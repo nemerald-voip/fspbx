@@ -156,7 +156,7 @@
                         <div class="grid grid-cols-6 gap-6">
                             <div class="col-span-6 sm:col-span-3 text-sm font-medium leading-6 text-gray-900">
                                 <div class="flex items-center gap-1">
-                                    <LabelInputOptional target="ring_pattern" label="Ring Pattern" />
+                                    <LabelInputOptional target="ring_pattern" label="Call Distribution" />
 
                                     <Popover>
                                         <template v-slot:popover-button>
@@ -262,12 +262,20 @@
 
                                 <LabelInputOptional target="members" label="Add Member(s)" />
 
-                                <div class="mt-2 relative">
+                                <div class="flex flex-wrap items-start gap-6">
+                                    <div class="flex-1 relative">
 
-                                    <Multiselect v-model="selectedNewMembers" :options="availableExtensions"
-                                        :multiple="true" :close-on-select="false" :clear-on-select="false"
-                                        placeholder="Search by first name, last name or extension" label="name"
-                                        track-by="value" :searchable="true" />
+                                        <Multiselect v-model="selectedNewMembers" :options="availableExtensions"
+                                            :multiple="true" :close-on-select="false" :clear-on-select="false"
+                                            placeholder="Search by first name, last name or extension" label="name"
+                                            track-by="value" :searchable="true" />
+
+                                    </div>
+
+                                    <button v-if="selectedNewMembers.length > 0" type="button" @click.prevent="addSelectedMembers"
+                                        class="flex-none rounded-md bg-white px-4 py-3 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                        Add ({{ selectedNewMembers.length }})
+                                    </button>
 
                                 </div>
 
@@ -285,10 +293,10 @@
                                             <thead class="bg-gray-100">
                                                 <tr>
                                                     <th
-                                                        class="px-3 py-2 lg:px-6 lg:py-3 text-left text-sm font-semibold text-gray-900">
+                                                        class="px-3 py-2 lg:py-3 text-left text-sm font-semibold text-gray-900">
                                                         Member</th>
                                                     <th
-                                                        class="px-3 py-2 lg:px-6 lg:py-3 text-left text-sm font-semibold text-gray-900">
+                                                        class="px-3 py-2 lg:py-3 text-left text-sm font-semibold text-gray-900">
 
                                                         <ejs-tooltip
                                                             :content="'How many seconds to wait before starting to ring this member.'"
@@ -308,19 +316,19 @@
                                                         </ejs-tooltip>
                                                     </th>
                                                     <th
-                                                        class="px-3 py-2 lg:px-6 lg:py-3 text-left text-sm font-semibold text-gray-900 hidden lg:table-cell">
+                                                        class="px-3 py-2 lg:py-3 text-left text-sm font-semibold text-gray-900 hidden lg:table-cell">
 
                                                         <ejs-tooltip
                                                             :content="'How many seconds to keep ringing this member before giving up.'"
                                                             position="TopLeft" target="#rings_tooltip_target">
                                                             <div id="rings_tooltip_target"
                                                                 class="text-sm font-semibold text-gray-900">
-                                                                Rings
+                                                                Ring for
                                                             </div>
                                                         </ejs-tooltip>
                                                     </th>
                                                     <th
-                                                        class="px-3 py-2 lg:px-6 lg:py-3 text-left text-sm font-semibold text-gray-900">
+                                                        class="px-3 py-2 lg:py-3 text-left text-sm font-semibold text-gray-900">
 
 
                                                         <ejs-tooltip
@@ -328,12 +336,25 @@
                                                             position='TopCenter' target="#destination_tooltip_target">
                                                             <div id="destination_tooltip_target"
                                                                 class="text-sm font-semibold text-gray-900">
-                                                                Confirm answer
+                                                                <!-- Mobile Label -->
+                                                                <span class="block lg:hidden">
+
+                                                                </span>
+
+                                                                <!-- Desktop Label -->
+                                                                <span class="hidden lg:block">
+                                                                    Confirm answer
+                                                                </span>
+
                                                             </div>
                                                         </ejs-tooltip>
                                                     </th>
                                                     <th
-                                                        class="relative px-3 py-2 lg:px-6 lg:py-3 text-left text-sm font-medium text-gray-500">
+                                                        class="px-3 py-2  lg:py-3 text-left text-sm font-semibold text-gray-900 hidden lg:table-cell">
+                                                        Active
+                                                    </th>
+                                                    <th
+                                                        class="relative px-3 py-2  lg:py-3 text-left text-sm font-medium text-gray-500">
                                                         <span class="sr-only">Actions</span>
                                                     </th>
                                                 </tr>
@@ -341,12 +362,11 @@
                                             <tbody v-if="members.length" class="divide-y divide-gray-200 bg-white">
                                                 <tr v-for="member in members" :key="member.uuid || member.extension_uuid">
                                                     <td
-                                                        class="whitespace-nowrap px-3 py-2 lg:px-6 lg:py-3 text-sm font-medium text-gray-900">
+                                                        class="whitespace-nowrap px-3 py-2  lg:py-3 text-sm font-medium text-gray-900">
                                                         {{ member.extension_name }}
                                                     </td>
 
-                                                    <td
-                                                        class="whitespace-nowrap px-3 py-2 lg:px-6 lg:py-3 text-sm text-gray-500 w-56">
+                                                    <td class="whitespace-nowrap px-3 py-2  lg:py-3 text-sm text-gray-500">
                                                         <!-- Delay Select -->
                                                         <div class="flex flex-col">
                                                             <!-- Label only on mobile -->
@@ -355,7 +375,7 @@
                                                                 Delay
                                                             </label>
                                                             <select v-model="member.delay"
-                                                                class="block w-full min-w-[10rem] rounded-md border-gray-300 py-1 px-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                                                class="block w-full min-w-[8rem] rounded-md border-gray-300 py-1 px-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                                                 <option v-for="option in delayOptions" :key="option.value"
                                                                     :value="option.value">
                                                                     {{ option.label }}
@@ -367,10 +387,10 @@
                                                         <div class="flex flex-col mt-2 lg:hidden">
                                                             <!-- Label only on mobile -->
                                                             <label class="block mb-1 text-xs font-medium text-gray-700">
-                                                                Rings
+                                                                Ring for
                                                             </label>
                                                             <select v-model="member.timeout"
-                                                                class="block w-full min-w-[10rem] rounded-md border-gray-300 py-1 px-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                                                class="block w-full min-w-[8rem] rounded-md border-gray-300 py-1 px-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                                                 <option v-for="option in timeoutOptions" :key="option.value"
                                                                     :value="option.value">
                                                                     {{ option.label }}
@@ -379,9 +399,9 @@
                                                         </div>
                                                     </td>
                                                     <td
-                                                        class="whitespace-nowrap px-3 py-2 lg:px-6 lg:py-3 text-sm text-gray-500 w-56 hidden lg:table-cell">
+                                                        class="whitespace-nowrap px-3 py-2  lg:py-3 text-sm text-gray-500 hidden lg:table-cell">
                                                         <select v-model="member.timeout"
-                                                            class="block w-full min-w-[10rem] rounded-md border-gray-300 py-1 px-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                                            class="block w-full min-w-[8rem] rounded-md border-gray-300 py-1 px-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                                             <option v-for="option in timeoutOptions" :key="option.value"
                                                                 :value="option.value">
                                                                 {{ option.label }}
@@ -390,11 +410,34 @@
                                                     </td>
 
                                                     <td
-                                                        class="whitespace-nowrap px-3 py-2 lg:px-6 lg:py-3 text-sm text-gray-500">
-                                                        <Toggle label="" v-model="member.destination_enabled" />
+                                                        class="whitespace-nowrap px-3 py-2 sm:px-6 lg:px-3 lg:py-3 text-sm text-gray-500">
+
+                                                        <div class="flex flex-col">
+                                                            <!-- Label only on mobile -->
+                                                            <label
+                                                                class="block mb-1 text-xs font-medium text-gray-700 lg:hidden">
+                                                                Confirm Answer
+                                                            </label>
+                                                            <Toggle label="" v-model="member.prompt" />
+                                                        </div>
+
+                                                        <!-- Active field (only visible on mobile) -->
+                                                        <div class="flex flex-col mt-2 lg:hidden">
+                                                            <!-- Label only on mobile -->
+                                                            <label class="block mb-1 text-xs font-medium text-gray-700">
+                                                                Active
+                                                            </label>
+                                                            <Toggle label="" v-model="member.enabled" />
+                                                        </div>
+
+
                                                     </td>
                                                     <td
-                                                        class="whitespace-nowrap px-3 py-2 lg:px-6 lg:py-3 text-right text-sm font-medium">
+                                                        class="whitespace-nowrap px-3 py-2  lg:py-3 text-sm text-gray-500 hidden lg:table-cell">
+                                                        <Toggle label="" v-model="member.enabled" />
+                                                    </td>
+                                                    <td
+                                                        class="whitespace-nowrap px-3 py-2 lg:py-3 text-right text-sm font-medium">
                                                         <div class="flex items-center whitespace-nowrap justify-end">
 
 
@@ -402,7 +445,7 @@
                                                                 target="#delete_tooltip_target">
                                                                 <div id="delete_tooltip_target">
                                                                     <TrashIcon
-                                                                        @click="handleSingleItemDeleteRequest(call.uuid)"
+                                                                        @click="removeMember(member)"
                                                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                                                 </div>
                                                             </ejs-tooltip>
@@ -569,7 +612,7 @@ const delayOptions = Array.from({ length: 21 }, (_, i) => {
     const rings = Math.round(seconds / 5); // 1 ring = ~5 seconds
     return {
         value: String(seconds),
-        label: `${rings} ${rings === 1 ? 'Ring' : 'Rings'} - ${seconds} Sec`
+        label: `${rings} ${rings === 1 ? 'Ring' : 'Rings'} (${seconds}s)`
     };
 });
 
@@ -578,7 +621,7 @@ const timeoutOptions = Array.from({ length: 21 }, (_, i) => {
     const rings = Math.round(seconds / 5);
     return {
         value: String(seconds),
-        label: `${rings} ${rings === 1 ? 'Ring' : 'Rings'} - ${seconds} Sec`
+        label: `${rings} ${rings === 1 ? 'Ring' : 'Rings'} (${seconds}s)`
     };
 });
 
@@ -594,7 +637,8 @@ members.value = props.options.ring_group.destinations.map(destination => {
         // timeout: timeoutOptions.find(option => option.value === String(destination.destination_timeout ?? "30")),
         delay: String(destination.destination_delay),
         timeout: String(destination.destination_timeout),
-        prompt: destination.destination_prompt,
+        prompt: destination.destination_prompt == "1",
+        enabled: destination.destination_enabled,
     };
 });
 
@@ -611,17 +655,30 @@ const addSelectedMembers = () => {
             uuid: null, // New member won't have UUID yet
             extension_uuid: ext.value,
             extension_name: ext.name,
-            destination_number: ext.extension, 
+            destination_number: ext.extension,
             delay: "0",
             timeout: "30",
             prompt: null,
-            destination_enabled: true, // or false, depending on your default
+            enabled: true, 
         });
     });
 
     selectedNewMembers.value = []; // Clear selection after adding
 };
 
+
+const removeMember = (member) => {
+    // 1. Remove from members list
+    members.value = members.value.filter(m => m !== member);
+
+    // 2. Add back to availableExtensions if the extension exists
+    const extension = props.options.extensions.find(ext => ext.extension === member.destination_number);
+    if (extension && !availableExtensions.value.some(ext => ext.value === extension.value)) {
+        availableExtensions.value.push(extension);
+    }
+    availableExtensions.value.sort((a, b) => a.name.localeCompare(b.name));
+
+};
 
 
 const setActiveTab = (tabSlug) => {
@@ -942,4 +999,5 @@ registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHV
     /* For Chrome and Safari */
     -moz-text-security: disc;
     /* For Firefox */
-}</style>
+}
+</style>
