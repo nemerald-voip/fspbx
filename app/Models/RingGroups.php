@@ -69,6 +69,11 @@ class RingGroups extends Model
         return $this->ring_group_extension . ' - ' . $this->ring_group_name;
     }
 
+    public function getNameFormattedAttribute()
+    {
+        return $this->ring_group_extension . ' - ' . $this->ring_group_name;
+    }
+
     public function getGroupDestinations()
     {
         return $this->belongsTo(RingGroupsDestinations::class, 'ring_group_uuid', 'ring_group_uuid')->orderBy('destination_delay')->get();
@@ -108,7 +113,7 @@ class RingGroups extends Model
             }
         }
 
-        if(isset($uniqueExtension)) {
+        if (isset($uniqueExtension)) {
             return $uniqueExtension;
         }
 

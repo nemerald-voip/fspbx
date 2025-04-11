@@ -265,14 +265,22 @@
                                 <div class="flex flex-wrap items-start gap-6">
                                     <div class="flex-1 relative">
 
-                                        <Multiselect v-model="selectedNewMembers" :options="availableExtensions"
-                                            :multiple="true" :close-on-select="false" :clear-on-select="false"
-                                            placeholder="Search by first name, last name or extension" label="name"
-                                            track-by="value" :searchable="true" />
+                                        <Multiselect v-model="selectedNewMembers" :options="availableMembers" 
+                                            :group-label="'groupLabel'"
+                                            :group-values="'groupValues'"
+                                            :multiple="true"
+                                            :close-on-select="false"
+                                            :clear-on-select="false"
+                                            placeholder="Search by name or extension"
+                                            label="name"
+                                            track-by="value"
+                                            :searchable="true"
+                                            />
 
                                     </div>
 
-                                    <button v-if="selectedNewMembers.length > 0" type="button" @click.prevent="addSelectedMembers"
+                                    <button v-if="selectedNewMembers.length > 0" type="button"
+                                        @click.prevent="addSelectedMembers"
                                         class="flex-none rounded-md bg-white px-4 py-3 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                                         Add ({{ selectedNewMembers.length }})
                                     </button>
@@ -444,8 +452,7 @@
                                                             <ejs-tooltip :content="'Delete'" position='TopCenter'
                                                                 target="#delete_tooltip_target">
                                                                 <div id="delete_tooltip_target">
-                                                                    <TrashIcon
-                                                                        @click="removeMember(member)"
+                                                                    <TrashIcon @click="removeMember(member)"
                                                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                                                 </div>
                                                             </ejs-tooltip>
@@ -625,61 +632,57 @@ const timeoutOptions = Array.from({ length: 21 }, (_, i) => {
     };
 });
 
+const allMemberOptions = props.options.member_options.flatMap(group => group.groupValues);
+
 members.value = props.options.ring_group.destinations.map(destination => {
-    const extension = props.options.extensions.find(ext => ext.extension === destination.destination_number);
+    const memberOption = allMemberOptions.find(opt => opt.extension === destination.destination_number);
 
     return {
         uuid: destination.ring_group_destination_uuid,
-        extension_uuid: extension ? extension.value : null,
-        extension_name: extension ? extension.name : destination.destination_number,
+        extension_uuid: memberOption ? memberOption.value : null,
+        extension_name: memberOption ? memberOption.name : destination.destination_number,
         destination_number: destination.destination_number,
-        // delay: delayOptions.find(option => option.value === String(destination.destination_delay ?? "0")), 
-        // timeout: timeoutOptions.find(option => option.value === String(destination.destination_timeout ?? "30")),
-        delay: String(destination.destination_delay),
-        timeout: String(destination.destination_timeout),
+        type: memberOption ? memberOption.type : null, 
+        delay: String(destination.destination_delay ?? "0"),
+        timeout: String(destination.destination_timeout ?? "30"),
         prompt: destination.destination_prompt == "1",
         enabled: destination.destination_enabled,
     };
 });
 
-const availableExtensions = computed(() => {
+
+const availableMembers = computed(() => {
     const selectedNumbers = members.value.map(m => m.destination_number);
-    return props.options.extensions.filter(
-        ext => !selectedNumbers.includes(ext.extension)
-    );
+
+    return props.options.member_options
+        .map(group => ({
+            groupLabel: group.groupLabel,
+            groupValues: group.groupValues.filter(opt => !selectedNumbers.includes(opt.extension)),
+        }))
+        .filter(group => group.groupValues.length > 0); // Only groups with values
 });
 
 const addSelectedMembers = () => {
-    selectedNewMembers.value.forEach((ext) => {
+    selectedNewMembers.value.forEach((member) => {
         members.value.push({
-            uuid: null, // New member won't have UUID yet
-            extension_uuid: ext.value,
-            extension_name: ext.name,
-            destination_number: ext.extension,
+            uuid: null,
+            extension_uuid: member.value,
+            extension_name: member.name,
+            destination_number: member.extension,
+            type: member.type,
             delay: "0",
             timeout: "30",
             prompt: null,
-            enabled: true, 
+            enabled: true,
         });
     });
 
-    selectedNewMembers.value = []; // Clear selection after adding
+    selectedNewMembers.value = []; // Clear selected items after adding
 };
-
 
 const removeMember = (member) => {
-    // 1. Remove from members list
     members.value = members.value.filter(m => m !== member);
-
-    // 2. Add back to availableExtensions if the extension exists
-    const extension = props.options.extensions.find(ext => ext.extension === member.destination_number);
-    if (extension && !availableExtensions.value.some(ext => ext.value === extension.value)) {
-        availableExtensions.value.push(extension);
-    }
-    availableExtensions.value.sort((a, b) => a.name.localeCompare(b.name));
-
 };
-
 
 const setActiveTab = (tabSlug) => {
     activeTab.value = tabSlug;

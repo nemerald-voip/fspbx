@@ -179,23 +179,45 @@ class RingGroupsController extends Controller
                 ->orderBy('extension', 'asc')
                 ->get();
 
-            // Transform the collection into the desired array format
-            $extensionsOptions = $extensions->map(function ($extension) {
-                return [
-                    'value' => $extension->extension_uuid,
-                    'name' => $extension->name_formatted,
-                    'extension' => $extension->extension,
-                ];
-            })->toArray();
+
+            $ringGroups = RingGroups::where('domain_uuid', $domain_uuid)
+                ->select('ring_group_uuid', 'ring_group_extension', 'ring_group_name')
+                ->orderBy('ring_group_extension', 'asc')
+                ->get();
+
+            $memberOptions = [
+                [
+                    'groupLabel' => 'Extensions',
+                    'groupValues' => $extensions->map(function ($extension) {
+                        return [
+                            'value' => $extension->extension_uuid,
+                            'name' => $extension->name_formatted,
+                            'extension' => $extension->extension,
+                            'type' => 'extension',
+                        ];
+                    })->toArray(),
+                ],
+                [
+                    'groupLabel' => 'Ring Groups',
+                    'groupValues' => $ringGroups->map(function ($group) {
+                        return [
+                            'value' => $group->ring_group_uuid,
+                            'name' => $group->name_formatted,
+                            'extension' => $group->ring_group_extension,
+                            'type' => 'ring_group',
+                        ];
+                    })->toArray(),
+                ]
+            ];
 
             // Check if item_uuid exists to find an existing model
             if ($item_uuid) {
                 // Find existing item by item_uuid
                 $item = $this->model::where($this->model->getKeyName(), $item_uuid)
-                ->with(['destinations' => function ($query) {
-                    $query->select('ring_group_destination_uuid', 'ring_group_uuid', 'destination_delay', 'destination_enabled', 'destination_number', 'destination_prompt', 'destination_timeout');
-                }])
-                ->first();
+                    ->with(['destinations' => function ($query) {
+                        $query->select('ring_group_destination_uuid', 'ring_group_uuid', 'destination_delay', 'destination_enabled', 'destination_number', 'destination_prompt', 'destination_timeout');
+                    }])
+                    ->first();
 
                 // If a model exists, use it; otherwise, create a new one
                 if (!$item) {
@@ -279,7 +301,7 @@ class RingGroupsController extends Controller
             $itemOptions = [
                 'navigation' => $navigation,
                 'ring_group' => $item,
-                'extensions' => $extensionsOptions,
+                'member_options' => $memberOptions,
                 'permissions' => $permissions,
                 'ring_patterns' => $ring_patterns,
                 'routes' => $routes,
