@@ -64,7 +64,7 @@ const checkStatus = async () => {
         error.value = null;
     } catch (err) {
         error.value = err.response?.data?.message || err.message;
-        logger(error.value);
+        console.log(error.value);
     } finally {
         loading.value = false;
     }
