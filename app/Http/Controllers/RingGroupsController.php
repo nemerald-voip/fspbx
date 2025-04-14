@@ -150,26 +150,26 @@ class RingGroupsController extends Controller
 
             ];
 
-            $ring_patterns = [
+            $call_distributions = [
                 [
                     'value' => 'enterprise',
-                    'name' => 'Advanced',
+                    'label' => 'Advanced',
                 ],
                 [
                     'value' => 'simultaneous',
-                    'name' => 'Simultaneous Ring',
+                    'label' => 'Simultaneous Ring',
                 ],
                 [
                     'value' => 'sequence',
-                    'name' => 'Sequential Ring',
+                    'label' => 'Sequential Ring',
                 ],
                 [
                     'value' => 'random',
-                    'name' => 'Random Ring',
+                    'label' => 'Random Ring',
                 ],
                 [
                     'value' => 'rollover',
-                    'name' => 'Rollover',
+                    'label' => 'Rollover',
                 ],
 
             ];
@@ -188,10 +188,10 @@ class RingGroupsController extends Controller
             $memberOptions = [
                 [
                     'groupLabel' => 'Extensions',
-                    'groupValues' => $extensions->map(function ($extension) {
+                    'groupOptions' => $extensions->map(function ($extension) {
                         return [
                             'value' => $extension->extension_uuid,
-                            'name' => $extension->name_formatted,
+                            'label' => $extension->name_formatted,
                             'extension' => $extension->extension,
                             'type' => 'extension',
                         ];
@@ -199,10 +199,10 @@ class RingGroupsController extends Controller
                 ],
                 [
                     'groupLabel' => 'Ring Groups',
-                    'groupValues' => $ringGroups->map(function ($group) {
+                    'groupOptions' => $ringGroups->map(function ($group) {
                         return [
                             'value' => $group->ring_group_uuid,
-                            'name' => $group->name_formatted,
+                            'label' => $group->name_formatted,
                             'extension' => $group->ring_group_extension,
                             'type' => 'ring_group',
                         ];
@@ -246,7 +246,7 @@ class RingGroupsController extends Controller
                 ->map(function ($greeting) {
                     return [
                         'value' => $greeting->recording_filename,
-                        'name' => $greeting->recording_name,
+                        'label' => $greeting->recording_name,
                         'description' => $greeting->recording_description,
                     ];
                 })->toArray();
@@ -303,7 +303,7 @@ class RingGroupsController extends Controller
                 'ring_group' => $item,
                 'member_options' => $memberOptions,
                 'permissions' => $permissions,
-                'ring_patterns' => $ring_patterns,
+                'call_distributions' => $call_distributions,
                 'routes' => $routes,
                 'voices' => $openAiVoices,
                 'speeds' => $openAiSpeeds,

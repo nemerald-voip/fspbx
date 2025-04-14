@@ -20,462 +20,178 @@
         <form @submit.prevent="submitForm" class="space-y-6 sm:px-6 lg:col-span-9 lg:px-0">
             <div v-if="activeTab === 'settings'">
                 <div class="shadow sm:rounded-md">
-                    <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
-                        <div class="">
-                            <h3 class="text-base font-semibold leading-6 text-gray-900">Settings</h3>
-                            <p class="mt-1 text-sm text-gray-500">Provide basic information about the ring group</p>
-                        </div>
-
-                        <div class="grid grid-cols-6 gap-6">
-                            <div class="col-span-6 sm:col-span-3">
-                                <LabelInputRequired target="name" label="Name" class="truncate" />
-                                <InputField v-model="form.name" type="text" name="name" id="name" class="mt-2"
-                                    :error="!!errors?.name" />
-                                <div v-if="errors?.name" class="mt-2 text-xs text-red-600">
-                                    {{ errors.name[0] }}
-                                </div>
-                            </div>
-                            <div class="col-span-6 sm:col-span-3">
-                                <LabelInputRequired target="extension" label="Extension" class="truncate" />
-                                <InputField v-model="form.extension" type="text" name="extension" id="extension"
-                                    class="mt-2" :error="!!errors?.extension" />
-                                <div v-if="errors?.extension" class="mt-2 text-xs text-red-600">
-                                    {{ errors.extension[0] }}
-                                </div>
-                            </div>
-
-                            <!-- <div class="col-span-3 sm:col-span-2">
-                                <LabelInputOptional target="voicemail_password" label="Password" class="truncate" />
-                                <InputFieldWithIcon v-model="form.voicemail_password" id="voicemail_password"
-                                    name="voicemail_password" type="text" autocomplete="shut-up-google"
-                                    :error="!!errors?.voicemail_password" class="password-field">
-                                    <template #icon>
-                                        <VisibilityIcon @click="togglePasswordVisibility"
-                                            class="h-8 w-8 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                            aria-hidden="true" />
-                                    </template>
-                                </InputFieldWithIcon>
-                                <div v-if="errors?.voicemail_password" class="mt-2 text-xs text-red-600">
-                                    {{ errors.voicemail_password[0] }}
-                                </div>
-                            </div> -->
-
-                            <!-- <div class="col-span-6 sm:col-span-3">
-                                <LabelInputOptional target="voicemail_mail_to" label="Email address" class="truncate" />
-                                <InputField v-model="form.voicemail_mail_to" type="text" name="voicemail_mail_to"
-                                    id="voicemail_mail_to" class="mt-2" :error="!!errors?.voicemail_mail_to" />
-                                <div v-if="errors?.voicemail_mail_to" class="mt-2 text-xs text-red-600">
-                                    {{ errors.voicemail_mail_to[0] }}
-                                </div>
-                            </div> -->
-
-                        </div>
-
-
-                        <div class="grid grid-cols-6 gap-6">
-                            <div class="col-span-6 sm:col-span-3 text-sm font-medium leading-6 text-gray-900">
-                                <div class="flex items-center gap-1">
-                                    <LabelInputOptional target="greeting" label="Greeting" />
-
-                                    <Popover>
-                                        <template v-slot:popover-button>
-                                            <InformationCircleIcon class="h-5 w-5 text-blue-500" />
-                                        </template>
-                                        <template v-slot:popover-panel>
-                                            <div>Enable this option so that callers hear a recorded greeting before they are
-                                                connected to a group member.
-                                            </div>
-                                        </template>
-                                    </Popover>
-                                </div>
-
-                                <div class="mt-2 relative">
-                                    <Multiselect v-model="form.greeting" :options="localOptions.greetings"
-                                        :key="greetingSelectKey" :close-on-select="true" :clear-on-select="false"
-                                        :preserve-search="true" placeholder="Select Greeting" label="name" track-by="value"
-                                        :searchable="true">
-
-                                        <!-- Custom tag slot to truncate labels to 15 characters -->
-                                        <template #singleLabel="{ option }">
-                                            <div class="truncate max-w-full">
-                                                {{ option.name }}
-                                            </div>
-                                        </template>
-                                    </Multiselect>
-
-                                </div>
-
-                                <div v-if="errors?.greeting" class="mt-2 text-xs text-red-600">
-                                    {{ errors.greeting[0] }}
-                                </div>
-                            </div>
-
-                            <div :class="{
-                                'pb-7': errors?.greeting,
-                                'pb-1': !errors?.greeting
-                            }" class="content-end col-span-2 text-sm font-medium leading-6 text-gray-900">
-                                <div class="flex items-center whitespace-nowrap gap-2">
-                                    <!-- Play Button -->
-                                    <PlayCircleIcon v-if="form.greeting && !isAudioPlaying" @click="playGreeting"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
-
-                                    <!-- Pause Button -->
-                                    <PauseCircleIcon v-if="form.greeting && isAudioPlaying" @click="pauseGreeting"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
-
-                                    <CloudArrowDownIcon v-if="form.greeting && !isDownloading" @click="downloadGreeting"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
-
-                                    <Spinner :show="isDownloading"
-                                        class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
-
-                                    <!-- Edit Button -->
-                                    <PencilSquareIcon v-if="form.greeting" @click="editGreeting"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
-
-                                    <!-- Delete Button -->
-                                    <TrashIcon v-if="form.greeting" @click="deleteGreeting"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
-
-                                    <PlusIcon @click="handleNewGreetingButtonClick"
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
-
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                        <div v-if="greetingDescription">
-                            <p class="-mt-2 text-xs text-gray-500 italic"
-                                v-html="`&quot;${decodedGreetingDescription}&quot;`"></p>
-
-                        </div>
-
-
-                        <div class="grid grid-cols-6 gap-6">
-                            <div class="col-span-6 sm:col-span-3 text-sm font-medium leading-6 text-gray-900">
-                                <div class="flex items-center gap-1">
-                                    <LabelInputOptional target="ring_pattern" label="Call Distribution" />
-
-                                    <Popover>
-                                        <template v-slot:popover-button>
-                                            <InformationCircleIcon class="h-5 w-5 text-blue-500" />
-                                        </template>
-                                        <template v-slot:popover-panel>
-                                            <div>
-                                                <ul>
-                                                    <li><b>Advanced (default):</b> This option rings all phones at once, but
-                                                        each phone has its own thread. This is especially useful when there
-                                                        are multiple registrations for the same extension. </li>
-                                                    <li><b>Sequential Ring:</b> This option rings one phone at a time in a
-                                                        specific order.</li>
-                                                    <li><b>Simultaneous Ring:</b> This option rings all phones at once.</li>
-                                                    <li><b>Random Ring:</b> This option rings one phone at a time in a
-                                                        random order. </li>
-                                                    <li><b>Rollover:</b> This option rings each phone one at a time, but it
-                                                        skips busy phones.</li>
-                                                </ul>
-                                            </div>
-                                        </template>
-                                    </Popover>
-                                </div>
-
-                                <div class="mt-2 relative">
-                                    <Multiselect v-model="form.ring_pattern" :options="localOptions.ring_patterns"
-                                        :close-on-select="true" :clear-on-select="false" :preserve-search="true"
-                                        placeholder="Select Ring Pattern" label="name" track-by="value" :searchable="true"
-                                        :allowEmpty="false">
-
-                                        <!-- Custom tag slot to truncate labels to 15 characters -->
-                                        <template #singleLabel="{ option }">
-                                            <div class="truncate max-w-full">
-                                                {{ option.name }}
-                                            </div>
-                                        </template>
-                                    </Multiselect>
-
-                                </div>
-
-                                <div v-if="errors?.greeting" class="mt-2 text-xs text-red-600">
-                                    {{ errors.greeting[0] }}
-                                </div>
-                            </div>
-
-
-
-                        </div>
-
-                        <!-- <div class="col-span-6">
-                            <LabelInputOptional target="voicemail_description" label="Description" class="truncate" />
-                            <div class="mt-2">
-                                <Textarea v-model="form.voicemail_description" id="voicemail_description"
-                                    name="voicemail_description" rows="2" :error="!!errors?.voicemail_description" />
-                            </div>
-                            <div v-if="errors?.voicemail_description" class="mt-2 text-xs text-red-600">
-                                {{ errors.voicemail_description[0] }}
-                            </div>
-                        </div>
-
-                        <div class="divide-y divide-gray-200 col-span-6">
-
-                            <Toggle v-if="localOptions.permissions.manage_voicemail_transcription"
-                                label="Voicemail Transcription"
-                                description="Convert voicemail messages to text using AI-powered transcription."
-                                v-model="form.voicemail_transcription_enabled" customClass="py-4" />
-
-                            <Toggle label="Attach File to Email Notifications"
-                                description="Attach voicemail recording file to the email notification."
-                                v-model="form.voicemail_email_attachment" customClass="py-4" />
-
-                            <Toggle v-if="localOptions.permissions.manage_voicemail_auto_delete"
-                                label="Automatically Delete Voicemail After Email"
-                                description="Remove voicemail from the cloud once the email is sent."
-                                v-model="form.voicemail_delete" customClass="py-4" />
-
-                        </div> -->
-
-
-                    </div>
-
-                </div>
-
-                <div class="bg-gray-50 px-4 py-3 text-right sm:px-6">
-
-                    <button type="submit"
-                        class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                        ref="saveButtonRef" :disabled="isSubmitting">
-                        <Spinner :show="isSubmitting" />
-                        Save
-                    </button>
-                </div>
-
-                <div class="mt-6 shadow sm:rounded-md">
-                    <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
-                        <div class="">
-                            <h3 class="text-base font-semibold leading-6 text-gray-900">Members</h3>
-                            <!-- <p class="mt-1 text-sm text-gray-500">Desciption</p> -->
-                        </div>
-
-                        <div class="grid grid-cols-6 gap-6">
-                            <div class="col-span-6 text-sm font-medium leading-6 text-gray-900">
-
-                                <LabelInputOptional target="members" label="Add Member(s)" />
-
-                                <div class="flex flex-wrap items-start gap-6">
-                                    <div class="flex-1 relative">
-
-                                        <Multiselect v-model="selectedNewMembers" :options="availableMembers" 
-                                            :group-label="'groupLabel'"
-                                            :group-values="'groupValues'"
-                                            :multiple="true"
-                                            :close-on-select="false"
-                                            :clear-on-select="false"
-                                            placeholder="Search by name or extension"
-                                            label="name"
-                                            track-by="value"
-                                            :searchable="true"
-                                            />
-
-                                    </div>
-
-                                    <button v-if="selectedNewMembers.length > 0" type="button"
-                                        @click.prevent="addSelectedMembers"
-                                        class="flex-none rounded-md bg-white px-4 py-3 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                                        Add ({{ selectedNewMembers.length }})
-                                    </button>
-
-                                </div>
-
-                                <div v-if="errors?.members" class="mt-2 text-xs text-red-600">
-                                    {{ errors.members[0] }}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-6 gap-6">
-                            <div class="col-span-6  -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                                <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                                    <div class="overflow-hidden border border-gray-200">
-                                        <table class="min-w-full divide-y divide-gray-200 mb-4">
-                                            <thead class="bg-gray-100">
-                                                <tr>
-                                                    <th
-                                                        class="px-3 py-2 lg:py-3 text-left text-sm font-semibold text-gray-900">
-                                                        Member</th>
-                                                    <th
-                                                        class="px-3 py-2 lg:py-3 text-left text-sm font-semibold text-gray-900">
-
-                                                        <ejs-tooltip
-                                                            :content="'How many seconds to wait before starting to ring this member.'"
-                                                            position="TopLeft" target="#delay_tooltip_target">
-                                                            <div id="delay_tooltip_target"
-                                                                class="text-sm font-semibold text-gray-900">
-                                                                <!-- Mobile Label -->
-                                                                <span class="block lg:hidden">
-
-                                                                </span>
-
-                                                                <!-- Desktop Label -->
-                                                                <span class="hidden lg:block">
-                                                                    Delay
-                                                                </span>
-                                                            </div>
-                                                        </ejs-tooltip>
-                                                    </th>
-                                                    <th
-                                                        class="px-3 py-2 lg:py-3 text-left text-sm font-semibold text-gray-900 hidden lg:table-cell">
-
-                                                        <ejs-tooltip
-                                                            :content="'How many seconds to keep ringing this member before giving up.'"
-                                                            position="TopLeft" target="#rings_tooltip_target">
-                                                            <div id="rings_tooltip_target"
-                                                                class="text-sm font-semibold text-gray-900">
-                                                                Ring for
-                                                            </div>
-                                                        </ejs-tooltip>
-                                                    </th>
-                                                    <th
-                                                        class="px-3 py-2 lg:py-3 text-left text-sm font-semibold text-gray-900">
-
-
-                                                        <ejs-tooltip
-                                                            :content="'Enable Answer confirmation to prevent voicemails and automated systems from ansvering a call.'"
-                                                            position='TopCenter' target="#destination_tooltip_target">
-                                                            <div id="destination_tooltip_target"
-                                                                class="text-sm font-semibold text-gray-900">
-                                                                <!-- Mobile Label -->
-                                                                <span class="block lg:hidden">
-
-                                                                </span>
-
-                                                                <!-- Desktop Label -->
-                                                                <span class="hidden lg:block">
-                                                                    Confirm answer
-                                                                </span>
-
-                                                            </div>
-                                                        </ejs-tooltip>
-                                                    </th>
-                                                    <th
-                                                        class="px-3 py-2  lg:py-3 text-left text-sm font-semibold text-gray-900 hidden lg:table-cell">
-                                                        Active
-                                                    </th>
-                                                    <th
-                                                        class="relative px-3 py-2  lg:py-3 text-left text-sm font-medium text-gray-500">
-                                                        <span class="sr-only">Actions</span>
-                                                    </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody v-if="members.length" class="divide-y divide-gray-200 bg-white">
-                                                <tr v-for="member in members" :key="member.uuid || member.extension_uuid">
-                                                    <td
-                                                        class="whitespace-nowrap px-3 py-2  lg:py-3 text-sm font-medium text-gray-900">
-                                                        {{ member.extension_name }}
-                                                    </td>
-
-                                                    <td class="whitespace-nowrap px-3 py-2  lg:py-3 text-sm text-gray-500">
-                                                        <!-- Delay Select -->
-                                                        <div class="flex flex-col">
-                                                            <!-- Label only on mobile -->
-                                                            <label
-                                                                class="block mb-1 text-xs font-medium text-gray-700 lg:hidden">
-                                                                Delay
-                                                            </label>
-                                                            <select v-model="member.delay"
-                                                                class="block w-full min-w-[8rem] rounded-md border-gray-300 py-1 px-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                                                <option v-for="option in delayOptions" :key="option.value"
-                                                                    :value="option.value">
-                                                                    {{ option.label }}
-                                                                </option>
-                                                            </select>
-                                                        </div>
-
-                                                        <!-- Rings Select (only visible on mobile) -->
-                                                        <div class="flex flex-col mt-2 lg:hidden">
-                                                            <!-- Label only on mobile -->
-                                                            <label class="block mb-1 text-xs font-medium text-gray-700">
-                                                                Ring for
-                                                            </label>
-                                                            <select v-model="member.timeout"
-                                                                class="block w-full min-w-[8rem] rounded-md border-gray-300 py-1 px-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                                                <option v-for="option in timeoutOptions" :key="option.value"
-                                                                    :value="option.value">
-                                                                    {{ option.label }}
-                                                                </option>
-                                                            </select>
-                                                        </div>
-                                                    </td>
-                                                    <td
-                                                        class="whitespace-nowrap px-3 py-2  lg:py-3 text-sm text-gray-500 hidden lg:table-cell">
-                                                        <select v-model="member.timeout"
-                                                            class="block w-full min-w-[8rem] rounded-md border-gray-300 py-1 px-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                                            <option v-for="option in timeoutOptions" :key="option.value"
-                                                                :value="option.value">
-                                                                {{ option.label }}
-                                                            </option>
-                                                        </select>
-                                                    </td>
-
-                                                    <td
-                                                        class="whitespace-nowrap px-3 py-2 sm:px-6 lg:px-3 lg:py-3 text-sm text-gray-500">
-
-                                                        <div class="flex flex-col">
-                                                            <!-- Label only on mobile -->
-                                                            <label
-                                                                class="block mb-1 text-xs font-medium text-gray-700 lg:hidden">
-                                                                Confirm Answer
-                                                            </label>
-                                                            <Toggle label="" v-model="member.prompt" />
-                                                        </div>
-
-                                                        <!-- Active field (only visible on mobile) -->
-                                                        <div class="flex flex-col mt-2 lg:hidden">
-                                                            <!-- Label only on mobile -->
-                                                            <label class="block mb-1 text-xs font-medium text-gray-700">
-                                                                Active
-                                                            </label>
-                                                            <Toggle label="" v-model="member.enabled" />
-                                                        </div>
-
-
-                                                    </td>
-                                                    <td
-                                                        class="whitespace-nowrap px-3 py-2  lg:py-3 text-sm text-gray-500 hidden lg:table-cell">
-                                                        <Toggle label="" v-model="member.enabled" />
-                                                    </td>
-                                                    <td
-                                                        class="whitespace-nowrap px-3 py-2 lg:py-3 text-right text-sm font-medium">
-                                                        <div class="flex items-center whitespace-nowrap justify-end">
-
-
-                                                            <ejs-tooltip :content="'Delete'" position='TopCenter'
-                                                                target="#delete_tooltip_target">
-                                                                <div id="delete_tooltip_target">
-                                                                    <TrashIcon @click="removeMember(member)"
-                                                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-                                                                </div>
-                                                            </ejs-tooltip>
-                                                        </div>
-
-                                                    </td>
-                                                </tr>
-                                            </tbody>
-                                        </table>
-
-                                        <div v-if="members.length === 0" class="text-center my-5">
-                                            <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                                            <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-
-                                        </div>
-
-
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
+
+                        <Vueform ref="form$">
+                            <StaticElement name="h4" tag="h4" content="Settings"
+                                description="Provide basic information about the ring group" />
+                            <TextElement name="name" label="Name" :columns="{
+                                sm: {
+                                    container: 6,
+                                },
+                                lg: {
+                                    container: 6,
+                                },
+                            }" placeholder="Enter Ring Group Name" :floating="false" />
+                            <TextElement name="extension" :columns="{
+                                sm: {
+                                    container: 6,
+                                },
+                                lg: {
+                                    container: 6,
+                                },
+                            }" label="Extension" placeholder="Enter Extension" :floating="false" />
+
+
+                            <SelectElement name="greeting" :search="true" :native="false" label="Greeting"
+                                :items="localOptions.greetings" input-type="search" autocomplete="off"
+                                placeholder="Select Greeting" :floating="false"
+                                info="Enable this option so that callers hear a recorded greeting before they are connected to a group member."
+                                :strict="false" :columns="{
+                                    sm: {
+                                        container: 6,
+                                    },
+                                    lg: {
+                                        container: 6,
+                                    },
+                                }" />
+
+
+                            <ButtonElement v-if="!isAudioPlaying" @click="playGreeting" name="play_button" label="&nbsp;"
+                                :secondary="true" :columns="{
+                                    sm: {
+                                        container: 1,
+                                    },
+                                    lg: {
+                                        container: 1,
+                                    },
+                                    default: {
+                                        container: 2,
+                                    },
+                                }" :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
+                                :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                <PlayCircleIcon
+                                    class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                            </ButtonElement>
+
+
+                            <ButtonElement v-if="isAudioPlaying" @click="pauseGreeting" name="pause_button" label="&nbsp;"
+                                :secondary="true" :columns="{
+                                    container: 1,
+                                }"
+                                :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                <PauseCircleIcon
+                                    class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+
+                            </ButtonElement>
+
+                            <ButtonElement v-if="!isDownloading" @click="downloadGreeting" name="download_button" label="&nbsp;" :secondary="true" :columns="{
+                                sm: {
+                                    container: 1,
+                                },
+                                lg: {
+                                    container: 1,
+                                },
+                                default: {
+                                    container: 2,
+                                },
+                            }" :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
+                                :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                <CloudArrowDownIcon 
+                                    class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                            </ButtonElement>
+
+                            <ButtonElement v-if="isDownloading" name="download_spinner_button" label="&nbsp;"
+                                :secondary="true" :columns="{
+                                    sm: {
+                                        container: 1,
+                                    },
+                                    lg: {
+                                        container: 1,
+                                    },
+                                    default: {
+                                        container: 2,
+                                    },
+                                }"
+                                :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                <Spinner :show="true"
+                                    class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                            </ButtonElement>
+
+                            <ButtonElement @click="editGreeting" name="edit_button" label="&nbsp;" :secondary="true"
+                                :columns="{
+                                    sm: {
+                                        container: 1,
+                                    },
+                                    lg: {
+                                        container: 1,
+                                    },
+                                    default: {
+                                        container: 2,
+                                    },
+                                }" :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
+                                :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                <PencilSquareIcon
+                                    class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                            </ButtonElement>
+
+                            <ButtonElement @click="deleteGreeting" name="delete_button" label="&nbsp;" :secondary="true"
+                                :columns="{
+                                    sm: {
+                                        container: 1,
+                                    },
+                                    lg: {
+                                        container: 1,
+                                    },
+                                    default: {
+                                        container: 2,
+                                    },
+                                }"
+                                :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
+                                :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                <TrashIcon
+                                    class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+
+                            </ButtonElement>
+
+                            <ButtonElement @click="handleNewGreetingButtonClick" name="add_button" label="&nbsp;" :secondary="true" :columns="{
+                                container: 1,
+                            }"
+                            :conditions="[['greeting', '==', null]]"
+                                :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                <PlusIcon 
+                                    class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                            </ButtonElement>
+
+
+
+
+                            <SelectElement name="call_distribution" :search="true" :native="false" label="Call Distribution"
+                                :items="localOptions.call_distributions" input-type="search" autocomplete="off"
+                                placeholder="Select Call Distribution" :floating="false" info="Advanced (default): This option rings all phones at once, but each phone has its own thread. This is especially useful when there are multiple registrations for the same extension.
+Sequential Ring: This option rings one phone at a time in a specific order.
+Simultaneous Ring: This option rings all phones at once.
+Random Ring: This option rings one phone at a time in a random order.
+Rollover: This option rings each phone one at a time, but it skips busy phones." :strict="false" :columns="{
+    sm: {
+        container: 6,
+    },
+    lg: {
+        container: 6,
+    },
+}" />
+
+
+
+                            <StaticElement name="divider" tag="hr" />
+                        </Vueform>
                     </div>
                 </div>
+
             </div>
 
 
@@ -563,7 +279,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, watch, computed, nextTick } from "vue";
+import { onMounted, reactive, ref, watch, computed, nextTick } from "vue";
 import { usePage } from '@inertiajs/vue3';
 
 import InputField from "../general/InputField.vue";
@@ -586,12 +302,8 @@ import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@hero
 import { MagnifyingGlassIcon, } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import { registerLicense } from '@syncfusion/ej2-base';
-import Multiselect from 'vue-multiselect'
+import VueMultiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.css'
-// import Multiselect from '@vueform/multiselect'
-//  import '@vueform/multiselect/themes/default.css'
-
-
 
 const props = defineProps({
     options: Object,
@@ -599,7 +311,7 @@ const props = defineProps({
     errors: Object,
 });
 
-
+const form$ = ref(null)
 // Initialize activeTab with the currently active tab from props
 const activeTab = ref(props.options.navigation.find(item => item.slug)?.slug || props.options.navigation[0].slug);
 const showEditModal = ref(false);
@@ -613,6 +325,21 @@ const showDeleteConfirmation = ref(false);
 const greetingSelectKey = ref(0);
 const members = ref([]);
 const selectedNewMembers = ref([]);
+
+onMounted(() => {
+    form$.value.update({ // updates form data
+        name: props.options.ring_group.ring_group_name ?? null,
+        extension: props.options.ring_group.ring_group_extension ?? null,
+        greeting: props.options.ring_group.ring_group_greeting
+            ? props.options.greetings.find(g => g.value === props.options.ring_group.ring_group_greeting)?.value || null
+            : null,
+        call_distribution: props.options.ring_group.call_distributions
+            ? props.options.call_distributions.find(rp => rp.value === props.options.ring_group.ring_group_strategy)?.value || 'enterprise'
+            : 'enterprise'
+    })
+
+    form$.value.clean()
+})
 
 const delayOptions = Array.from({ length: 21 }, (_, i) => {
     const seconds = i * 5; // 0, 5, 10, ..., 100
@@ -632,7 +359,7 @@ const timeoutOptions = Array.from({ length: 21 }, (_, i) => {
     };
 });
 
-const allMemberOptions = props.options.member_options.flatMap(group => group.groupValues);
+const allMemberOptions = props.options.member_options.flatMap(group => group.groupOptions);
 
 members.value = props.options.ring_group.destinations.map(destination => {
     const memberOption = allMemberOptions.find(opt => opt.extension === destination.destination_number);
@@ -642,7 +369,7 @@ members.value = props.options.ring_group.destinations.map(destination => {
         extension_uuid: memberOption ? memberOption.value : null,
         extension_name: memberOption ? memberOption.name : destination.destination_number,
         destination_number: destination.destination_number,
-        type: memberOption ? memberOption.type : null, 
+        type: memberOption ? memberOption.type : null,
         delay: String(destination.destination_delay ?? "0"),
         timeout: String(destination.destination_timeout ?? "30"),
         prompt: destination.destination_prompt == "1",
@@ -657,10 +384,12 @@ const availableMembers = computed(() => {
     return props.options.member_options
         .map(group => ({
             groupLabel: group.groupLabel,
-            groupValues: group.groupValues.filter(opt => !selectedNumbers.includes(opt.extension)),
+            groupOptions: group.groupOptions.filter(opt => !selectedNumbers.includes(opt.extension)), // ⬅️ filter based on extension
         }))
-        .filter(group => group.groupValues.length > 0); // Only groups with values
+        .filter(group => group.groupOptions.length > 0); // ⬅️ Only groups with available options
 });
+
+console.log(availableMembers.value);
 
 const addSelectedMembers = () => {
     selectedNewMembers.value.forEach((member) => {
@@ -806,10 +535,12 @@ const isAudioPlaying = ref(false);
 const currentAudioGreeting = ref(null);
 
 const playGreeting = () => {
-    if (!form.greeting) return; // No greeting selected
+    const greeting = form$.value.data.greeting;
+
+    if (!greeting) return; // No greeting selected
 
     // If there's already an audio playing for the SAME greeting
-    if (currentAudio.value && currentAudio.value.src && currentAudioGreeting.value === form.greeting) {
+    if (currentAudio.value && currentAudio.value.src && currentAudioGreeting.value === greeting) {
         if (currentAudio.value.paused) {
             currentAudio.value.play();
             isAudioPlaying.value = true;
@@ -825,39 +556,44 @@ const playGreeting = () => {
     }
     isAudioPlaying.value = false;
 
-    axios.post(props.options.routes.greeting_route, { file_name: form.greeting.value })
+    axios.post(props.options.routes.greeting_route, { file_name: greeting })
         .then((response) => {
-            // Stop the currently playing audio (if any)
             if (currentAudio.value) {
                 currentAudio.value.pause();
-                currentAudio.value.currentTime = 0; // Reset the playback position
+                currentAudio.value.currentTime = 0;
             }
             if (response.data.success) {
                 isAudioPlaying.value = true;
 
                 currentAudio.value = new Audio(response.data.file_url);
-                currentAudioGreeting.value = form.greeting;
-                currentAudio.value.play().catch((error) => {
+                currentAudioGreeting.value = greeting;
+                currentAudio.value.play().catch(() => {
                     isAudioPlaying.value = false;
-                    emits('error', { message: 'Audio playback failed', });
+                    emits('error', { message: 'Audio playback failed' });
                 });
 
-                // Add an event listener for when the audio ends
                 currentAudio.value.addEventListener("ended", () => {
                     isAudioPlaying.value = false;
                 });
             }
-
         }).catch((error) => {
             emits('error', error);
         });
 };
 
 
+
 const downloadGreeting = () => {
     isDownloading.value = true; // Start the spinner
 
-    axios.post(props.options.routes.greeting_route, { file_name: form.greeting.value })
+    const greeting = form$.value.data.greeting;
+
+    if (!greeting) {
+        isDownloading.value = false;
+        return; // No greeting selected, stop
+    }
+
+    axios.post(props.options.routes.greeting_route, { file_name: greeting })
         .then((response) => {
             if (response.data.success) {
                 // Create a URL with the download parameter set to true
@@ -869,15 +605,15 @@ const downloadGreeting = () => {
 
                 // Use the filename or a default name
                 const fileName = response.data.file_name;
-                link.download = fileName;
+                link.download = fileName || 'greeting.wav';
 
                 // Append the link to the body
                 document.body.appendChild(link);
 
-                // Trigger the download by programmatically clicking the link
+                // Trigger the download
                 link.click();
 
-                // Remove the link after the download starts
+                // Remove the link
                 document.body.removeChild(link);
             }
         })
@@ -888,6 +624,7 @@ const downloadGreeting = () => {
             isDownloading.value = false; // Stop the spinner after download completes
         });
 };
+
 
 
 const pauseGreeting = () => {
