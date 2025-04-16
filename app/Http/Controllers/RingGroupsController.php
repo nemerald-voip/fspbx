@@ -192,7 +192,7 @@ class RingGroupsController extends Controller
                         return [
                             'value' => $extension->extension_uuid,
                             'label' => $extension->name_formatted,
-                            'extension' => $extension->extension,
+                            'destination' => $extension->extension,
                             'type' => 'extension',
                         ];
                     })->toArray(),
@@ -203,7 +203,7 @@ class RingGroupsController extends Controller
                         return [
                             'value' => $group->ring_group_uuid,
                             'label' => $group->name_formatted,
-                            'extension' => $group->ring_group_extension,
+                            'destination' => $group->ring_group_extension,
                             'type' => 'ring_group',
                         ];
                     })->toArray(),

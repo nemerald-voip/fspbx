@@ -45,7 +45,7 @@
 
                             <SelectElement name="greeting" :search="true" :native="false" label="Greeting"
                                 :items="localOptions.greetings" input-type="search" autocomplete="off"
-                                placeholder="Select Greeting" :floating="false"
+                                placeholder="Select Greeting" :floating="false" :object="true"
                                 info="Enable this option so that callers hear a recorded greeting before they are connected to a group member."
                                 :strict="false" :columns="{
                                     sm: {
@@ -54,8 +54,15 @@
                                     lg: {
                                         container: 6,
                                     },
-                                }" />
-
+                                }" >
+                                <template #after>
+                                    <span v-if="greetingTranscription" class="text-xs italic">
+                                        "{{greetingTranscription}}"
+                                    </span>
+                                    
+                                    
+                                </template>
+                                </SelectElement>
 
                             <ButtonElement v-if="!isAudioPlaying" @click="playGreeting" name="play_button" label="&nbsp;"
                                 :secondary="true" :columns="{
@@ -85,19 +92,20 @@
 
                             </ButtonElement>
 
-                            <ButtonElement v-if="!isDownloading" @click="downloadGreeting" name="download_button" label="&nbsp;" :secondary="true" :columns="{
-                                sm: {
-                                    container: 1,
-                                },
-                                lg: {
-                                    container: 1,
-                                },
-                                default: {
-                                    container: 2,
-                                },
-                            }" :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
+                            <ButtonElement v-if="!isDownloading" @click="downloadGreeting" name="download_button"
+                                label="&nbsp;" :secondary="true" :columns="{
+                                    sm: {
+                                        container: 1,
+                                    },
+                                    lg: {
+                                        container: 1,
+                                    },
+                                    default: {
+                                        container: 2,
+                                    },
+                                }" :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
                                 :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
-                                <CloudArrowDownIcon 
+                                <CloudArrowDownIcon
                                     class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                             </ButtonElement>
@@ -149,25 +157,31 @@
                                     default: {
                                         container: 2,
                                     },
-                                }"
-                                :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
+                                }" :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
                                 :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                 <TrashIcon
                                     class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
 
                             </ButtonElement>
 
-                            <ButtonElement @click="handleNewGreetingButtonClick" name="add_button" label="&nbsp;" :secondary="true" :columns="{
-                                container: 1,
-                            }"
-                            :conditions="[['greeting', '==', null]]"
+                            <ButtonElement @click="handleNewGreetingButtonClick" name="add_button" label="&nbsp;"
+                                :secondary="true" :columns="{
+                                    container: 1,
+                                }" :conditions="[['greeting', '==', null]]"
                                 :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
-                                <PlusIcon 
+                                <PlusIcon
                                     class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                             </ButtonElement>
 
-
+                            <!-- <StaticElement name="p" :content="(el$) => {
+                                            return el$.parent.value.greeting;
+                                        }" :conditions="[
+                                [
+                                    'greeting',
+                                    'not_empty',
+                                ],
+                            ]" /> -->
 
 
                             <SelectElement name="call_distribution" :search="true" :native="false" label="Call Distribution"
@@ -187,7 +201,90 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
 
 
 
+                            <GroupElement name="container_3" />
                             <StaticElement name="divider" tag="hr" />
+                            <GroupElement name="container_4" />
+
+                            <StaticElement name="h3_1" tag="h4" content="Members"
+                                description="Add and remove users of this ring group" />
+
+                            <TagsElement name="selectedMembers" :close-on-select="false" :items="availableMembers"
+                                :create="true" :search="true" :groups="true" :native="false" label="Add Member(s)"
+                                input-type="search" autocomplete="off" placeholder="Search by name or extension"
+                                :floating="false" :hide-selected="false" :object="true" :group-hide-empty="true"
+                                :append-new-option="false"
+                                description="Choose from the list of available options or enter an external number manually." />
+
+                            <ButtonElement @click="addSelectedMembers" name="secondaryButton_1"
+                                button-label="Add Selected Members" :secondary="true" align="center" :full="false" />
+
+                            <GroupElement name="container_1" />
+                            <GroupElement name="container_2" />
+
+                            <ListElement name="members" :sort="true" :controls="{ add: false, }"
+                                :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                <template #default="{ index }">
+                                    <ObjectElement :name="index">
+                                        <HiddenElement name="uuid" :meta="true" />
+                                        <HiddenElement name="destination" :meta="true" />
+                                        <StaticElement name="p_1" tag="p" :content="(el$) => {
+                                            // Retrieve the extension value (stored in a hidden field or member object)
+                                            const num = el$.parent.value.destination;
+                                            return getMemberLabel(num);
+                                        }" :columns="{ default: { container: 8, }, sm: { container: 4, }, }"
+                                            label="Member" :attrs="{ class: 'text-base font-semibold' }" />
+
+                                        <SelectElement name="delay" :items="delayOptions" :search="true" :native="false"
+                                            label="Delay" input-type="search" allow-absent autocomplete="off" :columns="{
+                                                default: {
+                                                    container: 6,
+                                                },
+                                                sm: {
+                                                    container: 4,
+                                                },
+                                            }" size="sm"
+                                            info="How many seconds to wait before starting to ring this member."
+                                            placeholder="Select option" :floating="false" />
+                                        <SelectElement name="timeout" :items="timeoutOptions" :search="true" :native="false"
+                                            label="Ring for" input-type="search" allow-absent autocomplete="off" :columns="{
+                                                default: {
+                                                    container: 6,
+                                                },
+                                                sm: {
+                                                    container: 4,
+                                                },
+                                            }" size="sm"
+                                            info="How many seconds to keep ringing this member before giving up."
+                                            placeholder="Select option" :floating="false" />
+                                        <GroupElement name="container" :columns="{
+                                            default: {
+                                                container: 12,
+                                            },
+                                            sm: {
+                                                container: 4,
+                                            },
+                                        }" />
+                                        <ToggleElement name="prompt" :columns="{
+                                            default: {
+                                                container: 6,
+                                            },
+                                            sm: {
+                                                container: 4,
+                                            },
+                                        }" align="left" label="Confirm Answer" size="sm"
+                                            info="Enable answer confirmation to prevent voicemails and automated systems from answering a call." />
+                                        <ToggleElement name="enabled" :columns="{
+                                            default: {
+                                                container: 5,
+                                            },
+                                            sm: {
+                                                container: 4,
+                                            },
+                                        }" size="sm" label="Active" />
+                                        <!-- <StaticElement name="divider_1" tag="hr" /> -->
+                                    </ObjectElement>
+                                </template>
+                            </ListElement>
                         </Vueform>
                     </div>
                 </div>
@@ -264,7 +361,7 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
     <DeleteConfirmationModal :show="showDeleteConfirmation" @close="showDeleteConfirmation = false"
         @confirm="confirmDeleteAction" />
 
-    <UpdateGreetingModal :greeting="form.greeting" :show="showEditModal" :loading="isGreetingUpdating"
+    <UpdateGreetingModal :greeting="greetingLabel" :show="showEditModal" :loading="isGreetingUpdating"
         @confirm="handleGreetingUpdate" @close="showEditModal = false" />
 
     <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showNewGreetingModal" :header="''" :loading="loadingModal"
@@ -285,11 +382,9 @@ import { usePage } from '@inertiajs/vue3';
 import InputField from "../general/InputField.vue";
 import InputFieldWithIcon from "@generalComponents/InputFieldWithIcon.vue";
 import Popover from "@generalComponents/Popover.vue";
-import Textarea from "@generalComponents/Textarea.vue";
 import Toggle from "@generalComponents/Toggle.vue";
 import DeleteConfirmationModal from "../modal/DeleteConfirmationModal.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
-import LabelInputRequired from "../general/LabelInputRequired.vue";
 import Spinner from "@generalComponents/Spinner.vue";
 import { InformationCircleIcon } from "@heroicons/vue/24/outline";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
@@ -299,11 +394,7 @@ import UpdateGreetingModal from "../modal/UpdateGreetingModal.vue";
 import NewGreetingForm from './NewGreetingForm.vue';
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
-import { MagnifyingGlassIcon, } from "@heroicons/vue/24/solid";
-import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import { registerLicense } from '@syncfusion/ej2-base';
-import VueMultiselect from 'vue-multiselect'
-import 'vue-multiselect/dist/vue-multiselect.css'
 
 const props = defineProps({
     options: Object,
@@ -322,9 +413,31 @@ const loadingModal = ref(false);
 const isGreetingUpdating = ref(false);
 const showNewGreetingModal = ref(false);
 const showDeleteConfirmation = ref(false);
-const greetingSelectKey = ref(0);
-const members = ref([]);
-const selectedNewMembers = ref([]);
+const greetingLabel = ref(null);
+
+const greetingTranscription = computed(() => {
+  // Check that the ref is assigned and has a `value` property
+  return form$?.value?.data?.greeting?.description || null
+})
+
+const allMemberOptions = props.options.member_options.flatMap(group => group.groupOptions);
+
+
+// Prepare an array of member objects based on ring_group.destinations:
+const memberItems = props.options.ring_group.destinations.map(dest => {
+    const match = allMemberOptions.find(opt => opt.destination === dest.destination_number);
+
+    return {
+        uuid: dest.ring_group_destination_uuid,
+        destination: dest.destination_number,                 // The member's extension/number
+        delay: dest.destination_delay,                   // Delay (must match a Select option value)
+        timeout: dest.destination_timeout,               // Timeout (must match a Select option value)
+        prompt: !!dest.destination_prompt,               // Convert to boolean for Toggle
+        enabled: !!dest.destination_enabled,              // Convert to boolean for Toggle
+        type: match?.type || null,
+
+    }
+})
 
 onMounted(() => {
     form$.value.update({ // updates form data
@@ -335,11 +448,15 @@ onMounted(() => {
             : null,
         call_distribution: props.options.ring_group.call_distributions
             ? props.options.call_distributions.find(rp => rp.value === props.options.ring_group.ring_group_strategy)?.value || 'enterprise'
-            : 'enterprise'
+            : 'enterprise',
+
+        members: memberItems
     })
 
     form$.value.clean()
+    // console.log(form$.value.data);
 })
+
 
 const delayOptions = Array.from({ length: 21 }, (_, i) => {
     const seconds = i * 5; // 0, 5, 10, ..., 100
@@ -359,59 +476,54 @@ const timeoutOptions = Array.from({ length: 21 }, (_, i) => {
     };
 });
 
-const allMemberOptions = props.options.member_options.flatMap(group => group.groupOptions);
-
-members.value = props.options.ring_group.destinations.map(destination => {
-    const memberOption = allMemberOptions.find(opt => opt.extension === destination.destination_number);
-
-    return {
-        uuid: destination.ring_group_destination_uuid,
-        extension_uuid: memberOption ? memberOption.value : null,
-        extension_name: memberOption ? memberOption.name : destination.destination_number,
-        destination_number: destination.destination_number,
-        type: memberOption ? memberOption.type : null,
-        delay: String(destination.destination_delay ?? "0"),
-        timeout: String(destination.destination_timeout ?? "30"),
-        prompt: destination.destination_prompt == "1",
-        enabled: destination.destination_enabled,
-    };
-});
-
 
 const availableMembers = computed(() => {
-    const selectedNumbers = members.value.map(m => m.destination_number);
+    const membersField = form$.value?.el$('members');
+    const currentMembers = membersField?.value || [];
 
-    return props.options.member_options
-        .map(group => ({
-            groupLabel: group.groupLabel,
-            groupOptions: group.groupOptions.filter(opt => !selectedNumbers.includes(opt.extension)), // ⬅️ filter based on extension
-        }))
-        .filter(group => group.groupOptions.length > 0); // ⬅️ Only groups with available options
+    const selectedDestinations = currentMembers.map(m => m.destination);
+
+    return props.options.member_options.map(group => ({
+        label: group.groupLabel,
+        items: group.groupOptions.filter(opt =>
+            !selectedDestinations.includes(opt.destination)
+        ),
+    }));
 });
 
-console.log(availableMembers.value);
 
 const addSelectedMembers = () => {
-    selectedNewMembers.value.forEach((member) => {
-        members.value.push({
-            uuid: null,
-            extension_uuid: member.value,
-            extension_name: member.name,
-            destination_number: member.extension,
-            type: member.type,
+    // console.log(form$.value.el$('selectedMembers').value);
+    const selectedItems = form$.value.el$('selectedMembers').value.map(item => {
+        return {
+            uuid: item.destination ? item.value : null,              // if a destination exists, use the item.value as uuid; otherwise, uuid is null
+            destination: item.destination ? item.destination : item.label,  // if item.destination exists, use it; otherwise, use the label
+            type: item.type ? item.type : "other",                     // if type exists, use it; else default to "other"
             delay: "0",
             timeout: "30",
-            prompt: null,
-            enabled: true,
-        });
+            prompt: false,
+            enabled: true
+        }
     });
 
-    selectedNewMembers.value = []; // Clear selected items after adding
+    const currentMembers = form$.value.el$('members').value
+
+    form$.value.update({
+        members: [...currentMembers, ...selectedItems]
+    })
+
+    form$.value.el$('selectedMembers').update([]); // clear selection
 };
 
-const removeMember = (member) => {
-    members.value = members.value.filter(m => m !== member);
+
+function getMemberLabel(destination) {
+    // console.log(destination);
+    // Find the member option based on the extension number.
+    const member = allMemberOptions.find(opt => opt.destination === destination);
+    // If found, return the full label; otherwise, return the extension.
+    return member ? member.label : destination;
 };
+
 
 const setActiveTab = (tabSlug) => {
     activeTab.value = tabSlug;
@@ -452,32 +564,32 @@ watch(() => props.options, (newOptions) => {
     Object.assign(localOptions, newOptions);
 });
 
-const form = reactive({
-    name: props.options.ring_group.ring_group_name ?? null,
-    extension: props.options.ring_group.ring_group_extension ?? null,
-    greeting: props.options.ring_group.ring_group_greeting
-        ? props.options.greetings.find(g => g.value === props.options.ring_group.ring_group_greeting)
-        : null,
+// const form = reactive({
+//     name: props.options.ring_group.ring_group_name ?? null,
+//     extension: props.options.ring_group.ring_group_extension ?? null,
+//     greeting: props.options.ring_group.ring_group_greeting
+//         ? props.options.greetings.find(g => g.value === props.options.ring_group.ring_group_greeting)
+//         : null,
 
-    ring_pattern: props.options.ring_group.ring_pattern
-        ? props.options.ring_patterns.find(rp => rp.value === props.options.ring_group.ring_pattern)
-        : { value: 'enterprise', name: 'Advanced' },
-    // voicemail_id: props.options.voicemail.voicemail_id,
-    // voicemail_password: props.options.voicemail.voicemail_password,
-    // voicemail_mail_to: props.options.voicemail.voicemail_mail_to,
-    // voicemail_description: props.options.voicemail.voicemail_description,
-    // voicemail_transcription_enabled: props.options.voicemail.voicemail_transcription_enabled === "true",
-    // voicemail_email_attachment: props.options.voicemail.voicemail_file === "attach",
-    // voicemail_delete: props.options.voicemail.voicemail_local_after_email === "false",
-    // voicemail_tutorial: props.options.voicemail.voicemail_tutorial === "true",
-    // voicemail_play_recording_instructions: props.options.voicemail.voicemail_recording_instructions === "true",
-    // voicemail_copies: props.options.voicemail_copies,
-    // voicemail_alternate_greet_id: props.options.voicemail.voicemail_alternate_greet_id,
-    // voicemail_enabled: props.options.voicemail.voicemail_enabled === "true",
-    // update_route: props.options.routes.update_route,
-    // greeting_id: props.options.voicemail.greeting_id,
-    _token: page.props.csrf_token,
-})
+//     ring_pattern: props.options.ring_group.ring_pattern
+//         ? props.options.ring_patterns.find(rp => rp.value === props.options.ring_group.ring_pattern)
+//         : { value: 'enterprise', name: 'Advanced' },
+//     // voicemail_id: props.options.voicemail.voicemail_id,
+//     // voicemail_password: props.options.voicemail.voicemail_password,
+//     // voicemail_mail_to: props.options.voicemail.voicemail_mail_to,
+//     // voicemail_description: props.options.voicemail.voicemail_description,
+//     // voicemail_transcription_enabled: props.options.voicemail.voicemail_transcription_enabled === "true",
+//     // voicemail_email_attachment: props.options.voicemail.voicemail_file === "attach",
+//     // voicemail_delete: props.options.voicemail.voicemail_local_after_email === "false",
+//     // voicemail_tutorial: props.options.voicemail.voicemail_tutorial === "true",
+//     // voicemail_play_recording_instructions: props.options.voicemail.voicemail_recording_instructions === "true",
+//     // voicemail_copies: props.options.voicemail_copies,
+//     // voicemail_alternate_greet_id: props.options.voicemail.voicemail_alternate_greet_id,
+//     // voicemail_enabled: props.options.voicemail.voicemail_enabled === "true",
+//     // update_route: props.options.routes.update_route,
+//     // greeting_id: props.options.voicemail.greeting_id,
+//     _token: page.props.csrf_token,
+// })
 
 const greetingDescription = computed(() => {
     if (!form.greeting) return null; // Handle case where no greeting is selected
@@ -535,7 +647,7 @@ const isAudioPlaying = ref(false);
 const currentAudioGreeting = ref(null);
 
 const playGreeting = () => {
-    const greeting = form$.value.data.greeting;
+    const greeting = form$.value.data.greeting.value;
 
     if (!greeting) return; // No greeting selected
 
@@ -586,7 +698,7 @@ const playGreeting = () => {
 const downloadGreeting = () => {
     isDownloading.value = true; // Start the spinner
 
-    const greeting = form$.value.data.greeting;
+    const greeting = form$.value.data.greeting.value;
 
     if (!greeting) {
         isDownloading.value = false;
@@ -635,7 +747,8 @@ const pauseGreeting = () => {
 };
 
 const editGreeting = () => {
-    if (form.greeting) {
+    if (form$.value.data.greeting) {
+        greetingLabel.value = form$.value.data.greeting;
         showEditModal.value = true;
     }
 };
@@ -648,16 +761,16 @@ const deleteGreeting = () => {
 
 const confirmDeleteAction = () => {
     axios
-        .post(props.options.routes.delete_greeting_route, { file_name: form.greeting.value })
+        .post(props.options.routes.delete_greeting_route, { file_name: form$.value.data.greeting.value })
         .then((response) => {
             if (response.data.success) {
                 // Remove the deleted greeting from the localOptions.greetings array
                 localOptions.greetings = localOptions.greetings.filter(
-                    (greeting) => greeting.value !== String(form.greeting.value)
+                    (greeting) => greeting.value !== String(form$.value.el$('greeting').value)
                 );
 
                 // Reset the selected greeting ID
-                form.greeting = null; // Or set it to another default if needed
+                form$.value.el$('greeting').update(localOptions.greetings);
 
                 // Notify the parent component or show a local success message
                 emits('success', 'success', response.data.messages);
@@ -679,23 +792,16 @@ const handleGreetingUpdate = (updatedGreeting) => {
         // Update the local greetings array
         localOptions.greetings[index] = updatedGreeting;
 
-        // If the current selected greeting is the one we updated
-        if (form.greeting?.value === updatedGreeting.value) {
-            // Reassign form.greeting to the new object from the array
-            nextTick(() => {
-                form.greeting = localOptions.greetings[index];
-            });
-        }
+        form$.value.el$('greeting').update(localOptions.greetings);
 
-        // Force Multiselect to rerender just in case
-        greetingSelectKey.value++;
+        form$.value.el$('greeting').clear()
     }
 
     axios
         .post(props.options.routes.update_greeting_route,
             {
                 file_name: updatedGreeting.value,
-                new_name: updatedGreeting.name
+                new_name: updatedGreeting.label
             })
         .then((response) => {
             if (response.data.success) {
