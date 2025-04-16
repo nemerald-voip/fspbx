@@ -94,6 +94,13 @@ class HandleInertiaRequests extends Middleware
 
         $permissions['registrations_view_global'] = userCheckPermission('registration_all');
 
+        $permissions['active_calls_view_global'] = userCheckPermission('active_call_all');
+
+        $permissions['phone_numbers_view_global'] = userCheckPermission('destination_all');
+        $permissions['phone_numbers_create'] = userCheckPermission('destination_add');
+        $permissions['phone_numbers_update'] = userCheckPermission('destination_edit');
+        $permissions['phone_numbers_destroy'] = userCheckPermission('destination_delete');
+
         $permissions['virtual_receptionist_create'] = userCheckPermission('ivr_menu_add');
         $permissions['virtual_receptionist_update'] = userCheckPermission('ivr_menu_edit');
         $permissions['virtual_receptionist_destroy'] = userCheckPermission('ivr_menu_delete');
