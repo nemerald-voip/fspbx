@@ -252,6 +252,57 @@ class CallRoutingOptionsService
         }
     }
 
+        /**
+     * Reverse engineer IVR options based on the provided parameter.
+     *
+     * @param string $ivrAction A string containing the action details (e.g., "transfer 201 XML api.us.nemerald.net").
+     * @return array Reverse-engineered IVR option details.
+     */
+    public function reverseEngineerRingGroupExitAction($ivrAction)
+    {
+        try {
+            $ivrAction = trim($ivrAction);
+            // Split the string by spaces to extract details
+            $parts = explode(' ', $ivrAction);
+
+            if (count($parts) < 3 && $ivrAction != "hangup") {
+                throw new \Exception("Invalid Ring Group action format");
+            }
+
+            // Extract relevant data
+            $actionType = $parts[0]; // e.g., "transfer"
+            if ($actionType != 'hangup') {
+                $destination = $parts[1]; // e.g., "201"
+                $context = $parts[2]; // e.g., "XML"
+                $domain = $parts[3] ?? null; // e.g., "api.us.domain.net"
+            }
+
+            // Reverse engineer based on the action type
+            switch ($actionType) {
+                case 'transfer':
+                    return $this->reverseEngineerTransferAction("$destination $context $domain");
+                    break;
+                case 'lua':
+                    return $this->extractRecordingUuidFromData("$destination $context $domain");
+                    break;
+
+                case 'hangup':
+                    return array(
+                        'type' => 'hangup',
+                    );
+                    break;
+
+                    // Add more cases for other IVR actions as needed
+
+                default:
+                    throw new \Exception("Unsupported Ring Group action type: $actionType");
+            }
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return null;
+        }
+    }
+
     /**
      * Reverse engineer a 'transfer' action based on destination_data.
      */

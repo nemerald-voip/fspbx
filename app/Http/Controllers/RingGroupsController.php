@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use App\Models\RingGroupsDestinations;
 use Illuminate\Support\Facades\Session;
+use App\Services\CallRoutingOptionsService;
 use Propaganistas\LaravelPhone\PhoneNumber;
 use App\Http\Requests\StoreRingGroupRequest;
 use App\Http\Requests\UpdateRingGroupRequest;
@@ -224,6 +225,15 @@ class RingGroupsController extends Controller
                     throw new \Exception("Failed to fetch item details. Item not found");
                 }
 
+                $item->append([
+                    'timeout_target_uuid',
+                    'timeout_action',
+                    'timeout_action_display',
+                    'timeout_target_name',
+                    'timeout_target_extension',
+                    'destroy_route',
+                ]);
+
                 // Define the update route
                 $updateRoute = route('ring-groups.update', ['ring_group' => $item_uuid]);
             } else {
@@ -233,9 +243,12 @@ class RingGroupsController extends Controller
 
             $permissions = $this->getUserPermissions();
 
+            $routingOptionsService = new CallRoutingOptionsService;
+            $routingTypes = $routingOptionsService->routingTypes;
+
             $routes = [
                 'update_route' => $updateRoute ?? null,
-                // 'get_routing_options' => route('routing.options'),
+                'get_routing_options' => route('routing.options'),
 
             ];
 
@@ -305,6 +318,7 @@ class RingGroupsController extends Controller
                 'permissions' => $permissions,
                 'call_distributions' => $call_distributions,
                 'routes' => $routes,
+                'routing_types' => $routingTypes,
                 'voices' => $openAiVoices,
                 'speeds' => $openAiSpeeds,
                 'phone_call_instructions' => $phoneCallInstructions,
@@ -669,6 +683,9 @@ class RingGroupsController extends Controller
         if (!userCheckPermission('ring_group_add') && !userCheckPermission('ring_group_edit')) {
             return redirect('/');
         }
+
+        logger('update');
+        return;
 
         $attributes = $request->validated();
 

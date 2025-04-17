@@ -1,6 +1,6 @@
 <template>
-    <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
-        <aside class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
+    <div>
+        <!-- <aside class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
             <nav class="space-y-1">
                 <a v-for="item in localOptions.navigation" :key="item.name" href="#"
                     :class="[activeTab === item.slug ? 'bg-gray-200 text-indigo-700 hover:bg-gray-100 hover:text-indigo-700' : 'text-gray-900 hover:bg-gray-200 hover:text-gray-900', 'group flex items-center rounded-md px-3 py-2 text-sm font-medium']"
@@ -15,166 +15,185 @@
 
                 </a>
             </nav>
-        </aside>
+        </aside> -->
 
-        <form @submit.prevent="submitForm" class="space-y-6 sm:px-6 lg:col-span-9 lg:px-0">
+        <!-- <form class="space-y-6 sm:px-6 lg:col-span-9 lg:px-0">
             <div v-if="activeTab === 'settings'">
                 <div class="shadow sm:rounded-md">
-                    <div class="space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
+                    <div class="space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6"> -->
 
-                        <Vueform ref="form$">
-                            <StaticElement name="h4" tag="h4" content="Settings"
-                                description="Provide basic information about the ring group" />
-                            <TextElement name="name" label="Name" :columns="{
-                                sm: {
-                                    container: 6,
-                                },
-                                lg: {
-                                    container: 6,
-                                },
-                            }" placeholder="Enter Ring Group Name" :floating="false" />
-                            <TextElement name="extension" :columns="{
-                                sm: {
-                                    container: 6,
-                                },
-                                lg: {
-                                    container: 6,
-                                },
-                            }" label="Extension" placeholder="Enter Extension" :floating="false" />
+        <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError" @response="handleResponse"
+            :display-errors="false">
+            <template #empty>
 
+                <div class="grid grid-cols-12 gap-x-5">
+                    <div class="col-span-3">
+                        <FormTabs view="vertical">
+                            <FormTab name="page0" label="Settings" :elements="[
+                                'settings',
+                            ]" />
+                            <FormTab name="page1" label="Tab 2" :elements="[]" />
+                        </FormTabs>
+                    </div>
 
-                            <SelectElement name="greeting" :search="true" :native="false" label="Greeting"
-                                :items="localOptions.greetings" input-type="search" autocomplete="off"
-                                placeholder="Select Greeting" :floating="false" :object="true"
-                                info="Enable this option so that callers hear a recorded greeting before they are connected to a group member."
-                                :strict="false" :columns="{
+                    <div class="col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
+                        <FormElements>
+
+                            <GroupElement name="settings">
+                                <HiddenElement name="ring_group_uuid" :meta="true" />
+                                <StaticElement name="h4" tag="h4" content="Settings"
+                                    description="Provide basic information about the ring group" />
+                                <TextElement name="name" label="Name" :columns="{
                                     sm: {
                                         container: 6,
                                     },
                                     lg: {
                                         container: 6,
                                     },
-                                }" >
-                                <template #after>
-                                    <span v-if="greetingTranscription" class="text-xs italic">
-                                        "{{greetingTranscription}}"
-                                    </span>
-                                    
-                                    
-                                </template>
+                                }" placeholder="Enter Ring Group Name" :floating="false" />
+                                <TextElement name="extension" :columns="{
+                                    sm: {
+                                        container: 6,
+                                    },
+                                    lg: {
+                                        container: 6,
+                                    },
+                                }" label="Extension" placeholder="Enter Extension" :floating="false" />
+
+
+                                <SelectElement name="greeting" :search="true" :native="false" label="Greeting"
+                                    :items="localOptions.greetings" input-type="search" autocomplete="off"
+                                    placeholder="Select Greeting" :floating="false" :object="true"
+                                    :format-data="formatGreeting"
+                                    info="Enable this option so that callers hear a recorded greeting before they are connected to a group member."
+                                    :strict="false" :columns="{
+                                        sm: {
+                                            container: 6,
+                                        },
+                                        lg: {
+                                            container: 6,
+                                        },
+                                    }">
+                                    <template #after>
+                                        <span v-if="greetingTranscription" class="text-xs italic">
+                                            "{{ greetingTranscription }}"
+                                        </span>
+
+
+                                    </template>
                                 </SelectElement>
 
-                            <ButtonElement v-if="!isAudioPlaying" @click="playGreeting" name="play_button" label="&nbsp;"
-                                :secondary="true" :columns="{
-                                    sm: {
+                                <ButtonElement v-if="!isAudioPlaying" @click="playGreeting" name="play_button"
+                                    label="&nbsp;" :secondary="true" :columns="{
+                                        sm: {
+                                            container: 1,
+                                        },
+                                        lg: {
+                                            container: 1,
+                                        },
+                                        default: {
+                                            container: 2,
+                                        },
+                                    }" :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
+                                    :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                    <PlayCircleIcon
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                </ButtonElement>
+
+
+                                <ButtonElement v-if="isAudioPlaying" @click="pauseGreeting" name="pause_button"
+                                    label="&nbsp;" :secondary="true" :columns="{
                                         container: 1,
-                                    },
-                                    lg: {
+                                    }"
+                                    :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                    <PauseCircleIcon
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+
+                                </ButtonElement>
+
+                                <ButtonElement v-if="!isDownloading" @click="downloadGreeting" name="download_button"
+                                    label="&nbsp;" :secondary="true" :columns="{
+                                        sm: {
+                                            container: 1,
+                                        },
+                                        lg: {
+                                            container: 1,
+                                        },
+                                        default: {
+                                            container: 2,
+                                        },
+                                    }" :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
+                                    :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                    <CloudArrowDownIcon
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                                </ButtonElement>
+
+                                <ButtonElement v-if="isDownloading" name="download_spinner_button" label="&nbsp;"
+                                    :secondary="true" :columns="{
+                                        sm: {
+                                            container: 1,
+                                        },
+                                        lg: {
+                                            container: 1,
+                                        },
+                                        default: {
+                                            container: 2,
+                                        },
+                                    }"
+                                    :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                    <Spinner :show="true"
+                                        class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                                </ButtonElement>
+
+                                <ButtonElement @click="editGreeting" name="edit_button" label="&nbsp;" :secondary="true"
+                                    :columns="{
+                                        sm: {
+                                            container: 1,
+                                        },
+                                        lg: {
+                                            container: 1,
+                                        },
+                                        default: {
+                                            container: 2,
+                                        },
+                                    }" :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
+                                    :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                    <PencilSquareIcon
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                                </ButtonElement>
+
+                                <ButtonElement @click="deleteGreeting" name="delete_button" label="&nbsp;" :secondary="true"
+                                    :columns="{
+                                        sm: {
+                                            container: 1,
+                                        },
+                                        lg: {
+                                            container: 1,
+                                        },
+                                        default: {
+                                            container: 2,
+                                        },
+                                    }" :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
+                                    :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                    <TrashIcon
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+
+                                </ButtonElement>
+
+                                <ButtonElement @click="handleNewGreetingButtonClick" name="add_button" label="&nbsp;"
+                                    :secondary="true" :columns="{
                                         container: 1,
-                                    },
-                                    default: {
-                                        container: 2,
-                                    },
-                                }" :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
-                                :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
-                                <PlayCircleIcon
-                                    class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
-                            </ButtonElement>
+                                    }" :conditions="[['greeting', '==', null]]"
+                                    :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                    <PlusIcon
+                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
+                                </ButtonElement>
 
-                            <ButtonElement v-if="isAudioPlaying" @click="pauseGreeting" name="pause_button" label="&nbsp;"
-                                :secondary="true" :columns="{
-                                    container: 1,
-                                }"
-                                :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
-                                <PauseCircleIcon
-                                    class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
-
-                            </ButtonElement>
-
-                            <ButtonElement v-if="!isDownloading" @click="downloadGreeting" name="download_button"
-                                label="&nbsp;" :secondary="true" :columns="{
-                                    sm: {
-                                        container: 1,
-                                    },
-                                    lg: {
-                                        container: 1,
-                                    },
-                                    default: {
-                                        container: 2,
-                                    },
-                                }" :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
-                                :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
-                                <CloudArrowDownIcon
-                                    class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
-
-                            </ButtonElement>
-
-                            <ButtonElement v-if="isDownloading" name="download_spinner_button" label="&nbsp;"
-                                :secondary="true" :columns="{
-                                    sm: {
-                                        container: 1,
-                                    },
-                                    lg: {
-                                        container: 1,
-                                    },
-                                    default: {
-                                        container: 2,
-                                    },
-                                }"
-                                :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
-                                <Spinner :show="true"
-                                    class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
-
-                            </ButtonElement>
-
-                            <ButtonElement @click="editGreeting" name="edit_button" label="&nbsp;" :secondary="true"
-                                :columns="{
-                                    sm: {
-                                        container: 1,
-                                    },
-                                    lg: {
-                                        container: 1,
-                                    },
-                                    default: {
-                                        container: 2,
-                                    },
-                                }" :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
-                                :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
-                                <PencilSquareIcon
-                                    class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
-
-                            </ButtonElement>
-
-                            <ButtonElement @click="deleteGreeting" name="delete_button" label="&nbsp;" :secondary="true"
-                                :columns="{
-                                    sm: {
-                                        container: 1,
-                                    },
-                                    lg: {
-                                        container: 1,
-                                    },
-                                    default: {
-                                        container: 2,
-                                    },
-                                }" :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
-                                :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
-                                <TrashIcon
-                                    class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
-
-                            </ButtonElement>
-
-                            <ButtonElement @click="handleNewGreetingButtonClick" name="add_button" label="&nbsp;"
-                                :secondary="true" :columns="{
-                                    container: 1,
-                                }" :conditions="[['greeting', '==', null]]"
-                                :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
-                                <PlusIcon
-                                    class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
-
-                            </ButtonElement>
-
-                            <!-- <StaticElement name="p" :content="(el$) => {
+                                <!-- <StaticElement name="p" :content="(el$) => {
                                             return el$.parent.value.greeting;
                                         }" :conditions="[
                                 [
@@ -184,9 +203,9 @@
                             ]" /> -->
 
 
-                            <SelectElement name="call_distribution" :search="true" :native="false" label="Call Distribution"
-                                :items="localOptions.call_distributions" input-type="search" autocomplete="off"
-                                placeholder="Select Call Distribution" :floating="false" info="Advanced (default): This option rings all phones at once, but each phone has its own thread. This is especially useful when there are multiple registrations for the same extension.
+                                <SelectElement name="call_distribution" :search="true" :native="false"
+                                    label="Call Distribution" :items="localOptions.call_distributions" input-type="search"
+                                    autocomplete="off" placeholder="Select Call Distribution" :floating="false" info="Advanced (default): This option rings all phones at once, but each phone has its own thread. This is especially useful when there are multiple registrations for the same extension.
 Sequential Ring: This option rings one phone at a time in a specific order.
 Simultaneous Ring: This option rings all phones at once.
 Random Ring: This option rings one phone at a time in a random order.
@@ -201,99 +220,177 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
 
 
 
-                            <GroupElement name="container_3" />
-                            <StaticElement name="divider" tag="hr" />
-                            <GroupElement name="container_4" />
+                                <GroupElement name="container_3" />
+                                <StaticElement name="divider" tag="hr" />
+                                <GroupElement name="container_4" />
 
-                            <StaticElement name="h3_1" tag="h4" content="Members"
-                                description="Add and remove users of this ring group" />
+                                <StaticElement name="h3_1" tag="h4" content="Members"
+                                    description="Add and remove users of this ring group" />
 
-                            <TagsElement name="selectedMembers" :close-on-select="false" :items="availableMembers"
-                                :create="true" :search="true" :groups="true" :native="false" label="Add Member(s)"
-                                input-type="search" autocomplete="off" placeholder="Search by name or extension"
-                                :floating="false" :hide-selected="false" :object="true" :group-hide-empty="true"
-                                :append-new-option="false"
-                                description="Choose from the list of available options or enter an external number manually." />
+                                <TagsElement name="selectedMembers" :close-on-select="false" :items="availableMembers"
+                                    :create="true" :search="true" :groups="true" :native="false" label="Add Member(s)"
+                                    input-type="search" autocomplete="off" placeholder="Search by name or extension"
+                                    :floating="false" :hide-selected="false" :object="true" :group-hide-empty="true"
+                                    :append-new-option="false" :submit="false"
+                                    description="Choose from the list of available options or enter an external number manually." />
 
-                            <ButtonElement @click="addSelectedMembers" name="secondaryButton_1"
-                                button-label="Add Selected Members" :secondary="true" align="center" :full="false" />
+                                <ButtonElement @click="addSelectedMembers" name="secondaryButton_1"
+                                    button-label="Add Selected Members" :secondary="true" align="center" :full="false" />
 
-                            <GroupElement name="container_1" />
-                            <GroupElement name="container_2" />
+                                <GroupElement name="container_1" />
+                                <GroupElement name="container_2" />
 
-                            <ListElement name="members" :sort="true" :controls="{ add: false, }"
-                                :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
-                                <template #default="{ index }">
-                                    <ObjectElement :name="index">
-                                        <HiddenElement name="uuid" :meta="true" />
-                                        <HiddenElement name="destination" :meta="true" />
-                                        <StaticElement name="p_1" tag="p" :content="(el$) => {
-                                            // Retrieve the extension value (stored in a hidden field or member object)
-                                            const num = el$.parent.value.destination;
-                                            return getMemberLabel(num);
-                                        }" :columns="{ default: { container: 8, }, sm: { container: 4, }, }"
-                                            label="Member" :attrs="{ class: 'text-base font-semibold' }" />
+                                <ListElement name="members" :sort="true" :controls="{ add: false, }"
+                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                    <template #default="{ index }">
+                                        <ObjectElement :name="index">
+                                            <HiddenElement name="uuid" :meta="true" />
+                                            <HiddenElement name="destination" :meta="true" />
+                                            <StaticElement name="p_1" tag="p" :content="(el$) => {
+                                                // Retrieve the extension value (stored in a hidden field or member object)
+                                                const num = el$.parent.value.destination;
+                                                return getMemberLabel(num);
+                                            }" :columns="{ default: { container: 8, }, sm: { container: 4, }, }"
+                                                label="Member" :attrs="{ class: 'text-base font-semibold' }" />
 
-                                        <SelectElement name="delay" :items="delayOptions" :search="true" :native="false"
-                                            label="Delay" input-type="search" allow-absent autocomplete="off" :columns="{
+                                            <SelectElement name="delay" :items="delayOptions" :search="true" :native="false"
+                                                label="Delay" input-type="search" allow-absent autocomplete="off" :columns="{
+                                                    default: {
+                                                        container: 6,
+                                                    },
+                                                    sm: {
+                                                        container: 4,
+                                                    },
+                                                }" size="sm"
+                                                info="How many seconds to wait before starting to ring this member."
+                                                placeholder="Select option" :floating="false" />
+                                            <SelectElement name="timeout" :items="timeoutOptions" :search="true"
+                                                :native="false" label="Ring for" input-type="search" allow-absent
+                                                autocomplete="off" :columns="{
+                                                    default: {
+                                                        container: 6,
+                                                    },
+                                                    sm: {
+                                                        container: 4,
+                                                    },
+                                                }" size="sm"
+                                                info="How many seconds to keep ringing this member before giving up."
+                                                placeholder="Select option" :floating="false" />
+                                            <GroupElement name="container" :columns="{
+                                                default: {
+                                                    container: 12,
+                                                },
+                                                sm: {
+                                                    container: 4,
+                                                },
+                                            }" />
+                                            <ToggleElement name="prompt" :columns="{
                                                 default: {
                                                     container: 6,
                                                 },
                                                 sm: {
                                                     container: 4,
                                                 },
-                                            }" size="sm"
-                                            info="How many seconds to wait before starting to ring this member."
-                                            placeholder="Select option" :floating="false" />
-                                        <SelectElement name="timeout" :items="timeoutOptions" :search="true" :native="false"
-                                            label="Ring for" input-type="search" allow-absent autocomplete="off" :columns="{
+                                            }" align="left" label="Confirm Answer" size="sm"
+                                                info="Enable answer confirmation to prevent voicemails and automated systems from answering a call." />
+                                            <ToggleElement name="enabled" :columns="{
                                                 default: {
-                                                    container: 6,
+                                                    container: 5,
                                                 },
                                                 sm: {
                                                     container: 4,
                                                 },
-                                            }" size="sm"
-                                            info="How many seconds to keep ringing this member before giving up."
-                                            placeholder="Select option" :floating="false" />
-                                        <GroupElement name="container" :columns="{
-                                            default: {
-                                                container: 12,
-                                            },
-                                            sm: {
-                                                container: 4,
-                                            },
-                                        }" />
-                                        <ToggleElement name="prompt" :columns="{
-                                            default: {
-                                                container: 6,
-                                            },
-                                            sm: {
-                                                container: 4,
-                                            },
-                                        }" align="left" label="Confirm Answer" size="sm"
-                                            info="Enable answer confirmation to prevent voicemails and automated systems from answering a call." />
-                                        <ToggleElement name="enabled" :columns="{
-                                            default: {
-                                                container: 5,
-                                            },
-                                            sm: {
-                                                container: 4,
-                                            },
-                                        }" size="sm" label="Active" />
-                                        <!-- <StaticElement name="divider_1" tag="hr" /> -->
-                                    </ObjectElement>
-                                </template>
-                            </ListElement>
-                        </Vueform>
+                                            }" size="sm" label="Active" />
+                                            <!-- <StaticElement name="divider_1" tag="hr" /> -->
+                                        </ObjectElement>
+                                    </template>
+                                </ListElement>
+
+                                <GroupElement name="container_5" />
+                                <StaticElement name="divider" tag="hr" />
+                                <GroupElement name="container_6" />
+                                <StaticElement name="h3_2" tag="h4" content="When no one in ring group answers"
+                                    description="Forward calls to" />
+                                <SelectElement name="failback_action" :items="localOptions.routing_types" label-prop="name"
+                                    :search="true" :native="false" label="Choose Action" input-type="search"
+                                    autocomplete="off" placeholder="Choose Action" :floating="false" :strict="false"
+                                    :columns="{
+                                        sm: {
+                                            container: 6,
+                                        },
+                                    }" @change="(newValue, oldValue, el$) => {
+    let failback_target = el$.form$.el$('failback_target')
+    console.log(form$.value);
+
+    // only clear when this isn’t the very first time (i.e. oldValue was set)
+    if (oldValue !== null && oldValue !== undefined) {
+        failback_target.clear();
+    }
+
+    // failback_target.clear()
+    failback_target.updateItems()
+}" />
+                                <SelectElement name="failback_target" :items="async (query, input) => {
+                                    let failback_action = input.$parent.el$.form$.el$('failback_action');
+
+                                    try {
+                                        let response = await failback_action.$vueform.services.axios.post(
+                                            options.routes.get_routing_options,
+                                            { category: failback_action.value }
+                                        );
+                                        // console.log(response.data.options);
+                                        return response.data.options;
+                                    } catch (error) {
+                                        emits('error', error);
+                                        return [];  // Return an empty array in case of error
+                                    }
+                                }" :search="true" label-prop="name" :native="false" label="Target" input-type="search"
+                                    allow-absent :object="true" :format-data="formatTarget" autocomplete="off"
+                                    placeholder="Choose Target" :floating="false" :strict="false" :columns="{
+                                        sm: {
+                                            container: 6,
+                                        },
+                                    }" :conditions="[
+    ['failback_action', 'not_empty'],
+    ['failback_action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
+]" />
+
+
+                                <GroupElement name="container_7" />
+                                <StaticElement name="divider" tag="hr" />
+                                <GroupElement name="container_8" />
+                                <TextElement name="name_prefix" label="Caller ID Name Prefix"
+                                    info="Prepend text to the caller’s name when routing through this ring group (e.g. ‘Sales:’ to display ‘Sales: Jane Smith’.)."
+                                    :columns="{
+                                        sm: {
+                                            container: 6,
+                                        },
+                                    }" />
+                                <TextElement name="number_prefix" label="Caller ID Number Prefix"
+                                    info="Prepend text to the caller’s number when routing through this ring group (e.g. ‘555#2135551234’)."
+                                    :columns="{
+                                        sm: {
+                                            container: 6,
+                                        },
+                                    }" />
+                                <TextareaElement name="description" label="Description" :rows="2" />
+
+                                <ButtonElement name="submit" button-label="Save" :submits="true" align="right" />
+
+                            </GroupElement>
+                        </FormElements>
                     </div>
                 </div>
+            </template>
+        </Vueform>
+    </div>
+    <!-- </div> -->
 
-            </div>
+    <!-- </div> -->
 
 
 
-            <div v-if="activeTab === 'advanced'" action="#" method="POST">
+    <!-- <div div v-if="activeTab === 'advanced'" action=" #" method="POST">
                 <div class="shadow sm:rounded-md">
                     <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
                         <div>
@@ -306,12 +403,11 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
 
                             <Toggle label="Play Voicemail Tutorial"
                                 description="Provide user with a guided tutorial when accessing voicemail for the first time."
-                                v-model="form.voicemail_tutorial" customClass="py-4" />
+                                customClass="py-4" />
 
                             <Toggle v-if="localOptions.permissions.manage_voicemail_recording_instructions"
                                 label="Play Recording Instructions" description='Play a prompt instructing callers to "Record your message after the tone. Stop
-                                        speaking to end the recording."'
-                                v-model="form.voicemail_play_recording_instructions" customClass="py-4" />
+                                        speaking to end the recording."' vcustomClass="py-4" />
 
                         </div>
 
@@ -326,18 +422,21 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                             <InformationCircleIcon class="h-5 w-5 text-blue-500" />
                                         </template>
                                         <template v-slot:popover-panel>
-                                            <div>The parameter allows you to override the voicemail extension number
+                                            <div>The parameter allows you to override the voicemail
+                                                extension number
                                                 spoken
-                                                by the system in the voicemail greeting. This controls system greetings
+                                                by the system in the voicemail greeting. This controls
+                                                system greetings
                                                 that
-                                                read back an extension number, not user recorded greetings.</div>
+                                                read back an extension number, not user recorded greetings.
+                                            </div>
                                         </template>
                                     </Popover>
                                 </div>
 
-                                <InputField v-model="form.voicemail_alternate_greet_id" type="text"
-                                    name="voicemail_alternate_greet_id" :error="!!errors?.voicemail_alternate_greet_id"
-                                    id="voicemail_alternate_greet_id" class="mt-2" />
+                                <InputField type="text" name="voicemail_alternate_greet_id"
+                                    :error="!!errors?.voicemail_alternate_greet_id" id="voicemail_alternate_greet_id"
+                                    class="mt-2" />
 
                                 <div v-if="errors?.voicemail_alternate_greet_id" class="mt-2 text-xs text-red-600">
                                     {{ errors.voicemail_alternate_greet_id[0] }}
@@ -354,9 +453,9 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                             class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save</button>
                     </div>
                 </div>
-            </div>
-        </form>
-    </div>
+            </div> -->
+    <!-- </form>
+    </div> -->
 
     <DeleteConfirmationModal :show="showDeleteConfirmation" @close="showDeleteConfirmation = false"
         @confirm="confirmDeleteAction" />
@@ -396,6 +495,7 @@ import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
 import { registerLicense } from '@syncfusion/ej2-base';
 
+
 const props = defineProps({
     options: Object,
     isSubmitting: Boolean,
@@ -416,8 +516,8 @@ const showDeleteConfirmation = ref(false);
 const greetingLabel = ref(null);
 
 const greetingTranscription = computed(() => {
-  // Check that the ref is assigned and has a `value` property
-  return form$?.value?.data?.greeting?.description || null
+    // Check that the ref is assigned and has a `value` property
+    return form$?.value?.data?.greeting?.description || null
 })
 
 const allMemberOptions = props.options.member_options.flatMap(group => group.groupOptions);
@@ -441,20 +541,23 @@ const memberItems = props.options.ring_group.destinations.map(dest => {
 
 onMounted(() => {
     form$.value.update({ // updates form data
+        ring_group_uuid: props.options.ring_group.ring_group_uuid ?? null,
         name: props.options.ring_group.ring_group_name ?? null,
         extension: props.options.ring_group.ring_group_extension ?? null,
         greeting: props.options.ring_group.ring_group_greeting
-            ? props.options.greetings.find(g => g.value === props.options.ring_group.ring_group_greeting)?.value || null
+            ? props.options.greetings.find(g => g.value === props.options.ring_group.ring_group_greeting) || null
             : null,
         call_distribution: props.options.ring_group.call_distributions
             ? props.options.call_distributions.find(rp => rp.value === props.options.ring_group.ring_group_strategy)?.value || 'enterprise'
             : 'enterprise',
 
+        failback_action: props.options.ring_group.timeout_action ?? null,
+        failback_target: { value: props.options.ring_group.timeout_target_uuid ?? null, extension: props.options.ring_group.timeout_target_extension ?? null, name: props.options.ring_group.timeout_target_name ?? null },
         members: memberItems
     })
 
     form$.value.clean()
-    // console.log(form$.value.data);
+    console.log(form$.value.data);
 })
 
 
@@ -536,15 +639,6 @@ const handleNewGreetingButtonClick = () => {
 };
 
 
-const togglePasswordVisibility = () => {
-    showPassword.value = !showPassword.value;
-    const passwordInput = document.getElementById("voicemail_password");
-    if (showPassword.value) {
-        passwordInput.style.webkitTextSecurity = "none"; // Show text
-    } else {
-        passwordInput.style.webkitTextSecurity = "disc"; // Mask text
-    }
-};
 
 // Map icon names to their respective components
 const iconComponents = {
@@ -564,32 +658,6 @@ watch(() => props.options, (newOptions) => {
     Object.assign(localOptions, newOptions);
 });
 
-// const form = reactive({
-//     name: props.options.ring_group.ring_group_name ?? null,
-//     extension: props.options.ring_group.ring_group_extension ?? null,
-//     greeting: props.options.ring_group.ring_group_greeting
-//         ? props.options.greetings.find(g => g.value === props.options.ring_group.ring_group_greeting)
-//         : null,
-
-//     ring_pattern: props.options.ring_group.ring_pattern
-//         ? props.options.ring_patterns.find(rp => rp.value === props.options.ring_group.ring_pattern)
-//         : { value: 'enterprise', name: 'Advanced' },
-//     // voicemail_id: props.options.voicemail.voicemail_id,
-//     // voicemail_password: props.options.voicemail.voicemail_password,
-//     // voicemail_mail_to: props.options.voicemail.voicemail_mail_to,
-//     // voicemail_description: props.options.voicemail.voicemail_description,
-//     // voicemail_transcription_enabled: props.options.voicemail.voicemail_transcription_enabled === "true",
-//     // voicemail_email_attachment: props.options.voicemail.voicemail_file === "attach",
-//     // voicemail_delete: props.options.voicemail.voicemail_local_after_email === "false",
-//     // voicemail_tutorial: props.options.voicemail.voicemail_tutorial === "true",
-//     // voicemail_play_recording_instructions: props.options.voicemail.voicemail_recording_instructions === "true",
-//     // voicemail_copies: props.options.voicemail_copies,
-//     // voicemail_alternate_greet_id: props.options.voicemail.voicemail_alternate_greet_id,
-//     // voicemail_enabled: props.options.voicemail.voicemail_enabled === "true",
-//     // update_route: props.options.routes.update_route,
-//     // greeting_id: props.options.voicemail.greeting_id,
-//     _token: page.props.csrf_token,
-// })
 
 const greetingDescription = computed(() => {
     if (!form.greeting) return null; // Handle case where no greeting is selected
@@ -600,6 +668,15 @@ const greetingDescription = computed(() => {
     return selected ? selected.description : null;
 });
 
+
+const formatGreeting = (name, value) => {
+    return { [name]: value.value } // must return an object
+}
+
+const formatTarget = (name, value) => {
+    return { [name]: value?.extension ?? null } // must return an object
+}
+
 const decodedGreetingDescription = computed(() => {
     // Create a temporary DOM element (textarea works well for this)
     const txt = document.createElement("textarea");
@@ -609,14 +686,77 @@ const decodedGreetingDescription = computed(() => {
 
 const emits = defineEmits(['submit', 'cancel', 'error', 'success']);
 
-const submitForm = () => {
-    const payload = {
-        ...form,
-        greeting: form.greeting ? form.greeting.value : null, // extract value
-        ring_pattern: form.ring_pattern ? form.ring_pattern.value : null, // extract value
-    };
+const submitForm = async (FormData, form$) => {
+    // Using form$.requestData will EXCLUDE conditional elements and it 
+    // will submit the form as Content-Type: application/json . 
+    const requestData = form$.requestData
 
-    emits('submit', payload); // Emit the event with the form data
+    // console.log(requestData);
+    return await form$.$vueform.services.axios.put(localOptions.routes.update_route, requestData)
+};
+
+const handleResponse = (response, form$) => {
+    // Clear custom element errors
+    Object.values(form$.elements$).forEach((el$) => {
+        el$.messageBag?.clear()
+    })
+
+    // Display custom errors for elements
+    if (response.data.errors) {
+        Object.keys(response.data.errors).forEach((elName) => {
+            if (form$.el$(elName)) {
+                form$.el$(elName).messageBag.append(response.data.errors[elName][0])
+            }
+        })
+    }
+}
+
+const handleSuccess = (response, form$) => {
+    // console.log(response) // axios response
+    // console.log(response.status) // HTTP status code
+    // console.log(response.data) // response data
+
+    emits('success', 'success', response.data.messages);
+}
+
+const handleError = (error, details, form$) => {
+    form$.messageBag.clear() // clear message bag
+
+    switch (details.type) {
+        // Error occured while preparing elements (no submit happened)
+        case 'prepare':
+            console.log(error) // Error object
+
+            form$.messageBag.append('Could not prepare form')
+            break
+
+        // Error occured because response status is outside of 2xx
+        case 'submit':
+            emits('error', error);
+            console.log(error) // AxiosError object
+            // console.log(error.response) // axios response
+            // console.log(error.response.status) // HTTP status code
+            // console.log(error.response.data) // response data
+
+            // console.log(error.response.data.errors)
+
+
+            break
+
+        // Request cancelled (no response object)
+        case 'cancel':
+            console.log(error) // Error object
+
+            form$.messageBag.append('Request cancelled')
+            break
+
+        // Some other errors happened (no response object)
+        case 'other':
+            console.log(error) // Error object
+
+            form$.messageBag.append('Couldn\'t submit form')
+            break
+    }
 }
 
 // Handler for the greeting-saved event

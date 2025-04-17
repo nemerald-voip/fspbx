@@ -135,33 +135,6 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
-        Validator::extend('RingGroupUnique', function ($attribute, $value, $parameters, $validator) {
-            if (!isset($parameters[0])) {
-                return false;
-            }
-            $domain = $parameters[0];
-            if (Extensions::where('extension', $value)->where('domain_uuid', $domain)->first()) {
-                return false;
-            }
-
-            if (isset($parameters[1]) && !empty($parameters[1])) {
-                if (RingGroups::where('ring_group_extension', $value)->where('ring_group_uuid', '!=', $parameters[1])->where('domain_uuid', $domain)->first()) {
-                    return false;
-                }
-            } else {
-                if (RingGroups::where('ring_group_extension', $value)->where('domain_uuid', $domain)->first()) {
-                    return false;
-                }
-            }
-
-            if (Voicemails::where('voicemail_id', $value)->where('domain_uuid', $domain)->first()) {
-                return false;
-            }
-
-            return true;
-        });
-
-
         Password::defaults(function () {
             $rule = Password::min(8)
                 ->letters()

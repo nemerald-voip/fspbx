@@ -2,10 +2,11 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Session;
+use App\Rules\UniqueExtension;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateRingGroupRequest extends FormRequest
 {
@@ -22,166 +23,101 @@ class UpdateRingGroupRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'ring_group_name' => [
-                'required'
-            ],
-            'ring_group_extension' => [
+            'ring_group_uuid'   => ['required', 'uuid', 'exists:v_ring_groups,ring_group_uuid'],
+            'name'              => ['required', 'string', 'max:75'],
+
+            'extension' => [
                 'required',
-                'RingGroupUnique:'.Session::get('domain_uuid').",".$this->get('ring_group_uuid')
-            ],
-            'ring_group_greeting' => [
-                'nullable',
-                'string',
-                Rule::exists('App\Models\Recordings', 'recording_filename')
-                    ->where('domain_uuid', Session::get('domain_uuid')),
-            ],
-            'ring_group_destinations.*.type' => [
-                'in:external,internal'
-            ],
-            'ring_group_destinations.*.target_external' => [
-                'required_if:ring_group_destinations.*.type,==,external',
-                'nullable',
-            ],
-            'ring_group_destinations.*.target_internal' => [
-                'required_if:ring_group_destinations.*.type,==,internal',
-                'nullable',
                 'numeric',
-                'ExtensionExists:'.Session::get('domain_uuid')
+                new UniqueExtension($this->get('ring_group_uuid')),
             ],
-            'ring_group_destinations.*.delay' => 'numeric',
-            'ring_group_destinations.*.timeout' => 'numeric',
-            'ring_group_destinations.*.prompt' => 'in:true,false',
-            'ring_group_destinations.*.status' => 'in:true,false',
-            'ring_group_cid_name_prefix' => [
-                'nullable',
-                'string'
-            ],
-            'ring_group_cid_number_prefix' => [
-                'nullable',
-                'string'
-            ],
-            'ring_group_description' => [
-                'nullable',
-                'string'
-            ],
-            'ring_group_enabled' => 'in:true,false',
-            'ring_group_forward_enabled' => 'in:true,false',
-            'ring_group_forward.all.type' => [
-                'required_if:ring_group_forward_all_enabled,==,true',
-                'in:external,internal'
-            ],
-            'ring_group_forward.all.target_external' => [
-                'required_if:ring_group_forward.all.type,==,external',
+            'greeting' => [
                 'nullable',
             ],
-            'ring_group_forward.all.target_internal' => [
-                'required_if:ring_group_forward_enabled,==,true,ring_group_forward.all.type,==,internal',
-                'nullable',
-                'numeric',
-                'ExtensionExists:'.Session::get('domain_uuid')
-            ],
-            'timeout_category' => [
-                'in:disabled,ringgroup,dialplans,extensions,timeconditions,ivrs,voicemails,recordings,others'
-            ],
-            'timeout_action_ringgroup' => [
-                'required_if:timeout_category,==,ringgroup',
-                'string'
-            ],
-            'timeout_action_dialplans' => [
-                'required_if:timeout_category,==,dialplans',
-                'string'
-            ],
-            'timeout_action_extensions' => [
-                'required_if:timeout_category,==,extensions',
-                'string'
-            ],
-            'timeout_action_voicemails' => [
-                'required_if:timeout_category,==,voicemails',
-                'string'
-            ],
-            'timeout_action_ivrs' => [
-                'required_if:timeout_category,==,ivrs',
-                'string'
-            ],
-            'timeout_action_others' => [
-                'required_if:timeout_category,==,others',
-                'string'
-            ],
-            'ring_group_timeout_data' => [
-              'nullable',
-              'string'
-            ],
-            'ring_group_strategy' => [
-                'in:simultaneous,sequence,random,enterprise,rollover'
-            ],
-            'ring_group_caller_id_name' => [
-                'nullable',
-                'string'
-            ],
-            'ring_group_caller_id_number' => [
-                'nullable',
-                'string',            ],
-            'ring_group_distinctive_ring' => [
-                'nullable',
-                'string'
-            ],
-            'ring_group_ringback' => [
-                'nullable',
-                'string'
-            ],
-            'ring_group_call_forward_enabled' => 'in:true,false',
-            'ring_group_follow_me_enabled' => 'in:true,false',
-            'ring_group_missed_call_category' => [
-                'nullable',
-                'in:disabled,email'
-            ],
-            'ring_group_missed_call_data' => [
-                'required_if:ring_group_missed_call_category,==,email',
-                'nullable',
-                'string',
-                'email'
-            ],
-            'ring_group_forward_toll_allow' => [
-                'nullable',
-                'string'
-            ],
-            'ring_group_context' => [
+            'call_distribution' => [
                 'required',
-                'string',
-                Rule::exists('App\Models\Domain', 'domain_name'),
+                Rule::in([
+                    'enterprise',
+                    'simultaneous',
+                    'sequential',
+                    'random',
+                    'rollover',
+                    // …add any other strategies you support
+                ]),
             ],
+
+            // members may be omitted or empty
+            'members'               => ['nullable', 'array'],
+
+            // only validate each sub‑field if members was provided
+            'members.*.uuid'        => ['required_with:members', 'uuid'],
+            'members.*.destination' => ['required_with:members', 'numeric'],
+            'members.*.delay'       => ['required_with:members', 'numeric', 'min:0'],
+            'members.*.timeout'     => ['required_with:members', 'numeric', 'min:0'],
+            'members.*.prompt'      => ['required_with:members', 'boolean'],
+            'members.*.enabled'     => ['required_with:members', 'boolean'],
+
+            // Fail‑back logic: action + optional target
+            'failback_action' => [
+                'required',
+            ],
+
+            'failback_target' => [
+                'sometimes',
+                function ($attribute, $value, $fail) {
+                    $action = $this->input('failback_action');
+
+                    // if an action *needs* a target (i.e. it is NOT one of these),
+                    // then failback_target cannot be empty
+                    if (
+                        $action
+                        && ! in_array($action, [
+                            'company_directory',
+                            'check_voicemail',
+                            'hangup',
+                        ], true)
+                        && empty($value)
+                    ) {
+                        $fail('A target must be provided when action is selected.');
+                    }
+                },
+            ],
+            // Optional prefixes & description
+            'name_prefix'   => ['nullable', 'string', 'max:20'],
+            'number_prefix' => ['nullable', 'string', 'max:20'],
+            'description'   => ['nullable', 'string', 'max:150'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'ring_group_extension.ring_group_unique' => 'This number is already used',
-            'ring_group_destinations.*.target_external.phone' => 'Should be valid US phone number or extension id',
-            'ring_group_destinations.*.target_external.required_if' => 'This is the required field',
-            'ring_group_destinations.*.target_internal.ExtensionExists' => 'Should be valid destination',
+            'failback_action.required' => 'The no answer action is required.',
+
         ];
     }
 
     public function prepareForValidation()
     {
-        if($this->get('ring_group_greeting') == 'disabled') {
+
+        logger($this);
+        if ($this->get('ring_group_greeting') == 'disabled') {
             $this->merge([
                 'ring_group_greeting' => null
             ]);
         }
-        if($this->get('ring_group_missed_call_category') == 'disabled') {
+        if ($this->get('ring_group_missed_call_category') == 'disabled') {
             $this->merge([
                 'ring_group_missed_call_data' => null
             ]);
         }
-        if($this->get('timeout_category') == 'disabled') {
+        if ($this->get('timeout_category') == 'disabled') {
             $this->merge([
                 'ring_group_timeout_data' => null
             ]);
         } else {
             $this->merge([
-                'ring_group_timeout_data' => $this->get('timeout_action_'.$this->get('timeout_category'))
+                'ring_group_timeout_data' => $this->get('timeout_action_' . $this->get('timeout_category'))
             ]);
         }
     }

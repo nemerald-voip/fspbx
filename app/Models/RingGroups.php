@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
+use App\Services\CallRoutingOptionsService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class RingGroups extends Model
@@ -57,6 +58,61 @@ class RingGroups extends Model
         'update_date',
         'update_user'
     ];
+
+
+    /**
+     * Reverse‐engineer ring_group_timeout_app + ring_group_timeout_data
+     * into a single array of details.
+     */
+    protected function getTimeoutOptionDetailsAttribute(): ?array
+    {
+        if (! $this->ring_group_timeout_app) {
+            return null;
+        }
+
+        $service = new CallRoutingOptionsService;
+        return $service->reverseEngineerRingGroupExitAction(
+            $this->ring_group_timeout_app . ' ' . $this->ring_group_timeout_data
+        );
+    }
+
+    public function getTimeoutTargetUuidAttribute(): ?string
+    {
+        return $this->timeout_option_details['option'] ?? null;
+    }
+
+    public function getTimeoutActionAttribute(): ?string
+    {
+        return $this->timeout_option_details['type'] ?? null;
+    }
+
+    public function getTimeoutActionDisplayAttribute(): ?string
+    {
+        if (! $this->timeout_option_details['type']) {
+            return null;
+        }
+
+        return (new CallRoutingOptionsService)
+            ->getFriendlyTypeName($this->timeout_option_details['type']);
+    }
+
+    public function getTimeoutTargetNameAttribute(): ?string
+    {
+        return $this->timeout_option_details['name'] ?? null;
+    }
+
+    public function getTimeoutTargetExtensionAttribute(): ?string
+    {
+        return $this->timeout_option_details['extension'] ?? null;
+    }
+
+    /**
+     * Just like you did in your other model: build a destroy URL.
+     */
+    public function getDestroyRouteAttribute(): string
+    {
+        return route('ring-groups.destroy', $this);
+    }
 
 
     public function getId()
