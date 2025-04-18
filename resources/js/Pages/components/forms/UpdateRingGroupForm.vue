@@ -1,42 +1,23 @@
 <template>
     <div>
-        <!-- <aside class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
-            <nav class="space-y-1">
-                <a v-for="item in localOptions.navigation" :key="item.name" href="#"
-                    :class="[activeTab === item.slug ? 'bg-gray-200 text-indigo-700 hover:bg-gray-100 hover:text-indigo-700' : 'text-gray-900 hover:bg-gray-200 hover:text-gray-900', 'group flex items-center rounded-md px-3 py-2 text-sm font-medium']"
-                    @click.prevent="setActiveTab(item.slug)" :aria-current="item.current ? 'page' : undefined">
-                    <component :is="iconComponents[item.icon]"
-                        :class="[item.current ? 'text-indigo-500 group-hover:text-indigo-500' : 'text-gray-400 group-hover:text-gray-500', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']"
-                        aria-hidden="true" />
-                    <span class="truncate">{{ item.name }}</span>
-                    <ExclamationCircleIcon v-if="((errors?.voicemail_id || errors?.voicemail_password) && item.slug === 'settings') ||
-                        (errors?.voicemail_alternate_greet_id && item.slug === 'advanced')"
-                        class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
-
-                </a>
-            </nav>
-        </aside> -->
-
-        <!-- <form class="space-y-6 sm:px-6 lg:col-span-9 lg:px-0">
-            <div v-if="activeTab === 'settings'">
-                <div class="shadow sm:rounded-md">
-                    <div class="space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6"> -->
-
         <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError" @response="handleResponse"
             :display-errors="false">
             <template #empty>
 
-                <div class="grid grid-cols-12 gap-x-5">
-                    <div class="col-span-3">
+                <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
+                    <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                         <FormTabs view="vertical">
                             <FormTab name="page0" label="Settings" :elements="[
                                 'settings',
                             ]" />
-                            <FormTab name="page1" label="Tab 2" :elements="[]" />
+                            <FormTab name="page1" label="Call Forwarding" :elements="[
+                                'call_forward'
+                            ]" />
                         </FormTabs>
                     </div>
 
-                    <div class="col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
+                    <div
+                        class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                         <FormElements>
 
                             <GroupElement name="settings">
@@ -94,7 +75,8 @@
                                         default: {
                                             container: 2,
                                         },
-                                    }" :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
+                                    }"
+                                    :conditions="[['settings.greeting', '!=', null], ['settings.greeting', '!=', '']]"
                                     :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                     <PlayCircleIcon
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
@@ -122,7 +104,8 @@
                                         default: {
                                             container: 2,
                                         },
-                                    }" :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
+                                    }"
+                                    :conditions="[['settings.greeting', '!=', null], ['settings.greeting', '!=', '']]"
                                     :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                     <CloudArrowDownIcon
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
@@ -158,7 +141,8 @@
                                         default: {
                                             container: 2,
                                         },
-                                    }" :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
+                                    }"
+                                    :conditions="[['settings.greeting', '!=', null], ['settings.greeting', '!=', '']]"
                                     :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                     <PencilSquareIcon
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
@@ -176,7 +160,8 @@
                                         default: {
                                             container: 2,
                                         },
-                                    }" :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
+                                    }"
+                                    :conditions="[['settings.greeting', '!=', null], ['settings.greeting', '!=', '']]"
                                     :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                     <TrashIcon
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
@@ -186,21 +171,12 @@
                                 <ButtonElement @click="handleNewGreetingButtonClick" name="add_button" label="&nbsp;"
                                     :secondary="true" :columns="{
                                         container: 1,
-                                    }" :conditions="[['greeting', '==', null]]"
+                                    }"
                                     :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                     <PlusIcon
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                 </ButtonElement>
-
-                                <!-- <StaticElement name="p" :content="(el$) => {
-                                            return el$.parent.value.greeting;
-                                        }" :conditions="[
-                                [
-                                    'greeting',
-                                    'not_empty',
-                                ],
-                            ]" /> -->
 
 
                                 <SelectElement name="call_distribution" :search="true" :native="false"
@@ -319,8 +295,7 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                             container: 6,
                                         },
                                     }" @change="(newValue, oldValue, el$) => {
-    let failback_target = el$.form$.el$('failback_target')
-    console.log(form$.value);
+    let failback_target = el$.form$.el$('settings.failback_target')
 
     // only clear when this isn’t the very first time (i.e. oldValue was set)
     if (oldValue !== null && oldValue !== undefined) {
@@ -331,7 +306,7 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
     failback_target.updateItems()
 }" />
                                 <SelectElement name="failback_target" :items="async (query, input) => {
-                                    let failback_action = input.$parent.el$.form$.el$('failback_action');
+                                    let failback_action = input.$parent.el$.form$.el$('settings.failback_action');
 
                                     try {
                                         let response = await failback_action.$vueform.services.axios.post(
@@ -351,8 +326,8 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                             container: 6,
                                         },
                                     }" :conditions="[
-    ['failback_action', 'not_empty'],
-    ['failback_action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
+    ['settings.failback_action', 'not_empty'],
+    ['settings.failback_action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
 ]" />
 
 
@@ -378,84 +353,79 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                 <ButtonElement name="submit" button-label="Save" :submits="true" align="right" />
 
                             </GroupElement>
+
+                            <GroupElement name="call_forward">
+                                <StaticElement name="h4" tag="h4" content="Call Forwarding"
+                                    description="Automatically forward all calls for this ring group to another destination." />
+                                <ToggleElement name="call_forward_enabled" :labels="{
+                                    on: 'On',
+                                    off: 'Off',
+                                }" />
+                                <SelectElement name="forward_destination" :items="[
+                                    {
+                                        value: 0,
+                                        label: 'Label',
+                                    },
+                                ]" :search="true" :native="false" input-type="search" autocomplete="off" :create="true"
+                                    placeholder="Select Destination" :floating="false" :strict="false" :columns="{
+                                        sm: {
+                                            container: 6,
+                                        },
+                                    }" :conditions="[['call_forward.call_forward_enabled', '==', true,],]" />
+
+
+
+                                <SelectElement name="failback_action" :items="localOptions.routing_types" label-prop="name"
+                                    :search="true" :native="false" label="Choose Action" input-type="search"
+                                    autocomplete="off" placeholder="Choose Action" :floating="false" :strict="false"
+                                    :columns="{
+                                        sm: {
+                                            container: 6,
+                                        },
+                                    }" @change="(newValue, oldValue, el$) => {
+    let failback_target = el$.form$.el$('settings.failback_target')
+
+    // only clear when this isn’t the very first time (i.e. oldValue was set)
+    if (oldValue !== null && oldValue !== undefined) {
+        failback_target.clear();
+    }
+
+    // failback_target.clear()
+    failback_target.updateItems()
+}" />
+                                <SelectElement name="failback_target" :items="async (query, input) => {
+                                    let failback_action = input.$parent.el$.form$.el$('settings.failback_action');
+
+                                    try {
+                                        let response = await failback_action.$vueform.services.axios.post(
+                                            options.routes.get_routing_options,
+                                            { category: failback_action.value }
+                                        );
+                                        // console.log(response.data.options);
+                                        return response.data.options;
+                                    } catch (error) {
+                                        emits('error', error);
+                                        return [];  // Return an empty array in case of error
+                                    }
+                                }" :search="true" label-prop="name" :native="false" label="Target" input-type="search"
+                                    allow-absent :object="true" :format-data="formatTarget" autocomplete="off"
+                                    placeholder="Choose Target" :floating="false" :strict="false" :columns="{
+                                        sm: {
+                                            container: 6,
+                                        },
+                                    }" :conditions="[
+    ['settings.failback_action', 'not_empty'],
+    ['settings.failback_action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
+]" />
+                            </GroupElement>
+
                         </FormElements>
                     </div>
                 </div>
             </template>
         </Vueform>
     </div>
-    <!-- </div> -->
 
-    <!-- </div> -->
-
-
-
-    <!-- <div div v-if="activeTab === 'advanced'" action=" #" method="POST">
-                <div class="shadow sm:rounded-md">
-                    <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
-                        <div>
-                            <h3 class="text-base font-semibold leading-6 text-gray-900">Advanced</h3>
-                            <p class="mt-1 text-sm text-gray-500">Set advanced settings for this voicemail
-                            </p>
-                        </div>
-
-                        <div class="divide-y divide-gray-200 col-span-6">
-
-                            <Toggle label="Play Voicemail Tutorial"
-                                description="Provide user with a guided tutorial when accessing voicemail for the first time."
-                                customClass="py-4" />
-
-                            <Toggle v-if="localOptions.permissions.manage_voicemail_recording_instructions"
-                                label="Play Recording Instructions" description='Play a prompt instructing callers to "Record your message after the tone. Stop
-                                        speaking to end the recording."' vcustomClass="py-4" />
-
-                        </div>
-
-                        <div class="grid grid-cols-6 gap-6">
-                            <div class="col-span-3 sm:col-span-2">
-                                <div class="flex items-center gap-1">
-                                    <LabelInputOptional target="voicemail_alternate_greet_id" label="Announce Voicemail
-                                        Extension as" />
-
-                                    <Popover>
-                                        <template v-slot:popover-button>
-                                            <InformationCircleIcon class="h-5 w-5 text-blue-500" />
-                                        </template>
-                                        <template v-slot:popover-panel>
-                                            <div>The parameter allows you to override the voicemail
-                                                extension number
-                                                spoken
-                                                by the system in the voicemail greeting. This controls
-                                                system greetings
-                                                that
-                                                read back an extension number, not user recorded greetings.
-                                            </div>
-                                        </template>
-                                    </Popover>
-                                </div>
-
-                                <InputField type="text" name="voicemail_alternate_greet_id"
-                                    :error="!!errors?.voicemail_alternate_greet_id" id="voicemail_alternate_greet_id"
-                                    class="mt-2" />
-
-                                <div v-if="errors?.voicemail_alternate_greet_id" class="mt-2 text-xs text-red-600">
-                                    {{ errors.voicemail_alternate_greet_id[0] }}
-                                </div>
-
-                            </div>
-
-                        </div>
-
-
-                    </div>
-                    <div class="bg-gray-50 px-4 py-3 text-right sm:px-6">
-                        <button type="submit"
-                            class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Save</button>
-                    </div>
-                </div>
-            </div> -->
-    <!-- </form>
-    </div> -->
 
     <DeleteConfirmationModal :show="showDeleteConfirmation" @close="showDeleteConfirmation = false"
         @confirm="confirmDeleteAction" />
@@ -597,7 +567,7 @@ const availableMembers = computed(() => {
 
 const addSelectedMembers = () => {
     // console.log(form$.value.el$('selectedMembers').value);
-    const selectedItems = form$.value.el$('selectedMembers').value.map(item => {
+    const selectedItems = form$.value.el$('settings.selectedMembers').value.map(item => {
         return {
             uuid: item.destination ? item.value : null,              // if a destination exists, use the item.value as uuid; otherwise, uuid is null
             destination: item.destination ? item.destination : item.label,  // if item.destination exists, use it; otherwise, use the label
@@ -609,13 +579,13 @@ const addSelectedMembers = () => {
         }
     });
 
-    const currentMembers = form$.value.el$('members').value
+    const currentMembers = form$.value.el$('settings.members').value
 
     form$.value.update({
         members: [...currentMembers, ...selectedItems]
     })
 
-    form$.value.el$('selectedMembers').update([]); // clear selection
+    form$.value.el$('settings.selectedMembers').update([]); // clear selection
 };
 
 
@@ -906,11 +876,11 @@ const confirmDeleteAction = () => {
             if (response.data.success) {
                 // Remove the deleted greeting from the localOptions.greetings array
                 localOptions.greetings = localOptions.greetings.filter(
-                    (greeting) => greeting.value !== String(form$.value.el$('greeting').value)
+                    (greeting) => greeting.value !== String(form$.value.el$('settings.greeting').value)
                 );
 
                 // Reset the selected greeting ID
-                form$.value.el$('greeting').update(localOptions.greetings);
+                form$.value.el$('settings.greeting').update(localOptions.greetings);
 
                 // Notify the parent component or show a local success message
                 emits('success', 'success', response.data.messages);
@@ -932,9 +902,9 @@ const handleGreetingUpdate = (updatedGreeting) => {
         // Update the local greetings array
         localOptions.greetings[index] = updatedGreeting;
 
-        form$.value.el$('greeting').update(localOptions.greetings);
+        form$.value.el$('settings.greeting').update(localOptions.greetings);
 
-        form$.value.el$('greeting').clear()
+        form$.value.el$('settings.greeting').clear()
     }
 
     axios
