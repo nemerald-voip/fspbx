@@ -86,6 +86,29 @@ class UpdateRingGroupRequest extends FormRequest
             'name_prefix'   => ['nullable', 'string', 'max:20'],
             'number_prefix' => ['nullable', 'string', 'max:20'],
             'description'   => ['nullable', 'string', 'max:150'],
+
+            'call_forward_enabled' => [
+                'nullable',
+                'boolean'
+            ],
+
+            // Forward logic: action + optional target
+            // only required when call_forward_enabled === true
+            'forward_action'        => ['required_if:call_forward_enabled,true'],
+
+            // if you also want to validate the targets:
+            'forward_external_target' => [
+                'required_if:forward_action,external',
+                'string', // or 'uuid' if it must be a UUID
+            ],
+
+            'forward_target' => [
+                // drop all validation here unless forwarding is enabled
+                'exclude_unless:call_forward_enabled,true',
+                // when forwarding is enabled, require this field if action ≠ external
+                'required_unless:forward_action,external',
+                'string',
+            ],
         ];
     }
 
@@ -93,7 +116,9 @@ class UpdateRingGroupRequest extends FormRequest
     {
         return [
             'failback_action.required' => 'The no answer action is required.',
-
+            'members.*.delay.required_with' =>  'The member setting field is required',
+            'members.*.timeout.required_with' =>  'The member setting is required',
+            'forward_action.required_if' =>  'The action is required when call forwarding is enabled.'
         ];
     }
 

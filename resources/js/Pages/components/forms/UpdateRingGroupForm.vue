@@ -8,10 +8,65 @@
                     <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                         <FormTabs view="vertical">
                             <FormTab name="page0" label="Settings" :elements="[
-                                'settings',
+                                'ring_group_uuid',
+                                'h4',
+                                'name',
+                                'extension',
+                                'greeting',
+                                'play_button',
+                                'pause_button',
+                                'download_button',
+                                'download_spinner_button',
+                                'edit_button',
+                                'delete_button',
+                                'add_button',
+                                'call_distribution',
+                                'container_3',
+                                'divider1',
+                                'divider2',
+                                'divider3',
+                                'container_4',
+                                'h3_1',
+                                'selectedMembers',
+                                'secondaryButton_1',
+                                'container_1',
+                                'container_2',
+                                'members',
+                                'container_5',
+                                'container_6',
+                                'h3_2',
+                                'failback_action',
+                                'failback_target',
+                                'container_7',
+                                'container_8',
+                                'name_prefix',
+                                'number_prefix',
+                                'description',
+                                'settings_submit'
                             ]" />
                             <FormTab name="page1" label="Call Forwarding" :elements="[
-                                'call_forward'
+                                'h4_1',
+                                'call_forward_enabled',
+                                'forward_action',
+                                'forward_target',
+                                'forward_external_target',
+                                'call_forward_submit',
+                            ]" />
+                            <FormTab name="page2" label="Advanced" :elements="[
+                                'h4_3',
+                                'caller_id_name',
+                                'caller_id_number',
+                                'distinctive_ring',
+                                'container5',
+                                'container6',
+                                'ringback',
+                                'destination_call_forwarding',
+                                'destination_sequential_ring',
+                                'missed_call_notifications',
+                                'notification_email',
+                                'forward_toll_allow',
+                                'container',
+                                'context'
                             ]" />
                         </FormTabs>
                     </div>
@@ -20,168 +75,163 @@
                         class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                         <FormElements>
 
-                            <GroupElement name="settings">
-                                <HiddenElement name="ring_group_uuid" :meta="true" />
-                                <StaticElement name="h4" tag="h4" content="Settings"
-                                    description="Provide basic information about the ring group" />
-                                <TextElement name="name" label="Name" :columns="{
+                            <!-- <GroupElement name="settings"> -->
+                            <HiddenElement name="ring_group_uuid" :meta="true" />
+                            <StaticElement name="h4" tag="h4" content="Settings"
+                                description="Provide basic information about the ring group" />
+                            <TextElement name="name" label="Name" :columns="{
+                                sm: {
+                                    container: 6,
+                                },
+                                lg: {
+                                    container: 6,
+                                },
+                            }" placeholder="Enter Ring Group Name" :floating="false" />
+                            <TextElement name="extension" :columns="{
+                                sm: {
+                                    container: 6,
+                                },
+                                lg: {
+                                    container: 6,
+                                },
+                            }" label="Extension" placeholder="Enter Extension" :floating="false" />
+
+
+                            <SelectElement name="greeting" :search="true" :native="false" label="Greeting"
+                                :items="localOptions.greetings" input-type="search" autocomplete="off"
+                                placeholder="Select Greeting" :floating="false" :object="true" :format-data="formatGreeting"
+                                info="Enable this option so that callers hear a recorded greeting before they are connected to a group member."
+                                :strict="false" :columns="{
                                     sm: {
                                         container: 6,
                                     },
                                     lg: {
                                         container: 6,
                                     },
-                                }" placeholder="Enter Ring Group Name" :floating="false" />
-                                <TextElement name="extension" :columns="{
+                                }">
+                                <template #after>
+                                    <span v-if="greetingTranscription" class="text-xs italic">
+                                        "{{ greetingTranscription }}"
+                                    </span>
+
+
+                                </template>
+                            </SelectElement>
+
+                            <ButtonElement v-if="!isAudioPlaying" @click="playGreeting" name="play_button" label="&nbsp;"
+                                :secondary="true" :columns="{
                                     sm: {
-                                        container: 6,
+                                        container: 1,
                                     },
                                     lg: {
-                                        container: 6,
+                                        container: 1,
                                     },
-                                }" label="Extension" placeholder="Enter Extension" :floating="false" />
+                                    default: {
+                                        container: 2,
+                                    },
+                                }" :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
+                                :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                <PlayCircleIcon
+                                    class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                            </ButtonElement>
 
 
-                                <SelectElement name="greeting" :search="true" :native="false" label="Greeting"
-                                    :items="localOptions.greetings" input-type="search" autocomplete="off"
-                                    placeholder="Select Greeting" :floating="false" :object="true"
-                                    :format-data="formatGreeting"
-                                    info="Enable this option so that callers hear a recorded greeting before they are connected to a group member."
-                                    :strict="false" :columns="{
-                                        sm: {
-                                            container: 6,
-                                        },
-                                        lg: {
-                                            container: 6,
-                                        },
-                                    }">
-                                    <template #after>
-                                        <span v-if="greetingTranscription" class="text-xs italic">
-                                            "{{ greetingTranscription }}"
-                                        </span>
+                            <ButtonElement v-if="isAudioPlaying" @click="pauseGreeting" name="pause_button" label="&nbsp;"
+                                :secondary="true" :columns="{
+                                    container: 1,
+                                }"
+                                :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                <PauseCircleIcon
+                                    class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
 
+                            </ButtonElement>
 
-                                    </template>
-                                </SelectElement>
-
-                                <ButtonElement v-if="!isAudioPlaying" @click="playGreeting" name="play_button"
-                                    label="&nbsp;" :secondary="true" :columns="{
-                                        sm: {
-                                            container: 1,
-                                        },
-                                        lg: {
-                                            container: 1,
-                                        },
-                                        default: {
-                                            container: 2,
-                                        },
-                                    }"
-                                    :conditions="[['settings.greeting', '!=', null], ['settings.greeting', '!=', '']]"
-                                    :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
-                                    <PlayCircleIcon
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
-                                </ButtonElement>
-
-
-                                <ButtonElement v-if="isAudioPlaying" @click="pauseGreeting" name="pause_button"
-                                    label="&nbsp;" :secondary="true" :columns="{
+                            <ButtonElement v-if="!isDownloading" @click="downloadGreeting" name="download_button"
+                                label="&nbsp;" :secondary="true" :columns="{
+                                    sm: {
                                         container: 1,
-                                    }"
-                                    :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
-                                    <PauseCircleIcon
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
-
-                                </ButtonElement>
-
-                                <ButtonElement v-if="!isDownloading" @click="downloadGreeting" name="download_button"
-                                    label="&nbsp;" :secondary="true" :columns="{
-                                        sm: {
-                                            container: 1,
-                                        },
-                                        lg: {
-                                            container: 1,
-                                        },
-                                        default: {
-                                            container: 2,
-                                        },
-                                    }"
-                                    :conditions="[['settings.greeting', '!=', null], ['settings.greeting', '!=', '']]"
-                                    :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
-                                    <CloudArrowDownIcon
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
-
-                                </ButtonElement>
-
-                                <ButtonElement v-if="isDownloading" name="download_spinner_button" label="&nbsp;"
-                                    :secondary="true" :columns="{
-                                        sm: {
-                                            container: 1,
-                                        },
-                                        lg: {
-                                            container: 1,
-                                        },
-                                        default: {
-                                            container: 2,
-                                        },
-                                    }"
-                                    :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
-                                    <Spinner :show="true"
-                                        class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
-
-                                </ButtonElement>
-
-                                <ButtonElement @click="editGreeting" name="edit_button" label="&nbsp;" :secondary="true"
-                                    :columns="{
-                                        sm: {
-                                            container: 1,
-                                        },
-                                        lg: {
-                                            container: 1,
-                                        },
-                                        default: {
-                                            container: 2,
-                                        },
-                                    }"
-                                    :conditions="[['settings.greeting', '!=', null], ['settings.greeting', '!=', '']]"
-                                    :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
-                                    <PencilSquareIcon
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
-
-                                </ButtonElement>
-
-                                <ButtonElement @click="deleteGreeting" name="delete_button" label="&nbsp;" :secondary="true"
-                                    :columns="{
-                                        sm: {
-                                            container: 1,
-                                        },
-                                        lg: {
-                                            container: 1,
-                                        },
-                                        default: {
-                                            container: 2,
-                                        },
-                                    }"
-                                    :conditions="[['settings.greeting', '!=', null], ['settings.greeting', '!=', '']]"
-                                    :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
-                                    <TrashIcon
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
-
-                                </ButtonElement>
-
-                                <ButtonElement @click="handleNewGreetingButtonClick" name="add_button" label="&nbsp;"
-                                    :secondary="true" :columns="{
+                                    },
+                                    lg: {
                                         container: 1,
-                                    }"
-                                    :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
-                                    <PlusIcon
-                                        class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                    },
+                                    default: {
+                                        container: 2,
+                                    },
+                                }" :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
+                                :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                <CloudArrowDownIcon
+                                    class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
-                                </ButtonElement>
+                            </ButtonElement>
+
+                            <ButtonElement v-if="isDownloading" name="download_spinner_button" label="&nbsp;"
+                                :secondary="true" :columns="{
+                                    sm: {
+                                        container: 1,
+                                    },
+                                    lg: {
+                                        container: 1,
+                                    },
+                                    default: {
+                                        container: 2,
+                                    },
+                                }"
+                                :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                <Spinner :show="true"
+                                    class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                            </ButtonElement>
+
+                            <ButtonElement @click="editGreeting" name="edit_button" label="&nbsp;" :secondary="true"
+                                :columns="{
+                                    sm: {
+                                        container: 1,
+                                    },
+                                    lg: {
+                                        container: 1,
+                                    },
+                                    default: {
+                                        container: 2,
+                                    },
+                                }" :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
+                                :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                <PencilSquareIcon
+                                    class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                            </ButtonElement>
+
+                            <ButtonElement @click="deleteGreeting" name="delete_button" label="&nbsp;" :secondary="true"
+                                :columns="{
+                                    sm: {
+                                        container: 1,
+                                    },
+                                    lg: {
+                                        container: 1,
+                                    },
+                                    default: {
+                                        container: 2,
+                                    },
+                                }" :conditions="[['greeting', '!=', null], ['greeting', '!=', '']]"
+                                :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                <TrashIcon
+                                    class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+
+                            </ButtonElement>
+
+                            <ButtonElement @click="handleNewGreetingButtonClick" name="add_button" label="&nbsp;"
+                                :secondary="true" :columns="{
+                                    container: 1,
+                                }"
+                                :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                <PlusIcon
+                                    class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                            </ButtonElement>
 
 
-                                <SelectElement name="call_distribution" :search="true" :native="false"
-                                    label="Call Distribution" :items="localOptions.call_distributions" input-type="search"
-                                    autocomplete="off" placeholder="Select Call Distribution" :floating="false" info="Advanced (default): This option rings all phones at once, but each phone has its own thread. This is especially useful when there are multiple registrations for the same extension.
+                            <SelectElement name="call_distribution" :search="true" :native="false" label="Call Distribution"
+                                :items="localOptions.call_distributions" input-type="search" autocomplete="off"
+                                placeholder="Select Call Distribution" :floating="false" info="Advanced (default): This option rings all phones at once, but each phone has its own thread. This is especially useful when there are multiple registrations for the same extension.
 Sequential Ring: This option rings one phone at a time in a specific order.
 Simultaneous Ring: This option rings all phones at once.
 Random Ring: This option rings one phone at a time in a random order.
@@ -196,194 +246,104 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
 
 
 
-                                <GroupElement name="container_3" />
-                                <StaticElement name="divider" tag="hr" />
-                                <GroupElement name="container_4" />
+                            <GroupElement name="container_3" />
+                            <StaticElement name="divider1" tag="hr" />
+                            <GroupElement name="container_4" />
 
-                                <StaticElement name="h3_1" tag="h4" content="Members"
-                                    description="Add and remove users of this ring group" />
+                            <StaticElement name="h3_1" tag="h4" content="Members"
+                                description="Add and remove users of this ring group" />
 
-                                <TagsElement name="selectedMembers" :close-on-select="false" :items="availableMembers"
-                                    :create="true" :search="true" :groups="true" :native="false" label="Add Member(s)"
-                                    input-type="search" autocomplete="off" placeholder="Search by name or extension"
-                                    :floating="false" :hide-selected="false" :object="true" :group-hide-empty="true"
-                                    :append-new-option="false" :submit="false"
-                                    description="Choose from the list of available options or enter an external number manually." />
+                            <TagsElement name="selectedMembers" :close-on-select="false" :items="availableMembers"
+                                :create="true" :search="true" :groups="true" :native="false" label="Add Member(s)"
+                                input-type="search" autocomplete="off" placeholder="Search by name or extension"
+                                :floating="false" :hide-selected="false" :object="true" :group-hide-empty="true"
+                                :append-new-option="false" :submit="false"
+                                description="Choose from the list of available options or enter an external number manually." />
 
-                                <ButtonElement @click="addSelectedMembers" name="secondaryButton_1"
-                                    button-label="Add Selected Members" :secondary="true" align="center" :full="false" />
+                            <ButtonElement @click="addSelectedMembers" name="secondaryButton_1"
+                                button-label="Add Selected Members" :secondary="true" align="center" :full="false" />
 
-                                <GroupElement name="container_1" />
-                                <GroupElement name="container_2" />
+                            <GroupElement name="container_1" />
+                            <GroupElement name="container_2" />
 
-                                <ListElement name="members" :sort="true" :controls="{ add: false, }"
-                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
-                                    <template #default="{ index }">
-                                        <ObjectElement :name="index">
-                                            <HiddenElement name="uuid" :meta="true" />
-                                            <HiddenElement name="destination" :meta="true" />
-                                            <StaticElement name="p_1" tag="p" :content="(el$) => {
-                                                // Retrieve the extension value (stored in a hidden field or member object)
-                                                const num = el$.parent.value.destination;
-                                                return getMemberLabel(num);
-                                            }" :columns="{ default: { container: 8, }, sm: { container: 4, }, }"
-                                                label="Member" :attrs="{ class: 'text-base font-semibold' }" />
+                            <ListElement name="members" :sort="true" :controls="{ add: false, }"
+                                :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                <template #default="{ index }">
+                                    <ObjectElement :name="index">
+                                        <HiddenElement name="uuid" :meta="true" />
+                                        <HiddenElement name="destination" :meta="true" />
+                                        <StaticElement name="p_1" tag="p" :content="(el$) => {
+                                            // Retrieve the extension value (stored in a hidden field or member object)
+                                            const num = el$.parent.value.destination;
+                                            return getMemberLabel(num);
+                                        }" :columns="{ default: { container: 8, }, sm: { container: 4, }, }"
+                                            label="Member" :attrs="{ class: 'text-base font-semibold' }" />
 
-                                            <SelectElement name="delay" :items="delayOptions" :search="true" :native="false"
-                                                label="Delay" input-type="search" allow-absent autocomplete="off" :columns="{
-                                                    default: {
-                                                        container: 6,
-                                                    },
-                                                    sm: {
-                                                        container: 4,
-                                                    },
-                                                }" size="sm"
-                                                info="How many seconds to wait before starting to ring this member."
-                                                placeholder="Select option" :floating="false" />
-                                            <SelectElement name="timeout" :items="timeoutOptions" :search="true"
-                                                :native="false" label="Ring for" input-type="search" allow-absent
-                                                autocomplete="off" :columns="{
-                                                    default: {
-                                                        container: 6,
-                                                    },
-                                                    sm: {
-                                                        container: 4,
-                                                    },
-                                                }" size="sm"
-                                                info="How many seconds to keep ringing this member before giving up."
-                                                placeholder="Select option" :floating="false" />
-                                            <GroupElement name="container" :columns="{
-                                                default: {
-                                                    container: 12,
-                                                },
-                                                sm: {
-                                                    container: 4,
-                                                },
-                                            }" />
-                                            <ToggleElement name="prompt" :columns="{
+                                        <SelectElement name="delay" :items="delayOptions" :search="true" :native="false"
+                                            label="Delay" input-type="search" allow-absent autocomplete="off" :columns="{
                                                 default: {
                                                     container: 6,
                                                 },
                                                 sm: {
                                                     container: 4,
                                                 },
-                                            }" align="left" label="Confirm Answer" size="sm"
-                                                info="Enable answer confirmation to prevent voicemails and automated systems from answering a call." />
-                                            <ToggleElement name="enabled" :columns="{
+                                            }" size="sm"
+                                            info="How many seconds to wait before starting to ring this member."
+                                            placeholder="Select option" :floating="false" />
+                                        <SelectElement name="timeout" :items="timeoutOptions" :search="true" :native="false"
+                                            label="Ring for" input-type="search" allow-absent autocomplete="off" :columns="{
                                                 default: {
-                                                    container: 5,
+                                                    container: 6,
                                                 },
                                                 sm: {
                                                     container: 4,
                                                 },
-                                            }" size="sm" label="Active" />
-                                            <!-- <StaticElement name="divider_1" tag="hr" /> -->
-                                        </ObjectElement>
-                                    </template>
-                                </ListElement>
+                                            }" size="sm"
+                                            info="How many seconds to keep ringing this member before giving up."
+                                            placeholder="Select option" :floating="false" />
+                                        <GroupElement name="container" :columns="{
+                                            default: {
+                                                container: 12,
+                                            },
+                                            sm: {
+                                                container: 4,
+                                            },
+                                        }" />
+                                        <ToggleElement name="prompt" :columns="{
+                                            default: {
+                                                container: 6,
+                                            },
+                                            sm: {
+                                                container: 4,
+                                            },
+                                        }" align="left" label="Confirm Answer" size="sm"
+                                            info="Enable answer confirmation to prevent voicemails and automated systems from answering a call." />
+                                        <ToggleElement name="enabled" :columns="{
+                                            default: {
+                                                container: 5,
+                                            },
+                                            sm: {
+                                                container: 4,
+                                            },
+                                        }" size="sm" label="Active" />
+                                        <!-- <StaticElement name="divider_1" tag="hr" /> -->
+                                    </ObjectElement>
+                                </template>
+                            </ListElement>
 
-                                <GroupElement name="container_5" />
-                                <StaticElement name="divider" tag="hr" />
-                                <GroupElement name="container_6" />
-                                <StaticElement name="h3_2" tag="h4" content="When no one in ring group answers"
-                                    description="Forward calls to" />
-                                <SelectElement name="failback_action" :items="localOptions.routing_types" label-prop="name"
-                                    :search="true" :native="false" label="Choose Action" input-type="search"
-                                    autocomplete="off" placeholder="Choose Action" :floating="false" :strict="false"
-                                    :columns="{
-                                        sm: {
-                                            container: 6,
-                                        },
-                                    }" @change="(newValue, oldValue, el$) => {
-    let failback_target = el$.form$.el$('settings.failback_target')
-
-    // only clear when this isn’t the very first time (i.e. oldValue was set)
-    if (oldValue !== null && oldValue !== undefined) {
-        failback_target.clear();
-    }
-
-    // failback_target.clear()
-    failback_target.updateItems()
-}" />
-                                <SelectElement name="failback_target" :items="async (query, input) => {
-                                    let failback_action = input.$parent.el$.form$.el$('settings.failback_action');
-
-                                    try {
-                                        let response = await failback_action.$vueform.services.axios.post(
-                                            options.routes.get_routing_options,
-                                            { category: failback_action.value }
-                                        );
-                                        // console.log(response.data.options);
-                                        return response.data.options;
-                                    } catch (error) {
-                                        emits('error', error);
-                                        return [];  // Return an empty array in case of error
-                                    }
-                                }" :search="true" label-prop="name" :native="false" label="Target" input-type="search"
-                                    allow-absent :object="true" :format-data="formatTarget" autocomplete="off"
-                                    placeholder="Choose Target" :floating="false" :strict="false" :columns="{
-                                        sm: {
-                                            container: 6,
-                                        },
-                                    }" :conditions="[
-    ['settings.failback_action', 'not_empty'],
-    ['settings.failback_action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
-]" />
-
-
-                                <GroupElement name="container_7" />
-                                <StaticElement name="divider" tag="hr" />
-                                <GroupElement name="container_8" />
-                                <TextElement name="name_prefix" label="Caller ID Name Prefix"
-                                    info="Prepend text to the caller’s name when routing through this ring group (e.g. ‘Sales:’ to display ‘Sales: Jane Smith’.)."
-                                    :columns="{
-                                        sm: {
-                                            container: 6,
-                                        },
-                                    }" />
-                                <TextElement name="number_prefix" label="Caller ID Number Prefix"
-                                    info="Prepend text to the caller’s number when routing through this ring group (e.g. ‘555#2135551234’)."
-                                    :columns="{
-                                        sm: {
-                                            container: 6,
-                                        },
-                                    }" />
-                                <TextareaElement name="description" label="Description" :rows="2" />
-
-                                <ButtonElement name="submit" button-label="Save" :submits="true" align="right" />
-
-                            </GroupElement>
-
-                            <GroupElement name="call_forward">
-                                <StaticElement name="h4" tag="h4" content="Call Forwarding"
-                                    description="Automatically forward all calls for this ring group to another destination." />
-                                <ToggleElement name="call_forward_enabled" :labels="{
-                                    on: 'On',
-                                    off: 'Off',
-                                }" />
-                                <SelectElement name="forward_destination" :items="[
-                                    {
-                                        value: 0,
-                                        label: 'Label',
+                            <GroupElement name="container_5" />
+                            <StaticElement name="divider2" tag="hr" />
+                            <GroupElement name="container_6" />
+                            <StaticElement name="h3_2" tag="h4" content="When no one in ring group answers"
+                                description="Forward calls to" />
+                            <SelectElement name="failback_action" :items="localOptions.routing_types" label-prop="name"
+                                :search="true" :native="false" label="Choose Action" input-type="search" autocomplete="off"
+                                placeholder="Choose Action" :floating="false" :strict="false" :columns="{
+                                    sm: {
+                                        container: 6,
                                     },
-                                ]" :search="true" :native="false" input-type="search" autocomplete="off" :create="true"
-                                    placeholder="Select Destination" :floating="false" :strict="false" :columns="{
-                                        sm: {
-                                            container: 6,
-                                        },
-                                    }" :conditions="[['call_forward.call_forward_enabled', '==', true,],]" />
-
-
-
-                                <SelectElement name="failback_action" :items="localOptions.routing_types" label-prop="name"
-                                    :search="true" :native="false" label="Choose Action" input-type="search"
-                                    autocomplete="off" placeholder="Choose Action" :floating="false" :strict="false"
-                                    :columns="{
-                                        sm: {
-                                            container: 6,
-                                        },
-                                    }" @change="(newValue, oldValue, el$) => {
-    let failback_target = el$.form$.el$('settings.failback_target')
+                                }" @change="(newValue, oldValue, el$) => {
+    let failback_target = el$.form$.el$('failback_target')
 
     // only clear when this isn’t the very first time (i.e. oldValue was set)
     if (oldValue !== null && oldValue !== undefined) {
@@ -393,31 +353,192 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
     // failback_target.clear()
     failback_target.updateItems()
 }" />
-                                <SelectElement name="failback_target" :items="async (query, input) => {
-                                    let failback_action = input.$parent.el$.form$.el$('settings.failback_action');
+                            <SelectElement name="failback_target" :items="async (query, input) => {
+                                let failback_action = input.$parent.el$.form$.el$('failback_action');
 
-                                    try {
-                                        let response = await failback_action.$vueform.services.axios.post(
-                                            options.routes.get_routing_options,
-                                            { category: failback_action.value }
-                                        );
-                                        // console.log(response.data.options);
-                                        return response.data.options;
-                                    } catch (error) {
-                                        emits('error', error);
-                                        return [];  // Return an empty array in case of error
-                                    }
-                                }" :search="true" label-prop="name" :native="false" label="Target" input-type="search"
-                                    allow-absent :object="true" :format-data="formatTarget" autocomplete="off"
-                                    placeholder="Choose Target" :floating="false" :strict="false" :columns="{
-                                        sm: {
-                                            container: 6,
-                                        },
-                                    }" :conditions="[
-    ['settings.failback_action', 'not_empty'],
-    ['settings.failback_action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
+                                try {
+                                    let response = await failback_action.$vueform.services.axios.post(
+                                        options.routes.get_routing_options,
+                                        { category: failback_action.value }
+                                    );
+                                    // console.log(response.data.options);
+                                    return response.data.options;
+                                } catch (error) {
+                                    emits('error', error);
+                                    return [];  // Return an empty array in case of error
+                                }
+                            }" :search="true" label-prop="name" :native="false" label="Target" input-type="search"
+                                allow-absent :object="true" :format-data="formatTarget" autocomplete="off"
+                                placeholder="Choose Target" :floating="false" :strict="false" :columns="{
+                                    sm: {
+                                        container: 6,
+                                    },
+                                }" :conditions="[
+    ['failback_action', 'not_empty'],
+    ['failback_action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
 ]" />
-                            </GroupElement>
+
+
+                            <GroupElement name="container_7" />
+                            <StaticElement name="divider3" tag="hr" />
+                            <GroupElement name="container_8" />
+                            <TextElement name="name_prefix" label="Caller ID Name Prefix"
+                                info="Prepend text to the caller’s name when routing through this ring group (e.g. ‘Sales:’ to display ‘Sales: Jane Smith’.)."
+                                :columns="{
+                                    sm: {
+                                        container: 6,
+                                    },
+                                }" />
+                            <TextElement name="number_prefix" label="Caller ID Number Prefix"
+                                info="Prepend text to the caller’s number when routing through this ring group (e.g. ‘555#2135551234’)."
+                                :columns="{
+                                    sm: {
+                                        container: 6,
+                                    },
+                                }" />
+                            <TextareaElement name="description" label="Description" :rows="2" />
+
+                            <ButtonElement name="settings_submit" button-label="Save" :submits="true" align="right" />
+
+                            <!-- </GroupElement> -->
+
+                            <!-- <GroupElement name="call_forward"> -->
+                            <StaticElement name="h4_1" tag="h4" content="Call Forwarding"
+                                description="Automatically forward all calls for this ring group to another destination." />
+                            <ToggleElement name="call_forward_enabled" :labels="{
+                                on: 'On',
+                                off: 'Off',
+                            }" />
+
+                            <SelectElement name="forward_action" :items="localOptions.forwarding_types" :search="true"
+                                :native="false" label="Choose Action" input-type="search" autocomplete="off"
+                                placeholder="Choose Action" :floating="false" :strict="false"
+                                :conditions="[['call_forward_enabled', '==', true],]" :columns="{
+                                    sm: {
+                                        container: 6,
+                                    },
+                                }" @change="(newValue, oldValue, el$) => {
+    let forward_target = el$.form$.el$('forward_target')
+
+    // only clear when this isn’t the very first time (i.e. oldValue was set)
+    if (oldValue !== null && oldValue !== undefined) {
+        forward_target.clear();
+    }
+
+    forward_target.updateItems()
+}" />
+                            <SelectElement name="forward_target" :items="async (query, input) => {
+                                let forward_action = input.$parent.el$.form$.el$('forward_action');
+
+                                try {
+                                    let response = await forward_action.$vueform.services.axios.post(
+                                        options.routes.get_routing_options,
+                                        { category: forward_action.value }
+                                    );
+                                    // console.log(response.data.options);
+                                    return response.data.options;
+                                } catch (error) {
+                                    emits('error', error);
+                                    return [];  // Return an empty array in case of error
+                                }
+                            }" :search="true" label-prop="name" :native="false" label="Target" input-type="search"
+                                allow-absent :object="true" :format-data="formatTarget" autocomplete="off"
+                                placeholder="Choose Target" :floating="false" :strict="false" :columns="{
+                                    sm: {
+                                        container: 6,
+                                    },
+                                }" :conditions="[
+    ['call_forward_enabled', '==', true],
+    ['forward_action', 'not_empty'],
+    ['forward_action', 'not_in', ['external']]
+]" />
+
+                            <TextElement name="forward_external_target" label="Target" placeholder="Enter External Number"
+                                :floating="false" :columns="{
+                                    sm: {
+                                        container: 6,
+                                    },
+                                }" :conditions="[
+    ['call_forward_enabled', '==', true],
+    ['forward_action', 'not_empty'],
+    ['forward_action', 'in', ['external']]
+]" />
+
+                            <ButtonElement name="call_forward_submit" button-label="Save" :submits="true" align="right" />
+
+                            <!-- </GroupElement> -->
+
+                            <!-- Advanced tab -->
+
+                            <StaticElement name="h4_3" tag="h4" content="Advanced"
+                                description="Manage ring group's advanced settings" />
+                            <TextElement name="caller_id_name" label="Outbound Caller ID Name" description="Set the caller ID name for outbound external calls.
+" :columns="{
+    sm: {
+        container: 6,
+    },
+}" />
+                            <TextElement name="caller_id_number" label="Outbound Caller ID Number" description="Set the caller ID number for outbound external calls.
+" :columns="{
+    sm: {
+        container: 6,
+    },
+}" />
+                            <TextElement name="distinctive_ring" label="Distinctive Ring" :columns="{
+                                sm: {
+                                    container: 6,
+                                },
+                            }" />
+                            <GroupElement name="container5" size="sm" />
+                            <SelectElement name="ringback" :items="localOptions.ring_back_tones" :groups="true" default="${us-ring}" :search="true" :native="false" label="Ringback Tone" input-type="search" autocomplete="off" :strict="false"
+                                description="Specify the sound or tone the caller hears while waiting for the destination to answer the call." :columns="{
+                                    sm: {
+                                        container: 6,
+                                    },
+                                }" />
+                            <ToggleElement name="destination_call_forwarding" align="left"
+                                label="Allow Destination Call Forwarding Rules"
+                                info="Enable per‑destination call forwarding rules when Advanced call distribution is selected for the ring group."
+                                default="true" />
+                            <ToggleElement name="destination_sequential_ring" align="left"
+                                label="Allow Destination Sequential Ring Rules"
+                                info="Enable per‑destination call sequential routing rules when Advanced call distribution is selected for the ring group."
+                                default="true" />
+                            <ToggleElement name="missed_call_notifications" align="left"
+                                label="Enable Missed Call Notifications" default="true" :columns="{
+                                    md: {
+                                        container: 4,
+                                    },
+                                    sm: {
+                                        container: 6,
+                                    },
+                                    default: {
+                                        container: 6,
+                                    },
+                                }" />
+                            <TextElement name="notification_email" label="Notification Email" :columns="{
+                                sm: {
+                                    container: 6,
+                                },
+                            }" :conditions="[
+    [
+        'missed_call_notifications',
+        '==',
+        true,
+    ],
+]" />
+<GroupElement name="container6" size="sm" />
+                            <TextElement name="forward_toll_allow" label="Forward Toll Allow" :columns="{
+                                sm: {
+                                    container: 6,
+                                },
+                            }" />
+                            <GroupElement name="container" />
+                            <TextElement name="context" label="Context" :columns="{
+                                sm: {
+                                    container: 6,
+                                },
+                            }" />
 
                         </FormElements>
                     </div>
@@ -448,12 +569,8 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
 import { onMounted, reactive, ref, watch, computed, nextTick } from "vue";
 import { usePage } from '@inertiajs/vue3';
 
-import InputField from "../general/InputField.vue";
-import InputFieldWithIcon from "@generalComponents/InputFieldWithIcon.vue";
-import Popover from "@generalComponents/Popover.vue";
-import Toggle from "@generalComponents/Toggle.vue";
+
 import DeleteConfirmationModal from "../modal/DeleteConfirmationModal.vue";
-import LabelInputOptional from "../general/LabelInputOptional.vue";
 import Spinner from "@generalComponents/Spinner.vue";
 import { InformationCircleIcon } from "@heroicons/vue/24/outline";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
@@ -463,7 +580,6 @@ import UpdateGreetingModal from "../modal/UpdateGreetingModal.vue";
 import NewGreetingForm from './NewGreetingForm.vue';
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
-import { registerLicense } from '@syncfusion/ej2-base';
 
 
 const props = defineProps({
@@ -523,7 +639,30 @@ onMounted(() => {
 
         failback_action: props.options.ring_group.timeout_action ?? null,
         failback_target: { value: props.options.ring_group.timeout_target_uuid ?? null, extension: props.options.ring_group.timeout_target_extension ?? null, name: props.options.ring_group.timeout_target_name ?? null },
-        members: memberItems
+        members: memberItems,
+
+        call_forward_enabled: props.options.ring_group.ring_group_forward_enabled === 'true',
+        forward_action: props.options.ring_group.forward_action ?? null,
+        // only set forward_external_target when forwarding_action==='external'
+        forward_external_target: props.options.ring_group.forward_action === 'external'
+            ? props.options.ring_group.forward_target_extension ?? null
+            : null,
+
+        // for any other action, set forward_target
+        forward_target: props.options.ring_group.forward_action != 'external'
+            ? { value: props.options.ring_group.forward_target_uuid ?? null, extension: props.options.ring_group.forward_target_extension ?? null, name: props.options.ring_group.forward_target_name ?? null }
+            : null,
+
+        caller_id_name: props.options.ring_group.ring_group_caller_id_name ?? null,
+        caller_id_number: props.options.ring_group.ring_group_caller_id_number ?? null,
+        distinctive_ring: props.options.ring_group.ring_group_distinctive_ring ?? null,
+        ringback: props.options.ring_group.ring_group_ringback ?? null,
+        destination_call_forwarding: props.options.ring_group.ring_group_call_forward_enabled === 'true',
+        destination_sequential_ring: props.options.ring_group.ring_group_follow_me_enabled === 'true',
+        missed_call_notifications: props.options.ring_group.ring_group_missed_call_app === 'email',
+        notification_email: props.options.ring_group.ring_group_missed_call_data ?? null,
+        forward_toll_allow: props.options.ring_group.ring_group_forward_toll_allow ?? null,
+        context: props.options.ring_group.ring_group_context ?? null,
     })
 
     form$.value.clean()
@@ -567,7 +706,7 @@ const availableMembers = computed(() => {
 
 const addSelectedMembers = () => {
     // console.log(form$.value.el$('selectedMembers').value);
-    const selectedItems = form$.value.el$('settings.selectedMembers').value.map(item => {
+    const selectedItems = form$.value.el$('selectedMembers').value.map(item => {
         return {
             uuid: item.destination ? item.value : null,              // if a destination exists, use the item.value as uuid; otherwise, uuid is null
             destination: item.destination ? item.destination : item.label,  // if item.destination exists, use it; otherwise, use the label
@@ -579,13 +718,13 @@ const addSelectedMembers = () => {
         }
     });
 
-    const currentMembers = form$.value.el$('settings.members').value
+    const currentMembers = form$.value.el$('members').value
 
     form$.value.update({
         members: [...currentMembers, ...selectedItems]
     })
 
-    form$.value.el$('settings.selectedMembers').update([]); // clear selection
+    form$.value.el$('selectedMembers').update([]); // clear selection
 };
 
 
@@ -661,15 +800,30 @@ const submitForm = async (FormData, form$) => {
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
 
-    // console.log(requestData);
+    console.log(requestData);
     return await form$.$vueform.services.axios.put(localOptions.routes.update_route, requestData)
 };
+
+function clearAllErrors(elements) {
+    Object.values(elements).forEach(el$ => {
+        // clear this element’s messages
+        el$.messageBag?.clear()
+        console.log(el$.elements$)
+        // if it has nested elements, recurse into them
+        if (el$.elements$ && Object.keys(el$.elements$).length) {
+            clearAllErrors(el$.elements$)
+        }
+    })
+}
 
 const handleResponse = (response, form$) => {
     // Clear custom element errors
     Object.values(form$.elements$).forEach((el$) => {
         el$.messageBag?.clear()
     })
+
+    // clear every messageBag, top‑level and nested
+    clearAllErrors(form$.elements$)
 
     // Display custom errors for elements
     if (response.data.errors) {
@@ -876,11 +1030,11 @@ const confirmDeleteAction = () => {
             if (response.data.success) {
                 // Remove the deleted greeting from the localOptions.greetings array
                 localOptions.greetings = localOptions.greetings.filter(
-                    (greeting) => greeting.value !== String(form$.value.el$('settings.greeting').value)
+                    (greeting) => greeting.value !== String(form$.value.el$('greeting').value)
                 );
 
                 // Reset the selected greeting ID
-                form$.value.el$('settings.greeting').update(localOptions.greetings);
+                form$.value.el$('greeting').update(localOptions.greetings);
 
                 // Notify the parent component or show a local success message
                 emits('success', 'success', response.data.messages);
@@ -902,9 +1056,9 @@ const handleGreetingUpdate = (updatedGreeting) => {
         // Update the local greetings array
         localOptions.greetings[index] = updatedGreeting;
 
-        form$.value.el$('settings.greeting').update(localOptions.greetings);
+        form$.value.el$('greeting').update(localOptions.greetings);
 
-        form$.value.el$('settings.greeting').clear()
+        form$.value.el$('greeting').clear()
     }
 
     axios
@@ -944,7 +1098,6 @@ const handleModalClose = () => {
     showNewGreetingModal.value = false;
 }
 
-registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 
 </script>
 

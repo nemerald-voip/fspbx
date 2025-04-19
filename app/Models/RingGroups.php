@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
 use App\Services\CallRoutingOptionsService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+use function PHPUnit\Framework\isEmpty;
 
 class RingGroups extends Model
 {
@@ -19,6 +20,9 @@ class RingGroups extends Model
     protected $primaryKey = 'ring_group_uuid';
     public $incrementing = false;
     protected $keyType = 'string';
+    protected $timeoutOptionDetailsCache;
+    protected $rorwardDetailsCache;
+
 
     /**
      * The attributes that are mass assignable.
@@ -64,16 +68,22 @@ class RingGroups extends Model
      * Reverse‐engineer ring_group_timeout_app + ring_group_timeout_data
      * into a single array of details.
      */
+
     protected function getTimeoutOptionDetailsAttribute(): ?array
     {
+        if ($this->timeoutOptionDetailsCache !== null) {
+            return $this->timeoutOptionDetailsCache;
+        }
+
         if (! $this->ring_group_timeout_app) {
-            return null;
+            return $this->timeoutOptionDetailsCache = null;
         }
 
         $service = new CallRoutingOptionsService;
-        return $service->reverseEngineerRingGroupExitAction(
-            $this->ring_group_timeout_app . ' ' . $this->ring_group_timeout_data
-        );
+        return $this->timeoutOptionDetailsCache = $service
+            ->reverseEngineerRingGroupExitAction(
+                "{$this->ring_group_timeout_app} {$this->ring_group_timeout_data}"
+            );
     }
 
     public function getTimeoutTargetUuidAttribute(): ?string
@@ -112,6 +122,53 @@ class RingGroups extends Model
     public function getDestroyRouteAttribute(): string
     {
         return route('ring-groups.destroy', $this);
+    }
+
+    protected function getForwardDetailsAttribute(): ?array
+    {
+        if ($this->forwardDetailsCache !== null) {
+            return $this->forwardDetailsCache;
+        }
+
+        if ($this->ring_group_forward_enabled != 'true' || !isEmpty($this->ring_group_forward_destination)) {
+            return $this->timeoutOptionDetailsCache = null;
+        }
+
+        $service = new CallRoutingOptionsService;
+        return $this->forwardDetailsCache = $service
+            ->reverseEngineerForwardAction($this->ring_group_forward_destination);
+
+    }
+
+
+    public function getForwardTargetUuidAttribute(): ?string
+    {
+        return $this->forward_details['option'] ?? null;
+    }
+
+    public function getForwardActionAttribute(): ?string
+    {
+        return $this->forward_details['type'] ?? null;
+    }
+
+    public function getForwardActionDisplayAttribute(): ?string
+    {
+        if (! $this->forward_details['type']) {
+            return null;
+        }
+
+        return (new CallRoutingOptionsService)
+            ->getFriendlyTypeName($this->forward_details['type']);
+    }
+
+    public function getForwardTargetNameAttribute(): ?string
+    {
+        return $this->forward_details['name'] ?? null;
+    }
+
+    public function getForwardTargetExtensionAttribute(): ?string
+    {
+        return $this->forward_details['extension'] ?? null;
     }
 
 

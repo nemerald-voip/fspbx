@@ -232,6 +232,11 @@ class RingGroupsController extends Controller
                     'timeout_target_name',
                     'timeout_target_extension',
                     'destroy_route',
+                    'forward_target_uuid',
+                    'forward_action',
+                    'forward_action_display',
+                    'forward_target_name',
+                    'forward_target_extension',
                 ]);
 
                 // Define the update route
@@ -245,6 +250,7 @@ class RingGroupsController extends Controller
 
             $routingOptionsService = new CallRoutingOptionsService;
             $routingTypes = $routingOptionsService->routingTypes;
+            $forwardingTypes = $routingOptionsService->forwardingTypes;
 
             $routes = [
                 'update_route' => $updateRoute ?? null,
@@ -309,6 +315,7 @@ class RingGroupsController extends Controller
 
             $sampleMessage = 'Thank you for contacting the Sales Department. Please hold the line; a representative will be with you shortly.';
 
+            $ring_back_tones = getRingBackTonesCollectionGrouped(session('domain_uuid'));
 
             // Construct the itemOptions object
             $itemOptions = [
@@ -319,11 +326,13 @@ class RingGroupsController extends Controller
                 'call_distributions' => $call_distributions,
                 'routes' => $routes,
                 'routing_types' => $routingTypes,
+                'forwarding_types' => $forwardingTypes,
                 'voices' => $openAiVoices,
                 'speeds' => $openAiSpeeds,
                 'phone_call_instructions' => $phoneCallInstructions,
                 'sample_message' => $sampleMessage,
                 'greetings' => $greetingsArray,
+                'ring_back_tones' => $ring_back_tones,
                 // Define options for other fields as needed
             ];
             // logger($itemOptions);
