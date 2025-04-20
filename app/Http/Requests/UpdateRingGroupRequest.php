@@ -109,6 +109,34 @@ class UpdateRingGroupRequest extends FormRequest
                 'required_unless:forward_action,external',
                 'string',
             ],
+
+            'caller_id_name'             => ['nullable', 'string', 'max:20'],
+            'caller_id_number'           => [
+                'nullable',
+                'string',
+            ],
+
+            'distinctive_ring'           => ['nullable', 'string', 'max:30'],
+            'ringback'                   => [
+                'required',
+                'string',
+            ],
+            'destination_call_forwarding'=> ['boolean'],
+            'destination_sequential_ring'=> ['boolean'],
+
+            'missed_call_notifications' => ['boolean'],
+            'notification_email' => [
+                'required_if:missed_call_notifications,true',
+                'string', // or 'uuid' if it must be a UUID
+            ],
+
+            'forward_toll_allow'         => [
+                'nullable',
+            ],
+
+            'context'                    => [
+                'required',
+            ],
         ];
     }
 
@@ -118,7 +146,8 @@ class UpdateRingGroupRequest extends FormRequest
             'failback_action.required' => 'The no answer action is required.',
             'members.*.delay.required_with' =>  'The member setting field is required',
             'members.*.timeout.required_with' =>  'The member setting is required',
-            'forward_action.required_if' =>  'The action is required when call forwarding is enabled.'
+            'forward_action.required_if' =>  'The action is required when call forwarding is enabled.',
+            'notification_email.required_if' => 'The notification email is required when missed call notifications are enabled.',
         ];
     }
 

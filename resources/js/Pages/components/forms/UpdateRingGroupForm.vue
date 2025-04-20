@@ -66,7 +66,8 @@
                                 'notification_email',
                                 'forward_toll_allow',
                                 'container',
-                                'context'
+                                'context',
+                                'advanced_submit'
                             ]" />
                         </FormTabs>
                     </div>
@@ -490,8 +491,11 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                 },
                             }" />
                             <GroupElement name="container5" size="sm" />
-                            <SelectElement name="ringback" :items="localOptions.ring_back_tones" :groups="true" default="${us-ring}" :search="true" :native="false" label="Ringback Tone" input-type="search" autocomplete="off" :strict="false"
-                                description="Specify the sound or tone the caller hears while waiting for the destination to answer the call." :columns="{
+                            <SelectElement name="ringback" :items="localOptions.ring_back_tones" :groups="true"
+                                default="${us-ring}" :search="true" :native="false" label="Ringback Tone"
+                                input-type="search" autocomplete="off" :strict="false"
+                                description="Specify the sound or tone the caller hears while waiting for the destination to answer the call."
+                                :columns="{
                                     sm: {
                                         container: 6,
                                     },
@@ -527,7 +531,7 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
         true,
     ],
 ]" />
-<GroupElement name="container6" size="sm" />
+                            <GroupElement name="container6" size="sm" />
                             <TextElement name="forward_toll_allow" label="Forward Toll Allow" :columns="{
                                 sm: {
                                     container: 6,
@@ -539,6 +543,8 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                     container: 6,
                                 },
                             }" />
+
+                            <ButtonElement name="advanced_submit" button-label="Save" :submits="true" align="right" />
 
                         </FormElements>
                     </div>
@@ -666,7 +672,7 @@ onMounted(() => {
     })
 
     form$.value.clean()
-    console.log(form$.value.data);
+    // console.log(form$.value.data);
 })
 
 
@@ -800,30 +806,42 @@ const submitForm = async (FormData, form$) => {
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
 
-    console.log(requestData);
+    // console.log(requestData);
     return await form$.$vueform.services.axios.put(localOptions.routes.update_route, requestData)
 };
 
-function clearAllErrors(elements) {
-    Object.values(elements).forEach(el$ => {
-        // clear this element’s messages
-        el$.messageBag?.clear()
-        console.log(el$.elements$)
-        // if it has nested elements, recurse into them
-        if (el$.elements$ && Object.keys(el$.elements$).length) {
-            clearAllErrors(el$.elements$)
-        }
-    })
+function clearErrorsRecursive(el$) {
+    // clear this element’s errors
+    el$.messageBag?.clear()
+
+    // if it has child elements, recurse into each
+    if (el$.children$) {
+        Object.values(el$.children$).forEach(childEl$ => {
+            clearErrorsRecursive(childEl$)
+        })
+    }
 }
 
 const handleResponse = (response, form$) => {
     // Clear custom element errors
-    Object.values(form$.elements$).forEach((el$) => {
-        el$.messageBag?.clear()
+    // Object.values(form$.elements$).forEach((el$) => {
+    //     el$.messageBag?.clear()
+
+    //     if (el$.type === 'list') {
+    //         Object.values(el$.children$).forEach(childEl$ => {
+    //                 Object.values(childEl$.children$).forEach(childEl$ => {
+    //                     childEl$.messageBag?.clear()
+    //                 });
+    //         });
+    //     }
+    // })
+
+    Object.values(form$.elements$).forEach(el$ => {
+        clearErrorsRecursive(el$)
     })
 
     // clear every messageBag, top‑level and nested
-    clearAllErrors(form$.elements$)
+    // clearAllErrors(form$.elements$)
 
     // Display custom errors for elements
     if (response.data.errors) {
