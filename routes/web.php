@@ -144,11 +144,12 @@ Route::group(['middleware' => 'auth'], function () {
     // Domain Groups
     Route::resource('domaingroups', DomainGroupsController::class);
 
-    // Ring Groups
-    Route::resource('ring-groups', RingGroupsController::class);
-    Route::post('ring-groups/item-options', [RingGroupsController::class, 'getItemOptions'])->name('ring-groups.item.options');
-    Route::post('/ring-groups/bulk-delete', [RingGroupsController::class, 'bulkDelete'])->name('ring-groups.bulk.delete');
-    Route::post('/ring-groups/select-all', [RingGroupsController::class, 'selectAll'])->name('ring-groups.select.all');
+    // // Ring Groups
+    Route::get('ring-groups', [RingGroupsController::class, 'index'])->name('ring-groups.index');
+    // Route::resource('ring-groups', RingGroupsController::class);
+    // Route::post('ring-groups/item-options', [RingGroupsController::class, 'getItemOptions'])->name('ring-groups.item.options');
+    // Route::post('/ring-groups/bulk-delete', [RingGroupsController::class, 'bulkDelete'])->name('ring-groups.bulk.delete');
+    // Route::post('/ring-groups/select-all', [RingGroupsController::class, 'selectAll'])->name('ring-groups.select.all');
 
     //Voicemails
     Route::resource('voicemails', VoicemailController::class);

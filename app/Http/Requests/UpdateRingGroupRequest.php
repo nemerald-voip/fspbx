@@ -39,7 +39,7 @@ class UpdateRingGroupRequest extends FormRequest
                 Rule::in([
                     'enterprise',
                     'simultaneous',
-                    'sequential',
+                    'sequence',
                     'random',
                     'rollover',
                     // …add any other strategies you support
@@ -153,26 +153,27 @@ class UpdateRingGroupRequest extends FormRequest
 
     public function prepareForValidation()
     {
-
-        logger($this);
-        if ($this->get('ring_group_greeting') == 'disabled') {
-            $this->merge([
-                'ring_group_greeting' => null
-            ]);
+        $input = $this->all();
+    
+        $callDistribution = $input['call_distribution'] ?? null;
+    
+        if (isset($input['members']) && is_array($input['members'])) {
+            foreach ($input['members'] as $index => $member) {
+                // If delay is missing AND strategy is sequence/random/rollover, calculate it
+                if (
+                    in_array($callDistribution, ['sequence', 'random', 'rollover'], true)
+                    && (!isset($member['delay']) || $member['delay'] === null)
+                ) {
+                    $input['members'][$index]['delay'] = $index * 5;
+                }
+    
+                // fallback delay default
+                if (!isset($input['members'][$index]['delay'])) {
+                    $input['members'][$index]['delay'] = 0;
+                }
+            }
         }
-        if ($this->get('ring_group_missed_call_category') == 'disabled') {
-            $this->merge([
-                'ring_group_missed_call_data' => null
-            ]);
-        }
-        if ($this->get('timeout_category') == 'disabled') {
-            $this->merge([
-                'ring_group_timeout_data' => null
-            ]);
-        } else {
-            $this->merge([
-                'ring_group_timeout_data' => $this->get('timeout_action_' . $this->get('timeout_category'))
-            ]);
-        }
+    
+        $this->replace($input);
     }
 }

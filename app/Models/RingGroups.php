@@ -131,7 +131,12 @@ class RingGroups extends Model
         }
 
         if ($this->ring_group_forward_enabled != 'true' || !isEmpty($this->ring_group_forward_destination)) {
-            return $this->timeoutOptionDetailsCache = null;
+            return $this->forwardDetailsCache = [
+                'type' => null,
+                'extension' => null,
+                'option' => null,
+                'name' => null
+            ];
         }
 
         $service = new CallRoutingOptionsService;

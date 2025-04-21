@@ -289,8 +289,11 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                                     container: 4,
                                                 },
                                             }" size="sm"
+                                            :conditions="[['call_distribution', 'not_in', ['sequence', 'rollover', 'random']]]"
                                             info="How many seconds to wait before starting to ring this member."
                                             placeholder="Select option" :floating="false" />
+
+
                                         <SelectElement name="timeout" :items="timeoutOptions" :search="true" :native="false"
                                             label="Ring for" input-type="search" allow-absent autocomplete="off" :columns="{
                                                 default: {
@@ -302,6 +305,16 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                             }" size="sm"
                                             info="How many seconds to keep ringing this member before giving up."
                                             placeholder="Select option" :floating="false" />
+
+                                        <GroupElement name="container" :columns="{
+                                            default: {
+                                                container: 6,
+                                            },
+                                            sm: {
+                                                container: 4,
+                                            },
+                                        }"
+                                            :conditions="[['call_distribution', 'in', ['sequence', 'rollover', 'random']]]" />
                                         <GroupElement name="container" :columns="{
                                             default: {
                                                 container: 12,
@@ -309,7 +322,7 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                             sm: {
                                                 container: 4,
                                             },
-                                        }" />
+                                        }"  :conditions="[['call_distribution', 'not_in', ['sequence', 'rollover', 'random']]]"/>
                                         <ToggleElement name="prompt" :columns="{
                                             default: {
                                                 container: 6,
@@ -639,7 +652,7 @@ onMounted(() => {
         greeting: props.options.ring_group.ring_group_greeting
             ? props.options.greetings.find(g => g.value === props.options.ring_group.ring_group_greeting) || null
             : null,
-        call_distribution: props.options.ring_group.call_distributions
+        call_distribution: props.options.ring_group.ring_group_strategy
             ? props.options.call_distributions.find(rp => rp.value === props.options.ring_group.ring_group_strategy)?.value || 'enterprise'
             : 'enterprise',
 
