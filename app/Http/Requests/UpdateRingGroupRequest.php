@@ -23,10 +23,11 @@ class UpdateRingGroupRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'ring_group_uuid'   => ['required', 'uuid', 'exists:v_ring_groups,ring_group_uuid'],
-            'ring_group_name'              => ['required', 'string', 'max:75'],
+            'ring_group_uuid'   => ['sometimes','required', 'uuid', 'exists:v_ring_groups,ring_group_uuid'],
+            'ring_group_name'              => ['sometimes', 'required', 'string', 'max:75'],
 
             'ring_group_extension' => [
+                'sometimes',
                 'required',
                 'numeric',
                 new UniqueExtension($this->get('ring_group_uuid')),
@@ -35,6 +36,7 @@ class UpdateRingGroupRequest extends FormRequest
                 'nullable',
             ],
             'ring_group_strategy' => [
+                'sometimes',
                 'required',
                 Rule::in([
                     'enterprise',
@@ -59,6 +61,7 @@ class UpdateRingGroupRequest extends FormRequest
 
             // Fail‑back logic: action + optional target
             'failback_action' => [
+                'sometimes',
                 'required',
             ],
 
@@ -108,8 +111,6 @@ class UpdateRingGroupRequest extends FormRequest
                 function ($attribute, $value, $fail) {
                     $enabled = $this->boolean('ring_group_forward_enabled');
                     $action = $this->input('forward_action');
-
-                    logger($value);
 
                     if ($enabled && $action && $action !== 'external' && empty($value)) {
                         $fail('The forward target is required');

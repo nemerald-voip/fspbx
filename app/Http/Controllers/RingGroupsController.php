@@ -430,7 +430,6 @@ class RingGroupsController extends Controller
                 'messages' => ['error' => ['Something went wrong while updating.']]
             ], 500);
         }
-
     }
 
     public function generateDialPlanXML($ringGroup): void
@@ -501,13 +500,11 @@ class RingGroupsController extends Controller
         }
 
         $validated = $request->validated();
+        logger($validated);
         $domain_uuid = session('domain_uuid');
 
         try {
             DB::beginTransaction();
-
-            $timeoutData = $this->buildExitDestinationAction($validated);
-            $callTimeout = $this->calculateTimeout($validated);
 
             foreach (['ring_group_forward_enabled', 'ring_group_call_forward_enabled', 'ring_group_follow_me_enabled'] as $key) {
                 if (array_key_exists($key, $validated)) {
@@ -515,16 +512,32 @@ class RingGroupsController extends Controller
                 }
             }
 
+            $callTimeout = $this->calculateTimeout($validated);
             $updateData = array_merge($validated, [
-                'ring_group_call_timeout'       => $callTimeout,
-                'ring_group_timeout_app'        => $timeoutData['action'],
-                'ring_group_timeout_data'       => $timeoutData['data'],
-                'ring_group_forward_destination' => !empty($validated['ring_group_forward_enabled'])
-                    ? ($request->input('forward_action') === 'external'
-                        ? $request->input('forward_external_target')
-                        : $request->input('forward_target'))
-                    : null,
+                'ring_group_call_timeout' => $callTimeout,
             ]);
+
+
+            // Add timeout app/data only if failback info exists
+            if ($request->has('failback_action') && $request->has('failback_target')) {
+                $timeoutData = $this->buildExitDestinationAction($validated);
+                $updateData['ring_group_timeout_app'] = $timeoutData['action'];
+                $updateData['ring_group_timeout_data'] = $timeoutData['data'];
+            }
+
+            // Add forward destination only if all parts are present
+            if (
+                !empty($validated['ring_group_forward_enabled'])
+                && $request->has('forward_action')
+                && ($request->has('forward_target') || $request->has('forward_external_target'))
+            ) {
+                $updateData['ring_group_forward_destination'] = $this->buildForwardDestinationTarget($validated);
+            }
+
+            if (!empty($failbackData)) {
+                $updateData['ring_group_timeout_app'] = $failbackData['action'];
+                $updateData['ring_group_timeout_data'] = $failbackData['data'];
+            }
 
             // Only update missed call fields if they're present in the request
             if ($request->has('missed_call_notifications')) {
@@ -584,33 +597,33 @@ class RingGroupsController extends Controller
                 'messages' => ['error' => ['Access denied.']]
             ], 403);
         }
-    
+
         try {
             DB::beginTransaction();
-    
+
             $domain_uuid = session('domain_uuid');
             $uuids = $request->input('items');
-    
+
             $ringGroups = RingGroups::where('domain_uuid', $domain_uuid)
                 ->whereIn('ring_group_uuid', $uuids)
                 ->get();
-    
+
             foreach ($ringGroups as $ringGroup) {
                 // Delete destinations
                 $ringGroup->destinations()->delete();
-    
+
                 // Delete dialplan (if exists)
                 if ($ringGroup->dialplan_uuid) {
                     Dialplans::where('dialplan_uuid', $ringGroup->dialplan_uuid)->delete();
                 }
-    
+
                 // Delete ring group itself
                 $ringGroup->delete();
-    
+
                 // Clear FusionPBX cache per ring group
                 FusionCache::clear("dialplan:" . $ringGroup->ring_group_context);
             }
-    
+
             // Reload XML from FreeSWITCH
             $fp = event_socket_create(
                 config('eventsocket.ip'),
@@ -618,22 +631,22 @@ class RingGroupsController extends Controller
                 config('eventsocket.password')
             );
             event_socket_request($fp, 'bgapi reloadxml');
-    
+
             DB::commit();
-    
+
             return response()->json([
                 'messages' => ['success' => ['Selected ring group(s) were deleted successfully.']]
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
             logger('RingGroups bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
-    
+
             return response()->json([
                 'messages' => ['error' => ['An error occurred while deleting the selected ring group(s).']]
             ], 500);
         }
     }
-    
+
 
     /**
      * Helper function to build destination action based on exit action.
@@ -670,6 +683,31 @@ class RingGroupsController extends Controller
                 return [];
         }
     }
+
+    /**
+     * Helper function to build destination action based on exit action.
+     */
+    protected function buildForwardDestinationTarget($inputs)
+    {
+        switch ($inputs['forward_action']) {
+            case 'extensions':
+            case 'ring_groups':
+            case 'ivrs':
+            case 'time_conditions':
+            case 'contact_centers':
+            case 'faxes':
+            case 'call_flows':
+                return  $inputs['forward_target'];
+            case 'voicemails':
+                return '*99' . $inputs['forward_target'];
+                // Add other cases as necessary for different types
+            case 'external':
+                return $inputs['forward_external_target'];
+            default:
+                return null;
+        }
+    }
+
 
     protected function calculateTimeout(array $validated): int
     {

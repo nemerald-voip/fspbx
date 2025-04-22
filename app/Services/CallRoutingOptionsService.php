@@ -46,7 +46,7 @@ class CallRoutingOptionsService
         ['value' => 'contact_centers', 'label' => 'Contact Center'],
         ['value' => 'faxes', 'label' => 'Fax'],
         ['value' => 'call_flows', 'label' => 'Call Flow'],
-        ['value' => 'recordings', 'label' => 'Play Greeting'],
+        // ['value' => 'recordings', 'label' => 'Play Greeting'],
         ['value' => 'external', 'label' => 'External Number'],
     ];
 
@@ -355,12 +355,10 @@ class CallRoutingOptionsService
                 return $this->mapDialplanToRoutingOption($dialplan, $destination);
             }
 
-            
-
             // Check if destination is voicemail
             if ((substr($destination, 0, 3) == '*99') !== false) {
                 $voicemail = Voicemails::where('domain_uuid', session('domain_uuid'))
-                    ->where('voicemail_id', $destination)
+                    ->where('voicemail_id', substr($destination, 3))
                     ->with(['extension' => function ($query) {
                         $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
                             ->where('domain_uuid', session('domain_uuid'));
