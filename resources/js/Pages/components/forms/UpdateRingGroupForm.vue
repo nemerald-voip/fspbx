@@ -688,6 +688,7 @@ onMounted(() => {
         ring_group_missed_call_data: props.options.ring_group.ring_group_missed_call_data ?? null,
         forward_toll_allow: props.options.ring_group.ring_group_forward_toll_allow ?? null,
         ring_group_context: props.options.ring_group.ring_group_context ?? null,
+        ring_group_description: props.options.ring_group.ring_group_description ?? null,
     })
 
     form$.value.clean()

@@ -558,7 +558,7 @@ class RingGroupsController extends Controller
                         'destination_number'  => $member['destination'] ?? null,
                         'destination_delay'   => $member['delay'] ?? null,
                         'destination_timeout' => $member['timeout'] ?? null,
-                        'destination_prompt'  => $member['prompt'] ?? null,
+                        'destination_prompt'  => $member['prompt'] ? 1: null,
                         'destination_enabled' => !empty($member['enabled']) ? 'true' : 'false',
                     ]);
                 }
