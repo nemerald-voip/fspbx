@@ -1,9 +1,8 @@
 import { createApp, h } from 'vue';
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
-// import { ZiggyVue } from '../../vendor/tightenco/ziggy/dist/vue.m';
-// import { ZiggyVue } from 'ziggy-js';
-
+import Vueform from '@vueform/vueform';
+import vueformConfig from './vueform.config.js';
 
 
 import './bootstrap';
@@ -33,14 +32,17 @@ function resolvePage(name) {
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: async (name) => await resolvePage(name),
-    //.then((module) => module.default),
     setup({ el, App, props, plugin }) {
-        axios.defaults.withCredentials = true;
-
-        axios.get('/sanctum/csrf-cookie').then(() => {
-            createApp({ render: () => h(App, props) })
-                .use(plugin)
-                .mount(el);
-        });
+      const vueApp = createApp({ render: () => h(App, props) });
+  
+      vueApp.use(plugin);
+      vueApp.use(Vueform, vueformConfig); // ✅ register Vueform IMMEDIATELY here
+  
+      // MOUNT FIRST (no await for CSRF token)
+      vueApp.mount(el);
+  
+      // THEN after mounting do CSRF, etc
+      axios.defaults.withCredentials = true;
+      axios.get('/sanctum/csrf-cookie');
     }
-});
+  });

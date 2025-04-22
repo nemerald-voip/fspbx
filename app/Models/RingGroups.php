@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
+use App\Services\CallRoutingOptionsService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+
+use function PHPUnit\Framework\isEmpty;
 
 class RingGroups extends Model
 {
@@ -18,6 +20,9 @@ class RingGroups extends Model
     protected $primaryKey = 'ring_group_uuid';
     public $incrementing = false;
     protected $keyType = 'string';
+    protected $timeoutOptionDetailsCache;
+    protected $rorwardDetailsCache;
+
 
     /**
      * The attributes that are mass assignable.
@@ -58,27 +63,124 @@ class RingGroups extends Model
         'update_user'
     ];
 
+
     /**
-     * The booted method of the model
-     *
-     * Define all attributes here like normal code
-
+     * Reverse‐engineer ring_group_timeout_app + ring_group_timeout_data
+     * into a single array of details.
      */
-    protected static function booted()
+
+    protected function getTimeoutOptionDetailsAttribute(): ?array
     {
-        // static::saving(function ($model) {
+        if ($this->timeoutOptionDetailsCache !== null) {
+            return $this->timeoutOptionDetailsCache;
+        }
 
+        if (! $this->ring_group_timeout_app) {
+            return $this->timeoutOptionDetailsCache = [
+                'type' => null,
+                'extension' => null,
+                'option' => null,
+                'name' => null
+            ];
+        }
 
-
-        // });
-
-        // static::retrieved(function ($model) {
-
-        //     $model->destroy_route = route('devices.destroy', $model);
-
-        //     return $model;
-        // });
+        $service = new CallRoutingOptionsService;
+        return $this->timeoutOptionDetailsCache = $service
+            ->reverseEngineerRingGroupExitAction(
+                "{$this->ring_group_timeout_app} {$this->ring_group_timeout_data}"
+            );
     }
+
+    public function getTimeoutTargetUuidAttribute(): ?string
+    {
+        return $this->timeout_option_details['option'] ?? null;
+    }
+
+    public function getTimeoutActionAttribute(): ?string
+    {
+        return $this->timeout_option_details['type'] ?? null;
+    }
+
+    public function getTimeoutActionDisplayAttribute(): ?string
+    {
+        if (! $this->timeout_option_details['type']) {
+            return null;
+        }
+
+        return (new CallRoutingOptionsService)
+            ->getFriendlyTypeName($this->timeout_option_details['type']);
+    }
+
+    public function getTimeoutTargetNameAttribute(): ?string
+    {
+        return $this->timeout_option_details['name'] ?? null;
+    }
+
+    public function getTimeoutTargetExtensionAttribute(): ?string
+    {
+        return $this->timeout_option_details['extension'] ?? null;
+    }
+
+    /**
+     * Just like you did in your other model: build a destroy URL.
+     */
+    public function getDestroyRouteAttribute(): string
+    {
+        return route('ring-groups.destroy', $this);
+    }
+
+    protected function getForwardDetailsAttribute(): ?array
+    {
+        if ($this->forwardDetailsCache !== null) {
+            return $this->forwardDetailsCache;
+        }
+
+        if ($this->ring_group_forward_enabled != 'true' || !isEmpty($this->ring_group_forward_destination)) {
+            return $this->forwardDetailsCache = [
+                'type' => null,
+                'extension' => null,
+                'option' => null,
+                'name' => null
+            ];
+        }
+
+        $service = new CallRoutingOptionsService;
+        return $this->forwardDetailsCache = $service
+            ->reverseEngineerForwardAction($this->ring_group_forward_destination);
+
+    }
+
+
+    public function getForwardTargetUuidAttribute(): ?string
+    {
+        return $this->forward_details['option'] ?? null;
+    }
+
+    public function getForwardActionAttribute(): ?string
+    {
+        return $this->forward_details['type'] ?? null;
+    }
+
+    public function getForwardActionDisplayAttribute(): ?string
+    {
+        if (! $this->forward_details['type']) {
+            return null;
+        }
+
+        return (new CallRoutingOptionsService)
+            ->getFriendlyTypeName($this->forward_details['type']);
+    }
+
+    public function getForwardTargetNameAttribute(): ?string
+    {
+        return $this->forward_details['name'] ?? null;
+    }
+
+    public function getForwardTargetExtensionAttribute(): ?string
+    {
+        return $this->forward_details['extension'] ?? null;
+    }
+
 
     public function getId()
     {
@@ -90,12 +192,17 @@ class RingGroups extends Model
         return $this->ring_group_extension . ' - ' . $this->ring_group_name;
     }
 
+    public function getNameFormattedAttribute()
+    {
+        return $this->ring_group_extension . ' - ' . $this->ring_group_name;
+    }
+
     public function getGroupDestinations()
     {
         return $this->belongsTo(RingGroupsDestinations::class, 'ring_group_uuid', 'ring_group_uuid')->orderBy('destination_delay')->get();
     }
 
-    public function groupDestinations()
+    public function destinations()
     {
         return $this->hasMany(RingGroupsDestinations::class, 'ring_group_uuid', 'ring_group_uuid');
     }
@@ -107,17 +214,24 @@ class RingGroups extends Model
      */
     public function generateUniqueSequenceNumber()
     {
-
-        // Ring groups will have extensions in the range between 9000 and 9099 by default
+        // Virtual Receptionists will have extensions in the range between 9150 and 9199 by default
         $rangeStart = 9000;
         $rangeEnd = 9099;
 
-        $domainUuid = Session::get('domain_uuid');
+        $domainUuid = session('domain_uuid');
 
-        // Fetch all used extensions in one combined query
+        // Fetch all used extensions from Dialplans, Voicemails, and Extensions
         $usedExtensions = Dialplans::where('domain_uuid', $domainUuid)
             ->where('dialplan_number', 'not like', '*%')
             ->pluck('dialplan_number')
+            ->merge(
+                Voicemails::where('domain_uuid', $domainUuid)
+                    ->pluck('voicemail_id')
+            )
+            ->merge(
+                Extensions::where('domain_uuid', $domainUuid)
+                    ->pluck('extension')
+            )
             ->unique();
 
         // Find the first available extension
@@ -129,8 +243,8 @@ class RingGroups extends Model
             }
         }
 
-        if(isset($uniqueExtension)) {
-            return $uniqueExtension;
+        if (isset($uniqueExtension)) {
+            return (string) $uniqueExtension;
         }
 
         // Return null if unable to generate a unique sequence number

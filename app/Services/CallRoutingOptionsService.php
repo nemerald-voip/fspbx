@@ -14,6 +14,8 @@ use App\Models\{
     Voicemails
 };
 
+use function PHPUnit\Framework\isEmpty;
+
 class CallRoutingOptionsService
 {
     protected ?string $domainUuid;
@@ -33,6 +35,19 @@ class CallRoutingOptionsService
         ['value' => 'company_directory', 'name' => 'Company Directory'],
         ['value' => 'hangup', 'name' => 'Hang up'],
         // ['value' => 'other', 'name' => 'Other']
+    ];
+
+    public array $forwardingTypes = [
+        ['value' => 'extensions', 'label' => 'Extension'],
+        ['value' => 'voicemails', 'label' => 'Voicemail'],
+        ['value' => 'ring_groups', 'label' => 'Ring Group'],
+        ['value' => 'ivrs', 'label' => 'Virtual Receptionist'],
+        ['value' => 'time_conditions', 'label' => 'Schedule'],
+        ['value' => 'contact_centers', 'label' => 'Contact Center'],
+        ['value' => 'faxes', 'label' => 'Fax'],
+        ['value' => 'call_flows', 'label' => 'Call Flow'],
+        ['value' => 'recordings', 'label' => 'Play Greeting'],
+        ['value' => 'external', 'label' => 'External Number'],
     ];
 
     private const TRANSFER_FORMAT = '%s:%s XML %s';
@@ -241,11 +256,149 @@ class CallRoutingOptionsService
                     );
                     break;
 
-                    // Add more cases for other IVR actions as needed
+                // Add more cases for other IVR actions as needed
 
                 default:
                     throw new \Exception("Unsupported IVR action type: $actionType");
             }
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return null;
+        }
+    }
+
+    /**
+     * Reverse engineer Ring Group exit options based on the provided parameter.
+     *
+     * @param string $ivrAction A string containing the action details (e.g., "transfer 201 XML api.us.nemerald.net").
+     * @return array Reverse-engineered IVR option details.
+     */
+    public function reverseEngineerRingGroupExitAction($action)
+    {
+        try {
+            $action = trim($action);
+            // Split the string by spaces to extract details
+            $parts = explode(' ', $action);
+
+            if (count($parts) < 3 && $action != "hangup") {
+                throw new \Exception("Invalid Ring Group action format");
+            }
+
+            // Extract relevant data
+            $actionType = $parts[0]; // e.g., "transfer"
+            if ($actionType != 'hangup') {
+                $destination = $parts[1]; // e.g., "201"
+                $context = $parts[2]; // e.g., "XML"
+                $domain = $parts[3] ?? null; // e.g., "api.us.domain.net"
+            }
+
+            // Reverse engineer based on the action type
+            switch ($actionType) {
+                case 'transfer':
+                    return $this->reverseEngineerTransferAction("$destination $context $domain");
+                    break;
+                case 'lua':
+                    return $this->extractRecordingUuidFromData("$destination $context $domain");
+                    break;
+
+                case 'hangup':
+                    return array(
+                        'type' => 'hangup',
+                    );
+                    break;
+
+                // Add more cases for other IVR actions as needed
+
+                default:
+                    throw new \Exception("Unsupported Ring Group action type: $actionType");
+            }
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return null;
+        }
+    }
+
+    /**
+     * Reverse engineer Forward options based on the provided parameter.
+     *
+     * @param string $destination A string containing the forwarding destination
+     * @return array Reverse-engineered forward option details.
+     */
+    public function reverseEngineerForwardAction($destination)
+    {
+        try {
+
+            if (!filled($destination)) {
+                return [
+                    'type' => null,
+                    'extension' => null,
+                    'option' => null,
+                    'name' => null
+                ];
+            }
+
+            $dialplan = Dialplans::where(function ($query) use ($destination) {
+                $query->where('dialplan_number', $destination)
+                    ->orWhere('dialplan_number', '=', '1' . $destination);
+            })
+                ->where('dialplan_enabled', 'true')
+                ->where(function ($query) {
+                    $query->where('domain_uuid', session('domain_uuid'))
+                        ->orWhereNull('domain_uuid');
+                })
+                ->where('dialplan_context', '!=', 'public')
+                ->select('dialplan_uuid', 'dialplan_name', 'dialplan_number', 'dialplan_xml', 'dialplan_order')
+                ->first();
+
+            // If a Dialplan match is found, reverse-engineer it based on the XML and determine the type
+            if ($dialplan) {
+                return $this->mapDialplanToRoutingOption($dialplan, $destination);
+            }
+
+            
+
+            // Check if destination is voicemail
+            if ((substr($destination, 0, 3) == '*99') !== false) {
+                $voicemail = Voicemails::where('domain_uuid', session('domain_uuid'))
+                    ->where('voicemail_id', $destination)
+                    ->with(['extension' => function ($query) {
+                        $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
+                            ->where('domain_uuid', session('domain_uuid'));
+                    }])
+                    ->first();
+
+                if ($voicemail) {
+                    return [
+                        'type' => 'voicemails',
+                        'extension' => $voicemail->voicemail_id,
+                        'option' => $voicemail->voicemail_uuid,
+                        'name' => $voicemail->extension->name_formatted ?? $voicemail->voicemail_id,
+                    ];
+                }
+            }
+
+            // Check if it's an extension
+            $ext = Extensions::where('domain_uuid', session('domain_uuid'))
+                ->where('extension', $destination)
+                ->first();
+            if ($ext) {
+
+                return [
+                    'type' => 'extensions',
+                    'extension' => $ext->extension,
+                    'option' => $ext->extension_uuid,
+                    'name' => $ext->name_formatted,
+                ];
+            }
+
+            // Assuming it's some external destination
+            return [
+                'type' => 'external',
+                'extension' => $destination,
+                'option' => '',
+                'name' => '',
+            ];
+
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return null;
@@ -436,6 +589,7 @@ class CallRoutingOptionsService
             'company_directory' => 'Company Directory',
             'check_voicemail' => 'Check Voicemail',
             'hangup' => 'Hang up',
+            'external' => "External Number"
         ];
 
         return $typeMapping[$type] ?? 'Unknown';
