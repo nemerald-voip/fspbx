@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Inertia\Inertia;
-use App\Models\IvrMenus;
 use App\Models\Dialplans;
 use App\Models\Extensions;
 use App\Models\Recordings;
@@ -25,7 +24,7 @@ class RingGroupsController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'RingGroups';
-    protected $searchable = ['ring_group_name', 'ring_group_extension'];
+    protected $searchable = ['ring_group_name', 'ring_group_extension', 'destinations.destination_number'];
 
     public function __construct()
     {
@@ -130,6 +129,33 @@ class RingGroupsController extends Controller
         return $data;
     }
 
+
+    /**
+     * @param $query
+     * @param $value
+     * @return void
+     */
+    protected function filterSearch($query, $value)
+    {
+        $searchable = $this->searchable;
+
+        // Case-insensitive partial string search in the specified fields
+        $query->where(function ($query) use ($value, $searchable) {
+            foreach ($searchable as $field) {
+                if (strpos($field, '.') !== false) {
+                    // Nested field (e.g., 'extension.name_formatted')
+                    [$relation, $nestedField] = explode('.', $field, 2);
+
+                    $query->orWhereHas($relation, function ($query) use ($nestedField, $value) {
+                        $query->where($nestedField, 'ilike', '%' . $value . '%');
+                    });
+                } else {
+                    // Direct field
+                    $query->orWhere($field, 'ilike', '%' . $value . '%');
+                }
+            }
+        });
+    }
 
     public function getItemOptions()
     {
