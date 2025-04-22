@@ -618,11 +618,8 @@ const props = defineProps({
 
 const form$ = ref(null)
 // Initialize activeTab with the currently active tab from props
-const activeTab = ref(props.options.navigation.find(item => item.slug)?.slug || props.options.navigation[0].slug);
 const showEditModal = ref(false);
-const selectedGreetingMethod = ref('text-to-speech');
 const isDownloading = ref(false);
-const confirmationModalTrigger = ref(false);
 const loadingModal = ref(false);
 const isGreetingUpdating = ref(false);
 const showNewGreetingModal = ref(false);
@@ -638,7 +635,7 @@ const allMemberOptions = props.options.member_options.flatMap(group => group.gro
 
 
 // Prepare an array of member objects based on ring_group.destinations:
-const memberItems = props.options.ring_group.destinations.map(dest => {
+const memberItems = props.options.ring_group.destinations?.map(dest => {
     const match = allMemberOptions.find(opt => opt.destination === dest.destination_number);
 
     return {
@@ -795,7 +792,7 @@ const formatTarget = (name, value) => {
 }
 
 
-const emits = defineEmits(['submit', 'cancel', 'error', 'success']);
+const emits = defineEmits(['close', 'error', 'success', 'refresh-data']);
 
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
@@ -819,25 +816,10 @@ function clearErrorsRecursive(el$) {
 }
 
 const handleResponse = (response, form$) => {
-    // Clear custom element errors
-    // Object.values(form$.elements$).forEach((el$) => {
-    //     el$.messageBag?.clear()
-
-    //     if (el$.type === 'list') {
-    //         Object.values(el$.children$).forEach(childEl$ => {
-    //                 Object.values(childEl$.children$).forEach(childEl$ => {
-    //                     childEl$.messageBag?.clear()
-    //                 });
-    //         });
-    //     }
-    // })
-
+    // Clear form including nested elements 
     Object.values(form$.elements$).forEach(el$ => {
         clearErrorsRecursive(el$)
     })
-
-    // clear every messageBag, top‑level and nested
-    // clearAllErrors(form$.elements$)
 
     // Display custom errors for elements
     if (response.data.errors) {
@@ -855,6 +837,8 @@ const handleSuccess = (response, form$) => {
     // console.log(response.data) // response data
 
     emits('success', 'success', response.data.messages);
+    emits('close');
+    emits('refresh-data');
 }
 
 const handleError = (error, details, form$) => {

@@ -76,7 +76,12 @@ class RingGroups extends Model
         }
 
         if (! $this->ring_group_timeout_app) {
-            return $this->timeoutOptionDetailsCache = null;
+            return $this->timeoutOptionDetailsCache = [
+                'type' => null,
+                'extension' => null,
+                'option' => null,
+                'name' => null
+            ];
         }
 
         $service = new CallRoutingOptionsService;
@@ -209,17 +214,24 @@ class RingGroups extends Model
      */
     public function generateUniqueSequenceNumber()
     {
-
-        // Ring groups will have extensions in the range between 9000 and 9099 by default
+        // Virtual Receptionists will have extensions in the range between 9150 and 9199 by default
         $rangeStart = 9000;
         $rangeEnd = 9099;
 
-        $domainUuid = Session::get('domain_uuid');
+        $domainUuid = session('domain_uuid');
 
-        // Fetch all used extensions in one combined query
+        // Fetch all used extensions from Dialplans, Voicemails, and Extensions
         $usedExtensions = Dialplans::where('domain_uuid', $domainUuid)
             ->where('dialplan_number', 'not like', '*%')
             ->pluck('dialplan_number')
+            ->merge(
+                Voicemails::where('domain_uuid', $domainUuid)
+                    ->pluck('voicemail_id')
+            )
+            ->merge(
+                Extensions::where('domain_uuid', $domainUuid)
+                    ->pluck('extension')
+            )
             ->unique();
 
         // Find the first available extension
@@ -232,7 +244,7 @@ class RingGroups extends Model
         }
 
         if (isset($uniqueExtension)) {
-            return $uniqueExtension;
+            return (string) $uniqueExtension;
         }
 
         // Return null if unable to generate a unique sequence number

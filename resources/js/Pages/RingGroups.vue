@@ -22,7 +22,7 @@
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.voicemail_create" type="button" @click.prevent="handleCreateButtonClick()"
+                <button v-if="page.props.auth.can.ring_group_create" type="button" @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
@@ -103,7 +103,7 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="page.props.auth.can.voicemail_update" :content="'Edit'"
+                                <ejs-tooltip v-if="page.props.auth.can.ring_group_update" :content="'Edit'"
                                     position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditButtonClick(row.ring_group_uuid)"
@@ -112,10 +112,10 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="page.props.auth.can.voicemail_destroy" :content="'Delete'"
+                                <ejs-tooltip v-if="page.props.auth.can.ring_group_destroy" :content="'Delete'"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
-                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
+                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.ring_group_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
@@ -148,11 +148,10 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showCreateModal" :header="'Create New Voicemail Extension'"
+    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showCreateModal" :header="'Create New Ring Group'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateVoicemailForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
-                @submit="handleCreateRequest" @cancel="handleModalClose" />
+            <CreateRingGroupForm :options="itemOptions" @close="handleModalClose" @error="handleErrorResponse"  @success="showNotification" @refresh-data="handleSearchButtonClick" @open-edit-form="handleEditButtonClick"/>
         </template>
     </AddEditItemModal>
 
@@ -160,9 +159,7 @@
         :header="'Update Ring Group Settings - ' + itemOptions?.ring_group?.ring_group_name"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdateRingGroupForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
-                @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleErrorResponse"
-                @success="showNotification" />
+            <UpdateRingGroupForm :options="itemOptions" @close="handleModalClose" @error="handleErrorResponse" @success="showNotification" @refresh-data="handleSearchButtonClick"/>
         </template>
     </AddEditItemModal>
 
@@ -175,8 +172,10 @@
         </template>
     </AddEditItemModal>
 
-    <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
-        @confirm="confirmDeleteAction" />
+    <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
+        @confirm="confirmDeleteAction" :header="'Confirm Deletion'"
+        :text="'This action will permanently delete the selected ring group(s). Are you sure you want to proceed?'"
+        :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -192,7 +191,7 @@ import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
-import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
+import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
@@ -200,7 +199,7 @@ import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
-import CreateVoicemailForm from "./components/forms/CreateVoicemailForm.vue";
+import CreateRingGroupForm from "./components/forms/CreateRingGroupForm.vue";
 import UpdateRingGroupForm from "./components/forms/UpdateRingGroupForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
@@ -216,7 +215,6 @@ const selectPageItems = ref(false);
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
-const confirmationModalTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
 const createFormSubmiting = ref(null);
 const updateFormSubmiting = ref(null);
@@ -226,6 +224,7 @@ const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
+const showDeleteConfirmationModal = ref(false);
 
 const props = defineProps({
     data: Object,
@@ -272,76 +271,27 @@ const handleEditButtonClick = (itemUuid) => {
     getItemOptions(itemUuid);
 }
 
-const handleCreateRequest = (form) => {
-    createFormSubmiting.value = true;
-    formErrors.value = null;
-
-    axios.post(props.routes.store, form)
-        .then((response) => {
-            createFormSubmiting.value = false;
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-            handleModalClose();
-            handleClearSelection();
-        }).catch((error) => {
-            createFormSubmiting.value = false;
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        });
-
+const handleSingleItemDeleteRequest = (uuid) => {
+    showDeleteConfirmationModal.value = true;
+    confirmDeleteAction.value = () => executeBulkDelete([uuid]);
 };
 
-const handleUpdateRequest = (form) => {
-    updateFormSubmiting.value = true;
-    formErrors.value = null;
-
-    axios.put(form.update_route, form)
+const executeBulkDelete = (items = selectedItems.value) => {
+    axios.post(props.routes.bulk_delete, { items })
         .then((response) => {
-            updateFormSubmiting.value = false;
+            handleModalClose();
             showNotification('success', response.data.messages);
             handleSearchButtonClick();
+        })
+        .catch((error) => {
             handleModalClose();
-            handleClearSelection();
-        }).catch((error) => {
-            updateFormSubmiting.value = false;
-            handleClearSelection();
-            handleFormErrorResponse(error);
+            handleErrorResponse(error);
         });
-
-};
-
-const handleSingleItemDeleteRequest = (url) => {
-    confirmationModalTrigger.value = true;
-    confirmDeleteAction.value = () => executeSingleDelete(url);
-}
-
-const executeSingleDelete = (url) => {
-    router.delete(url, {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: (page) => {
-            if (page.props.flash.error) {
-                showNotification('error', page.props.flash.error);
-            }
-            if (page.props.flash.message) {
-                showNotification('success', page.props.flash.message);
-            }
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onFinish: () => {
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onError: (errors) => {
-            console.log(errors);
-        },
-    });
 }
 
 const handleBulkActionRequest = (action) => {
     if (action === 'bulk_delete') {
-        confirmationModalTrigger.value = true;
+        showDeleteConfirmationModal.value = true;
         confirmDeleteAction.value = () => executeBulkDelete();
     }
     if (action === 'bulk_update') {
@@ -351,22 +301,6 @@ const handleBulkActionRequest = (action) => {
         bulkUpdateModalTrigger.value = true;
     }
 
-}
-
-
-
-const executeBulkDelete = () => {
-    axios.post(`${props.routes.bulk_delete}`, { items: selectedItems.value })
-        .then((response) => {
-            handleModalClose();
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-        })
-        .catch((error) => {
-            handleClearSelection();
-            handleModalClose();
-            handleErrorResponse(error);
-        });
 }
 
 const handleBulkUpdateRequest = (form) => {
@@ -455,7 +389,7 @@ const getItemOptions = (itemUuid = null) => {
         .then((response) => {
             loadingModal.value = false;
             itemOptions.value = response.data;
-            console.log(itemOptions.value);
+            // console.log(itemOptions.value);
 
         }).catch((error) => {
             handleModalClose();
@@ -524,7 +458,7 @@ const handleClearSelection = () => {
 const handleModalClose = () => {
     showCreateModal.value = false;
     showEditModal.value = false;
-    confirmationModalTrigger.value = false;
+    showDeleteConfirmationModal.value = false;
     bulkUpdateModalTrigger.value = false;
 }
 
@@ -540,10 +474,6 @@ const showNotification = (type, messages = null) => {
     notificationShow.value = true;
 }
 
-const navigateToMessages = (messagesRoute) => {
-    // Use Inertia's router to visit the messages page
-    router.visit(messagesRoute);
-};
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 
