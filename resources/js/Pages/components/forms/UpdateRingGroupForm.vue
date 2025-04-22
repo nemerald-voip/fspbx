@@ -785,7 +785,7 @@ watch(() => props.options, (newOptions) => {
 
 
 const formatGreeting = (name, value) => {
-    return { [name]: value?.value } // must return an object
+    return { [name]: value?.value ?? null } // must return an object
 }
 
 const formatTarget = (name, value) => {
