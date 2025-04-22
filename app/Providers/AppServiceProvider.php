@@ -8,16 +8,22 @@ use App\Models\RingGroups;
 use App\Models\Voicemails;
 use Laravel\Horizon\Horizon;
 use Laravel\Sanctum\Sanctum;
+use App\Models\EmergencyCall;
+use App\Models\EmergencyCallEmail;
+use App\Models\EmergencyCallMember;
 use App\Observers\ExtensionObserver;
 use App\Services\RingotelApiService;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
+use App\Observers\EmergencyCallObserver;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 use App\Models\Sanctum\PersonalAccessToken;
+use App\Observers\EmergencyCallEmailObserver;
+use App\Observers\EmergencyCallMemberObserver;
 
 
 class AppServiceProvider extends ServiceProvider
@@ -75,6 +81,9 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Extensions::observe(ExtensionObserver::class);
+        EmergencyCall::observe(EmergencyCallObserver::class);
+        EmergencyCallMember::observe(EmergencyCallMemberObserver::class);
+        EmergencyCallEmail::observe(EmergencyCallEmailObserver::class);
 
         Builder::macro('orWhereLike', function (string $column, string $search) {
             return $this->orWhere($column, 'ILIKE', '%' . trim($search) . '%');
@@ -127,33 +136,6 @@ class AppServiceProvider extends ServiceProvider
                 return $found;
             }
         });
-
-        Validator::extend('RingGroupUnique', function ($attribute, $value, $parameters, $validator) {
-            if (!isset($parameters[0])) {
-                return false;
-            }
-            $domain = $parameters[0];
-            if (Extensions::where('extension', $value)->where('domain_uuid', $domain)->first()) {
-                return false;
-            }
-
-            if (isset($parameters[1]) && !empty($parameters[1])) {
-                if (RingGroups::where('ring_group_extension', $value)->where('ring_group_uuid', '!=', $parameters[1])->where('domain_uuid', $domain)->first()) {
-                    return false;
-                }
-            } else {
-                if (RingGroups::where('ring_group_extension', $value)->where('domain_uuid', $domain)->first()) {
-                    return false;
-                }
-            }
-
-            if (Voicemails::where('voicemail_id', $value)->where('domain_uuid', $domain)->first()) {
-                return false;
-            }
-
-            return true;
-        });
-
 
         Password::defaults(function () {
             $rule = Password::min(8)

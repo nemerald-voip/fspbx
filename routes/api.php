@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TokenController;
+use App\Http\Controllers\RingGroupsController;
+use App\Http\Controllers\Api\EmergencyCallController;
 
 
 
@@ -16,17 +18,22 @@ use App\Http\Controllers\TokenController;
 |
 */
 
-// Route::post('/tokens/create', [TokenController::class,"create"]);
 
-//Route::post('/tokens', [TokenController::class,"index"]);
+Route::group(['middleware' => ['auth:sanctum']], function () {
+    Route::post('/tokens', [TokenController::class, "index"]);
 
-Route::group(['middleware'=>['auth:sanctum']], function(){
-    Route::post('/tokens', [TokenController::class,"index"]);
-    // Route used for submitting authnetication request from FusionPBX login
-    //Route::post('/users/manual_auth', [UsersController::class, 'manual_auth'])->name('manual_auth');
+    // Emergency calls
+    Route::resource('/emergency-calls', EmergencyCallController::class);
+    Route::post('/emergency-calls/item-options', [EmergencyCallController::class, 'getItemOptions'])->name('emergency-calls.item.options');
+    Route::post('/emergency-calls/bulk-delete', [EmergencyCallController::class, 'bulkDelete'])->name('emergency-calls.bulk.delete');
+    Route::post('/emergency-calls/check-service-status', [EmergencyCallController::class, 'checkServiceStatus'])->name('emergency-calls.check.service.status');
+
+
+    // Ring Groups
+    Route::post('ring-groups', [RingGroupsController::class, 'store'])->name('ring-groups.store');
+    Route::put('ring-groups/{ring_group}', [RingGroupsController::class, 'update'])->name('ring-groups.update');
+    Route::delete('ring-groups/{ring_group}', [RingGroupsController::class, 'destroy'])->name('ring-groups.destroy');
+    Route::post('ring-groups/item-options', [RingGroupsController::class, 'getItemOptions'])->name('ring-groups.item.options');
+    Route::post('ring-groups/bulk-delete', [RingGroupsController::class, 'bulkDelete'])->name('ring-groups.bulk.delete');
+    Route::post('ring-groups/select-all', [RingGroupsController::class, 'selectAll'])->name('ring-groups.select.all');
 });
- //Route::post('/users/manual_auth', [UsersController::class, 'manual_auth'])->name('manual_auth');  
-
-// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-//     return $request->user();
-// });

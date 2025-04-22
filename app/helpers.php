@@ -601,6 +601,7 @@ if (!function_exists('outbound_route_to_bridge')) {
     }
 }
 
+// * depreciated
 if (!function_exists('get_registrations')) {
     function get_registrations($show = null)
     {
@@ -1445,6 +1446,100 @@ if (!function_exists('getRingBackTonesCollection')) {
         ];
     }
 }
+
+if (! function_exists('getRingBackTonesCollectionGrouped')) {
+    function getRingBackTonesCollectionGrouped(string $domain = null): array
+    {
+        // — Music on Hold —
+        $musicOnHold = MusicOnHold::when($domain, function($q) use ($domain) {
+                $q->where('domain_uuid', $domain)
+                  ->orWhereNull('domain_uuid');
+            })
+            ->orderBy('music_on_hold_name')
+            ->get()
+            ->unique('music_on_hold_name')
+            ->map(fn($m) => [
+                'label' => $m->music_on_hold_name,
+                'value' => 'local_stream://' . $m->music_on_hold_name,
+            ])
+            ->toArray();
+
+        // — Recordings —
+        $recordingPath = DefaultSettings::where('default_setting_category', 'switch')
+            ->where('default_setting_subcategory', 'recordings')
+            ->where('default_setting_enabled', true)
+            ->value('default_setting_value');
+
+        $recordings = Recordings::with(['domain:domain_uuid,domain_name'])
+            ->when($domain, fn($q) => $q->where('domain_uuid', $domain))
+            ->orderBy('recording_name')
+            ->get()
+            ->map(fn($r) => [
+                'label' => $r->recording_name,
+                'value' => "{$recordingPath}/{$r->domain->domain_name}/{$r->recording_filename}",
+            ])
+            ->toArray();
+
+        // — Ringtones —
+        $ringtones = SwitchVariable::where('var_category', 'Ringtones')
+            ->where('var_enabled', 'true')
+            ->orderBy('var_name')
+            ->get(['var_name'])
+            ->map(fn($v) => [
+                'label' => $v->var_name,
+                'value' => '${' . $v->var_name . '}',
+            ])
+            ->toArray();
+
+        // — Streams —
+        $streams = MusicStreams::when($domain, function($q) use ($domain) {
+                $q->where('domain_uuid', $domain)
+                  ->orWhereNull('domain_uuid');
+            })
+            ->where('stream_enabled', 'true')
+            ->orderBy('stream_name')
+            ->get(['stream_name', 'stream_location'])
+            ->map(fn($s) => [
+                'label' => $s->stream_name,
+                'value' => $s->stream_location,
+            ])
+            ->toArray();
+
+        // — Assemble groups —
+        $groups = [];
+
+        if (! empty($musicOnHold)) {
+            $groups[] = [
+                'label' => 'Music on Hold',
+                'items' => $musicOnHold,
+            ];
+        }
+
+        if (! empty($recordings)) {
+            $groups[] = [
+                'label' => 'Recordings',
+                'items' => $recordings,
+            ];
+        }
+
+        if (! empty($ringtones)) {
+            $groups[] = [
+                'label' => 'Ringtones',
+                'items' => $ringtones,
+            ];
+        }
+
+        if (! empty($streams)) {
+            $groups[] = [
+                'label' => 'Streams',
+                'items' => $streams,
+            ];
+        }
+
+        return $groups;
+    }
+}
+
 
 if (!function_exists('getSoundsCollection')) {
     function getSoundsCollection(string $domain = null): array

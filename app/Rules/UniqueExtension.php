@@ -39,7 +39,7 @@ class UniqueExtension implements ValidationRule
     {
         // Add validation for 911 as a reserved value
         if ($value == '911') {
-            $fail('911 can not be used as extension number. It is reserved for emergency calls only.');
+            $fail('Extension 911 is reserved for emergency services and cannot be used.');
             return;
         }
 

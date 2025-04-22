@@ -121,16 +121,16 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="page.props.auth.can.voicemail_update" :content="'Edit'"
+                                <ejs-tooltip v-if="page.props.auth.can.contact_edit" :content="'Edit'"
                                     position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
-                                        <PencilSquareIcon @click="handleEditRequest(row.voicemail_uuid)"
+                                        <PencilSquareIcon @click="handleEditRequest(row.contact_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
 
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="page.props.auth.can.voicemail_destroy" :content="'Delete'"
+                                <ejs-tooltip v-if="page.props.auth.can.contact_delete" :content="'Delete'"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.contact_uuid)"
@@ -276,7 +276,7 @@ const bulkActions = computed(() => {
     ];
 
     // Conditionally add the delete action if permission is granted
-    if (page.props.auth.can.device_destroy) {
+    if (page.props.auth.can.contact_delete) {
         actions.push({
             id: 'bulk_delete',
             label: 'Delete',
@@ -468,7 +468,7 @@ const getItemOptions = (itemUuid = null) => {
         .then((response) => {
             loadingModal.value = false;
             itemOptions.value = response.data;
-            console.log(itemOptions.value);
+            // console.log(itemOptions.value);
 
         }).catch((error) => {
             handleModalClose();
@@ -569,7 +569,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.voicemail_uuid);
+        selectedItems.value = props.data.data.map(item => item.contact_uuid);
     } else {
         selectedItems.value = [];
     }

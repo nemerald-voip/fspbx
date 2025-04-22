@@ -1,3 +1,86 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+
+.multiselect {
+    color: inherit !important;
+}
+
+.multiselect__content-wrapper {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+}
+
+.multiselect__tag {
+    background-color: #a5b4fc !important;
+}
+
+.multiselect__tags {
+    border: 1px solid #d1d5db !important;
+}
+
+.multiselect__tag-icon:after {
+    color: #fff !important;
+    /* Base color */
+}
+
+.multiselect__tag-icon:hover:after,
+.multiselect__tag-icon:focus:after {
+    color: #312e81 !important;
+    /* Hover/Focus color */
+}
+
+.multiselect__input {
+    @apply focus:outline-none focus:ring-0 focus:shadow-none;
+    font-size: 0.9rem !important;
+}
+
+.multiselect__option {
+    font-size: 0.9rem !important;
+}
+
+.multiselect__option--highlight {
+    background-color: #e5e7eb !important;
+    color: #19129a !important;
+    font-size: 0.9rem !important;
+}
+
+.multiselect__option--highlight:after {
+    background-color: #e5e7eb !important;
+    color: #129a4b !important;
+}
+
+.multiselect__option--selected.multiselect__option--highlight {
+    background-color: #fef2f2 !important;
+    color: #ea8c8f !important;
+}
+
+.multiselect__option--selected.multiselect__option--highlight:after {
+    background-color: #fef2f2 !important;
+    /* Tailwind bg-red-50 */
+    color: #f87171 !important;
+    /* Tailwind text-red-200 */
+}
+
+.multiselect__placeholder{
+    margin-bottom: 8px !important;
+    padding-top: 0px !important;
+}
+
+.multiselect__single {
+    font-size: 0.9rem !important;
+}
+
+
+:root, :before, :after, * {
+    --vf-primary: #6366F1;
+    --vf-primary-darker: #3730A3;
+    /* --vf-danger: #ef4444;
+    --vf-danger-lighter: #fee2e2;
+    --vf-success: #10b981;
+    --vf-success-lighter: #d1fae5; */
+
+    --vf-font-size: 0.875rem;
+    /* --vf-font-size-small: 0.575rem; */
+}
+

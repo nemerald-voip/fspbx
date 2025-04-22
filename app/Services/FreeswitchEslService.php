@@ -36,6 +36,26 @@ class FreeswitchEslService
         }
     }
 
+    public function isConnected(): bool
+    {
+        return $this->conn && $this->conn->connected();
+    }
+
+    public function reconnect(): void
+    {
+        $this->disconnect(); // Optional: clear old connection
+
+        $this->conn = new ESLconnection(
+            config('eventsocket.ip'),
+            config('eventsocket.port'),
+            config('eventsocket.password')
+        );
+
+        if (!$this->conn->connected()) {
+            throw new \Exception("Failed to reconnect to FreeSWITCH ESL.");
+        }
+    }
+
     public function executeCommand($cmd, $disconnect = true)
     {
         try {
@@ -237,6 +257,55 @@ class FreeswitchEslService
 
         return $result;
     }
+
+
+    public function subscribeToEvents($eventType, $events)
+    {
+        try {
+            $this->conn->events($eventType, $events);
+            return true;
+        } catch (\Throwable $e) {
+            logger()->error("Failed to subscribe to events: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function listen(callable $callback)
+    {
+        $nullCount = 0;
+    
+        while (true) {
+            try {
+                if (!$this->isConnected()) {
+                    throw new \Exception('ESL disconnected');
+                }
+    
+                $event = $this->conn->recvEvent();
+    
+                if (!$event) {
+                    $nullCount++;
+    
+                    // After 100 nulls (~10 seconds), assume we're stuck
+                    if ($nullCount >= 100) {
+                        throw new \Exception('ESL stuck or disconnected (too many null events)');
+                    }
+    
+                    usleep(100000); // 100ms
+                    continue;
+                }
+    
+                // Reset null counter after valid event
+                $nullCount = 0;
+    
+                $callback($event);
+            } catch (\Throwable $e) {
+                logger()->error("ESL listen error: " . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+                $this->disconnect(); // ✅ Always disconnect on any error
+                throw $e; // bubble up to force reconnect
+            }
+        }
+    }
+    
 
 
     function convertEslResponse($eslEvent)

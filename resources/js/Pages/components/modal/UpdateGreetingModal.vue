@@ -101,15 +101,30 @@ const props = defineProps({
     },
 });
 
-const greeting_name = ref(props.greeting?.name || '');
+const greeting_name = ref(props.greeting?.name ?? props.greeting?.label ?? '');
 
 watch(() => props.greeting, (newGreeting) => {
-    greeting_name.value = newGreeting?.name || '';
+  greeting_name.value = newGreeting?.name ?? newGreeting?.label ?? '';
 });
 
+// const updateGreeting = () => {
+//     emit('confirm', { ...props.greeting, name: greeting_name.value });
+//     emit('close');
+// };
+
 const updateGreeting = () => {
-    emit('confirm', { ...props.greeting, name: greeting_name.value });
-    emit('close');
+  const updatedGreeting = { ...props.greeting };
+
+  if (props.greeting && Object.prototype.hasOwnProperty.call(props.greeting, 'name')) {
+    // If the original greeting has a "name" property, update that property.
+    updatedGreeting.name = greeting_name.value;
+  } else if (props.greeting && Object.prototype.hasOwnProperty.call(props.greeting, 'label')) {
+    // If there's no "name" but there is a "label", update the "label" property.
+    updatedGreeting.label = greeting_name.value;
+  }
+  
+  emit('confirm', updatedGreeting);
+  emit('close');
 };
 
 </script>

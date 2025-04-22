@@ -41,7 +41,9 @@
                                         <dd class="mt-1 truncate text-gray-500 md:hidden">{{
                                             option.ivr_menu_option_description }}</dd>
                                         <dd class="mt-1 md:hidden">
-                                            <Toggle v-model="option.ivr_menu_option_enabled" disabled />
+                                            <Badge v-if="option.ivr_menu_option_enabled" :text="'Enabled'"
+                                                backgroundColor="bg-green-50" textColor="text-green-700"
+                                                ringColor="ring-green-600/20" />
                                         </dd>
 
                                     </dl>

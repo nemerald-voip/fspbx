@@ -144,6 +144,13 @@ Route::group(['middleware' => 'auth'], function () {
     // Domain Groups
     Route::resource('domaingroups', DomainGroupsController::class);
 
+    // // Ring Groups
+    Route::get('ring-groups', [RingGroupsController::class, 'index'])->name('ring-groups.index');
+    // Route::resource('ring-groups', RingGroupsController::class);
+    // Route::post('ring-groups/item-options', [RingGroupsController::class, 'getItemOptions'])->name('ring-groups.item.options');
+    // Route::post('/ring-groups/bulk-delete', [RingGroupsController::class, 'bulkDelete'])->name('ring-groups.bulk.delete');
+    // Route::post('/ring-groups/select-all', [RingGroupsController::class, 'selectAll'])->name('ring-groups.select.all');
+
     //Voicemails
     Route::resource('voicemails', VoicemailController::class);
     Route::post('voicemails/item-options', [VoicemailController::class, 'getItemOptions'])->name('voicemails.item.options');
@@ -289,7 +296,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/contacts/import', [ContactsController::class, 'import'])->name('contacts.import');
     Route::get('/contacts/template/download', [ContactsController::class, 'downloadTemplate'])->name('contacts.download.template');
     Route::get('/contacts-export', [ContactsController::class, 'export'])->name('contacts.export');
-    
+
     // SMS for testing
     // Route::get('/sms/ringotelwebhook', [SmsWebhookController::class,"messageFromRingotel"]);
 
@@ -329,9 +336,6 @@ Route::group(['middleware' => 'auth'], function () {
     Route::resource('faxqueue', FaxQueueController::class);
     Route::post('/faxqueue/retry', [FaxQueueController::class, 'retry'])->name('faxqueue.retry');
     Route::post('/faxqueue/select-all', [FaxQueueController::class, 'selectAll'])->name('faxqueue.select.all');
-
-    // Ring Groups
-    Route::resource('ring-groups', RingGroupsController::class);
 
     // Recordings
     Route::get('recordings', [RecordingsController::class, 'index'])->name('recordings.index');

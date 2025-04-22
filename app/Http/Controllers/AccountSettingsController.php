@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Inertia\Inertia;
-use App\Models\Faxes;
 use Inertia\Response;
 use App\Models\Domain;
 use App\Models\Dialplans;
@@ -62,12 +61,11 @@ class AccountSettingsController extends Controller
                 },
                 'routes' => [
                     'update' => route('account-settings.update'),
-                    // 'store' => route('phone-numbers.store'),
-                    // 'select_all' => route('phone-numbers.select.all'),
-                    // 'bulk_update' => route('phone-numbers.bulk.update'),
-                    // 'bulk_delete' => route('phone-numbers.bulk.delete'),
-                    // 'item_options' => route('phone-numbers.item.options'),
-                    //'bulk_delete' => route('messages.settings.bulk.delete'),
+                    'emergency_calls' => route('emergency-calls.index'),
+                    'emergency_calls_store' => route('emergency-calls.store'),
+                    'emergency_calls_item_options' => route('emergency-calls.item.options'),
+                    'emergency_calls_bulk_delete' => route('emergency-calls.bulk.delete'),
+                    'emergency_calls_service_status' => route('emergency-calls.check.service.status'),
                     //'bulk_update' => route('devices.bulk.update'),
                 ],
 
@@ -138,11 +136,11 @@ class AccountSettingsController extends Controller
                 'slug' => 'general',
             ],
 
-            // [
-            //     'name' => 'Emergency Calls',
-            //     'icon' => 'BellIcon',
-            //     'slug' => 'emergency',
-            // ],
+            [
+                'name' => 'Emergency Calls',
+                'icon' => 'BellIcon',
+                'slug' => 'emergency',
+            ],
 
             // [
             //     'name' => 'Billing',

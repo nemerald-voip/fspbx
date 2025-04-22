@@ -22,15 +22,15 @@
             </template>
 
             <template #action>
-                <button type="button" @click.prevent="handleCreateButtonClick()"
+                <button type="button" v-if="page.props.auth.can.phone_numbers_create" @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
-                <button v-if="!showGlobal" type="button" @click.prevent="handleShowGlobal()"
+                <button v-if="page.props.auth.can.phone_numbers_view_global && !showGlobal" type="button" @click.prevent="handleShowGlobal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show global
                 </button>
-                <button v-if="showGlobal" type="button" @click.prevent="handleShowLocal()"
+                <button v-if="page.props.auth.can.phone_numbers_view_global && showGlobal" type="button" @click.prevent="handleShowLocal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show local
                 </button>
@@ -85,8 +85,8 @@
                             <input v-if="row.destination_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
                                 :value="row.destination_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9"
-                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.device_update, }"
-                                @click="handleEditRequest(row.destination_uuid)">
+                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.phone_numbers_update, }"
+                                @click="page.props.auth.can.phone_numbers_update && handleEditRequest(row.destination_uuid)">
                                 {{ row.destination_number_formatted }}
                             </div>
 
@@ -134,14 +134,14 @@
                     <TableField class="w-4 whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center space-x-2 whitespace-nowrap">
-                                <ejs-tooltip v-if="page.props.auth.can.destination_edit" :content="'Edit phone number'"
+                                <ejs-tooltip v-if="page.props.auth.can.destination_update" :content="'Edit phone number'"
                                     position='TopLeft' target="#edit_tooltip_target">
                                     <div id="edit_tooltip_target">
                                         <PencilSquareIcon @click="handleEditRequest(row.destination_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
-                                <ejs-tooltip v-if="page.props.auth.can.destination_delete" :content="'Remove phone number'"
+                                <ejs-tooltip v-if="page.props.auth.can.destination_destroy" :content="'Remove phone number'"
                                     position='TopLeft' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
