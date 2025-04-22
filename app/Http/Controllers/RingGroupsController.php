@@ -500,7 +500,6 @@ class RingGroupsController extends Controller
         }
 
         $validated = $request->validated();
-        logger($validated);
         $domain_uuid = session('domain_uuid');
 
         try {
