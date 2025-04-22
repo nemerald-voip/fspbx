@@ -95,19 +95,18 @@ class SendFaxInvalidEmailNotification implements ShouldQueue
         Redis::throttle('fax')->allow(2)->every(1)->then(function () {
 
             $this->request['slack_message'] = 'Someone with the email ' . $this->request['FromFull']['Email'] . ' tried sending a fax and was not authorized.';
-            
+
             Log::alert($this->request['slack_message']);
 
-            Notification::route('slack', config('slack.fax'))
-                ->notify(new SendSlackNotification($this->request));
+            if (config('slack.fax')) {
+                Notification::route('slack', config('slack.fax'))
+                    ->notify(new SendSlackNotification($this->request));
+            }
 
             Mail::to($this->request['FromFull']['Email'])->send(new FaxNotAuthorized($this->request));
-
-
         }, function () {
             // Could not obtain lock; this job will be re-queued
             return $this->release(5);
         });
-
     }
 }
