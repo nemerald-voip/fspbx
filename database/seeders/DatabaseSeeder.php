@@ -138,6 +138,16 @@ class DatabaseSeeder extends Seeder
                 'permission_name'        => 'account_settings_list_view',
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
+            [
+                'application_name'       => 'Ring Groups',
+                'permission_name'        => 'ring_group_view_settings',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'application_name'       => 'Ring Groups',
+                'permission_name'        => 'ring_group_view_advanced',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
             // Add more permissions as needed
         ];
 
@@ -290,6 +300,30 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'permission_name'      => 'wakeup_calls_view_settings',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'ring_group_view_settings',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'ring_group_view_settings',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "admin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'ring_group_view_advanced',
                 'permission_protected' => 'true',
                 'permission_assigned'  => 'true',
                 'group_name'           => "superadmin",

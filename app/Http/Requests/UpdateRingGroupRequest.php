@@ -24,17 +24,17 @@ class UpdateRingGroupRequest extends FormRequest
     {
         return [
             'ring_group_uuid'   => ['required', 'uuid', 'exists:v_ring_groups,ring_group_uuid'],
-            'name'              => ['required', 'string', 'max:75'],
+            'ring_group_name'              => ['required', 'string', 'max:75'],
 
-            'extension' => [
+            'ring_group_extension' => [
                 'required',
                 'numeric',
                 new UniqueExtension($this->get('ring_group_uuid')),
             ],
-            'greeting' => [
+            'ring_group_greeting' => [
                 'nullable',
             ],
-            'call_distribution' => [
+            'ring_group_strategy' => [
                 'required',
                 Rule::in([
                     'enterprise',
@@ -83,18 +83,18 @@ class UpdateRingGroupRequest extends FormRequest
                 },
             ],
             // Optional prefixes & description
-            'name_prefix'   => ['nullable', 'string', 'max:20'],
-            'number_prefix' => ['nullable', 'string', 'max:20'],
-            'description'   => ['nullable', 'string', 'max:150'],
+            'ring_group_cid_name_prefix'   => ['nullable', 'string', 'max:20'],
+            'ring_group_cid_number_prefix' => ['nullable', 'string', 'max:20'],
+            'ring_group_description'   => ['nullable', 'string', 'max:150'],
 
-            'call_forward_enabled' => [
+            'ring_group_forward_enabled' => [
                 'nullable',
                 'boolean'
             ],
 
             // Forward logic: action + optional target
-            // only required when call_forward_enabled === true
-            'forward_action'        => ['required_if:call_forward_enabled,true'],
+            // only required when ring_group_forward_enabled === true
+            'forward_action'        => ['required_if:ring_group_forward_enabled,true'],
 
             // if you also want to validate the targets:
             'forward_external_target' => [
@@ -103,38 +103,61 @@ class UpdateRingGroupRequest extends FormRequest
             ],
 
             'forward_target' => [
-                // drop all validation here unless forwarding is enabled
-                'exclude_unless:call_forward_enabled,true',
-                // when forwarding is enabled, require this field if action ≠ external
-                'required_unless:forward_action,external',
-                'string',
+                'sometimes',
+                'present',
+                function ($attribute, $value, $fail) {
+                    $enabled = $this->boolean('ring_group_forward_enabled');
+                    $action = $this->input('forward_action');
+
+                    logger($value);
+
+                    if ($enabled && $action && $action !== 'external' && empty($value)) {
+                        $fail('The forward target is required');
+                    }
+                },
             ],
 
-            'caller_id_name'             => ['nullable', 'string', 'max:20'],
-            'caller_id_number'           => [
+            'forward_external_target' => [
+                'sometimes',
+                'present',
+                function ($attribute, $value, $fail) {
+                    $enabled = $this->boolean('ring_group_forward_enabled');
+                    $action = $this->input('forward_action');
+
+                    if ($enabled && $action === 'external' && empty($value)) {
+                        $fail('The forward target is required');
+                    }
+                },
+            ],
+
+
+            'ring_group_caller_id_name'             => ['nullable', 'string', 'max:20'],
+            'ring_group_caller_id_number'           => [
                 'nullable',
                 'string',
             ],
 
-            'distinctive_ring'           => ['nullable', 'string', 'max:30'],
-            'ringback'                   => [
+            'ring_group_distinctive_ring'           => ['nullable', 'string', 'max:30'],
+            'ring_group_ringback'                   => [
+                'sometimes',
                 'required',
                 'string',
             ],
-            'destination_call_forwarding'=> ['boolean'],
-            'destination_sequential_ring'=> ['boolean'],
+            'ring_group_call_forward_enabled' => ['boolean'],
+            'ring_group_follow_me_enabled' => ['boolean'],
 
             'missed_call_notifications' => ['boolean'],
-            'notification_email' => [
+            'ring_group_missed_call_data' => [
                 'required_if:missed_call_notifications,true',
                 'string', // or 'uuid' if it must be a UUID
             ],
 
-            'forward_toll_allow'         => [
+            'ring_group_forward_toll_allow'         => [
                 'nullable',
             ],
 
-            'context'                    => [
+            'ring_group_context'                    => [
+                'sometimes',
                 'required',
             ],
         ];
@@ -148,15 +171,17 @@ class UpdateRingGroupRequest extends FormRequest
             'members.*.timeout.required_with' =>  'The member setting is required',
             'forward_action.required_if' =>  'The action is required when call forwarding is enabled.',
             'notification_email.required_if' => 'The notification email is required when missed call notifications are enabled.',
+            'forward_target.required_unless' =>  'The forwarding target is required',
+            'ring_group_missed_call_data.required_if' => 'The notifcation email is required',
         ];
     }
 
     public function prepareForValidation()
     {
         $input = $this->all();
-    
-        $callDistribution = $input['call_distribution'] ?? null;
-    
+
+        $callDistribution = $input['ring_group_strategy'] ?? null;
+
         if (isset($input['members']) && is_array($input['members'])) {
             foreach ($input['members'] as $index => $member) {
                 // If delay is missing AND strategy is sequence/random/rollover, calculate it
@@ -166,14 +191,14 @@ class UpdateRingGroupRequest extends FormRequest
                 ) {
                     $input['members'][$index]['delay'] = $index * 5;
                 }
-    
+
                 // fallback delay default
                 if (!isset($input['members'][$index]['delay'])) {
                     $input['members'][$index]['delay'] = 0;
                 }
             }
         }
-    
+
         $this->replace($input);
     }
 }
