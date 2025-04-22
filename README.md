@@ -59,9 +59,11 @@ After completing the installation steps, you can access the application at your 
 
 
 ## How to update
-After pulling the updates, run this command to install them.
+Pull new updates and install them by running these commands:
 
    ```bash
+   cd /var/www/fspbx
+   git pull
    php artisan app:update
    ```
 Check if there are any pending database updates.
