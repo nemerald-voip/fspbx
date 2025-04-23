@@ -528,12 +528,12 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                     },
                                 }" />
                             <ToggleElement name="ring_group_call_forward_enabled" align="left"
-                                label="Allow Destination Call Forwarding Rules"
-                                info="Enable per‑destination call forwarding rules when Advanced call distribution is selected for the ring group."
+                                label="Allow Member Call Forwarding Rules"
+                                info="Enable per‑member call forwarding rules when Advanced call distribution is selected for the ring group."
                                 default="true" />
                             <ToggleElement name="ring_group_follow_me_enabled" align="left"
-                                label="Allow Destination Sequential Ring Rules"
-                                info="Enable per‑destination call sequential routing rules when Advanced call distribution is selected for the ring group."
+                                label="Allow Member Sequential Ring Rules"
+                                info="Enable per‑member call sequential routing rules when Advanced call distribution is selected for the ring group."
                                 default="true" />
                             <ToggleElement name="missed_call_notifications" align="left"
                                 label="Enable Missed Call Notifications" default="true" :columns="{
