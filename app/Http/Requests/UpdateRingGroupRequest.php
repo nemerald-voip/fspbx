@@ -52,7 +52,7 @@ class UpdateRingGroupRequest extends FormRequest
             'members'               => ['nullable', 'array'],
 
             // only validate each sub‑field if members was provided
-            'members.*.uuid'        => ['required_with:members', 'uuid'],
+            'members.*.uuid'        => ['present'],
             'members.*.destination' => ['required_with:members', 'numeric'],
             'members.*.delay'       => ['required_with:members', 'numeric', 'min:0'],
             'members.*.timeout'     => ['required_with:members', 'numeric', 'min:0'],
@@ -180,6 +180,8 @@ class UpdateRingGroupRequest extends FormRequest
     public function prepareForValidation()
     {
         $input = $this->all();
+
+        logger($input);
 
         $callDistribution = $input['ring_group_strategy'] ?? null;
 
