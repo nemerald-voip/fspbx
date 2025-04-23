@@ -1006,27 +1006,31 @@ class FaxesController extends Controller
      * @param int $id
      * @return \Illuminate\Http\Response
      */
-    public function destroy($id)
+    public function destroy(Faxes $fax)
     {
-        $fax = Faxes::findOrFail($id);
+        try {
+            // Delete related records first
+            $fax->allowed_emails()->delete();
+            $fax->allowed_domain_names()->delete();
 
-        if (isset($fax)) {
-            $deleted = $fax->delete();
-            if ($deleted) {
-                return response()->json([
-                    'status' => 200,
-                    'success' => [
-                        'message' => 'Selected faxes have been deleted'
-                    ]
-                ]);
-            } else {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => 'There was an error deleting selected faxes'
-                    ]
-                ]);
-            }
+            // Delete the fax itself
+            $fax->delete();
+
+            return response()->json([
+                'status' => 200,
+                'success' => [
+                    'message' => 'The fax and all related records have been successfully deleted.'
+                ]
+            ]);
+        } catch (\Exception $e) {
+            logger('Fax deletion error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+
+            return response()->json([
+                'status' => 500,
+                'error' => [
+                    'message' => 'An error occurred while deleting the fax.'
+                ]
+            ]);
         }
     }
 
@@ -1225,7 +1229,7 @@ class FaxesController extends Controller
         if (!isset($files) || sizeof($files) == 0) {
             return response()->json(['error' => 'At least one file must be uploaded'], 400);
         }
-        
+
         // Start creating the payload variable that will be passed to next step
         $payload = array(
             'From' => Session::get('user.user_email'),
@@ -1271,8 +1275,6 @@ class FaxesController extends Controller
                     'Name' => $fileName,
                 )
             );
-
-
         }
 
         $fax = new Faxes();
