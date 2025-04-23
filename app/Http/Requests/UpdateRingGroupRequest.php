@@ -181,8 +181,6 @@ class UpdateRingGroupRequest extends FormRequest
     {
         $input = $this->all();
 
-        logger($input);
-
         $callDistribution = $input['ring_group_strategy'] ?? null;
 
         if (isset($input['members']) && is_array($input['members'])) {
