@@ -41,6 +41,10 @@ class ListenForEmergencyCalls extends Command
                 }
 
                 $eslService->listen(function ($event) {
+                    $direction = $event->getHeader('variable_direction');
+                    if ($direction !== 'inbound') {
+                        return; // only act on inbound calls
+                    }
                     $destination = $event->getHeader('Caller-Destination-Number');
                     $caller = $event->getHeader('Caller-Caller-ID-Number');
                     $domain = $event->getHeader('variable_domain_uuid');

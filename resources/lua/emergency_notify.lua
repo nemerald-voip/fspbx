@@ -14,6 +14,10 @@ debug_log("INFO", "[emergency_notify.lua] Executing Emergency Notify Lua Script.
 -- Set the sound path dynamically
 session:setVariable("sound_prefix", "/var/www/fspbx/resources/sounds/en/us/alloy/emergency_notify")
 
+local extension = session:getVariable("origination_caller_id_number")
+debug_log("INFO", "[emergency_notify.lua] Extension " .. extension .. " dialed an emergency number")
+
+
 -- Answer the call
 session:answer()
 
@@ -23,7 +27,7 @@ session:sleep(1000)
 -- Say the emergency greeting
 session:streamFile("emergency_greeting.wav")
 
-session:execute("say", "en number iterated 101")
+session:execute("say", "en number iterated " .. extension)
 
 session:sleep(300)
 
