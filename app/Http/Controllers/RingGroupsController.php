@@ -409,8 +409,8 @@ class RingGroupsController extends Controller
                 'ring_group_enabled' => 'true',
                 'ring_group_strategy' => 'enterprise',
                 'ring_group_ringback' => '${us-ring}',
-                'ring_group_call_forward_enabled' => 'true',
-                'ring_group_follow_me_enabled' => 'true',
+                'ring_group_call_forward_enabled' => get_domain_setting('honor_member_cfwd'),
+                'ring_group_follow_me_enabled' => get_domain_setting('honor_member_followme'),
                 'dialplan_uuid' => Str::uuid(),
             ]));
 
