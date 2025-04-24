@@ -21,6 +21,6 @@ class FaxAllowedDomainNames extends Model
      */
     public function fax()
     {
-        return $this->belongsTo(Faxes::class);
+        return $this->belongsTo(Faxes::class, 'fax_uuid', 'fax_uuid');
     }
 }
