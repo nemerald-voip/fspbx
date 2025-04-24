@@ -738,7 +738,7 @@ const addSelectedMembers = () => {
             destination: item.destination ? item.destination : item.label,  // if item.destination exists, use it; otherwise, use the label
             type: item.type ? item.type : "other",                     // if type exists, use it; else default to "other"
             delay: "0",
-            timeout: "30",
+            timeout: "25",
             prompt: false,
             enabled: true
         }
