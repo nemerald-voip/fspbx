@@ -807,6 +807,22 @@ class DatabaseSeeder extends Seeder
                 'default_setting_description'   => "Enable or disable email challenge authentication. When enabled, users will be required to verify their email before completing the login process.",
             ],
 
+          [
+                'default_setting_category'      => 'ring_group',
+                'default_setting_subcategory'   => 'honor_member_cfwd',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Default setting for Allow Member Call Forwarding Rules",
+            ],
+            [
+                'default_setting_category'      => 'ring_group',
+                'default_setting_subcategory'   => 'honor_member_followme',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Default setting for Allow Member Follow Me Rules",
+            ],
 
         ];
 
