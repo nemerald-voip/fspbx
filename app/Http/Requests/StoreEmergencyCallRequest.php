@@ -20,7 +20,7 @@ class StoreEmergencyCallRequest extends FormRequest
             'members'                 => 'nullable|array',
             'members.*.extension_uuid'=> 'required_with:members|uuid',
             'emails' => 'nullable|array',
-            'emails.*' => 'email|max:255',
+            'emails.*' => 'nullable|email|max:255',
         ];
         
     }
