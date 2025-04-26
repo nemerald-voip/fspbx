@@ -17,7 +17,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Builder;
-use App\Http\Requests\StorePhoneNumberRequest;
 use Illuminate\Contracts\Foundation\Application;
 use App\Http\Requests\UpdateAccountSettingsRequest;
 
@@ -53,14 +52,11 @@ class AccountSettingsController extends Controller
                 'data' => function () {
                     return $this->getData();
                 },
-                'navigation' => function () {
-                    return $this->getNavigation();
-                },
                 'timezones' => function () {
                     return getGroupedTimezones();
                 },
                 'routes' => [
-                    'update' => route('account-settings.update'),
+                    'settings_update' => route('account-settings.update'),
                     'emergency_calls' => route('emergency-calls.index'),
                     'emergency_calls_store' => route('emergency-calls.store'),
                     'emergency_calls_item_options' => route('emergency-calls.item.options'),
@@ -92,6 +88,8 @@ class AccountSettingsController extends Controller
 
         $data = $data->first(); // This will return a collection
 
+        $data->append('named_settings');
+
         // logger($data);
 
         return $data;
@@ -116,41 +114,13 @@ class AccountSettingsController extends Controller
             'domain_enabled',
         );
 
-        $data->with(['settings' => function ($query) {
-            $query->select('domain_uuid', 'domain_setting_uuid', 'domain_setting_category', 'domain_setting_subcategory', 'domain_setting_value', 'domain_setting_enabled');
-        }]);
+        // $data->with(['settings' => function ($query) {
+        //     $query->select('domain_uuid', 'domain_setting_uuid', 'domain_setting_category', 'domain_setting_subcategory', 'domain_setting_value', 'domain_setting_enabled');
+        // }]);
 
         return $data;
     }
 
-
-    /**
-     * @return Array
-     */
-    public function getNavigation()
-    {
-        $navigation = [
-            [
-                'name' => 'General',
-                'icon' => 'Cog6ToothIcon',
-                'slug' => 'general',
-            ],
-
-            [
-                'name' => 'Emergency Calls',
-                'icon' => 'BellIcon',
-                'slug' => 'emergency',
-            ],
-
-            // [
-            //     'name' => 'Billing',
-            //     'icon' => 'CreditCardIcon',
-            //     'slug' => 'billing',
-            // ],
-        ];
-
-        return $navigation;
-    }
 
     /**
      * Show the form for creating a new resource.
@@ -162,68 +132,6 @@ class AccountSettingsController extends Controller
         //
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \App\Http\Requests\StorePhoneNumberRequest  $request
-     * @return JsonResponse
-     */
-    public function store(StorePhoneNumberRequest $request): JsonResponse
-    {
-        try {
-            $inputs = array_map(function ($value) {
-                return $value === 'NULL' ? null : $value;
-            }, $request->validated());
-
-            // Process routing_options to form destination_actions
-            $destination_actions = [];
-            if (!empty($inputs['routing_options'])) {
-                foreach ($inputs['routing_options'] as $option) {
-                    $destination_actions[] = $this->buildDestinationAction($option);
-                }
-            }
-
-            // Assign the formatted actions to the destination_actions field
-            $inputs['destination_actions'] = json_encode($destination_actions);
-
-            $instance = $this->model;
-            $instance->fill([
-                'domain_uuid' => $inputs['domain_uuid'],
-                'dialplan_uuid' => Str::uuid(),
-                'fax_uuid' => $inputs['fax_uuid'] ?? null,
-                'destination_type' => 'inbound',
-                'destination_prefix' => $inputs['destination_prefix'],
-                'destination_number' => $inputs['destination_number'],
-                'destination_actions' => $inputs['destination_actions'],
-                // 'destination_conditions' => $inputs['destination_conditions'],
-                'destination_hold_music' => $inputs['destination_hold_music'] ?? null,
-                'destination_description' => $inputs['destination_description'] ?? null,
-                'destination_enabled' => $inputs['destination_enabled'] ?? true,
-                'destination_record' => $inputs['destination_record'] ?? false,
-                'destination_type_fax' => $inputs['destination_type_fax'] ?? false,
-                'destination_cid_name_prefix' => $inputs['destination_cid_name_prefix'] ?? null,
-                'destination_accountcode' => $inputs['destination_accountcode'] ?? null,
-                'destination_distinctive_ring' => $inputs['destination_distinctive_ring'] ?? null,
-                'destination_context' => $inputs['destination_context'] ?? 'public',
-            ]);
-            $instance->save();
-
-            $this->generateDialPlanXML($instance);
-
-            return response()->json([
-                'messages' => ['success' => ['New item created']]
-            ], 201);
-        } catch (\Exception $e) {
-            // Log the error message
-            logger($e);
-
-            // Handle any other exception that may occur
-            return response()->json([
-                'success' => false,
-                'errors' => ['server' => ['Failed to create new item'], 'ss' => $e->getMessage()]
-            ], 500);  // 500 Internal Server Error for any other errors
-        }
-    }
 
     /**
      * Display the specified resource.
@@ -256,6 +164,7 @@ class AccountSettingsController extends Controller
      */
     public function update(UpdateAccountSettingsRequest $request)
     {
+
         try {
             // Begin Transaction
             DB::beginTransaction();
@@ -275,46 +184,60 @@ class AccountSettingsController extends Controller
                 'domain_enabled'     => $data['domain_enabled'],
             ]);
 
+            // Apply all existing‐row updates
+            if (!empty($data['updatedSettings'])) {
+                foreach ($data['updatedSettings'] as $s) {
+                    // if the new value is NULL, we disable this setting
+                    $enabled = is_null($s['domain_setting_value'])
+                        ? false
+                        : $s['domain_setting_enabled'];
 
-            // Update settings if provided
-            if (!empty($data['settings'])) {
-                // Extract all subcategories from the incoming settings
-                $subcategories = array_column($data['settings'], 'subcategory');
+                    DomainSettings::where('domain_setting_uuid', $s['domain_setting_uuid'])
+                        ->update([
+                            'domain_setting_value'   => $s['domain_setting_value'],
+                            'domain_setting_enabled' => $enabled,
+                        ]);
+                }
+            }
 
-                // Retrieve all default settings for these subcategories in one query
-                $defaultSettings = DefaultSettings::whereIn('default_setting_subcategory', $subcategories)
+            // 3️⃣ Prepare and insert brand‐new settings in one go
+            if (!empty($data['newSettings'])) {
+                // extract the subcategories to look up
+                $subs = collect($data['newSettings'])
+                    ->pluck('domain_setting_subcategory')
+                    ->unique()
+                    ->all();
+
+                // single query to get their default definitions
+                $defaults = DB::table('v_default_settings')
+                    ->whereIn('default_setting_subcategory', $subs)
                     ->get()
                     ->keyBy('default_setting_subcategory');
 
-                // logger($defaultSettings);
+                foreach ($data['newSettings'] as $new) {
+                    $sub = $new['domain_setting_subcategory'];
 
-                foreach ($data['settings'] as $setting) {
-
-                    // If the category is empty, try to get it from the default settings collection
-                    if (empty($setting['category']) && isset($defaultSettings[$setting['subcategory']])) {
-                        $setting['category'] = $defaultSettings[$setting['subcategory']]->default_setting_category ?? "Other";
-                    }
-
-                    // Delete null values
-                    if (is_null($setting['value'])) {
-                        // Remove the custom setting if it exists
-                        DomainSettings::where('domain_setting_uuid', $setting['uuid'])->delete();
+                    // skip any subcategory we couldn't find in defaults
+                    if (! isset($defaults[$sub])) {
+                        logger("No default_setting found for subcategory: {$sub}");
                         continue;
                     }
 
-                    DomainSettings::updateOrCreate(
-                        [
-                            'domain_uuid' => $data['domain_uuid'],
-                            'domain_setting_subcategory' => $setting['subcategory']
-                        ],
-                        [
-                            'domain_setting_value' => $setting['value'],
-                            'domain_setting_category' => $setting['category'],
-                            'domain_setting_enabled' => true,
-                        ]
-                    );
+                    $def = $defaults[$sub];
+
+                    // create the new override
+                    $domain->settings()->create([
+                        'domain_setting_uuid'        => Str::uuid()->toString(),
+                        'domain_setting_category'    => $def->default_setting_category,
+                        'domain_setting_subcategory' => $sub,
+                        'domain_setting_name'        => $def->default_setting_name,
+                        'domain_setting_value'       => $new['domain_setting_value'],
+                        'domain_setting_enabled'     => true,
+                        'domain_setting_description' => $def->default_setting_description,
+                    ]);
                 }
             }
+
 
             // Commit Transaction
             DB::commit();

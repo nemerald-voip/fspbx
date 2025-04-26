@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TokenController;
 use App\Http\Controllers\RingGroupsController;
+use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\Api\EmergencyCallController;
 
 
@@ -36,4 +37,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('ring-groups/item-options', [RingGroupsController::class, 'getItemOptions'])->name('ring-groups.item.options');
     Route::post('ring-groups/bulk-delete', [RingGroupsController::class, 'bulkDelete'])->name('ring-groups.bulk.delete');
     Route::post('ring-groups/select-all', [RingGroupsController::class, 'selectAll'])->name('ring-groups.select.all');
+
+    // Account Settings
+    Route::put('account-settings/update', [AccountSettingsController::class, 'update'])->name('account-settings.update');
+
 });
