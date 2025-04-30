@@ -749,6 +749,7 @@ const addSelectedMembers = () => {
     form$.value.update({
         members: [...currentMembers, ...selectedItems]
     })
+    console.log(form$.value.el$('members').value);
 
     form$.value.el$('selectedMembers').update([]); // clear selection
 };

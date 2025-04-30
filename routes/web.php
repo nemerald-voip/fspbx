@@ -32,6 +32,7 @@ use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\UserSettingsController;
 use App\Http\Controllers\RegistrationsController;
+use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\AppsCredentialsController;
 use App\Http\Controllers\MessageSettingsController;
@@ -185,9 +186,12 @@ Route::group(['middleware' => 'auth'], function () {
     Route::put('/virtual-receptionists/key/update', [VirtualReceptionistController::class, 'updateKey'])->name('virtual-receptionist.key.update');
     Route::post('/virtual-receptionists/key/delete', [VirtualReceptionistController::class, 'destroyKey'])->name('virtual-receptionist.key.destroy');
 
-    //Settings
+    //Account ettings
     // Route::resource('account-settings', AccountSettingsController::class);
     Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings.index');
+
+    // System Settings
+    Route::get('system-settings', [SystemSettingsController::class, 'index'])->name('system-settings.index');
 
     // Greetings
     Route::post('/greetings/url', [GreetingsController::class, 'getGreetingUrl'])->name('greeting.url');

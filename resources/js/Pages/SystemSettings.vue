@@ -6,7 +6,7 @@
                 <div class="sm:flex-auto">
                     <div>
                         <div class="mt-3 text-lg font-semibold leading-6 text-gray-600">
-                            Account Settings
+                            System Settings
                         </div>
                     </div>
 
@@ -23,26 +23,15 @@
 
                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                         <div class="px-2 py-6 sm:px-6 lg:col-span-2 lg:px-0 lg:py-0">
-                            <FormTabs view="vertical">
-                                <FormTab name="page0" label="General" :elements="[
-                                    'general_tab_label',
-                                    'domain_enabled',
+                            <FormTabs view="vertical" @select="getData">
+                                <FormTab name="payment_gateways" label="Payment Gateways" :elements="[
+                                    'payment_gateways_tab_label',
+                                    'gateways',
                                     'domain_description',
                                     'domain_name',
                                     'time_zone',
                                     'general_submit',
 
-                                ]" :conditions="[() => true]" />
-                                <FormTab name="page1" label="Billing" :elements="[
-
-                                ]" :conditions="[() => true]" />
-
-                                <FormTab name="page2" label="Emergency Calls" :elements="[
-                                    'emergency_calls',
-                                    'container_1',
-                                    'container_2',
-                                    'divider',
-                                    'emergency_calls_service_status'
                                 ]" :conditions="[() => true]" />
 
                             </FormTabs>
@@ -52,51 +41,56 @@
                             class="sm:px-6 lg:col-span-10 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                             <FormElements>
 
-                                <!-- General Tab -->
+                                <!-- Payment Gateways Tab -->
 
-                                <StaticElement name="general_tab_label" tag="h4" content="General" />
-                                <HiddenElement name="domain_uuid" :meta="true" />
-                                <ToggleElement name="domain_enabled" text="Account Status" />
-                                <TextElement name="domain_description" label="Account Name" placeholder="Enter Account Name"
-                                    :floating="false" :columns="{
-                                        sm: {
-                                            container: 6,
-                                        },
-                                    }" />
-                                <TextElement name="domain_name" label="Domain" :readonly="true" :columns="{
-                                    sm: {
-                                        container: 6,
-                                    },
-                                }" />
-                                <SelectElement name="time_zone" :groups="true" :items="timezones" :search="true"
-                                    :native="false" label="Time Zone" input-type="search" autocomplete="off"
-                                    placeholder="Select Time Zone" :floating="false" :strict="false" :columns="{
-                                        sm: {
-                                            container: 6,
-                                        },
-                                    }" />
+                                <StaticElement name="payment_gateways_tab_label" tag="h4" content="Payment Gateways"
+                                    description="Manage Payment Providers" />
+                                <ListElement name="gateways" :controls="{
+                                    add: false,
+                                    remove: false,
+                                }"
+                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                    <template #default="{ index }">
+                                        <ObjectElement :name="index">
+                                            <StaticElement name="name" tag="p" :content="(el$) => {
+                                                // console.log (el$.form$.el$('gateways').value[index].name);
+                                                return el$.form$.el$('gateways').value[index].name
+                                            }" :columns="{ container: 6, }"
+                                                :attrs="{ class: 'text-base font-semibold' }">
+                                                <template #after="{ el$ }">
+                                                    <Badge v-if="el$.form$.el$('gateways').value[index].is_enabled"
+                                                        class="mt-1" :text="'Activated'" :backgroundColor="'bg-green-50'"
+                                                        :textColor="'text-green-700'" :ringColor="'ring-green-600/20'" />
 
-                                <ButtonElement name="general_submit" button-label="Save" :submits="true" align="right" />
+                                                    <Badge v-else class="mt-1" :text="'Disabled'"
+                                                        :backgroundColor="'bg-rose-50'" :textColor="'text-rose-700'"
+                                                        :ringColor="'ring-rose-600/20'" />
+                                                </template>
+                                            </StaticElement>
+                                            <HiddenElement name="is_enabled" :meta="true" />
+                                            <ButtonElement name="stripe_activate" button-label="Configure"
+                                                @click="activateGateway" :columns="{
+                                                    container: 6,
+                                                }" align="right" :conditions="[
+            ['gateways.*.is_enabled', false]
+          ]" />
 
-
-                                <!-- Emergency Calls -->
-
-                                <StaticElement name="emergency_calls">
-                                    <template #default="{ el$ }">
-                                        <EmergencyCalls :routes="routes" />
+                                            <ButtonElement name="stripe_deactivate" button-label="Deactivate"
+                                                :secondary="true" :columns="{
+                                                    container: 6,
+                                                }" align="right" :conditions="[
+            ['gateways.*.is_enabled', true]
+          ]"/>
+                                            <ToggleElement name="stripe_sandbox" text="Sandbox"
+                                                description="You can use the Stripe API in test mode, which doesn’t affect your live data or interact with the banking networks." 
+                                                :conditions="[
+            ['gateways.*.is_enabled', true]
+          ]"/>
+                                        </ObjectElement>
                                     </template>
-                                </StaticElement>
-
-                                <GroupElement name="container_1" />
-                                <StaticElement name="divider" tag="hr" />
-                                <GroupElement name="container_2" />
+                                </ListElement>
 
 
-                                <StaticElement name="emergency_calls_service_status">
-                                    <template #default="{ el$ }">
-                                        <EmergencyServiceStatus :routes="routes" />
-                                    </template>
-                                </StaticElement>
 
                             </FormElements>
                         </div>
@@ -126,6 +120,7 @@ import EmergencyServiceStatus from "./components/EmergencyServiceStatus.vue";
 import { CheckCircleIcon, QuestionMarkCircleIcon, ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { CreditCardIcon } from '@heroicons/vue/24/outline'
 import { ChevronDownIcon } from '@heroicons/vue/16/solid'
+import Badge from "@generalComponents/Badge.vue";
 
 
 
@@ -147,19 +142,12 @@ const form$ = ref(null)
 
 onMounted(() => {
     form$.value.update({ // updates form data
-        domain_uuid: props.data.domain_uuid ?? null,
-        domain_enabled: props.data.domain_enabled ?? false,
-        domain_name: props.data.domain_name ?? '',
-        domain_description: props.data.domain_description ?? '',
-        time_zone: props.data.named_settings.time_zone?.value ?? null,
-
+        gateways: [],
     })
 
     form$.value.clean()
     // console.log(form$.value.data);
 })
-
-console.log(props.data)
 
 
 const notificationType = ref(null);
@@ -167,6 +155,30 @@ const notificationShow = ref(null);
 const notificationMessages = ref(null);
 
 
+const getData = (activeTab, previousTab) => {
+    if (activeTab.name == 'payment_gateways') {
+        getPaymentGatewaysData(activeTab.form$);
+    }
+}
+
+
+const getPaymentGatewaysData = async (form) => {
+    try {
+        // hit your endpoint
+        const response = await form$.value.$vueform.services.axios.get(props.routes.payment_gateways)
+        console.log(response.data)
+
+        form$.value.update({
+            gateways: response.data
+        })
+
+        form$.value.clean()
+    }
+    catch (err) {
+        console.error('Failed to load gateways:', err)
+        return []                    // return an empty array on error
+    }
+}
 
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
@@ -314,6 +326,12 @@ const handleError = (error, details, form$) => {
             break
     }
 }
+
+
+const activateGateway = () => {
+    console.log(form$.value.data);
+
+};
 
 
 

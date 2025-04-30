@@ -14,7 +14,7 @@
             <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
                 <div class="overflow-hidden border-t border-gray-200">
                     <table class="min-w-full divide-y divide-gray-200 mb-4">
-                        <thead class="bg-gray-50">
+                        <thead class="bg-gray-100">
                             <tr>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Number</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Extensions to Notify
