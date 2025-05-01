@@ -80,8 +80,8 @@ class HandleInertiaRequests extends Middleware
         $permissions['device_profile_index'] = userCheckPermission('device_profile_view');
 
         $permissions['destination_add'] = userCheckPermission('destination_add');
-        $permissions['destination_edit'] = userCheckPermission('destination_edit');
-        $permissions['destination_delete'] = userCheckPermission('destination_delete');
+        $permissions['destination_update'] = userCheckPermission('destination_edit');
+        $permissions['destination_destroy'] = userCheckPermission('destination_delete');
         $permissions['destination_edit_domain'] = userCheckPermission('destination_domain');
 
         $permissions['cdrs_view_global'] = userCheckPermission('xml_cdr_all');
