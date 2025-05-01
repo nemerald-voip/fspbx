@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TokenController;
 use App\Http\Controllers\RingGroupsController;
+use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\Api\EmergencyCallController;
@@ -45,4 +46,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     // System Settings
     Route::put('system-settings/update', [SystemSettingsController::class, 'update'])->name('system-settings.update');
     Route::get('system-settings/payment_gateways', [SystemSettingsController::class, 'getPaymentGatewayData'])->name('system-settings.payment_gateways');
+
+    // Payment Gateways
+    Route::put('/gateways', [PaymentGatewayController::class, 'update'])->name('gateway.update');
 });

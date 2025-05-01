@@ -69,23 +69,23 @@
                                             </StaticElement>
                                             <HiddenElement name="is_enabled" :meta="true" />
                                             <ButtonElement name="stripe_activate" button-label="Configure"
-                                                @click="activateGateway" :columns="{
+                                                @click="handlePaymentGatewaySettingsClick(index)" :columns="{
                                                     container: 6,
                                                 }" align="right" :conditions="[
-            ['gateways.*.is_enabled', false]
-          ]" />
+    ['gateways.*.is_enabled', false]
+]" />
 
                                             <ButtonElement name="stripe_deactivate" button-label="Deactivate"
-                                                :secondary="true" :columns="{
+                                                @click="handlePaymentGatewaySettingsClick()" :secondary="true" :columns="{
                                                     container: 6,
                                                 }" align="right" :conditions="[
-            ['gateways.*.is_enabled', true]
-          ]"/>
+    ['gateways.*.is_enabled', true]
+]" />
                                             <ToggleElement name="stripe_sandbox" text="Sandbox"
-                                                description="You can use the Stripe API in test mode, which doesn’t affect your live data or interact with the banking networks." 
+                                                description="You can use the Stripe API in test mode, which doesn’t affect your live data or interact with the banking networks."
                                                 :conditions="[
-            ['gateways.*.is_enabled', true]
-          ]"/>
+                                                    ['gateways.*.is_enabled', true]
+                                                ]" />
                                         </ObjectElement>
                                     </template>
                                 </ListElement>
@@ -102,24 +102,19 @@
         <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
             @update:show="hideNotification" />
 
+        <UpdateStripeSettingsModal :settings="gatewaySettings" :uuid="gatewayUuid" :is-enabled="gatewayEnabled" :show="showStripeSettingsModal" :route="routes.payment_gateway_update"
+        @confirm="handleGreetingUpdate" @close="showStripeSettingsModal = false" />
+
+
     </MainLayout>
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import MainLayout from '../Layouts/MainLayout.vue'
-import { Cog6ToothIcon, BellIcon } from '@heroicons/vue/24/outline';
-import LabelInputOptional from "@generalComponents/LabelInputOptional.vue";
-import InputField from "@generalComponents/InputField.vue";
-import Toggle from "@generalComponents/Toggle.vue";
-import Spinner from "@generalComponents/Spinner.vue";
+
 import Notification from "./components/notifications/Notification.vue";
-import ListboxGroup from "@generalComponents/ListboxGroup.vue";
-import EmergencyCalls from "./components/EmergencyCalls.vue";
-import EmergencyServiceStatus from "./components/EmergencyServiceStatus.vue";
-import { CheckCircleIcon, QuestionMarkCircleIcon, ExclamationCircleIcon } from '@heroicons/vue/20/solid'
-import { CreditCardIcon } from '@heroicons/vue/24/outline'
-import { ChevronDownIcon } from '@heroicons/vue/16/solid'
+import UpdateStripeSettingsModal from "./components/modal/UpdateStripeSettingsModal.vue";
 import Badge from "@generalComponents/Badge.vue";
 
 
@@ -137,17 +132,22 @@ const props = defineProps({
 })
 
 const form$ = ref(null)
+const showStripeSettingsModal = ref(false);
+const gatewaySettings = ref(null);
+const gatewayUuid = ref(null);
+const gatewayEnabled = ref(null);
+
 
 // const localData = ref(JSON.parse(JSON.stringify(props.data || {})));
 
-onMounted(() => {
-    form$.value.update({ // updates form data
-        gateways: [],
-    })
+// onMounted(() => {
+//     form$.value.update({ // updates form data
+//         gateways: [],
+//     })
 
-    form$.value.clean()
-    // console.log(form$.value.data);
-})
+//     form$.value.clean()
+//     // console.log(form$.value.data);
+// })
 
 
 const notificationType = ref(null);
@@ -157,26 +157,42 @@ const notificationMessages = ref(null);
 
 const getData = (activeTab, previousTab) => {
     if (activeTab.name == 'payment_gateways') {
-        getPaymentGatewaysData(activeTab.form$);
+        getPaymentGatewaysData();
     }
 }
 
-
-const getPaymentGatewaysData = async (form) => {
+const getPaymentGatewaysData = async () => {
     try {
         // hit your endpoint
         const response = await form$.value.$vueform.services.axios.get(props.routes.payment_gateways)
-        console.log(response.data)
 
         form$.value.update({
             gateways: response.data
         })
+
+        console.log(form$.value.data);
 
         form$.value.clean()
     }
     catch (err) {
         console.error('Failed to load gateways:', err)
         return []                    // return an empty array on error
+    }
+}
+
+
+const handlePaymentGatewaySettingsClick = (index) => {
+    // if (activeTab.name == 'payment_gateways') {
+    //     getPaymentGatewaysData(activeTab.form$);
+    // }
+
+    console.log(form$.value.el$('gateways').value[index].slug);
+
+    if (form$.value.el$('gateways').value[index].slug == 'stripe') {
+        showStripeSettingsModal.value = true;
+        gatewaySettings.value = form$.value.el$('gateways').value[index].settings
+        gatewayUuid.value = form$.value.el$('gateways').value[index].uuid
+        gatewayEnabled.value = form$.value.el$('gateways').value[index].is_enabled
     }
 }
 
@@ -326,12 +342,6 @@ const handleError = (error, details, form$) => {
             break
     }
 }
-
-
-const activateGateway = () => {
-    console.log(form$.value.data);
-
-};
 
 
 

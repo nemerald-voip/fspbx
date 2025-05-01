@@ -51,7 +51,7 @@ class SystemSettingsController extends Controller
                 'routes' => [
                     'settings_update' => route('system-settings.update'),
                     'payment_gateways' => route('system-settings.payment_gateways'),
-
+                    'payment_gateway_update' => route('gateway.update')
                 ],
 
             ]
@@ -224,7 +224,7 @@ class SystemSettingsController extends Controller
                     'slug'       => $gw->slug,
                     'name'       => $gw->name,
                     'is_enabled' => (bool) $gw->is_enabled,
-                    // 'settings'   => $gw->settings->pluck('setting_value','setting_key')->toArray(),
+                    'settings'   => $gw->settings->pluck('setting_value','setting_key')->toArray(),
                 ];
             });
 
