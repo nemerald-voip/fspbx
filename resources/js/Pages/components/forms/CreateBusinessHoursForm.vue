@@ -38,12 +38,7 @@
                                     container: 6,
                                 },
                             }" placeholder="Enter Extension" :floating="false" :submit="false" />
-                            <SelectElement name="timezone" :items="[
-                                {
-                                    value: 0,
-                                    label: 'Label',
-                                },
-                            ]" :search="true" :native="false" label="Time Zone" input-type="search" autocomplete="off"
+                            <SelectElement name="timezone"  :groups="true" :items="options.timezones" :search="true" :native="false" label="Time Zone" input-type="search" autocomplete="off"
                                 placeholder="Choose time zone" :floating="false" :strict="false" :columns="{
                                     sm: {
                                         container: 6,
@@ -67,11 +62,11 @@
                                     <ObjectElement :name="index">
                                         <CheckboxgroupElement name="weekdays" view="tabs" label="Weekdays" :items="[
                                             {
-                                                value: 0,
+                                                value: '0',
                                                 label: 'M',
                                             },
                                             {
-                                                value: 1,
+                                                value: '1',
                                                 label: 'T',
                                             },
                                             {

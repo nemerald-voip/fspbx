@@ -1639,29 +1639,65 @@ if (!function_exists('formatMacAddress')) {
 }
 
 
+// if (!function_exists('getGroupedTimezones')) {
+//     function getGroupedTimezones()
+//     {
+//         $groupedTimezones = [];
+
+//         foreach (DateTimeZone::listIdentifiers() as $tz) {
+//             $parts = explode('/', $tz, 2);
+//             $region = $parts[0];
+//             $label = $tz;
+//             $offset = (new DateTime('now', new DateTimeZone($tz)))->format('P');
+
+//             $groupedTimezones[$region][] = [
+//                 'value' => $tz,
+//                 'name' => "(UTC $offset) $label"
+//             ];
+//         }
+
+//         ksort($groupedTimezones); // Optional: sort regions alphabetically
+
+//         // Prepend "System Default" with a null value at the very top
+//         $groupedTimezones = ['System Default' => [['value' => null, 'name' => 'System Default']]] + $groupedTimezones;
+
+
+//         return $groupedTimezones;
+//     }
+// }
+
 if (!function_exists('getGroupedTimezones')) {
     function getGroupedTimezones()
     {
+        // 1) build an associative map of regions → options
         $groupedTimezones = [];
 
         foreach (DateTimeZone::listIdentifiers() as $tz) {
-            $parts = explode('/', $tz, 2);
-            $region = $parts[0];
-            $label = $tz;
+            [$region] = explode('/', $tz, 2);
             $offset = (new DateTime('now', new DateTimeZone($tz)))->format('P');
 
             $groupedTimezones[$region][] = [
                 'value' => $tz,
-                'name' => "(UTC $offset) $label"
+                'label'  => "(UTC {$offset}) {$tz}",
             ];
         }
 
-        ksort($groupedTimezones); // Optional: sort regions alphabetically
+        ksort($groupedTimezones);
 
-        // Prepend "System Default" with a null value at the very top
-        $groupedTimezones = ['System Default' => [['value' => null, 'name' => 'System Default']]] + $groupedTimezones;
+        // 2) prepend “System Default”
+        $groupedTimezones = ['System Default' => [
+            ['value' => null, 'label' => 'System Default'],
+        ]] + $groupedTimezones;
 
+        // 3) transform into indexed array of { groupLabel, groupOptions }
+        $result = [];
+        foreach ($groupedTimezones as $region => $options) {
+            $result[] = [
+                'label'   => $region,
+                'items' => $options,
+            ];
+        }
 
-        return $groupedTimezones;
+        return $result;
     }
 }

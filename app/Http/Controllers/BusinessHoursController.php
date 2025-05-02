@@ -205,7 +205,6 @@ class BusinessHoursController extends Controller
 
             $routingOptionsService = new CallRoutingOptionsService;
             $routingTypes = $routingOptionsService->routingTypes;
-            $forwardingTypes = $routingOptionsService->forwardingTypes;
 
             $routes = [
                 'store_route' => $storeRoute ?? null,
@@ -213,22 +212,6 @@ class BusinessHoursController extends Controller
                 'get_routing_options' => route('routing.options'),
 
             ];
-
-
-
-
-            $routes = array_merge($routes, [
-                'text_to_speech_route' => route('greetings.textToSpeech'),
-                'greeting_route' => route('greeting.url'),
-                'delete_greeting_route' => route('greetings.file.delete'),
-                'update_greeting_route' => route('greetings.file.update'),
-                'upload_greeting_route' => route('greetings.file.upload'),
-                // 'update_route' => route('virtual-receptionists.update', $ivr),
-                'apply_greeting_route' => route('virtual-receptionist.greeting.apply'),
-
-            ]);
-
-
       
             // Construct the itemOptions object
             $itemOptions = [
@@ -236,7 +219,7 @@ class BusinessHoursController extends Controller
                 'permissions' => $permissions,
                 'routes' => $routes,
                 'routing_types' => $routingTypes,
-                'forwarding_types' => $forwardingTypes,
+                'timezones' => getGroupedTimezones(),
                 // Define options for other fields as needed
             ];
             // logger($itemOptions);
