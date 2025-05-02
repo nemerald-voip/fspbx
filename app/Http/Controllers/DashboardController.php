@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\BusinessHour;
 use Linfo\Linfo;
 use App\Models\User;
 use Inertia\Inertia;
@@ -147,6 +148,13 @@ class DashboardController extends Controller
             //Call Flow Count
             $counts['call_flows'] = CallFlows::where('domain_uuid', $domain_id)
                 ->where('call_flow_enabled', 'true')
+                ->count();
+        }
+
+        if (userCheckPermission("business_hours_list_view")) {
+            //Business Hours Count
+            $counts['business_hours'] = BusinessHour::where('domain_uuid', $domain_id)
+                ->where('enabled', 'true')
                 ->count();
         }
 
@@ -334,6 +342,9 @@ class DashboardController extends Controller
         }
         if (userCheckPermission("ivr_menu_view")) {
             $apps[] = ['name' => 'Virtual Receptionists (IVRs)', 'href' => route('virtual-receptionists.index'), 'icon' => 'IvrIcon', 'slug' => 'ivrs'];
+        }
+        if (userCheckPermission("business_hours_list_view")) {
+            $apps[] = ['name' => 'Business Hours', 'href' => '/business-hours', 'icon' => 'CalendarDaysIcon', 'slug' => 'business_hours'];
         }
         if (userCheckPermission("time_condition_view")) {
             $apps[] = ['name' => 'Schedules', 'href' => '/app/time_conditions/time_conditions.php', 'icon' => 'CalendarDaysIcon', 'slug' => 'schedules'];

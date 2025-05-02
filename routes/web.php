@@ -31,6 +31,7 @@ use App\Http\Controllers\WakeupCallsController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\UserSettingsController;
+use App\Http\Controllers\BusinessHoursController;
 use App\Http\Controllers\RegistrationsController;
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\AppsCredentialsController;
@@ -150,6 +151,9 @@ Route::group(['middleware' => 'auth'], function () {
     // Route::post('ring-groups/item-options', [RingGroupsController::class, 'getItemOptions'])->name('ring-groups.item.options');
     // Route::post('/ring-groups/bulk-delete', [RingGroupsController::class, 'bulkDelete'])->name('ring-groups.bulk.delete');
     // Route::post('/ring-groups/select-all', [RingGroupsController::class, 'selectAll'])->name('ring-groups.select.all');
+
+    // Business hours
+    Route::get('business-hours', [BusinessHoursController::class, 'index'])->name('business-hours.index');
 
     //Voicemails
     Route::resource('voicemails', VoicemailController::class);

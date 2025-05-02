@@ -1,0 +1,287 @@
+<template>
+    <div>
+        <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError" @response="handleResponse"
+            :default="{ extension: options.item.extension }" :display-errors="false">
+            <template #empty>
+
+                <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
+                    <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
+                        <FormTabs view="vertical">
+                            <FormTab name="page0" label="Business Hours" :elements="[
+                                'business_hours_header',
+                                'name',
+                                'extension',
+                                'timezone',
+                                'custom_hours',
+                                'time_slots',
+                                'ring_group_extension',
+                                'ring_group_description',
+                                'submit',
+
+                            ]" />
+
+                        </FormTabs>
+                    </div>
+
+                    <div
+                        class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
+                        <FormElements>
+
+                            <StaticElement name="business_hours_header" tag="h4" content="Business Hours" />
+                            <TextElement name="name" label="Name" :columns="{
+                                sm: {
+                                    container: 6,
+                                },
+                            }" placeholder="Enter Name" :floating="false" />
+                            <TextElement name="extension" label="Extension" :columns="{
+                                sm: {
+                                    container: 6,
+                                },
+                            }" placeholder="Enter Extension" :floating="false" :submit="false" />
+                            <SelectElement name="timezone" :items="[
+                                {
+                                    value: 0,
+                                    label: 'Label',
+                                },
+                            ]" :search="true" :native="false" label="Time Zone" input-type="search" autocomplete="off"
+                                placeholder="Choose time zone" :floating="false" :strict="false" :columns="{
+                                    sm: {
+                                        container: 6,
+                                    },
+                                }" />
+
+                            <RadiogroupElement name="custom_hours" :items="[
+                                {
+                                    value: false,
+                                    label: 'Always take calls (24/7)',
+                                },
+                                {
+                                    value: true,
+                                    label: 'Only during specific hours',
+                                },
+                            ]" label="When do you want to receive calls?" default="false" />
+                            <ListElement name="time_slots" :sort="true" label="Time Slots"
+                                :conditions="[['custom_hours', true]]"
+                                :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                <template #default="{ index }">
+                                    <ObjectElement :name="index">
+                                        <CheckboxgroupElement name="weekdays" view="tabs" label="Weekdays" :items="[
+                                            {
+                                                value: 0,
+                                                label: 'M',
+                                            },
+                                            {
+                                                value: 1,
+                                                label: 'T',
+                                            },
+                                            {
+                                                value: '3',
+                                                label: 'W',
+                                            },
+                                            {
+                                                value: '4',
+                                                label: 'T',
+                                            },
+                                            {
+                                                value: '5',
+                                                label: 'F',
+                                            },
+                                            {
+                                                value: '6',
+                                                label: 'S',
+                                            },
+                                            {
+                                                value: '7',
+                                                label: 'S',
+                                            },
+                                        ]" size="sm" :columns="{
+    sm: {
+        container: 6,
+    },
+}" />
+                                        <DateElement name="time_from" label="From" :time="true" :date="false"
+                                            :hour24="false" :columns="{
+                                                default: {
+                                                    container: 6,
+                                                },
+                                                sm: {
+                                                    container: 3,
+                                                },
+                                            }" size="sm" />
+                                        <DateElement name="time_to" :time="true" :date="false" :hour24="false" :columns="{
+                                            default: {
+                                                container: 6,
+                                            },
+                                            sm: {
+                                                container: 3,
+                                            },
+                                        }" size="sm" label="To" />
+
+                                        <SelectElement name="action" :items="options.routing_types" label-prop="name"
+                                            :search="true" :native="false" label="Choose Action" input-type="search"
+                                            autocomplete="off" placeholder="Choose Action" :floating="false" :strict="false"
+                                            :columns="{ sm: { container: 6, }, }" @change="(newValue, oldValue, el$) => {
+                                                let target = el$.form$.el$('time_slots').children$[index].children$['target']
+
+                                                // console.log(el$.form$.el$('time_slots').children$[index].children$['target']);
+
+                                                // only clear when this isn’t the very first time (i.e. oldValue was set)
+                                                if (oldValue !== null && oldValue !== undefined) {
+                                                    target.clear();
+                                                }
+
+                                                target.updateItems()
+                                            }" size="sm" />
+
+                                        <SelectElement name="target" :items="async (query, input) => {
+                                            let action = input.$parent.el$.form$.el$('time_slots').children$[index].children$['action']
+
+                                            try {
+                                                let response = await action.$vueform.services.axios.post(
+                                                    options.routes.get_routing_options,
+                                                    { category: action.value }
+                                                );
+                                                // console.log(response.data.options);
+                                                return response.data.options;
+                                            } catch (error) {
+                                                emits('error', error);
+                                                return [];  // Return an empty array in case of error
+                                            }
+                                        }" :search="true" label-prop="name" :native="false" label="Target"
+                                            input-type="search" allow-absent :object="true" :format-data="formatTarget"
+                                            autocomplete="off" placeholder="Choose Target" :floating="false" :strict="false"
+                                            :columns="{ sm: { container: 6, }, }" :conditions="[
+                                                ['time_slots.*.action', 'not_empty'],
+                                                ['time_slots.*.action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
+                                            ]" size="sm" />
+
+                                    </ObjectElement>
+                                </template>
+                            </ListElement>
+
+                            <ButtonElement name="submit" button-label="Save" :submits="true" align="right" />
+
+                        </FormElements>
+                    </div>
+                </div>
+            </template>
+        </Vueform>
+    </div>
+</template>
+
+<script setup>
+import { ref } from "vue";
+
+const props = defineProps({
+    options: Object,
+});
+
+const form$ = ref(null)
+
+const emits = defineEmits(['close', 'error', 'success', 'refresh-data', 'open-edit-form']);
+
+
+const formatTarget = (name, value) => {
+    return { [name]: value?.extension ?? null } // must return an object
+}
+
+const submitForm = async (FormData, form$) => {
+    // Using form$.requestData will EXCLUDE conditional elements and it 
+    // will submit the form as Content-Type: application/json . 
+    const requestData = form$.requestData
+
+    console.log(requestData);
+    return await form$.$vueform.services.axios.post(props.options.routes.store_route, requestData)
+};
+
+function clearErrorsRecursive(el$) {
+    // clear this element’s errors
+    el$.messageBag?.clear()
+
+    // if it has child elements, recurse into each
+    if (el$.children$) {
+        Object.values(el$.children$).forEach(childEl$ => {
+            clearErrorsRecursive(childEl$)
+        })
+    }
+}
+
+const handleResponse = (response, form$) => {
+    // Clear form including nested elements 
+    Object.values(form$.elements$).forEach(el$ => {
+        clearErrorsRecursive(el$)
+    })
+
+    // Display custom errors for elements
+    if (response.data.errors) {
+        Object.keys(response.data.errors).forEach((elName) => {
+            if (form$.el$(elName)) {
+                form$.el$(elName).messageBag.append(response.data.errors[elName][0])
+            }
+        })
+    }
+}
+
+const handleSuccess = (response, form$) => {
+    // console.log(response) // axios response
+    // console.log(response.status) // HTTP status code
+    // console.log(response.data) // response data
+
+    emits('success', 'success', response.data.messages);
+    emits('close');
+    emits('refresh-data');
+    emits('open-edit-form', response.data.ring_group_uuid);
+}
+
+const handleError = (error, details, form$) => {
+    form$.messageBag.clear() // clear message bag
+
+    switch (details.type) {
+        // Error occured while preparing elements (no submit happened)
+        case 'prepare':
+            console.log(error) // Error object
+
+            form$.messageBag.append('Could not prepare form')
+            break
+
+        // Error occured because response status is outside of 2xx
+        case 'submit':
+            emits('error', error);
+            console.log(error) // AxiosError object
+            // console.log(error.response) // axios response
+            // console.log(error.response.status) // HTTP status code
+            // console.log(error.response.data) // response data
+
+            // console.log(error.response.data.errors)
+
+
+            break
+
+        // Request cancelled (no response object)
+        case 'cancel':
+            console.log(error) // Error object
+
+            form$.messageBag.append('Request cancelled')
+            break
+
+        // Some other errors happened (no response object)
+        case 'other':
+            console.log(error) // Error object
+
+            form$.messageBag.append('Couldn\'t submit form')
+            break
+    }
+}
+
+
+</script>
+
+<style scoped>
+/* This will mask the text input to behave like a password field */
+.password-field {
+    -webkit-text-security: disc;
+    /* For Chrome and Safari */
+    -moz-text-security: disc;
+    /* For Firefox */
+}
+</style>
