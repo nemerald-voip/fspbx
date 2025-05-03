@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\Traits\TraitUuid;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class BusinessHourPeriod extends Model
 {
@@ -21,6 +22,9 @@ class BusinessHourPeriod extends Model
         'day_of_week',
         'start_time',
         'end_time',
+        'action',
+        'target_type',
+        'target_id',
     ];
 
     protected $casts = [
@@ -37,5 +41,10 @@ class BusinessHourPeriod extends Model
     public function businessHour(): BelongsTo
     {
         return $this->belongsTo(BusinessHour::class, 'business_hour_uuid', 'uuid');
+    }
+
+    public function target(): MorphTo
+    {
+        return $this->morphTo();
     }
 }

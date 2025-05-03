@@ -47,7 +47,6 @@
                 </TableColumnHeader>
 
                 <TableColumnHeader header="Extension" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Members" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                 <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
@@ -72,50 +71,44 @@
             </template>
 
             <template #table-body>
-                <tr v-for="row in data.data" :key="row.ring_group_uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.ring_group_extension">
+                <tr v-for="row in data.data" :key="row.uuid">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.extension">
                         <div class="flex items-center">
-                            <input v-if="row.ring_group_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
-                                :value="row.ring_group_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <input v-if="row.uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
+                                :value="row.uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9"
-                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.ring_group_update, }"
-                                @click="page.props.auth.can.ring_group_update && handleEditButtonClick(row.ring_group_uuid)">
+                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.business_hours_update, }"
+                                @click="page.props.auth.can.business_hours_update && handleEditButtonClick(row.uuid)">
                                 <span class="flex items-center">
-                                    {{ row.ring_group_name }}
+                                    {{ row.name }}
                                 </span>
                             </div>
                         </div>
                     </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.ring_group_extension" />
-
-                    <TableField class="px-2 py-2 text-sm text-gray-500">
-                        <Badge v-for="destination in row.destinations" :key="destination.ring_group_destination_uuid"
-                            :text="destination.destination_number" backgroundColor="bg-gray-100" textColor="text-gray-700"
-                            ringColor="ring-gray-400/20" class="px-2 py-1 text-xs font-semibold" />
-                    </TableField>
+                        :text="row.extension" />
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.ring_group_description" />
+                        :text="row.description" />
 
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="page.props.auth.can.ring_group_update" :content="'Edit'"
+                                <ejs-tooltip v-if="page.props.auth.can.business_hours_update" :content="'Edit'"
                                     position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
-                                        <PencilSquareIcon @click="handleEditButtonClick(row.ring_group_uuid)"
+                                        <PencilSquareIcon @click="handleEditButtonClick(row.uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
 
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="page.props.auth.can.ring_group_destroy" :content="'Delete'"
+                                <ejs-tooltip v-if="page.props.auth.can.business_hours_destroy" :content="'Delete'"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
-                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.ring_group_uuid)"
+                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
@@ -156,10 +149,10 @@
     </AddEditItemModal>
 
     <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showEditModal"
-        :header="'Update Ring Group Settings - ' + itemOptions?.ring_group?.ring_group_name"
+        :header="'Update Business Hours - ' + itemOptions?.item?.name"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdateRingGroupForm :options="itemOptions" @close="handleModalClose" @error="handleErrorResponse" @success="showNotification" @refresh-data="handleSearchButtonClick"/>
+            <UpdateBusinessHoursForm :options="itemOptions" @close="handleModalClose" @error="handleErrorResponse" @success="showNotification" @refresh-data="handleSearchButtonClick"/>
         </template>
     </AddEditItemModal>
 
@@ -200,7 +193,7 @@ import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import CreateBusinessHoursForm from "./components/forms/CreateBusinessHoursForm.vue";
-import UpdateRingGroupForm from "./components/forms/UpdateRingGroupForm.vue";
+import UpdateBusinessHoursForm from "./components/forms/UpdateBusinessHoursForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 
@@ -250,7 +243,7 @@ const bulkActions = computed(() => {
     ];
 
     // Conditionally add the delete action if permission is granted
-    if (page.props.auth.can.device_destroy) {
+    if (page.props.auth.can.business_hours_destroy) {
         actions.push({
             id: 'bulk_delete',
             label: 'Delete',
@@ -389,7 +382,7 @@ const getItemOptions = (itemUuid = null) => {
         .then((response) => {
             loadingModal.value = false;
             itemOptions.value = response.data;
-            // console.log(itemOptions.value);
+            console.log(itemOptions.value);
 
         }).catch((error) => {
             handleModalClose();
@@ -441,7 +434,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.ring_group_uuid);
+        selectedItems.value = props.data.data.map(item => item.uuid);
     } else {
         selectedItems.value = [];
     }

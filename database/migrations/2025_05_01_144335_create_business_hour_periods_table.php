@@ -19,8 +19,10 @@ return new class extends Migration
                 $table->smallInteger('day_of_week');    // 1=Mon … 7=Sun
                 $table->time('start_time');
                 $table->time('end_time');
+                $table->text('action')->nullable();
+                // polymorphic target: model type + model id (UUID)
+                $table->nullableUuidMorphs('target');
                 $table->timestamps();
-
             });
         }
     }

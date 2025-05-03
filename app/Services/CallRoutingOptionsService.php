@@ -50,6 +50,21 @@ class CallRoutingOptionsService
         ['value' => 'external', 'label' => 'External Number'],
     ];
 
+        /**
+     * Map of slot-action keys to their Eloquent model classes.
+     */
+    private const MODEL_MAP = [
+        'extensions'       => \App\Models\Extensions::class,
+        'ivrs'             => \App\Models\IvrMenus::class,
+        'voicemails'       => \App\Models\Voicemails::class,
+        'ring_groups'      => \App\Models\RingGroups::class,
+        'time_conditions'  => \App\Models\Dialplans::class,
+        'contact_centers'  => \App\Models\CallCenterQueues::class,
+        'faxes'            => \App\Models\Faxes::class,
+        'call_flows'       => \App\Models\CallFlows::class,
+        'recordings'       => \App\Models\Recordings::class,
+    ];
+
     private const TRANSFER_FORMAT = '%s:%s XML %s';
 
     public function __construct()
@@ -591,5 +606,21 @@ class CallRoutingOptionsService
         ];
 
         return $typeMapping[$type] ?? 'Unknown';
+    }
+
+    /**
+     * Given an action key, return the corresponding Eloquent model class.
+     *
+     * @param  string  $action
+     * @return class-string<Model>
+
+     */
+    public function mapActionToModel(string $action)
+    {
+        if (! array_key_exists($action, self::MODEL_MAP)) {
+            return null;
+        }
+
+        return self::MODEL_MAP[$action];
     }
 }

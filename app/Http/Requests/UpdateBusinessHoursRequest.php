@@ -7,7 +7,7 @@ use App\Rules\UniqueExtension;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreBusinessHoursRequest extends FormRequest
+class UpdateBusinessHoursRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -69,6 +69,33 @@ class StoreBusinessHoursRequest extends FormRequest
                 },
             ],
 
+
+            'time_slots.*.action' => [
+                'sometimes',
+                'required',
+            ],
+
+            'time_slots.*.target' => [
+                'sometimes',
+                function ($attribute, $value, $fail) {
+                    $action = $this->input('time_slots.*.action');
+
+                    // if an action *needs* a target (i.e. it is NOT one of these),
+                    // then failback_target cannot be empty
+                    if (
+                        $action
+                        && ! in_array($action, [
+                            'company_directory',
+                            'check_voicemail',
+                            'hangup',
+                        ], true)
+                        && empty($value)
+                    ) {
+                        $fail('A target must be provided when action is selected.');
+                    }
+                },
+            ],
+
         ];
     }
 
@@ -77,7 +104,9 @@ class StoreBusinessHoursRequest extends FormRequest
         return [
             // 'ring_group_extension.ring_group_unique' => 'This number is already used',
             'time_slots.*.time_from.required' => 'The from field is required',
-            'time_slots.*.time_to.required' => 'The to field is required'
+            'time_slots.*.time_to.required' => 'The to field is required',
+            'time_slots.*.weekdays.required' => 'Please select at least one day',
+            'time_slots.*.action.required' => 'The action field is required',
         ];
     }
 

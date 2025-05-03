@@ -2,20 +2,26 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use Inertia\Inertia;
+use App\Models\IvrMenus;
 use App\Models\Dialplans;
 use App\Models\Extensions;
 use App\Models\Recordings;
 use App\Models\RingGroups;
+use App\Models\Voicemails;
 use App\Models\FusionCache;
 use Illuminate\Support\Str;
+use App\Models\BusinessHour;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use App\Services\CallRoutingOptionsService;
 use App\Http\Requests\StoreBusinessHoursRequest;
-use App\Http\Requests\UpdateRingGroupRequest;
-use App\Models\BusinessHour;
+use App\Http\Requests\UpdateBusinessHoursRequest;
+use App\Models\CallCenterQueues;
+use App\Models\CallFlows;
+use App\Models\Faxes;
 
 class BusinessHoursController extends Controller
 {
@@ -75,7 +81,7 @@ class BusinessHoursController extends Controller
         }
 
         // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'ring_group_extension');
+        $this->sortField = request()->get('sortField', 'extension');
         $this->sortOrder = request()->get('sortOrder', 'asc');
 
         $data = $this->builder($this->filters);
@@ -167,32 +173,71 @@ class BusinessHoursController extends Controller
             if ($item_uuid) {
                 // Find existing item by item_uuid
                 $item = $this->model::where($this->model->getKeyName(), $item_uuid)
-                    ->with(['destinations' => function ($query) {
-                        $query->select('ring_group_destination_uuid', 'ring_group_uuid', 'destination_delay', 'destination_enabled', 'destination_number', 'destination_prompt', 'destination_timeout');
+                    ->with(['periods' => function ($query) {
+                        $query->select('business_hour_uuid', 'day_of_week', 'start_time', 'end_time', 'action', 'target_type', 'target_id');
                     }])
                     ->first();
+
+                // logger($item);
 
                 // If a model exists, use it; otherwise, create a new one
                 if (!$item) {
                     throw new \Exception("Failed to fetch item details. Item not found");
                 }
 
-                $item->append([
-                    'timeout_target_uuid',
-                    'timeout_action',
-                    'timeout_action_display',
-                    'timeout_target_name',
-                    'timeout_target_extension',
-                    'destroy_route',
-                    'forward_target_uuid',
-                    'forward_action',
-                    'forward_action_display',
-                    'forward_target_name',
-                    'forward_target_extension',
-                ]);
+                $timeSlots = $item->periods
+                    // group by start|end|action|target_type|target_id
+                    ->groupBy(function ($p) {
+                        return implode('|', [
+                            $p->start_time,
+                            $p->end_time,
+                            $p->action,
+                            $p->target_type,
+                            $p->target_id,
+                        ]);
+                    })
+                    ->map(function ($group) {
+                        /** @var \Illuminate\Support\Collection $group */
+                        $first = $group->first();
+
+                        // restore weekdays 1–7 → 0–6
+                        $weekdays = $group
+                            ->pluck('day_of_week')
+                            ->map(fn($dow) =>(string) $dow)
+                            ->sort()
+                            ->values()
+                            ->all();
+
+                        // format back to “h:i a”
+                        $timeFrom = Carbon::createFromFormat('H:i:s', $first->start_time)
+                            ->format('h:i a');
+                        $timeTo   = Carbon::createFromFormat('H:i:s', $first->end_time)
+                            ->format('h:i a');
+
+                        // rebuild the target object
+                        $targetModel = $first->target;
+                        $target = null;
+                        if ($targetModel) {
+                            $target = [
+                                'value'     => $first->target_id,
+                            ];
+                        }
+
+                        return [
+                            'weekdays'  => $weekdays,
+                            'time_from' => $timeFrom,
+                            'time_to'   => $timeTo,
+                            'action'    => $first->action,
+                            'target'    => $target,
+                        ];
+                    })
+                    ->values()
+                    ->all();
+
+                    // logger($timeSlots);
 
                 // Define the update route
-                $updateRoute = route('business-hours.update', ['business_hours' => $item_uuid]);
+                $updateRoute = route('business-hours.update', ['business_hour' => $item_uuid]);
             } else {
                 // Create a new model if item_uuid is not provided
                 $item = $this->model;
@@ -212,14 +257,17 @@ class BusinessHoursController extends Controller
                 'get_routing_options' => route('routing.options'),
 
             ];
-      
+
             // Construct the itemOptions object
             $itemOptions = [
                 'item' => $item,
+                'custom_hours' => $item->periods->isNotEmpty(),
+                'time_slots' => $timeSlots,
                 'permissions' => $permissions,
                 'routes' => $routes,
                 'routing_types' => $routingTypes,
                 'timezones' => getGroupedTimezones(),
+                'timezone' => $item->timezone ?? get_local_time_zone(),
                 // Define options for other fields as needed
             ];
             // logger($itemOptions);
@@ -256,75 +304,105 @@ class BusinessHoursController extends Controller
      */
     public function store(StoreBusinessHoursRequest $request)
     {
-
         $validated = $request->validated();
-
         logger($validated);
-
-        return;
 
         try {
             DB::beginTransaction();
 
+            // 1) Create the BusinessHour record
+            $businessHour = BusinessHour::create([
+                'uuid'         => Str::uuid(),
+                'domain_uuid'  => session('domain_uuid'),
+                'name'         => $validated['name'],
+                'extension'    => $validated['extension'],
+                'timezone'     => $validated['timezone'],
+                'context' => session('domain_name'),
+                'enabled' => true,
+            ]);
 
+            // 2) Persist each period
+            // foreach ($validated['time_slots'] as $slot) {
+            //     $start = Carbon::createFromFormat('h:i a', $slot['time_from'])->format('H:i:s');
+            //     $end   = Carbon::createFromFormat('h:i a', $slot['time_to'])->format('H:i:s');
+
+            //     foreach ($slot['weekdays'] as $wd) {
+            //         $dow = intval($wd) === 0 ? 7 : intval($wd); // map 0→7 if you're using 1=Mon…7=Sun
+
+            //         $businessHour->periods()->create([
+            //             'day_of_week' => $dow,
+            //             'start_time'  => $start,
+            //             'end_time'    => $end,
+            //         ]);
+            //     }
+            // }
+
+            // 3) Generate the FreeSWITCH dialplan XML
+            // $xml = $this->buildDialplanXml($businessHour);
 
 
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Ring group updated']],
- 
+                'messages' => ['success' => ['Business hours created and dialplan written.']],
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
-            logger('RingGroup update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            logger(
+                'BusinessHours store error: '
+                    . $e->getMessage()
+                    . " at " . $e->getFile()
+                    . ":" . $e->getLine()
+            );
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while updating.']]
+                'messages' => ['error' => ['Something went wrong while saving business hours.']]
             ], 500);
         }
     }
 
-    public function generateDialPlanXML($ringGroup): void
+    /**
+     * Generate (or update) the FreeSWITCH dialplan for a BusinessHour.
+     */
+    public function generateDialPlanXML(BusinessHour $businessHour): void
     {
         // Data to pass to the Blade template
         $data = [
-            'ring_group' => $ringGroup,
+            'businessHour' => $businessHour,
         ];
 
         // Render the Blade template and get the XML content as a string
-        $xml = view('layouts.xml.ring-group-dial-plan-template', $data)->render();
+        $xml = view('layouts.xml.business-hours-dial-plan-template', $data)->render();
 
-        $dialPlan = Dialplans::where('dialplan_uuid', $ringGroup->dialplan_uuid)->first();
+        // Find existing dialplan by UUID or instantiate a new one
+        $dialPlan = Dialplans::where('dialplan_uuid', $businessHour->dialplan_uuid)
+            ->first();
 
-        if (!$dialPlan) {
+        if (! $dialPlan) {
             $dialPlan = new Dialplans();
-            $dialPlan->dialplan_uuid = $ringGroup->dialplan_uuid;
-            $dialPlan->app_uuid = '1d61fb65-1eec-bc73-a6ee-a6203b4fe6f2';
-            $dialPlan->domain_uuid = Session::get('domain_uuid');
-            $dialPlan->dialplan_name = $ringGroup->ring_group_name;
-            $dialPlan->dialplan_number = $ringGroup->ring_group_extension;
-            if (isset($ringGroup->ring_group_context)) {
-                $dialPlan->dialplan_context = $ringGroup->ring_group_context;
-            }
-            $dialPlan->dialplan_continue = 'false';
-            $dialPlan->dialplan_xml = $xml;
-            $dialPlan->dialplan_order = 101;
-            $dialPlan->dialplan_enabled = $ringGroup->ring_group_enabled;
-            $dialPlan->dialplan_description = $ringGroup->ring_group_description;
-            $dialPlan->insert_date = date('Y-m-d H:i:s');
-            $dialPlan->insert_user = Session::get('user_uuid');
-        } else {
-            $dialPlan->dialplan_xml = $xml;
-            $dialPlan->dialplan_name = $ringGroup->ring_group_name;
-            $dialPlan->dialplan_number = $ringGroup->ring_group_extension;
-            $dialPlan->dialplan_description = $ringGroup->ring_group_description;
-            $dialPlan->update_date = date('Y-m-d H:i:s');
-            $dialPlan->update_user = Session::get('user_uuid');
+            $dialPlan->dialplan_uuid      = $businessHour->dialplan_uuid;
+            $dialPlan->app_uuid           = 'YOUR-BUSINESS-HOURS-APP-UUID';
+            $dialPlan->domain_uuid        = Session::get('domain_uuid');
+            $dialPlan->dialplan_name      = $businessHour->name;
+            $dialPlan->dialplan_number    = $businessHour->extension;
+            // if you have a specific context field on BusinessHour, use it; otherwise default:
+            $dialPlan->dialplan_context   = $businessHour->context ?? Session::get('domain_uuid');
+            $dialPlan->dialplan_continue  = 'false';
+            $dialPlan->dialplan_order     = 200;
+            $dialPlan->insert_date        = now()->format('Y-m-d H:i:s');
+            $dialPlan->insert_user        = Session::get('user_uuid');
         }
+
+        // Common fields (for both create & update)
+        $dialPlan->dialplan_xml         = $xml;
+        $dialPlan->dialplan_enabled     = $businessHour->custom_hours ? 'true' : 'false';
+        $dialPlan->dialplan_description = 'Business Hours: ' . $businessHour->name;
+        $dialPlan->update_date          = now()->format('Y-m-d H:i:s');
+        $dialPlan->update_user          = Session::get('user_uuid');
 
         $dialPlan->save();
 
+        // reload XML in FreeSWITCH
         $fp = event_socket_create(
             config('eventsocket.ip'),
             config('eventsocket.port'),
@@ -332,21 +410,21 @@ class BusinessHoursController extends Controller
         );
         event_socket_request($fp, 'bgapi reloadxml');
 
-        //clear fusionpbx cache
-        FusionCache::clear("dialplan:" . $ringGroup->ring_group_context);
+        // clear FS PBX cache for this context
+        FusionCache::clear('dialplan:' . $dialPlan->dialplan_context);
     }
 
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  UpdateRingGroupRequest  $request
+     * @param  UpdateBusinessHoursRequest  $request
      * @param  RingGroups  $ringGroup
      * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
      */
-    public function update(UpdateRingGroupRequest $request, RingGroups $ringGroup)
+    public function update(UpdateBusinessHoursRequest $request, BusinessHour $businessHour)
     {
-        if (!userCheckPermission('ring_group_edit')) {
+        if (!userCheckPermission('business_hours_update')) {
             return response()->json([
                 'messages' => ['error' => ['Access denied.']]
             ], 403);
@@ -355,77 +433,63 @@ class BusinessHoursController extends Controller
         $validated = $request->validated();
         $domain_uuid = session('domain_uuid');
 
+        logger($validated);
+
         try {
+
             DB::beginTransaction();
 
-            foreach (['ring_group_forward_enabled', 'ring_group_call_forward_enabled', 'ring_group_follow_me_enabled'] as $key) {
-                if (array_key_exists($key, $validated)) {
-                    $validated[$key] = $validated[$key] ? 'true' : 'false';
-                }
-            }
-
-            $callTimeout = $this->calculateTimeout($validated);
-            $updateData = array_merge($validated, [
-                'ring_group_call_timeout' => $callTimeout,
+            $businessHour->update([
+                'name'         => $validated['name'],
+                'extension'    => $validated['extension'],
+                'timezone'     => $validated['timezone'],
             ]);
 
 
-            // Add timeout app/data only if failback info exists
-            if ($request->has('failback_action') && $request->has('failback_target')) {
-                $timeoutData = $this->buildExitDestinationAction($validated);
-                $updateData['ring_group_timeout_app'] = $timeoutData['action'];
-                $updateData['ring_group_timeout_data'] = $timeoutData['data'];
-            }
+            // 2) delete old periods
+            $businessHour->periods()->delete();
 
-            // Add forward destination only if all parts are present
-            if (
-                !empty($validated['ring_group_forward_enabled'])
-                && $request->has('forward_action')
-                && ($request->has('forward_target') || $request->has('forward_external_target'))
-            ) {
-                $updateData['ring_group_forward_destination'] = $this->buildForwardDestinationTarget($validated);
-            }
+            $callRoutingService = new CallRoutingOptionsService;
 
-            if (!empty($failbackData)) {
-                $updateData['ring_group_timeout_app'] = $failbackData['action'];
-                $updateData['ring_group_timeout_data'] = $failbackData['data'];
-            }
+            // 3) recreate periods with action + polymorphic target
+            foreach ($validated['time_slots'] ?? [] as $slot) {
+                // parse times into "H:i:s"
+                $start = Carbon::createFromFormat('h:i a', $slot['time_from'])
+                    ->format('H:i:s');
+                $end = Carbon::createFromFormat('h:i a', $slot['time_to'])
+                    ->format('H:i:s');
 
-            // Only update missed call fields if they're present in the request
-            if ($request->has('missed_call_notifications')) {
-                $updateData['ring_group_missed_call_app'] = $request->boolean('missed_call_notifications') ? 'email' : null;
-                $updateData['ring_group_missed_call_data'] = $request->boolean('missed_call_notifications')
-                    ? $request->input('ring_group_missed_call_data')
-                    : null;
-            }
+                foreach ($slot['weekdays'] as $wd) {
+                    $dow = intval($wd) === 0 ? 7 : intval($wd); // 1=Mon…7=Sun
 
-            $ringGroup->update($updateData);
+                    $periodData = [
+                        'day_of_week' => $dow,
+                        'start_time'  => $start,
+                        'end_time'    => $end,
+                        'action'      => $slot['action'],
+                    ];
 
-            // Delete old destinations and re-insert new ones
-            if (!empty($validated['members']) && is_array($validated['members'])) {
-                $ringGroup->destinations()->delete();
+                    // if target.value is set and we have a mapping, store it
+                    if (
+                        isset($slot['target']['value']) &&
+                        $callRoutingService->mapActionToModel($slot['action'])
+                    ) {
+                        $periodData['target_type'] = $callRoutingService->mapActionToModel($slot['action']);
+                        $periodData['target_id']   = $slot['target']['value'];
+                    }
 
-                foreach ($validated['members'] as $member) {
-                    $ringGroup->destinations()->create([
-                        'domain_uuid'         => $domain_uuid,
-                        'destination_number'  => $member['destination'] ?? null,
-                        'destination_delay'   => $member['delay'] ?? null,
-                        'destination_timeout' => $member['timeout'] ?? null,
-                        'destination_prompt'  => $member['prompt'] ? 1: null,
-                        'destination_enabled' => !empty($member['enabled']) ? 'true' : 'false',
-                    ]);
+                    $businessHour->periods()->create($periodData);
                 }
             }
 
-            $this->generateDialPlanXML($ringGroup);
 
             DB::commit();
 
             //clear fusionpbx cache
-            FusionCache::clear("dialplan:" . $ringGroup->ring_group_context);
+            // FusionCache::clear("dialplan:" . $ringGroup->ring_group_context);
 
             return response()->json([
-                'messages' => ['success' => ['Ring group updated']]
+                'messages' => ['success' => ['Business hours updated']]
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();

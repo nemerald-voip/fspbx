@@ -41,7 +41,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // Business Hours
     Route::post('business-hours', [BusinessHoursController::class, 'store'])->name('business-hours.store');
-    Route::put('business-hours/{ring_group}', [BusinessHoursController::class, 'update'])->name('business-hours.update');
+    Route::put('business-hours/{business_hour}', [BusinessHoursController::class, 'update'])->name('business-hours.update');
     Route::post('business-hours/item-options', [BusinessHoursController::class, 'getItemOptions'])->name('business-hours.item.options');
     Route::post('business-hours/bulk-delete', [BusinessHoursController::class, 'bulkDelete'])->name('business-hours.bulk.delete');
     Route::post('business-hours/select-all', [BusinessHoursController::class, 'selectAll'])->name('business-hours.select.all');

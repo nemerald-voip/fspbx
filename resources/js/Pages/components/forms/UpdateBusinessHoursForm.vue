@@ -1,10 +1,13 @@
 <template>
     <div>
         <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError" @response="handleResponse"
-            :default="{ 
+            :default="{
                 extension: options.item.extension,
+                name: options.item.name,
                 timezone: options.timezone,
-                }" :display-errors="false">
+                custom_hours: options.custom_hours,
+                time_slots: options.time_slots,
+            }" :display-errors="false">
             <template #empty>
 
                 <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
@@ -15,6 +18,7 @@
                                 'name',
                                 'extension',
                                 'timezone',
+                                'container',
                                 'custom_hours',
                                 'time_slots',
                                 'ring_group_extension',
@@ -43,12 +47,15 @@
                                 },
                             }" placeholder="Enter Extension" :floating="false" />
 
-                            <SelectElement name="timezone"  :groups="true" :items="options.timezones" :search="true" :native="false" label="Time Zone" input-type="search" autocomplete="off"
+                            <SelectElement name="timezone" :groups="true" :items="options.timezones" :search="true"
+                                :native="false" label="Time Zone" input-type="search" autocomplete="off"
                                 placeholder="Choose time zone" :floating="false" :strict="false" :columns="{
                                     sm: {
                                         container: 6,
                                     },
                                 }" />
+
+                            <GroupElement name="container" />
 
                             <RadiogroupElement name="custom_hours" :items="[
                                 {
@@ -59,13 +66,17 @@
                                     value: true,
                                     label: 'Only during specific hours',
                                 },
-                            ]" label="When do you want to receive calls?" default="false" />
-                            <ListElement name="time_slots" :sort="true" label="Time Slots"
+                            ]" label="When do you want to receive calls?" default="false" @change="handleCustomHoursUpdate"/>
+                            <ListElement name="time_slots" :sort="true" label="Time Slots" :initial="1"
                                 :conditions="[['custom_hours', true]]"
                                 :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
                                 <template #default="{ index }">
                                     <ObjectElement :name="index">
                                         <CheckboxgroupElement name="weekdays" view="tabs" label="Weekdays" :items="[
+                                            {
+                                                value: '1',
+                                                label: 'S',
+                                            },
                                             {
                                                 value: '2',
                                                 label: 'M',
@@ -90,10 +101,7 @@
                                                 value: '7',
                                                 label: 'S',
                                             },
-                                            {
-                                                value: '1',
-                                                label: 'S',
-                                            },
+
                                         ]" size="sm" :columns="{
     sm: {
         container: 6,
@@ -122,14 +130,12 @@
                                             autocomplete="off" placeholder="Choose Action" :floating="false" :strict="false"
                                             :columns="{ sm: { container: 6, }, }" @change="(newValue, oldValue, el$) => {
                                                 let target = el$.form$.el$('time_slots').children$[index].children$['target']
-
                                                 // console.log(el$.form$.el$('time_slots').children$[index].children$['target']);
 
                                                 // only clear when this isn’t the very first time (i.e. oldValue was set)
                                                 if (oldValue !== null && oldValue !== undefined) {
                                                     target.clear();
                                                 }
-
                                                 target.updateItems()
                                             }" size="sm" />
 
@@ -141,15 +147,29 @@
                                                     options.routes.get_routing_options,
                                                     { category: action.value }
                                                 );
-                                                // console.log(response.data.options);
+
+                                                if (input.externalValue) {
+                                                    const opts = response.data.options;
+                                                    // extract the raw value (in case externalValue might be a string or object)
+                                                    const lookupValue = typeof input.externalValue === 'string'
+                                                        ? input.externalValue
+                                                        : input.externalValue?.value;
+
+                                                    const selectedOption = opts.find(o => o.value === lookupValue);
+
+                                                    console.log(selectedOption);
+                                                    input.update(selectedOption)
+                                                }
+
+
                                                 return response.data.options;
                                             } catch (error) {
                                                 emits('error', error);
                                                 return [];  // Return an empty array in case of error
                                             }
                                         }" :search="true" label-prop="name" :native="false" label="Target"
-                                            input-type="search" allow-absent :object="true" :format-data="formatTarget"
-                                            autocomplete="off" placeholder="Choose Target" :floating="false" :strict="false"
+                                            input-type="search" allow-absent :object="true" autocomplete="off"
+                                            placeholder="Choose Target" :floating="false" :strict="false"
                                             :columns="{ sm: { container: 6, }, }" :conditions="[
                                                 ['time_slots.*.action', 'not_empty'],
                                                 ['time_slots.*.action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
@@ -181,8 +201,23 @@ const form$ = ref(null)
 const emits = defineEmits(['close', 'error', 'success', 'refresh-data', 'open-edit-form']);
 
 
-const formatTarget = (name, value) => {
-    return { [name]: value?.extension ?? null } // must return an object
+const handleCustomHoursUpdate = (newValue, oldValue, el$) => {
+      // only when toggling from false → true
+  if (!oldValue && newValue) {
+    const slotsField = el$.form$.el$('time_slots');
+    const currentSlots = slotsField.value || [];
+
+    // if there are no slots yet, seed one
+    if (currentSlots.length === 0) {
+      const defaultSlot = {
+        weekdays: [],
+        time_from: '',
+        time_to: '',
+        action: ''
+      };
+      slotsField.update([ defaultSlot ]);
+    }
+  }
 }
 
 const submitForm = async (FormData, form$) => {
@@ -191,7 +226,7 @@ const submitForm = async (FormData, form$) => {
     const requestData = form$.requestData
 
     console.log(requestData);
-    return await form$.$vueform.services.axios.post(props.options.routes.store_route, requestData)
+    return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
 };
 
 function clearErrorsRecursive(el$) {

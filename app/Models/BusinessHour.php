@@ -21,6 +21,7 @@ class BusinessHour extends Model
         'dialplan_uuid',
         'name',
         'extension',
+        'timezone',
         'context',
         'description',
         'enabled',
