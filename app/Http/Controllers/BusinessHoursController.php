@@ -178,12 +178,14 @@ class BusinessHoursController extends Controller
                     }])
                     ->first();
 
-                // logger($item);
-
                 // If a model exists, use it; otherwise, create a new one
                 if (!$item) {
                     throw new \Exception("Failed to fetch item details. Item not found");
                 }
+
+                $item->after_hours_target = [
+                    'value'     => $item->after_hours_target_id,
+                ];
 
                 $timeSlots = $item->periods
                     // group by start|end|action|target_type|target_id
@@ -203,7 +205,7 @@ class BusinessHoursController extends Controller
                         // restore weekdays 1–7 → 0–6
                         $weekdays = $group
                             ->pluck('day_of_week')
-                            ->map(fn($dow) =>(string) $dow)
+                            ->map(fn($dow) => (string) $dow)
                             ->sort()
                             ->values()
                             ->all();
@@ -234,7 +236,7 @@ class BusinessHoursController extends Controller
                     ->values()
                     ->all();
 
-                    // logger($timeSlots);
+                // logger($timeSlots);
 
                 // Define the update route
                 $updateRoute = route('business-hours.update', ['business_hour' => $item_uuid]);
@@ -262,7 +264,7 @@ class BusinessHoursController extends Controller
             $itemOptions = [
                 'item' => $item,
                 'custom_hours' => $item->periods->isNotEmpty(),
-                'time_slots' => $timeSlots,
+                'time_slots' => $timeSlots ?? [],
                 'permissions' => $permissions,
                 'routes' => $routes,
                 'routing_types' => $routingTypes,
@@ -374,31 +376,48 @@ class BusinessHoursController extends Controller
         // Render the Blade template and get the XML content as a string
         $xml = view('layouts.xml.business-hours-dial-plan-template', $data)->render();
 
-        // Find existing dialplan by UUID or instantiate a new one
-        $dialPlan = Dialplans::where('dialplan_uuid', $businessHour->dialplan_uuid)
-            ->first();
+        $dom = new \DOMDocument();
+        $dom->preserveWhiteSpace = false;  // Removes extra spaces
+        $dom->loadXML($xml);
+        $dom->formatOutput = true;         // Formats XML properly
+        $xml = $dom->saveXML($dom->documentElement);
 
-        if (! $dialPlan) {
-            $dialPlan = new Dialplans();
-            $dialPlan->dialplan_uuid      = $businessHour->dialplan_uuid;
-            $dialPlan->app_uuid           = 'YOUR-BUSINESS-HOURS-APP-UUID';
-            $dialPlan->domain_uuid        = Session::get('domain_uuid');
-            $dialPlan->dialplan_name      = $businessHour->name;
-            $dialPlan->dialplan_number    = $businessHour->extension;
-            // if you have a specific context field on BusinessHour, use it; otherwise default:
-            $dialPlan->dialplan_context   = $businessHour->context ?? Session::get('domain_uuid');
-            $dialPlan->dialplan_continue  = 'false';
-            $dialPlan->dialplan_order     = 200;
-            $dialPlan->insert_date        = now()->format('Y-m-d H:i:s');
-            $dialPlan->insert_user        = Session::get('user_uuid');
+        // 1) if we don’t yet have a dialplan_uuid, make one and persist it
+        if (! $businessHour->dialplan_uuid) {
+            $businessHour->dialplan_uuid = (string) Str::uuid();
+            $businessHour->saveQuietly(); // avoid touching update_date again
         }
 
-        // Common fields (for both create & update)
-        $dialPlan->dialplan_xml         = $xml;
-        $dialPlan->dialplan_enabled     = $businessHour->custom_hours ? 'true' : 'false';
-        $dialPlan->dialplan_description = 'Business Hours: ' . $businessHour->name;
-        $dialPlan->update_date          = now()->format('Y-m-d H:i:s');
-        $dialPlan->update_user          = Session::get('user_uuid');
+        // logger($businessHour);
+
+        $dialPlan = Dialplans::where('dialplan_uuid', $businessHour->dialplan_uuid)->first();
+
+        if (!$dialPlan) {
+            $dialPlan = new Dialplans();
+            $dialPlan->dialplan_uuid = $businessHour->dialplan_uuid;
+            $dialPlan->app_uuid = '4b821450-926b-175a-af93-a03c441818b2';
+            $dialPlan->domain_uuid = session('domain_uuid');
+            $dialPlan->dialplan_name = $businessHour->name;
+            $dialPlan->dialplan_number = $businessHour->extension;
+            if (isset($businessHour->context)) {
+                $dialPlan->dialplan_context = $businessHour->context;
+            }
+            $dialPlan->dialplan_continue = 'false';
+            $dialPlan->dialplan_destination = 'false';
+            $dialPlan->dialplan_xml = $xml;
+            $dialPlan->dialplan_order = 300;
+            $dialPlan->dialplan_enabled = $businessHour->enabled;
+            $dialPlan->dialplan_description = $businessHour->description;
+            $dialPlan->insert_date = date('Y-m-d H:i:s');
+            $dialPlan->insert_user = Session::get('user_uuid');
+        } else {
+            $dialPlan->dialplan_xml = $xml;
+            $dialPlan->dialplan_name = $businessHour->name;
+            $dialPlan->dialplan_number = $businessHour->extension;
+            $dialPlan->dialplan_description = $businessHour->description;
+            $dialPlan->update_date = date('Y-m-d H:i:s');
+            $dialPlan->update_user = Session::get('user_uuid');
+        }
 
         $dialPlan->save();
 
@@ -433,23 +452,30 @@ class BusinessHoursController extends Controller
         $validated = $request->validated();
         $domain_uuid = session('domain_uuid');
 
-        logger($validated);
+        // logger($validated);
 
         try {
 
             DB::beginTransaction();
 
+            $callRoutingService = new CallRoutingOptionsService;
+
+            $action = $validated['after_hours_action'] ?? null;
+            $targetId = $validated['after_hours_target']['value'] ?? null;
+
             $businessHour->update([
                 'name'         => $validated['name'],
                 'extension'    => $validated['extension'],
                 'timezone'     => $validated['timezone'],
+                'description'     => $validated['description'] ?? null,
+                'after_hours_action'     => $validated['after_hours_action'] ?? null,
+                'after_hours_target_type'   => $action ? $callRoutingService->mapActionToModel($action) : null,
+                'after_hours_target_id'     => $targetId,
             ]);
 
 
             // 2) delete old periods
             $businessHour->periods()->delete();
-
-            $callRoutingService = new CallRoutingOptionsService;
 
             // 3) recreate periods with action + polymorphic target
             foreach ($validated['time_slots'] ?? [] as $slot) {
@@ -483,6 +509,8 @@ class BusinessHoursController extends Controller
             }
 
 
+            $xml = $this->generateDialPlanXML($businessHour);
+
             DB::commit();
 
             //clear fusionpbx cache
@@ -493,7 +521,7 @@ class BusinessHoursController extends Controller
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
-            logger('RingGroup update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            logger('Business Hours update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
                 'messages' => ['error' => ['Something went wrong while updating.']]
@@ -598,43 +626,5 @@ class BusinessHoursController extends Controller
             default:
                 return [];
         }
-    }
-
-    /**
-     * Helper function to build destination action based on exit action.
-     */
-    protected function buildForwardDestinationTarget($inputs)
-    {
-        switch ($inputs['forward_action']) {
-            case 'extensions':
-            case 'ring_groups':
-            case 'ivrs':
-            case 'time_conditions':
-            case 'contact_centers':
-            case 'faxes':
-            case 'call_flows':
-                return  $inputs['forward_target'];
-            case 'voicemails':
-                return '*99' . $inputs['forward_target'];
-                // Add other cases as necessary for different types
-            case 'external':
-                return $inputs['forward_external_target'];
-            default:
-                return null;
-        }
-    }
-
-
-    protected function calculateTimeout(array $validated): int
-    {
-        $enabledMembers = array_filter($validated['members'] ?? [], fn($m) => $m['enabled']);
-
-        if (in_array($validated['ring_group_strategy'] ?? '', ['random', 'sequence', 'rollover'])) {
-            return array_reduce($enabledMembers, fn($carry, $m) => $carry + (int) $m['timeout'], 0);
-        }
-
-        return collect($enabledMembers)
-            ->map(fn($m) => (int) $m['delay'] + (int) $m['timeout'])
-            ->max() ?? 0;
     }
 }

@@ -39,6 +39,11 @@ class UpdateBusinessHoursRequest extends FormRequest
                 'string',
             ],
 
+            'description' => [
+                'nullable',
+                'string',
+            ],
+
             // top-level slots array
             'time_slots'                 => ['sometimes', 'required', 'array'],
             'time_slots.*.weekdays'      => ['required', 'array'],
@@ -79,6 +84,32 @@ class UpdateBusinessHoursRequest extends FormRequest
                 'sometimes',
                 function ($attribute, $value, $fail) {
                     $action = $this->input('time_slots.*.action');
+
+                    // if an action *needs* a target (i.e. it is NOT one of these),
+                    // then failback_target cannot be empty
+                    if (
+                        $action
+                        && ! in_array($action, [
+                            'company_directory',
+                            'check_voicemail',
+                            'hangup',
+                        ], true)
+                        && empty($value)
+                    ) {
+                        $fail('A target must be provided when action is selected.');
+                    }
+                },
+            ],
+
+            'after_hours_action' => [
+                'sometimes',
+                'required',
+            ],
+
+            'after_hours_target' => [
+                'sometimes',
+                function ($attribute, $value, $fail) {
+                    $action = $this->input('after_hours_action');
 
                     // if an action *needs* a target (i.e. it is NOT one of these),
                     // then failback_target cannot be empty

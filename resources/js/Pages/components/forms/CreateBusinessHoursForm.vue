@@ -1,10 +1,10 @@
 <template>
     <div>
         <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError" @response="handleResponse"
-            :default="{ 
+            :default="{
                 extension: options.item.extension,
                 timezone: options.timezone,
-                }" :display-errors="false">
+            }" :display-errors="false">
             <template #empty>
 
                 <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
@@ -43,7 +43,8 @@
                                 },
                             }" placeholder="Enter Extension" :floating="false" />
 
-                            <SelectElement name="timezone"  :groups="true" :items="options.timezones" :search="true" :native="false" label="Time Zone" input-type="search" autocomplete="off"
+                            <SelectElement name="timezone" :groups="true" :items="options.timezones" :search="true"
+                                :native="false" label="Time Zone" input-type="search" autocomplete="off"
                                 placeholder="Choose time zone" :floating="false" :strict="false" :columns="{
                                     sm: {
                                         container: 6,
@@ -67,6 +68,10 @@
                                     <ObjectElement :name="index">
                                         <CheckboxgroupElement name="weekdays" view="tabs" label="Weekdays" :items="[
                                             {
+                                                value: '1',
+                                                label: 'S',
+                                            },
+                                            {
                                                 value: '2',
                                                 label: 'M',
                                             },
@@ -88,10 +93,6 @@
                                             },
                                             {
                                                 value: '7',
-                                                label: 'S',
-                                            },
-                                            {
-                                                value: '1',
                                                 label: 'S',
                                             },
                                         ]" size="sm" :columns="{

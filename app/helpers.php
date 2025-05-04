@@ -1066,7 +1066,7 @@ if (!function_exists('get_local_time_zone')) {
             $domain_uuid = session('domain_uuid');
         }
         $cacheKey = "{$domain_uuid}_timeZone";
-    
+
         return Cache::remember($cacheKey, 3600, function () use ($domain_uuid) {
             return get_domain_setting('time_zone', $domain_uuid) ?? 'UTC';
         });
@@ -1451,10 +1451,10 @@ if (! function_exists('getRingBackTonesCollectionGrouped')) {
     function getRingBackTonesCollectionGrouped(string $domain = null): array
     {
         // — Music on Hold —
-        $musicOnHold = MusicOnHold::when($domain, function($q) use ($domain) {
-                $q->where('domain_uuid', $domain)
-                  ->orWhereNull('domain_uuid');
-            })
+        $musicOnHold = MusicOnHold::when($domain, function ($q) use ($domain) {
+            $q->where('domain_uuid', $domain)
+                ->orWhereNull('domain_uuid');
+        })
             ->orderBy('music_on_hold_name')
             ->get()
             ->unique('music_on_hold_name')
@@ -1492,10 +1492,10 @@ if (! function_exists('getRingBackTonesCollectionGrouped')) {
             ->toArray();
 
         // — Streams —
-        $streams = MusicStreams::when($domain, function($q) use ($domain) {
-                $q->where('domain_uuid', $domain)
-                  ->orWhereNull('domain_uuid');
-            })
+        $streams = MusicStreams::when($domain, function ($q) use ($domain) {
+            $q->where('domain_uuid', $domain)
+                ->orWhereNull('domain_uuid');
+        })
             ->where('stream_enabled', 'true')
             ->orderBy('stream_name')
             ->get(['stream_name', 'stream_location'])
@@ -1699,5 +1699,62 @@ if (!function_exists('getGroupedTimezones')) {
         }
 
         return $result;
+    }
+}
+
+/**
+ * Helper function to build destination action based on routing option type.
+ */
+if (!function_exists('buildDestinationAction')) {
+    function buildDestinationAction($option)
+    {
+        switch ($option['type']) {
+            case 'extensions':
+            case 'ring_groups':
+            case 'ivrs':
+            case 'time_conditions':
+            case 'contact_centers':
+            case 'faxes':
+            case 'call_flows':
+                return [
+                    'destination_app' => 'transfer',
+                    'destination_data' => $option['extension'] . ' XML ' . session('domain_name'),
+                ];
+
+            case 'voicemails':
+                return [
+                    'destination_app' => 'transfer',
+                    'destination_data' => '*99' . $option['extension'] . ' XML ' . session('domain_name'),
+                ];
+
+            case 'check_voicemail':
+                return [
+                    'destination_app' => 'transfer',
+                    'destination_data' => '*98 XML ' . session('domain_name'),
+                ];
+
+            case 'company_directory':
+                return [
+                    'destination_app' => 'transfer',
+                    'destination_data' => '*411 XML ' . session('domain_name'),
+                ];
+
+            case 'recordings':
+                // Handle recordings with 'lua' destination app
+                return [
+                    'destination_app' => 'lua',
+                    'destination_data' => 'streamfile.lua ' . $option['extension'],
+                ];
+
+            case 'hangup':
+                return [
+                    'destination_app' => 'hangup',
+                    'destination_data' => '',
+                ];
+
+                // Add other cases as necessary for different types
+            default:
+                return [];
+        }
     }
 }

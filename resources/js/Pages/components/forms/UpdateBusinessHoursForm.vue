@@ -5,8 +5,11 @@
                 extension: options.item.extension,
                 name: options.item.name,
                 timezone: options.timezone,
+                description: options.item.description ?? null,
                 custom_hours: options.custom_hours,
                 time_slots: options.time_slots,
+                after_hours_action: options.item.after_hours_action,
+                after_hours_target: options.item.after_hours_target,
             }" :display-errors="false">
             <template #empty>
 
@@ -18,11 +21,18 @@
                                 'name',
                                 'extension',
                                 'timezone',
+                                'description',
                                 'container',
                                 'custom_hours',
                                 'time_slots',
                                 'ring_group_extension',
                                 'ring_group_description',
+                                'container_3',
+                                'container_4',
+                                'divider1',
+                                'closed_hours_header',
+                                'after_hours_action',
+                                'after_hours_target',
                                 'submit',
 
                             ]" />
@@ -55,6 +65,12 @@
                                     },
                                 }" />
 
+                            <TextElement name="description" label="Description" :columns="{
+                                sm: {
+                                    container: 6,
+                                },
+                            }" placeholder="Enter Description" :floating="false" />
+
                             <GroupElement name="container" />
 
                             <RadiogroupElement name="custom_hours" :items="[
@@ -66,7 +82,8 @@
                                     value: true,
                                     label: 'Only during specific hours',
                                 },
-                            ]" label="When do you want to receive calls?" default="false" @change="handleCustomHoursUpdate"/>
+                            ]" label="When do you want to receive calls?" default="false"
+                                @change="handleCustomHoursUpdate" />
                             <ListElement name="time_slots" :sort="true" label="Time Slots" :initial="1"
                                 :conditions="[['custom_hours', true]]"
                                 :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
@@ -157,10 +174,9 @@
 
                                                     const selectedOption = opts.find(o => o.value === lookupValue);
 
-                                                    console.log(selectedOption);
+                                                    // console.log(selectedOption);
                                                     input.update(selectedOption)
                                                 }
-
 
                                                 return response.data.options;
                                             } catch (error) {
@@ -178,6 +194,64 @@
                                     </ObjectElement>
                                 </template>
                             </ListElement>
+
+                            <GroupElement name="container_3" :conditions="[['custom_hours', true]]" />
+                            <StaticElement name="divider1" tag="hr" :conditions="[['custom_hours', true]]" />
+                            <GroupElement name="container_4" :conditions="[['custom_hours', true]]" />
+
+                            <StaticElement name="closed_hours_header" tag="h4" content="Closed Hours"
+                                description="Define how incoming calls are handled outside of your business hours."
+                                :conditions="[['custom_hours', true]]" />
+
+                            <SelectElement name="after_hours_action" :items="options.routing_types" label-prop="name"
+                                :search="true" :native="false" label="Choose Action" input-type="search" autocomplete="off"
+                                placeholder="Choose Action" :floating="false" :strict="false"
+                                :columns="{ sm: { container: 6, }, }" @change="(newValue, oldValue, el$) => {
+                                    let after_hours_target = el$.form$.el$('after_hours_target')
+
+                                    // only clear when this isn’t the very first time (i.e. oldValue was set)
+                                    if (oldValue !== null && oldValue !== undefined) {
+                                        after_hours_target.clear();
+                                    }
+
+                                    // after_hours_target.clear()
+                                    after_hours_target.updateItems()
+                                }" :conditions="[['custom_hours', true]]" />
+
+                            <SelectElement name="after_hours_target" :items="async (query, input) => {
+                                let after_hours_action = input.$parent.el$.form$.el$('after_hours_action');
+
+                                try {
+                                    let response = await after_hours_action.$vueform.services.axios.post(
+                                        options.routes.get_routing_options,
+                                        { category: after_hours_action.value }
+                                    );
+
+                                    if (input.externalValue) {
+                                        const opts = response.data.options;
+                                        // extract the raw value (in case externalValue might be a string or object)
+                                        const lookupValue = typeof input.externalValue === 'string'
+                                            ? input.externalValue
+                                            : input.externalValue?.value;
+
+                                        const selectedOption = opts.find(o => o.value === lookupValue);
+
+                                        // console.log(selectedOption);
+                                        input.update(selectedOption)
+                                    }
+                                    // console.log(response.data.options);
+                                    return response.data.options;
+                                } catch (error) {
+                                    emits('error', error);
+                                    return [];  // Return an empty array in case of error
+                                }
+                            }" :search="true" label-prop="name" :native="false" label="Target" input-type="search"
+                                allow-absent :object="true" autocomplete="off" placeholder="Choose Target" :floating="false"
+                                :strict="false" :columns="{ sm: { container: 6, }, }" :conditions="[
+                                    ['after_hours_action', 'not_empty'],
+                                    ['after_hours_action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
+                                ]" />
+
 
                             <ButtonElement name="submit" button-label="Save" :submits="true" align="right" />
 
@@ -202,22 +276,22 @@ const emits = defineEmits(['close', 'error', 'success', 'refresh-data', 'open-ed
 
 
 const handleCustomHoursUpdate = (newValue, oldValue, el$) => {
-      // only when toggling from false → true
-  if (!oldValue && newValue) {
-    const slotsField = el$.form$.el$('time_slots');
-    const currentSlots = slotsField.value || [];
+    // only when toggling from false → true
+    if (!oldValue && newValue) {
+        const slotsField = el$.form$.el$('time_slots');
+        const currentSlots = slotsField.value || [];
 
-    // if there are no slots yet, seed one
-    if (currentSlots.length === 0) {
-      const defaultSlot = {
-        weekdays: [],
-        time_from: '',
-        time_to: '',
-        action: ''
-      };
-      slotsField.update([ defaultSlot ]);
+        // if there are no slots yet, seed one
+        if (currentSlots.length === 0) {
+            const defaultSlot = {
+                weekdays: [],
+                time_from: '',
+                time_to: '',
+                action: ''
+            };
+            slotsField.update([defaultSlot]);
+        }
     }
-  }
 }
 
 const submitForm = async (FormData, form$) => {
@@ -225,7 +299,7 @@ const submitForm = async (FormData, form$) => {
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
 
-    console.log(requestData);
+    // console.log(requestData);
     return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
 };
 

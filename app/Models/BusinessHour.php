@@ -2,10 +2,11 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\Traits\TraitUuid;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class BusinessHour extends Model
 {
@@ -22,6 +23,9 @@ class BusinessHour extends Model
         'name',
         'extension',
         'timezone',
+        'after_hours_action',
+        'after_hours_target_type',
+        'after_hours_target_id',
         'context',
         'description',
         'enabled',
@@ -50,7 +54,12 @@ class BusinessHour extends Model
     }
 
 
-        /**
+    public function after_hours_target(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+    /**
      * Generates a unique sequence number.
      *
      * @return int|null The generated sequence number, or null if unable to generate.

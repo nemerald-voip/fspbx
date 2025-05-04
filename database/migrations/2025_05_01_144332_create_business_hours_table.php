@@ -20,11 +20,12 @@ return new class extends Migration
                 $table->string('name');
                 $table->string('extension');
                 $table->string('timezone')->nullable();
+                $table->string('after_hours_action')->nullable();
+                $table->nullableUuidMorphs('after_hours_target');
                 $table->string('context');
                 $table->text('description')->nullable();
                 $table->boolean('enabled');
                 $table->timestamps();
-    
             });
         }
     }
