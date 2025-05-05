@@ -680,6 +680,8 @@ onMounted(() => {
 
         ring_group_caller_id_name: props.options.ring_group.ring_group_caller_id_name ?? null,
         ring_group_caller_id_number: props.options.ring_group.ring_group_caller_id_number ?? null,
+        ring_group_cid_name_prefix: props.options.ring_group.ring_group_cid_name_prefix ?? null,
+        ring_group_cid_number_prefix: props.options.ring_group.ring_group_cid_number_prefix ?? null,
         ring_group_distinctive_ring: props.options.ring_group.ring_group_distinctive_ring ?? null,
         ring_group_ringback: props.options.ring_group.ring_group_ringback ?? null,
         ring_group_call_forward_enabled: props.options.ring_group.ring_group_call_forward_enabled === 'true',
