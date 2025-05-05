@@ -869,6 +869,20 @@ class PhoneNumbersController extends Controller
             $detailOrder += 10;
         }
 
+        if (!empty($phoneNumber->destination_cid_name_prefix)) {
+            $dialPlanDetails = new DialplanDetails();
+            $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
+            $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
+            $dialPlanDetails->dialplan_detail_tag = "action";
+            $dialPlanDetails->dialplan_detail_type = "set";
+            $dialPlanDetails->dialplan_detail_data = "cnam_prefix=" . $phoneNumber->destination_cid_name_prefix;
+            $dialPlanDetails->dialplan_detail_group = $detailGroup;
+            $dialPlanDetails->dialplan_detail_order = $detailOrder;
+            $dialPlanDetails->save();
+
+            $detailOrder += 10;
+        }
+
         if (!empty($phoneNumber->destination_accountcode)) {
             $dialPlanDetails = new DialplanDetails();
             $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;

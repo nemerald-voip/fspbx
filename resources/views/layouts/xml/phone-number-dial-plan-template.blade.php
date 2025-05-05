@@ -38,6 +38,8 @@
             <action application="set"
                 data="effective_caller_id_name={{ $phone_number->destination_cid_name_prefix }}#${caller_id_name}"
                 inline="false" />
+            <action application="set"
+                data="cnam_prefix={{ $phone_number->destination_cid_name_prefix }}"/> 
         @endif
         @if ($phone_number->destination_distinctive_ring && !empty($phone_number->destination_distinctive_ring))
             <action application="export" data="sip_h_Alert-Info={{ $phone_number->destination_distinctive_ring }}"

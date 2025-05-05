@@ -1,5 +1,5 @@
 -- Enable/Disable debug mode globally
-DEBUG_MODE = false  -- Set to false to disable debug logs
+DEBUG_MODE = true  -- Set to false to disable debug logs
 
 -- Debug logging function
 function debug_log(level, message)
@@ -95,6 +95,18 @@ end
 
 -- 4) Apply to channel if we got a name
 if name and #name > 0 and name ~= "UNKNOWN" then
-  api:executeString("uuid_setvar "..uuid.." effective_caller_id_name "..name)
-  debug_log("INFO", "[cnam_lookup.lua] Set effective_caller_id_name to "..name)
+
+    api:executeString("uuid_setvar " .. uuid .. " ignore_display_updates false");
+
+    -- freeswitch.consoleLog("NOTICE", "[cnam_lookup.lua] uuid_setvar " .. uuid .. " caller_id_name " .. name);
+    -- api:executeString("uuid_setvar " .. uuid .. " caller_id_name " .. name);
+
+    local prefix = api:executeString("uuid_getvar " .. uuid .. " cnam_prefix")
+    if prefix and #prefix > 0 then
+        debug_log("INFO", "[cnam_lookup.lua] cnam_prefix is "..prefix)
+        name = prefix .. "::" .. name
+    end
+
+    api:executeString("uuid_setvar "..uuid.." effective_caller_id_name "..name)
+    debug_log("INFO", "[cnam_lookup.lua] Set effective_caller_id_name to "..name)
 end
