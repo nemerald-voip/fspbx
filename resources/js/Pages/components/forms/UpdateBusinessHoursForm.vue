@@ -16,7 +16,7 @@
                 <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                     <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                         <FormTabs view="vertical">
-                            <FormTab name="page0" label="Business Hours" :elements="[
+                            <FormTab name="business_hours" label="Business Hours" :elements="[
                                 'business_hours_header',
                                 'name',
                                 'extension',
@@ -33,6 +33,12 @@
                                 'closed_hours_header',
                                 'after_hours_action',
                                 'after_hours_target',
+                                'submit',
+
+                            ]" />
+
+                            <FormTab name="holidays" label="Holidays" :elements="[
+                                'holidays_header',
                                 'submit',
 
                             ]" />
@@ -119,11 +125,8 @@
                                                 label: 'S',
                                             },
 
-                                        ]" size="sm" :columns="{
-    sm: {
-        container: 6,
-    },
-}" />
+                                        ]" size="sm" :columns="{ sm: { container: 6, }, }" />
+
                                         <DateElement name="time_from" label="From" :time="true" :date="false"
                                             :hour24="false" :columns="{
                                                 default: {
@@ -252,6 +255,11 @@
                                     ['after_hours_action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
                                 ]" />
 
+
+                            <!-- Holidays -->
+
+                            <StaticElement name="holidays_header" tag="h4" content="Holidays"
+                                description="Configure how incoming calls are routed on holidays and other special dates outside your normal business hours." />
 
                             <ButtonElement name="submit" button-label="Save" :submits="true" align="right" />
 
