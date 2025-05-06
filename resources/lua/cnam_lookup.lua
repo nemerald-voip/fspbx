@@ -1,5 +1,5 @@
 -- Enable/Disable debug mode globally
-DEBUG_MODE = false  -- Set to false to disable debug logs
+DEBUG_MODE = true  -- Set to false to disable debug logs
 
 -- Debug logging function
 function debug_log(level, message)
@@ -100,7 +100,7 @@ if name and #name > 0 and name ~= "UNKNOWN" then
 
     -- Get the prefix
     local prefix = api:executeString("uuid_getvar " .. uuid .. " cnam_prefix")
-    if prefix and #prefix > 0 then
+    if prefix and #prefix > 0 and prefix ~= '_undef_' then
         debug_log("INFO", "[cnam_lookup.lua] cnam_prefix is "..prefix)
         name = prefix .. "*" .. name
     end
