@@ -176,6 +176,9 @@ class BusinessHoursController extends Controller
                     ->with(['periods' => function ($query) {
                         $query->select('business_hour_uuid', 'day_of_week', 'start_time', 'end_time', 'action', 'target_type', 'target_id');
                     }])
+                    ->with(['exceptions' => function ($query) {
+                        $query->select('business_hour_uuid', 'start_date', 'start_time', 'end_date', 'start_time', 'end_time', 'mon', 'wday', 'mweek', 'mday', 'action', 'target_type', 'target_id');
+                    }])
                     ->first();
 
                 // If a model exists, use it; otherwise, create a new one
@@ -507,7 +510,6 @@ class BusinessHoursController extends Controller
                     $businessHour->periods()->create($periodData);
                 }
             }
-
 
             $xml = $this->generateDialPlanXML($businessHour);
 

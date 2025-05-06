@@ -10,6 +10,7 @@
                 time_slots: options.time_slots,
                 after_hours_action: options.item.after_hours_action,
                 after_hours_target: options.item.after_hours_target,
+                exceptions: options.item.exceptions,
             }" :display-errors="false">
             <template #empty>
 
@@ -39,6 +40,8 @@
 
                             <FormTab name="holidays" label="Holidays" :elements="[
                                 'holidays_header',
+                                'add_holiday',
+                                'holiday_table',
                                 'submit',
 
                             ]" />
@@ -261,6 +264,16 @@
                             <StaticElement name="holidays_header" tag="h4" content="Holidays"
                                 description="Configure how incoming calls are routed on holidays and other special dates outside your normal business hours." />
 
+                            <ButtonElement name="add_holiday" button-label="Add Holiday" align="right" @click="handleAddHolidayButtonClick" />
+
+                            <StaticElement name="holiday_table">
+                                <HolidayTable />
+                            </StaticElement>
+                            <HiddenElement name="exceptions" :meta="true" />
+
+
+
+
                             <ButtonElement name="submit" button-label="Save" :submits="true" align="right" />
 
                         </FormElements>
@@ -268,20 +281,36 @@
                 </div>
             </template>
         </Vueform>
+
+        <CreateHolidayHourModal :show="showAddHolidayModal" 
+            @confirm="handleAddHolidayHour" @close="showAddHolidayModal = false" />
+
     </div>
 </template>
 
 <script setup>
 import { ref } from "vue";
+import HolidayTable from "./../HolidayTable.vue";
+import CreateHolidayHourModal from "./../modal/CreateHolidayHourModal.vue"
+
 
 const props = defineProps({
     options: Object,
 });
 
 const form$ = ref(null)
+const showAddHolidayModal = ref(false)
 
 const emits = defineEmits(['close', 'error', 'success', 'refresh-data', 'open-edit-form']);
 
+
+const handleAddHolidayButtonClick = () => {
+    showAddHolidayModal.value = true
+}
+
+const handleAddHolidayHour = () => {
+
+}
 
 const handleCustomHoursUpdate = (newValue, oldValue, el$) => {
     // only when toggling from false → true
@@ -307,7 +336,7 @@ const submitForm = async (FormData, form$) => {
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
 
-    // console.log(requestData);
+    console.log(requestData);
     return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
 };
 
