@@ -4,12 +4,8 @@ namespace App\Http\Controllers;
 
 use Carbon\Carbon;
 use Inertia\Inertia;
-use App\Models\IvrMenus;
 use App\Models\Dialplans;
-use App\Models\Extensions;
-use App\Models\Recordings;
 use App\Models\RingGroups;
-use App\Models\Voicemails;
 use App\Models\FusionCache;
 use Illuminate\Support\Str;
 use App\Models\BusinessHour;
@@ -19,9 +15,7 @@ use Illuminate\Support\Facades\Session;
 use App\Services\CallRoutingOptionsService;
 use App\Http\Requests\StoreBusinessHoursRequest;
 use App\Http\Requests\UpdateBusinessHoursRequest;
-use App\Models\CallCenterQueues;
-use App\Models\CallFlows;
-use App\Models\Faxes;
+
 
 class BusinessHoursController extends Controller
 {
@@ -176,9 +170,9 @@ class BusinessHoursController extends Controller
                     ->with(['periods' => function ($query) {
                         $query->select('business_hour_uuid', 'day_of_week', 'start_time', 'end_time', 'action', 'target_type', 'target_id');
                     }])
-                    ->with(['exceptions' => function ($query) {
-                        $query->select('business_hour_uuid', 'start_date', 'start_time', 'end_date', 'start_time', 'end_time', 'mon', 'wday', 'mweek', 'mday', 'action', 'target_type', 'target_id');
-                    }])
+                    // ->with(['exceptions' => function ($query) {
+                    //     $query->select('business_hour_uuid', 'start_date', 'start_time', 'end_date', 'start_time', 'end_time', 'mon', 'wday', 'mweek', 'mday', 'action', 'target_type', 'target_id');
+                    // }])
                     ->first();
 
                 // If a model exists, use it; otherwise, create a new one
@@ -260,6 +254,8 @@ class BusinessHoursController extends Controller
                 'store_route' => $storeRoute ?? null,
                 'update_route' => $updateRoute ?? null,
                 'get_routing_options' => route('routing.options'),
+                'holidays' => route('holiday-hours.index'),
+                'holiday_item_options' => route('holiday-hours.item.options'),
 
             ];
 

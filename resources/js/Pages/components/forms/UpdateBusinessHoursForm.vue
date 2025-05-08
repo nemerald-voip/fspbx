@@ -16,7 +16,7 @@
 
                 <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                     <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
-                        <FormTabs view="vertical">
+                        <FormTabs view="vertical" @select="handleTabSelected">
                             <FormTab name="business_hours" label="Business Hours" :elements="[
                                 'business_hours_header',
                                 'name',
@@ -264,10 +264,11 @@
                             <StaticElement name="holidays_header" tag="h4" content="Holidays"
                                 description="Configure how incoming calls are routed on holidays and other special dates outside your normal business hours." />
 
-                            <ButtonElement name="add_holiday" button-label="Add Holiday" align="right" @click="handleAddHolidayButtonClick" />
+                            <ButtonElement name="add_holiday" button-label="Add Holiday" align="right"
+                                @click="handleAddHolidayButtonClick" :loading="addHolidayButtonLoading" />
 
                             <StaticElement name="holiday_table">
-                                <HolidayTable />
+                                <HolidayTable :holidays="holidays"/>
                             </StaticElement>
                             <HiddenElement name="exceptions" :meta="true" />
 
@@ -282,8 +283,9 @@
             </template>
         </Vueform>
 
-        <CreateHolidayHourModal :show="showAddHolidayModal" 
-            @confirm="handleAddHolidayHour" @close="showAddHolidayModal = false" />
+        <CreateHolidayHourModal :show="showAddHolidayModal" :options="holidayItemOptions"
+            :business_hour_uuid="options.item.uuid" @close="showAddHolidayModal = false"
+            @error="emitErrorToParentFromChild" />
 
     </div>
 </template>
@@ -300,12 +302,32 @@ const props = defineProps({
 
 const form$ = ref(null)
 const showAddHolidayModal = ref(false)
+const holidayItemOptions = ref(null)
+const addHolidayButtonLoading = ref(false)
+const holidays = ref([])
 
 const emits = defineEmits(['close', 'error', 'success', 'refresh-data', 'open-edit-form']);
 
 
 const handleAddHolidayButtonClick = () => {
-    showAddHolidayModal.value = true
+    addHolidayButtonLoading.value = true
+    getHolidayItemOptions();
+}
+
+const getHolidayItemOptions = (itemUuid = null) => {
+    const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
+
+    axios.post(props.options.routes.holiday_item_options, payload)
+        .then((response) => {
+            holidayItemOptions.value = response.data;
+            // console.log(holidayItemOptions.value);
+            showAddHolidayModal.value = true
+        }).catch((error) => {
+            handleModalClose();
+            emits('error', error)
+        }).finally(() => {
+            addHolidayButtonLoading.value = false
+        });
 }
 
 const handleAddHolidayHour = () => {
@@ -329,6 +351,30 @@ const handleCustomHoursUpdate = (newValue, oldValue, el$) => {
             slotsField.update([defaultSlot]);
         }
     }
+}
+
+const handleTabSelected = (activeTab, previousTab) => {
+    if (activeTab.name == 'holidays') {
+        getHolidays()
+    }
+}
+
+const getHolidays = async () => {
+    axios.get(props.options.routes.holidays, {
+        params: {
+            uuid: props.options.item.uuid
+        }
+    })
+        .then((response) => {
+            holidays.value = response.data;
+            console.log(holidays.value);
+
+        }).catch((error) => {
+            handleModalClose();
+            emits('error', error)
+        }).finally(() => {
+            // addHolidayButtonLoading.value = false
+        });
 }
 
 const submitForm = async (FormData, form$) => {
@@ -417,6 +463,15 @@ const handleError = (error, details, form$) => {
             form$.messageBag.append('Couldn\'t submit form')
             break
     }
+}
+
+
+const handleModalClose = () => {
+    showAddHolidayModal.value = false;
+}
+
+const emitErrorToParentFromChild = (error) => {
+    emits('error', error);
 }
 
 

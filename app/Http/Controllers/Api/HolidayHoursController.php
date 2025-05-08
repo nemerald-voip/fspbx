@@ -2,76 +2,88 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\Extensions;
 use Illuminate\Http\Request;
 use App\Models\EmergencyCall;
 use Illuminate\Support\Facades\DB;
+use App\Models\BusinessHourHoliday;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Process;
+use App\Services\CallRoutingOptionsService;
+use App\Http\Requests\StoreHolidayHourRequest;
 use App\Http\Requests\StoreEmergencyCallRequest;
 use App\Http\Requests\UpdateEmergencyCallRequest;
-use App\Models\BusinessHourException;
 
 class HolidayHoursController extends Controller
 {
-    public function index(Request $request)
-    {
-        logger(request()->all());
-        logger('here');
-        return;
-        $domain_uuid = session('domain_uuid');
+    public $model;
 
-        $calls = BusinessHourException::where('domain_uuid', $domain_uuid)
+    public function __construct()
+    {
+        $this->model = new BusinessHourHoliday();
+    }
+
+    public function index()
+    {
+
+        $holidays = BusinessHourHoliday::where('business_hour_uuid', request('uuid'))
             ->get();
 
-        return response()->json($calls);
+        return response()->json($holidays);
     }
 
 
-    public function store(StoreEmergencyCallRequest $request)
+    public function store(StoreHolidayHourRequest $request)
     {
-        $domain_uuid = session('domain_uuid');
-        $validated = $request->validated();
+        $data = $request->validated();
+
+        // Determine the true Eloquent model class for this action
+        $callRoutingService = new CallRoutingOptionsService;
+        $action     = $data['action'];
+        $targetId   = $data['target']['value'] ?? null;
+        $targetType = $action
+            ? $callRoutingService->mapActionToModel($action)
+            : null;
+
+        DB::beginTransaction();
+
+        logger($data);
 
         try {
-            DB::beginTransaction();
+            $holiday = BusinessHourHoliday::create([
+                'business_hour_uuid'  => $data['business_hour_uuid'],
+                'holiday_type'        => $data['holiday_type'],
+                'description'         => $data['description'] ?? null,
+                'start_date'          => $data['start_date'] ?? null,
+                'end_date'            => $data['end_date'] ?? null,
+                'start_time'          => $data['start_time'] ?? null,
+                'end_time'            => $data['end_time']   ?? null,
+                'mon'                 => $data['mon']        ?? null,
+                'wday'                => $data['wday']       ?? null,
+                'mweek'               => $data['mweek']      ?? null,
+                'week'               => $data['week']      ?? null,
+                'mday'                => $data['mday']       ?? null,
 
-            $call = EmergencyCall::create([
-                'domain_uuid'       => $domain_uuid,
-                'emergency_number'  => $validated['emergency_number'],
-                'description'       => $validated['description'] ?? null,
+                'action'              => $action,
+                'target_type'         => $targetType,
+                'target_id'           => $targetId,
             ]);
-
-            if (!empty($validated['members'])) {
-                foreach ($validated['members'] as $member) {
-                    $call->members()->create([
-                        'domain_uuid'     => $domain_uuid,
-                        'extension_uuid'  => $member['extension_uuid'],
-                    ]);
-                }
-            }
-
-            // Save Emails
-            if (!empty($validated['emails'])) {
-                foreach ($validated['emails'] as $email) {
-                    $call->emails()->create([
-                        'email' => $email,
-                    ]);
-                }
-            }
 
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['New item created']]
+                'messages' => ['success' => ['Holiday exception created']],
+                'data'     => $holiday,
             ], 201);
         } catch (\Throwable $e) {
             DB::rollBack();
 
-            logger('EmergencyCall store error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            logger('BusinessHourHoliday store error: ' . $e->getMessage(), [
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+            ]);
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while saving.']]
+                'messages' => ['error' => ['Could not save holiday exception.']],
             ], 500);
         }
     }
@@ -137,37 +149,33 @@ class HolidayHoursController extends Controller
         try {
             $domain_uuid = session('domain_uuid');
 
-            $call = null;
-            $routes = [];
+            $item = null;
             if (request()->has('item_uuid')) {
-                $call = EmergencyCall::with('members', 'emails')
-                    ->where('domain_uuid', $domain_uuid)
+                $item = $this->model::where('domain_uuid', $domain_uuid)
                     ->where('uuid', request('item_uuid'))
                     ->first();
 
                 // Define the update route
-                $updateRoute = route('emergency-calls.update', $call);
+                $updateRoute = route('holiday-hours.update', $item);
+            } else {
+                // Create a new model if item_uuid is not provided
+                $item = $this->model;
+                $storeRoute  = route('holiday-hours.store');
             }
 
-            $extensions = Extensions::where('domain_uuid', $domain_uuid)
-                ->select('extension_uuid', 'extension', 'effective_caller_id_name')
-                ->orderBy('extension')
-                ->get()
-                ->map(function ($ext) {
-                    return [
-                        'value' => $ext->extension_uuid,
-                        'name' => $ext->name_formatted,
-                    ];
-                });
+            $routingOptionsService = new CallRoutingOptionsService;
+            $routingTypes = $routingOptionsService->routingTypes;
 
             $routes = [
+                'store_route' => $storeRoute ?? null,
                 'update_route' => $updateRoute ?? null,
+                'get_routing_options' => route('routing.options'),
             ];
 
             return response()->json([
-                'item' => $call,
-                'extensions' => $extensions,
+                'item' => $item,
                 'routes' => $routes,
+                'routing_types' => $routingTypes,
             ]);
         } catch (\Exception $e) {
             // Log the error message

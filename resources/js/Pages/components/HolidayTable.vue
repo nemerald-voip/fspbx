@@ -8,7 +8,7 @@
                         <thead class="bg-gray-200">
                             <tr>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Holiday</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Extensions to Notify
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Date(s)
                                 </th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Description</th>
                                 <th class="relative px-6 py-3 text-left text-sm font-medium text-gray-500">
@@ -16,22 +16,20 @@
                                 </th>
                             </tr>
                         </thead>
-                        <tbody v-if="!loading && emergencyCalls.length" class="divide-y divide-gray-200 bg-white">
-                            <tr v-for="call in emergencyCalls" :key="call.id">
+                        <tbody v-if="!loading && holidays.length" class="divide-y divide-gray-200 bg-white">
+                            <tr v-for="holiday in holidays" :key="holiday.uuid">
                                 <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900">
-                                    {{ call.emergency_number }}
+                                    {{ holiday.description }}
                                 </td>
                                 <!-- <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                                     {{ call.members.length }}
                                 </td> -->
 
                                 <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                    <Badge :text="call.members.length" backgroundColor="bg-indigo-100"
-                                        textColor="text-indigo-700" ringColor="ring-indigo-400/20"
-                                        class="px-2 py-1 text-xs font-semibold" />
+                                    {{ holiday.human_date }}
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                    {{ call.description }}
+                                    
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                     <div class="flex items-center whitespace-nowrap justify-end">
@@ -59,7 +57,7 @@
                     </table>
 
                     <!-- Empty State -->
-                    <div v-if="!loading && emergencyCalls.length === 0" class="text-center my-5">
+                    <div v-if="!loading && holidays.length === 0" class="text-center my-5">
                         <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
                         <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
                         <!-- <p class="mt-1 text-sm text-gray-500">
@@ -77,22 +75,12 @@
     </div>
 
 
-    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showEditModal" :header="'Edit Emergency Call'"
-        :loading="loadingModal" @close="handleModalClose">
-        <template #modal-body>
-            <UpdateEmergencyCallForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
-                @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
-                @success="showNotification('success', $event)" @clear-errors="handleClearErrors" />
-        </template>
-    </AddEditItemModal>
-
+<!-- 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
         @confirm="confirmDeleteAction" :header="'Confirm Deletion'"
         :text="'This action will permanently delete the selected emergency call(s). Are you sure you want to proceed?'"
-        :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+        :confirm-button-label="'Delete'" cancel-button-label="Cancel" /> -->
 
-    <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
-        @update:show="hideNotification" />
 </template>
 
 <script setup>
@@ -108,69 +96,12 @@ import Badge from "@generalComponents/Badge.vue";
 
 
 const props = defineProps({
-    routes: Object,
-    business_hour_uuid: String,
+    holidays: Object,
+    loading: Boolean,
 })
 
-const emergencyCalls = ref([]);
-const loading = ref(false);
-const error = ref(null);
-const showCreateModal = ref(false);
-const showEditModal = ref(false);
-const loadingModal = ref(false)
-const formErrors = ref(null);
-const notificationType = ref(null);
-const notificationMessages = ref(null);
-const notificationShow = ref(null);
-const showDeleteConfirmationModal = ref(false);
-const confirmDeleteAction = ref(null);
-const itemOptions = ref({})
-const createFormSubmiting = ref(null);
-const updateFormSubmiting = ref(null);
 
 
-const loadData = async () => {
-    loading.value = true;
-    try {
-        
-        const response = await axios.get(props.routes.holiday_hours_route, {business_hour_uuid: props.business_hour_uuid});
-        console.log('hi');
-        emergencyCalls.value = response.data;
-    } catch (err) {
-        error.value = err.response?.data?.message || err.message;
-    } finally {
-        loading.value = false;
-    }
-};
-
-onMounted(() => {
-    console.log(props.business_hour_uuid);
-    loadData();
-});
-
-const handleCreateButtonClick = () => {
-    showCreateModal.value = true
-    formErrors.value = null;
-    loadingModal.value = true
-    getItemOptions();
-}
-
-const handleCreateRequest = (form) => {
-    createFormSubmiting.value = true;
-    formErrors.value = null;
-
-    axios.post(props.routes.emergency_calls_store, form)
-        .then((response) => {
-            createFormSubmiting.value = false;
-            showNotification('success', response.data.messages);
-            handleModalClose();
-            loadData();
-        }).catch((error) => {
-            createFormSubmiting.value = false;
-            handleFormErrorResponse(error);
-        });
-
-};
 
 const handleEditButtonClick = (uuid) => {
     showEditModal.value = true

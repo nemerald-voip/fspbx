@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Models\Traits\TraitUuid;
+use App\Models\BusinessHourPeriod;
+use App\Models\BusinessHourHoliday;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -48,9 +50,9 @@ class BusinessHour extends Model
     /**
      * The one-off exceptions (holidays or overrides).
      */
-    public function exceptions(): HasMany
+    public function holidays(): HasMany
     {
-        return $this->hasMany(BusinessHourException::class, 'business_hour_uuid', 'uuid');
+        return $this->hasMany(BusinessHourHoliday::class, 'business_hour_uuid', 'uuid');
     }
 
 
