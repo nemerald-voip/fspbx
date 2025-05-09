@@ -209,28 +209,10 @@ class BusinessHourHoliday extends Model
                 // Otherwise just dates
                 return "{$this->start_date->format('F j, Y')} – {$this->end_date->format('F j, Y')}";
 
+
             case 'recurring_pattern':
-                // 0) Week-of-year (1–53)
-                if ($this->week !== null) {
-                    return $this->ordinal($this->week) . ' week of every year';
-                }
 
-                // 1) “Xth day of every month”
-                if ($this->mday !== null) {
-                    return $this->ordinal($this->mday) . ' day of every month';
-                }
-
-                // 2) Nth (or last) weekday
-                $parts = [];
-
-                // Nth vs Last
-                if ($this->mweek !== null) {
-                    $parts[] = $this->mweek === 5
-                        ? 'Last'
-                        : $this->ordinal($this->mweek);
-                }
-
-                // Day name
+                // helper maps
                 $days = [
                     1 => 'Sunday',
                     2 => 'Monday',
@@ -238,21 +220,77 @@ class BusinessHourHoliday extends Model
                     4 => 'Wednesday',
                     5 => 'Thursday',
                     6 => 'Friday',
-                    7 => 'Saturday'
+                    7 => 'Saturday',
                 ];
-                if ($this->wday !== null && isset($days[$this->wday])) {
-                    $parts[] = $days[$this->wday];
+                $monthName = $this->mon
+                    ? Carbon::create()->month($this->mon)->format('F')
+                    : null;
+
+                // 1) Week-of-year (1–53)
+                if ($this->week !== null) {
+                    $recurrence = $this->ordinal($this->week) . ' week of every year';
+                }
+                // 2) Day-of-month + weekday **every** month
+                elseif ($this->mday !== null && $this->wday !== null && $this->mon === null) {
+                    $recurrence = $this->ordinal($this->mday)
+                        . ' day of every month on '
+                        . $days[$this->wday];
+                }
+                // 3) Exact date each year (month + day, with optional weekday)
+                elseif ($this->mon !== null && $this->mday !== null) {
+                    $recurrence = "{$this->ordinal($this->mday)} day of {$monthName} of every year";
+                    if (isset($days[$this->wday])) {
+                        $recurrence .= " on {$days[$this->wday]}";
+                    }
+                }
+                // 4) Day-of-month every month
+                elseif ($this->mday !== null) {
+                    $recurrence = $this->ordinal($this->mday) . ' day of every month';
+                }
+                // 5) Nth (or Last) weekday [in month or in a specific month]
+                elseif ($this->mweek !== null && isset($days[$this->wday])) {
+                    $prefix  = $this->mweek === 5
+                        ? 'Last'
+                        : $this->ordinal($this->mweek);
+                    $weekday = $days[$this->wday];
+                    if ($this->mon !== null) {
+                        $recurrence = "{$prefix} {$weekday} in {$monthName} of every year";
+                    } else {
+                        $recurrence = "{$prefix} {$weekday} of every month";
+                    }
+                }
+                // 6) Every <weekday> [in month or every month]
+                elseif (isset($days[$this->wday])) {
+                    $weekday = $days[$this->wday];
+                    if ($this->mon !== null) {
+                        $recurrence = "{$weekday} in {$monthName} of every year";
+                    } else {
+                        $recurrence = "{$weekday} of every month";
+                    }
+                }
+                // 7) Month only (e.g. “Every May”)
+                elseif ($this->mon !== null) {
+                    $recurrence = "Every {$monthName}";
+                }
+                // 8) Fallback to description
+                else {
+                    $recurrence = (string) $this->description;
                 }
 
-                // Frequency
-                if ($this->mon !== null) {
-                    $monthName = Carbon::create()->month($this->mon)->format('F');
-                    $freq = "in {$monthName} of every year";
-                } else {
-                    $freq = 'of every month';
+                // append time span if both times are set
+                if ($this->start_time && $this->end_time) {
+                    $from = $this->start_time instanceof Carbon
+                        ? $this->start_time->format('H:i')
+                        : $this->start_time;
+                    $to   = $this->end_time   instanceof Carbon
+                        ? $this->end_time->format('H:i')
+                        : $this->end_time;
+                    $recurrence .= " ({$from}–{$to})";
                 }
 
-                return implode(' ', $parts) . " {$freq}";
+                return $recurrence;
+
+
 
             default:
                 return (string) $this->description;

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use Carbon\Carbon;
 use App\Models\EmergencyCall;
 use Illuminate\Support\Facades\DB;
 use App\Models\BusinessHourHoliday;
@@ -11,7 +10,6 @@ use Illuminate\Support\Facades\Process;
 use App\Services\CallRoutingOptionsService;
 use App\Http\Requests\StoreHolidayHourRequest;
 use App\Http\Requests\UpdateHolidayHourRequest;
-use App\Http\Requests\UpdateEmergencyCallRequest;
 use App\Http\Resources\BusinessHourHolidayResource;
 
 class HolidayHoursController extends Controller
@@ -28,6 +26,7 @@ class HolidayHoursController extends Controller
 
         $holidays = BusinessHourHoliday::with('target')
             ->where('business_hour_uuid', request('uuid'))
+            ->orderBy('created_at', 'desc')
             ->get();
 
         return BusinessHourHolidayResource::collection($holidays);
@@ -71,7 +70,7 @@ class HolidayHoursController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Holiday exception created']],
+                'messages' => ['success' => ['Holiday created']],
                 'data'     => $holiday,
             ], 201);
         } catch (\Throwable $e) {
@@ -83,7 +82,7 @@ class HolidayHoursController extends Controller
             ]);
 
             return response()->json([
-                'messages' => ['error' => ['Could not save holiday exception.']],
+                'messages' => ['error' => ['Could not save holiday.']],
             ], 500);
         }
     }
@@ -100,8 +99,6 @@ class HolidayHoursController extends Controller
         $targetType = $action
             ? $callRoutingService->mapActionToModel($action)
             : null;
-
-        logger($data);
 
         try {
             DB::beginTransaction();
@@ -127,14 +124,14 @@ class HolidayHoursController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Holiday exception updated']],
+                'messages' => ['success' => ['Holiday updated']],
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
-            logger('EmergencyCall update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            logger('Holiday update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Could not update holiday exception.']],
+                'messages' => ['error' => ['Could not update holiday.']],
             ], 500);
         }
     }
@@ -183,40 +180,29 @@ class HolidayHoursController extends Controller
 
     public function bulkDelete()
     {
+
         try {
             DB::beginTransaction();
 
-            $domain_uuid = auth()->user()->domain_uuid ?? session('domain_uuid');
-
-            $items = EmergencyCall::where('domain_uuid', $domain_uuid)
-                ->whereIn('uuid', request('items'))
-                ->get();
-
-            foreach ($items as $item) {
-                // 💥 Delete related members and emails first
-                $item->members()->delete();
-                $item->emails()->delete();
-
-                // Delete the parent EmergencyCall
-                $item->delete();
-            }
+            // Delete all holidays whose 'uuid' is in the provided array
+            BusinessHourHoliday::whereIn('uuid', request('items'))->delete();
 
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Selected item(s) were deleted successfully.']]
+                'messages' => ['success' => ['Selected holiday(s) deleted successfully.']]
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
-
-            logger('EmergencyCall bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
-
+    
+            logger('BusinessHourHoliday bulkDelete error: ' . $e->getMessage() . 
+                   " at " . $e->getFile() . ":" . $e->getLine());
+    
             return response()->json([
-                'messages' => ['error' => ['An error occurred while deleting the selected item(s).']]
+                'messages' => ['error' => ['An error occurred while deleting the selected holiday(s).']]
             ], 500);
         }
     }
-
 
 
     function checkServiceStatus(string $processName = 'esl:listen-emergency')

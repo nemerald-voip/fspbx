@@ -42,7 +42,7 @@
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-2 text-right text-sm font-medium">
                                     <div class="flex items-center whitespace-nowrap justify-end">
-                                        <ejs-tooltip :content="'Edit'" position='TopCenter'
+                                        <ejs-tooltip v-if="permissions.holidays_update" :content="'Edit'" position='TopCenter'
                                             target="#destination_tooltip_target">
                                             <div id="destination_tooltip_target">
                                                 <PencilSquareIcon @click="handleEditButtonClick(holiday.uuid)"
@@ -51,7 +51,7 @@
                                             </div>
                                         </ejs-tooltip>
 
-                                        <ejs-tooltip :content="'Delete'" position='TopCenter'
+                                        <ejs-tooltip v-if="permissions.holidays_delete" :content="'Delete'" position='TopCenter'
                                             target="#delete_tooltip_target">
                                             <div id="delete_tooltip_target">
                                                 <TrashIcon @click="handleSingleItemDeleteRequest(holiday.uuid)"
@@ -91,11 +91,6 @@
     </div>
 
 
-    <!-- 
-    <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
-        @confirm="confirmDeleteAction" :header="'Confirm Deletion'"
-        :text="'This action will permanently delete the selected emergency call(s). Are you sure you want to proceed?'"
-        :confirm-button-label="'Delete'" cancel-button-label="Cancel" /> -->
 </template>
 
 <script setup>
@@ -103,139 +98,22 @@ import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue
 import { registerLicense } from '@syncfusion/ej2-base';
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 
-
-
 const props = defineProps({
     holidays: Object,
+    permissions: Object,
     loading: Boolean,
 })
 
 const emits = defineEmits(['edit-item', 'delete-item']);
 
-
 const handleEditButtonClick = (uuid) => {
     emits('edit-item', uuid)
-
 }
-
-const handleUpdateRequest = (form) => {
-    updateFormSubmiting.value = true;
-    formErrors.value = null;
-
-    axios.put(itemOptions.value.routes.update_route, form)
-        .then((response) => {
-            updateFormSubmiting.value = false;
-            showNotification('success', response.data.messages);
-            handleModalClose();
-            loadData();
-        })
-        .catch((error) => {
-            updateFormSubmiting.value = false;
-            handleFormErrorResponse(error);
-        });
-};
 
 const handleSingleItemDeleteRequest = (uuid) => {
-    showDeleteConfirmationModal.value = true;
-    confirmDeleteAction.value = () => executeBulkDelete([uuid]);
+    emits('delete-item', uuid);
 };
 
-const executeBulkDelete = (items = selectedItems.value) => {
-    axios.post(props.routes.emergency_calls_bulk_delete, { items })
-        .then((response) => {
-            handleModalClose();
-            showNotification('success', response.data.messages);
-            loadData();
-        })
-        .catch((error) => {
-            handleModalClose();
-            handleErrorResponse(error);
-        });
-}
-
-
-const handleModalClose = () => {
-    showCreateModal.value = false;
-    showEditModal.value = false;
-    showDeleteConfirmationModal.value = false;
-    // bulkUpdateModalTrigger.value = false;
-}
-
-const getItemOptions = (itemUuid = null) => {
-    loadingModal.value = true;
-    formErrors.value = null;
-
-    const payload = itemUuid ? { item_uuid: itemUuid } : {};
-
-    axios.post(props.routes.emergency_calls_item_options, payload)
-        .then((response) => {
-            loadingModal.value = false;
-            itemOptions.value = response.data;
-            // console.log(itemOptions.value);
-        })
-        .catch((error) => {
-            handleModalClose();
-            handleErrorResponse(error);
-        });
-}
-
-const hideNotification = () => {
-    notificationShow.value = false;
-    notificationType.value = null;
-    notificationMessages.value = null;
-}
-
-const showNotification = (type, messages = null) => {
-    notificationType.value = type;
-    notificationMessages.value = messages;
-    notificationShow.value = true;
-}
-
-const handleClearErrors = () => {
-    formErrors.value = null;
-}
-
-const handleFormErrorResponse = (error) => {
-    if (error.request?.status == 419) {
-        showNotification('error', { request: ["Session expired. Reload the page"] });
-    } else if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        // console.log(error.response.data);
-        showNotification('error', error.response.data.errors || { request: [error.message] });
-        formErrors.value = error.response.data.errors;
-    } else if (error.request) {
-        // The request was made but no response was received
-        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-        // http.ClientRequest in node.js
-        showNotification('error', { request: [error.request] });
-        console.log(error.request);
-    } else {
-        // Something happened in setting up the request that triggered an Error
-        showNotification('error', { request: [error.message] });
-        console.log(error.message);
-    }
-
-}
-
-const handleErrorResponse = (error) => {
-    if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        // console.log(error.response.data);
-        showNotification('error', error.response.data.errors || { request: [error.message] });
-    } else if (error.request) {
-        // The request was made but no response was received
-        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-        // http.ClientRequest in node.js
-        showNotification('error', { request: [error.request] });
-        console.log(error.request);
-    } else {
-        // Something happened in setting up the request that triggered an Error
-        showNotification('error', { request: [error.message] });
-        console.log(error.message);
-    }
-}
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
 

@@ -158,8 +158,6 @@ class BusinessHoursController extends Controller
     public function getItemOptions()
     {
         try {
-
-            $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
             $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
 
 
@@ -256,7 +254,7 @@ class BusinessHoursController extends Controller
                 'get_routing_options' => route('routing.options'),
                 'holidays' => route('holiday-hours.index'),
                 'holiday_item_options' => route('holiday-hours.item.options'),
-
+                'holiday_bulk_delete' => route('holiday-hours.bulk.delete'),
             ];
 
             // Construct the itemOptions object
@@ -290,8 +288,10 @@ class BusinessHoursController extends Controller
     public function getUserPermissions()
     {
         $permissions = [];
-        // $permissions['manage_cid_name_prefix'] = userCheckPermission('ring_group_cid_name_prefix');
-
+        $permissions['holidays_list_view'] = userCheckPermission('business_hours_holidays_list_view');
+        $permissions['holidays_create'] = userCheckPermission('business_hours_holidays_create');
+        $permissions['holidays_update'] = userCheckPermission('business_hours_holidays_update');
+        $permissions['holidays_delete'] = userCheckPermission('business_hours_holidays_delete');
 
         return $permissions;
     }

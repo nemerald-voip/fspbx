@@ -468,7 +468,7 @@ const handleSuccess = (response, form$) => {
     // console.log(response.status) // HTTP status code
     // console.log(response.data) // response data
 
-    emits('success', 'success', response.data.messages);
+    emits('success', response.data.messages);
     emits('close');
     emits('refresh-data');
 }

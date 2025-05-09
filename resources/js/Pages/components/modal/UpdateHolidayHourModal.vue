@@ -491,7 +491,7 @@ const handleSuccess = (response, form$) => {
     // console.log(response.status) // HTTP status code
     // console.log(response.data) // response data
 
-    emits('success', 'success', response.data.messages);
+    emits('success',response.data.messages);
     emits('close');
     emits('refresh-data');
 }
@@ -553,20 +553,20 @@ const handleUSHolidayUpdate = (newValue, oldValue, el$) => {
 
         // find the holiday whose value matches newValue
         const match = usHolidays.find(h =>
-            h.value.mon === newValue.mon
-            && h.value.mday === newValue.mday
-            && h.value.mweek === newValue.mweek
-            && h.value.wday === newValue.wday
+            h.value.mon === newValue.value.mon
+            && h.value.mday === newValue.value.mday
+            && h.value.mweek === newValue.value.mweek
+            && h.value.wday === newValue.value.wday
         );
 
         // pull its label (or fall back to an empty string)
         const label = match?.label ?? '';
 
         el$.form$.update({
-            mday: newValue['mday'],
-            mon: newValue['mon'],
-            mweek: newValue['mweek'],
-            wday: newValue['wday'],
+            mday: newValue.value.mday,
+            mon: newValue.value.mon,
+            mweek: newValue.value.mweek,
+            wday: newValue.value.wday,
             description: label,
         })
     }

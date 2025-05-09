@@ -32,6 +32,7 @@
                                 'container_4',
                                 'divider1',
                                 'closed_hours_header',
+                                '247_header',
                                 'after_hours_action',
                                 'after_hours_target',
                                 'submit',
@@ -44,7 +45,7 @@
                                 'holiday_table',
                                 'submit',
 
-                            ]" />
+                            ]" :conditions="[() => options.permissions.holidays_list_view]" />
 
                         </FormTabs>
                     </div>
@@ -186,7 +187,7 @@
 
                                                 return response.data.options;
                                             } catch (error) {
-                                                emits('error', error);
+                                                emit('error', error);
                                                 return [];  // Return an empty array in case of error
                                             }
                                         }" :search="true" label-prop="name" :native="false" label="Target"
@@ -209,6 +210,10 @@
                                 description="Define how incoming calls are handled outside of your business hours."
                                 :conditions="[['custom_hours', true]]" />
 
+                            <StaticElement name="247_header" tag="h4" content=""
+                                description="Define how incoming calls are handled."
+                                :conditions="[['custom_hours', false]]" />
+
                             <SelectElement name="after_hours_action" :items="options.routing_types" label-prop="name"
                                 :search="true" :native="false" label="Choose Action" input-type="search" autocomplete="off"
                                 placeholder="Choose Action" :floating="false" :strict="false"
@@ -222,7 +227,7 @@
 
                                     // after_hours_target.clear()
                                     after_hours_target.updateItems()
-                                }" :conditions="[['custom_hours', true]]" />
+                                }"  />
 
                             <SelectElement name="after_hours_target" :items="async (query, input) => {
                                 let after_hours_action = input.$parent.el$.form$.el$('after_hours_action');
@@ -248,7 +253,7 @@
                                     // console.log(response.data.options);
                                     return response.data.options;
                                 } catch (error) {
-                                    emits('error', error);
+                                    emit('error', error);
                                     return [];  // Return an empty array in case of error
                                 }
                             }" :search="true" label-prop="name" :native="false" label="Target" input-type="search"
@@ -265,11 +270,13 @@
                                 description="Configure how incoming calls are routed on holidays and other special dates outside your normal business hours." />
 
                             <ButtonElement name="add_holiday" button-label="Add Holiday" align="right"
-                                @click="handleAddHolidayButtonClick" :loading="addHolidayButtonLoading" />
+                                @click="handleAddHolidayButtonClick" :loading="addHolidayButtonLoading"
+                                :conditions="[() => options.permissions.holidays_create]" />
 
                             <StaticElement name="holiday_table">
                                 <HolidayTable :holidays="holidays" :loading="isHolidaysLoading"
-                                    @edit-item="handleUpdateHolidayButtonClick" />
+                                    :permissions="options.permissions" @edit-item="handleUpdateHolidayButtonClick"
+                                    @delete-item="handleDeleteHolidayButtonClick" />
                             </StaticElement>
                             <HiddenElement name="exceptions" :meta="true" />
 
@@ -285,12 +292,17 @@
         </Vueform>
 
         <UpdateHolidayHourModal :show="showUpdateHolidayModal" :options="holidayItemOptions"
-            :business_hour_uuid="options.item.uuid" @close="showUpdateHolidayModal = false" @error="emitErrorToParentFromChild"
-            @success="emitSuccessToParentFromChild" @refresh-data="getHolidays" />
+            :business_hour_uuid="options.item.uuid" @close="showUpdateHolidayModal = false"
+            @error="emitErrorToParentFromChild" @success="emitSuccessToParentFromChild" @refresh-data="getHolidays" />
 
         <CreateHolidayHourModal :show="showAddHolidayModal" :options="holidayItemOptions"
             :business_hour_uuid="options.item.uuid" @close="showAddHolidayModal = false" @error="emitErrorToParentFromChild"
             @success="emitSuccessToParentFromChild" @refresh-data="getHolidays" />
+
+        <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
+            @confirm="confirmDeleteAction" :header="'Confirm Deletion'" :loading="isDeleteHolidayLoading"
+            :text="'This action will permanently delete the selected holiday. Are you sure you want to proceed?'"
+            :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
 
     </div>
 </template>
@@ -300,6 +312,7 @@ import { ref } from "vue";
 import HolidayTable from "./../HolidayTable.vue";
 import CreateHolidayHourModal from "./../modal/CreateHolidayHourModal.vue"
 import UpdateHolidayHourModal from "./../modal/UpdateHolidayHourModal.vue"
+import ConfirmationModal from "./../modal/ConfirmationModal.vue";
 
 
 const props = defineProps({
@@ -314,8 +327,11 @@ const addHolidayButtonLoading = ref(false)
 const updateHolidayButtonLoading = ref(false)
 const holidays = ref([])
 const isHolidaysLoading = ref(false)
+const isDeleteHolidayLoading = ref(false)
+const showDeleteConfirmationModal = ref(false)
+const confirmDeleteAction = ref(null);
 
-const emits = defineEmits(['close', 'error', 'success', 'refresh-data']);
+const emit = defineEmits(['close', 'error', 'success', 'refresh-data']);
 
 
 const getHolidayItemOptions = (itemUuid = null) => {
@@ -336,11 +352,12 @@ const handleAddHolidayButtonClick = async () => {
         showAddHolidayModal.value = true;
     } catch (err) {
         handleModalClose();
-        emits('error', err);
+        emit('error', err);
     } finally {
         addHolidayButtonLoading.value = false;
     }
 };
+
 
 const handleUpdateHolidayButtonClick = async uuid => {
     updateHolidayButtonLoading.value = true;
@@ -349,9 +366,35 @@ const handleUpdateHolidayButtonClick = async uuid => {
         showUpdateHolidayModal.value = true;
     } catch (err) {
         handleModalClose();
-        emits('error', err);
+        emit('error', err);
     } finally {
         updateHolidayButtonLoading.value = false;
+    }
+};
+
+
+const handleDeleteHolidayButtonClick = (uuid) => {
+    showDeleteConfirmationModal.value = true;
+    confirmDeleteAction.value = () => executeBulkDelete([uuid]);
+};
+
+
+const executeBulkDelete = async (items) => {
+    isDeleteHolidayLoading.value = true;
+
+    try {
+        const response = await axios.post(
+            props.options.routes.holiday_bulk_delete,
+            { items }
+        );
+        emit('success', 'success', response.data.messages);
+        getHolidays();
+    } catch (error) {
+        emit('error', error);
+    } finally {
+        // hide both the delete and the confirmation modals
+        handleModalClose();
+        isDeleteHolidayLoading.value = false;
     }
 };
 
@@ -393,7 +436,7 @@ const getHolidays = async () => {
 
         }).catch((error) => {
             handleModalClose();
-            emits('error', error)
+            emit('error', error)
         }).finally(() => {
             isHolidaysLoading.value = false
         });
@@ -404,7 +447,7 @@ const submitForm = async (FormData, form$) => {
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
 
-    console.log(requestData);
+    // console.log(requestData);
     return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
 };
 
@@ -441,10 +484,10 @@ const handleSuccess = (response, form$) => {
     // console.log(response.status) // HTTP status code
     // console.log(response.data) // response data
 
-    emits('success', 'success', response.data.messages);
-    emits('close');
-    emits('refresh-data');
-    emits('open-edit-form', response.data.ring_group_uuid);
+    emit('success', 'success', response.data.messages);
+    emit('close');
+    emit('refresh-data');
+    emit('open-edit-form', response.data.ring_group_uuid);
 }
 
 const handleError = (error, details, form$) => {
@@ -460,7 +503,7 @@ const handleError = (error, details, form$) => {
 
         // Error occured because response status is outside of 2xx
         case 'submit':
-            emits('error', error);
+            emit('error', error);
             console.log(error) // AxiosError object
             // console.log(error.response) // axios response
             // console.log(error.response.status) // HTTP status code
@@ -491,26 +534,18 @@ const handleError = (error, details, form$) => {
 const handleModalClose = () => {
     showAddHolidayModal.value = false;
     showUpdateHolidayModal.value = false
+    showDeleteConfirmationModal.value = false;
+
 }
 
 const emitErrorToParentFromChild = (error) => {
-    emits('error', error);
+    emit('error', error);
 }
 
 const emitSuccessToParentFromChild = (message) => {
-    emits('success', message);
+    emit('success', 'success', message);
 }
 
 
 
 </script>
-
-<style scoped>
-/* This will mask the text input to behave like a password field */
-.password-field {
-    -webkit-text-security: disc;
-    /* For Chrome and Safari */
-    -moz-text-security: disc;
-    /* For Firefox */
-}
-</style>

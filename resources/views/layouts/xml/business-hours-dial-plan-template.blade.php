@@ -35,6 +35,111 @@
         {{-- reset our “matched slot” flag --}}
         <action application="set" data="slot_matched=" />
 
+
+
+        {{-- 1) Holiday exceptions --}}
+        @foreach ($businessHour->holidays as $h)
+            @php
+                // prepare destination
+                $extField = $fieldMap[$h->action] ?? null;
+                $extValue = $extField ? $h->target->{$extField} : $businessHour->extension;
+                $dest = buildDestinationAction([
+                    'type' => $h->action,
+                    'extension' => $extValue,
+                ]);
+
+                // time-of-day attr from cast Carbon instances
+                $timeAttr = '';
+                if ($h->start_time && $h->end_time) {
+                    $tf = $h->start_time->format('H:i');
+                    $tt = $h->end_time->format('H:i');
+                    $timeAttr = " time-of-day=\"{$tf}-{$tt}\"";
+                }
+
+                // decide matching attributes
+                $useAttrs = [];
+
+                switch ($h->holiday_type) {
+                    case 'single_date':
+                        // exact single-day match with year, month, and day
+                        if ($h->start_date) {
+                            // start_date is cast to Carbon
+                            $dt = $h->start_date;
+                            $useAttrs = [
+                                'year' => $dt->format('Y'),
+                                'mon' => $dt->format('n'),
+                                'mday' => $dt->format('j'),
+                            ];
+                        }
+                        break;
+
+                    case 'date_range':
+                        // date-range can be timed or full-day
+                        if ($h->start_date && $h->end_date) {
+                            if ($h->start_time && $h->end_time) {
+                                // use FreeSWITCH date-time range, combine date + time from separate fields
+                                $startDT = $h->start_date->format('Y-m-d') . ' ' . $h->start_time->format('H:i');
+                                $endDT = $h->end_date->format('Y-m-d') . ' ' . $h->end_time->format('H:i');
+                                $useAttrs = ['date-time' => "$startDT~$endDT"];
+                                $timeAttr = '';
+                            } else {
+                                // full-day range via year, mon, mday-range
+                                $sd = $h->start_date;
+                                $ed = $h->end_date;
+                                $useAttrs = [
+                                    'year' => $sd->format('Y'),
+                                    'mon' => $sd->format('n'),
+                                    'mday' => $sd->format('j') . '-' . $ed->format('j'),
+                                ];
+                            }
+                        }
+                        break;
+
+                    case 'us_holiday':
+                        // month + weekday + day-range (e.g. 15-21) & optional weekday
+                        if ($h->mon && $h->mday && $h->wday) {
+                            $useAttrs = [
+                                'mon' => $h->mon,
+                                'wday' => $h->wday,
+                                'mday' => $h->mday,
+                            ];
+                        }
+                        // or nth-weekday of month (e.g. 3rd Monday)
+                        elseif ($h->mon && $h->wday && $h->mweek) {
+                            $useAttrs = [
+                                'mon' => $h->mon,
+                                'wday' => $h->wday,
+                                'mweek' => $h->mweek,
+                            ];
+                        }
+                        break;
+
+                    case 'recurring_pattern':
+                        // any combination of year, mon, week, wday, mweek, mday for recurring patterns
+                        foreach (['year', 'mon', 'week', 'wday', 'mweek', 'mday'] as $f) {
+                            if (!empty($h->{$f})) {
+                                $useAttrs[$f] = $h->{$f};
+                            }
+                        }
+                        break;
+                }
+            @endphp
+
+            @if (count($useAttrs))
+                {{-- attribute-based condition --}}
+                <condition
+                    @foreach ($useAttrs as $attr => $val)
+                {{ $attr }}="{{ $val }}" @endforeach
+                    {!! $timeAttr !!} break="on-true">
+                    <action application="set" data="slot_matched=1" />
+                    <action application="{{ $dest['destination_app'] }}" data="{{ $dest['destination_data'] }}" />
+                </condition>
+            @endif
+        @endforeach
+
+
+
+
         {{-- business-hours time slots --}}
         @foreach ($groups as $group)
             @php
