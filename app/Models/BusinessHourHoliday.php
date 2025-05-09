@@ -5,6 +5,7 @@ namespace App\Models;
 use Carbon\Carbon;
 use App\Models\Traits\TraitUuid;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -36,10 +37,10 @@ class BusinessHourHoliday extends Model
     ];
 
     protected $casts = [
-        'start_date' => 'date',
-        'end_date'   => 'date',
-        'start_time' => 'string',
-        'end_time'   => 'string',
+        'start_date' => 'date:Y-m-d',
+        'end_date'   => 'date:Y-m-d',
+        'start_time' => 'datetime:H:i',
+        'end_time'   => 'datetime:H:i',
         'created_at'     => 'datetime',
         'updated_at'     => 'datetime',
     ];
@@ -57,6 +58,115 @@ class BusinessHourHoliday extends Model
         return $this->belongsTo(BusinessHour::class, 'business_hour_uuid', 'uuid');
     }
 
+    /**
+     * The polymorphic target (Extension, Voicemail, IvrMenu, etc).
+     */
+    public function target(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+    /**
+     * A human-friendly description of where calls go.
+     */
+    public function getTargetLabelAttribute(): string
+    {
+        if (! $this->target) {
+            // built-in actions without a target
+            switch ($this->action) {
+                case 'hangup':
+                    return 'Hang Up';
+                case 'company_directory':
+                    return 'Company Directory';
+                case 'check_voicemail':
+                    return 'Check Voicemail';
+                    // add any other action-only cases here…
+                default:
+                    return '—';
+            }
+        }
+
+        switch (class_basename($this->target_type)) {
+            case 'Extensions':
+                // e.g. “Extension: 100 — Alice Johnson”
+                return sprintf(
+                    'Extension: %s - %s',
+                    $this->target->extension,
+                    $this->target->directory_first_name . ' ' . $this->target->directory_last_name
+                );
+
+            case 'Voicemails':
+                // “Voicemail: 100 - Reception”
+                $ext = $this->target->extension;
+                if ($ext) {
+                    $label =  $ext->directory_first_name . ' ' . $ext->directory_last_name;
+                } else {
+                    $label = "Team Voicemail";
+                }
+                return sprintf(
+                    'Voicemail: %s - %s',
+                    $this->target->voicemail_id,
+                    $label
+                );
+
+            case 'RingGroups':
+                // “Ring Group 0600 — Sales Team”
+                return sprintf(
+                    'Ring Group: %s - %s',
+                    $this->target->ring_group_extension,
+                    $this->target->ring_group_name
+                );
+
+            case 'IvrMenus':
+                // “Virtual Receptionist: 5000 - Main Menu”
+                return sprintf(
+                    'Virtual Receptionist: %s - %s',
+                    $this->target->ivr_menu_extension,
+                    $this->target->ivr_menu_name
+                );
+
+            case 'Recordings':
+                // “Recording: promo.mp3”
+                logger($this->target);
+                return 'Play Greeting: ' . $this->target->recording_name;
+
+            case 'Dialplans':
+                // “Schedule 9300 — Main Business Hours””
+                return sprintf(
+                    'Schedule: %s - %s',
+                    $this->target->dialplan_number,
+                    $this->target->dialplan_name
+                );
+
+            case 'CallCenterQueues':
+                // Contact Center: 9600 — Sales Queue””
+                return sprintf(
+                    'Contact Center: %s - %s',
+                    $this->target->queue_extension,
+                    $this->target->queue_name
+                );
+
+            case 'Faxes':
+                // Fax: 50000 — Main Fax””
+                return sprintf(
+                    'Fax: %s - %s',
+                    $this->target->fax_extension,
+                    $this->target->fax_name
+                );
+
+            case 'CallFlows':
+                // Call Flow: 300 — Night Mode””
+                return sprintf(
+                    'Call Flow: %s - %s',
+                    $this->target->call_flow_extension,
+                    $this->target->call_flow_name
+                );
+
+            default:
+                // fallback 
+                return 'invalid action';
+        }
+    }
 
     /**
      * Get a human-readable “date / recurrence” string.
@@ -65,31 +175,39 @@ class BusinessHourHoliday extends Model
     {
         switch ($this->holiday_type) {
             case 'us_holiday':
-                // Compute the next date
                 $next = $this->getNextUsHolidayDate()->format('F j, Y');
-                // Always note it repeats annually, then show “next”
                 return "Every year (next: {$next})";
 
             case 'single_date':
-                $d = $this->start_date->format('F j, Y');
+                $date = $this->start_date->format('F j, Y');
                 if ($this->start_time && $this->end_time) {
-                    $d .= ' ' . substr($this->start_time, 0, 5)
-                        . '–' . substr($this->end_time, 0, 5);
+                    $from = $this->start_time instanceof Carbon
+                        ? $this->start_time->format('H:i')
+                        : $this->start_time;
+                    $to   = $this->end_time   instanceof Carbon
+                        ? $this->end_time->format('H:i')
+                        : $this->end_time;
+                    $date .= " {$from}–{$to}";
                 }
-                return $d;
+                return $date;
 
             case 'date_range':
-                // If both times are set, show full datetime span.
+                // If both times are set, show the full span
                 if ($this->start_time && $this->end_time) {
-                    $from = $this->start_date->format('F j, Y') . ' ' . substr($this->start_time, 0, 5);
-                    $to   = $this->end_date->format('F j, Y') . ' ' . substr($this->end_time,   0, 5);
-                    return "{$from} – {$to}";
+                    $fromDate = $this->start_date->format('F j, Y');
+                    $toDate   = $this->end_date->format('F j, Y');
+                    $fromTime = $this->start_time instanceof Carbon
+                        ? $this->start_time->format('H:i')
+                        : $this->start_time;
+                    $toTime   = $this->end_time   instanceof Carbon
+                        ? $this->end_time->format('H:i')
+                        : $this->end_time;
+
+                    return "{$fromDate} {$fromTime} – {$toDate} {$toTime}";
                 }
 
-                // Fallback: just dates
-                $fromDate = $this->start_date->format('F j, Y');
-                $toDate   = $this->end_date->format('F j, Y');
-                return "{$fromDate} – {$toDate}";
+                // Otherwise just dates
+                return "{$this->start_date->format('F j, Y')} – {$this->end_date->format('F j, Y')}";
 
             case 'recurring_pattern':
                 // 0) Week-of-year (1–53)

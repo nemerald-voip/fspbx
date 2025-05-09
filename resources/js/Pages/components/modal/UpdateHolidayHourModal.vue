@@ -17,9 +17,31 @@
                             class="relative transform  rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-6">
 
                             <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
-                                @response="handleResponse" :display-errors="false">
+                                @response="handleResponse" :display-errors="false" :default="{
+                                    holiday_type: options.item.holiday_type,
+                                    description: options.item.description,
+                                    start_date: options.item.start_date,
+                                    start_time: options.item.start_time,
+                                    end_date: options.item.end_date,
+                                    end_time: options.item.end_time,
+                                    mday: options.item.mday,
+                                    mon: options.item.mon,
+                                    mweek: options.item.mweek,
+                                    wday: options.item.wday,
+                                    week: options.item.week,
+                                    action: options.item.action,
+                                    target: { value: options.item.target_id },
+                                    us_holiday:
+                                        usHolidays.find(h =>
+                                            (h.value.mon ?? '') === (options.item.mon ?? '') &&
+                                            (h.value.mday ?? '') === (options.item.mday ?? '') &&
+                                            (h.value.wday ?? '') === (options.item.wday ?? '') &&
+                                            (h.value.mweek ?? '') === (options.item.mweek ?? '')
+                                        )
+                                        ?? null
+                                }">
                                 <HiddenElement name="business_hour_uuid" :meta="true" />
-                                <StaticElement name="h4" tag="h4" content="Add New Holiday" />
+                                <StaticElement name="h4" tag="h4" content="Update Holiday" />
                                 <SelectElement name="holiday_type" :items="[
                                     {
                                         value: 'us_holiday',
@@ -156,7 +178,7 @@
                                 </StaticElement>
 
                                 <SelectElement name="us_holiday" :search="true" :native="false" label="US Holiday"
-                                    :submit="false" :items="usHolidays" input-type="search" autocomplete="off" :object="true"
+                                    :items="usHolidays" input-type="search" autocomplete="off" :object="true"
                                     @change="handleUSHolidayUpdate" placeholder="Select US Holiday" :floating="false"
                                     :conditions="[
                                         [
@@ -182,7 +204,7 @@
                                         ],
                                     ]" />
 
-                                <DateElement name="start_date" display-format="MMMM DD, YYYY" :label="(el$) => {
+                                <DateElement name="start_date" display-format="MMMM DD, YYYY" load-format="DD/MM/YYYY" :label="(el$) => {
                                     if (el$.form$.el$('holiday_type').value == 'single_date') {
                                         return 'Date'
                                     }
@@ -408,7 +430,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
+import { ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { InformationCircleIcon } from '@heroicons/vue/20/solid'
 
@@ -426,13 +448,14 @@ const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.data
+    // console.log(requestData);
 
     delete requestData.us_holiday;
 
     requestData.business_hour_uuid = props.business_hour_uuid
 
     // console.log(requestData);
-    return await form$.$vueform.services.axios.post(props.options.routes.store_route, requestData)
+    return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
 };
 
 function clearErrorsRecursive(el$) {
@@ -530,20 +553,20 @@ const handleUSHolidayUpdate = (newValue, oldValue, el$) => {
 
         // find the holiday whose value matches newValue
         const match = usHolidays.find(h =>
-            h.value.mon === newValue.value.mon
-            && h.value.mday === newValue.value.mday
-            && h.value.mweek === newValue.value.mweek
-            && h.value.wday === newValue.value.wday
+            h.value.mon === newValue.mon
+            && h.value.mday === newValue.mday
+            && h.value.mweek === newValue.mweek
+            && h.value.wday === newValue.wday
         );
 
         // pull its label (or fall back to an empty string)
         const label = match?.label ?? '';
 
         el$.form$.update({
-            mday: newValue.value.mday,
-            mon: newValue.value.mon,
-            mweek: newValue.value.mweek,
-            wday: newValue.value.wday,
+            mday: newValue['mday'],
+            mon: newValue['mon'],
+            mweek: newValue['mweek'],
+            wday: newValue['wday'],
             description: label,
         })
     }
@@ -554,119 +577,118 @@ const handleUSHolidayUpdate = (newValue, oldValue, el$) => {
 
 // Month (1=Jan … 12=Dec)
 const monthOptions = [
-  { value: '1',  label: 'January' },
-  { value: '2',  label: 'February' },
-  { value: '3',  label: 'March' },
-  { value: '4',  label: 'April' },
-  { value: '5',  label: 'May' },
-  { value: '6',  label: 'June' },
-  { value: '7',  label: 'July' },
-  { value: '8',  label: 'August' },
-  { value: '9',  label: 'September' },
-  { value: '10', label: 'October' },
-  { value: '11', label: 'November' },
-  { value: '12', label: 'December' },
+    { value: '1', label: 'January' },
+    { value: '2', label: 'February' },
+    { value: '3', label: 'March' },
+    { value: '4', label: 'April' },
+    { value: '5', label: 'May' },
+    { value: '6', label: 'June' },
+    { value: '7', label: 'July' },
+    { value: '8', label: 'August' },
+    { value: '9', label: 'September' },
+    { value: '10', label: 'October' },
+    { value: '11', label: 'November' },
+    { value: '12', label: 'December' },
 ];
 
 // Day of Month (1–31)
 const dayOfMonthOptions = Array.from({ length: 31 }, (_, i) => ({
-  value: String(i + 1),
-  label: String(i + 1),
+    value: String(i + 1),
+    label: String(i + 1),
 }));
 
 // Week of Year (1–53)
 const weekOfYearOptions = Array.from({ length: 53 }, (_, i) => ({
-  value: String(i + 1),
-  label: String(i + 1),
+    value: String(i + 1),
+    label: String(i + 1),
 }));
 
 // Week of Month (1=first … 5=fifth, 6=last)
 const weekOfMonthOptions = [
-  { value: '1', label: '1 (First)' },
-  { value: '2', label: '2 (Second)' },
-  { value: '3', label: '3 (Third)' },
-  { value: '4', label: '4 (Fourth)' },
-  { value: '5', label: '5 (Fifth)' },
-  { value: '6', label: '6 (Last)' },
+    { value: '1', label: '1 (First)' },
+    { value: '2', label: '2 (Second)' },
+    { value: '3', label: '3 (Third)' },
+    { value: '4', label: '4 (Fourth)' },
+    { value: '5', label: '5 (Fifth)' },
+    { value: '6', label: '6 (Last)' },
 ];
 
 // Day of Week (1=Sunday … 7=Saturday)
 const dayOfWeekOptions = [
-  { value: '1', label: 'Sunday' },
-  { value: '2', label: 'Monday' },
-  { value: '3', label: 'Tuesday' },
-  { value: '4', label: 'Wednesday' },
-  { value: '5', label: 'Thursday' },
-  { value: '6', label: 'Friday' },
-  { value: '7', label: 'Saturday' },
+    { value: '1', label: 'Sunday' },
+    { value: '2', label: 'Monday' },
+    { value: '3', label: 'Tuesday' },
+    { value: '4', label: 'Wednesday' },
+    { value: '5', label: 'Thursday' },
+    { value: '6', label: 'Friday' },
+    { value: '7', label: 'Saturday' },
 ];
 
 const usHolidays = [
-  {
-    label: "New Year's Day (January 1)",
-    value: { mon: "1",  wday: "",   mday: "1",      mweek: "" }
-  },
-  {
-    label: "Martin Luther King Jr. Day (3rd Monday in January)",
-    value: { mon: "1",  wday: "2",  mday: "15-21",  mweek: "" }
-  },
-  {
-    label: "Valentine's Day (February 14)",
-    value: { mon: "2",  wday: "",   mday: "14",     mweek: "" }
-  },
-  {
-    label: "Presidents' Day (3rd Monday in February)",
-    value: { mon: "2",  wday: "2",  mday: "15-21",  mweek: "" }
-  },
-  {
-    label: "St. Patrick's Day (March 17)",
-    value: { mon: "3",  wday: "",   mday: "17",     mweek: "" }
-  },
-  {
-    label: "Memorial Day (last Monday in May)",
-    value: { mon: "5",  wday: "2",  mday: "25-31",  mweek: "" }
-  },
-  {
-    label: "Juneteenth (June 19)",
-    value: { mon: "6",  wday: "",   mday: "19",     mweek: "" }
-  },
-  {
-    label: "Independence Day (July 4)",
-    value: { mon: "7",  wday: "",   mday: "4",      mweek: "" }
-  },
-  {
-    label: "Labor Day (1st Monday in September)",
-    value: { mon: "9",  wday: "2",  mday: "1-7",    mweek: "" }
-  },
-  {
-    label: "Columbus Day (2nd Monday in October)",
-    value: { mon: "10", wday: "2",  mday: "8-14",   mweek: "" }
-  },
-  {
-    label: "Halloween (October 31)",
-    value: { mon: "10", wday: "",   mday: "31",     mweek: "" }
-  },
-  {
-    label: "Veterans Day (November 11)",
-    value: { mon: "11", wday: "",   mday: "11",     mweek: "" }
-  },
-  {
-    label: "Thanksgiving Day (4th Thursday in November)",
-    value: { mon: "11", wday: "5",  mday: "22-28",  mweek: "" }
-  },
-  {
-    label: "Christmas Day (December 25)",
-    value: { mon: "12", wday: "",   mday: "25",     mweek: "" }
-  },
-  {
-    label: "Mother's Day (2nd Sunday in May)",
-    value: { mon: "5",  wday: "1",  mday: "8-14",   mweek: "" }
-  },
-  {
-    label: "Father's Day (3rd Sunday in June)",
-    value: { mon: "6",  wday: "1",  mday: "15-21",  mweek: "" }
-  }
+    {
+        label: "New Year's Day (January 1)",
+        value: { mon: "1", wday: "", mday: "1", mweek: "" }
+    },
+    {
+        label: "Martin Luther King Jr. Day (3rd Monday in January)",
+        value: { mon: "1", wday: "2", mday: "15-21", mweek: "" }
+    },
+    {
+        label: "Valentine's Day (February 14)",
+        value: { mon: "2", wday: "", mday: "14", mweek: "" }
+    },
+    {
+        label: "Presidents' Day (3rd Monday in February)",
+        value: { mon: "2", wday: "2", mday: "15-21", mweek: "" }
+    },
+    {
+        label: "St. Patrick's Day (March 17)",
+        value: { mon: "3", wday: "", mday: "17", mweek: "" }
+    },
+    {
+        label: "Memorial Day (last Monday in May)",
+        value: { mon: "5", wday: "2", mday: "25-31", mweek: "" }
+    },
+    {
+        label: "Juneteenth (June 19)",
+        value: { mon: "6", wday: "", mday: "19", mweek: "" }
+    },
+    {
+        label: "Independence Day (July 4)",
+        value: { mon: "7", wday: "", mday: "4", mweek: "" }
+    },
+    {
+        label: "Labor Day (1st Monday in September)",
+        value: { mon: "9", wday: "2", mday: "1-7", mweek: "" }
+    },
+    {
+        label: "Columbus Day (2nd Monday in October)",
+        value: { mon: "10", wday: "2", mday: "8-14", mweek: "" }
+    },
+    {
+        label: "Halloween (October 31)",
+        value: { mon: "10", wday: "", mday: "31", mweek: "" }
+    },
+    {
+        label: "Veterans Day (November 11)",
+        value: { mon: "11", wday: "", mday: "11", mweek: "" }
+    },
+    {
+        label: "Thanksgiving Day (4th Thursday in November)",
+        value: { mon: "11", wday: "5", mday: "22-28", mweek: "" }
+    },
+    {
+        label: "Christmas Day (December 25)",
+        value: { mon: "12", wday: "", mday: "25", mweek: "" }
+    },
+    {
+        label: "Mother's Day (2nd Sunday in May)",
+        value: { mon: "5", wday: "1", mday: "8-14", mweek: "" }
+    },
+    {
+        label: "Father's Day (3rd Sunday in June)",
+        value: { mon: "6", wday: "1", mday: "15-21", mweek: "" }
+    }
 ];
-
 
 </script>

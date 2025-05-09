@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
-use Illuminate\Http\Request;
+use Carbon\Carbon;
 use App\Models\EmergencyCall;
 use Illuminate\Support\Facades\DB;
 use App\Models\BusinessHourHoliday;
@@ -10,8 +10,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Process;
 use App\Services\CallRoutingOptionsService;
 use App\Http\Requests\StoreHolidayHourRequest;
-use App\Http\Requests\StoreEmergencyCallRequest;
+use App\Http\Requests\UpdateHolidayHourRequest;
 use App\Http\Requests\UpdateEmergencyCallRequest;
+use App\Http\Resources\BusinessHourHolidayResource;
 
 class HolidayHoursController extends Controller
 {
@@ -25,10 +26,11 @@ class HolidayHoursController extends Controller
     public function index()
     {
 
-        $holidays = BusinessHourHoliday::where('business_hour_uuid', request('uuid'))
+        $holidays = BusinessHourHoliday::with('target')
+            ->where('business_hour_uuid', request('uuid'))
             ->get();
 
-        return response()->json($holidays);
+        return BusinessHourHolidayResource::collection($holidays);
     }
 
 
@@ -45,8 +47,6 @@ class HolidayHoursController extends Controller
             : null;
 
         DB::beginTransaction();
-
-        logger($data);
 
         try {
             $holiday = BusinessHourHoliday::create([
@@ -89,57 +89,52 @@ class HolidayHoursController extends Controller
     }
 
 
-    public function update(UpdateEmergencyCallRequest $request, string $id)
+    public function update(UpdateHolidayHourRequest $request, BusinessHourHoliday $holiday_hour)
     {
-        $domain_uuid = session('domain_uuid');
-        $validated = $request->validated();
+        $data = $request->validated();
+
+        // Map action to the correct model class
+        $callRoutingService = new CallRoutingOptionsService;
+        $action     = $data['action'];
+        $targetId   = $data['target']['value'] ?? null;
+        $targetType = $action
+            ? $callRoutingService->mapActionToModel($action)
+            : null;
+
+        logger($data);
 
         try {
             DB::beginTransaction();
 
-            $call = EmergencyCall::with('members')
-                ->where('domain_uuid', $domain_uuid)
-                ->findOrFail($id);
-
-            $call->update([
-                'emergency_number' => $validated['emergency_number'],
-                'description' => $validated['description'] ?? null,
+            $holiday_hour->update([
+                'business_hour_uuid' => $data['business_hour_uuid'],
+                'holiday_type'       => $data['holiday_type'],
+                'description'        => $data['description'] ?? null,
+                'start_date'         => $data['start_date']   ?? null,
+                'end_date'           => $data['end_date']     ?? null,
+                'start_time'         => $data['start_time']   ?? null,
+                'end_time'           => $data['end_time']     ?? null,
+                'mon'                => $data['mon']          ?? null,
+                'wday'               => $data['wday']         ?? null,
+                'mweek'              => $data['mweek']        ?? null,
+                'week'               => $data['week']         ?? null,
+                'mday'               => $data['mday']         ?? null,
+                'action'             => $action,
+                'target_type'        => $targetType,
+                'target_id'          => $targetId,
             ]);
-
-
-            // Delete old members and emails
-            $call->members()->delete();
-            $call->emails()->delete();
-
-            if (!empty($validated['members'])) {
-                foreach ($validated['members'] as $member) {
-                    $call->members()->create([
-                        'domain_uuid' => $domain_uuid,
-                        'extension_uuid' => $member['extension_uuid'],
-                    ]);
-                }
-            }
-
-            // Save new emails
-            if (!empty($validated['emails'])) {
-                foreach ($validated['emails'] as $email) {
-                    $call->emails()->create([
-                        'email' => $email,
-                    ]);
-                }
-            }
 
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Item updated']]
+                'messages' => ['success' => ['Holiday exception updated']],
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
             logger('EmergencyCall update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while updating.']]
+                'messages' => ['error' => ['Could not update holiday exception.']],
             ], 500);
         }
     }
@@ -147,12 +142,9 @@ class HolidayHoursController extends Controller
     public function getItemOptions()
     {
         try {
-            $domain_uuid = session('domain_uuid');
-
             $item = null;
             if (request()->has('item_uuid')) {
-                $item = $this->model::where('domain_uuid', $domain_uuid)
-                    ->where('uuid', request('item_uuid'))
+                $item = $this->model::where('uuid', request('item_uuid'))
                     ->first();
 
                 // Define the update route

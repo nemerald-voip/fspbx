@@ -268,7 +268,8 @@
                                 @click="handleAddHolidayButtonClick" :loading="addHolidayButtonLoading" />
 
                             <StaticElement name="holiday_table">
-                                <HolidayTable :holidays="holidays"/>
+                                <HolidayTable :holidays="holidays" :loading="isHolidaysLoading"
+                                    @edit-item="handleUpdateHolidayButtonClick" />
                             </StaticElement>
                             <HiddenElement name="exceptions" :meta="true" />
 
@@ -283,9 +284,13 @@
             </template>
         </Vueform>
 
+        <UpdateHolidayHourModal :show="showUpdateHolidayModal" :options="holidayItemOptions"
+            :business_hour_uuid="options.item.uuid" @close="showUpdateHolidayModal = false" @error="emitErrorToParentFromChild"
+            @success="emitSuccessToParentFromChild" @refresh-data="getHolidays" />
+
         <CreateHolidayHourModal :show="showAddHolidayModal" :options="holidayItemOptions"
-            :business_hour_uuid="options.item.uuid" @close="showAddHolidayModal = false"
-            @error="emitErrorToParentFromChild" />
+            :business_hour_uuid="options.item.uuid" @close="showAddHolidayModal = false" @error="emitErrorToParentFromChild"
+            @success="emitSuccessToParentFromChild" @refresh-data="getHolidays" />
 
     </div>
 </template>
@@ -294,6 +299,7 @@
 import { ref } from "vue";
 import HolidayTable from "./../HolidayTable.vue";
 import CreateHolidayHourModal from "./../modal/CreateHolidayHourModal.vue"
+import UpdateHolidayHourModal from "./../modal/UpdateHolidayHourModal.vue"
 
 
 const props = defineProps({
@@ -302,37 +308,52 @@ const props = defineProps({
 
 const form$ = ref(null)
 const showAddHolidayModal = ref(false)
+const showUpdateHolidayModal = ref(false)
 const holidayItemOptions = ref(null)
 const addHolidayButtonLoading = ref(false)
+const updateHolidayButtonLoading = ref(false)
 const holidays = ref([])
+const isHolidaysLoading = ref(false)
 
-const emits = defineEmits(['close', 'error', 'success', 'refresh-data', 'open-edit-form']);
+const emits = defineEmits(['close', 'error', 'success', 'refresh-data']);
 
-
-const handleAddHolidayButtonClick = () => {
-    addHolidayButtonLoading.value = true
-    getHolidayItemOptions();
-}
 
 const getHolidayItemOptions = (itemUuid = null) => {
-    const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
-
-    axios.post(props.options.routes.holiday_item_options, payload)
-        .then((response) => {
-            holidayItemOptions.value = response.data;
-            // console.log(holidayItemOptions.value);
-            showAddHolidayModal.value = true
-        }).catch((error) => {
-            handleModalClose();
-            emits('error', error)
-        }).finally(() => {
-            addHolidayButtonLoading.value = false
+    const payload = itemUuid ? { item_uuid: itemUuid } : {};
+    return axios
+        .post(props.options.routes.holiday_item_options, payload)
+        .then(res => {
+            holidayItemOptions.value = res.data;
+            console.log(holidayItemOptions.value);
+            return res;
         });
-}
+};
 
-const handleAddHolidayHour = () => {
+const handleAddHolidayButtonClick = async () => {
+    addHolidayButtonLoading.value = true;
+    try {
+        await getHolidayItemOptions();
+        showAddHolidayModal.value = true;
+    } catch (err) {
+        handleModalClose();
+        emits('error', err);
+    } finally {
+        addHolidayButtonLoading.value = false;
+    }
+};
 
-}
+const handleUpdateHolidayButtonClick = async uuid => {
+    updateHolidayButtonLoading.value = true;
+    try {
+        await getHolidayItemOptions(uuid);
+        showUpdateHolidayModal.value = true;
+    } catch (err) {
+        handleModalClose();
+        emits('error', err);
+    } finally {
+        updateHolidayButtonLoading.value = false;
+    }
+};
 
 const handleCustomHoursUpdate = (newValue, oldValue, el$) => {
     // only when toggling from false → true
@@ -360,20 +381,21 @@ const handleTabSelected = (activeTab, previousTab) => {
 }
 
 const getHolidays = async () => {
+    isHolidaysLoading.value = true
     axios.get(props.options.routes.holidays, {
         params: {
             uuid: props.options.item.uuid
         }
     })
         .then((response) => {
-            holidays.value = response.data;
-            console.log(holidays.value);
+            holidays.value = response.data.data;
+            // console.log(holidays.value);
 
         }).catch((error) => {
             handleModalClose();
             emits('error', error)
         }).finally(() => {
-            // addHolidayButtonLoading.value = false
+            isHolidaysLoading.value = false
         });
 }
 
@@ -468,11 +490,17 @@ const handleError = (error, details, form$) => {
 
 const handleModalClose = () => {
     showAddHolidayModal.value = false;
+    showUpdateHolidayModal.value = false
 }
 
 const emitErrorToParentFromChild = (error) => {
     emits('error', error);
 }
+
+const emitSuccessToParentFromChild = (message) => {
+    emits('success', message);
+}
+
 
 
 </script>
