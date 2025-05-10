@@ -123,6 +123,10 @@ class HandleInertiaRequests extends Middleware
 
         $permissions['account_settings_index'] = userCheckPermission('account_settings_list_view');
 
+        $permissions['business_hours_create'] = userCheckPermission('business_hours_create');
+        $permissions['business_hours_update'] = userCheckPermission('business_hours_update');
+        $permissions['business_hours_destroy'] = userCheckPermission('business_hours_delete');
+
         // logger($permissions);
         return $permissions;
     }
