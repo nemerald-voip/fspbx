@@ -305,62 +305,89 @@ class BusinessHoursController extends Controller
      */
     public function store(StoreBusinessHoursRequest $request)
     {
+        if (!userCheckPermission('business_hours_create')) {
+            return response()->json([
+                'messages' => ['error' => ['Access denied.']]
+            ], 403);
+        }
+
         $validated = $request->validated();
-        logger($validated);
+        $domainUuid = session('domain_uuid');
 
         try {
             DB::beginTransaction();
 
             // 1) Create the BusinessHour record
             $businessHour = BusinessHour::create([
-                'uuid'         => Str::uuid(),
-                'domain_uuid'  => session('domain_uuid'),
-                'name'         => $validated['name'],
-                'extension'    => $validated['extension'],
-                'timezone'     => $validated['timezone'],
-                'context' => session('domain_name'),
-                'enabled' => true,
+                'uuid'                    => Str::uuid(),
+                'domain_uuid'             => $domainUuid,
+                'context'                 => session('domain_name'),
+                'name'                    => $validated['name'],
+                'extension'               => $validated['extension'],
+                'timezone'                => $validated['timezone'],
+                'description'             => $validated['description'] ?? null,
+                'enabled'                 => true,
+                // after-hours defaults
+                'after_hours_action'      => $validated['after_hours_action'] ?? null,
+                'after_hours_target_type' => $validated['after_hours_action']
+                    ? (new CallRoutingOptionsService)
+                    ->mapActionToModel($validated['after_hours_action'])
+                    : null,
+                'after_hours_target_id'   => $validated['after_hours_target']['value'] ?? null,
             ]);
 
-            // 2) Persist each period
-            // foreach ($validated['time_slots'] as $slot) {
-            //     $start = Carbon::createFromFormat('h:i a', $slot['time_from'])->format('H:i:s');
-            //     $end   = Carbon::createFromFormat('h:i a', $slot['time_to'])->format('H:i:s');
+            // 2) Persist each period (time slot)
+            $callRoutingService = new CallRoutingOptionsService;
+            foreach ($validated['time_slots'] ?? [] as $slot) {
+                $start = Carbon::createFromFormat('h:i a', $slot['time_from'])->format('H:i:s');
+                $end   = Carbon::createFromFormat('h:i a', $slot['time_to'])->format('H:i:s');
 
-            //     foreach ($slot['weekdays'] as $wd) {
-            //         $dow = intval($wd) === 0 ? 7 : intval($wd); // map 0→7 if you're using 1=Mon…7=Sun
+                foreach ($slot['weekdays'] as $wd) {
+                    $dow = intval($wd) === 0 ? 7 : intval($wd); // 1=Mon…7=Sun
 
-            //         $businessHour->periods()->create([
-            //             'day_of_week' => $dow,
-            //             'start_time'  => $start,
-            //             'end_time'    => $end,
-            //         ]);
-            //     }
-            // }
+                    $periodData = [
+                        'day_of_week' => $dow,
+                        'start_time'  => $start,
+                        'end_time'    => $end,
+                        'action'      => $slot['action'],
+                    ];
 
-            // 3) Generate the FreeSWITCH dialplan XML
-            // $xml = $this->buildDialplanXml($businessHour);
+                    // attach polymorphic target if applicable
+                    if (
+                        isset($slot['target']['value']) &&
+                        $callRoutingService->mapActionToModel($slot['action'])
+                    ) {
+                        $periodData['target_type'] = $callRoutingService->mapActionToModel($slot['action']);
+                        $periodData['target_id']   = $slot['target']['value'];
+                    }
 
+                    $businessHour->periods()->create($periodData);
+                }
+            }
+
+            // 3) Generate and write the FreeSWITCH dialplan XML
+            $xml = $this->generateDialPlanXML($businessHour);
 
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Business hours created and dialplan written.']],
+                'messages' => ['success' => ['Business hours created.']],
+                'business_hours_uuid' =>  $businessHour->uuid,
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
             logger(
                 'BusinessHours store error: '
                     . $e->getMessage()
-                    . " at " . $e->getFile()
-                    . ":" . $e->getLine()
+                    . ' at ' . $e->getFile() . ':' . $e->getLine()
             );
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while saving business hours.']]
+                'messages' => ['error' => ['Something went wrong while saving business hours.']],
             ], 500);
         }
     }
+
 
     /**
      * Generate (or update) the FreeSWITCH dialplan for a BusinessHour.
@@ -527,14 +554,17 @@ class BusinessHoursController extends Controller
         }
     }
 
+
     /**
-     * Remove the specified resource from storage.
+     * Bulk-delete selected business hours.
      *
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
     public function bulkDelete(Request $request)
     {
-        if (!userCheckPermission('ring_group_delete')) {
+        // 1) Permission check
+        if (! userCheckPermission('business_hours_delete')) {
             return response()->json([
                 'messages' => ['error' => ['Access denied.']]
             ], 403);
@@ -543,30 +573,32 @@ class BusinessHoursController extends Controller
         try {
             DB::beginTransaction();
 
-            $domain_uuid = session('domain_uuid');
-            $uuids = $request->input('items');
+            $domainUuid = session('domain_uuid');
+            $uuids      = $request->input('items', []);
 
-            $ringGroups = RingGroups::where('domain_uuid', $domain_uuid)
-                ->whereIn('ring_group_uuid', $uuids)
+            // 2) Fetch the BusinessHour models
+            $businessHours = BusinessHour::where('domain_uuid', $domainUuid)
+                ->whereIn('uuid', $uuids)
                 ->get();
 
-            foreach ($ringGroups as $ringGroup) {
-                // Delete destinations
-                $ringGroup->destinations()->delete();
+            foreach ($businessHours as $bh) {
+                // 3) Delete related periods & holidays
+                $bh->periods()->delete();
+                $bh->holidays()->delete();
 
-                // Delete dialplan (if exists)
-                if ($ringGroup->dialplan_uuid) {
-                    Dialplans::where('dialplan_uuid', $ringGroup->dialplan_uuid)->delete();
+                // 4) Delete its dialplan record
+                if ($bh->dialplan_uuid) {
+                    Dialplans::where('dialplan_uuid', $bh->dialplan_uuid)->delete();
                 }
 
-                // Delete ring group itself
-                $ringGroup->delete();
+                // 5) Delete the BusinessHour itself
+                $bh->delete();
 
-                // Clear FusionPBX cache per ring group
-                FusionCache::clear("dialplan:" . $ringGroup->ring_group_context);
+                // 6) Clear cached dialplan for this context
+                FusionCache::clear('dialplan:' . $bh->context);
             }
 
-            // Reload XML from FreeSWITCH
+            // 7) Tell FreeSWITCH to reload XML
             $fp = event_socket_create(
                 config('eventsocket.ip'),
                 config('eventsocket.port'),
@@ -577,17 +609,22 @@ class BusinessHoursController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Selected ring group(s) were deleted successfully.']]
+                'messages' => ['success' => ['Selected business hour(s) deleted successfully.']]
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
-            logger('RingGroups bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            logger(
+                'BusinessHours bulkDelete error: '
+                    . $e->getMessage()
+                    . ' at ' . $e->getFile() . ':' . $e->getLine()
+            );
 
             return response()->json([
-                'messages' => ['error' => ['An error occurred while deleting the selected ring group(s).']]
+                'messages' => ['error' => ['An error occurred while deleting business hours.']]
             ], 500);
         }
     }
+
 
 
     /**
@@ -599,6 +636,7 @@ class BusinessHoursController extends Controller
             case 'extensions':
             case 'ring_groups':
             case 'ivrs':
+            case 'business_hours':
             case 'time_conditions':
             case 'contact_centers':
             case 'faxes':
@@ -623,6 +661,32 @@ class BusinessHoursController extends Controller
                 // Add other cases as necessary for different types
             default:
                 return [];
+        }
+    }
+
+
+    public function selectAll()
+    {
+        try {
+            if (request()->get('showGlobal')) {
+                $uuids = $this->model::get($this->model->getKeyName())->pluck($this->model->getKeyName());
+            } else {
+                $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
+                    ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
+            }
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['All items selected']],
+                'items' => $uuids,
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e);
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to select all items']]
+            ], 500); // 500 Internal Server Error for any other errors
         }
     }
 }

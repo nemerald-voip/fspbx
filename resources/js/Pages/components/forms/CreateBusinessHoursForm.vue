@@ -4,6 +4,7 @@
             :default="{
                 extension: options.item.extension,
                 timezone: options.timezone,
+                custom_hours: false,
             }" :display-errors="false">
             <template #empty>
 
@@ -15,10 +16,19 @@
                                 'name',
                                 'extension',
                                 'timezone',
+                                'description',
+                                'container',
                                 'custom_hours',
                                 'time_slots',
                                 'ring_group_extension',
                                 'ring_group_description',
+                                'container_3',
+                                'container_4',
+                                'divider1',
+                                'closed_hours_header',
+                                '247_header',
+                                'after_hours_action',
+                                'after_hours_target',
                                 'submit',
 
                             ]" />
@@ -51,6 +61,14 @@
                                     },
                                 }" />
 
+                            <TextElement name="description" label="Description" :columns="{
+                                sm: {
+                                    container: 6,
+                                },
+                            }" placeholder="Enter Description" :floating="false" />
+
+                            <GroupElement name="container" />
+
                             <RadiogroupElement name="custom_hours" :items="[
                                 {
                                     value: false,
@@ -60,7 +78,8 @@
                                     value: true,
                                     label: 'Only during specific hours',
                                 },
-                            ]" label="When do you want to receive calls?" default="false" />
+                            ]" label="When do you want to receive calls?" default="false"
+                                @change="handleCustomHoursUpdate" />
                             <ListElement name="time_slots" :sort="true" label="Time Slots"
                                 :conditions="[['custom_hours', true]]"
                                 :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
@@ -149,7 +168,7 @@
                                                 return [];  // Return an empty array in case of error
                                             }
                                         }" :search="true" label-prop="name" :native="false" label="Target"
-                                            input-type="search" allow-absent :object="true" :format-data="formatTarget"
+                                            input-type="search" allow-absent :object="true"
                                             autocomplete="off" placeholder="Choose Target" :floating="false" :strict="false"
                                             :columns="{ sm: { container: 6, }, }" :conditions="[
                                                 ['time_slots.*.action', 'not_empty'],
@@ -159,6 +178,68 @@
                                     </ObjectElement>
                                 </template>
                             </ListElement>
+
+                            <GroupElement name="container_3" :conditions="[['custom_hours', true]]" />
+                            <StaticElement name="divider1" tag="hr" :conditions="[['custom_hours', true]]" />
+                            <GroupElement name="container_4" :conditions="[['custom_hours', true]]" />
+
+                            <StaticElement name="closed_hours_header" tag="h4" content="Closed Hours"
+                                description="Define how incoming calls are handled outside of your business hours."
+                                :conditions="[['custom_hours', true]]" />
+
+                            <StaticElement name="247_header" tag="h4" content=""
+                                description="Define how incoming calls are handled."
+                                :conditions="[['custom_hours', false]]" />
+
+                            <SelectElement name="after_hours_action" :items="options.routing_types" label-prop="name"
+                                :search="true" :native="false" label="Choose Action" input-type="search" autocomplete="off"
+                                placeholder="Choose Action" :floating="false" :strict="false"
+                                :columns="{ sm: { container: 6, }, }" @change="(newValue, oldValue, el$) => {
+                                    let after_hours_target = el$.form$.el$('after_hours_target')
+
+                                    // only clear when this isn’t the very first time (i.e. oldValue was set)
+                                    if (oldValue !== null && oldValue !== undefined) {
+                                        after_hours_target.clear();
+                                    }
+
+                                    // after_hours_target.clear()
+                                    after_hours_target.updateItems()
+                                }" />
+
+                            <SelectElement name="after_hours_target" :items="async (query, input) => {
+                                let after_hours_action = input.$parent.el$.form$.el$('after_hours_action');
+
+                                try {
+                                    let response = await after_hours_action.$vueform.services.axios.post(
+                                        options.routes.get_routing_options,
+                                        { category: after_hours_action.value }
+                                    );
+
+                                    if (input.externalValue) {
+                                        const opts = response.data.options;
+                                        // extract the raw value (in case externalValue might be a string or object)
+                                        const lookupValue = typeof input.externalValue === 'string'
+                                            ? input.externalValue
+                                            : input.externalValue?.value;
+
+                                        const selectedOption = opts.find(o => o.value === lookupValue);
+
+                                        // console.log(selectedOption);
+                                        input.update(selectedOption)
+                                    }
+                                    // console.log(response.data.options);
+                                    return response.data.options;
+                                } catch (error) {
+                                    emit('error', error);
+                                    return [];  // Return an empty array in case of error
+                                }
+                            }" :search="true" label-prop="name" :native="false" label="Target" input-type="search"
+                                allow-absent :object="true" autocomplete="off" placeholder="Choose Target" :floating="false"
+                                :strict="false" :columns="{ sm: { container: 6, }, }" :conditions="[
+                                    ['after_hours_action', 'not_empty'],
+                                    ['after_hours_action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
+                                ]" />
+
 
                             <ButtonElement name="submit" button-label="Save" :submits="true" align="right" />
 
@@ -179,11 +260,25 @@ const props = defineProps({
 
 const form$ = ref(null)
 
-const emits = defineEmits(['close', 'error', 'success', 'refresh-data', 'open-edit-form']);
+const emit = defineEmits(['close', 'error', 'success', 'refresh-data', 'open-edit-form']);
 
+const handleCustomHoursUpdate = (newValue, oldValue, el$) => {
+    // only when toggling from false → true
+    if (!oldValue && newValue) {
+        const slotsField = el$.form$.el$('time_slots');
+        const currentSlots = slotsField.value || [];
 
-const formatTarget = (name, value) => {
-    return { [name]: value?.extension ?? null } // must return an object
+        // if there are no slots yet, seed one
+        if (currentSlots.length === 0) {
+            const defaultSlot = {
+                weekdays: [],
+                time_from: '',
+                time_to: '',
+                action: ''
+            };
+            slotsField.update([defaultSlot]);
+        }
+    }
 }
 
 const submitForm = async (FormData, form$) => {
@@ -191,7 +286,7 @@ const submitForm = async (FormData, form$) => {
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
 
-    console.log(requestData);
+    // console.log(requestData);
     return await form$.$vueform.services.axios.post(props.options.routes.store_route, requestData)
 };
 
@@ -228,10 +323,10 @@ const handleSuccess = (response, form$) => {
     // console.log(response.status) // HTTP status code
     // console.log(response.data) // response data
 
-    emits('success', 'success', response.data.messages);
-    emits('close');
-    emits('refresh-data');
-    emits('open-edit-form', response.data.ring_group_uuid);
+    emit('success', 'success', response.data.messages);
+    emit('close');
+    emit('refresh-data');
+    emit('open-edit-form', response.data.business_hours_uuid);
 }
 
 const handleError = (error, details, form$) => {
@@ -247,7 +342,7 @@ const handleError = (error, details, form$) => {
 
         // Error occured because response status is outside of 2xx
         case 'submit':
-            emits('error', error);
+            emit('error', error);
             console.log(error) // AxiosError object
             // console.log(error.response) // axios response
             // console.log(error.response.status) // HTTP status code
@@ -273,7 +368,6 @@ const handleError = (error, details, form$) => {
             break
     }
 }
-
 
 </script>
 

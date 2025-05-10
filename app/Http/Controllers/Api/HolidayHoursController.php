@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\BusinessHour;
 use App\Models\EmergencyCall;
 use Illuminate\Support\Facades\DB;
 use App\Models\BusinessHourHoliday;
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\Process;
 use App\Services\CallRoutingOptionsService;
 use App\Http\Requests\StoreHolidayHourRequest;
 use App\Http\Requests\UpdateHolidayHourRequest;
+use App\Http\Controllers\BusinessHoursController;
 use App\Http\Resources\BusinessHourHolidayResource;
 
 class HolidayHoursController extends Controller
@@ -184,8 +186,17 @@ class HolidayHoursController extends Controller
         try {
             DB::beginTransaction();
 
+            // 1) grab the first (and only) business_hour_uuid
+            $bhUuid = BusinessHourHoliday::whereIn('uuid', request('items'))
+                ->value('business_hour_uuid');
+
             // Delete all holidays whose 'uuid' is in the provided array
             BusinessHourHoliday::whereIn('uuid', request('items'))->delete();
+
+            $bh = BusinessHour::find($bhUuid);
+            if ($bh) {
+                app(BusinessHoursController::class)->generateDialPlanXML($bh);
+            }
 
             DB::commit();
 
@@ -194,10 +205,10 @@ class HolidayHoursController extends Controller
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
-    
-            logger('BusinessHourHoliday bulkDelete error: ' . $e->getMessage() . 
-                   " at " . $e->getFile() . ":" . $e->getLine());
-    
+
+            logger('BusinessHourHoliday bulkDelete error: ' . $e->getMessage() .
+                " at " . $e->getFile() . ":" . $e->getLine());
+
             return response()->json([
                 'messages' => ['error' => ['An error occurred while deleting the selected holiday(s).']]
             ], 500);

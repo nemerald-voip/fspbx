@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\{
+    BusinessHour,
     CallCenterQueues,
     CallFlows,
     Dialplans,
@@ -14,8 +15,6 @@ use App\Models\{
     Voicemails
 };
 
-use function PHPUnit\Framework\isEmpty;
-
 class CallRoutingOptionsService
 {
     protected ?string $domainUuid;
@@ -26,6 +25,7 @@ class CallRoutingOptionsService
         ['value' => 'voicemails', 'name' => 'Voicemail'],
         ['value' => 'ring_groups', 'name' => 'Ring Group'],
         ['value' => 'ivrs', 'name' => 'Virtual Receptionist'],
+        ['value' => 'business_hours', 'name' => 'Business Hours'],
         ['value' => 'time_conditions', 'name' => 'Schedule'],
         ['value' => 'contact_centers', 'name' => 'Contact Center'],
         ['value' => 'faxes', 'name' => 'Fax'],
@@ -42,6 +42,7 @@ class CallRoutingOptionsService
         ['value' => 'voicemails', 'label' => 'Voicemail'],
         ['value' => 'ring_groups', 'label' => 'Ring Group'],
         ['value' => 'ivrs', 'label' => 'Virtual Receptionist'],
+        ['value' => 'business_hours', 'label' => 'Business Hours'],
         ['value' => 'time_conditions', 'label' => 'Schedule'],
         ['value' => 'contact_centers', 'label' => 'Contact Center'],
         ['value' => 'faxes', 'label' => 'Fax'],
@@ -50,7 +51,7 @@ class CallRoutingOptionsService
         ['value' => 'external', 'label' => 'External Number'],
     ];
 
-        /**
+    /**
      * Map of slot-action keys to their Eloquent model classes.
      */
     private const MODEL_MAP = [
@@ -58,6 +59,7 @@ class CallRoutingOptionsService
         'ivrs'             => \App\Models\IvrMenus::class,
         'voicemails'       => \App\Models\Voicemails::class,
         'ring_groups'      => \App\Models\RingGroups::class,
+        'business_hours'   => \App\Models\BusinessHour::class,
         'time_conditions'  => \App\Models\Dialplans::class,
         'contact_centers'  => \App\Models\CallCenterQueues::class,
         'faxes'            => \App\Models\Faxes::class,
@@ -93,6 +95,8 @@ class CallRoutingOptionsService
                 return $this->buildOptions(Recordings::class, 'recording_filename', 'recording_name');
             case 'ring_groups':
                 return $this->buildOptions(RingGroups::class, 'ring_group_extension', 'ring_group_name');
+            case 'business_hours':
+                return $this->buildOptions(BusinessHour::class, 'extension', 'name');
             case 'time_conditions':
                 return $this->buildOptions(Dialplans::class, 'dialplan_number', 'dialplan_name');
             case 'voicemails':
@@ -411,7 +415,6 @@ class CallRoutingOptionsService
                 'option' => '',
                 'name' => '',
             ];
-
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return null;
@@ -494,6 +497,7 @@ class CallRoutingOptionsService
             'ring_groups' => '/ring_group_uuid=([0-9a-fA-F-]+)/',
             'ivrs' => '/ivr_menu_uuid=([0-9a-fA-F-]+)/',
             'contact_centers' => '/call_center_queue_uuid=([0-9a-fA-F-]+)/',
+            'business_hours' => '/business_hours=([0-9a-fA-F-]+)/',
             'call_flows' => '/call_flow_uuid=([0-9a-fA-F-]+)/',
             'time_conditions' => '/\b(year|yday|mon|mday|week|mweek|wday|hour|minute|minute-of-day|time-of-day|date-time)=("[^"]+"|\'[^\']+\'|\S+)/',
             'faxes' => '/fax_uuid=([0-9a-fA-F-]+)/',
@@ -503,6 +507,15 @@ class CallRoutingOptionsService
 
         foreach ($patterns as $type => $pattern) {
             if (preg_match($pattern, $dialplan->dialplan_xml, $matches)) {
+                if ($type === 'business_hours') {
+                    // For business hours, return the dialplan UUID as the option
+                    return [
+                        'type' => $type,
+                        'extension' => $extension,
+                        'option' => $dialplan->dialplan_uuid,
+                        'name' => $dialplan->dialplan_name,
+                    ];
+                }
                 if ($type === 'time_conditions') {
                     // For time conditions, return the dialplan UUID as the option
                     return [
@@ -596,6 +609,7 @@ class CallRoutingOptionsService
             'ivrs' => 'Virtual Receptionist',
             'contact_centers' => 'Contact Center',
             'faxes' => "Fax",
+            'business_hours' => 'Business Hours',
             'time_conditions' => 'Schedules',
             'call_flows' => 'Call Flow',
             'recordings' => 'Play recording',

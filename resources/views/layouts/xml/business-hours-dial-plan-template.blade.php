@@ -96,16 +96,23 @@
                         break;
 
                     case 'us_holiday':
-                        // month + weekday + day-range (e.g. 15-21) & optional weekday
-                        if ($h->mon && $h->mday && $h->wday) {
+                        // 1) a fixed calendar date (e.g. January 1)
+                        if (!empty($h->mon) && !empty($h->mday) && empty($h->wday) && empty($h->mweek)) {
                             $useAttrs = [
                                 'mon' => $h->mon,
-                                'wday' => $h->wday,
                                 'mday' => $h->mday,
                             ];
                         }
-                        // or nth-weekday of month (e.g. 3rd Monday)
-                        elseif ($h->mon && $h->wday && $h->mweek) {
+                        // 2) a day-of-month range with an optional weekday (e.g. 15-21st, any Monday within that)
+                        elseif (!empty($h->mon) && !empty($h->mday) && !empty($h->wday)) {
+                            $useAttrs = [
+                                'mon' => $h->mon,
+                                'mday' => $h->mday,
+                                'wday' => $h->wday,
+                            ];
+                        }
+                        // 3) the “nth weekday of the month” pattern (e.g. 3rd Monday)
+                        elseif (!empty($h->mon) && !empty($h->wday) && !empty($h->mweek)) {
                             $useAttrs = [
                                 'mon' => $h->mon,
                                 'wday' => $h->wday,

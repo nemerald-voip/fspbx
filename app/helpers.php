@@ -1712,6 +1712,7 @@ if (!function_exists('buildDestinationAction')) {
             case 'extensions':
             case 'ring_groups':
             case 'ivrs':
+            case 'business_hours':
             case 'time_conditions':
             case 'contact_centers':
             case 'faxes':

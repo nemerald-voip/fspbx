@@ -340,7 +340,7 @@ const getHolidayItemOptions = (itemUuid = null) => {
         .post(props.options.routes.holiday_item_options, payload)
         .then(res => {
             holidayItemOptions.value = res.data;
-            console.log(holidayItemOptions.value);
+            // console.log(holidayItemOptions.value);
             return res;
         });
 };
@@ -487,7 +487,6 @@ const handleSuccess = (response, form$) => {
     emit('success', 'success', response.data.messages);
     emit('close');
     emit('refresh-data');
-    emit('open-edit-form', response.data.ring_group_uuid);
 }
 
 const handleError = (error, details, form$) => {
