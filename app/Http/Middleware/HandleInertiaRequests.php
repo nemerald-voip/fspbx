@@ -80,8 +80,8 @@ class HandleInertiaRequests extends Middleware
         $permissions['device_profile_index'] = userCheckPermission('device_profile_view');
 
         $permissions['destination_add'] = userCheckPermission('destination_add');
-        $permissions['destination_edit'] = userCheckPermission('destination_edit');
-        $permissions['destination_delete'] = userCheckPermission('destination_delete');
+        $permissions['destination_update'] = userCheckPermission('destination_edit');
+        $permissions['destination_destroy'] = userCheckPermission('destination_delete');
         $permissions['destination_edit_domain'] = userCheckPermission('destination_domain');
 
         $permissions['cdrs_view_global'] = userCheckPermission('xml_cdr_all');
@@ -122,6 +122,10 @@ class HandleInertiaRequests extends Middleware
         $permissions['contact_upload'] = userCheckPermission('contact_upload');
 
         $permissions['account_settings_index'] = userCheckPermission('account_settings_list_view');
+
+        $permissions['business_hours_create'] = userCheckPermission('business_hours_create');
+        $permissions['business_hours_update'] = userCheckPermission('business_hours_update');
+        $permissions['business_hours_destroy'] = userCheckPermission('business_hours_delete');
 
         // logger($permissions);
         return $permissions;

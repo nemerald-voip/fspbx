@@ -312,7 +312,7 @@ class PhoneNumbersController extends Controller
             $destination_actions = [];
             if (!empty($inputs['routing_options'])) {
                 foreach ($inputs['routing_options'] as $option) {
-                    $destination_actions[] = $this->buildDestinationAction($option);
+                    $destination_actions[] = buildDestinationAction($option);
                 }
             }
 
@@ -478,7 +478,7 @@ class PhoneNumbersController extends Controller
             $destination_actions = [];
             if (!empty($inputs['routing_options'])) {
                 foreach ($inputs['routing_options'] as $option) {
-                    $destination_actions[] = $this->buildDestinationAction($option);
+                    $destination_actions[] = buildDestinationAction($option);
                 }
             }
 
@@ -498,60 +498,6 @@ class PhoneNumbersController extends Controller
         }
     }
 
-    /**
-     * Helper function to build destination action based on routing option type.
-     */
-    protected function buildDestinationAction($option)
-    {
-        switch ($option['type']) {
-            case 'extensions':
-            case 'ring_groups':
-            case 'ivrs':
-            case 'time_conditions':
-            case 'contact_centers':
-            case 'faxes':
-            case 'call_flows':
-                return [
-                    'destination_app' => 'transfer',
-                    'destination_data' => $option['extension'] . ' XML ' . session('domain_name'),
-                ];
-
-            case 'voicemails':
-                return [
-                    'destination_app' => 'transfer',
-                    'destination_data' => '*99' . $option['extension'] . ' XML ' . session('domain_name'),
-                ];
-
-            case 'check_voicemail':
-                return [
-                    'destination_app' => 'transfer',
-                    'destination_data' => '*98 XML ' . session('domain_name'),
-                ];
-
-            case 'company_directory':
-                return [
-                    'destination_app' => 'transfer',
-                    'destination_data' => '*411 XML ' . session('domain_name'),
-                ];
-
-            case 'recordings':
-                // Handle recordings with 'lua' destination app
-                return [
-                    'destination_app' => 'lua',
-                    'destination_data' => 'streamfile.lua ' . $option['extension'],
-                ];
-
-            case 'hangup':
-                return [
-                    'destination_app' => 'hangup',
-                    'destination_data' => '',
-                ];
-
-                // Add other cases as necessary for different types
-            default:
-                return [];
-        }
-    }
 
 
     /**
@@ -862,6 +808,20 @@ class PhoneNumbersController extends Controller
             $dialPlanDetails->dialplan_detail_type = "set";
             $dialPlanDetails->dialplan_detail_data = "pfx_effective_caller_id_name=" . $phoneNumber->destination_cid_name_prefix . "#\${pfx_effective_caller_id_name}";
             $dialPlanDetails->dialplan_detail_inline = "true";
+            $dialPlanDetails->dialplan_detail_group = $detailGroup;
+            $dialPlanDetails->dialplan_detail_order = $detailOrder;
+            $dialPlanDetails->save();
+
+            $detailOrder += 10;
+        }
+
+        if (!empty($phoneNumber->destination_cid_name_prefix)) {
+            $dialPlanDetails = new DialplanDetails();
+            $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
+            $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
+            $dialPlanDetails->dialplan_detail_tag = "action";
+            $dialPlanDetails->dialplan_detail_type = "set";
+            $dialPlanDetails->dialplan_detail_data = "cnam_prefix=" . $phoneNumber->destination_cid_name_prefix;
             $dialPlanDetails->dialplan_detail_group = $detailGroup;
             $dialPlanDetails->dialplan_detail_order = $detailOrder;
             $dialPlanDetails->save();

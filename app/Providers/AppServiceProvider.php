@@ -10,6 +10,7 @@ use Laravel\Horizon\Horizon;
 use Laravel\Sanctum\Sanctum;
 use App\Models\EmergencyCall;
 use App\Models\EmergencyCallEmail;
+use App\Models\BusinessHourHoliday;
 use App\Models\EmergencyCallMember;
 use App\Observers\ExtensionObserver;
 use App\Services\RingotelApiService;
@@ -23,6 +24,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rules\Password;
 use App\Models\Sanctum\PersonalAccessToken;
 use App\Observers\EmergencyCallEmailObserver;
+use App\Observers\BusinessHourHolidayObserver;
 use App\Observers\EmergencyCallMemberObserver;
 
 
@@ -84,6 +86,7 @@ class AppServiceProvider extends ServiceProvider
         EmergencyCall::observe(EmergencyCallObserver::class);
         EmergencyCallMember::observe(EmergencyCallMemberObserver::class);
         EmergencyCallEmail::observe(EmergencyCallEmailObserver::class);
+        BusinessHourHoliday::observe(BusinessHourHolidayObserver::class);
 
         Builder::macro('orWhereLike', function (string $column, string $search) {
             return $this->orWhere($column, 'ILIKE', '%' . trim($search) . '%');

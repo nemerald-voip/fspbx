@@ -409,8 +409,8 @@ class RingGroupsController extends Controller
                 'ring_group_enabled' => 'true',
                 'ring_group_strategy' => 'enterprise',
                 'ring_group_ringback' => '${us-ring}',
-                'ring_group_call_forward_enabled' => 'true',
-                'ring_group_follow_me_enabled' => 'true',
+                'ring_group_call_forward_enabled' => get_domain_setting('honor_member_cfwd'),
+                'ring_group_follow_me_enabled' => get_domain_setting('honor_member_followme'),
                 'dialplan_uuid' => Str::uuid(),
             ]));
 
@@ -558,7 +558,7 @@ class RingGroupsController extends Controller
                         'destination_number'  => $member['destination'] ?? null,
                         'destination_delay'   => $member['delay'] ?? null,
                         'destination_timeout' => $member['timeout'] ?? null,
-                        'destination_prompt'  => $member['prompt'] ? 1: null,
+                        'destination_prompt'  => $member['prompt'] ? 1 : null,
                         'destination_enabled' => !empty($member['enabled']) ? 'true' : 'false',
                     ]);
                 }
@@ -656,6 +656,7 @@ class RingGroupsController extends Controller
             case 'extensions':
             case 'ring_groups':
             case 'ivrs':
+            case 'business_hours':
             case 'time_conditions':
             case 'contact_centers':
             case 'faxes':
@@ -692,6 +693,7 @@ class RingGroupsController extends Controller
             case 'extensions':
             case 'ring_groups':
             case 'ivrs':
+            case 'business_hours':
             case 'time_conditions':
             case 'contact_centers':
             case 'faxes':
@@ -719,5 +721,30 @@ class RingGroupsController extends Controller
         return collect($enabledMembers)
             ->map(fn($m) => (int) $m['delay'] + (int) $m['timeout'])
             ->max() ?? 0;
+    }
+
+    public function selectAll()
+    {
+        try {
+            if (request()->get('showGlobal')) {
+                $uuids = $this->model::get($this->model->getKeyName())->pluck($this->model->getKeyName());
+            } else {
+                $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
+                    ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
+            }
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['All items selected']],
+                'items' => $uuids,
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e);
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to select all items']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
     }
 }

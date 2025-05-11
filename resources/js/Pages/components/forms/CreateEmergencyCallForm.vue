@@ -103,7 +103,9 @@ const submitForm = () => {
         emergency_number: form.emergency_number,
         description: form.description,
         members: form.members.map(m => ({ extension_uuid: m.value })),
-        emails: form.emails.split(',').map(email => email.trim())
+        emails: form.emails
+        ? form.emails.split(',').map(email => email.trim()).filter(email => email !== '')
+        : []
     };
 
     emits('submit', payload); // Emit the event with the form data

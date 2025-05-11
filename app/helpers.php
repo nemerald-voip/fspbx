@@ -1066,7 +1066,7 @@ if (!function_exists('get_local_time_zone')) {
             $domain_uuid = session('domain_uuid');
         }
         $cacheKey = "{$domain_uuid}_timeZone";
-    
+
         return Cache::remember($cacheKey, 3600, function () use ($domain_uuid) {
             return get_domain_setting('time_zone', $domain_uuid) ?? 'UTC';
         });
@@ -1451,10 +1451,10 @@ if (! function_exists('getRingBackTonesCollectionGrouped')) {
     function getRingBackTonesCollectionGrouped(string $domain = null): array
     {
         // — Music on Hold —
-        $musicOnHold = MusicOnHold::when($domain, function($q) use ($domain) {
-                $q->where('domain_uuid', $domain)
-                  ->orWhereNull('domain_uuid');
-            })
+        $musicOnHold = MusicOnHold::when($domain, function ($q) use ($domain) {
+            $q->where('domain_uuid', $domain)
+                ->orWhereNull('domain_uuid');
+        })
             ->orderBy('music_on_hold_name')
             ->get()
             ->unique('music_on_hold_name')
@@ -1492,10 +1492,10 @@ if (! function_exists('getRingBackTonesCollectionGrouped')) {
             ->toArray();
 
         // — Streams —
-        $streams = MusicStreams::when($domain, function($q) use ($domain) {
-                $q->where('domain_uuid', $domain)
-                  ->orWhereNull('domain_uuid');
-            })
+        $streams = MusicStreams::when($domain, function ($q) use ($domain) {
+            $q->where('domain_uuid', $domain)
+                ->orWhereNull('domain_uuid');
+        })
             ->where('stream_enabled', 'true')
             ->orderBy('stream_name')
             ->get(['stream_name', 'stream_location'])
@@ -1639,29 +1639,123 @@ if (!function_exists('formatMacAddress')) {
 }
 
 
+// if (!function_exists('getGroupedTimezones')) {
+//     function getGroupedTimezones()
+//     {
+//         $groupedTimezones = [];
+
+//         foreach (DateTimeZone::listIdentifiers() as $tz) {
+//             $parts = explode('/', $tz, 2);
+//             $region = $parts[0];
+//             $label = $tz;
+//             $offset = (new DateTime('now', new DateTimeZone($tz)))->format('P');
+
+//             $groupedTimezones[$region][] = [
+//                 'value' => $tz,
+//                 'name' => "(UTC $offset) $label"
+//             ];
+//         }
+
+//         ksort($groupedTimezones); // Optional: sort regions alphabetically
+
+//         // Prepend "System Default" with a null value at the very top
+//         $groupedTimezones = ['System Default' => [['value' => null, 'name' => 'System Default']]] + $groupedTimezones;
+
+
+//         return $groupedTimezones;
+//     }
+// }
+
 if (!function_exists('getGroupedTimezones')) {
     function getGroupedTimezones()
     {
+        // 1) build an associative map of regions → options
         $groupedTimezones = [];
 
         foreach (DateTimeZone::listIdentifiers() as $tz) {
-            $parts = explode('/', $tz, 2);
-            $region = $parts[0];
-            $label = $tz;
+            [$region] = explode('/', $tz, 2);
             $offset = (new DateTime('now', new DateTimeZone($tz)))->format('P');
 
             $groupedTimezones[$region][] = [
                 'value' => $tz,
-                'name' => "(UTC $offset) $label"
+                'label'  => "(UTC {$offset}) {$tz}",
             ];
         }
 
-        ksort($groupedTimezones); // Optional: sort regions alphabetically
+        ksort($groupedTimezones);
 
-        // Prepend "System Default" with a null value at the very top
-        $groupedTimezones = ['System Default' => [['value' => null, 'name' => 'System Default']]] + $groupedTimezones;
+        // 2) prepend “System Default”
+        $groupedTimezones = ['System Default' => [
+            ['value' => null, 'label' => 'System Default'],
+        ]] + $groupedTimezones;
 
+        // 3) transform into indexed array of { groupLabel, groupOptions }
+        $result = [];
+        foreach ($groupedTimezones as $region => $options) {
+            $result[] = [
+                'label'   => $region,
+                'items' => $options,
+            ];
+        }
 
-        return $groupedTimezones;
+        return $result;
+    }
+}
+
+/**
+ * Helper function to build destination action based on routing option type.
+ */
+if (!function_exists('buildDestinationAction')) {
+    function buildDestinationAction($option)
+    {
+        switch ($option['type']) {
+            case 'extensions':
+            case 'ring_groups':
+            case 'ivrs':
+            case 'business_hours':
+            case 'time_conditions':
+            case 'contact_centers':
+            case 'faxes':
+            case 'call_flows':
+                return [
+                    'destination_app' => 'transfer',
+                    'destination_data' => $option['extension'] . ' XML ' . session('domain_name'),
+                ];
+
+            case 'voicemails':
+                return [
+                    'destination_app' => 'transfer',
+                    'destination_data' => '*99' . $option['extension'] . ' XML ' . session('domain_name'),
+                ];
+
+            case 'check_voicemail':
+                return [
+                    'destination_app' => 'transfer',
+                    'destination_data' => '*98 XML ' . session('domain_name'),
+                ];
+
+            case 'company_directory':
+                return [
+                    'destination_app' => 'transfer',
+                    'destination_data' => '*411 XML ' . session('domain_name'),
+                ];
+
+            case 'recordings':
+                // Handle recordings with 'lua' destination app
+                return [
+                    'destination_app' => 'lua',
+                    'destination_data' => 'streamfile.lua ' . $option['extension'],
+                ];
+
+            case 'hangup':
+                return [
+                    'destination_app' => 'hangup',
+                    'destination_data' => '',
+                ];
+
+                // Add other cases as necessary for different types
+            default:
+                return [];
+        }
     }
 }
