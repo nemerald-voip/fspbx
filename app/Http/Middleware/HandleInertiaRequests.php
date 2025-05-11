@@ -127,6 +127,12 @@ class HandleInertiaRequests extends Middleware
         $permissions['business_hours_update'] = userCheckPermission('business_hours_update');
         $permissions['business_hours_destroy'] = userCheckPermission('business_hours_delete');
 
+        //assign permissions
+        $permissions['groups_create'] = userCheckPermission('group_add');
+        $permissions['groups_update'] = userCheckPermission('group_edit');
+        $permissions['groups_destroy'] = userCheckPermission('group_delete');
+        $permissions['groups_domain_groups_view'] = isSuperAdmin();
+
         // logger($permissions);
         return $permissions;
     }
