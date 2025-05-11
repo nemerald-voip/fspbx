@@ -67,7 +67,7 @@ class RingGroupsController extends Controller
     /**
      *  Get data
      */
-    public function getData($paginate = 3)
+    public function getData($paginate = 50)
     {
 
         // Check if search parameter is present and not empty
