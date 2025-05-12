@@ -512,7 +512,7 @@ class CallRoutingOptionsService
                     return [
                         'type' => $type,
                         'extension' => $extension,
-                        'option' => $dialplan->dialplan_uuid,
+                        'option' => $matches[1],
                         'name' => $dialplan->dialplan_name,
                     ];
                 }

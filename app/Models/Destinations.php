@@ -123,6 +123,7 @@ class Destinations extends Model
                 $callRoutingOptionsService = new CallRoutingOptionsService();
 
                 $model->routing_options = $callRoutingOptionsService->reverseEngineerDestinationActions($model->destination_actions);
+                logger($model->routing_options);
             }
 
             if (!empty($model->destination_conditions)) {
