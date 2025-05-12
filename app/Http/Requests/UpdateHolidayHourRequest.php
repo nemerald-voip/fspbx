@@ -17,6 +17,7 @@ class UpdateHolidayHourRequest extends FormRequest
     {
         $types = [
             'us_holiday',
+            'ca_holiday',
             'single_date',
             'date_range',
             'recurring_pattern', 
