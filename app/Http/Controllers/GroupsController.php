@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Domain;
 use Inertia\Inertia;
 use App\Models\Groups;
 use Illuminate\Http\Request;
@@ -152,9 +153,7 @@ class GroupsController extends Controller
     {
         try {
 
-            $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
             $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
-
 
             // Check if item_uuid exists to find an existing model
             if ($item_uuid) {
@@ -179,6 +178,24 @@ class GroupsController extends Controller
 
             // $permissions = $this->getUserPermissions();
 
+            $domains = Domain::where('domain_enabled', 'true')
+                ->select('domain_uuid', 'domain_name', 'domain_description')
+                ->orderBy('domain_description')
+                ->get()
+                ->map(function ($domain) {
+                    return [
+                        'value' => $domain->domain_uuid,
+                        'label' => $domain->domain_description,
+                    ];
+                })
+                ->prepend([
+                    'value' => null,
+                    'label' => 'Global',
+                ])
+                ->toArray();
+
+
+
             $routes = [
                 'store_route' => $storeRoute ?? null,
                 'update_route' => $updateRoute ?? null,
@@ -188,6 +205,7 @@ class GroupsController extends Controller
             $itemOptions = [
                 'item' => $item,
                 'routes' => $routes,
+                'domains' => $domains,
                 // Define options for other fields as needed
             ];
             // logger($itemOptions);
