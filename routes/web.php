@@ -125,7 +125,8 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('user/password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('users.password.email');
 
     // Groups
-    Route::resource('groups', GroupsController::class);
+    // Route::resource('groups', GroupsController::class);
+    Route::get('groups', [GroupsController::class, 'index'])->name('groups.index');
 
     //Fax
     Route::resource('faxes', FaxesController::class);
@@ -147,10 +148,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     // // Ring Groups
     Route::get('ring-groups', [RingGroupsController::class, 'index'])->name('ring-groups.index');
-    // Route::resource('ring-groups', RingGroupsController::class);
-    // Route::post('ring-groups/item-options', [RingGroupsController::class, 'getItemOptions'])->name('ring-groups.item.options');
-    // Route::post('/ring-groups/bulk-delete', [RingGroupsController::class, 'bulkDelete'])->name('ring-groups.bulk.delete');
-    // Route::post('/ring-groups/select-all', [RingGroupsController::class, 'selectAll'])->name('ring-groups.select.all');
+
 
     // Business hours
     Route::get('business-hours', [BusinessHoursController::class, 'index'])->name('business-hours.index');

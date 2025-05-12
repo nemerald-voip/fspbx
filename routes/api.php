@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TokenController;
+use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\BusinessHoursController;
 use App\Http\Controllers\Api\HolidayHoursController;
@@ -53,4 +54,11 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/holiday-hours/item-options', [HolidayHoursController::class, 'getItemOptions'])->name('holiday-hours.item.options');
     Route::post('/holiday-hours/bulk-delete', [HolidayHoursController::class, 'bulkDelete'])->name('holiday-hours.bulk.delete');
 
+    // Groups
+    Route::post('groups', [GroupsController::class, 'store'])->name('groups.store');
+    Route::put('groups/{ring_group}', [GroupsController::class, 'update'])->name('groups.update');
+    Route::delete('groups/{ring_group}', [GroupsController::class, 'destroy'])->name('groups.destroy');
+    Route::post('groups/item-options', [GroupsController::class, 'getItemOptions'])->name('groups.item.options');
+    Route::post('groups/bulk-delete', [GroupsController::class, 'bulkDelete'])->name('groups.bulk.delete');
+    Route::post('groups/select-all', [GroupsController::class, 'selectAll'])->name('groups.select.all');
 });

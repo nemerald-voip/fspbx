@@ -96,17 +96,23 @@
                             ringColor="ring-indigo-400/20" class="px-2 py-1 text-xs font-semibold" />
                     </TableField>
 
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <a :href="`/core/groups/group_permissions.php?group_uuid=${row.group_uuid}`"
+                            class="inline-block rounded bg-white px-2 py-1 text-sm text-gray-600 shadow-sm hover:text-gray-900">
+                            Permissions
+                            ({{ row.permissions_count }})
+                        </a>
 
-                    <TableField class="px-2 py-2 text-sm text-gray-500">
-                        <Badge v-for="destination in row.destinations" :key="destination.ring_group_destination_uuid"
-                            :text="destination.destination_number" backgroundColor="bg-gray-100" textColor="text-gray-700"
-                            ringColor="ring-gray-400/20" class="px-2 py-1 text-xs font-semibold" />
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" >
-                        <button type="button" class="rounded bg-white px-2 py-1 text-sm  text-gray-600 shadow-sm hover:text-gray-900">Permissions ({{ row.permissions_count }})</button>
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <a :href="`/core/groups/group_members.php?group_uuid=${row.group_uuid}`"
+                            class="inline-block rounded bg-white px-2 py-1 text-sm text-gray-600 shadow-sm hover:text-gray-900">
+                            Members
+                            ({{ row.user_groups_count }})
+                        </a>
 
-                        </TableField>
+                    </TableField>
 
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
@@ -165,32 +171,8 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showCreateModal" :header="'Create New Ring Group'"
-        :loading="loadingModal" @close="handleModalClose">
-        <template #modal-body>
-            <CreateRingGroupForm :options="itemOptions" @close="handleModalClose" @error="handleErrorResponse"
-                @success="showNotification" @refresh-data="handleSearchButtonClick"
-                @open-edit-form="handleEditButtonClick" />
-        </template>
-    </AddEditItemModal>
-
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showEditModal"
-        :header="'Update Ring Group Settings - ' + itemOptions?.ring_group?.group_name" :loading="loadingModal"
-        @close="handleModalClose">
-        <template #modal-body>
-            <UpdateRingGroupForm :options="itemOptions" @close="handleModalClose" @error="handleErrorResponse"
-                @success="showNotification" @refresh-data="handleSearchButtonClick" />
-        </template>
-    </AddEditItemModal>
-
-    <AddEditItemModal :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="loadingModal"
-        @close="handleModalClose">
-        <template #modal-body>
-            <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
-                :is-submitting="bulkUpdateFormSubmiting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose"
-                @domain-selected="getItemOptions" />
-        </template>
-    </AddEditItemModal>
+    <UpdatePermissionGroupForm :show="showUpdateModal" :options="itemOptions" @close="showUpdateModal = false"
+        @error="handleErrorResponse" @success="showNotification" />
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
         @confirm="confirmDeleteAction" :header="'Confirm Deletion'"
@@ -210,17 +192,14 @@ import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
-import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
-import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
-import CreateRingGroupForm from "./components/forms/CreateRingGroupForm.vue";
-import UpdateRingGroupForm from "./components/forms/UpdateRingGroupForm.vue";
+import UpdatePermissionGroupForm from "./components/forms/UpdatePermissionGroupForm.vue"
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 
@@ -228,19 +207,15 @@ import Badge from "@generalComponents/Badge.vue";
 
 const page = usePage()
 const loading = ref(false)
-const loadingModal = ref(false)
+// const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const showCreateModal = ref(false);
-const showEditModal = ref(false);
+const showUpdateModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
-const confirmationModalDestroyPath = ref(null);
-const createFormSubmiting = ref(null);
-const updateFormSubmiting = ref(null);
 const confirmDeleteAction = ref(null);
 const bulkUpdateFormSubmiting = ref(null);
-const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
@@ -285,9 +260,7 @@ onMounted(() => {
 });
 
 const handleEditButtonClick = (itemUuid) => {
-    showEditModal.value = true
-    formErrors.value = null;
-    loadingModal.value = true
+    showUpdateModal.value = true
     getItemOptions(itemUuid);
 }
 
@@ -407,7 +380,6 @@ const getItemOptions = (itemUuid = null) => {
 
     axios.post(props.routes.item_options, payload)
         .then((response) => {
-            loadingModal.value = false;
             itemOptions.value = response.data;
             // console.log(itemOptions.value);
 
@@ -477,7 +449,7 @@ const handleClearSelection = () => {
 
 const handleModalClose = () => {
     showCreateModal.value = false;
-    showEditModal.value = false;
+    showUpdateModal.value = false;
     showDeleteConfirmationModal.value = false;
     bulkUpdateModalTrigger.value = false;
 }

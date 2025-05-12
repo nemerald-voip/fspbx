@@ -41,10 +41,10 @@ class GroupsController extends Controller
                 },
 
                 'routes' => [
-                    'current_page' => route('ring-groups.index'),
-                    'item_options' => route('ring-groups.item.options'),
-                    'bulk_delete' => route('ring-groups.bulk.delete'),
-                    'select_all' => route('ring-groups.select.all'),
+                    'current_page' => route('groups.index'),
+                    'item_options' => route('groups.item.options'),
+                    'bulk_delete' => route('groups.bulk.delete'),
+                    'select_all' => route('groups.select.all'),
                 ]
             ]
         );
@@ -74,7 +74,7 @@ class GroupsController extends Controller
             $data = $data->get(); // This will return a collection
         }
 
-        logger($data);
+        // logger($data);
 
         return $data;
     }
@@ -103,7 +103,7 @@ class GroupsController extends Controller
         );
 
         $data->withCount(['permissions']);
-
+        $data->withCount(['user_groups']);
 
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
@@ -145,6 +145,65 @@ class GroupsController extends Controller
                 }
             }
         });
+    }
+
+
+    public function getItemOptions()
+    {
+        try {
+
+            $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
+            $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
+
+
+            // Check if item_uuid exists to find an existing model
+            if ($item_uuid) {
+                // Find existing item by item_uuid
+                $item = $this->model::where($this->model->getKeyName(), $item_uuid)
+                    ->first();
+
+                // If a model exists, use it; otherwise, create a new one
+                if (!$item) {
+                    throw new \Exception("Failed to fetch item details. Item not found");
+                }
+
+
+                // Define the update route
+                $updateRoute = route('groups.update', ['ring_group' => $item_uuid]);
+            } else {
+                // Create a new model if item_uuid is not provided
+                $item = $this->model;
+
+                $storeRoute  = route('groups.store');
+            }
+
+            // $permissions = $this->getUserPermissions();
+
+            $routes = [
+                'store_route' => $storeRoute ?? null,
+                'update_route' => $updateRoute ?? null,
+            ];
+
+            // Construct the itemOptions object
+            $itemOptions = [
+                'item' => $item,
+                'routes' => $routes,
+                // Define options for other fields as needed
+            ];
+            // logger($itemOptions);
+
+            return $itemOptions;
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // report($e);
+
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to fetch item details']]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
     }
 
     /**
