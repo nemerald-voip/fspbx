@@ -38,6 +38,14 @@
                                             (h.value.wday ?? '') === (options.item.wday ?? '') &&
                                             (h.value.mweek ?? '') === (options.item.mweek ?? '')
                                         )
+                                        ?? null,
+                                    ca_holiday:
+                                        caHolidays.find(h =>
+                                            (h.value.mon ?? '') === (options.item.mon ?? '') &&
+                                            (h.value.mday ?? '') === (options.item.mday ?? '') &&
+                                            (h.value.wday ?? '') === (options.item.wday ?? '') &&
+                                            (h.value.mweek ?? '') === (options.item.mweek ?? '')
+                                        )
                                         ?? null
                                 }">
                                 <HiddenElement name="business_hour_uuid" :meta="true" />
@@ -196,9 +204,9 @@
                                     ]" />
 
                                 <SelectElement name="ca_holiday" :search="true" :native="false" label="Canadian Holiday"
-                                    :submit="false" :items="caHolidays" input-type="search" autocomplete="off" :object="true"
-                                    @change="handleCAHolidayUpdate" placeholder="Select Canadian Holiday" :floating="false"
-                                    :conditions="[
+                                    :submit="false" :items="caHolidays" input-type="search" autocomplete="off"
+                                    :object="true" @change="handleCAHolidayUpdate" placeholder="Select Canadian Holiday"
+                                    :floating="false" :conditions="[
                                         [
                                             'holiday_type',
                                             'in',
@@ -222,16 +230,17 @@
                                         ],
                                     ]" />
 
-                                <DateElement name="start_date" display-format="MMMM DD, YYYY" load-format="DD/MM/YYYY" :label="(el$) => {
-                                    if (el$.form$.el$('holiday_type').value == 'single_date') {
-                                        return 'Date'
-                                    }
+                                <DateElement name="start_date" display-format="MMMM DD, YYYY" load-format="DD/MM/YYYY"
+                                    :label="(el$) => {
+                                        if (el$.form$.el$('holiday_type').value == 'single_date') {
+                                            return 'Date'
+                                        }
 
-                                    if (el$.form$.el$('holiday_type').value == 'date_range') {
-                                        return 'Start Date'
-                                    }
+                                        if (el$.form$.el$('holiday_type').value == 'date_range') {
+                                            return 'Start Date'
+                                        }
 
-                                }" :columns="{
+                                    }" :columns="{
     default: {
         container: 6,
     },
@@ -509,7 +518,7 @@ const handleSuccess = (response, form$) => {
     // console.log(response.status) // HTTP status code
     // console.log(response.data) // response data
 
-    emits('success',response.data.messages);
+    emits('success', response.data.messages);
     emits('close');
     emits('refresh-data');
 }
