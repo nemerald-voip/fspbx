@@ -128,10 +128,10 @@ class HandleInertiaRequests extends Middleware
         $permissions['business_hours_destroy'] = userCheckPermission('business_hours_delete');
 
         //assign permissions
-        $permissions['groups_create'] = userCheckPermission('group_add');
-        $permissions['groups_update'] = userCheckPermission('group_edit');
-        $permissions['groups_destroy'] = userCheckPermission('group_delete');
-        $permissions['groups_domain_groups_view'] = isSuperAdmin();
+        $permissions['group_create'] = userCheckPermission('group_add');
+        $permissions['group_update'] = userCheckPermission('group_edit');
+        $permissions['group_destroy'] = userCheckPermission('group_delete');
+        $permissions['domain_groups_view'] = userCheckPermission('domain_groups_list_view');
 
         // logger($permissions);
         return $permissions;

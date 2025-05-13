@@ -52,7 +52,7 @@
                                     group_description: options.item.group_description ?? null
                                 }">
 
-                                <StaticElement name="h4" tag="h4" content="Update Permission Group" />
+                                <StaticElement name="h4" tag="h4" content="Create New Permission Group" />
                                 <TextElement name="group_name" label="Name" placeholder="Enter Group Name"  :floating="false"/>
                                 <SelectElement name="domain_uuid" :items="options.domains" :search="true" :native="false"
                                     input-type="search" autocomplete="off" :floating="false" label="Account Name"
@@ -104,8 +104,8 @@ const submitForm = async (FormData, form$) => {
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
     // console.log(requestData);
-
-    return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
+console.log(props.options.routes.store_route)
+    return await form$.$vueform.services.axios.post(props.options.routes.store_route, requestData)
 };
 
 function clearErrorsRecursive(el$) {

@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Domain;
 use Inertia\Inertia;
+use App\Models\Domain;
 use App\Models\Groups;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use App\Http\Requests\CreatePermissionGroupRequest;
+use App\Http\Requests\UpdatePermissionGroupRequest;
 
 class GroupsController extends Controller
 {
@@ -168,7 +172,7 @@ class GroupsController extends Controller
 
 
                 // Define the update route
-                $updateRoute = route('groups.update', ['ring_group' => $item_uuid]);
+                $updateRoute = route('groups.update', ['group' => $item_uuid]);
             } else {
                 // Create a new model if item_uuid is not provided
                 $item = $this->model;
@@ -189,11 +193,18 @@ class GroupsController extends Controller
                     ];
                 })
                 ->prepend([
-                    'value' => null,
+                    'value' => '',
                     'label' => 'Global',
                 ])
                 ->toArray();
 
+            $group_levels = [];
+            for ($i = 10; $i <= 70; $i += 10) {
+                $group_levels[] = [
+                    'value' => (string)$i,
+                    'label' => (string)$i,
+                ];
+            }
 
 
             $routes = [
@@ -206,6 +217,7 @@ class GroupsController extends Controller
                 'item' => $item,
                 'routes' => $routes,
                 'domains' => $domains,
+                'group_levels' => $group_levels,
                 // Define options for other fields as needed
             ];
             // logger($itemOptions);
@@ -225,58 +237,79 @@ class GroupsController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(CreatePermissionGroupRequest $request)
     {
-        //
+        $validated = $request->validated();
+
+        try {
+            DB::beginTransaction();
+
+            $groupManager = Groups::create(array_merge($validated, [
+                'domain_uuid' => session('domain_uuid'),
+                'group_uuid'  => Str::uuid(),
+            ]));
+
+            DB::commit();
+
+            return response()->json([
+                'messages'   => ['success' => ['Group created']],
+                'group_uuid' => $groupManager->group_uuid,
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger(
+                'GroupManager store error: '
+                    . $e->getMessage()
+                    . ' at ' . $e->getFile() . ':' . $e->getLine()
+            );
+
+            return response()->json([
+                'messages' => ['error' => ['Something went wrong while creating the group.']]
+            ], 500);
+        }
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @param  \App\Http\Requests\UpdatePermissionGroupRequest  $request
+     * @param  \App\Models\Groups                     $group
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function update(Request $request, $id)
+    public function update(UpdatePermissionGroupRequest $request, Groups $group)
     {
-        //
+        $data = $request->validated();
+
+        try {
+            DB::beginTransaction();
+
+            $group->update($data);
+
+            DB::commit();
+
+            return response()->json([
+                'messages'      => ['success' => ['Group updated']],
+                'group_uuid'    => $group->group_uuid,
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger(
+                'GroupManager update error: '
+                    . $e->getMessage()
+                    . ' at ' . $e->getFile()
+                    . ':' . $e->getLine()
+            );
+
+            return response()->json([
+                'messages' => ['error' => ['Something went wrong while updating the group.']]
+            ], 500);
+        }
     }
 
     /**
@@ -310,6 +343,68 @@ class GroupsController extends Controller
                     ]
                 ]);
             }
+        }
+    }
+
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function bulkDelete(Request $request)
+    {
+        if (!userCheckPermission('group_delete')) {
+            return response()->json([
+                'messages' => ['error' => ['Access denied.']]
+            ], 403);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $uuids = $request->input('items');
+
+            // delete all matching groups in one query
+            Groups::whereIn('group_uuid', $uuids)->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'messages' => ['success' => ['Selected group(s) were deleted successfully.']]
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger('RingGroups bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'messages' => ['error' => ['An error occurred while deleting the selected group(s).']]
+            ], 500);
+        }
+    }
+
+    public function selectAll()
+    {
+        try {
+            $domainUuid = session('domain_uuid');
+            $uuids = $this->model::where($this->model->getTable() . '.domain_uuid', $domainUuid)
+                ->orWhereNull($this->model->getTable() . '.domain_uuid')
+                ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
+
+
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['All items selected']],
+                'items' => $uuids,
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e);
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to select all items']]
+            ], 500); // 500 Internal Server Error for any other errors
         }
     }
 }

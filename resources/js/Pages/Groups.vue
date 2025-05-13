@@ -22,7 +22,7 @@
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.ring_group_create" type="button"
+                <button v-if="page.props.auth.can.group_create" type="button"
                     @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
@@ -82,8 +82,8 @@
                             <input v-if="row.group_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
                                 :value="row.group_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9"
-                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.groups_update, }"
-                                @click="page.props.auth.can.groups_update && handleEditButtonClick(row.group_uuid)">
+                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.group_update, }"
+                                @click="page.props.auth.can.group_update && handleEditButtonClick(row.group_uuid)">
                                 <span class="flex items-center">
                                     {{ row.group_name }}
                                 </span>
@@ -126,7 +126,7 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="page.props.auth.can.groups_update" :content="'Edit'" position='TopCenter'
+                                <ejs-tooltip v-if="page.props.auth.can.group_update" :content="'Edit'" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditButtonClick(row.group_uuid)"
@@ -135,7 +135,7 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="page.props.auth.can.ring_group_destroy" :content="'Delete'"
+                                <ejs-tooltip v-if="page.props.auth.can.group_destroy" :content="'Delete'"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.group_uuid)"
@@ -171,12 +171,17 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <UpdatePermissionGroupForm :show="showUpdateModal" :options="itemOptions" @close="showUpdateModal = false"
-        @error="handleErrorResponse" @success="showNotification" />
+    <CreatePermissionGroupForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading"
+        @close="showCreateModal = false" @error="handleErrorResponse" @success="showNotification"
+        @refresh-data="handleSearchButtonClick" />
+
+    <UpdatePermissionGroupForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"
+        @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
+        @refresh-data="handleSearchButtonClick" />
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
         @confirm="confirmDeleteAction" :header="'Confirm Deletion'"
-        :text="'This action will permanently delete the selected ring group(s). Are you sure you want to proceed?'"
+        :text="'This action will permanently delete the selected group(s). Are you sure you want to proceed?'"
         :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
@@ -200,6 +205,7 @@ import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import UpdatePermissionGroupForm from "./components/forms/UpdatePermissionGroupForm.vue"
+import CreatePermissionGroupForm from "./components/forms/CreatePermissionGroupForm.vue"
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 
@@ -207,7 +213,7 @@ import Badge from "@generalComponents/Badge.vue";
 
 const page = usePage()
 const loading = ref(false)
-// const loadingModal = ref(false)
+const isModalLoading = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
@@ -290,7 +296,7 @@ const handleBulkActionRequest = (action) => {
     if (action === 'bulk_update') {
         formErrors.value = [];
         getItemOptions();
-        loadingModal.value = true
+        isModalLoading.value = true
         bulkUpdateModalTrigger.value = true;
     }
 
@@ -313,8 +319,7 @@ const handleBulkUpdateRequest = (form) => {
 
 const handleCreateButtonClick = () => {
     showCreateModal.value = true
-    formErrors.value = null;
-    loadingModal.value = true
+    isModalLoading.value = true
     getItemOptions();
 }
 
@@ -377,7 +382,7 @@ const renderRequestedPage = (url) => {
 
 const getItemOptions = (itemUuid = null) => {
     const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
-
+    isModalLoading.value = true
     axios.post(props.routes.item_options, payload)
         .then((response) => {
             itemOptions.value = response.data;
@@ -386,7 +391,9 @@ const getItemOptions = (itemUuid = null) => {
         }).catch((error) => {
             handleModalClose();
             handleErrorResponse(error);
-        });
+        }).finally(() => {
+            isModalLoading.value = false
+        })
 }
 
 const handleFormErrorResponse = (error) => {
