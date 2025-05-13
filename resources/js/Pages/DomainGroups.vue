@@ -135,11 +135,11 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <CreatePermissionGroupForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading"
+    <CreateDomainGroupForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading"
         @close="showCreateModal = false" @error="handleErrorResponse" @success="showNotification"
         @refresh-data="handleSearchButtonClick" />
 
-    <UpdatePermissionGroupForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"
+    <UpdateDomainGroupForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"
         @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
         @refresh-data="handleSearchButtonClick" />
 
@@ -153,7 +153,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
@@ -168,10 +168,9 @@ import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
-import UpdatePermissionGroupForm from "./components/forms/UpdatePermissionGroupForm.vue"
-import CreatePermissionGroupForm from "./components/forms/CreatePermissionGroupForm.vue"
+import UpdateDomainGroupForm from "./components/forms/UpdateDomainGroupForm.vue"
+import CreateDomainGroupForm from "./components/forms/CreateDomainGroupForm.vue"
 import Notification from "./components/notifications/Notification.vue";
-import Badge from "@generalComponents/Badge.vue";
 
 
 
@@ -226,8 +225,6 @@ const bulkActions = computed(() => {
     return actions;
 });
 
-onMounted(() => {
-});
 
 const handleEditButtonClick = (itemUuid) => {
     showUpdateModal.value = true

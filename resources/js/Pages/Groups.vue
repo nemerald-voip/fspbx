@@ -193,7 +193,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, ref } from "vue";
 import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
@@ -266,8 +266,6 @@ const bulkActions = computed(() => {
     return actions;
 });
 
-onMounted(() => {
-});
 
 const handleEditButtonClick = (itemUuid) => {
     showUpdateModal.value = true
@@ -390,7 +388,7 @@ const getItemOptions = (itemUuid = null) => {
     axios.post(props.routes.item_options, payload)
         .then((response) => {
             itemOptions.value = response.data;
-            console.log(itemOptions.value);
+            // console.log(itemOptions.value);
 
         }).catch((error) => {
             handleModalClose();

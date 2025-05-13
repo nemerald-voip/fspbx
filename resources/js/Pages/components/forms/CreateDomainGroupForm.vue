@@ -52,7 +52,7 @@
 
                                 }">
 
-                                <StaticElement name="h4" tag="h4" content="Update Domain Group" />
+                                <StaticElement name="h4" tag="h4" content="Create New Domain Group" />
                                 <TextElement name="group_name" label="Name" placeholder="Enter Group Name"
                                     :floating="false" />
 
@@ -104,7 +104,7 @@ const submitForm = async (FormData, form$) => {
     const requestData = form$.requestData
     // console.log(requestData);
 
-    return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
+    return await form$.$vueform.services.axios.post(props.options.routes.store_route, requestData)
 };
 
 function clearErrorsRecursive(el$) {

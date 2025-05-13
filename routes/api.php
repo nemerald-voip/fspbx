@@ -63,7 +63,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // Domain Groups
     Route::post('domain-groups', [DomainGroupsController::class, 'store'])->name('domain-groups.store');
-    Route::put('domain-groups/{group}', [DomainGroupsController::class, 'update'])->name('domain-groups.update');
+    Route::put('domain-groups/{domain_group}', [DomainGroupsController::class, 'update'])->name('domain-groups.update');
     Route::post('domain-groups/item-options', [DomainGroupsController::class, 'getItemOptions'])->name('domain-groups.item.options');
     Route::post('domain-groups/bulk-delete', [DomainGroupsController::class, 'bulkDelete'])->name('domain-groups.bulk.delete');
     Route::post('domain-groups/select-all', [DomainGroupsController::class, 'selectAll'])->name('domain-groups.select.all');

@@ -312,39 +312,6 @@ class GroupsController extends Controller
         }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        $group = Groups::findOrFail($id);
-
-        if (isset($group)) {
-            if ($group->permissions->isNotEmpty()) {
-                $deleted = $group->permissions()->delete();
-            }
-            $deleted = $group->delete();
-
-            if ($deleted) {
-                return response()->json([
-                    'status' => 200,
-                    'success' => [
-                        'message' => 'Selected groups have been deleted'
-                    ]
-                ]);
-            } else {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => 'There was an error deleting selected groups'
-                    ]
-                ]);
-            }
-        }
-    }
 
 
     /**
