@@ -144,7 +144,8 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/faxes/send', [FaxesController::class, 'sendFax'])->name('faxes.sendFax');
 
     // Domain Groups
-    Route::resource('domaingroups', DomainGroupsController::class);
+    // Route::resource('domaingroups', DomainGroupsController::class);
+    Route::get('domain-groups', [DomainGroupsController::class, 'index'])->name('domain-groups.index');
 
     // // Ring Groups
     Route::get('ring-groups', [RingGroupsController::class, 'index'])->name('ring-groups.index');

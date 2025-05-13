@@ -3,7 +3,7 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Group Manager</template>
+            <template #title>Domain Groups</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -27,11 +27,6 @@
                     Create
                 </button>
 
-                <a v-if="page.props.auth.can.domain_groups_view" type="button" href="/domain-groups"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Domain Groups
-                </a>
-
 
             </template>
 
@@ -51,13 +46,6 @@
                     <span class="pl-4">Name</span>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Level" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-
-                <TableColumnHeader header="Protected" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
@@ -80,14 +68,14 @@
             </template>
 
             <template #table-body>
-                <tr v-for="row in data.data" :key="row.group_uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.group_uuid">
+                <tr v-for="row in data.data" :key="row.domain_group_uuid">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.domain_group_uuid">
                         <div class="flex items-center">
-                            <input v-if="row.group_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
-                                :value="row.group_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <input v-if="row.domain_group_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
+                                :value="row.domain_group_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9"
                                 :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.group_update, }"
-                                @click="page.props.auth.can.group_update && handleEditButtonClick(row.group_uuid)">
+                                @click="page.props.auth.can.group_update && handleEditButtonClick(row.domain_group_uuid)">
                                 <span class="flex items-center">
                                     {{ row.group_name }}
                                 </span>
@@ -95,34 +83,6 @@
                         </div>
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <Badge :text="row.group_level" backgroundColor="bg-indigo-100" textColor="text-indigo-700"
-                            ringColor="ring-indigo-400/20" class="px-2 py-1 text-xs font-semibold" />
-                    </TableField>
-
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <a :href="`/core/groups/group_permissions.php?group_uuid=${row.group_uuid}`"
-                            class="inline-block rounded bg-white px-2 py-1 text-sm text-gray-600 shadow-sm hover:text-gray-900">
-                            Permissions
-                            ({{ row.permissions_count }})
-                        </a>
-
-                    </TableField>
-
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <a :href="`/core/groups/group_members.php?group_uuid=${row.group_uuid}`"
-                            class="inline-block rounded bg-white px-2 py-1 text-sm text-gray-600 shadow-sm hover:text-gray-900">
-                            Members
-                            ({{ row.user_groups_count }})
-                        </a>
-
-                    </TableField>
-
-
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <Badge :text="row.group_protected" backgroundColor="bg-blue-100" textColor="text-blue-700"
-                            ringColor="ring-blue-400/20" class="px-2 py-1 text-xs font-semibold" />
-                    </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.group_description" />
 
@@ -133,7 +93,7 @@
                                 <ejs-tooltip v-if="page.props.auth.can.group_update" :content="'Edit'" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
-                                        <PencilSquareIcon @click="handleEditButtonClick(row.group_uuid)"
+                                        <PencilSquareIcon @click="handleEditButtonClick(row.domain_group_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
 
                                     </div>
@@ -142,7 +102,7 @@
                                 <ejs-tooltip v-if="page.props.auth.can.group_destroy" :content="'Delete'"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
-                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.group_uuid)"
+                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.domain_group_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
@@ -444,7 +404,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.group_uuid);
+        selectedItems.value = props.data.data.map(item => item.domain_group_uuid);
     } else {
         selectedItems.value = [];
     }

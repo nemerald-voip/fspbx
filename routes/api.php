@@ -1,14 +1,14 @@
 <?php
 
+use App\Models\DomainGroups;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TokenController;
 use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\RingGroupsController;
+use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\BusinessHoursController;
 use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\EmergencyCallController;
-
-
 
 /*
 |--------------------------------------------------------------------------
@@ -57,8 +57,14 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     // Groups
     Route::post('groups', [GroupsController::class, 'store'])->name('groups.store');
     Route::put('groups/{group}', [GroupsController::class, 'update'])->name('groups.update');
-    Route::delete('groups/{group}', [GroupsController::class, 'destroy'])->name('groups.destroy');
     Route::post('groups/item-options', [GroupsController::class, 'getItemOptions'])->name('groups.item.options');
     Route::post('groups/bulk-delete', [GroupsController::class, 'bulkDelete'])->name('groups.bulk.delete');
     Route::post('groups/select-all', [GroupsController::class, 'selectAll'])->name('groups.select.all');
+
+    // Domain Groups
+    Route::post('domain-groups', [DomainGroupsController::class, 'store'])->name('domain-groups.store');
+    Route::put('domain-groups/{group}', [DomainGroupsController::class, 'update'])->name('domain-groups.update');
+    Route::post('domain-groups/item-options', [DomainGroupsController::class, 'getItemOptions'])->name('domain-groups.item.options');
+    Route::post('domain-groups/bulk-delete', [DomainGroupsController::class, 'bulkDelete'])->name('domain-groups.bulk.delete');
+    Route::post('domain-groups/select-all', [DomainGroupsController::class, 'selectAll'])->name('domain-groups.select.all');
 });
