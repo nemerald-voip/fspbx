@@ -2,8 +2,6 @@
 
 namespace App\Listeners;
 
-use dashboard;
-use permissions;
 use App\Models\Domain;
 use App\Models\DomainSettings;
 use App\Models\DefaultSettings;
