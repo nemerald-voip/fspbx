@@ -4,22 +4,23 @@ namespace App\Http\Controllers;
 
 use Inertia\Inertia;
 use App\Models\FaxQueues;
+use App\Models\UserLog;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Session;
 
-class FaxQueueController extends Controller
+class UserLogsController extends Controller
 {
 
     public $model;
     public $filters = [];
     public $sortField;
     public $sortOrder;
-    protected $viewName = 'FaxQueue';
-    protected $searchable = ['fax_caller_id_number'];
+    protected $viewName = 'UserLogs';
+    protected $searchable = ['remote_address', 'username', 'user.user_email'];
 
     public function __construct()
     {
-        $this->model = new FaxQueues();
+        $this->model = new UserLog();
     }
 
     /**
@@ -30,7 +31,7 @@ class FaxQueueController extends Controller
     public function index()
     {
         // Check permissions
-        if (!userCheckPermission("fax_queue_all")) {
+        if (!userCheckPermission("user_log_view")) {
             return redirect('/');
         }
 
@@ -50,9 +51,8 @@ class FaxQueueController extends Controller
                     return get_local_time_zone(session('domain_uuid'));
                 },
                 'routes' => [
-                    'current_page' => route('faxqueue.index'),
-                    'retry' => route('faxqueue.retry'),
-                    'select_all' => route('faxqueue.select.all'),
+                    'current_page' => route('user-logs.index'),
+                    'select_all' => route('user-logs.select.all'),
                 ]
 
             ]
@@ -72,7 +72,7 @@ class FaxQueueController extends Controller
         }
 
         // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'fax_date'); // Default to 'fax_date'
+        $this->sortField = request()->get('sortField', 'timestamp'); // Default to 'timestamp'
         $this->sortOrder = request()->get('sortOrder', 'desc'); // Default to descending
 
         $this->filters = [
@@ -98,7 +98,7 @@ class FaxQueueController extends Controller
             $data = $data->get(); // This will return a collection
         }
 
-        // logger($data);
+        logger($data);
 
         return $data;
     }
@@ -125,17 +125,17 @@ class FaxQueueController extends Controller
             $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
         }
 
+        $data->with('user');
+
         $data->select(
-            'fax_queue_uuid',
+            'user_log_uuid',
             'domain_uuid',
-            'fax_date',
-            'fax_number',
-            'fax_caller_id_number',
-            'fax_email_address',
-            'fax_retry_date',
-            'fax_retry_count',
-            'fax_notify_date',
-            'fax_status',
+            'timestamp',
+            'user_uuid',
+            'type',
+            'result',
+            'remote_address',
+            'user_agent',
         );
 
         if (is_array($filters)) {
@@ -181,12 +181,12 @@ class FaxQueueController extends Controller
 
     protected function filterStartPeriod($query, $value)
     {
-        $query->where('fax_date', '>=', $value->toIso8601String());
+        $query->where('timestamp', '>=', $value->toIso8601String());
     }
 
     protected function filterEndPeriod($query, $value)
     {
-        $query->where('fax_date', '<=', $value->toIso8601String());
+        $query->where('timestamp', '<=', $value->toIso8601String());
     }
 
     /**

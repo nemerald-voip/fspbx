@@ -96,6 +96,7 @@
                         break;
 
                     case 'us_holiday':
+                    case 'ca_holiday':
                         // 1) a fixed calendar date (e.g. January 1)
                         if (!empty($h->mon) && !empty($h->mday) && empty($h->wday) && empty($h->mweek)) {
                             $useAttrs = [

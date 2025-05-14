@@ -38,6 +38,14 @@
                                             (h.value.wday ?? '') === (options.item.wday ?? '') &&
                                             (h.value.mweek ?? '') === (options.item.mweek ?? '')
                                         )
+                                        ?? null,
+                                    ca_holiday:
+                                        caHolidays.find(h =>
+                                            (h.value.mon ?? '') === (options.item.mon ?? '') &&
+                                            (h.value.mday ?? '') === (options.item.mday ?? '') &&
+                                            (h.value.wday ?? '') === (options.item.wday ?? '') &&
+                                            (h.value.mweek ?? '') === (options.item.mweek ?? '')
+                                        )
                                         ?? null
                                 }">
                                 <HiddenElement name="business_hour_uuid" :meta="true" />
@@ -46,6 +54,10 @@
                                     {
                                         value: 'us_holiday',
                                         label: 'US Holiday',
+                                    },
+                                    {
+                                        value: 'ca_holiday',
+                                        label: 'Canadian Holiday',
                                     },
                                     {
                                         value: 'single_date',
@@ -70,6 +82,7 @@
                                         'in',
                                         [
                                             'us_holiday',
+                                            'ca_holiday',
                                         ],
                                     ],
                                 ]">
@@ -81,7 +94,7 @@
                                             </div>
 
                                             <div class="ml-3">
-                                                Choose from the list of U.S. federal holidays. Each selection automatically
+                                                Choose from the list of holidays. Each selection automatically
                                                 applies the exception on that exact holiday date.
 
                                             </div>
@@ -190,6 +203,19 @@
                                         ],
                                     ]" />
 
+                                <SelectElement name="ca_holiday" :search="true" :native="false" label="Canadian Holiday"
+                                    :submit="false" :items="caHolidays" input-type="search" autocomplete="off"
+                                    :object="true" @change="handleCAHolidayUpdate" placeholder="Select Canadian Holiday"
+                                    :floating="false" :conditions="[
+                                        [
+                                            'holiday_type',
+                                            'in',
+                                            [
+                                                'ca_holiday',
+                                            ],
+                                        ],
+                                    ]" />
+
                                 <TextElement name="description" label="Holiday Description"
                                     description="Enter a clear, descriptive name for this holiday (e.g. ‘Company Annual Picnic’)."
                                     :conditions="[
@@ -204,16 +230,17 @@
                                         ],
                                     ]" />
 
-                                <DateElement name="start_date" display-format="MMMM DD, YYYY" load-format="DD/MM/YYYY" :label="(el$) => {
-                                    if (el$.form$.el$('holiday_type').value == 'single_date') {
-                                        return 'Date'
-                                    }
+                                <DateElement name="start_date" display-format="MMMM DD, YYYY" load-format="DD/MM/YYYY"
+                                    :label="(el$) => {
+                                        if (el$.form$.el$('holiday_type').value == 'single_date') {
+                                            return 'Date'
+                                        }
 
-                                    if (el$.form$.el$('holiday_type').value == 'date_range') {
-                                        return 'Start Date'
-                                    }
+                                        if (el$.form$.el$('holiday_type').value == 'date_range') {
+                                            return 'Start Date'
+                                        }
 
-                                }" :columns="{
+                                    }" :columns="{
     default: {
         container: 6,
     },
@@ -491,7 +518,7 @@ const handleSuccess = (response, form$) => {
     // console.log(response.status) // HTTP status code
     // console.log(response.data) // response data
 
-    emits('success',response.data.messages);
+    emits('success', response.data.messages);
     emits('close');
     emits('refresh-data');
 }
@@ -573,7 +600,28 @@ const handleUSHolidayUpdate = (newValue, oldValue, el$) => {
 
 }
 
+const handleCAHolidayUpdate = (newValue, oldValue, el$) => {
+    if (newValue != oldValue) {
+        // find the holiday whose value matches newValue
+        const match = caHolidays.find(h =>
+            h.value.mon === newValue.value.mon
+            && h.value.mday === newValue.value.mday
+            && h.value.mweek === newValue.value.mweek
+            && h.value.wday === newValue.value.wday
+        );
 
+        // pull its label (or fall back to an empty string)
+        const label = match?.label ?? '';
+
+        el$.form$.update({
+            mday: newValue.value.mday,
+            mon: newValue.value.mon,
+            mweek: newValue.value.mweek,
+            wday: newValue.value.wday,
+            description: label,
+        })
+    }
+}
 
 // Month (1=Jan … 12=Dec)
 const monthOptions = [
@@ -688,6 +736,78 @@ const usHolidays = [
     {
         label: "Father's Day (3rd Sunday in June)",
         value: { mon: "6", wday: "1", mday: "15-21", mweek: "" }
+    }
+];
+
+const caHolidays = [
+    {
+        label: "New Year's Day (January 1)",
+        value: { mon: "1", wday: "", mday: "1", mweek: "" }
+    },
+    {
+        label: "Family Day (3rd Monday in February)",
+        value: { mon: "2", wday: "2", mday: "15-21", mweek: "" }
+    },
+    {
+        label: "Good Friday (Friday before Easter Sunday)",
+        value: { mon: "4", wday: "6", mday: "2-8", mweek: "" }
+    },
+    {
+        label: "Easter Monday (Monday after Easter Sunday)",
+        value: { mon: "4", wday: "2", mday: "1-7", mweek: "" }
+    },
+    {
+        label: "Victoria Day (Last Monday before May 25)",
+        value: { mon: "5", wday: "2", mday: "18-24", mweek: "" }
+    },
+    {
+        label: "Canada Day (July 1)",
+        value: { mon: "7", wday: "", mday: "1", mweek: "" }
+    },
+    {
+        label: "Civic Holiday (First Monday in August)",
+        value: { mon: "8", wday: "2", mday: "1-7", mweek: "" }
+    },
+    {
+        label: "Labour Day (First Monday in September)",
+        value: { mon: "9", wday: "2", mday: "1-7", mweek: "" }
+    },
+    {
+        label: "National Day for Truth and Reconciliation (September 30)",
+        value: { mon: "9", wday: "", mday: "30", mweek: "" }
+    },
+    {
+        label: "Thanksgiving Day (Second Monday in October)",
+        value: { mon: "10", wday: "2", mday: "8-14", mweek: "" }
+    },
+    {
+        label: "Remembrance Day (November 11)",
+        value: { mon: "11", wday: "", mday: "11", mweek: "" }
+    },
+    {
+        label: "Christmas Day (December 25)",
+        value: { mon: "12", wday: "", mday: "25", mweek: "" }
+    },
+    {
+        label: "Boxing Day (December 26)",
+        value: { mon: "12", wday: "", mday: "26", mweek: "" }
+    },
+    // Additional observances
+    {
+        label: "St. Patrick's Day (March 17)",
+        value: { mon: "3", wday: "", mday: "17", mweek: "" }
+    },
+    {
+        label: "Mother's Day (Second Sunday in May)",
+        value: { mon: "5", wday: "1", mday: "8-14", mweek: "" }
+    },
+    {
+        label: "Father's Day (Third Sunday in June)",
+        value: { mon: "6", wday: "1", mday: "15-21", mweek: "" }
+    },
+    {
+        label: "Halloween (October 31)",
+        value: { mon: "10", wday: "", mday: "31", mweek: "" }
     }
 ];
 
