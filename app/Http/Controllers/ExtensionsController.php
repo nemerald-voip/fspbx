@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Throwable;
+use Inertia\Inertia;
 use App\Models\Devices;
 use App\Models\FollowMe;
 use App\Models\IvrMenus;
@@ -60,6 +61,10 @@ class ExtensionsController extends Controller
      */
     public function index(Request $request)
     {
+        if ($request->hasHeader('X-Inertia')) {
+            return Inertia::location(route($request->route()->getName()));
+        }
+        
         // Check permissions
         if (!userCheckPermission("extension_view")) {
             return redirect('/');
