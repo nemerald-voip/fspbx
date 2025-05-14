@@ -24,7 +24,8 @@ class EventServiceProvider extends ServiceProvider
      */
     protected $listen = [
         Login::class => [
-            'App\Listeners\SetUpUserSession',
+            \App\Listeners\SetUpUserSession::class,
+            \App\Listeners\LogSuccessfulLogin::class,
         ],
         ExtensionCreated::class => [
             NotifySuperadminListener::class,
@@ -41,7 +42,12 @@ class EventServiceProvider extends ServiceProvider
         GreetingDeleted::class => [
             NotifyModelsOnGreetingDeleted::class,
         ],
-
+        \Illuminate\Auth\Events\Failed::class        => [
+            \App\Listeners\LogFailedLogin::class,
+        ],
+        \Illuminate\Auth\Events\PasswordReset::class => [
+            \App\Listeners\LogPasswordReset::class,
+        ],
 
     ];
 

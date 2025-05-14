@@ -15,6 +15,7 @@ use App\Http\Controllers\ContactsController;
 use App\Http\Controllers\FaxQueueController;
 use App\Http\Controllers\FirewallController;
 use App\Http\Controllers\MessagesController;
+use App\Http\Controllers\UserLogsController;
 use App\Http\Controllers\CsrfTokenController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GreetingsController;
@@ -144,12 +145,13 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/faxes/send', [FaxesController::class, 'sendFax'])->name('faxes.sendFax');
 
     // Domain Groups
-    // Route::resource('domaingroups', DomainGroupsController::class);
     Route::get('domain-groups', [DomainGroupsController::class, 'index'])->name('domain-groups.index');
 
-    // // Ring Groups
+    // Ring Groups
     Route::get('ring-groups', [RingGroupsController::class, 'index'])->name('ring-groups.index');
 
+    // User Logs
+    Route::get('user-logs', [UserLogsController::class, 'index'])->name('user-logs.index');
 
     // Business hours
     Route::get('business-hours', [BusinessHoursController::class, 'index'])->name('business-hours.index');
