@@ -62,51 +62,9 @@
                         :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
                         @pagination-change-page="renderRequestedPage" />
                 </template>
-                <!-- <template #table-header>
-                    <TableColumnHeader
-                        class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
-                        <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
-                            class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                        <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
-                            :has-selected-items="selectedItems.length > 0" />
-                        <span class="pl-4">From</span>
-                    </TableColumnHeader>
-
-                    <TableColumnHeader header="To" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    </TableColumnHeader>
-                    <TableColumnHeader v-if="filterData.showGlobal" header="Domain"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Email" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    </TableColumnHeader>
-                    <TableColumnHeader header="Date" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    </TableColumnHeader>
-                    <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    </TableColumnHeader>
-                    <TableColumnHeader header="Last Attempt"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    </TableColumnHeader>
-                    <TableColumnHeader header="Retry Count"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    </TableColumnHeader>
-                    <TableColumnHeader header="Notify Date"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    </TableColumnHeader>
-
-                    <TableColumnHeader header="" class="px-2 py-3.5 text-sm font-semibold text-center text-gray-900" />
-
-                </template> -->
 
 
                 <template #table-header>
-                    <!-- <TableColumnHeader
-                        class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
-                        <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
-                            class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                        <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
-                            :has-selected-items="selectedItems.length > 0" />
-                        <span class="pl-4">From</span>
-                    </TableColumnHeader> -->
-
                     <TableColumnHeader
                         class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                         <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
@@ -169,18 +127,6 @@
 
                 <template #table-body>
                     <tr v-for="row in data.data" :key="row.user_log_uuid">
-                        <!-- Username + checkbox -->
-                        <!-- <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500">
-                            <div class="flex items-center">
-                                <input v-model="selectedItems" type="checkbox" name="action_box[]"
-                                    :value="row.user_log_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600" />
-                                <div class="ml-4">
-                                    {{ row.user.name_formatted }}
-                                </div>
-                            </div>
-                        </TableField> -->
-
-
                         <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500"
                             :text="row.fax_caller_id_number">
                             <div class="flex items-center">
@@ -196,10 +142,6 @@
 
                         <!-- Email -->
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.user.user_email" />
-
-                        <!-- Domain (when global) -->
-                        <!-- <TableField v-if="filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                            :text="row.domain?.domain_description" /> -->
 
                         <TableField v-if="filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                             :text="row.domain?.domain_description">
@@ -325,17 +267,6 @@ const props = defineProps({
     statusOptions: Object,
 });
 
-// onMounted(() => {
-//     //request list of entities
-//     // getEntities();
-//     if (props.data.data.length === 0) {
-//         handleSearchButtonClick();
-//     }
-// })
-
-console.log(props.data)
-
-
 const filterData = ref({
     search: props.search,
     showGlobal: false,
@@ -410,57 +341,23 @@ const renderRequestedPage = (url) => {
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
     const actions = [
-        {
-            id: 'bulk_retry',
-            label: 'Retry',
-            icon: 'RestartIcon'
-        }
+        // {
+        //     id: 'bulk_retry',
+        //     label: 'Retry',
+        //     icon: 'RestartIcon'
+        // }
     ];
 
     return actions;
 });
 
 const handleBulkActionRequest = (action) => {
-    if (action === 'bulk_retry') {
-        showRetryConfirmationModal.value = true;
-        confirmRetryAction.value = () => executeBulkRetry();
-    }
+    // if (action === 'bulk_retry') {
+    //     showRetryConfirmationModal.value = true;
+    //     confirmRetryAction.value = () => executeBulkRetry();
+    // }
 
 }
-
-const handleRetry = (uuid) => {
-    axios.post(props.routes.retry,
-        { 'items': [uuid] },
-    )
-        .then((response) => {
-            showNotification('success', response.data.messages);
-
-            handleClearSelection();
-        }).catch((error) => {
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        }).finally(() => {
-            handleSearchButtonClick();
-        });
-}
-
-const executeBulkRetry = () => {
-    axios.post(props.routes.retry,
-        { 'items': selectedItems.value },
-    )
-        .then((response) => {
-            showNotification('success', response.data.messages);
-            handleModalClose();
-            handleClearSelection();
-        }).catch((error) => {
-            handleClearSelection();
-            handleModalClose();
-            handleFormErrorResponse(error);
-        }).finally(() => {
-            handleSearchButtonClick();
-        });
-}
-
 
 const handleUpdateDateRange = (newDateRange) => {
     filterData.value.dateRange = newDateRange;
