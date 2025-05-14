@@ -317,26 +317,7 @@ class VoicemailController extends Controller
         ]);
     }
 
-
-    /**
-     * Get voicemail greeting.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    // public function getVoicemailGreeting(Voicemails $voicemail, string $filename)
-    // {
-    //     $path = Session::get('domain_name') . '/' . $voicemail->voicemail_id . '/' . $filename;
-
-    //     if (!Storage::disk('voicemail')->exists($path)) abort(404);
-
-    //     $file = Storage::disk('voicemail')->path($path);
-    //     $type = Storage::disk('voicemail')->mimeType($path);
-
-    //     $response = Response::make(file_get_contents($file), 200);
-    //     $response->header("Content-Type", $type);
-    //     return $response;
-    // }
-
+    
     /**
      * Get voicemail greeting.
      *
@@ -723,11 +704,6 @@ class VoicemailController extends Controller
         $permissions['manage_voicemail_transcription'] = userCheckPermission('voicemail_transcription_enabled');
         $permissions['manage_voicemail_auto_delete'] = userCheckPermission('voicemail_local_after_email');
         $permissions['manage_voicemail_recording_instructions'] = userCheckPermission('voicemail_recording_instructions');
-
-        // $permissions['manage_voicemail_copies'] = false;
-        // $permissions['manage_voicemail_transcription'] = false;
-        // $permissions['manage_voicemail_auto_delete'] = false;
-        // $permissions['manage_voicemail_recording_instructions'] = false;
 
         return $permissions;
     }

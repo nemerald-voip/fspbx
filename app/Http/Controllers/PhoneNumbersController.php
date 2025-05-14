@@ -1093,15 +1093,7 @@ class PhoneNumbersController extends Controller
     public function getUserPermissions()
     {
         $permissions = [];
-        $permissions['manage_voicemail_copies'] = userCheckPermission('voicemail_forward');
-        $permissions['manage_voicemail_transcription'] = userCheckPermission('voicemail_transcription_enabled');
-        $permissions['manage_voicemail_auto_delete'] = userCheckPermission('voicemail_local_after_email');
-        $permissions['manage_voicemail_recording_instructions'] = userCheckPermission('voicemail_recording_instructions');
-
-        // $permissions['manage_voicemail_copies'] = false;
-        // $permissions['manage_voicemail_transcription'] = false;
-        // $permissions['manage_voicemail_auto_delete'] = false;
-        // $permissions['manage_voicemail_recording_instructions'] = false;
+        // $permissions['manage_voicemail_copies'] = userCheckPermission('voicemail_forward');
 
         return $permissions;
     }

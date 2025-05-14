@@ -103,6 +103,10 @@ class StoreVoicemailRequest extends FormRequest
             $this->merge([
                 'voicemail_recording_instructions' => $this->voicemail_play_recording_instructions ? 'true' : 'false',
             ]);
+        } else {
+            $this->merge([
+                'voicemail_recording_instructions' => 'true' 
+            ]);
         }
 
         // Sanitize voicemail_description
