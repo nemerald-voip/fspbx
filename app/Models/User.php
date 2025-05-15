@@ -61,39 +61,17 @@ class User extends Authenticatable
         'contact_uuid',
         'user_totp_secret',
         'user_type',
-        'user_status',
+        'user_adv_fields',
+        'settings'
     ];
 
-    /**
-     * The booted method of the model
-     *
-     * Define all attributes here like normal code
+    // always eager-load the relation
+    protected $with = ['user_adv_fields', 'settings'];
 
-     */
-    protected static function booted()
-    {
-        static::saving(function ($model) {
-            // Remove attributes before saving to database
-            unset($model->name_formatted);
-            if (!$model->domain_uuid) {
-                $model->domain_uuid = session('domain_uuid');
-            }
-        });
+    /* Automatically include this computed attribute on every model
+    */
+    protected $appends = ['name_formatted', 'language', 'time_zone'];
 
-        static::retrieved(function ($model) {
-            if (Schema::hasTable('users_adv_fields')) {
-                if ($model->user_adv_fields && ($model->user_adv_fields->first_name || $model->user_adv_fields->last_name)) {
-                    $model->name_formatted = trim(($model->user_adv_fields->first_name ?? '') . ' ' . ($model->user_adv_fields->last_name ?? ''));
-                } else {
-                    $model->name_formatted = $model->username;
-                }
-                // $model->destroy_route = route('devices.destroy', $model);
-            } else {
-                $model->name_formatted = $model->username;
-            }
-            return $model;
-        });
-    }
 
     /**
      * The attributes that should be cast.
@@ -102,6 +80,54 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+
+    /**
+     * Mutator: if no domain_uuid is explicitly set, pull it from session
+     */
+    public function setDomainUuidAttribute($value)
+    {
+        $this->attributes['domain_uuid'] = $value ?: session('domain_uuid');
+    }
+
+    /**
+     * Accessor: build name_formatted from advanced fields if available,
+     * otherwise fall back to username
+     */
+    public function getNameFormattedAttribute(): string
+    {
+        // if relationship not yet loaded, lazy‐load it
+        $adv = $this->user_adv_fields;
+        if ($adv && ($adv->first_name || $adv->last_name)) {
+            return trim(($adv->first_name ?? '') . ' ' . ($adv->last_name ?? ''));
+        }
+
+        return $this->username;
+    }
+
+    /**
+     * Accessor: get the 'language' setting under category 'domain'
+     */
+    public function getLanguageAttribute(): ?string
+    {
+        $setting = $this->settings
+            ->where('user_setting_category', 'domain')
+            ->firstWhere('user_setting_subcategory', 'language');
+
+        return $setting->user_setting_value ?? null;
+    }
+
+    /**
+     * Accessor: get the 'time_zone' setting under category 'domain'
+     */
+    public function getTimeZoneAttribute(): ?string
+    {
+        $setting = $this->settings
+            ->where('user_setting_category', 'domain')
+            ->firstWhere('user_setting_subcategory', 'time_zone');
+
+        return $setting->user_setting_value ?? null;
+    }
+
 
 
     /**
@@ -195,7 +221,7 @@ class User extends Authenticatable
         return $this->user_adv_fields->two_factor_cookies ?? null;
     }
 
-    public function setting()
+    public function settings()
     {
         return $this->hasMany(UserSetting::class, 'user_uuid', 'user_uuid');
     }

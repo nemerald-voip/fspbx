@@ -594,14 +594,10 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
 </template>
 
 <script setup>
-import { onMounted, reactive, ref, watch, computed, nextTick } from "vue";
-import { usePage } from '@inertiajs/vue3';
-
+import { onMounted, reactive, ref, watch, computed } from "vue";
 
 import DeleteConfirmationModal from "../modal/DeleteConfirmationModal.vue";
 import Spinner from "@generalComponents/Spinner.vue";
-import { InformationCircleIcon } from "@heroicons/vue/24/outline";
-import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { PlusIcon, TrashIcon, PencilSquareIcon } from '@heroicons/vue/20/solid'
 import { PlayCircleIcon, CloudArrowDownIcon, PauseCircleIcon } from '@heroicons/vue/24/solid';
 import UpdateGreetingModal from "../modal/UpdateGreetingModal.vue";

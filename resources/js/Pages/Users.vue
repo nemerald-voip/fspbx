@@ -3,7 +3,7 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Domain Groups</template>
+            <template #title>Users</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -22,7 +22,8 @@
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.group_create" type="button" @click.prevent="handleCreateButtonClick()"
+                <button v-if="page.props.auth.can.ring_group_create" type="button"
+                    @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
@@ -35,8 +36,10 @@
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
                     @pagination-change-page="renderRequestedPage" />
             </template>
-            <template #table-header>
 
+
+            <template #table-header>
+                <!-- Checkbox + Name column -->
                 <TableColumnHeader
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
@@ -46,6 +49,16 @@
                     <span class="pl-4">Name</span>
                 </TableColumnHeader>
 
+                <!-- Email column -->
+                <TableColumnHeader header="Email" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+
+                <!-- Roles -->
+                <TableColumnHeader header="Roles" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+
+                <!-- Enabled column -->
+                <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+
+                <!-- Actions column -->
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
@@ -67,50 +80,73 @@
                 </td>
             </template>
 
+
+
             <template #table-body>
-                <tr v-for="row in data.data" :key="row.domain_group_uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.domain_group_uuid">
+                <tr v-for="row in data.data" :key="row.user_uuid">
+                    <!-- Checkbox + Name -->
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.ring_group_extension">
                         <div class="flex items-center">
-                            <input v-if="row.domain_group_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
-                                :value="row.domain_group_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <input v-if="row.user_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
+                                :value="row.user_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9"
-                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.group_update, }"
-                                @click="page.props.auth.can.group_update && handleEditButtonClick(row.domain_group_uuid)">
+                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.user_update, }"
+                                @click="page.props.auth.can.user_update && handleEditButtonClick(row.user_uuid)">
                                 <span class="flex items-center">
-                                    {{ row.group_name }}
+                                    {{ row.name_formatted }}
                                 </span>
                             </div>
                         </div>
                     </TableField>
 
+                    <!-- Email -->
+                    <TableField class="px-2 py-2 text-sm text-gray-500" :text="row.user_email" />
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.group_description" />
+                    <!-- Groups badges -->
+                    <TableField class="px-2 py-2 text-sm">
+                        <div class="flex flex-wrap gap-1">
+                            <Badge v-for="group in row.user_groups" :key="group.user_group_uuid" :text="group.group_name"
+                                backgroundColor="bg-blue-100" textColor="text-blue-700" ringColor="ring-blue-400/20"
+                                class="px-2 py-1 text-xs " />
+                        </div>
+                    </TableField>
 
+                    <!-- Enabled badge -->
+                    <TableField class="px-2 py-2 text-sm">
+                        <Badge :text="row.user_enabled ? 'Enabled' : 'Disabled'"
+                            :backgroundColor="row.user_enabled ? 'bg-green-100' : 'bg-red-100'"
+                            :textColor="row.user_enabled ? 'text-green-800' : 'text-red-800'" class="px-2 py-1 text-xs " />
+                    </TableField>
 
+                    <!-- Action buttons -->
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="page.props.auth.can.group_update" :content="'Edit'" position='TopCenter'
+                                <ejs-tooltip v-if="page.props.auth.can.user_update" :content="'Edit'" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
-                                        <PencilSquareIcon @click="handleEditButtonClick(row.domain_group_uuid)"
+                                        <PencilSquareIcon @click="handleEditButtonClick(row.user_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
 
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="page.props.auth.can.group_destroy" :content="'Delete'"
+                                <ejs-tooltip v-if="page.props.auth.can.user_destroy" :content="'Delete'"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
-                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.domain_group_uuid)"
+                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.user_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
                             </div>
                         </template>
+
+
                     </TableField>
                 </tr>
             </template>
+
             <template #empty>
                 <!-- Conditional rendering for 'no records' message -->
                 <div v-if="data.data.length === 0" class="text-center my-5 ">
@@ -135,17 +171,31 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <CreateDomainGroupForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading"
-        @close="showCreateModal = false" @error="handleErrorResponse" @success="showNotification"
-        @refresh-data="handleSearchButtonClick" />
-
-    <UpdateDomainGroupForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"
+    <UpdateUserForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"
         @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
         @refresh-data="handleSearchButtonClick" />
 
+    <!-- <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showUpdateModal"
+        :header="'Update Ring Group Settings - ' + itemOptions?.ring_group?.ring_group_name" :loading="loadingModal"
+        @close="handleModalClose">
+        <template #modal-body>
+            <UpdateRingGroupForm :options="itemOptions" @close="handleModalClose" @error="handleErrorResponse"
+                @success="showNotification" @refresh-data="handleSearchButtonClick" />
+        </template>
+    </AddEditItemModal> -->
+
+    <!-- <AddEditItemModal :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="loadingModal"
+        @close="handleModalClose">
+        <template #modal-body>
+            <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
+                :is-submitting="bulkUpdateFormSubmiting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose"
+                @domain-selected="getItemOptions" />
+        </template>
+    </AddEditItemModal> -->
+
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
         @confirm="confirmDeleteAction" :header="'Confirm Deletion'"
-        :text="'This action will permanently delete the selected group(s). Are you sure you want to proceed?'"
+        :text="'This action will permanently delete the selected ring group(s). Are you sure you want to proceed?'"
         :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
@@ -161,16 +211,19 @@ import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
+import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
+import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
-import UpdateDomainGroupForm from "./components/forms/UpdateDomainGroupForm.vue"
-import CreateDomainGroupForm from "./components/forms/CreateDomainGroupForm.vue"
+import UpdateUserForm from "./components/forms/UpdateUserForm.vue";
+import UpdateRingGroupForm from "./components/forms/UpdateRingGroupForm.vue";
 import Notification from "./components/notifications/Notification.vue";
+import Badge from "@generalComponents/Badge.vue";
 
 
 
@@ -183,8 +236,12 @@ const selectPageItems = ref(false);
 const showCreateModal = ref(false);
 const showUpdateModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
+const confirmationModalDestroyPath = ref(null);
+const createFormSubmiting = ref(null);
+const updateFormSubmiting = ref(null);
 const confirmDeleteAction = ref(null);
 const bulkUpdateFormSubmiting = ref(null);
+const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
@@ -193,9 +250,7 @@ const showDeleteConfirmationModal = ref(false);
 const props = defineProps({
     data: Object,
     routes: Object,
-    itemData: Object,
 });
-
 
 const filterData = ref({
     search: null,
@@ -224,6 +279,7 @@ const bulkActions = computed(() => {
 
     return actions;
 });
+
 
 
 const handleEditButtonClick = (itemUuid) => {
@@ -257,7 +313,7 @@ const handleBulkActionRequest = (action) => {
     if (action === 'bulk_update') {
         formErrors.value = [];
         getItemOptions();
-        isModalLoading.value = true
+        loadingModal.value = true
         bulkUpdateModalTrigger.value = true;
     }
 
@@ -280,7 +336,8 @@ const handleBulkUpdateRequest = (form) => {
 
 const handleCreateButtonClick = () => {
     showCreateModal.value = true
-    isModalLoading.value = true
+    formErrors.value = null;
+    loadingModal.value = true
     getItemOptions();
 }
 
@@ -304,7 +361,9 @@ const handleSearchButtonClick = () => {
     loading.value = true;
     router.visit(props.routes.current_page, {
         data: {
-            filterData: filterData._rawValue,
+            filter: {
+                search: filterData.value.search,     // ← here
+            },
         },
         preserveScroll: true,
         preserveState: true,
@@ -329,7 +388,9 @@ const renderRequestedPage = (url) => {
     loading.value = true;
     router.visit(url, {
         data: {
-            filterData: filterData._rawValue,
+            filter: {
+                search: filterData.value.search,     // ← here
+            },
         },
         preserveScroll: true,
         preserveState: true,
@@ -347,7 +408,7 @@ const getItemOptions = (itemUuid = null) => {
     axios.post(props.routes.item_options, payload)
         .then((response) => {
             itemOptions.value = response.data;
-            // console.log(itemOptions.value);
+            console.log(itemOptions.value);
 
         }).catch((error) => {
             handleModalClose();
@@ -401,7 +462,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.domain_group_uuid);
+        selectedItems.value = props.data.data.map(item => item.user_uuid);
     } else {
         selectedItems.value = [];
     }
