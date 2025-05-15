@@ -549,6 +549,7 @@ class ExtensionsController extends Controller
         if (isset($attributes['exclude_from_ringotel_stale_users']) && $attributes['exclude_from_ringotel_stale_users'] == "on") $attributes['exclude_from_ringotel_stale_users'] = "true";
         $attributes['voicemail_enabled'] = "true";
         $attributes['voicemail_transcription_enabled'] = "true";
+        $attributes['voicemail_recording_instructions'] = "true";
         $attributes['voicemail_file'] = "attach";
         $attributes['voicemail_local_after_email'] = "true";
         $attributes['voicemail_tutorial'] = "true";
