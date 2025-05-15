@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Throwable;
+use Inertia\Inertia;
 use App\Models\Devices;
 use App\Models\FollowMe;
 use App\Models\IvrMenus;
@@ -60,6 +61,10 @@ class ExtensionsController extends Controller
      */
     public function index(Request $request)
     {
+        if ($request->hasHeader('X-Inertia')) {
+            return Inertia::location(route($request->route()->getName()));
+        }
+        
         // Check permissions
         if (!userCheckPermission("extension_view")) {
             return redirect('/');
@@ -544,6 +549,7 @@ class ExtensionsController extends Controller
         if (isset($attributes['exclude_from_ringotel_stale_users']) && $attributes['exclude_from_ringotel_stale_users'] == "on") $attributes['exclude_from_ringotel_stale_users'] = "true";
         $attributes['voicemail_enabled'] = "true";
         $attributes['voicemail_transcription_enabled'] = "true";
+        $attributes['voicemail_recording_instructions'] = "true";
         $attributes['voicemail_file'] = "attach";
         $attributes['voicemail_local_after_email'] = "true";
         $attributes['voicemail_tutorial'] = "true";

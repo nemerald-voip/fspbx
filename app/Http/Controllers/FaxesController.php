@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 
 use Throwable;
 use Carbon\Carbon;
+use Inertia\Inertia;
 use App\Models\Faxes;
 use App\Models\FaxLogs;
 use App\Models\FaxFiles;
 use App\Models\Dialplans;
 use App\Models\FaxQueues;
+use App\Models\FusionCache;
 use App\Models\Destinations;
 use Illuminate\Http\Request;
 use App\Models\DefaultSettings;
@@ -25,7 +27,6 @@ use App\Jobs\SendFaxNotificationToSlack;
 use Illuminate\Support\Facades\Response;
 use libphonenumber\NumberParseException;
 use Illuminate\Support\Facades\Validator;
-use App\Models\FusionCache;
 
 class FaxesController extends Controller
 {
@@ -36,6 +37,10 @@ class FaxesController extends Controller
      */
     public function index(Request $request)
     {
+        if ($request->hasHeader('X-Inertia')) {
+            return Inertia::location(route($request->route()->getName()));
+        }
+        
         // Check permissions
         if (!userCheckPermission("fax_view")) {
             return redirect('/');

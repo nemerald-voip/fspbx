@@ -98,7 +98,7 @@ class UserLogsController extends Controller
             $data = $data->get(); // This will return a collection
         }
 
-        logger($data);
+        // logger($data);
 
         return $data;
     }
