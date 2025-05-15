@@ -726,6 +726,10 @@ const usHolidays = [
         value: { mon: "11", wday: "5", mday: "22-28", mweek: "" }
     },
     {
+        label: "Black Friday (4th Friday in November)",
+        value: { mon: "11", wday: "6",  mday: "23-29",  mweek: "" }
+    },
+    {
         label: "Christmas Day (December 25)",
         value: { mon: "12", wday: "", mday: "25", mweek: "" }
     },
