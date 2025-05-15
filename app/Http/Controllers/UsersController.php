@@ -148,6 +148,8 @@ class UsersController extends Controller
                 user_uuid: '',
                 user_email: '',
                 name_formatted: '',
+                first_name: '',
+                last_name: '',
                 language: 'en-us',
                 time_zone: get_local_time_zone(),
                 user_enabled: true,
@@ -163,6 +165,17 @@ class UsersController extends Controller
             // etc…
         ];
 
+        $groups = Groups::where('domain_uuid', session('domain_uuid'))
+            ->orWhere('domain_uuid', null)
+            ->orderBy('group_name')
+            ->get()
+            ->map(function ($group) {
+                return [
+                    'value' => $group->group_uuid,
+                    'label' => $group->group_name,
+                ];
+            })->toArray();
+
         // 3) Any routes your front end needs
         $routes = [
             'store_route'  => route('users.store'),
@@ -176,6 +189,7 @@ class UsersController extends Controller
             'permissions' => $permissions,
             'routes'      => $routes,
             'timezones' => getGroupedTimezones(),
+            'groups' => $groups,
             // 'roles'    => $rolesLookup,
             // 'domains'  => $domainsLookup,
         ]);

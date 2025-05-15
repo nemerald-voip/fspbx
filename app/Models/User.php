@@ -105,6 +105,36 @@ class User extends Authenticatable
     }
 
     /**
+     * Accessor: build first_name from advanced fields if available,
+     * otherwise return emptry string
+     */
+    public function getFirstNameAttribute(): string
+    {
+        // if relationship not yet loaded, lazy‐load it
+        $adv = $this->user_adv_fields;
+        if ($adv && $adv->first_name) {
+            return trim($adv->first_name ?? '');
+        }
+
+        return '';
+    }
+
+    /**
+     * Accessor: build last_name from advanced fields if available,
+     * otherwise return empty string
+     */
+    public function getLastNameAttribute(): string
+    {
+        // if relationship not yet loaded, lazy‐load it
+        $adv = $this->user_adv_fields;
+        if ($adv && $adv->last_name) {
+            return trim($adv->last_name ?? '');
+        }
+
+        return '';
+    }
+
+    /**
      * Accessor: get the 'language' setting under category 'domain'
      */
     public function getLanguageAttribute(): ?string

@@ -45,12 +45,14 @@
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
-                                    timezone:options.item.timezone,
+                                    time_zone:options.item.time_zone,
                                     user_email:options.item.user_email,
-                                    // group_name: options.item.group_name ?? null,
-                                    // members: options.item.domain_group_relations
-                                    //     ? options.item.domain_group_relations.map(r => r.domain_uuid)
-                                    //     : []
+                                    first_name:options.item.first_name,
+                                    last_name:options.item.last_name,
+                                    user_enabled:options.item.user_enabled,
+                                    groups: options.item.user_groups
+                                        ? options.item.user_groups.map(ug => ug.group_uuid)
+                                        : []
 
                                 }">
 
@@ -61,9 +63,9 @@
                                 <TextElement name="last_name" label="Last Name" placeholder="Enter Last Name"
                                     :floating="false" />
                                 <TextElement name="user_email" label="Email" placeholder="Enter Email" :floating="false" />
-                                <TagsElement name="groups" :close-on-select="false" :search="true" :items="null" label="Roles" input-type="search" autocomplete="off" placeholder="Select Roles" :floating="false"
+                                <TagsElement name="groups" :close-on-select="false" :search="true" :items="options.groups" label="Roles" input-type="search" autocomplete="off" placeholder="Select Roles" :floating="false"
                                     :strict="false" />
-                                <SelectElement name="timezone" :groups="true" :items="options.timezones" :search="true"
+                                <SelectElement name="time_zone" :groups="true" :items="options.timezones" :search="true"
                                 :native="false" label="Time Zone" input-type="search" autocomplete="off"
                                  :floating="false" :strict="false" placeholder="Select Time Zone" />
                                 <ToggleElement name="user_enabled" text="Status" true-value="true" false-value="false" />
