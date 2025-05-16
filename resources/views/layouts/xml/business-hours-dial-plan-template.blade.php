@@ -33,7 +33,7 @@
         {{-- set the correct timezone for all subsequent time-of-day checks --}}
         <action application="set" data="timezone={{ $businessHour->timezone }}" inline="true" />
         {{-- reset our “matched slot” flag --}}
-        <action application="set" data="slot_matched=" />
+        <action application="set" data="slot_matched=" inline="true" />
 
 
 
