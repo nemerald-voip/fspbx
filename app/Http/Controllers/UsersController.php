@@ -6,26 +6,14 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Inertia\Inertia;
 use App\Data\UserData;
-use App\Models\Domain;
 use App\Models\Groups;
-use App\Models\UserGroup;
-use App\Models\UserSetting;
 use Illuminate\Support\Str;
-use App\Models\DomainGroups;
 use Illuminate\Http\Request;
-use App\Models\UserAdvFields;
-use Illuminate\Validation\Rule;
-use App\Models\GroupPermissions;
 use Illuminate\Support\Facades\DB;
-use App\Models\UserDomainPermission;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
-use Illuminate\Support\Facades\Session;
-use Spatie\QueryBuilder\AllowedInclude;
-use Illuminate\Support\Facades\Validator;
-use App\Models\UserDomainGroupPermissions;
+use App\Http\Requests\StoreUserRequest;
+use App\Http\Requests\UpdateUserRequest;
 
 class UsersController extends Controller
 {
@@ -180,9 +168,8 @@ class UsersController extends Controller
         $routes = [
             'store_route'  => route('users.store'),
             'update_route' => $updateRoute,
+            'password_reset' => route('users.password.email'),
         ];
-
-
 
         return response()->json([
             'item'        => $userDto,
@@ -196,441 +183,213 @@ class UsersController extends Controller
     }
 
 
+    // public function getDomainID($domain_name)
+    // {
+    //     return Domain::where('domain_name', $domain_name)->pluck('domain_uuid')->first();
+    // }
+
+
     /**
-     * Show the create user form.
+     * Store a newly created user in storage.
      *
-     * @return \Illuminate\Contracts\Support\Renderable
+     * @param  \App\Http\Requests\StoreUserRequest  $request
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function create(Request $request)
+    public function store(StoreUserRequest $request)
     {
+        $data        = $request->validated();
+        $domain_uuid = session('domain_uuid');
 
-        if (!userCheckPermission('user_add') || !userCheckPermission('user_edit')) {
-            return redirect('/');
-        }
+        // build username: slug of first_name + (optional '_' + slug(last_name))
+        $username = Str::slug($data['first_name'], '_')
+            . (!empty($data['last_name']) ? '_' . Str::slug($data['last_name'], '_') : '');
 
-        $user = new User();
-        $user->user_enabled = "true";
+        try {
+            DB::beginTransaction();
 
-        // Get all permission groups that are lower or equal to the logged in users level
-        $all_groups = Groups::where('group_level', '<=', Session::get('user')['group_level'])
-            ->where(function ($query) {
-                $query->where('domain_uuid', null)
-                    ->orWhere('domain_uuid', Session::get('domain_uuid'));
-            })
-            ->get();
+            // 1) Core user
+            $user = User::create([
+                'username'     => $username,
+                'user_email'   => $data['user_email'],
+                'user_enabled' => $data['user_enabled'] ? 'true' : 'false',
+                'domain_uuid'  => $data['domain_uuid'] ?? null,
+            ]);
 
-        //get all active domains
-        $all_domains = Domain::where('domain_enabled', 'true')
-            ->get();
+            // 2) Advanced fields
+            $user->user_adv_fields()->create([
+                'first_name' => $data['first_name'],
+                'last_name'  => $data['last_name'] ?? null,
+            ]);
 
-        //get all domain groups
-        $all_domain_groups = DomainGroups::get();
-
-        // Get groups that have domain_select permission
-        $domain_select_groups = array();
-        foreach ($all_groups as $group) {
-            $group_permission = GroupPermissions::where('group_uuid', $group->group_uuid)
-                ->where('permission_name', 'domain_select')
-                ->where('permission_assigned', 'true')
-                ->get();
-            if (!$group_permission->isEmpty()) {
-                $domain_select_groups[] = $group->group_uuid;
+            // 3) Domain settings
+            foreach (['language', 'time_zone'] as $field) {
+                $user->settings()->create([
+                    'domain_uuid'               => $domain_uuid,
+                    'user_setting_category'     => 'domain',
+                    'user_setting_subcategory'  => $field,
+                    'user_setting_name'         => $field === 'language' ? 'code' : 'name',
+                    'user_setting_value'        => $data[$field] ?? null,
+                    'user_setting_enabled'      => true,
+                ]);
             }
+
+            // 4) Groups
+            $groupNames = Groups::whereIn('group_uuid', $data['groups'])
+                ->pluck('group_name', 'group_uuid');
+
+            foreach ($data['groups'] as $groupUuid) {
+                $user->user_groups()->create([
+                    'group_uuid'  => $groupUuid,
+                    'domain_uuid' => $domain_uuid,
+                    'group_name'  => $groupNames[$groupUuid] ?? null,
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'messages' => ['success' => ['User created']],
+            ], 201);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger('User create error: ' . $e->getMessage()
+                . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'messages' => ['error' => ['Something went wrong while creating the user.']]
+            ], 500);
         }
-
-        //Set defaults
-        $user_language = new UserSetting();
-        $user_language->user_setting_value = "en-us";
-        $user_time_zone = new UserSetting();
-        $user_time_zone->user_setting_value = "America/Los_Angeles";
-
-        $data = array();
-        $data['user'] = $user;
-        $data['all_groups'] = $all_groups;
-        $data['all_domains'] = $all_domains;
-        $data['all_domain_groups'] = $all_domain_groups;
-        $data['domain_select_groups'] = json_encode($domain_select_groups);
-        $data['user_language'] = $user_language;
-        $data['user_time_zone'] = $user_time_zone;
-        $data['languages'] = DB::table('v_languages')->get();
-
-        return view('layouts.users.createOrUpdate')->with($data);
     }
 
-
-    public function getDomainID($domain_name)
-    {
-        return Domain::where('domain_name', $domain_name)->pluck('domain_uuid')->first();
-    }
 
     /**
-     * Show the form for editing the specified resource.
+     * Update the specified user in storage.
      *
-     * @param  guid  $user
-     * @return \Illuminate\Http\Response
+     * @param  \App\Http\Requests\UpdateUserRequest  $request
+     * @param  \App\Models\User                     $user
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function edit(User $user)
+    public function update(UpdateUserRequest $request, User $user)
     {
-        if (request()->hasHeader('X-Inertia')) {
-            return Inertia::location(route(request()->route()->getName()));
-        }
 
-        //check permissions
-        if (!userCheckPermission('user_edit')) {
-            return redirect('/');
-        }
+        $validated   = $request->validated();
+        $domain_uuid = session('domain_uuid');
+        // logger($validated);
 
-        $user_language = [];
-        $user_time_zone = [];
-        if (!empty($user->setting)) {
-            foreach ($user->setting as $setting) {
-                if ($setting->user_setting_subcategory == 'language') {
-                    $user_language = $setting;
-                }
-                if ($setting->user_setting_subcategory == 'time_zone') {
-                    $user_time_zone = $setting;
-                }
+        try {
+            DB::beginTransaction();
+
+            // 1) Advanced fields (first_name, last_name)
+            $user->user_adv_fields()->updateOrCreate(
+                ['user_uuid' => $user->user_uuid],
+                [
+                    'first_name' => $validated['first_name'] ?? null,
+                    'last_name'  => $validated['last_name']  ?? null,
+                ]
+            );
+
+            // 2) Core user updates
+            $user->update([
+                'user_email'   => $validated['user_email'],
+                'user_enabled' => $validated['user_enabled'] ? 'true' : 'false',
+            ]);
+
+            // 3) Domain settings: language & time_zone
+            foreach (['language', 'time_zone'] as $field) {
+                $user->settings()->updateOrCreate(
+                    [
+                        'user_setting_category'    => 'domain',
+                        'user_setting_subcategory' => $field,
+                    ],
+                    [
+                        'user_setting_value'   => $validated[$field] ?? null,
+                        'user_setting_enabled' => true,
+                    ]
+                );
             }
-        }
 
-        // Get all permission groups that are lower or equal to the logged in users level
-        $all_groups = Groups::where('group_level', '<=', Session::get('user')['group_level'])
-            ->where(function ($query) {
-                $query->where('domain_uuid', null)
-                    ->orWhere('domain_uuid', Session::get('domain_uuid'));
-            })
-            ->get();
+            // 4) User groups
+            $groupNames = Groups::whereIn('group_uuid', $validated['groups'])
+                ->pluck('group_name', 'group_uuid');
+            $user->user_groups()->delete();
 
-        // Get groups that have domain_select permission
-        $domain_select_groups = array();
-        foreach ($all_groups as $group) {
-            $group_permission = GroupPermissions::where('group_uuid', $group->group_uuid)
-                ->where('permission_name', 'domain_select')
-                ->where('permission_assigned', 'true')
-                ->get();
-            if (!$group_permission->isEmpty()) {
-                $domain_select_groups[] = $group->group_uuid;
+            foreach ($validated['groups'] as $groupUuid) {
+                $user->user_groups()->create([
+                    'group_uuid'  => $groupUuid,
+                    'domain_uuid' => $domain_uuid,
+                    'group_name'  => $groupNames[$groupUuid] ?? null,
+                ]);
             }
+
+            DB::commit();
+
+            return response()->json([
+                'messages' => ['success' => ['User updated']]
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger('User update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'messages' => ['error' => ['Something went wrong while updating.']]
+            ], 500);
         }
-
-        //get all active domains
-        $all_domains = Domain::where('domain_enabled', 'true')
-            ->get();
-
-        //get all domain groups
-        $all_domain_groups = DomainGroups::get();
-
-        $data = array();
-        $data['user_groups'] = $user->groups();
-        $data['all_groups'] = $all_groups;
-        $data['all_domains'] = $all_domains;
-        $data['all_domain_groups'] = $all_domain_groups;
-        $data['domain_select_groups'] = json_encode($domain_select_groups);
-
-        $data['assigned_domains'] = collect();
-        foreach ($user->domain_permissions as $domain_permission) {
-            $data['assigned_domains']->push($domain_permission->domain);
-        }
-
-        $data['assigned_domain_groups'] = collect();
-        foreach ($user->domain_group_permissions as $domain_group_permission) {
-            $data['assigned_domain_groups']->push($domain_group_permission->domain_group);
-        }
-
-        $data['languages'] = DB::table('v_languages')->get();
-        $data['user'] = $user;
-        $data['user_language'] = $user_language;
-        $data['user_time_zone'] = $user_time_zone;
-
-        $records = $user->setting()
-            ->where('user_setting_name', '!=', 'system_default')
-            ->where('user_setting_subcategory', '!=', 'language')
-            ->where('user_setting_subcategory', '!=', 'time_zone')
-            ->orderBy('user_setting_category')->get();
-
-        $data['settings'] = $records;
-
-        return view('layouts.users.createOrUpdate')->with($data);
     }
 
-    public function store(Request $request, User $user)
-    {
-        $attributes = [
-            'user_email' => 'email',
-            'groups' => 'roles'
-        ];
 
-        $validator = Validator::make($request->all(), [
-            'first_name' => 'required|string|max:40',
-            'last_name' => 'nullable|string|max:40',
-            'user_email' => [
-                'required',
-                Rule::unique('App\Models\User', 'user_email')->ignore($user->user_uuid, 'user_uuid'),
-                'email:rfc'
-            ],
-            'groups' => 'required|array',
-            'time_zone' => 'nullable',
-            'language' => 'nullable',
-            'user_enabled' => 'present',
-            'domains' => 'nullable',
-            'domain_groups' => 'nullable',
-            'domain_uuid' => 'present',
-
-        ], [], $attributes);
-
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()]);
-        }
-
-        // Retrieve the validated input assign all attributes
-        $attributes = $validator->validated();
-        if (isset($attributes['user_enabled']) && $attributes['user_enabled'] == "on")  $attributes['user_enabled'] = "true";
-
-        //Make username by combining first name and last name
-        $attributes['username'] = $attributes['first_name'];
-        if (!empty($attributes['last_name'])) {
-            $attributes['username'] .= '_' . $attributes['last_name'];
-        }
-
-        $attributes['user_email'] = strtolower(trim($attributes['user_email']));
-
-        // Generate a secure password 
-        $attributes['password'] = Hash::make(Str::random(25));
-
-        $attributes['add_user'] = Auth::user()->username;
-        $user->fill($attributes);
-        $user->save();
-
-        $user_name_info = new UserAdvFields();
-        $user_name_info->first_name = $attributes['first_name'];
-        $user_name_info->last_name = $attributes['last_name'];
-        $user->user_adv_fields()->save($user_name_info);
-
-        // Save user groups 
-        if (isset($attributes['groups'])) {
-            foreach ($attributes['groups'] as $group) {
-                $group_name = Groups::where('group_uuid', $group)->pluck('group_name')->first();
-                $user_group = new UserGroup();
-                $user_group->domain_uuid = Session::get('domain_uuid');
-                $user_group->group_name = $group_name;
-                $user_group->group_uuid = $group;
-                $user_group->insert_date = date('Y-m-d H:i:s');
-                $user_group->insert_user = Session::get('user_uuid');
-                $user->user_groups()->save($user_group);
-            }
-        }
-
-        if (isSuperAdmin()) {
-            if (isset($attributes['domains'])) {
-                foreach ($attributes['domains'] as $res_domain) {
-                    $dom_per = new UserDomainPermission();
-                    $dom_per->domain_uuid = $res_domain;
-                    $user->domain_permissions()->save($dom_per);
-                }
-            }
-
-            if (isset($attributes['domain_groups'])) {
-                foreach ($attributes['domain_groups'] as $domain_group) {
-                    $dom_per = new UserDomainGroupPermissions();
-                    $dom_per->domain_group_uuid = $domain_group;
-                    $user->domain_group_permissions()->save($dom_per);
-                }
-            }
-        }
-
-        $language = new UserSetting();
-        $language->domain_uuid = Session::get('domain_uuid');;
-        $language->user_setting_category = 'domain';
-        $language->user_setting_subcategory = 'language';
-        $language->user_setting_name = 'code';
-        $language->user_setting_value = $attributes['language'];
-        $language->user_setting_enabled = 't';
-
-        $time_zone = new UserSetting();
-        $time_zone->domain_uuid = Session::get('domain_uuid');;
-        $time_zone->user_setting_category = 'domain';
-        $time_zone->user_setting_subcategory = 'time_zone';
-        $time_zone->user_setting_name = 'name';
-        $time_zone->user_setting_value = $attributes['time_zone'];
-        $time_zone->user_setting_enabled = 't';
-
-        $user->setting()->saveMany([$language, $time_zone]);
-
-        return response()->json([
-            'status' => 'success',
-            'user_uuid' => $user->user_uuid,
-            'message' => 'User has been saved'
-        ]);
-    }
 
     /**
-     * Update the specified resource in storage.
+     * Remove the specified users from storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\User  $user
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
-
-    function update(Request $request, User $user)
+    public function bulkDelete(Request $request)
     {
-
-        $attributes = [
-            'user_email' => 'email',
-            'groups' => 'roles'
-
-        ];
-
-        $validator = Validator::make($request->all(), [
-            'first_name' => 'required|string|max:40',
-            'last_name' => 'nullable|string|max:40',
-            'user_email' => [
-                'required',
-                Rule::unique('App\Models\User', 'user_email')->ignore($user->user_uuid, 'user_uuid'),
-                'email:rfc'
-            ],
-            'groups' => 'required|array',
-            'time_zone' => 'nullable',
-            'language' => 'nullable',
-            'user_enabled' => 'present',
-            'domains' => 'nullable',
-            'domain_groups' => 'nullable'
-
-        ], [], $attributes);
-
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()]);
+        if (! userCheckPermission('user_delete')) {
+            return response()->json([
+                'messages' => ['error' => ['Access denied.']]
+            ], 403);
         }
 
-        // Retrieve the validated input assign all attributes
-        $attributes = $validator->validated();
-        if (isset($attributes['user_enabled']) && $attributes['user_enabled'] == "on")  $attributes['user_enabled'] = "true";
+        try {
+            DB::beginTransaction();
 
-        // Update user permission group table
-        foreach ($user->user_groups as $user_group) {
-            $user_group->delete();
-        }
+            $domain_uuid = session('domain_uuid');
+            $uuids = $request->input('items', []);
 
-        if (isset($attributes['groups'])) {
-            foreach ($attributes['groups'] as $group) {
-                $group_name = Groups::where('group_uuid', $group)->pluck('group_name')->first();
-                $user_group = new UserGroup();
-                $user_group->domain_uuid = Session::get('domain_uuid');
-                $user_group->group_name = $group_name;
-                $user_group->group_uuid = $group;
-                $user_group->update_date = date('Y-m-d H:i:s');
-                $user_group->update_user = Session::get('user_uuid');
-                $user->user_groups()->save($user_group);
-            }
-        }
+            $users = User::where('domain_uuid', $domain_uuid)
+                ->whereIn('user_uuid', $uuids)
+                ->get();
 
-        //Make username by combining first name and last name
-        $attributes['username'] = $attributes['first_name'];
-        if (!empty($attributes['last_name'])) {
-            $attributes['username'] .= '_' . $attributes['last_name'];
-        }
-        $attributes['user_email'] = strtolower(trim($attributes['user_email']));
+            foreach ($users as $user) {
+                // Delete related advanced fields
+                $user->user_adv_fields()->delete();
 
-        $attributes['add_user'] = Auth::user()->username;
-        $user->update($attributes);
+                // Delete user settings
+                $user->settings()->delete();
 
+                // Delete group assignments
+                $user->user_groups()->delete();
 
-        $user_name_info = $user->user_adv_fields;
-        if (empty($user_name_info)) {
-            $user_name_info = new UserAdvFields();
-        }
-        $user_name_info->first_name = $attributes['first_name'];
-        $user_name_info->last_name = $attributes['last_name'];
-        $user->user_adv_fields()->save($user_name_info);
-
-
-        if (isSuperAdmin()) {
-            $user->domain_permissions()->delete();
-            if (isset($attributes['domains'])) {
-                foreach ($attributes['domains'] as $res_domain) {
-                    $dom_per = new UserDomainPermission();
-                    $dom_per->domain_uuid = $res_domain;
-                    $user->domain_permissions()->save($dom_per);
-                }
+                // Finally delete the user record
+                $user->delete();
             }
 
-            $user->domain_group_permissions()->delete();
-            if (isset($attributes['domain_groups'])) {
-                foreach ($attributes['domain_groups'] as $domain_group) {
-                    $dom_per = new UserDomainGroupPermissions();
-                    $dom_per->domain_group_uuid = $domain_group;
-                    $user->domain_group_permissions()->save($dom_per);
-                }
-            }
+            DB::commit();
+
+            return response()->json([
+                'messages' => ['success' => ['Selected user(s) were deleted successfully.']]
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger('User bulkDelete error: '
+                . $e->getMessage()
+                . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'messages' => ['error' => ['An error occurred while deleting the selected user(s).']]
+            ], 500);
         }
-
-        //Save user language and time zone
-        $user->setting()->delete();
-        $language = new UserSetting();
-        $language->domain_uuid = Session::get('domain_uuid');
-        $language->user_setting_category = 'domain';
-        $language->user_setting_subcategory = 'language';
-        $language->user_setting_name = 'code';
-        $language->user_setting_value = $attributes['language'];
-        $language->user_setting_enabled = 't';
-
-        $time_zone = new UserSetting();
-        $time_zone->domain_uuid = Session::get('domain_uuid');
-        $time_zone->user_setting_category = 'domain';
-        $time_zone->user_setting_subcategory = 'time_zone';
-        $time_zone->user_setting_name = 'name';
-        $time_zone->user_setting_value = $attributes['time_zone'];
-        $time_zone->user_setting_enabled = 't';
-
-        $user->setting()->saveMany([$language, $time_zone]);
-
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'User has been saved'
-        ]);
-    }
-
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        $user = User::findOrFail($id);
-
-        if (isset($user)) {
-            $deleted = $user->delete();
-            foreach ($user->setting as $setting) {
-                $setting->delete();
-            }
-
-            foreach ($user->user_groups as $group) {
-                $group->delete();
-            }
-
-            if ($deleted) {
-                return response()->json([
-                    'status' => 200,
-                    'success' => [
-                        'message' => 'Selected users have been deleted'
-                    ]
-                ]);
-            } else {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => 'There was an error deleting this user'
-                    ]
-                ]);
-            }
-        }
-    }
-
-    public function show($id)
-    {
-        //
     }
 }

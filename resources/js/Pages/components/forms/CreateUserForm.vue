@@ -45,35 +45,35 @@
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
-                                    time_zone: options.item.time_zone,
-                                    user_email: options.item.user_email,
-                                    first_name: options.item.first_name,
-                                    last_name: options.item.last_name,
-                                    user_enabled: options.item.user_enabled,
-                                    language: options.item.language,
+                                    time_zone:options.item.time_zone,
+                                    user_email:options.item.user_email,
+                                    first_name:options.item.first_name,
+                                    last_name:options.item.last_name,
+                                    user_enabled:options.item.user_enabled,
+                                    language:options.item.language,
+                                    domain_uuid:options.item.domain_uuid,
                                     groups: options.item.user_groups
                                         ? options.item.user_groups.map(ug => ug.group_uuid)
                                         : []
 
                                 }">
 
-                                <StaticElement name="h4" tag="h4" content="Update User" />
+                                <StaticElement name="h4" tag="h4" content="Create User" />
 
                                 <TextElement name="first_name" label="First Name" placeholder="Enter First Name"
                                     :floating="false" />
                                 <TextElement name="last_name" label="Last Name" placeholder="Enter Last Name"
                                     :floating="false" />
                                 <TextElement name="user_email" label="Email" placeholder="Enter Email" :floating="false" />
-                                <TagsElement name="groups" :close-on-select="false" :search="true" :items="options.groups"
-                                    label="Roles" input-type="search" autocomplete="off" placeholder="Select Roles"
-                                    :floating="false" :strict="false" />
+                                <TagsElement name="groups" :close-on-select="false" :search="true" :items="options.groups" 
+                                label="Roles" input-type="search" autocomplete="off" placeholder="Select Roles" :floating="false"
+                                    :strict="false" />
                                 <SelectElement name="time_zone" :groups="true" :items="options.timezones" :search="true"
-                                    :native="false" label="Time Zone" input-type="search" autocomplete="off"
-                                    :floating="false" :strict="false" placeholder="Select Time Zone" />
+                                :native="false" label="Time Zone" input-type="search" autocomplete="off"
+                                 :floating="false" :strict="false" placeholder="Select Time Zone" />
                                 <ToggleElement name="user_enabled" text="Status" true-value="true" false-value="false" />
                                 <HiddenElement name="language" :meta="true" />
-                                <ButtonElement name="password_reset" :secondary="true" label="Password"
-                                    @click="requestResetPassword" button-label="Reset Password" align="left" />
+                                <HiddenElement name="domain_uuid" :meta="true" />
 
                                 <GroupElement name="container_3" />
                                 <ButtonElement name="reset" button-label="Cancel" :secondary="true" :resets="true"
@@ -93,19 +93,12 @@
             </div>
         </Dialog>
     </TransitionRoot>
-
-    <ConfirmationModal :show="showResetConfirmationModal" @close="showResetConfirmationModal = false"
-        @confirm="confirmResetPassword" header="Confirm Password Reset"
-        text="Are you sure you want to reset the password for this user?" confirm-button-label="Reset"
-        cancel-button-label="Cancel" />
 </template>
 
 <script setup>
 import { ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
-import ConfirmationModal from "./../modal/ConfirmationModal.vue";
-
 
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
@@ -117,7 +110,6 @@ const props = defineProps({
 });
 
 const form$ = ref(null)
-const showResetConfirmationModal = ref(false);
 
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
@@ -125,7 +117,7 @@ const submitForm = async (FormData, form$) => {
     const requestData = form$.requestData
     // console.log(requestData);
 
-    return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
+    return await form$.$vueform.services.axios.post(props.options.routes.store_route, requestData)
 };
 
 function clearErrorsRecursive(el$) {
@@ -139,28 +131,6 @@ function clearErrorsRecursive(el$) {
         })
     }
 }
-
-
-const requestResetPassword = () => {
-    showResetConfirmationModal.value = true;
-};
-
-const confirmResetPassword = async () => {
-    showResetConfirmationModal.value = false;
-
-    try {
-        await form$.value.$vueform.services.axios.post(
-            props.options.routes.password_reset,
-            {
-                email: props.options.item.user_email,
-            }
-        );
-
-        emit("success", "success", { success: ["Password reset email sent successfully."] });
-    } catch (error) {
-        emit("error", error);
-    }
-};
 
 const handleResponse = (response, form$) => {
     // Clear form including nested elements 
@@ -227,6 +197,8 @@ const handleError = (error, details, form$) => {
             break
     }
 }
+
+
 
 
 </script>

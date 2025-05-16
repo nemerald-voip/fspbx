@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\UserGroup;
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Activitylog\Traits\CausesActivity;

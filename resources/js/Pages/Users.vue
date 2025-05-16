@@ -175,27 +175,14 @@
         @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
         @refresh-data="handleSearchButtonClick" />
 
-    <!-- <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showUpdateModal"
-        :header="'Update Ring Group Settings - ' + itemOptions?.ring_group?.ring_group_name" :loading="loadingModal"
-        @close="handleModalClose">
-        <template #modal-body>
-            <UpdateRingGroupForm :options="itemOptions" @close="handleModalClose" @error="handleErrorResponse"
-                @success="showNotification" @refresh-data="handleSearchButtonClick" />
-        </template>
-    </AddEditItemModal> -->
+    <CreateUserForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading"
+        @close="showCreateModal = false" @error="handleErrorResponse" @success="showNotification"
+        @refresh-data="handleSearchButtonClick" />
 
-    <!-- <AddEditItemModal :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="loadingModal"
-        @close="handleModalClose">
-        <template #modal-body>
-            <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
-                :is-submitting="bulkUpdateFormSubmiting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose"
-                @domain-selected="getItemOptions" />
-        </template>
-    </AddEditItemModal> -->
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
         @confirm="confirmDeleteAction" :header="'Confirm Deletion'"
-        :text="'This action will permanently delete the selected ring group(s). Are you sure you want to proceed?'"
+        :text="'This action will permanently delete the selected user(s). Are you sure you want to proceed?'"
         :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
@@ -211,17 +198,15 @@ import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
-import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
-import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
+import CreateUserForm from "./components/forms/CreateUserForm.vue";
 import UpdateUserForm from "./components/forms/UpdateUserForm.vue";
-import UpdateRingGroupForm from "./components/forms/UpdateRingGroupForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 
@@ -236,12 +221,7 @@ const selectPageItems = ref(false);
 const showCreateModal = ref(false);
 const showUpdateModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
-const confirmationModalDestroyPath = ref(null);
-const createFormSubmiting = ref(null);
-const updateFormSubmiting = ref(null);
 const confirmDeleteAction = ref(null);
-const bulkUpdateFormSubmiting = ref(null);
-const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
@@ -269,7 +249,7 @@ const bulkActions = computed(() => {
     ];
 
     // Conditionally add the delete action if permission is granted
-    if (page.props.auth.can.device_destroy) {
+    if (page.props.auth.can.user_destroy) {
         actions.push({
             id: 'bulk_delete',
             label: 'Delete',
@@ -319,25 +299,9 @@ const handleBulkActionRequest = (action) => {
 
 }
 
-const handleBulkUpdateRequest = (form) => {
-    bulkUpdateFormSubmiting.value = true
-    axios.post(`${props.routes.bulk_update}`, form)
-        .then((response) => {
-            bulkUpdateFormSubmiting.value = false;
-            handleModalClose();
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-        })
-        .catch((error) => {
-            bulkUpdateFormSubmiting.value = false;
-            handleFormErrorResponse(error);
-        });
-}
 
 const handleCreateButtonClick = () => {
     showCreateModal.value = true
-    formErrors.value = null;
-    loadingModal.value = true
     getItemOptions();
 }
 
@@ -362,7 +326,7 @@ const handleSearchButtonClick = () => {
     router.visit(props.routes.current_page, {
         data: {
             filter: {
-                search: filterData.value.search,     // ← here
+                search: filterData.value.search,     
             },
         },
         preserveScroll: true,
@@ -389,7 +353,7 @@ const renderRequestedPage = (url) => {
     router.visit(url, {
         data: {
             filter: {
-                search: filterData.value.search,     // ← here
+                search: filterData.value.search,    
             },
         },
         preserveScroll: true,
@@ -408,7 +372,7 @@ const getItemOptions = (itemUuid = null) => {
     axios.post(props.routes.item_options, payload)
         .then((response) => {
             itemOptions.value = response.data;
-            console.log(itemOptions.value);
+            // console.log(itemOptions.value);
 
         }).catch((error) => {
             handleModalClose();
@@ -418,28 +382,6 @@ const getItemOptions = (itemUuid = null) => {
         })
 }
 
-const handleFormErrorResponse = (error) => {
-    if (error.request?.status == 419) {
-        showNotification('error', { request: ["Session expired. Reload the page"] });
-    } else if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        // console.log(error.response.data);
-        showNotification('error', error.response.data.errors || { request: [error.message] });
-        formErrors.value = error.response.data.errors;
-    } else if (error.request) {
-        // The request was made but no response was received
-        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-        // http.ClientRequest in node.js
-        showNotification('error', { request: [error.request] });
-        console.log(error.request);
-    } else {
-        // Something happened in setting up the request that triggered an Error
-        showNotification('error', { request: [error.message] });
-        console.log(error.message);
-    }
-
-}
 
 const handleErrorResponse = (error) => {
     if (error.response) {
