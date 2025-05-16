@@ -502,7 +502,7 @@ class RingGroupsController extends Controller
         $validated = $request->validated();
         $domain_uuid = session('domain_uuid');
 
-        logger($validated);
+        // logger($validated);
 
         try {
             DB::beginTransaction();
