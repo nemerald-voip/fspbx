@@ -642,6 +642,10 @@ const dayOfWeekOptions = [
 
 const usHolidays = [
   {
+    label: "New Year's Eve (December 31)",
+    value: { mon: "12",  wday: "",   mday: "31",      mweek: "" }
+  },
+  {
     label: "New Year's Day (January 1)",
     value: { mon: "1",  wday: "",   mday: "1",      mweek: "" }
   },
@@ -696,6 +700,10 @@ const usHolidays = [
   {
     label: "Black Friday (4th Friday in November)",
     value: { mon: "11", wday: "6",  mday: "23-29",  mweek: "" }
+  },
+  {
+    label: "Christmas Eve (December 24)",
+    value: { mon: "12", wday: "",   mday: "24",     mweek: "" }
   },
   {
     label: "Christmas Day (December 25)",
