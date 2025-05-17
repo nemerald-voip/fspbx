@@ -65,7 +65,7 @@
 
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
-                                            <FormTabs view="vertical">
+                                            <FormTabs view="vertical" @select="handleTabSelected">
                                                 <FormTab name="page0" label="Basic Info" :elements="[
                                                     'h4',
                                                     'first_name',
@@ -86,7 +86,7 @@
                                                     'password_reset',
 
                                                 ]" />
-                                                <FormTab name="page2" label="API Keys" :elements="[
+                                                <FormTab name="api_tokens" label="API Keys" :elements="[
 
                                                 ]" :conditions="[() => options.permissions.api_key]" />
                                             </FormTabs>
@@ -199,9 +199,10 @@
                                                     align="left" />
 
                                                 <StaticElement name="html">
-                                                    <template #default="">
-                                                        <ApiTokens :routes="options.routes" />
-                                                    </template>
+                                                    <ApiTokens :tokens="tokens" :loading="isTokensLoading"
+                                                        :permissions="options.permissions"
+                                                        @edit-item="handleUpdateTokenButtonClick"
+                                                        @delete-item="handleDeleteTokenButtonClick" />
                                                 </StaticElement>
                                             </FormElements>
                                         </div>
@@ -230,8 +231,6 @@ import { XMarkIcon } from "@heroicons/vue/24/solid";
 import ConfirmationModal from "./../modal/ConfirmationModal.vue";
 import ApiTokens from "./../ApiTokens.vue";
 
-
-
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
 
 const props = defineProps({
@@ -243,7 +242,10 @@ const props = defineProps({
 
 const form$ = ref(null)
 const showResetConfirmationModal = ref(false);
-
+const isTokensLoading = ref(false)
+const isDeleteTokenLoading = ref(false)
+const showDeleteConfirmationModal = ref(false)
+const tokens = ref([])
 
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
@@ -285,6 +287,69 @@ const confirmResetPassword = async () => {
         emit("success", "success", { success: ["Password reset email sent successfully."] });
     } catch (error) {
         emit("error", error);
+    }
+};
+
+const handleTabSelected = (activeTab, previousTab) => {
+    if (activeTab.name == 'api_tokens') {
+        getTokens()
+    }
+}
+
+const getTokens = async () => {
+    isTokensLoading.value = true
+    axios.get(props.options.routes.tokens, {
+        params: {
+            uuid: props.options.item.uuid
+        }
+    })
+        .then((response) => {
+            tokens.value = response.data.data;
+            console.log(tokens.value);
+
+        }).catch((error) => {
+            emit('error', error)
+        }).finally(() => {
+            isTokensLoading.value = false
+        });
+}
+
+const handleUpdateTokenButtonClick = async uuid => {
+    updateTokenButtonLoading.value = true;
+    try {
+        await getHolidayItemOptions(uuid);
+        showUpdateTokenModal.value = true;
+    } catch (err) {
+        handleModalClose();
+        emit('error', err);
+    } finally {
+        updateTokenButtonLoading.value = false;
+    }
+};
+
+
+const handleDeleteTokenButtonClick = (uuid) => {
+    showDeleteConfirmationModal.value = true;
+    confirmDeleteAction.value = () => executeBulkDelete([uuid]);
+};
+
+
+const executeBulkDelete = async (items) => {
+    isDeleteTokenLoading.value = true;
+
+    try {
+        const response = await axios.post(
+            props.options.routes.holiday_bulk_delete,
+            { items }
+        );
+        emit('success', 'success', response.data.messages);
+        getHolidays();
+    } catch (error) {
+        emit('error', error);
+    } finally {
+        // hide both the delete and the confirmation modals
+        handleModalClose();
+        isDeleteTokenLoading.value = false;
     }
 };
 
