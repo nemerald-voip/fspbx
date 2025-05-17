@@ -25,11 +25,11 @@ class UpdateUserRequest extends FormRequest
                 // exclude current user by UUID
                 "unique:v_users,user_email,{$user->user_uuid},user_uuid",
             ],
-            'groups'       => 'required|array',
+            'groups'       => 'sometimes|required|array',
             'groups.*'     => 'uuid|exists:v_groups,group_uuid',
             'language'     => 'nullable|string|max:10',
             'time_zone'    => 'nullable|string|max:50',
-            'user_enabled' => 'required|string',
+            'user_enabled' => 'sometimes|required|string',
         ];
     }
 

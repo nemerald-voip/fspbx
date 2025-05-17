@@ -14,6 +14,8 @@ use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Models\Domain;
+use App\Models\DomainGroups;
 
 class UsersController extends Controller
 {
@@ -147,11 +149,7 @@ class UsersController extends Controller
         }
 
         // 2) Permissions array (you’ll have to implement this)
-        $permissions = [
-            'user_update' => userCheckPermission('user_update'),
-            'user_delete' => userCheckPermission('user_delete'),
-            // etc…
-        ];
+        $permissions = $this->getUserPermissions();
 
         $groups = Groups::where('domain_uuid', session('domain_uuid'))
             ->orWhere('domain_uuid', null)
@@ -163,6 +161,26 @@ class UsersController extends Controller
                     'label' => $group->group_name,
                 ];
             })->toArray();
+
+        $domains = Domain::where('domain_enabled', true)
+            ->orderBy('domain_description')
+            ->get()
+            ->map(function ($domain) {
+                return [
+                    'value' => $domain->domain_uuid,
+                    'label' => $domain->domain_description ?: $domain->domain_name,
+                ];
+            })->toArray();
+
+        $domain_groups = DomainGroups::orderBy('group_name')
+            ->get()
+            ->map(function ($group) {
+                return [
+                    'value' => $group->domain_group_uuid,
+                    'label' => $group->group_name,
+                ];
+            })->toArray();
+
 
         // 3) Any routes your front end needs
         $routes = [
@@ -177,16 +195,10 @@ class UsersController extends Controller
             'routes'      => $routes,
             'timezones' => getGroupedTimezones(),
             'groups' => $groups,
-            // 'roles'    => $rolesLookup,
-            // 'domains'  => $domainsLookup,
+            'domains' => $domains,
+            'domain_groups' => $domain_groups,
         ]);
     }
-
-
-    // public function getDomainID($domain_name)
-    // {
-    //     return Domain::where('domain_name', $domain_name)->pluck('domain_uuid')->first();
-    // }
 
 
     /**
@@ -309,16 +321,21 @@ class UsersController extends Controller
             }
 
             // 4) User groups
-            $groupNames = Groups::whereIn('group_uuid', $validated['groups'])
-                ->pluck('group_name', 'group_uuid');
-            $user->user_groups()->delete();
+            if (!empty($validated['groups']) && is_array($validated['groups'])) {
+                $groupNames = Groups::whereIn('group_uuid', $validated['groups'])
+                    ->pluck('group_name', 'group_uuid');
 
-            foreach ($validated['groups'] as $groupUuid) {
-                $user->user_groups()->create([
-                    'group_uuid'  => $groupUuid,
-                    'domain_uuid' => $domain_uuid,
-                    'group_name'  => $groupNames[$groupUuid] ?? null,
-                ]);
+                // Delete existing group relations for the user
+                $user->user_groups()->delete();
+
+                // Add new group relations
+                foreach ($validated['groups'] as $groupUuid) {
+                    $user->user_groups()->create([
+                        'group_uuid'  => $groupUuid,
+                        'domain_uuid' => $domain_uuid,
+                        'group_name'  => $groupNames[$groupUuid] ?? null,
+                    ]);
+                }
             }
 
             DB::commit();
@@ -391,5 +408,19 @@ class UsersController extends Controller
                 'messages' => ['error' => ['An error occurred while deleting the selected user(s).']]
             ], 500);
         }
+    }
+
+    public function getUserPermissions()
+    {
+        $permissions = [];
+        $permissions['user_group_view'] = !userCheckPermission('user_group_view');
+        $permissions['user_group_edit'] = userCheckPermission('user_group_edit');
+        $permissions['user_status'] = userCheckPermission('user_status');
+        $permissions['user_view_managed_accounts'] = userCheckPermission('user_view_managed_accounts');
+        $permissions['user_update_managed_accounts'] = userCheckPermission('user_update_managed_accounts');
+        $permissions['user_view_managed_account_groups'] = userCheckPermission('user_view_managed_account_groups');
+        $permissions['api_key'] = userCheckPermission('api_key');
+
+        return $permissions;
     }
 }

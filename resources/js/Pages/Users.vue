@@ -171,7 +171,7 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <UpdateUserForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"
+    <UpdateUserForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading" :header="'Update User'"
         @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
         @refresh-data="handleSearchButtonClick" />
 

@@ -193,6 +193,26 @@ class DatabaseSeeder extends Seeder
                 'permission_name'        => 'domain_groups_list_view',
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
+            [
+                'application_name'       => 'User Manager',
+                'permission_name'        => 'user_view_managed_account_groups',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'application_name'       => 'User Manager',
+                'permission_name'        => 'user_update_managed_account_groups',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'application_name'       => 'User Manager',
+                'permission_name'        => 'user_view_managed_accounts',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'application_name'       => 'User Manager',
+                'permission_name'        => 'user_update_managed_accounts',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
             // Add more permissions as needed
         ];
 
@@ -511,6 +531,42 @@ class DatabaseSeeder extends Seeder
                 'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
                 'insert_date'          => date("Y-m-d H:i:s"),
             ],
+            [
+                'permission_name'      => 'user_view_managed_account_groups',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'user_update_managed_account_groups',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+
+            [
+                'permission_name'      => 'user_view_managed_accounts',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+
+            [
+                'permission_name'      => 'user_update_managed_accounts',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+
+
 
             
         ];
