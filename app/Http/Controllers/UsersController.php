@@ -301,10 +301,7 @@ class UsersController extends Controller
             );
 
             // 2) Core user updates
-            $user->update([
-                'user_email'   => $validated['user_email'],
-                'user_enabled' => $validated['user_enabled'] ? 'true' : 'false',
-            ]);
+            $user->update($validated);
 
             // 3) Domain settings: language & time_zone
             foreach (['language', 'time_zone'] as $field) {
@@ -413,12 +410,13 @@ class UsersController extends Controller
     public function getUserPermissions()
     {
         $permissions = [];
-        $permissions['user_group_view'] = !userCheckPermission('user_group_view');
+        $permissions['user_group_view'] = userCheckPermission('user_group_view');
         $permissions['user_group_edit'] = userCheckPermission('user_group_edit');
         $permissions['user_status'] = userCheckPermission('user_status');
         $permissions['user_view_managed_accounts'] = userCheckPermission('user_view_managed_accounts');
         $permissions['user_update_managed_accounts'] = userCheckPermission('user_update_managed_accounts');
         $permissions['user_view_managed_account_groups'] = userCheckPermission('user_view_managed_account_groups');
+        $permissions['user_update_managed_account_groups'] = userCheckPermission('user_update_managed_account_groups');
         $permissions['api_key'] = userCheckPermission('api_key');
 
         return $permissions;

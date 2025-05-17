@@ -89,7 +89,7 @@
                                                 ]" />
                                                 <FormTab name="page2" label="API Keys" :elements="[
 
-                                                ]" />
+                                                ]" :conditions="[() => options.permissions.api_key]" />
                                             </FormTabs>
                                         </div>
 
@@ -127,13 +127,15 @@
                                                         },
                                                     }" />
 
-                                                <TagsElement name="groups"  :search="true"
-                                                    :items="options.groups" label="Roles" input-type="search"
-                                                    autocomplete="off" placeholder="Select Roles" :floating="false"
-                                                    :strict="false" :conditions="[() => options.permissions.user_group_view]"/>
+                                                <TagsElement name="groups" :search="true" :items="options.groups"
+                                                    label="Roles" input-type="search" autocomplete="off"
+                                                    placeholder="Select Roles" :floating="false" :strict="false"
+                                                    :conditions="[() => options.permissions.user_group_view]"
+                                                    :disabled="[(el$, form$) => { return !options.permissions.user_group_edit }]" />
 
                                                 <TagsElement name="account_groups" :close-on-select="false" :search="true"
-                                                    :items="options.domain_groups" label="Select account groups the user is allowed to manage"
+                                                    :items="options.domain_groups"
+                                                    label="Select account groups the user is allowed to manage"
                                                     input-type="search" autocomplete="off"
                                                     placeholder="Select Account Groups" :floating="false"
                                                     description="Selecting an account group gives the user management permissions for every account in that group."
@@ -154,8 +156,10 @@
                                                             return selectedGroupUuids.includes(multiSiteAdminUuid) ||
                                                                 selectedGroupUuids.includes(superAdminUuid);
                                                         }
-                                                    ]" />
-                                                <TagsElement name="accounts" :close-on-select="false" :search="true" :items="options.domains" label="Select accounts the user is allowed to manage"
+                                                    ]" :disabled="[(el$, form$) => { return !options.permissions.user_update_managed_account_groups }]"/>
+                                                <TagsElement name="accounts" :close-on-select="false" :search="true"
+                                                    :items="options.domains"
+                                                    label="Select accounts the user is allowed to manage"
                                                     input-type="search" autocomplete="off" placeholder="Select Accounts"
                                                     :floating="false"
                                                     description="Choose individual accounts that this user should have permission to manage. The user will have administrative access to the selected accounts."
@@ -176,19 +180,21 @@
                                                             return selectedGroupUuids.includes(multiSiteAdminUuid) ||
                                                                 selectedGroupUuids.includes(superAdminUuid);
                                                         }
-                                                    ]" />
+                                                    ]" :disabled="[(el$, form$) => { return !options.permissions.user_update_managed_accounts }]"/>
 
-                                                <ToggleElement name=" user_enabled" text="Status" true-value="true"
-                                                    false-value="false" />
+                                                <ToggleElement name="user_enabled" text="Status" true-value="true"
+                                                    false-value="false" :conditions="[() => options.permissions.user_status]"/>
                                                 <HiddenElement name="language" :meta="true" />
-                                                <ButtonElement name="password_reset" :secondary="true" label="Password"
-                                                    @click="requestResetPassword" button-label="Reset Password"
-                                                    align="left" />
 
                                                 <GroupElement name="container_3" />
 
                                                 <ButtonElement name="submit" button-label="Save" :submits="true"
                                                     align="right" />
+
+
+                                                <ButtonElement name="password_reset" :secondary="true" label="Password"
+                                                    @click="requestResetPassword" button-label="Reset Password"
+                                                    align="left" />
                                             </FormElements>
                                         </div>
                                     </div>
