@@ -19,7 +19,7 @@ class StoreUserRequest extends FormRequest
             'first_name'   => 'required|string|max:255',
             'last_name'    => 'nullable|string|max:255',
             'user_email'   => 'required|email|unique:v_users,user_email',
-            'groups'       => 'required|array|min:1',
+            'groups'       => 'sometimes|required|array|min:1',
             'groups.*'     => 'uuid|exists:v_groups,group_uuid',
             'language'     => 'nullable|string|max:10',
             'time_zone'    => 'nullable|string|max:50',

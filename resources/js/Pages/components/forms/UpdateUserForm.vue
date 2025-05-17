@@ -48,8 +48,7 @@
 
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
-                                @mounted="handleFormMounted" @error="handleError" @response="handleResponse"
-                                :display-errors="false" :default="{
+                                @error="handleError" @response="handleResponse" :display-errors="false" :default="{
                                     time_zone: options.item.time_zone,
                                     user_email: options.item.user_email,
                                     first_name: options.item.first_name,
@@ -156,7 +155,8 @@
                                                             return selectedGroupUuids.includes(multiSiteAdminUuid) ||
                                                                 selectedGroupUuids.includes(superAdminUuid);
                                                         }
-                                                    ]" :disabled="[(el$, form$) => { return !options.permissions.user_update_managed_account_groups }]"/>
+                                                    ]"
+                                                    :disabled="[(el$, form$) => { return !options.permissions.user_update_managed_account_groups }]" />
                                                 <TagsElement name="accounts" :close-on-select="false" :search="true"
                                                     :items="options.domains"
                                                     label="Select accounts the user is allowed to manage"
@@ -180,10 +180,12 @@
                                                             return selectedGroupUuids.includes(multiSiteAdminUuid) ||
                                                                 selectedGroupUuids.includes(superAdminUuid);
                                                         }
-                                                    ]" :disabled="[(el$, form$) => { return !options.permissions.user_update_managed_accounts }]"/>
+                                                    ]"
+                                                    :disabled="[(el$, form$) => { return !options.permissions.user_update_managed_accounts }]" />
 
                                                 <ToggleElement name="user_enabled" text="Status" true-value="true"
-                                                    false-value="false" :conditions="[() => options.permissions.user_status]"/>
+                                                    false-value="false"
+                                                    :conditions="[() => options.permissions.user_status]" />
                                                 <HiddenElement name="language" :meta="true" />
 
                                                 <GroupElement name="container_3" />
@@ -195,6 +197,12 @@
                                                 <ButtonElement name="password_reset" :secondary="true" label="Password"
                                                     @click="requestResetPassword" button-label="Reset Password"
                                                     align="left" />
+
+                                                <StaticElement name="html">
+                                                    <template #default="">
+                                                        <ApiTokens :routes="options.routes" />
+                                                    </template>
+                                                </StaticElement>
                                             </FormElements>
                                         </div>
                                     </div>
@@ -220,6 +228,7 @@ import { ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import ConfirmationModal from "./../modal/ConfirmationModal.vue";
+import ApiTokens from "./../ApiTokens.vue";
 
 
 
@@ -234,16 +243,7 @@ const props = defineProps({
 
 const form$ = ref(null)
 const showResetConfirmationModal = ref(false);
-// const multiSiteAdminUuid = ref(null)
-// const superAdminUuid = ref(null)
 
-const handleFormMounted = () => {
-    // Find the UUIDs for multi-site admin and superadmin
-    // multiSiteAdminUuid.value = props.options.groups.find(g => g.label.toLowerCase() === 'multi-site admin')?.value;
-    // superAdminUuid.value = props.options.groups.find(g => g.label.toLowerCase() === 'superadmin')?.value;
-
-    // console.log(multiSiteAdminUuid.value);
-}
 
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 

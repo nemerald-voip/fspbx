@@ -142,7 +142,7 @@ class UsersController extends Controller
                 last_name: '',
                 language: 'en-us',
                 time_zone: get_local_time_zone(),
-                user_enabled: true,
+                user_enabled: 'true',
                 domain_uuid: session('domain_uuid'),
             );
             $updateRoute = null;
@@ -151,8 +151,11 @@ class UsersController extends Controller
         // 2) Permissions array (you’ll have to implement this)
         $permissions = $this->getUserPermissions();
 
-        $groups = Groups::where('domain_uuid', session('domain_uuid'))
-            ->orWhere('domain_uuid', null)
+        $groups = Groups::where('group_level', '<=', session('user.group_level'))
+            ->where(function ($query) {
+                $query->where('domain_uuid', null)
+                    ->orWhere('domain_uuid', session('domain_uuid'));
+            })
             ->orderBy('group_name')
             ->get()
             ->map(function ($group) {
@@ -223,8 +226,8 @@ class UsersController extends Controller
             $user = User::create([
                 'username'     => $username,
                 'user_email'   => $data['user_email'],
-                'user_enabled' => $data['user_enabled'] ? 'true' : 'false',
-                'domain_uuid'  => $data['domain_uuid'] ?? null,
+                'user_enabled' => $data['user_enabled'] ?? 'true',
+                'domain_uuid'  => $data['domain_uuid'] ?? session('domain_uuid'),
             ]);
 
             // 2) Advanced fields
@@ -261,6 +264,7 @@ class UsersController extends Controller
 
             return response()->json([
                 'messages' => ['success' => ['User created']],
+                'user_uuid' => $user->user_uuid,
             ], 201);
         } catch (\Throwable $e) {
             DB::rollBack();

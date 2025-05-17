@@ -14,7 +14,11 @@
                         leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
 
                         <DialogPanel
-                            class="relative transform  rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-6">
+                            class="relative transform  rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
+                           
+                            <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
+                                {{ header }}
+                            </DialogTitle>
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
@@ -44,47 +48,150 @@
 
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
-                                @error="handleError" @response="handleResponse" :display-errors="false" :default="{
-                                    time_zone:options.item.time_zone,
-                                    user_email:options.item.user_email,
-                                    first_name:options.item.first_name,
-                                    last_name:options.item.last_name,
-                                    user_enabled:options.item.user_enabled,
-                                    language:options.item.language,
-                                    domain_uuid:options.item.domain_uuid,
+                                 @error="handleError" @response="handleResponse"
+                                :display-errors="false" :default="{
+                                    time_zone: options.item.time_zone,
+                                    user_email: options.item.user_email,
+                                    first_name: options.item.first_name,
+                                    last_name: options.item.last_name,
+                                    user_enabled: options.item.user_enabled,
+                                    language: options.item.language,
+                                    domain_uuid: options.item.domain_uuid,
                                     groups: options.item.user_groups
                                         ? options.item.user_groups.map(ug => ug.group_uuid)
                                         : []
 
                                 }">
 
-                                <StaticElement name="h4" tag="h4" content="Create User" />
+                                <template #empty>
 
-                                <TextElement name="first_name" label="First Name" placeholder="Enter First Name"
-                                    :floating="false" />
-                                <TextElement name="last_name" label="Last Name" placeholder="Enter Last Name"
-                                    :floating="false" />
-                                <TextElement name="user_email" label="Email" placeholder="Enter Email" :floating="false" />
-                                <TagsElement name="groups" :close-on-select="false" :search="true" :items="options.groups" 
-                                label="Roles" input-type="search" autocomplete="off" placeholder="Select Roles" :floating="false"
-                                    :strict="false" />
-                                <SelectElement name="time_zone" :groups="true" :items="options.timezones" :search="true"
-                                :native="false" label="Time Zone" input-type="search" autocomplete="off"
-                                 :floating="false" :strict="false" placeholder="Select Time Zone" />
-                                <ToggleElement name="user_enabled" text="Status" true-value="true" false-value="false" />
-                                <HiddenElement name="language" :meta="true" />
-                                <HiddenElement name="domain_uuid" :meta="true" />
+                                    <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
+                                        <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
+                                            <FormTabs view="vertical">
+                                                <FormTab name="page0" label="Basic Info" :elements="[
+                                                    'h4',
+                                                    'first_name',
+                                                    'last_name',
+                                                    'user_email',
+                                                    'groups',
+                                                    'time_zone',
+                                                    'user_enabled',
+                                                    'language',
+                                                    'account_groups',
+                                                    'accounts',
+                                                    'container_3',
+                                                    'reset',
+                                                    'submit',
 
-                                <GroupElement name="container_3" />
-                                <ButtonElement name="reset" button-label="Cancel" :secondary="true" :resets="true"
-                                    @click="emit('close')" :columns="{
-                                        container: 6,
-                                    }" />
+                                                ]" />
+                                                
+                                            </FormTabs>
+                                        </div>
 
-                                <ButtonElement name="submit" button-label="Save" :submits="true" align="right" :columns="{
-                                    container: 6,
-                                }" />
+                                        <div
+                                            class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
+                                            <FormElements>
+
+                                                <StaticElement name="h4" tag="h4" content="Basic Info" />
+
+                                                <TextElement name="first_name" label="First Name"
+                                                    placeholder="Enter First Name" :floating="false" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" />
+                                                <TextElement name="last_name" label="Last Name"
+                                                    placeholder="Enter Last Name" :floating="false" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" />
+                                                <TextElement name="user_email" label="Email" placeholder="Enter Email"
+                                                    :floating="false" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" />
+
+                                                <SelectElement name="time_zone" :groups="true" :items="options.timezones"
+                                                    :search="true" :native="false" label="Time Zone" input-type="search"
+                                                    autocomplete="off" :floating="false" :strict="false"
+                                                    placeholder="Select Time Zone" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" />
+
+                                                <TagsElement name="groups" :search="true" :items="options.groups"
+                                                    label="Roles" input-type="search" autocomplete="off"
+                                                    placeholder="Select Roles" :floating="false" :strict="false"
+                                                    :conditions="[() => options.permissions.user_group_view]"
+                                                    :disabled="[(el$, form$) => { return !options.permissions.user_group_edit }]" />
+
+                                                <TagsElement name="account_groups" :close-on-select="false" :search="true"
+                                                    :items="options.domain_groups"
+                                                    label="Select account groups the user is allowed to manage"
+                                                    input-type="search" autocomplete="off"
+                                                    placeholder="Select Account Groups" :floating="false"
+                                                    description="Selecting an account group gives the user management permissions for every account in that group."
+                                                    :conditions="[
+                                                        function (form$, el$) {
+
+                                                            // Get selected group UUIDs
+                                                            const selectedGroupUuids = el$.form$.el$('groups')?.value || [];
+
+                                                            // Get groups list from form options (passed via props)
+                                                            const groups = props.options.groups;
+
+                                                            // // Find the UUIDs for the roles you care about (case-insensitive)
+                                                            const multiSiteAdminUuid = groups.find(g => g.label.toLowerCase() === 'multi-site admin')?.value;
+                                                            const superAdminUuid = groups.find(g => g.label.toLowerCase() === 'superadmin')?.value;
+
+                                                            // // Show the element if either admin role is selected
+                                                            return selectedGroupUuids.includes(multiSiteAdminUuid) ||
+                                                                selectedGroupUuids.includes(superAdminUuid);
+                                                        }
+                                                    ]" :disabled="[(el$, form$) => { return !options.permissions.user_update_managed_account_groups }]"/>
+                                                <TagsElement name="accounts" :close-on-select="false" :search="true"
+                                                    :items="options.domains"
+                                                    label="Select accounts the user is allowed to manage"
+                                                    input-type="search" autocomplete="off" placeholder="Select Accounts"
+                                                    :floating="false"
+                                                    description="Choose individual accounts that this user should have permission to manage. The user will have administrative access to the selected accounts."
+                                                    :conditions="[
+                                                        function (form$, el$) {
+
+                                                            // Get selected group UUIDs
+                                                            const selectedGroupUuids = el$.form$.el$('groups')?.value || [];
+
+                                                            // Get groups list from form options (passed via props)
+                                                            const groups = props.options.groups;
+
+                                                            // // Find the UUIDs for the roles you care about (case-insensitive)
+                                                            const multiSiteAdminUuid = groups.find(g => g.label.toLowerCase() === 'multi-site admin')?.value;
+                                                            const superAdminUuid = groups.find(g => g.label.toLowerCase() === 'superadmin')?.value;
+
+                                                            // // Show the element if either admin role is selected
+                                                            return selectedGroupUuids.includes(multiSiteAdminUuid) ||
+                                                                selectedGroupUuids.includes(superAdminUuid);
+                                                        }
+                                                    ]" :disabled="[(el$, form$) => { return !options.permissions.user_update_managed_accounts }]"/>
+
+                                                <HiddenElement name="language" :meta="true" />
+                                                <HiddenElement name="domain_uuid" :meta="true" />
+                                                <HiddenElement name="user_enabled" :meta="true" />
+
+                                                <GroupElement name="container_3" />
+
+                                                <ButtonElement name="submit" button-label="Save" :submits="true"
+                                                    align="right" />
+
+                                            </FormElements>
+                                        </div>
+                                    </div>
+                                </template>
                             </Vueform>
+
                         </DialogPanel>
 
 
@@ -101,11 +208,12 @@ import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } fro
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 
 
-const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
+const emit = defineEmits(['close', 'error', 'success', 'refresh-data', 'open-edit-form'])
 
 const props = defineProps({
     show: Boolean,
     options: Object,
+    header: String,
     loading: Boolean,
 });
 
@@ -153,9 +261,10 @@ const handleSuccess = (response, form$) => {
     // console.log(response.status) // HTTP status code
     // console.log(response.data) // response data
 
-    emit('success', 'success', response.data.messages);
     emit('close');
     emit('refresh-data');
+    emit('open-edit-form', response.data.user_uuid);
+    emit('success', 'success', response.data.messages);
 }
 
 const handleError = (error, details, form$) => {

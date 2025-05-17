@@ -175,8 +175,8 @@
         @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
         @refresh-data="handleSearchButtonClick" />
 
-    <CreateUserForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading"
-        @close="showCreateModal = false" @error="handleErrorResponse" @success="showNotification"
+    <CreateUserForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading" :header="'Create User'"
+        @close="showCreateModal = false" @error="handleErrorResponse" @success="showNotification" @open-edit-form="handleEditButtonClick"
         @refresh-data="handleSearchButtonClick" />
 
 
