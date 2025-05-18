@@ -32,12 +32,11 @@ class UserGroup extends Model
 
     public function user()
     {
-        return $this->belongsTo(User::class,'user_uuid','user_uuid');
+        return $this->belongsTo(User::class, 'user_uuid', 'user_uuid');
     }
 
     public function group()
     {
-        return $this->belongsTo(Groups::class,'group_uuid','group_uuid');
+        return $this->belongsTo(Groups::class, 'group_uuid', 'group_uuid');
     }
-
 }
