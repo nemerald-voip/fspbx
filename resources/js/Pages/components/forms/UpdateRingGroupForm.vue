@@ -35,8 +35,8 @@
                                 'container_5',
                                 'container_6',
                                 'h3_2',
-                                'failback_action',
-                                'failback_target',
+                                'fallback_action',
+                                'fallback_target',
                                 'container_7',
                                 'container_8',
                                 'ring_group_cid_name_prefix',
@@ -364,30 +364,30 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                             <GroupElement name="container_6" />
                             <StaticElement name="h3_2" tag="h4" content="When no one in ring group answers"
                                 description="Forward calls to" />
-                            <SelectElement name="failback_action" :items="localOptions.routing_types" label-prop="name"
+                            <SelectElement name="fallback_action" :items="localOptions.routing_types" label-prop="name"
                                 :search="true" :native="false" label="Choose Action" input-type="search" autocomplete="off"
                                 placeholder="Choose Action" :floating="false" :strict="false" :columns="{
                                     sm: {
                                         container: 6,
                                     },
                                 }" @change="(newValue, oldValue, el$) => {
-    let failback_target = el$.form$.el$('failback_target')
+    let fallback_target = el$.form$.el$('fallback_target')
 
     // only clear when this isn’t the very first time (i.e. oldValue was set)
     if (oldValue !== null && oldValue !== undefined) {
-        failback_target.clear();
+        fallback_target.clear();
     }
 
-    // failback_target.clear()
-    failback_target.updateItems()
+    // fallback_target.clear()
+    fallback_target.updateItems()
 }" />
-                            <SelectElement name="failback_target" :items="async (query, input) => {
-                                let failback_action = input.$parent.el$.form$.el$('failback_action');
+                            <SelectElement name="fallback_target" :items="async (query, input) => {
+                                let fallback_action = input.$parent.el$.form$.el$('fallback_action');
 
                                 try {
-                                    let response = await failback_action.$vueform.services.axios.post(
+                                    let response = await fallback_action.$vueform.services.axios.post(
                                         options.routes.get_routing_options,
-                                        { category: failback_action.value }
+                                        { category: fallback_action.value }
                                     );
                                     // console.log(response.data.options);
                                     return response.data.options;
@@ -402,8 +402,8 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                         container: 6,
                                     },
                                 }" :conditions="[
-    ['failback_action', 'not_empty'],
-    ['failback_action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
+    ['fallback_action', 'not_empty'],
+    ['fallback_action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
 ]" />
 
 
@@ -596,6 +596,7 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
 <script setup>
 import { onMounted, reactive, ref, watch, computed } from "vue";
 
+
 import DeleteConfirmationModal from "../modal/DeleteConfirmationModal.vue";
 import Spinner from "@generalComponents/Spinner.vue";
 import { PlusIcon, TrashIcon, PencilSquareIcon } from '@heroicons/vue/20/solid'
@@ -658,8 +659,8 @@ onMounted(() => {
             ? props.options.call_distributions.find(rp => rp.value === props.options.ring_group.ring_group_strategy)?.value || 'enterprise'
             : 'enterprise',
 
-        failback_action: props.options.ring_group.timeout_action ?? null,
-        failback_target: { value: props.options.ring_group.timeout_target_uuid ?? null, extension: props.options.ring_group.timeout_target_extension ?? null, name: props.options.ring_group.timeout_target_name ?? null },
+        fallback_action: props.options.ring_group.timeout_action ?? null,
+        fallback_target: { value: props.options.ring_group.timeout_target_uuid ?? null, extension: props.options.ring_group.timeout_target_extension ?? null, name: props.options.ring_group.timeout_target_name ?? null },
         members: memberItems,
 
         ring_group_forward_enabled: props.options.ring_group.ring_group_forward_enabled === 'true',

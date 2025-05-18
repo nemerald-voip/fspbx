@@ -20,7 +20,7 @@ class UpdateHolidayHourRequest extends FormRequest
             'ca_holiday',
             'single_date',
             'date_range',
-            'recurring_pattern', 
+            'recurring_pattern',
         ];
 
         return [
@@ -41,7 +41,7 @@ class UpdateHolidayHourRequest extends FormRequest
 
             // Time-of-day slices (optional)
             'start_time'       => ['nullable', 'date_format:H:i', 'required_with:end_time'],
-            'end_time'         => ['nullable', 'date_format:H:i', 'after_or_equal:start_time', 'required_with:start_time'],
+            'end_time'         => ['nullable', 'date_format:H:i', 'required_with:start_time'],
 
             // Month/day/week‐of‐month for US holidays & recurring patterns
             'mon'              => ['nullable', 'string'],
@@ -95,9 +95,13 @@ class UpdateHolidayHourRequest extends FormRequest
     {
         $validator->after(function ($validator) {
             $type = $this->input('holiday_type');
+            $startDate = $this->input('start_date');
+            $endDate = $this->input('end_date');
+            $startTime = $this->input('start_time');
+            $endTime = $this->input('end_time');
 
             // US holiday must be fixed‐date (mday) OR floating (wday + mweek)
-            if ($type === 'us_holiday') {
+            if ($type === 'us_holiday' || $type === 'ca_holiday') {
                 $hasFixed    = filled($this->input('mday'));
                 $hasFloating = filled($this->input('wday')) && filled($this->input('mweek'));
 
@@ -133,6 +137,20 @@ class UpdateHolidayHourRequest extends FormRequest
                         'end_date',
                         'For a single-date holiday, end_date must equal start_date.'
                     );
+                }
+            }
+
+            // Only check if both times and dates are present
+            if ($startDate && $endDate && $startTime && $endTime) {
+                // Only apply the after-or-equal rule if start_date == end_date
+                if ($startDate === $endDate) {
+                    // Compare as times (string compare is fine for HH:MM 24hr format)
+                    if ($endTime < $startTime) {
+                        $validator->errors()->add(
+                            'end_time',
+                            'The end time must be a time after or equal to start time.'
+                        );
+                    }
                 }
             }
         });

@@ -502,6 +502,8 @@ class RingGroupsController extends Controller
         $validated = $request->validated();
         $domain_uuid = session('domain_uuid');
 
+        // logger($validated);
+
         try {
             DB::beginTransaction();
 
@@ -518,7 +520,7 @@ class RingGroupsController extends Controller
 
 
             // Add timeout app/data only if failback info exists
-            if ($request->has('failback_action') && $request->has('failback_target')) {
+            if ($request->has('fallback_action')) {
                 $timeoutData = $this->buildExitDestinationAction($validated);
                 $updateData['ring_group_timeout_app'] = $timeoutData['action'];
                 $updateData['ring_group_timeout_data'] = $timeoutData['data'];
@@ -652,7 +654,7 @@ class RingGroupsController extends Controller
      */
     protected function buildExitDestinationAction($inputs)
     {
-        switch ($inputs['failback_action']) {
+        switch ($inputs['fallback_action']) {
             case 'extensions':
             case 'ring_groups':
             case 'ivrs':
@@ -661,13 +663,13 @@ class RingGroupsController extends Controller
             case 'contact_centers':
             case 'faxes':
             case 'call_flows':
-                return  ['action' => 'transfer', 'data' => $inputs['failback_target'] . ' XML ' . session('domain_name')];
+                return  ['action' => 'transfer', 'data' => $inputs['fallback_target'] . ' XML ' . session('domain_name')];
             case 'voicemails':
-                return ['action' => 'transfer', 'data' => '*99' . $inputs['failback_target'] . ' XML ' . session('domain_name')];
+                return ['action' => 'transfer', 'data' => '*99' . $inputs['fallback_target'] . ' XML ' . session('domain_name')];
 
             case 'recordings':
                 // Handle recordings with 'lua' destination app
-                return ['action' => 'lua', 'data' => 'streamfile.lua ' . $inputs['failback_target']];
+                return ['action' => 'lua', 'data' => 'streamfile.lua ' . $inputs['fallback_target']];
 
             case 'check_voicemail':
                 return ['action' => 'transfer', 'data' => '*98 XML ' . session('domain_name')];
