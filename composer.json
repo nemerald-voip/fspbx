@@ -36,8 +36,7 @@
         "spatie/laravel-webhook-client": "^3.2",
         "spatie/simple-excel": "^3.6",
         "symfony/http-client": "^6.4",
-        "symfony/postmark-mailer": "^6.4",
-        "tightenco/ziggy": "^1.8"
+        "symfony/postmark-mailer": "^6.4"
     },
     "require-dev": {
         "spatie/laravel-ignition": "^2.0",
