@@ -49,7 +49,7 @@ class UpdateApp extends Command
     {
         $this->info('Starting update...');
 
-        $this->runArtisanCommand('config:cache');
+        // $this->runArtisanCommand('config:cache');
         $currentVersion = config('app.version');
         $downloadedVersion = config('version.release');
 
