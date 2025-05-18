@@ -25,7 +25,9 @@ use App\Http\Controllers\Api\EmergencyCallController;
 
 
 Route::group(['middleware' => ['auth:sanctum']], function () {
-    Route::post('/tokens', [TokenController::class, "index"]);
+    // Tokens
+    Route::resource('/tokens', TokenController::class);
+    Route::post('tokens/bulk-delete', [TokenController::class, 'bulkDelete'])->name('tokens.bulk.delete');
 
     // Emergency calls
     Route::resource('/emergency-calls', EmergencyCallController::class);
@@ -79,4 +81,5 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // User logs
     Route::post('user-logs/select-all', [UserLogsController::class, 'selectAll'])->name('user-logs.select.all');
+
 });

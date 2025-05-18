@@ -213,6 +213,21 @@ class DatabaseSeeder extends Seeder
                 'permission_name'        => 'user_update_managed_accounts',
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
+            [
+                'application_name'       => 'User Manager',
+                'permission_name'        => 'api_key_create',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'application_name'       => 'User Manager',
+                'permission_name'        => 'api_key_update',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'application_name'       => 'User Manager',
+                'permission_name'        => 'api_key_delete',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
             // Add more permissions as needed
         ];
 
@@ -559,6 +574,30 @@ class DatabaseSeeder extends Seeder
 
             [
                 'permission_name'      => 'user_update_managed_accounts',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'api_key_create',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'api_key_update',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'api_key_delete',
                 'permission_protected' => 'true',
                 'permission_assigned'  => 'true',
                 'group_name'           => "superadmin",

@@ -6,63 +6,67 @@
                     <table class="min-w-full divide-y divide-gray-200 mb-4">
                         <thead class="bg-gray-200">
                             <tr>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">API Tokens</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
                                 <th class="hidden px-6 py-3 text-left text-sm font-semibold text-gray-900 sm:table-cell">
-                                    Date(s)
+                                    Created At
                                 </th>
                                 <th class="hidden px-6 py-3 text-left text-sm font-semibold text-gray-900 sm:table-cell">
-                                    Route To</th>
+                                    Last Used
+                                </th>
                                 <th class="relative px-6 py-3 text-left text-sm font-medium text-gray-500">
                                     <span class="sr-only">Actions</span>
                                 </th>
                             </tr>
                         </thead>
                         <tbody v-if="!loading && tokens.length" class="divide-y divide-gray-200 bg-white">
-                            <tr v-for="token in tokens" :key="token.uuid">
-                                <td class=" px-6 py-4 text-sm font-medium text-gray-900">
-                                    {{ token.description }}
+                            <tr v-for="token in tokens" :key="token.id">
+                                <!-- Token Name -->
+                                <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                                    {{ token.name }}
 
+                                    <!-- Created at: show in mobile view -->
                                     <div class="px-6 py-2 text-sm text-gray-500 sm:hidden">
-                                        {{ token.human_date }}
+                                        {{ token.created_at }}
                                     </div>
 
+                                    <!-- Last used: show in mobile view -->
                                     <div class="px-6 py-2 text-sm text-gray-500 sm:hidden">
-                                        {{ token.target_label }}
+                                        <span v-if="token.last_used_at">Last used: {{ token.last_used_at }}</span>
+                                        <span v-else>Never used</span>
                                     </div>
                                 </td>
-                                <!-- <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                    {{ call.members.length }}
-                                </td> -->
 
+                                <!-- Created at: show in desktop view -->
                                 <td class="hidden px-6 py-2 text-sm text-gray-500 sm:table-cell">
-                                    {{ token.human_date }}
+                                    {{ token.created_at }}
                                 </td>
+                                <!-- Last used: show in desktop view -->
                                 <td class="hidden px-6 py-2 text-sm text-gray-500 sm:table-cell">
-                                    {{ token.target_label }}
+                                    <span v-if="token.last_used_at">{{ token.last_used_at }}</span>
+                                    <span v-else>Never used</span>
                                 </td>
+
+                                <!-- Actions -->
                                 <td class="whitespace-nowrap px-6 py-2 text-right text-sm font-medium">
-                                    <div class="flex items-center whitespace-nowrap justify-end">
-                                        <ejs-tooltip v-if="permissions.tokens_update" :content="'Edit'" position='TopCenter'
-                                            target="#destination_tooltip_target">
-                                            <div id="destination_tooltip_target">
-                                                <PencilSquareIcon @click="handleEditButtonClick(token.uuid)"
-                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                    <div class="flex items-center justify-end space-x-2">
+                                        <!-- Edit (if needed) -->
+                                        <!-- <ejs-tooltip v-if="permissions.api_key_update" :content="'Edit'"
+                                            position='TopCenter'>
+                                            <PencilSquareIcon @click="handleEditButtonClick(token.id)"
+                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                        </ejs-tooltip> -->
 
-                                            </div>
-                                        </ejs-tooltip>
-
-                                        <ejs-tooltip v-if="permissions.tokens_delete" :content="'Delete'" position='TopCenter'
-                                            target="#delete_tooltip_target">
-                                            <div id="delete_tooltip_target">
-                                                <TrashIcon @click="handleSingleItemDeleteRequest(token.uuid)"
-                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-                                            </div>
+                                        <!-- Revoke/Delete -->
+                                        <ejs-tooltip v-if="permissions.api_key_delete" :content="'Revoke'"
+                                            position='TopCenter'>
+                                            <TrashIcon @click="handleSingleItemDeleteRequest(token.id)"
+                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
                                         </ejs-tooltip>
                                     </div>
-
                                 </td>
                             </tr>
                         </tbody>
+
                     </table>
 
                     <!-- Empty State -->
@@ -89,8 +93,6 @@
             </div>
         </div>
     </div>
-
-
 </template>
 
 <script setup>
@@ -122,4 +124,5 @@ registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHV
 
 <style>
 @import "@syncfusion/ej2-base/styles/tailwind.css";
-@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";</style>
+@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";
+</style>

@@ -1,6 +1,6 @@
 <template>
     <TransitionRoot as="div" :show="show">
-        <Dialog as="div" class="relative z-10">
+        <Dialog as="div" class="relative z-10" :inert="showApiTokenModal">
             <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
                 <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
@@ -84,9 +84,13 @@
                                                 ]" />
                                                 <FormTab name="page1" label="Security" :elements="[
                                                     'password_reset',
+                                                    'security_title',
 
                                                 ]" />
                                                 <FormTab name="api_tokens" label="API Keys" :elements="[
+                                                    'html',
+                                                    'add_token',
+                                                    'token_title',
 
                                                 ]" :conditions="[() => options.permissions.api_key]" />
                                             </FormTabs>
@@ -194,14 +198,21 @@
                                                     align="right" />
 
 
+                                                <StaticElement name="security_title" tag="h4" content="Security" />
+
                                                 <ButtonElement name="password_reset" :secondary="true" label="Password"
                                                     @click="requestResetPassword" button-label="Reset Password"
                                                     align="left" />
 
+                                                <StaticElement name="token_title" tag="h4" content="API Keys" />
+
+                                                <ButtonElement name="add_token" button-label="Create API Key" align="right"
+                                                    @click="handleAddTokenButtonClick" :loading="addTokenButtonLoading"
+                                                    :conditions="[() => options.permissions.api_key_create]" />
+
                                                 <StaticElement name="html">
                                                     <ApiTokens :tokens="tokens" :loading="isTokensLoading"
                                                         :permissions="options.permissions"
-                                                        @edit-item="handleUpdateTokenButtonClick"
                                                         @delete-item="handleDeleteTokenButtonClick" />
                                                 </StaticElement>
                                             </FormElements>
@@ -218,10 +229,18 @@
         </Dialog>
     </TransitionRoot>
 
+    <CreateApiTokenModal :show="showApiTokenModal" :options="options" @close="showApiTokenModal = false"
+        @error="emitErrorToParentFromChild" @success="emitSuccessToParentFromChild" @refresh-data="getTokens" />
+
     <ConfirmationModal :show="showResetConfirmationModal" @close="showResetConfirmationModal = false"
         @confirm="confirmResetPassword" header="Confirm Password Reset"
         text="Are you sure you want to reset the password for this user?" confirm-button-label="Reset"
         cancel-button-label="Cancel" />
+
+    <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
+        @confirm="confirmDeleteAction" :header="'Confirm Deletion'" :loading="isDeleteTokenLoading"
+        :text="'This action will permanently delete the selected API Key. Are you sure you want to proceed?'"
+        confirm-button-label="Delete" cancel-button-label="Cancel" />
 </template>
 
 <script setup>
@@ -230,6 +249,8 @@ import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } fro
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import ConfirmationModal from "./../modal/ConfirmationModal.vue";
 import ApiTokens from "./../ApiTokens.vue";
+import CreateApiTokenModal from "./../modal/CreateApiTokenModal.vue"
+
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
 
@@ -246,6 +267,10 @@ const isTokensLoading = ref(false)
 const isDeleteTokenLoading = ref(false)
 const showDeleteConfirmationModal = ref(false)
 const tokens = ref([])
+const addTokenButtonLoading = ref(false)
+const showApiTokenModal = ref(false)
+const confirmDeleteAction = ref(null);
+
 
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
@@ -290,6 +315,10 @@ const confirmResetPassword = async () => {
     }
 };
 
+const handleAddTokenButtonClick = () => {
+    showApiTokenModal.value = true
+}
+
 const handleTabSelected = (activeTab, previousTab) => {
     if (activeTab.name == 'api_tokens') {
         getTokens()
@@ -300,12 +329,12 @@ const getTokens = async () => {
     isTokensLoading.value = true
     axios.get(props.options.routes.tokens, {
         params: {
-            uuid: props.options.item.uuid
+            uuid: props.options.item.user_uuid
         }
     })
         .then((response) => {
             tokens.value = response.data.data;
-            console.log(tokens.value);
+            // console.log(tokens.value);
 
         }).catch((error) => {
             emit('error', error)
@@ -314,18 +343,18 @@ const getTokens = async () => {
         });
 }
 
-const handleUpdateTokenButtonClick = async uuid => {
-    updateTokenButtonLoading.value = true;
-    try {
-        await getHolidayItemOptions(uuid);
-        showUpdateTokenModal.value = true;
-    } catch (err) {
-        handleModalClose();
-        emit('error', err);
-    } finally {
-        updateTokenButtonLoading.value = false;
-    }
-};
+// const handleUpdateTokenButtonClick = async uuid => {
+//     updateTokenButtonLoading.value = true;
+//     try {
+//         await getHolidayItemOptions(uuid);
+//         showUpdateTokenModal.value = true;
+//     } catch (err) {
+//         handleModalClose();
+//         emit('error', err);
+//     } finally {
+//         updateTokenButtonLoading.value = false;
+//     }
+// };
 
 
 const handleDeleteTokenButtonClick = (uuid) => {
@@ -334,16 +363,25 @@ const handleDeleteTokenButtonClick = (uuid) => {
 };
 
 
+const emitErrorToParentFromChild = (error) => {
+    emit('error', error);
+}
+
+const emitSuccessToParentFromChild = (message) => {
+    emit('success', 'success', message);
+}
+
+
 const executeBulkDelete = async (items) => {
     isDeleteTokenLoading.value = true;
 
     try {
         const response = await axios.post(
-            props.options.routes.holiday_bulk_delete,
+            props.options.routes.token_bulk_delete,
             { items }
         );
         emit('success', 'success', response.data.messages);
-        getHolidays();
+        getTokens();
     } catch (error) {
         emit('error', error);
     } finally {
@@ -352,6 +390,12 @@ const executeBulkDelete = async (items) => {
         isDeleteTokenLoading.value = false;
     }
 };
+
+const handleModalClose = () => {
+    showResetConfirmationModal.value = false;
+    showApiTokenModal.value = false
+    showDeleteConfirmationModal.value = false;
+}
 
 const handleResponse = (response, form$) => {
     // Clear form including nested elements 

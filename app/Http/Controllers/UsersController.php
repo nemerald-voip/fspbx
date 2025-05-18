@@ -190,6 +190,9 @@ class UsersController extends Controller
             'store_route'  => route('users.store'),
             'update_route' => $updateRoute,
             'password_reset' => route('users.password.email'),
+            'tokens' => route('tokens.index'),
+            'create_token' => route('tokens.store'),
+            'token_bulk_delete' => route('tokens.bulk.delete')
         ];
 
         return response()->json([
@@ -422,6 +425,9 @@ class UsersController extends Controller
         $permissions['user_view_managed_account_groups'] = userCheckPermission('user_view_managed_account_groups');
         $permissions['user_update_managed_account_groups'] = userCheckPermission('user_update_managed_account_groups');
         $permissions['api_key'] = userCheckPermission('api_key');
+        $permissions['api_key_create'] = userCheckPermission('api_key_create');
+        $permissions['api_key_update'] = userCheckPermission('api_key_update');
+        $permissions['api_key_delete'] = userCheckPermission('api_key_delete');
 
         return $permissions;
     }
