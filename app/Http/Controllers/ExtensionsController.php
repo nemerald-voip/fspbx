@@ -11,6 +11,7 @@ use App\Models\Extensions;
 use App\Models\Recordings;
 use App\Models\RingGroups;
 use App\Models\Voicemails;
+use App\Data\ExtensionData;
 use App\Jobs\DeleteAppUser;
 use App\Models\DeviceLines;
 use App\Models\FusionCache;
@@ -31,6 +32,7 @@ use libphonenumber\PhoneNumberUtil;
 use App\Models\FollowMeDestinations;
 use App\Models\VoicemailDestinations;
 use libphonenumber\PhoneNumberFormat;
+use Spatie\QueryBuilder\QueryBuilder;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
@@ -49,10 +51,19 @@ use Propaganistas\LaravelPhone\Exceptions\NumberParseException;
 class ExtensionsController extends Controller
 {
 
+    public $model;
+    public $filters = [];
+    public $sortField;
+    public $sortOrder;
+    protected $viewName = 'Extensions';
+    protected $searchable = ['extension', 'effective_caller_id_name', 'description'];
+
     public function __construct()
     {
+        $this->model = new Extensions();
         $this->middleware('auth')->except(['callerId', 'updateCallerID']);
     }
+
 
     /**
      * Display a listing of the resource.
@@ -61,51 +72,76 @@ class ExtensionsController extends Controller
      */
     public function index(Request $request)
     {
-        if ($request->hasHeader('X-Inertia')) {
-            return Inertia::location(route($request->route()->getName()));
-        }
-        
+
         // Check permissions
         if (!userCheckPermission("extension_view")) {
             return redirect('/');
         }
+
+        $perPage = 50;
+        $currentDomain = session('domain_uuid');
+
+        $extensions = QueryBuilder::for(Extensions::class)
+            // only extensions in the current domain
+            ->where('domain_uuid', $currentDomain)
+            ->with([
+                'voicemail' => function ($query) {
+                    $query->select([
+                        'voicemail_id',      // used for the relation join (maps to extension)
+                        'domain_uuid',       // used for the relation join (maps to domain_uuid)
+                        'voicemail_mail_to', // the field you want
+                    ]);
+                },
+            ])
+            ->select([
+                'extension_uuid',
+                'domain_uuid',
+                'extension',
+                'effective_caller_id_name',
+                'effective_caller_id_number',
+                'outbound_caller_id_number',
+                'emergency_caller_id_number',
+                'directory_first_name',
+                'directory_last_name',
+                'directory_visible',
+                'enabled',
+                'description',
+            ])
+            // allow ?sort=-username or ?sort=add_date
+            ->allowedSorts(['extension'])
+            ->defaultSort('extension')
+            ->paginate($perPage)
+            ->appends($request->query());
+
+        // wrap in your DTO
+        $extensionsDto = ExtensionData::collect($extensions);
+
+        // logger($extensionsDto);
+
+        return Inertia::render(
+            $this->viewName,
+            [
+                'data' => $extensionsDto,
+
+                'routes' => [
+                    'current_page' => route('extensions.index'),
+                    'item_options' => route('extensions.item.options'),
+                    'bulk_delete' => route('extensions.bulk.delete'),
+                    'select_all' => route('extensions.select.all'),
+                ]
+            ]
+        );
 
         $searchString = $request->get('search');
 
         // Get all registered devices for this domain
         $registrations = get_registrations();
 
-        // Get all extensions
-        $extensions = Extensions::where('domain_uuid', Session::get('domain_uuid'))
-            ->orderBy('extension')
-            ->with('advSettings');
 
-        if ($searchString) {
-            $extensions->where(function ($query) use ($searchString) {
-                $query->where('extension', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
-                    ->orWhere('effective_caller_id_name', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
-                    ->orWhere('directory_first_name', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
-                    ->orWhere('directory_last_name', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
-                    ->orWhere('description', 'ilike', '%' . str_replace('-', '', $searchString) . '%');
-            });
-        }
         $extensions = $extensions->paginate(50)->onEachSide(1);
 
-        //Get libphonenumber object
-        $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
-
         foreach ($extensions as $extension) {
-            if ($extension['outbound_caller_id_number']) {
-                try {
-                    $phoneNumberObject = $phoneNumberUtil->parse($extension['outbound_caller_id_number'], 'US');
-                    if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                        $extension->outbound_caller_id_number = $phoneNumberUtil
-                            ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::NATIONAL);
-                    }
-                } catch (NumberParseException $e) {
-                    // Do nothing and leave the numner as is
-                }
-            }
+    
             //check against registrations and add them to array
             $all_regs = [];
             foreach ($registrations as $registration) {
@@ -119,27 +155,6 @@ class ExtensionsController extends Controller
             }
         }
 
-        $data = array();
-        // $domain_uuid=Session::get('domain_uuid');
-        $data['searchString'] = $searchString;
-        $data['extensions'] = $extensions;
-
-        //assign permissions
-        $permissions['add_new'] = userCheckPermission('extension_add');
-        // $permissions['edit'] = userCheckPermission('voicemail_edit');
-        $permissions['delete'] = userCheckPermission('extension_delete');
-        $permissions['import'] = isSuperAdmin();
-        $permissions['device_restart'] = isSuperAdmin();
-        $permissions['add_user'] = userCheckPermission('user_add');
-        $permissions['contact_center_agent_create'] = (isSuperAdmin() || userCheckPermission('contact_center_agent_create')) ? true : false;
-        $permissions['contact_center_admin_create'] = (isSuperAdmin() || userCheckPermission('contact_center_admin_create')) ? true : false;
-        $permissions['contact_center_supervisor_create'] = (isSuperAdmin() || userCheckPermission('contact_center_supervisor_create')) ? true : false;
-
-        $data['permissions'] = $permissions;
-
-        return view('layouts.extensions.list')
-            ->with($data);
-        // ->with("conn_params", $conn_params);
     }
 
     /**
@@ -1283,7 +1298,7 @@ class ExtensionsController extends Controller
             if (Schema::hasColumn('mobile_app_users', 'exclude_from_stale_report')) {
                 $mobile_app->exclude_from_stale_report = $attributes['exclude_from_ringotel_stale_users'];
                 $mobile_app->save();
-            }          
+            }
             $mobile_app->name = $attributes['effective_caller_id_name'];
             $mobile_app->email = $attributes['voicemail_mail_to'] ?? "";
             $mobile_app->ext = $attributes['extension'];

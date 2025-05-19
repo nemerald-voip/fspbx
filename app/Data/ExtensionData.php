@@ -1,0 +1,27 @@
+<?php
+
+namespace App\Data;
+
+use Spatie\LaravelData\Data;
+
+class ExtensionData extends Data
+{
+    public function __construct(
+        public string $extension_uuid,
+        public string $extension,
+        public ?string $effective_caller_id_name,
+        public ?string $effective_caller_id_number,
+        public ?string $outbound_caller_id_number,
+        public ?string $outbound_caller_id_number_formatted,
+        public ?string $emergency_caller_id_number,
+        public ?string $directory_first_name,
+        public ?string $directory_last_name,
+        public ?string $name_formatted,
+        public ?string $directory_visible,
+        public ?string $email,
+        public ?string $enabled,
+        public ?bool $suspended,
+        public ?string $description,
+    ) {}
+}
+

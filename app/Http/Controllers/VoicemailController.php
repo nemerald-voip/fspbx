@@ -88,6 +88,8 @@ class VoicemailController extends Controller
             $data = $data->get(); // This will return a collection
         }
 
+        $data->getCollection()->each->append(['destroy_route', 'messages_route']);
+        
         return $data;
     }
 
@@ -207,6 +209,10 @@ class VoicemailController extends Controller
         try {
             // Retrieve the item by ID from the route parameter
             $voicemail = $this->model->findOrFail($uuid);
+
+            // Set system fields
+            $voicemail->insert_date = date('Y-m-d H:i:s');
+            $voicemail->insert_user = session('user_uuid');
 
             // Update the voicemail with the new inputs
             $voicemail->fill($inputs);

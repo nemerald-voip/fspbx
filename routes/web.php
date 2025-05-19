@@ -94,7 +94,8 @@ Route::post('/mobile-app/get-password/{token}', [AppsCredentialsController::clas
 Route::group(['middleware' => 'auth'], function () {
 
     // Extensions
-    Route::resource('extensions', ExtensionsController::class);
+    Route::get('extensions', [ExtensionsController::class, 'index'])->name('extensions.index');
+    // Route::resource('extensions', ExtensionsController::class);
     Route::post('/extensions/import', [ExtensionsController::class, 'import'])->name('extensions.import');
     Route::post('/extensions/{extension}/assign-device', [ExtensionsController::class, 'assignDevice'])->name('extensions.assign-device');
     Route::post('/extensions/{extension}/device', [ExtensionsController::class, 'oldStoreDevice'])->name('extensions.store-device');

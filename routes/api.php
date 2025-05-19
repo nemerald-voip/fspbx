@@ -11,6 +11,7 @@ use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\BusinessHoursController;
 use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\EmergencyCallController;
+use App\Http\Controllers\ExtensionsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -79,7 +80,13 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('users/bulk-delete', [UsersController::class, 'bulkDelete'])->name('users.bulk.delete');
     Route::post('users/select-all', [UsersController::class, 'selectAll'])->name('users.select.all');
 
+    // Extensions
+    Route::post('extensions', [ExtensionsController::class, 'store'])->name('extensions.store');
+    Route::put('extensions/{extension}', [ExtensionsController::class, 'update'])->name('extensions.update');
+    Route::post('extensions/item-options', [ExtensionsController::class, 'getItemOptions'])->name('extensions.item.options');
+    Route::post('extensions/bulk-delete', [ExtensionsController::class, 'bulkDelete'])->name('extensions.bulk.delete');
+    Route::post('extensions/select-all', [ExtensionsController::class, 'selectAll'])->name('extensions.select.all');
+
     // User logs
     Route::post('user-logs/select-all', [UserLogsController::class, 'selectAll'])->name('user-logs.select.all');
-
 });

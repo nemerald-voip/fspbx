@@ -60,25 +60,41 @@ class Voicemails extends Model
      * Define all attributes here like normal code
 
      */
-    protected static function booted()
+    // protected static function booted()
+    // {
+    //     static::creating(function ($model) {
+    //         $model->insert_date = date('Y-m-d H:i:s');
+    //         $model->insert_user = session('user_uuid');
+    //     });
+
+    //     static::saving(function ($model) {
+    //         if (!$model->domain_uuid) {
+    //             $model->domain_uuid = session('domain_uuid');
+    //         }
+    //         unset($model->destroy_route);
+    //         unset($model->messages_route);
+    //     });
+
+    //     static::retrieved(function ($model) {
+    //         $model->destroy_route = route('voicemails.destroy', $model);
+    //         $model->messages_route = route('voicemails.messages.index', $model);
+    //     });
+    // }
+
+    public function getDestroyRouteAttribute()
     {
-        static::creating(function ($model) {
-            $model->insert_date = date('Y-m-d H:i:s');
-            $model->insert_user = session('user_uuid');
-        });
+        return route('voicemails.destroy', $this);
+    }
 
-        static::saving(function ($model) {
-            if (!$model->domain_uuid) {
-                $model->domain_uuid = session('domain_uuid');
-            }
-            unset($model->destroy_route);
-            unset($model->messages_route);
-        });
+    public function getMessagesRouteAttribute()
+    {
+        return route('voicemails.messages.index', $this);
+    }
 
-        static::retrieved(function ($model) {
-            $model->destroy_route = route('voicemails.destroy', $model);
-            $model->messages_route = route('voicemails.messages.index', $model);
-        });
+    // If you must, you can still fallback domain_uuid (optional)
+    public function setDomainUuidAttribute($value)
+    {
+        $this->attributes['domain_uuid'] = $value ?: session('domain_uuid');
     }
 
     // Accessor for greeting_id

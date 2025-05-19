@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use Spatie\Activitylog\LogOptions;
+use libphonenumber\PhoneNumberFormat;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Spatie\Activitylog\Traits\LogsActivity;
-use Spatie\Activitylog\LogOptions;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 
 class Extensions extends Model
@@ -87,6 +88,9 @@ class Extensions extends Model
         'update_user',
     ];
 
+    protected $appends = ['name_formatted', 'suspended', 'email'];
+    protected $with = ['advSettings'];
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -97,45 +101,39 @@ class Extensions extends Model
         'advSettings'
     ];
 
-    public function __construct(array $attributes = [])
+    // Accessor for name_formatted
+    public function getNameFormattedAttribute()
     {
-        parent::__construct();
-        $this->attributes['domain_uuid'] = Session::get('domain_uuid');
-        $this->attributes['insert_date'] = date('Y-m-d H:i:s');
-        $this->attributes['insert_user'] = Session::get('user_uuid');
-        $this->fill($attributes);
+        return !empty($this->effective_caller_id_name)
+            ? trim($this->extension . ' - ' . $this->effective_caller_id_name)
+            : trim($this->extension);
     }
 
-    /**
-     * The booted method of the model
-     *
-     * Define all attributes here like normal code
-
-     */
-    protected static function booted()
+    // Accessor for suspended
+    public function getSuspendedAttribute()
     {
-        static::saving(function ($model) {
-            // Remove 'destination_formatted' attribute before saving to database
-            unset($model->name_formatted);
-            unset($model->suspended);
-        });
+        return $this->advSettings ? (bool) ($this->advSettings->suspended ?? false) : false;
+    }
 
-        static::retrieved(function ($model) {
-            // Format the name to look like "202 - Chris Fourmont"
-            $model->name_formatted = !empty($model->effective_caller_id_name)
-                ? trim($model->extension . ' - ' . $model->effective_caller_id_name)
-                : trim($model->extension);
-
-            if ($model->advSettings) {
-                $model->suspended = $model->advSettings->suspended;
-            } else {
-                $model->suspended = false;
+    public function getEmailAttribute()
+    {
+        if ($this->relationLoaded('voicemail') && $this->voicemail) {
+            // Only return if domain matches
+            if ($this->voicemail->domain_uuid === $this->domain_uuid) {
+                return $this->voicemail->voicemail_mail_to;
             }
-        });
+        }
+        return null;
+    }
 
-        static::deleting(function ($extension) {
-            $extension->advSettings()->delete();
-        });
+    /* Use this if you want the entire voicemail record
+    */
+    public function getMatchingVoicemail()
+    {
+        if ($this->relationLoaded('voicemail') && $this->voicemail && $this->voicemail->domain_uuid === $this->domain_uuid) {
+            return $this->voicemail;
+        }
+        return null;
     }
 
     public function getActivitylogOptions(): LogOptions
@@ -155,14 +153,18 @@ class Extensions extends Model
         // Chain fluent methods for configuration options
     }
 
+    public function getOutboundCallerIdNumberFormattedAttribute()
+    {
+        return formatPhoneNumber($this->outbound_caller_id_number, 'US', PhoneNumberFormat::NATIONAL);
+    }
+
     /**
-     * Get the voicemail associated with this extension.
-     *  returns Eloqeunt Object
+     * This gets you “all possible” voicemails where ID matches extension, regardless of domain.
+     * Further filtering by domain is REQUIRED to avoid false positives and PERFORMANCE ISSUESyou  
      */
     public function voicemail()
     {
-        return $this->hasOne(Voicemails::class, 'voicemail_id', 'extension')
-            ->where('domain_uuid', $this->domain_uuid);
+        return $this->hasOne(Voicemails::class, 'voicemail_id', 'extension');
     }
 
     /**
