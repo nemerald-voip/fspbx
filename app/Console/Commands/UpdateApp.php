@@ -97,8 +97,10 @@ class UpdateApp extends Command
         $this->executeCommand('composer dump-autoload --no-interaction --ignore-platform-reqs');
 
         // Cache config and routes
-        $this->runArtisanCommand('config:cache');
-        $this->runArtisanCommand('route:cache');
+        // $this->runArtisanCommand('config:cache');
+        $this->executeCommand('php artisan config:cache');
+        // $this->runArtisanCommand('route:cache');
+        $this->executeCommand('php artisan route:cache');
         $this->runArtisanCommand('queue:restart');
 
         //Seed the db
