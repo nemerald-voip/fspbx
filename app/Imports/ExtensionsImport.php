@@ -10,10 +10,7 @@ use App\Models\FusionCache;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
-use Illuminate\Support\Facades\Validator;
-use Maatwebsite\Excel\Validators\Failure;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
@@ -168,6 +165,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
                 'voicemail_password' => $voicemail_password,
                 'voicemail_mail_to' => $row['email'],
                 'voicemail_transcription_enabled' => 'true',
+                'voicemail_recording_instructions' => 'true',
                 'voicemail_file' => 'attach',
                 'voicemail_local_after_email' => 'true',
                 'voicemail_enabled' => 'true',
