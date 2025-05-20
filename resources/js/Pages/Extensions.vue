@@ -81,28 +81,35 @@
                         <div class="flex items-center gap-5">
                             <input v-if="row.extension_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
                                 :value="row.extension_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="">
-                                <span v-if="isRegsLoading" class="inline-flex items-center justify-center w-5 h-5">
-                                    <svg class="animate-spin h-4 w-4 text-gray-400" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                            stroke-width="4" fill="none" />
-                                        <path class="opacity-75" fill="currentColor"
-                                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-                                    </svg>
-                                </span>
-                                <span
-                                    v-else-if="registrations && Array.isArray(registrations[String(row.extension)]) && registrations[String(row.extension)].length > 0"
-                                    class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-green-500 text-white text-xs "
-                                    :title="`${registrations[String(row.extension)].length} device(s) registered`">
-                                    {{ registrations[String(row.extension)].length }}
-                                </span>
-                                <span v-else
-                                    class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-300 text-gray-600 text-xs "
-                                    title="Not registered">
+                            <Menu as="div" class="relative shrink-0">
+                                <div>
+                                    <MenuButton
+                                        v-if="!isRegsLoading && registrations && Array.isArray(registrations[String(row.extension)]) && registrations[String(row.extension)].length > 0"
+                                        class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-500 text-white text-xs cursor-pointer focus:outline-none"
+                                        :title="`${registrations[String(row.extension)].length} device(s) registered`">
+                                        {{ registrations[String(row.extension)].length }}
+                                    </MenuButton>
+                                </div>
+                                <transition enter-active-class="transition ease-out duration-100"
+                                    enter-from-class="transform opacity-0 scale-95"
+                                    enter-to-class="transform opacity-100 scale-100"
+                                    leave-active-class="transition ease-in duration-75"
+                                    leave-from-class="transform opacity-100 scale-100"
+                                    leave-to-class="transform opacity-0 scale-95">
+                                    <MenuItems
+                                        class="absolute left-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none">
+                                        <MenuItem v-for="(reg, idx) in registrations[String(row.extension)]" :key="idx">
+                                        <div class="mb-2 p-2 rounded hover:bg-gray-50 border-b last:border-0">
+                                            <div><span class="font-medium">Agent:</span> {{ reg.agent }}</div>
+                                            <div><span class="font-medium">WAN IP:</span> {{ reg.wan_ip }}</div>
+                                            <div><span class="font-medium">Transport:</span> {{ reg.transport }}</div>
+                                            <div><span class="font-medium">Expires in:</span> {{ reg.expsecs }}s</div>
+                                        </div>
+                                        </MenuItem>
+                                    </MenuItems>
+                                </transition>
+                            </Menu>
 
-                                </span>
-
-                            </div>
                             <div :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.user_update, }"
                                 @click="page.props.auth.can.user_update && handleEditButtonClick(row.extension_uuid)">
                                 <span class="flex items-center gap-2">
@@ -253,7 +260,12 @@ import CreateUserForm from "./components/forms/CreateUserForm.vue";
 import UpdateUserForm from "./components/forms/UpdateUserForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
-
+import {
+    Popover, PopoverButton, PopoverPanel, Menu,
+    MenuButton,
+    MenuItem,
+    MenuItems,
+} from '@headlessui/vue'
 
 
 const page = usePage()
@@ -503,4 +515,5 @@ registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHV
 
 <style>
 @import "@syncfusion/ej2-base/styles/tailwind.css";
-@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";</style>
+@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";
+</style>
