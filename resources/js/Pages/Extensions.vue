@@ -44,8 +44,9 @@
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
                         :has-selected-items="selectedItems.length > 0" />
-                    <span class="pl-4">Extension</span>
+                    <span class="pl-10">Extension</span>
                 </TableColumnHeader>
+
                 <TableColumnHeader header="Email" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Outbound Caller ID"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
@@ -77,11 +78,32 @@
                 <tr v-for="row in data.data" :key="row.extension_uuid">
                     <!-- Checkbox + Extension -->
                     <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500">
-                        <div class="flex items-center">
+                        <div class="flex items-center gap-5">
                             <input v-if="row.extension_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
                                 :value="row.extension_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="ml-9"
-                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.user_update, }"
+                            <div class="">
+                                <span v-if="isRegsLoading" class="inline-flex items-center justify-center w-5 h-5">
+                                    <svg class="animate-spin h-4 w-4 text-gray-400" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4" fill="none" />
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                                    </svg>
+                                </span>
+                                <span
+                                    v-else-if="registrations && Array.isArray(registrations[String(row.extension)]) && registrations[String(row.extension)].length > 0"
+                                    class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-green-500 text-white text-xs "
+                                    :title="`${registrations[String(row.extension)].length} device(s) registered`">
+                                    {{ registrations[String(row.extension)].length }}
+                                </span>
+                                <span v-else
+                                    class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-gray-300 text-gray-600 text-xs "
+                                    title="Not registered">
+
+                                </span>
+
+                            </div>
+                            <div :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.user_update, }"
                                 @click="page.props.auth.can.user_update && handleEditButtonClick(row.extension_uuid)">
                                 <span class="flex items-center gap-2">
                                     {{ row.name_formatted }}
@@ -122,6 +144,8 @@
                             <span class="badge badge-outline-primary">Sequence</span>
                         </span>
                     </TableField> -->
+
+
                     <!-- Email -->
                     <TableField class="px-2 py-2 text-sm text-gray-500">
                         {{ row.email || '' }}
@@ -140,8 +164,8 @@
 
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="page.props.auth.can.extension_update" :content="'Edit'" position='TopCenter'
-                                    target="#destination_tooltip_target">
+                                <ejs-tooltip v-if="page.props.auth.can.extension_update" :content="'Edit'"
+                                    position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditButtonClick(row.user_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
@@ -210,7 +234,7 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
@@ -246,6 +270,7 @@ const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
 const showDeleteConfirmationModal = ref(false);
+const isRegsLoading = ref(false)
 
 const props = defineProps({
     data: Object,
@@ -257,6 +282,7 @@ const filterData = ref({
 });
 
 const itemOptions = ref({})
+const registrations = ref({})
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
@@ -281,6 +307,19 @@ const bulkActions = computed(() => {
 });
 
 
+onMounted(async () => {
+    isRegsLoading.value = true
+    try {
+        // Make your additional API call (example URL)
+        const response = await axios.get(props.routes.registrations)
+        registrations.value = response.data.registrations || {}
+        // console.log(response.data.registrations)
+    } catch (error) {
+        handleErrorResponse(error);
+    } finally {
+        isRegsLoading.value = false
+    }
+})
 
 const handleEditButtonClick = (itemUuid) => {
     showUpdateModal.value = true
@@ -464,5 +503,4 @@ registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHV
 
 <style>
 @import "@syncfusion/ej2-base/styles/tailwind.css";
-@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";
-</style>
+@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";</style>

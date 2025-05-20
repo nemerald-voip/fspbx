@@ -33,6 +33,7 @@ use App\Models\FollowMeDestinations;
 use App\Models\VoicemailDestinations;
 use libphonenumber\PhoneNumberFormat;
 use Spatie\QueryBuilder\QueryBuilder;
+use App\Services\FreeswitchEslService;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
@@ -128,6 +129,7 @@ class ExtensionsController extends Controller
                     'item_options' => route('extensions.item.options'),
                     'bulk_delete' => route('extensions.bulk.delete'),
                     'select_all' => route('extensions.select.all'),
+                    'registrations' => route('extensions.registrations'),
                 ]
             ]
         );
@@ -141,7 +143,7 @@ class ExtensionsController extends Controller
         $extensions = $extensions->paginate(50)->onEachSide(1);
 
         foreach ($extensions as $extension) {
-    
+
             //check against registrations and add them to array
             $all_regs = [];
             foreach ($registrations as $registration) {
@@ -154,7 +156,48 @@ class ExtensionsController extends Controller
                 unset($all_regs);
             }
         }
+    }
 
+    public function registrations(FreeswitchEslService $esl)
+    {
+        // Check permissions if needed
+        if (!userCheckPermission('extension_view')) {
+            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+        }
+
+        try {
+            $registrations = $esl->getAllSipRegistrations();
+            // Optionally, if you want to filter only for the current domain/extensions, do it here.
+            $currentDomain = session('domain_name');
+            // Filter by sip_auth_realm (domain)
+            $domainRegistrations = $registrations->filter(function ($reg) use ($currentDomain) {
+                return $reg['sip_auth_realm'] === $currentDomain;
+            })->values();
+
+            $grouped = $domainRegistrations
+                ->groupBy('sip_auth_user')
+                ->map(function ($items) {
+                    return $items->map(function ($reg) {
+                        return [
+                            'agent'    => $reg['agent'],
+                            'wan_ip'   => $reg['wan_ip'],
+                            'transport' => $reg['transport'],
+                            'expsecs'  => $reg['expsecs'],
+                        ];
+                    })->values();
+                });
+
+            return response()->json([
+                'success' => true,
+                'registrations' => $grouped,
+            ]);
+        } catch (\Throwable $e) {
+            logger('ExtensionsController@registrations error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            return response()->json([
+                'success' => false,
+                'messages' => ['error' => [$e->getMessage()]],
+            ], 500);
+        }
     }
 
     /**

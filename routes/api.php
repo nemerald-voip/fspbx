@@ -86,6 +86,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('extensions/item-options', [ExtensionsController::class, 'getItemOptions'])->name('extensions.item.options');
     Route::post('extensions/bulk-delete', [ExtensionsController::class, 'bulkDelete'])->name('extensions.bulk.delete');
     Route::post('extensions/select-all', [ExtensionsController::class, 'selectAll'])->name('extensions.select.all');
+    Route::get('/extensions/registrations', [ExtensionsController::class, 'registrations'])->name('extensions.registrations');
+
 
     // User logs
     Route::post('user-logs/select-all', [UserLogsController::class, 'selectAll'])->name('user-logs.select.all');
