@@ -35,6 +35,7 @@ use libphonenumber\PhoneNumberFormat;
 use Spatie\QueryBuilder\QueryBuilder;
 use App\Services\FreeswitchEslService;
 use Illuminate\Support\Facades\Schema;
+use Spatie\QueryBuilder\AllowedFilter;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\HeadingRowImport;
@@ -57,7 +58,6 @@ class ExtensionsController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'Extensions';
-    protected $searchable = ['extension', 'effective_caller_id_name', 'description'];
 
     public function __construct()
     {
@@ -85,15 +85,10 @@ class ExtensionsController extends Controller
         $extensions = QueryBuilder::for(Extensions::class)
             // only extensions in the current domain
             ->where('domain_uuid', $currentDomain)
-            ->with([
-                'voicemail' => function ($query) {
-                    $query->select([
-                        'voicemail_id',      // used for the relation join (maps to extension)
-                        'domain_uuid',       // used for the relation join (maps to domain_uuid)
-                        'voicemail_mail_to', // the field you want
-                    ]);
-                },
-            ])
+            ->with(['voicemail' => function ($query) use ($currentDomain) {
+                $query->where('domain_uuid', $currentDomain)
+                      ->select('voicemail_id', 'domain_uuid', 'voicemail_mail_to');
+            }])
             ->select([
                 'extension_uuid',
                 'domain_uuid',
@@ -107,6 +102,25 @@ class ExtensionsController extends Controller
                 'directory_visible',
                 'enabled',
                 'description',
+            ])
+            ->allowedFilters([
+                AllowedFilter::callback('search', function ($query, $value)  use ($currentDomain) {
+                    $query->where(function ($q) use ($value, $currentDomain) {
+                        $q->where('extension', 'ilike', "%{$value}%")
+                            ->orWhere('effective_caller_id_name', 'ilike', "%{$value}%")
+                            ->orWhere('outbound_caller_id_number', 'ilike', "%{$value}%")
+                            ->orWhere('directory_first_name', 'ilike', "%{$value}%")
+                            ->orWhere('directory_last_name', 'ilike', "%{$value}%")
+                            ->orWhere('description', 'ilike', "%{$value}%")
+                            // Search related voicemail email
+                            ->orWhereHas('voicemail', function ($q2) use ($value, $currentDomain) {
+                                $q2->where('domain_uuid', $currentDomain)
+                                    ->where('voicemail_mail_to', 'ilike', "%{$value}%");
+                            });
+                        // Add more fields if needed
+                    });
+                }),
+                AllowedFilter::exact('enabled'), // Example: filter[enabled]=true
             ])
             // allow ?sort=-username or ?sort=add_date
             ->allowedSorts(['extension'])
@@ -198,6 +212,109 @@ class ExtensionsController extends Controller
                 'messages' => ['error' => [$e->getMessage()]],
             ], 500);
         }
+    }
+
+    public function getItemOptions(Request $request)
+    {
+        $itemUuid = $request->input('item_uuid');
+
+        $currentDomain = session('domain_uuid');
+        // 1) Base payload: either an existing user DTO or a “new user” stub
+        if ($itemUuid) {
+            $user = QueryBuilder::for(Extensions::class)
+                ->select([
+                    'extension_uuid',
+                    'domain_uuid',
+                    'extension',
+                    'effective_caller_id_name',
+                    'effective_caller_id_number',
+                    'outbound_caller_id_number',
+                    'emergency_caller_id_number',
+                    'directory_first_name',
+                    'directory_last_name',
+                    'directory_visible',
+                    'directory_exten_visible',
+                    'enabled',
+                    'description',
+                ])
+                ->with(['voicemail' => function ($query) use ($currentDomain) {
+                    $query->where('domain_uuid', $currentDomain)
+                          ->select('voicemail_id', 'domain_uuid', 'voicemail_mail_to');
+                }])
+                ->whereKey($itemUuid)
+                ->firstOrFail();
+
+            $userDto = ExtensionData::from($user);
+            $updateRoute = route('extensions.update', ['extension' => $itemUuid]);
+        } else {
+            // “New extension defaults
+            $userDto     = new ExtensionData(
+                user_uuid: '',
+                user_email: '',
+                name_formatted: '',
+                first_name: '',
+                last_name: '',
+                language: 'en-us',
+                time_zone: get_local_time_zone(),
+                user_enabled: 'true',
+                domain_uuid: session('domain_uuid'),
+            );
+            $updateRoute = null;
+        }
+
+        // 2) Permissions array (you’ll have to implement this)
+        $permissions = $this->getUserPermissions();
+
+        // $groups = Groups::where('group_level', '<=', session('user.group_level'))
+        //     ->where(function ($query) {
+        //         $query->where('domain_uuid', null)
+        //             ->orWhere('domain_uuid', session('domain_uuid'));
+        //     })
+        //     ->orderBy('group_name')
+        //     ->get()
+        //     ->map(function ($group) {
+        //         return [
+        //             'value' => $group->group_uuid,
+        //             'label' => $group->group_name,
+        //         ];
+        //     })->toArray();
+
+        // $domains = Domain::where('domain_enabled', true)
+        //     ->orderBy('domain_description')
+        //     ->get()
+        //     ->map(function ($domain) {
+        //         return [
+        //             'value' => $domain->domain_uuid,
+        //             'label' => $domain->domain_description ?: $domain->domain_name,
+        //         ];
+        //     })->toArray();
+
+        // $domain_groups = DomainGroups::orderBy('group_name')
+        //     ->get()
+        //     ->map(function ($group) {
+        //         return [
+        //             'value' => $group->domain_group_uuid,
+        //             'label' => $group->group_name,
+        //         ];
+        //     })->toArray();
+
+
+        // 3) Any routes your front end needs
+        $routes = [
+            'store_route'  => route('extensions.store'),
+            'update_route' => $updateRoute,
+            'password_reset' => route('users.password.email'),
+            'tokens' => route('tokens.index'),
+            'create_token' => route('tokens.store'),
+            'token_bulk_delete' => route('tokens.bulk.delete')
+        ];
+
+        return response()->json([
+            'item'        => $userDto,
+            'permissions' => $permissions,
+            'routes'      => $routes,
+      
+        ]);
     }
 
     /**
@@ -1835,4 +1952,23 @@ class ExtensionsController extends Controller
             'message' => 'Device has been updated.'
         ]);
     }
+
+    public function getUserPermissions()
+    {
+        $permissions = [];
+        $permissions['user_group_view'] = userCheckPermission('user_group_view');
+        $permissions['user_group_edit'] = userCheckPermission('user_group_edit');
+        $permissions['user_status'] = userCheckPermission('user_status');
+        $permissions['user_view_managed_accounts'] = userCheckPermission('user_view_managed_accounts');
+        $permissions['user_update_managed_accounts'] = userCheckPermission('user_update_managed_accounts');
+        $permissions['user_view_managed_account_groups'] = userCheckPermission('user_view_managed_account_groups');
+        $permissions['user_update_managed_account_groups'] = userCheckPermission('user_update_managed_account_groups');
+        $permissions['api_key'] = userCheckPermission('api_key');
+        $permissions['api_key_create'] = userCheckPermission('api_key_create');
+        $permissions['api_key_update'] = userCheckPermission('api_key_update');
+        $permissions['api_key_delete'] = userCheckPermission('api_key_delete');
+
+        return $permissions;
+    }
+
 }

@@ -716,12 +716,12 @@ const getRoutesForNameForm = computed(() => {
 
 </script>
 
-<style scoped>
-/* This will mask the text input to behave like a password field */
-.password-field {
-    -webkit-text-security: disc;
-    /* For Chrome and Safari */
-    -moz-text-security: disc;
-    /* For Firefox */
+<style>
+div[data-lastpass-icon-root] {
+    display: none !important
+}
+
+div[data-lastpass-root] {
+    display: none !important
 }
 </style>

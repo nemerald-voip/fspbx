@@ -47,10 +47,9 @@
                     <span class="pl-10">Extension</span>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Email" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Outbound Caller ID"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Email" class="hidden px-2 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell" />
+                <TableColumnHeader header="Outbound Caller ID" class="whitespace-nowrap hidden px-2 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell" />
+                <TableColumnHeader header="Description" class="hidden px-2 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell" />
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
@@ -75,124 +74,110 @@
 
 
             <template #table-body>
-                <tr v-for="row in data.data" :key="row.extension_uuid">
-                    <!-- Checkbox + Extension -->
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500">
-                        <div class="flex items-center gap-5">
-                            <input v-if="row.extension_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
-                                :value="row.extension_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <Menu as="div" class="relative shrink-0">
-                                <div>
-                                    <MenuButton
-                                        v-if="!isRegsLoading && registrations && Array.isArray(registrations[String(row.extension)]) && registrations[String(row.extension)].length > 0"
-                                        class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-500 text-white text-xs cursor-pointer focus:outline-none"
-                                        :title="`${registrations[String(row.extension)].length} device(s) registered`">
-                                        {{ registrations[String(row.extension)].length }}
-                                    </MenuButton>
-                                </div>
-                                <transition enter-active-class="transition ease-out duration-100"
-                                    enter-from-class="transform opacity-0 scale-95"
-                                    enter-to-class="transform opacity-100 scale-100"
-                                    leave-active-class="transition ease-in duration-75"
-                                    leave-from-class="transform opacity-100 scale-100"
-                                    leave-to-class="transform opacity-0 scale-95">
-                                    <MenuItems
-                                        class="absolute left-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none">
-                                        <MenuItem v-for="(reg, idx) in registrations[String(row.extension)]" :key="idx">
-                                        <div class="mb-2 p-2 rounded hover:bg-gray-50 border-b last:border-0">
-                                            <div><span class="font-medium">Agent:</span> {{ reg.agent }}</div>
-                                            <div><span class="font-medium">WAN IP:</span> {{ reg.wan_ip }}</div>
-                                            <div><span class="font-medium">Transport:</span> {{ reg.transport }}</div>
-                                            <div><span class="font-medium">Expires in:</span> {{ reg.expsecs }}s</div>
-                                        </div>
-                                        </MenuItem>
-                                    </MenuItems>
-                                </transition>
-                            </Menu>
+                <template v-for="row in data.data" :key="row.extension_uuid">
 
-                            <div :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.user_update, }"
-                                @click="page.props.auth.can.user_update && handleEditButtonClick(row.extension_uuid)">
-                                <span class="flex items-center gap-2">
-                                    {{ row.name_formatted }}
-                                    <Badge v-if="row.suspended" :text="'Suspended'" :backgroundColor="'bg-rose-100'"
-                                        :textColor="'text-rose-800'" ringColor="ring-rose-400/20"
-                                        class="px-2 py-1 text-xs" />
-                                    <Badge v-if="row.do_not_disturb" :text="'DND'" :backgroundColor="'bg-rose-100'"
-                                        :textColor="'text-rose-800'" ringColor="ring-rose-400/20"
-                                        class="px-2 py-1 text-xs" />
-                                    <Badge v-if="row.forward_all_enabled" :text="'FWD'" :backgroundColor="'bg-blue-100'"
-                                        :textColor="'text-blue-800'" ringColor="ring-blue-400/20"
-                                        class="px-2 py-1 text-xs" />
-                                    <Badge v-if="row.follow_me_enabled" :text="'Sequence'" :backgroundColor="'bg-blue-100'"
-                                        :textColor="'text-blue-800'" ringColor="ring-blue-400/20"
-                                        class="px-2 py-1 text-xs" />
+                    <tr>
+                        <!-- Checkbox + Extension -->
+                        <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500">
+                            <div class="flex items-center gap-5">
+                                <input v-if="row.extension_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
+                                    :value="row.extension_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                                <span
+                                    v-if="!isRegsLoading && registrations && Array.isArray(registrations[String(row.extension)])"
+                                    class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-500 text-white text-xs cursor-pointer focus:outline-none"
+                                    :title="`${registrations[String(row.extension)].length} device(s) registered`"
+                                    @click="toggleExpand(row.extension_uuid)">
+                                    {{ registrations[String(row.extension)].length }}
+                                </span>
+                                <span v-else
+                                    class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gray-300 text-gray-600 text-xs"
+                                    title="Not registered" @click="toggleExpand(row.extension_uuid)">
                                 </span>
 
+                                <div :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.user_update, }"
+                                    @click="page.props.auth.can.user_update && handleEditButtonClick(row.extension_uuid)">
+                                    <span class="flex flex-col lg:flex-row items-start gap-2">
+                                        {{ row.name_formatted }}
+                                        <span class="italic text-xs sm:hidden"> {{ row.email || '' }}</span>
+                                        <Badge v-if="row.suspended" :text="'Suspended'" :backgroundColor="'bg-rose-100'"
+                                            :textColor="'text-rose-800'" ringColor="ring-rose-400/20"
+                                            class="px-2 py-1 text-xs" />
+                                        <Badge v-if="row.do_not_disturb" :text="'DND'" :backgroundColor="'bg-rose-100'"
+                                            :textColor="'text-rose-800'" ringColor="ring-rose-400/20"
+                                            class="px-2 py-1 text-xs" />
+                                        <Badge v-if="row.forward_all_enabled" :text="'FWD'" :backgroundColor="'bg-blue-100'"
+                                            :textColor="'text-blue-800'" ringColor="ring-blue-400/20"
+                                            class="px-2 py-1 text-xs" />
+                                        <Badge v-if="row.follow_me_enabled" :text="'Sequence'"
+                                            :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
+                                            ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
+                                    </span>
+
+                                </div>
                             </div>
-                        </div>
-                    </TableField>
-
-                    <!-- Name and Status Badges
-                    <TableField class="px-2 py-2 text-sm text-gray-500">
-                        <span @click="handleEditButtonClick(row.extension_uuid)"
-                            class="cursor-pointer hover:text-gray-900 font-medium">
-                            {{ row.name_formatted }}
-                        </span>
-                        <span v-if="row.suspended" class="ml-2">
-                            <span class="badge badge-outline-danger">Suspended</span>
-                        </span>
-                        <span v-if="row.do_not_disturb === 'true'" class="ml-2">
-                            <span class="badge badge-outline-danger">DND</span>
-                        </span>
-                        <span v-if="row.forward_all_enabled === 'true'" class="ml-2">
-                            <span class="badge badge-outline-primary">FWD</span>
-                        </span>
-                        <span v-if="row.follow_me_enabled === 'true'" class="ml-2">
-                            <span class="badge badge-outline-primary">Sequence</span>
-                        </span>
-                    </TableField> -->
+                        </TableField>
 
 
-                    <!-- Email -->
-                    <TableField class="px-2 py-2 text-sm text-gray-500">
-                        {{ row.email || '' }}
-                    </TableField>
-                    <!-- Outbound Caller ID -->
-                    <TableField class="px-2 py-2 text-sm text-gray-500">
-                        {{ row.outbound_caller_id_number_formatted || row.outbound_caller_id_number || '' }}
+                        <!-- Email -->
+                        <TableField class="hidden px-2 py-2 text-sm text-gray-500 sm:table-cell">
+                            {{ row.email || '' }}
+                        </TableField>
+                        <!-- Outbound Caller ID -->
+                        <TableField class="whitespace-nowrap hidden spx-2 py-2 text-sm text-gray-500 md:table-cell">
+                            {{ row.outbound_caller_id_number_formatted || row.outbound_caller_id_number || '' }}
 
-                    </TableField>
-                    <!-- Description -->
-                    <TableField class="px-2 py-2 text-sm text-gray-500">
-                        {{ row.description }}
-                    </TableField>
-                    <!-- Actions -->
-                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                        </TableField>
+                        <!-- Description -->
+                        <TableField class="hidden px-2 py-2 text-sm text-gray-500 lg:table-cell">
+                            {{ row.description }}
+                        </TableField>
+                        <!-- Actions -->
+                        <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
 
-                        <template #action-buttons>
-                            <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="page.props.auth.can.extension_update" :content="'Edit'"
-                                    position='TopCenter' target="#destination_tooltip_target">
-                                    <div id="destination_tooltip_target">
-                                        <PencilSquareIcon @click="handleEditButtonClick(row.user_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                            <template #action-buttons>
+                                <div class="flex items-center whitespace-nowrap justify-end">
+                                    <ejs-tooltip v-if="page.props.auth.can.extension_update" :content="'Edit'"
+                                        position='TopCenter' target="#destination_tooltip_target">
+                                        <div id="destination_tooltip_target">
+                                            <PencilSquareIcon @click="handleEditButtonClick(row.user_uuid)"
+                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
 
+                                        </div>
+                                    </ejs-tooltip>
+
+                                    <ejs-tooltip v-if="page.props.auth.can.extension_destroy" :content="'Delete'"
+                                        position='TopCenter' target="#delete_tooltip_target">
+                                        <div id="delete_tooltip_target">
+                                            <TrashIcon @click="handleSingleItemDeleteRequest(row.user_uuid)"
+                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                        </div>
+                                    </ejs-tooltip>
+                                </div>
+                            </template>
+
+
+                        </TableField>
+                    </tr>
+
+                    <!-- EXPANDABLE ROW -->
+                    <tr v-if="expandedExtension === row.extension_uuid">
+                        <td :colspan="5" class="bg-gray-50 px-6 py-4">
+                            <div
+                                v-if="registrations && Array.isArray(registrations[String(row.extension)]) && registrations[String(row.extension)].length">
+                                <div class="ml-9 space-y-2 text-sm text-gray-500">
+                                    <div v-for="(reg, idx) in registrations[String(row.extension)]" :key="idx"
+                                        class="flex flex-col md:flex-row gap-4 border-b last:border-0 pb-2">
+                                        <div><span class="font-semibold">Device:</span> {{ reg.agent }}</div>
+                                        <div><span class="font-semibold">Remote IP Address:</span> {{ reg.wan_ip }}</div>
+                                        <div><span class="font-semibold">Connection Type:</span> {{ reg.transport }}</div>
+                                        <div><span class="font-semibold">Expires in:</span> {{ reg.expsecs }}s</div>
                                     </div>
-                                </ejs-tooltip>
-
-                                <ejs-tooltip v-if="page.props.auth.can.extension_destroy" :content="'Delete'"
-                                    position='TopCenter' target="#delete_tooltip_target">
-                                    <div id="delete_tooltip_target">
-                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.user_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-                                    </div>
-                                </ejs-tooltip>
+                                </div>
                             </div>
-                        </template>
-
-
-                    </TableField>
-                </tr>
+                            <div v-else class="text-gray-400 text-sm ">No registered devices found.</div>
+                        </td>
+                    </tr>
+                </template>
             </template>
 
 
@@ -222,7 +207,7 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <UpdateUserForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading" :header="'Update User'"
+    <UpdateExtensionForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading" :header="'Update User'"
         @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
         @refresh-data="handleSearchButtonClick" />
 
@@ -257,15 +242,9 @@ import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import CreateUserForm from "./components/forms/CreateUserForm.vue";
-import UpdateUserForm from "./components/forms/UpdateUserForm.vue";
+import UpdateExtensionForm from "./components/forms/UpdateExtensionForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
-import {
-    Popover, PopoverButton, PopoverPanel, Menu,
-    MenuButton,
-    MenuItem,
-    MenuItems,
-} from '@headlessui/vue'
 
 
 const page = usePage()
@@ -295,6 +274,12 @@ const filterData = ref({
 
 const itemOptions = ref({})
 const registrations = ref({})
+const expandedExtension = ref(null)
+
+
+const toggleExpand = (extension_uuid) => {
+    expandedExtension.value = expandedExtension.value === extension_uuid ? null : extension_uuid
+}
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
@@ -443,7 +428,7 @@ const getItemOptions = (itemUuid = null) => {
     axios.post(props.routes.item_options, payload)
         .then((response) => {
             itemOptions.value = response.data;
-            // console.log(itemOptions.value);
+            console.log(itemOptions.value);
 
         }).catch((error) => {
             handleModalClose();

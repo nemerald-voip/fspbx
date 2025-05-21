@@ -18,6 +18,7 @@ class ExtensionData extends Data
         public ?string $directory_last_name,
         public ?string $name_formatted,
         public ?string $directory_visible,
+        public ?string $directory_exten_visible,
         public ?string $email,
         public ?string $enabled,
         public ?bool $suspended,
