@@ -207,7 +207,7 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <UpdateExtensionForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading" :header="'Update User'"
+    <UpdateExtensionForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading" :header="'Update Extension'"
         @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
         @refresh-data="handleSearchButtonClick" />
 

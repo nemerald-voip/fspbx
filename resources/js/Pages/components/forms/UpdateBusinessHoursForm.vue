@@ -2,6 +2,7 @@
     <div>
         <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError" @response="handleResponse"
             :default="{
+                uuid: options.item.uuid,
                 extension: options.item.extension,
                 name: options.item.name,
                 timezone: options.timezone,
@@ -53,6 +54,8 @@
                     <div
                         class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                         <FormElements>
+
+                            <HiddenElement name="uuid" :meta="true" />
 
                             <StaticElement name="business_hours_header" tag="h4" content="Business Hours" />
                             <TextElement name="name" label="Name" :columns="{

@@ -49,16 +49,19 @@
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
+                                    extension_uuid: options.item.extension_uuid,
                                     directory_first_name: options.item.directory_first_name,
                                     directory_last_name: options.item.directory_last_name,
                                     extension: options.item.extension,
                                     last_name: options.item.last_name,
-                                    user_email: options.item.email,
+                                    voicemail_mail_to: options.item.email,
                                     description: options.item.description,
                                     suspended: options.item.suspended,
                                     enabled: options.item.enabled,
                                     directory_visible: options.item.directory_visible,
                                     directory_exten_visible: options.item.directory_exten_visible,
+                                    outbound_caller_id_number: options.item.outbound_caller_id_number_e164 ?? '',
+                                    emergency_caller_id_number: options.item.emergency_caller_id_number_e164 ?? '',
 
                                     // groups: options.item.user_groups
                                     //     ? options.item.user_groups.map(ug => ug.group_uuid)
@@ -76,7 +79,7 @@
                                                     'directory_first_name',
                                                     'directory_last_name',
                                                     'extension',
-                                                    'user_email',
+                                                    'voicemail_mail_to',
                                                     'description',
                                                     'user_enabled',
                                                     'enabled',
@@ -86,14 +89,18 @@
                                                     'divider',
                                                     'divider2',
                                                     'divider3',
-                                                    'container_3',
                                                     'container_2',
+                                                    'container_3',
                                                     'submit',
 
                                                 ]" />
-                                                <FormTab name="page1" label="Security" :elements="[
-                                                    'password_reset',
-                                                    'security_title',
+                                                <FormTab name="caller_id" label="Caller ID" :elements="[
+                                                    'external_caller_id_title',
+                                                    'emergency_caller_id_title',
+                                                    'outbound_caller_id_number',
+                                                    'emergency_caller_id_number',
+                                                    'container_3',
+                                                    'submit',
 
                                                 ]" />
                                                 <FormTab name="api_tokens" label="API Keys" :elements="[
@@ -108,6 +115,8 @@
                                         <div
                                             class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                                             <FormElements>
+
+                                                <HiddenElement name="extension_uuid" :meta="true" />
 
                                                 <StaticElement name="basic_info_title" tag="h4" content="Basic Info"
                                                     description="Fill in basic details to identify and describe this extension." />
@@ -129,14 +138,14 @@
                                                             container: 6,
                                                         }
                                                     }" />
-                                                <TextElement name="user_email" label="Email" placeholder="Enter Email"
-                                                    :floating="false" :columns="{
+                                                <TextElement name="voicemail_mail_to" label="Email"
+                                                    placeholder="Enter Email" :floating="false" :columns="{
                                                         container: 6,
                                                     }" />
                                                 <TextElement name="description" label="Description"
                                                     placeholder="Enter Description" :floating="false" />
 
-                                                    <GroupElement name="container_2" />
+                                                <GroupElement name="container_2" />
 
                                                 <ToggleElement name="suspended" text="Suspended"
                                                     description="Prevents users from making or receiving calls, except for emergency calls. Typically used for billing or policy-related suspensions."
@@ -144,8 +153,8 @@
                                                         'toggle.toggleOn': {
                                                             'form-bg-primary': 'bg-red-500',
                                                             'form-border-color-primary': 'border-red-500',
-                                                            'form-color-on-primary' : 'form-color-on-danger'
-                                                            
+                                                            'form-color-on-primary': 'form-color-on-danger'
+
                                                         }
                                                     }" />
 
@@ -168,6 +177,23 @@
                                                     text="Announce extension after name in directory"
                                                     description="Controls whether the extension number is played after the user’s name in the directory. Useful for making it easier for callers to reach the extension directly. Disable for privacy or security reasons."
                                                     true-value="true" false-value="false" />
+
+
+                                                <!-- Caller ID Tab -->
+                                                <StaticElement name="external_caller_id_title" tag="h4"
+                                                    content="External Caller ID"
+                                                    description="Define the External Caller ID that will be displayed on the recipient's device when dialing outside the company." />
+
+                                                <SelectElement name="outbound_caller_id_number"
+                                                    :items="options.phone_numbers" :search="true" :native="false"
+                                                    input-type="search" autocomplete="off" />
+                                                <StaticElement name="emergency_caller_id_title" tag="h4"
+                                                    content="Emergency Caller ID"
+                                                    description="Define the Emergency Caller ID that will be displayed when dialing emergency services." />
+
+                                                <SelectElement name="emergency_caller_id_number"
+                                                    :items="options.phone_numbers" :search="true" :native="false"
+                                                    input-type="search" autocomplete="off" />
 
                                                 <GroupElement name="container_3" />
 
@@ -205,7 +231,6 @@ import { ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import ConfirmationModal from "./../modal/ConfirmationModal.vue";
-import ApiTokens from "./../ApiTokens.vue";
 import CreateApiTokenModal from "./../modal/CreateApiTokenModal.vue"
 
 
@@ -233,7 +258,7 @@ const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
-    // console.log(requestData);
+    console.log(requestData);
 
     return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
 };
@@ -262,7 +287,7 @@ const requestResetPassword = () => {
 //         await form$.value.$vueform.services.axios.post(
 //             props.options.routes.password_reset,
 //             {
-//                 email: props.options.item.user_email,
+//                 email: props.options.item.voicemail_mail_to,
 //             }
 //         );
 
@@ -430,5 +455,4 @@ div[data-lastpass-icon-root] {
 
 div[data-lastpass-root] {
     display: none !important
-}
-</style>
+}</style>

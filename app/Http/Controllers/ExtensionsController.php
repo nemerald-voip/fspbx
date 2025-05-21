@@ -46,6 +46,7 @@ use Spatie\Activitylog\Contracts\Activity;
 use Propaganistas\LaravelPhone\PhoneNumber;
 use App\Http\Requests\OldStoreDeviceRequest;
 use App\Http\Requests\OldUpdateDeviceRequest;
+use App\Http\Requests\UpdateExtensionRequest;
 use Spatie\Activitylog\Facades\CauserResolver;
 use Propaganistas\LaravelPhone\Exceptions\NumberParseException;
 
@@ -87,7 +88,7 @@ class ExtensionsController extends Controller
             ->where('domain_uuid', $currentDomain)
             ->with(['voicemail' => function ($query) use ($currentDomain) {
                 $query->where('domain_uuid', $currentDomain)
-                      ->select('voicemail_id', 'domain_uuid', 'voicemail_mail_to');
+                    ->select('voicemail_id', 'domain_uuid', 'voicemail_mail_to');
             }])
             ->select([
                 'extension_uuid',
@@ -219,9 +220,9 @@ class ExtensionsController extends Controller
         $itemUuid = $request->input('item_uuid');
 
         $currentDomain = session('domain_uuid');
-        // 1) Base payload: either an existing user DTO or a “new user” stub
+        // 1) Base payload: either an existing user DTO or a “new extension stub
         if ($itemUuid) {
-            $user = QueryBuilder::for(Extensions::class)
+            $extension = QueryBuilder::for(Extensions::class)
                 ->select([
                     'extension_uuid',
                     'domain_uuid',
@@ -239,17 +240,21 @@ class ExtensionsController extends Controller
                 ])
                 ->with(['voicemail' => function ($query) use ($currentDomain) {
                     $query->where('domain_uuid', $currentDomain)
-                          ->select('voicemail_id', 'domain_uuid', 'voicemail_mail_to');
+                        ->select('voicemail_id', 'domain_uuid', 'voicemail_mail_to');
                 }])
                 ->whereKey($itemUuid)
-                ->firstOrFail();
+                ->firstOrFail()
+                ->append([
+                    'emergency_caller_id_number_e164',
+                    'outbound_caller_id_number_e164',
+                ]);
 
-            $userDto = ExtensionData::from($user);
+            $extensionDto = ExtensionData::from($extension);
             $updateRoute = route('extensions.update', ['extension' => $itemUuid]);
         } else {
             // “New extension defaults
             $userDto     = new ExtensionData(
-                user_uuid: '',
+                extension_uuid: '',
                 user_email: '',
                 name_formatted: '',
                 first_name: '',
@@ -265,38 +270,31 @@ class ExtensionsController extends Controller
         // 2) Permissions array (you’ll have to implement this)
         $permissions = $this->getUserPermissions();
 
-        // $groups = Groups::where('group_level', '<=', session('user.group_level'))
-        //     ->where(function ($query) {
-        //         $query->where('domain_uuid', null)
-        //             ->orWhere('domain_uuid', session('domain_uuid'));
-        //     })
-        //     ->orderBy('group_name')
-        //     ->get()
-        //     ->map(function ($group) {
-        //         return [
-        //             'value' => $group->group_uuid,
-        //             'label' => $group->group_name,
-        //         ];
-        //     })->toArray();
+        $phone_numbers = QueryBuilder::for(Destinations::class)
+            ->allowedFilters(['destination_number', 'destination_description'])
+            ->allowedSorts('destination_number')
+            ->where('destination_enabled', 'true')
+            ->where('domain_uuid', $currentDomain)
+            ->get([
+                'destination_uuid',
+                'destination_number',
+                'destination_description',
+            ])
+            ->each->append('label', 'destination_number_e164')
+            ->map(function ($destination) {
+                return [
+                    'value' => $destination->destination_number_e164,
+                    'label' => $destination->label,
+                ];
+            })    
+            ->prepend([
+                'value' => '',
+                'label' => 'Main Company Number',
+            ])
+            ->values() 
+            ->toArray();
 
-        // $domains = Domain::where('domain_enabled', true)
-        //     ->orderBy('domain_description')
-        //     ->get()
-        //     ->map(function ($domain) {
-        //         return [
-        //             'value' => $domain->domain_uuid,
-        //             'label' => $domain->domain_description ?: $domain->domain_name,
-        //         ];
-        //     })->toArray();
-
-        // $domain_groups = DomainGroups::orderBy('group_name')
-        //     ->get()
-        //     ->map(function ($group) {
-        //         return [
-        //             'value' => $group->domain_group_uuid,
-        //             'label' => $group->group_name,
-        //         ];
-        //     })->toArray();
+        // logger($phone_numbers);
 
 
         // 3) Any routes your front end needs
@@ -310,10 +308,11 @@ class ExtensionsController extends Controller
         ];
 
         return response()->json([
-            'item'        => $userDto,
+            'item'        => $extensionDto,
             'permissions' => $permissions,
             'routes'      => $routes,
-      
+            'phone_numbers' => $phone_numbers,
+
         ]);
     }
 
@@ -451,97 +450,98 @@ class ExtensionsController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //check permissions
-        if (!userCheckPermission('extension_add') || !userCheckPermission('extension_edit')) {
-            return redirect('/');
-        }
+    // /**
+    //  * Show the form for creating a new resource.
+    //  *
+    //  * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\Contracts\View\View|\Illuminate\Http\Response
+    //  */
+    // public function create()
+    // {
 
-        // Get all phone numbers
-        $destinations = Destinations::where('destination_enabled', 'true')
-            ->where('domain_uuid', Session::get('domain_uuid'))
-            ->get([
-                'destination_uuid',
-                'destination_number',
-                'destination_enabled',
-                'destination_description',
-                DB::Raw("coalesce(destination_description , '') as destination_description"),
-            ])
-            ->sortBy('destination_number');
+    //     //check permissions
+    //     if (!userCheckPermission('extension_add') || !userCheckPermission('extension_edit')) {
+    //         return redirect('/');
+    //     }
 
-        //Get libphonenumber object
-        $phoneNumberUtil = PhoneNumberUtil::getInstance();
+    //     // Get all phone numbers
+    //     $destinations = Destinations::where('destination_enabled', 'true')
+    //         ->where('domain_uuid', Session::get('domain_uuid'))
+    //         ->get([
+    //             'destination_uuid',
+    //             'destination_number',
+    //             'destination_enabled',
+    //             'destination_description',
+    //             DB::Raw("coalesce(destination_description , '') as destination_description"),
+    //         ])
+    //         ->sortBy('destination_number');
 
-        foreach ($destinations as $destination) {
-            try {
-                $phoneNumberObject = $phoneNumberUtil->parse($destination->destination_number, 'US');
-                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $destination->destination_number = $phoneNumberUtil
-                        ->format($phoneNumberObject, PhoneNumberFormat::E164);
-                }
+    //     //Get libphonenumber object
+    //     $phoneNumberUtil = PhoneNumberUtil::getInstance();
 
-                // Set the label
-                $phoneNumber = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
-                $destination->label = isset($destination->destination_description) && !empty($destination->destination_description)
-                    ? $phoneNumber . " - " . $destination->destination_description
-                    : $phoneNumber;
-            } catch (NumberParseException $e) {
-                // Do nothing and leave the numbner as is
+    //     foreach ($destinations as $destination) {
+    //         try {
+    //             $phoneNumberObject = $phoneNumberUtil->parse($destination->destination_number, 'US');
+    //             if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+    //                 $destination->destination_number = $phoneNumberUtil
+    //                     ->format($phoneNumberObject, PhoneNumberFormat::E164);
+    //             }
 
-                //Set the label
-                $destination->label = isset($destination->destination_description) && !empty($destination->destination_description)
-                    ? $destination->destination_number . " - " . $destination->destination_description
-                    : $destination->destination_number;
-            }
+    //             // Set the label
+    //             $phoneNumber = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
+    //             $destination->label = isset($destination->destination_description) && !empty($destination->destination_description)
+    //                 ? $phoneNumber . " - " . $destination->destination_description
+    //                 : $phoneNumber;
+    //         } catch (NumberParseException $e) {
+    //             // Do nothing and leave the numbner as is
 
-            $destination->isCallerID = false;
-            $destination->isEmergencyCallerID = false;
-        }
+    //             //Set the label
+    //             $destination->label = isset($destination->destination_description) && !empty($destination->destination_description)
+    //                 ? $destination->destination_number . " - " . $destination->destination_description
+    //                 : $destination->destination_number;
+    //         }
 
-        // Get music on hold
-        $moh = MusicOnHold::where('domain_uuid', Session::get('domain_uuid'))
-            ->orWhere('domain_uuid', null)
-            ->orderBy('music_on_hold_name', 'ASC')
-            ->get()
-            ->unique('music_on_hold_name');
+    //         $destination->isCallerID = false;
+    //         $destination->isEmergencyCallerID = false;
+    //     }
 
-        $recordings = Recordings::where('domain_uuid', Session::get('domain_uuid'))
-            ->orderBy('recording_name', 'ASC')
-            ->get();
+    //     // Get music on hold
+    //     $moh = MusicOnHold::where('domain_uuid', Session::get('domain_uuid'))
+    //         ->orWhere('domain_uuid', null)
+    //         ->orderBy('music_on_hold_name', 'ASC')
+    //         ->get()
+    //         ->unique('music_on_hold_name');
 
-        $extension = new Extensions();
-        $extension->directory_visible = "true";
-        $extension->directory_exten_visible = "true";
-        $extension->enabled = "true";
-        $extension->user_context = Session::get('domain_name');
-        $extension->accountcode = Session::get('domain_name');
-        $extension->limit_destination = "!USER_BUSY";
-        $extension->limit_max = "5";
-        $extension->call_timeout = "25";
-        $extension->forward_all_enabled = "false";
-        $extension->forward_busy_enabled = "false";
-        $extension->forward_no_answer_enabled = "false";
-        $extension->forward_user_not_registered_enabled = "false";
-        $extension->follow_me_enabled = "false";
-        $extension->do_not_disturb = "false";
+    //     $recordings = Recordings::where('domain_uuid', Session::get('domain_uuid'))
+    //         ->orderBy('recording_name', 'ASC')
+    //         ->get();
 
-        return view('layouts.extensions.createOrUpdate')
-            ->with('extension', $extension)
-            ->with('extensions', $this->getDestinationExtensions())
-            ->with('destinations', $destinations)
-            ->with('follow_me_destinations', [])
-            ->with('domain_users', $extension->domain->users)
-            ->with('follow_me_ring_my_phone_timeout', 0)
-            ->with('moh', $moh)
-            ->with('recordings', $recordings)
-            ->with('national_phone_number_format', PhoneNumberFormat::NATIONAL);
-    }
+    //     $extension = new Extensions();
+    //     $extension->directory_visible = "true";
+    //     $extension->directory_exten_visible = "true";
+    //     $extension->enabled = "true";
+    //     $extension->user_context = Session::get('domain_name');
+    //     $extension->accountcode = Session::get('domain_name');
+    //     $extension->limit_destination = "!USER_BUSY";
+    //     $extension->limit_max = "5";
+    //     $extension->call_timeout = "25";
+    //     $extension->forward_all_enabled = "false";
+    //     $extension->forward_busy_enabled = "false";
+    //     $extension->forward_no_answer_enabled = "false";
+    //     $extension->forward_user_not_registered_enabled = "false";
+    //     $extension->follow_me_enabled = "false";
+    //     $extension->do_not_disturb = "false";
+
+    //     return view('layouts.extensions.createOrUpdate')
+    //         ->with('extension', $extension)
+    //         ->with('extensions', $this->getDestinationExtensions())
+    //         ->with('destinations', $destinations)
+    //         ->with('follow_me_destinations', [])
+    //         ->with('domain_users', $extension->domain->users)
+    //         ->with('follow_me_ring_my_phone_timeout', 0)
+    //         ->with('moh', $moh)
+    //         ->with('recordings', $recordings)
+    //         ->with('national_phone_number_format', PhoneNumberFormat::NATIONAL);
+    // }
 
     /**
      * Store a newly created resource in storage.
@@ -551,6 +551,7 @@ class ExtensionsController extends Controller
      */
     public function store(Request $request, Extensions $extension)
     {
+
         $attributes = [
             'directory_first_name' => 'first name',
             'directory_last_name' => 'last name',
@@ -888,16 +889,6 @@ class ExtensionsController extends Controller
         ]);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param \App\Models\Extentions $extentions
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Extensions $extensions)
-    {
-        //
-    }
 
 
     /**
@@ -924,145 +915,183 @@ class ExtensionsController extends Controller
      * @param Extension $extention
      * @return \Illuminate\Http\Response
      */
-    public function edit(Extensions $extension)
+    // public function edit(Extensions $extension)
+    // {
+
+    //     //check permissions
+    //     if (!userCheckPermission('extension_add') && !userCheckPermission('extension_edit')) {
+    //         return redirect('/');
+    //     }
+
+    //     $devices = Devices::where('device_enabled', 'true')
+    //         ->where('domain_uuid', Session::get('domain_uuid'))
+    //         /*->whereNotExists( function ($query) {
+    //             $query->select(DB::raw(1))
+    //                 ->from('v_device_lines')
+    //                 ->whereRaw('v_devices.device_uuid = v_device_lines.device_uuid');
+    //         })*/
+    //         ->get();
+
+    //     $vendors = DeviceVendor::where('enabled', 'true')->orderBy('name')->get();
+    //     $profiles = DeviceProfile::where('device_profile_enabled', 'true')
+    //         ->where('domain_uuid', Session::get('domain_uuid'))
+    //         ->orderBy('device_profile_name')->get();
+
+    //     // Get all phone numbers
+    //     $destinations = Destinations::where('destination_enabled', 'true')
+    //         ->where('domain_uuid', Session::get('domain_uuid'))
+    //         ->get([
+    //             'destination_uuid',
+    //             'destination_number',
+    //             'destination_enabled',
+    //             'destination_description',
+    //             DB::Raw("coalesce(destination_description , '') as destination_description"),
+    //         ])
+    //         ->sortBy('destination_number');
+
+    //     //Get libphonenumber object
+    //     $phoneNumberUtil = PhoneNumberUtil::getInstance();
+
+    //     //try to convert emergency caller ID to e164 format
+    //     if ($extension->emergency_caller_id_number) {
+    //         $extension->emergency_caller_id_number = formatPhoneNumber($extension->emergency_caller_id_number, "US", 0); // 0 is E164 format
+    //         // try {
+    //         //     $phoneNumberObject = $phoneNumberUtil->parse($extension->emergency_caller_id_number, 'US');
+    //         //     if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+    //         //         $extension->emergency_caller_id_number = $phoneNumberUtil
+    //         //             ->format($phoneNumberObject, PhoneNumberFormat::E164);
+    //         //     }
+    //         // } catch (NumberParseException $e) {
+    //         //     // Do nothing and leave the numbner as is
+    //         // }
+    //     }
+
+    //     //try to convert caller ID to e164 format
+    //     if ($extension->outbound_caller_id_number) {
+    //         $extension->outbound_caller_id_number = formatPhoneNumber($extension->outbound_caller_id_number, "US", 0); // 0 is E164 format
+    //         // try {
+    //         //     $phoneNumberObject = $phoneNumberUtil->parse($extension->outbound_caller_id_number, 'US');
+    //         //     if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+    //         //         $extension->outbound_caller_id_number = $phoneNumberUtil
+    //         //             ->format($phoneNumberObject, PhoneNumberFormat::E164);
+    //         //     }
+    //         // } catch (NumberParseException $e) {
+    //         //     // Do nothing and leave the numbner as is
+    //         // }
+    //     }
+
+    //     foreach ($destinations as $destination) {
+    //         try {
+    //             $phoneNumberObject = $phoneNumberUtil->parse($destination->destination_number, 'US');
+    //             if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
+    //                 $destination->destination_number = $phoneNumberUtil
+    //                     ->format($phoneNumberObject, PhoneNumberFormat::E164);
+    //             }
+
+    //             // Set the label
+    //             $phoneNumber = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
+    //             $destination->label = isset($destination->destination_description) && !empty($destination->destination_description)
+    //                 ? $phoneNumber . " - " . $destination->destination_description
+    //                 : $phoneNumber;
+    //         } catch (NumberParseException $e) {
+    //             // Do nothing and leave the numbner as is
+
+    //             //Set the label
+    //             $destination->label = isset($destination->destination_description) && !empty($destination->destination_description)
+    //                 ? $destination->destination_number . " - " . $destination->destination_description
+    //                 : $destination->destination_number;
+    //         }
+
+    //         $destination->isCallerID = ($destination->destination_number === $extension->outbound_caller_id_number);
+    //         $destination->isEmergencyCallerID = ($destination->destination_number === $extension->emergency_caller_id_number);
+    //     }
+
+    //     $vm_unavailable_file_exists = Storage::disk('voicemail')
+    //         ->exists(Session::get('domain_name') . '/' . $extension->extension . '/greeting_1.wav');
+
+    //     $vm_name_file_exists = Storage::disk('voicemail')
+    //         ->exists(Session::get('domain_name') . '/' . $extension->extension . '/recorded_name.wav');
+
+    //     // Get music on hold
+    //     $moh = MusicOnHold::where('domain_uuid', Session::get('domain_uuid'))
+    //         ->orWhere('domain_uuid', null)
+    //         ->orderBy('music_on_hold_name', 'ASC')
+    //         ->get()
+    //         ->unique('music_on_hold_name');
+
+    //     $recordings = Recordings::where('domain_uuid', Session::get('domain_uuid'))
+    //         ->orderBy('recording_name', 'ASC')
+    //         ->get();
+
+    //     //Check if there is voicemail for this extension
+    //     if (!isset($extension->voicemail)) {
+    //         $extension->voicemail = new Voicemails();
+    //     }
+
+    //     $follow_me_ring_my_phone_timeout = 0;
+    //     $follow_me_destinations = $extension->getFollowMeDestinations();
+    //     if ($follow_me_destinations->count() > 0) {
+    //         if ($follow_me_destinations[0]->follow_me_destination == $extension->extension) {
+    //             $follow_me_ring_my_phone_timeout = $follow_me_destinations[0]->follow_me_timeout;
+    //             unset($follow_me_destinations[0]);
+    //         }
+    //     }
+
+    //     return view('layouts.extensions.createOrUpdate')
+    //         ->with('extension', $extension)
+    //         ->with('domain_users', $extension->domain->users)
+    //         ->with('domain_voicemails', $extension->domain->voicemails)
+    //         ->with('extensions', $this->getDestinationExtensions())
+    //         ->with('extension_users', $extension->users())
+    //         ->with('destinations', $destinations)
+    //         ->with('follow_me_destinations', $follow_me_destinations)
+    //         ->with('follow_me_ring_my_phone_timeout', $follow_me_ring_my_phone_timeout)
+    //         ->with('vm_unavailable_file_exists', $vm_unavailable_file_exists)
+    //         ->with('vm_name_file_exists', $vm_name_file_exists)
+    //         ->with('moh', $moh)
+    //         ->with('recordings', $recordings)
+    //         ->with('devices', $devices)
+    //         ->with('vendors', $vendors)
+    //         ->with('profiles', $profiles);
+    // }
+
+
+    public function update(UpdateExtensionRequest $request, $id)
     {
+        try {
+            $data = $request->validated();
+            logger($data);
 
-        //check permissions
-        if (!userCheckPermission('extension_add') && !userCheckPermission('extension_edit')) {
-            return redirect('/');
+            $currentDomain = session('domain_uuid');
+
+            $extension = Extensions::with(['advSettings'])
+                ->with(['voicemail' => function ($query) use ($currentDomain) {
+                    $query->where('domain_uuid', $currentDomain);
+                }])
+                ->where('extension_uuid', $id)
+                ->firstOrFail();
+
+            $extension->update($data);
+
+            // Update related models
+            $extension->voicemail->update($data);
+            $extension->advSettings->update($data);
+
+            logger($extension->toArray());
+
+
+            return response()->json([
+                'messages' => ['success' => ['Extension updated successfully']],
+                'extension' => $extension->fresh(['voicemail', 'advSettings']),
+            ], 200);
+        } catch (\Throwable $e) {
+            logger('Error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return response()->json([
+                'messages' => ['error' => ['An error occurred while updating the extension.', $e->getMessage()]],
+            ], 500);
         }
-
-        $devices = Devices::where('device_enabled', 'true')
-            ->where('domain_uuid', Session::get('domain_uuid'))
-            /*->whereNotExists( function ($query) {
-                $query->select(DB::raw(1))
-                    ->from('v_device_lines')
-                    ->whereRaw('v_devices.device_uuid = v_device_lines.device_uuid');
-            })*/
-            ->get();
-
-        $vendors = DeviceVendor::where('enabled', 'true')->orderBy('name')->get();
-        $profiles = DeviceProfile::where('device_profile_enabled', 'true')
-            ->where('domain_uuid', Session::get('domain_uuid'))
-            ->orderBy('device_profile_name')->get();
-
-        // Get all phone numbers
-        $destinations = Destinations::where('destination_enabled', 'true')
-            ->where('domain_uuid', Session::get('domain_uuid'))
-            ->get([
-                'destination_uuid',
-                'destination_number',
-                'destination_enabled',
-                'destination_description',
-                DB::Raw("coalesce(destination_description , '') as destination_description"),
-            ])
-            ->sortBy('destination_number');
-
-        //Get libphonenumber object
-        $phoneNumberUtil = PhoneNumberUtil::getInstance();
-
-        //try to convert emergency caller ID to e164 format
-        if ($extension->emergency_caller_id_number) {
-            $extension->emergency_caller_id_number = formatPhoneNumber($extension->emergency_caller_id_number, "US", 0); // 0 is E164 format
-            // try {
-            //     $phoneNumberObject = $phoneNumberUtil->parse($extension->emergency_caller_id_number, 'US');
-            //     if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-            //         $extension->emergency_caller_id_number = $phoneNumberUtil
-            //             ->format($phoneNumberObject, PhoneNumberFormat::E164);
-            //     }
-            // } catch (NumberParseException $e) {
-            //     // Do nothing and leave the numbner as is
-            // }
-        }
-
-        //try to convert caller ID to e164 format
-        if ($extension->outbound_caller_id_number) {
-            $extension->outbound_caller_id_number = formatPhoneNumber($extension->outbound_caller_id_number, "US", 0); // 0 is E164 format
-            // try {
-            //     $phoneNumberObject = $phoneNumberUtil->parse($extension->outbound_caller_id_number, 'US');
-            //     if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-            //         $extension->outbound_caller_id_number = $phoneNumberUtil
-            //             ->format($phoneNumberObject, PhoneNumberFormat::E164);
-            //     }
-            // } catch (NumberParseException $e) {
-            //     // Do nothing and leave the numbner as is
-            // }
-        }
-
-        foreach ($destinations as $destination) {
-            try {
-                $phoneNumberObject = $phoneNumberUtil->parse($destination->destination_number, 'US');
-                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $destination->destination_number = $phoneNumberUtil
-                        ->format($phoneNumberObject, PhoneNumberFormat::E164);
-                }
-
-                // Set the label
-                $phoneNumber = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
-                $destination->label = isset($destination->destination_description) && !empty($destination->destination_description)
-                    ? $phoneNumber . " - " . $destination->destination_description
-                    : $phoneNumber;
-            } catch (NumberParseException $e) {
-                // Do nothing and leave the numbner as is
-
-                //Set the label
-                $destination->label = isset($destination->destination_description) && !empty($destination->destination_description)
-                    ? $destination->destination_number . " - " . $destination->destination_description
-                    : $destination->destination_number;
-            }
-
-            $destination->isCallerID = ($destination->destination_number === $extension->outbound_caller_id_number);
-            $destination->isEmergencyCallerID = ($destination->destination_number === $extension->emergency_caller_id_number);
-        }
-
-        $vm_unavailable_file_exists = Storage::disk('voicemail')
-            ->exists(Session::get('domain_name') . '/' . $extension->extension . '/greeting_1.wav');
-
-        $vm_name_file_exists = Storage::disk('voicemail')
-            ->exists(Session::get('domain_name') . '/' . $extension->extension . '/recorded_name.wav');
-
-        // Get music on hold
-        $moh = MusicOnHold::where('domain_uuid', Session::get('domain_uuid'))
-            ->orWhere('domain_uuid', null)
-            ->orderBy('music_on_hold_name', 'ASC')
-            ->get()
-            ->unique('music_on_hold_name');
-
-        $recordings = Recordings::where('domain_uuid', Session::get('domain_uuid'))
-            ->orderBy('recording_name', 'ASC')
-            ->get();
-
-        //Check if there is voicemail for this extension
-        if (!isset($extension->voicemail)) {
-            $extension->voicemail = new Voicemails();
-        }
-
-        $follow_me_ring_my_phone_timeout = 0;
-        $follow_me_destinations = $extension->getFollowMeDestinations();
-        if ($follow_me_destinations->count() > 0) {
-            if ($follow_me_destinations[0]->follow_me_destination == $extension->extension) {
-                $follow_me_ring_my_phone_timeout = $follow_me_destinations[0]->follow_me_timeout;
-                unset($follow_me_destinations[0]);
-            }
-        }
-
-        return view('layouts.extensions.createOrUpdate')
-            ->with('extension', $extension)
-            ->with('domain_users', $extension->domain->users)
-            ->with('domain_voicemails', $extension->domain->voicemails)
-            ->with('extensions', $this->getDestinationExtensions())
-            ->with('extension_users', $extension->users())
-            ->with('destinations', $destinations)
-            ->with('follow_me_destinations', $follow_me_destinations)
-            ->with('follow_me_ring_my_phone_timeout', $follow_me_ring_my_phone_timeout)
-            ->with('vm_unavailable_file_exists', $vm_unavailable_file_exists)
-            ->with('vm_name_file_exists', $vm_name_file_exists)
-            ->with('moh', $moh)
-            ->with('recordings', $recordings)
-            ->with('devices', $devices)
-            ->with('vendors', $vendors)
-            ->with('profiles', $profiles);
     }
+
 
     /**
      * Update the specified resource in storage.
@@ -1071,31 +1100,14 @@ class ExtensionsController extends Controller
      * @param \App\Models\Extentions $extentions
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Extensions $extension)
+    public function update_old(UpdateExtensionRequest $request, Extensions $extension)
     {
-        $attributes = [
-            'directory_first_name' => 'first name',
-            'directory_last_name' => 'last name',
-            'extension' => 'extension number',
-            'voicemail_mail_to' => 'email address',
-            'users' => 'users field',
-            'voicemail_password' => 'voicemail pin',
-            'outbound_caller_id_number' => 'external caller ID',
-            'voicemail_description' => 'description',
-            'domain_uuid' => 'domain',
-            'user_context' => 'context',
-            'max_registrations' => 'registrations',
-            'accountcode' => 'account code',
-            'limit_max' => 'total allowed outbound calls',
-            'forward_all_enabled' => 'call forwarding always',
-            'forward_all_destination' => 'field',
-            'forward_busy_enabled' => 'call forwarding busy',
-            'forward_busy_destination' => 'field',
-            'forward_no_answer_enabled' => 'call forwarding no answer',
-            'forward_no_answer_description' => 'field',
-            'forward_user_not_registered_enabled' => 'call forwarding no user',
-            'forward_user_not_registered_destination' => 'field',
-        ];
+
+        $data = $request->validated();
+        logger($data);
+        return;
+
+
 
         $validator = Validator::make($request->all(), [
             'directory_first_name' => 'required|string',
@@ -1970,5 +1982,4 @@ class ExtensionsController extends Controller
 
         return $permissions;
     }
-
 }

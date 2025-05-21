@@ -158,6 +158,16 @@ class Extensions extends Model
         return formatPhoneNumber($this->outbound_caller_id_number, 'US', PhoneNumberFormat::NATIONAL);
     }
 
+    public function getEmergencyCallerIdNumberE164Attribute()
+    {
+        return formatPhoneNumber($this->emergency_caller_id_number, 'US', PhoneNumberFormat::E164);
+    }
+
+    public function getOutboundCallerIdNumberE164Attribute()
+    {
+        return formatPhoneNumber($this->outbound_caller_id_number, 'US', PhoneNumberFormat::E164);
+    }
+
     /**
      * This gets you “all possible” voicemails where ID matches extension, regardless of domain.
      * Further filtering by domain is REQUIRED to avoid false positives and PERFORMANCE ISSUESyou  
