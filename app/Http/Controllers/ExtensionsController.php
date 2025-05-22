@@ -43,6 +43,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\AssignDeviceRequest;
 use App\Http\Requests\UpdateDeviceRequest;
 use Spatie\Activitylog\Contracts\Activity;
+use App\Services\CallRoutingOptionsService;
 use Propaganistas\LaravelPhone\PhoneNumber;
 use App\Http\Requests\OldStoreDeviceRequest;
 use App\Http\Requests\OldUpdateDeviceRequest;
@@ -296,12 +297,12 @@ class ExtensionsController extends Controller
                     'value' => $destination->destination_number_e164,
                     'label' => $destination->label,
                 ];
-            })    
+            })
             ->prepend([
                 'value' => '',
                 'label' => 'Main Company Number',
             ])
-            ->values() 
+            ->values()
             ->toArray();
 
         // logger($phone_numbers);
@@ -314,15 +315,19 @@ class ExtensionsController extends Controller
             'password_reset' => route('users.password.email'),
             'tokens' => route('tokens.index'),
             'create_token' => route('tokens.store'),
-            'token_bulk_delete' => route('tokens.bulk.delete')
+            'token_bulk_delete' => route('tokens.bulk.delete'),
+            'get_routing_options' => route('routing.options'),
         ];
+
+        $routingOptionsService = new CallRoutingOptionsService;
+        $forwardingTypes = $routingOptionsService->forwardingTypes;
 
         return response()->json([
             'item'        => $extensionDto,
             'permissions' => $permissions,
             'routes'      => $routes,
             'phone_numbers' => $phone_numbers,
-
+            'forwarding_types' => $forwardingTypes,
         ]);
     }
 

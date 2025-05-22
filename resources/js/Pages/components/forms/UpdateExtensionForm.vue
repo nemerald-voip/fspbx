@@ -103,10 +103,34 @@
                                                     'submit',
 
                                                 ]" />
-                                                <FormTab name="api_tokens" label="API Keys" :elements="[
-                                                    'html',
-                                                    'add_token',
+                                                <FormTab name="call_forward" label="Call Forward" :elements="[
+                                                    'forward_all_calls_title',
+                                                    'forward_all_enabled',
                                                     'token_title',
+                                                    'forward_all_action',
+                                                    'forward_all_target',
+                                                    'forward_all_external_target',
+                                                    'container_3',
+                                                    'divider5',
+                                                    'forward_busy_title',
+                                                    'forward_busy_enabled',
+                                                    'forward_busy_action',
+                                                    'forward_busy_target',
+                                                    'forward_busy_external_target',
+                                                    'divider6',
+                                                    'forward_no_answer_title',
+                                                    'forward_no_answer_enabled',
+                                                    'forward_no_answer_action',
+                                                    'forward_no_answer_target',
+                                                    'forward_no_answer_external_target',
+                                                    'divider7',
+                                                    'forward_user_not_registered_title',
+                                                    'forward_user_not_registered_enabled',
+                                                    'forward_user_not_registered_action',
+                                                    'forward_user_not_registered_target',
+                                                    'forward_user_not_registered_external_target',
+                                                    'divider8',
+                                                    'submit',
 
                                                 ]" :conditions="[() => options.permissions.api_key]" />
                                             </FormTabs>
@@ -195,6 +219,278 @@
                                                     :items="options.phone_numbers" :search="true" :native="false"
                                                     input-type="search" autocomplete="off" />
 
+
+                                                <!-- Call Forward Tab -->
+
+                                                <StaticElement name="forward_all_calls_title" tag="h4"
+                                                    content="Forward All Calls"
+                                                    description="Instantly and unconditionally forward all incoming calls to another destination. No calls will ring to your phone until forwarding is disabled." />
+                                                <ToggleElement name="forward_all_enabled" :labels="{
+                                                    on: 'On',
+                                                    off: 'Off',
+                                                }" true-value="true" false-value="false" />
+
+                                                <SelectElement name="forward_all_action" :items="options.forwarding_types"
+                                                    :search="true" :native="false" label="Choose Action" input-type="search"
+                                                    autocomplete="off" placeholder="Choose Action" :floating="false"
+                                                    :strict="false" :conditions="[['forward_all_enabled', '==', 'true'],]"
+                                                    :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" @change="(newValue, oldValue, el$) => {
+    let forward_all_target = el$.form$.el$('forward_all_target')
+
+    // only clear when this isn’t the very first time (i.e. oldValue was set)
+    if (oldValue !== null && oldValue !== undefined) {
+        forward_all_target.clear();
+    }
+
+    forward_all_target.updateItems()
+}" />
+                                                <SelectElement name="forward_all_target" :items="async (query, input) => {
+                                                    let forward_all_action = input.$parent.el$.form$.el$('forward_all_action');
+
+                                                    try {
+                                                        let response = await forward_all_action.$vueform.services.axios.post(
+                                                            options.routes.get_routing_options,
+                                                            { category: forward_all_action.value }
+                                                        );
+                                                        // console.log(response.data.options);
+                                                        return response.data.options;
+                                                    } catch (error) {
+                                                        emit('error', error);
+                                                        return [];  // Return an empty array in case of error
+                                                    }
+                                                }" :search="true" label-prop="name" :native="false" label="Target"
+                                                    input-type="search" allow-absent :object="true" autocomplete="off"
+                                                    placeholder="Choose Target" :floating="false" :strict="false" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" :conditions="[
+    ['forward_all_enabled', '==', 'true'],
+    ['forward_all_action', 'not_empty'],
+    ['forward_all_action', 'not_in', ['external']]
+]" />
+
+                                                <TextElement name="forward_all_external_target" label="Target"
+                                                    placeholder="Enter External Number" :floating="false" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" :conditions="[
+    ['forward_all_enabled', '==', 'true'],
+    ['forward_all_action', 'not_empty'],
+    ['forward_all_action', 'in', ['external']]
+]" />
+                                                <StaticElement name="divider5" tag="hr" />
+
+
+
+                                                <StaticElement name="forward_busy_title" tag="h4"
+                                                    content="When user is busy"
+                                                    description="Automatically redirect incoming calls to a different destination when your line is busy or Do Not Disturb is active." />
+
+                                                <ToggleElement name="forward_busy_enabled" :labels="{
+                                                    on: 'On',
+                                                    off: 'Off',
+                                                }" true-value="true" false-value="false" />
+
+                                                <SelectElement name="forward_busy_action" :items="options.forwarding_types"
+                                                    :search="true" :native="false" label="Choose Action" input-type="search"
+                                                    autocomplete="off" placeholder="Choose Action" :floating="false"
+                                                    :strict="false" :conditions="[['forward_busy_enabled', '==', 'true']]"
+                                                    :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" @change="(newValue, oldValue, el$) => {
+    let forward_busy_target = el$.form$.el$('forward_busy_target');
+
+    // only clear when this isn’t the very first time (i.e. oldValue was set)
+    if (oldValue !== null && oldValue !== undefined) {
+        forward_busy_target.clear();
+    }
+
+    forward_busy_target.updateItems();
+}" />
+
+                                                <SelectElement name="forward_busy_target" :items="async (query, input) => {
+                                                    let forward_busy_action = input.$parent.el$.form$.el$('forward_busy_action');
+
+                                                    try {
+                                                        let response = await forward_busy_action.$vueform.services.axios.post(
+                                                            options.routes.get_routing_options,
+                                                            { category: forward_busy_action.value }
+                                                        );
+                                                        // console.log(response.data.options);
+                                                        return response.data.options;
+                                                    } catch (error) {
+                                                        emit('error', error);
+                                                        return [];  // Return an empty array in case of error
+                                                    }
+                                                }" :search="true" label-prop="name" :native="false" label="Target"
+                                                    input-type="search" allow-absent :object="true" autocomplete="off"
+                                                    placeholder="Choose Target" :floating="false" :strict="false" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" :conditions="[
+    ['forward_busy_enabled', '==', 'true'],
+    ['forward_busy_action', 'not_empty'],
+    ['forward_busy_action', 'not_in', ['external']]
+]" />
+
+                                                <TextElement name="forward_busy_external_target" label="Target"
+                                                    placeholder="Enter External Number" :floating="false" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" :conditions="[
+    ['forward_busy_enabled', '==', 'true'],
+    ['forward_busy_action', 'not_empty'],
+    ['forward_busy_action', 'in', ['external']]
+]" />
+                                                <StaticElement name="divider6" tag="hr" />
+
+                                                <StaticElement name="forward_no_answer_title" tag="h4"
+                                                    content="When user does not answer the call"
+                                                    description="Automatically redirect incoming calls to another number if you do not answer within a set time." />
+
+                                                <ToggleElement name="forward_no_answer_enabled" :labels="{
+                                                    on: 'On',
+                                                    off: 'Off',
+                                                }" true-value="true" false-value="false" />
+
+                                                <SelectElement name="forward_no_answer_action"
+                                                    :items="options.forwarding_types" :search="true" :native="false"
+                                                    label="Choose Action" input-type="search" autocomplete="off"
+                                                    placeholder="Choose Action" :floating="false" :strict="false"
+                                                    :conditions="[['forward_no_answer_enabled', '==', 'true']]" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" @change="(newValue, oldValue, el$) => {
+    let forward_no_answer_target = el$.form$.el$('forward_no_answer_target');
+
+    // only clear when this isn’t the very first time (i.e. oldValue was set)
+    if (oldValue !== null && oldValue !== undefined) {
+        forward_no_answer_target.clear();
+    }
+
+    forward_no_answer_target.updateItems();
+}" />
+
+                                                <SelectElement name="forward_no_answer_target" :items="async (query, input) => {
+                                                    let forward_no_answer_action = input.$parent.el$.form$.el$('forward_no_answer_action');
+
+                                                    try {
+                                                        let response = await forward_no_answer_action.$vueform.services.axios.post(
+                                                            options.routes.get_routing_options,
+                                                            { category: forward_no_answer_action.value }
+                                                        );
+                                                        // console.log(response.data.options);
+                                                        return response.data.options;
+                                                    } catch (error) {
+                                                        emit('error', error);
+                                                        return [];  // Return an empty array in case of error
+                                                    }
+                                                }" :search="true" label-prop="name" :native="false" label="Target"
+                                                    input-type="search" allow-absent :object="true" autocomplete="off"
+                                                    placeholder="Choose Target" :floating="false" :strict="false" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" :conditions="[
+    ['forward_no_answer_enabled', '==', 'true'],
+    ['forward_no_answer_action', 'not_empty'],
+    ['forward_no_answer_action', 'not_in', ['external']]
+]" />
+
+                                                <TextElement name="forward_no_answer_external_target" label="Target"
+                                                    placeholder="Enter External Number" :floating="false" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" :conditions="[
+    ['forward_no_answer_enabled', '==', 'true'],
+    ['forward_no_answer_action', 'not_empty'],
+    ['forward_no_answer_action', 'in', ['external']]
+]" />
+
+                                                <StaticElement name="divider7" tag="hr" />
+
+
+                                                <StaticElement name="forward_user_not_registered_title" tag="h4"
+                                                    content="When Device Is Not Registered (Internet Outage)"
+                                                    description="Redirect calls to a different number if your device is not registered or unreachable." />
+
+                                                <ToggleElement name="forward_user_not_registered_enabled" :labels="{
+                                                    on: 'On',
+                                                    off: 'Off',
+                                                }" true-value="true" false-value="false" />
+
+                                                <SelectElement name="forward_user_not_registered_action"
+                                                    :items="options.forwarding_types" :search="true" :native="false"
+                                                    label="Choose Action" input-type="search" autocomplete="off"
+                                                    placeholder="Choose Action" :floating="false" :strict="false"
+                                                    :conditions="[['forward_user_not_registered_enabled', '==', 'true']]"
+                                                    :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" @change="(newValue, oldValue, el$) => {
+    let forward_user_not_registered_target = el$.form$.el$('forward_user_not_registered_target');
+
+    // only clear when this isn’t the very first time (i.e. oldValue was set)
+    if (oldValue !== null && oldValue !== undefined) {
+        forward_user_not_registered_target.clear();
+    }
+
+    forward_user_not_registered_target.updateItems();
+}" />
+
+                                                <SelectElement name="forward_user_not_registered_target" :items="async (query, input) => {
+                                                    let forward_user_not_registered_action = input.$parent.el$.form$.el$('forward_user_not_registered_action');
+
+                                                    try {
+                                                        let response = await forward_user_not_registered_action.$vueform.services.axios.post(
+                                                            options.routes.get_routing_options,
+                                                            { category: forward_user_not_registered_action.value }
+                                                        );
+                                                        // console.log(response.data.options);
+                                                        return response.data.options;
+                                                    } catch (error) {
+                                                        emit('error', error);
+                                                        return [];  // Return an empty array in case of error
+                                                    }
+                                                }" :search="true" label-prop="name" :native="false" label="Target"
+                                                    input-type="search" allow-absent :object="true" autocomplete="off"
+                                                    placeholder="Choose Target" :floating="false" :strict="false" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" :conditions="[
+    ['forward_user_not_registered_enabled', '==', 'true'],
+    ['forward_user_not_registered_action', 'not_empty'],
+    ['forward_user_not_registered_action', 'not_in', ['external']]
+]" />
+
+                                                <TextElement name="forward_user_not_registered_external_target"
+                                                    label="Target" placeholder="Enter External Number" :floating="false"
+                                                    :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" :conditions="[
+    ['forward_user_not_registered_enabled', '==', 'true'],
+    ['forward_user_not_registered_action', 'not_empty'],
+    ['forward_user_not_registered_action', 'in', ['external']]
+]" />
+
+                                                <StaticElement name="divider8" tag="hr" />
+
                                                 <GroupElement name="container_3" />
 
                                                 <ButtonElement name="submit" button-label="Save" :submits="true"
@@ -260,7 +556,7 @@ const submitForm = async (FormData, form$) => {
     const requestData = form$.requestData
     console.log(requestData);
 
-    return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
+    // return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
 };
 
 function clearErrorsRecursive(el$) {
@@ -455,4 +751,5 @@ div[data-lastpass-icon-root] {
 
 div[data-lastpass-root] {
     display: none !important
-}</style>
+}
+</style>
