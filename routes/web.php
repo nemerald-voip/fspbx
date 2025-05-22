@@ -120,13 +120,12 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('domains/extensions', [DomainController::class, 'countExtensionsInDomains']);
 
     //Users
-    Route::resource('users', UsersController::class);
-    Route::post('user/{user}/settings', [UserSettingsController::class, 'store'])->name('users.settings.store');
-    Route::delete('user/settings/{setting}', [UserSettingsController::class, 'destroy'])->name('users.settings.destroy');
+    Route::get('users', [UsersController::class, 'index'])->name('users.index');
+    // Route::post('user/{user}/settings', [UserSettingsController::class, 'store'])->name('users.settings.store');
+    // Route::delete('user/settings/{setting}', [UserSettingsController::class, 'destroy'])->name('users.settings.destroy');
     Route::post('user/password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('users.password.email');
 
     // Groups
-    // Route::resource('groups', GroupsController::class);
     Route::get('groups', [GroupsController::class, 'index'])->name('groups.index');
 
     //Fax

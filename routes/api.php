@@ -3,6 +3,7 @@
 use App\Models\DomainGroups;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TokenController;
+use App\Http\Controllers\UsersController;
 use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\UserLogsController;
 use App\Http\Controllers\RingGroupsController;
@@ -24,7 +25,9 @@ use App\Http\Controllers\Api\EmergencyCallController;
 
 
 Route::group(['middleware' => ['auth:sanctum']], function () {
-    Route::post('/tokens', [TokenController::class, "index"]);
+    // Tokens
+    Route::resource('/tokens', TokenController::class);
+    Route::post('tokens/bulk-delete', [TokenController::class, 'bulkDelete'])->name('tokens.bulk.delete');
 
     // Emergency calls
     Route::resource('/emergency-calls', EmergencyCallController::class);
@@ -69,6 +72,14 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('domain-groups/bulk-delete', [DomainGroupsController::class, 'bulkDelete'])->name('domain-groups.bulk.delete');
     Route::post('domain-groups/select-all', [DomainGroupsController::class, 'selectAll'])->name('domain-groups.select.all');
 
+    // Users
+    Route::post('users', [UsersController::class, 'store'])->name('users.store');
+    Route::put('users/{user}', [UsersController::class, 'update'])->name('users.update');
+    Route::post('users/item-options', [UsersController::class, 'getItemOptions'])->name('users.item.options');
+    Route::post('users/bulk-delete', [UsersController::class, 'bulkDelete'])->name('users.bulk.delete');
+    Route::post('users/select-all', [UsersController::class, 'selectAll'])->name('users.select.all');
+
     // User logs
     Route::post('user-logs/select-all', [UserLogsController::class, 'selectAll'])->name('user-logs.select.all');
+
 });
