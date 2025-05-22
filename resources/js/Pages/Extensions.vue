@@ -102,13 +102,13 @@
                                         <Badge v-if="row.suspended" :text="'Suspended'" :backgroundColor="'bg-rose-100'"
                                             :textColor="'text-rose-800'" ringColor="ring-rose-400/20"
                                             class="px-2 py-1 text-xs" />
-                                        <Badge v-if="row.do_not_disturb" :text="'DND'" :backgroundColor="'bg-rose-100'"
+                                        <Badge v-if="row.do_not_disturb == 'true'" :text="'DND'" :backgroundColor="'bg-rose-100'"
                                             :textColor="'text-rose-800'" ringColor="ring-rose-400/20"
                                             class="px-2 py-1 text-xs" />
-                                        <Badge v-if="row.forward_all_enabled" :text="'FWD'" :backgroundColor="'bg-blue-100'"
+                                        <Badge v-if="row.forward_all_enabled == 'true'" :text="'FWD'" :backgroundColor="'bg-blue-100'"
                                             :textColor="'text-blue-800'" ringColor="ring-blue-400/20"
                                             class="px-2 py-1 text-xs" />
-                                        <Badge v-if="row.follow_me_enabled" :text="'Sequence'"
+                                        <Badge v-if="row.follow_me_enabled == 'true'" :text="'Sequence'"
                                             :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
                                             ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
                                     </span>
