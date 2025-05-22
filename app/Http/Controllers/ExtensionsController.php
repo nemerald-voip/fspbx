@@ -237,6 +237,16 @@ class ExtensionsController extends Controller
                     'directory_exten_visible',
                     'enabled',
                     'description',
+                    'do_not_disturb',
+                    'forward_all_destination',
+                    'forward_all_enabled',
+                    'forward_busy_destination',
+                    'forward_busy_enabled',
+                    'forward_no_answer_destination',
+                    'forward_no_answer_enabled',
+                    'forward_user_not_registered_destination',
+                    'forward_user_not_registered_enabled',
+
                 ])
                 ->with(['voicemail' => function ($query) use ($currentDomain) {
                     $query->where('domain_uuid', $currentDomain)
