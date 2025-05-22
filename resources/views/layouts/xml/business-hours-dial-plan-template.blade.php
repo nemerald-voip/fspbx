@@ -21,6 +21,55 @@
         'recordings' => 'recording_filename',
         'voicemails' => 'voicemail_id',
     ];
+
+    /**
+     * Build regexes for any time range (e.g., 2215–0110).
+     * Returns an array of regexes for use in <condition> blocks.
+     */
+    function makeTimeRangeRegex($start, $end) {
+        $start = str_pad($start, 4, '0', STR_PAD_LEFT);
+        $end = str_pad($end, 4, '0', STR_PAD_LEFT);
+        $startHour = intval(substr($start, 0, 2));
+        $startMin = intval(substr($start, 2, 2));
+        $endHour = intval(substr($end, 0, 2));
+        $endMin = intval(substr($end, 2, 2));
+        $regexes = [];
+
+        // Not overnight
+        if ($start < $end) {
+            for ($h = $startHour; $h <= $endHour; $h++) {
+                if ($h == $startHour && $h == $endHour) {
+                    // One hour window
+                    $regexes[] = '^' . sprintf('%02d', $h) . '(' . implode('|', range($startMin, $endMin)) . ')$';
+                } elseif ($h == $startHour) {
+                    $regexes[] = '^' . sprintf('%02d', $h) . '(' . implode('|', range($startMin, 59)) . ')$';
+                } elseif ($h == $endHour) {
+                    $regexes[] = '^' . sprintf('%02d', $h) . '(' . implode('|', range(0, $endMin)) . ')$';
+                } else {
+                    $regexes[] = '^' . sprintf('%02d', $h) . '([0-5][0-9])$';
+                }
+            }
+        } else {
+            // Overnight (spans midnight)
+            // Late segment (startHour:startMin → 23:59)
+            for ($h = $startHour; $h <= 23; $h++) {
+                if ($h == $startHour) {
+                    $regexes[] = '^' . sprintf('%02d', $h) . '(' . implode('|', range($startMin, 59)) . ')$';
+                } else {
+                    $regexes[] = '^' . sprintf('%02d', $h) . '([0-5][0-9])$';
+                }
+            }
+            // Early segment (00:00 → endHour:endMin)
+            for ($h = 0; $h <= $endHour; $h++) {
+                if ($h == $endHour) {
+                    $regexes[] = '^' . sprintf('%02d', $h) . '(' . implode('|', range(0, $endMin)) . ')$';
+                } else {
+                    $regexes[] = '^' . sprintf('%02d', $h) . '([0-5][0-9])$';
+                }
+            }
+        }
+        return $regexes;
+    }
 @endphp
 
 <extension name="{{ $businessHour->name }}" continue="false" uuid="{{ $businessHour->dialplan_uuid }}">
@@ -59,6 +108,11 @@
                 // decide matching attributes
                 $useAttrs = [];
 
+                        $tz = $businessHour->timezone;
+
+
+        $strftimeConditions = [];
+
                 switch ($h->holiday_type) {
                     case 'single_date':
                         // exact single-day match with year, month, and day
@@ -73,27 +127,77 @@
                         }
                         break;
 
+                    // case 'date_range':
+                    //     // date-range can be timed or full-day
+                    //     if ($h->start_date && $h->end_date) {
+                    //         if ($h->start_time && $h->end_time) {
+                    //             // use FreeSWITCH date-time range, combine date + time from separate fields
+                    //             $startDT = $h->start_date->format('Y-m-d') . ' ' . $h->start_time->format('H:i');
+                    //             $endDT = $h->end_date->format('Y-m-d') . ' ' . $h->end_time->format('H:i');
+                    //             $useAttrs = ['date-time' => "$startDT~$endDT"];
+                    //             $timeAttr = '';
+                    //         } else {
+                    //             // full-day range via year, mon, mday-range
+                    //             $sd = $h->start_date;
+                    //             $ed = $h->end_date;
+                    //             $useAttrs = [
+                    //                 'year' => $sd->format('Y'),
+                    //                 'mon' => $sd->format('n'),
+                    //                 'mday' => $sd->format('j') . '-' . $ed->format('j'),
+                    //             ];
+                    //         }
+                    //     }
+                    //     break;
+
                     case 'date_range':
-                        // date-range can be timed or full-day
-                        if ($h->start_date && $h->end_date) {
-                            if ($h->start_time && $h->end_time) {
-                                // use FreeSWITCH date-time range, combine date + time from separate fields
-                                $startDT = $h->start_date->format('Y-m-d') . ' ' . $h->start_time->format('H:i');
-                                $endDT = $h->end_date->format('Y-m-d') . ' ' . $h->end_time->format('H:i');
-                                $useAttrs = ['date-time' => "$startDT~$endDT"];
-                                $timeAttr = '';
-                            } else {
-                                // full-day range via year, mon, mday-range
-                                $sd = $h->start_date;
-                                $ed = $h->end_date;
-                                $useAttrs = [
-                                    'year' => $sd->format('Y'),
-                                    'mon' => $sd->format('n'),
-                                    'mday' => $sd->format('j') . '-' . $ed->format('j'),
-                                ];
-                            }
-                        }
-                        break;
+    if ($h->start_date && $h->end_date && $h->start_time && $h->end_time) {
+        $sd = $h->start_date;
+        $ed = $h->end_date;
+        $st = $h->start_time->format('Hi');
+        $et = $h->end_time->format('Hi');
+
+        if ($sd->isSameDay($ed)) {
+            // Single day (could be overnight, but dates match)
+            $regexes = makeTimeRangeRegex($st, $et);
+            foreach ($regexes as $regex) {
+                $strftimeConditions[] = [
+                    'date' => $sd->format('Y-m-d'),
+                    'time_regex' => $regex,
+                ];
+            }
+        } else {
+            // Multi-day or overnight
+
+            // First day (start_time → 23:59)
+            $regexes = makeTimeRangeRegex($st, '2359');
+            foreach ($regexes as $regex) {
+                $strftimeConditions[] = [
+                    'date' => $sd->format('Y-m-d'),
+                    'time_regex' => $regex,
+                ];
+            }
+
+            // Middle days (full 24 hours)
+            $curr = $sd->copy()->addDay();
+            while ($curr->lt($ed)) {
+                $strftimeConditions[] = [
+                    'date' => $curr->format('Y-m-d'),
+                    'time_regex' => '^([0-1][0-9]|2[0-3])[0-5][0-9]$', // Matches all times
+                ];
+                $curr->addDay();
+            }
+
+            // Last day (00:00 → end_time)
+            $regexes = makeTimeRangeRegex('0000', $et);
+            foreach ($regexes as $regex) {
+                $strftimeConditions[] = [
+                    'date' => $ed->format('Y-m-d'),
+                    'time_regex' => $regex,
+                ];
+            }
+        }
+    }
+    break;
 
                     case 'us_holiday':
                     case 'ca_holiday':
@@ -133,7 +237,17 @@
                 }
             @endphp
 
-            @if (count($useAttrs))
+
+    @if (count($strftimeConditions))
+        @foreach ($strftimeConditions as $c)
+            <condition field="${strftime_tz({{ $tz }} %Y-%m-%d)}" expression="^{{ $c['date'] }}$" break="never">
+                <condition field="${strftime_tz({{ $tz }} %H%M)}" expression="{{ $c['time_regex'] }}" break="on-true">
+                    <action application="set" data="slot_matched=1" />
+                    <action application="{{ $dest['destination_app'] }}" data="{{ $dest['destination_data'] }}" />
+                </condition>
+            </condition>
+        @endforeach
+    @elseif (count($useAttrs ?? []))
                 {{-- attribute-based condition --}}
                 <condition
                     @foreach ($useAttrs as $attr => $val)
