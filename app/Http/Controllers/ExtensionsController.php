@@ -8,10 +8,8 @@ use App\Models\Devices;
 use App\Models\FollowMe;
 use App\Models\IvrMenus;
 use App\Models\Extensions;
-use App\Models\Recordings;
 use App\Models\RingGroups;
 use App\Models\Voicemails;
-use App\Data\ExtensionData;
 use App\Jobs\DeleteAppUser;
 use App\Models\DeviceLines;
 use App\Models\FusionCache;
@@ -23,8 +21,10 @@ use App\Jobs\SendEventNotify;
 use App\Models\DeviceProfile;
 use App\Models\ExtensionUser;
 use App\Models\MobileAppUsers;
+use App\Data\ExtensionListData;
 use App\Jobs\UpdateAppSettings;
 use Illuminate\Validation\Rule;
+use App\Data\ExtensionDetailData;
 use App\Imports\ExtensionsImport;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -131,7 +131,7 @@ class ExtensionsController extends Controller
             ->appends($request->query());
 
         // wrap in your DTO
-        $extensionsDto = ExtensionData::collect($extensions);
+        $extensionsDto = ExtensionListData::collect($extensions);
 
         // logger($extensionsDto);
 
@@ -258,13 +258,41 @@ class ExtensionsController extends Controller
                 ->append([
                     'emergency_caller_id_number_e164',
                     'outbound_caller_id_number_e164',
+                
+                    // Unconditional forwarding (all)
+                    'forward_all_target_uuid',
+                    'forward_all_action',
+                    'forward_all_action_display',
+                    'forward_all_target_name',
+                    'forward_all_target_extension',
+                
+                    // Busy forwarding
+                    'forward_busy_target_uuid',
+                    'forward_busy_action',
+                    'forward_busy_action_display',
+                    'forward_busy_target_name',
+                    'forward_busy_target_extension',
+                
+                    // No answer forwarding
+                    'forward_no_answer_target_uuid',
+                    'forward_no_answer_action',
+                    'forward_no_answer_action_display',
+                    'forward_no_answer_target_name',
+                    'forward_no_answer_target_extension',
+                
+                    // User not registered forwarding
+                    'forward_user_not_registered_target_uuid',
+                    'forward_user_not_registered_action',
+                    'forward_user_not_registered_action_display',
+                    'forward_user_not_registered_target_name',
+                    'forward_user_not_registered_target_extension',
                 ]);
 
-            $extensionDto = ExtensionData::from($extension);
+            $extensionDto = ExtensionDetailData::from($extension);
             $updateRoute = route('extensions.update', ['extension' => $itemUuid]);
         } else {
             // “New extension defaults
-            $userDto     = new ExtensionData(
+            $userDto     = new ExtensionDetailData(
                 extension_uuid: '',
                 user_email: '',
                 name_formatted: '',
@@ -1086,6 +1114,26 @@ class ExtensionsController extends Controller
                 ->where('extension_uuid', $id)
                 ->firstOrFail();
 
+            // Build Forwarding destinations
+            $forwardTypes = ['forward_all', 'forward_busy', 'forward_no_answer', 'forward_user_not_registered'];
+            foreach ($forwardTypes as $type) {
+                $enabledKey = "{$type}_enabled";
+                $actionKey = "{$type}_action";
+                $targetKey = "{$type}_target";
+                $externalKey = "{$type}_external_target";
+                $destinationKey = "{$type}_destination";
+
+                if (
+                    !empty($data[$enabledKey])
+                    && !empty($data[$actionKey])
+                    && (
+                        !empty($data[$targetKey]) || !empty($data[$externalKey])
+                    )
+                ) {
+                    $data[$destinationKey] = $this->buildForwardDestinationTarget($data, $type);
+                }
+            }
+
             $extension->update($data);
 
             // Update related models
@@ -1709,6 +1757,38 @@ class ExtensionsController extends Controller
             ]
         ]);
     }
+
+    /**
+     * Helper function to build destination action based on exit action.
+     */
+    protected function buildForwardDestinationTarget(array $inputs, string $prefix)
+    {
+        $actionKey = "{$prefix}_action";
+        $targetKey = "{$prefix}_target";
+        $externalKey = "{$prefix}_external_target";
+
+        switch ($inputs[$actionKey] ?? null) {
+            case 'extensions':
+            case 'ring_groups':
+            case 'ivrs':
+            case 'business_hours':
+            case 'time_conditions':
+            case 'contact_centers':
+            case 'faxes':
+            case 'call_flows':
+                return $inputs[$targetKey] ?? null;
+
+            case 'voicemails':
+                return isset($inputs[$targetKey]) ? ('*99' . $inputs[$targetKey]) : null;
+
+            case 'external':
+                return $inputs[$externalKey] ?? null;
+
+            default:
+                return null;
+        }
+    }
+
 
     public function assignDevice(AssignDeviceRequest $request, Extensions $extension)
     {

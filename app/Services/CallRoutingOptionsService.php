@@ -389,7 +389,7 @@ class CallRoutingOptionsService
                         'type' => 'voicemails',
                         'extension' => $voicemail->voicemail_id,
                         'option' => $voicemail->voicemail_uuid,
-                        'name' => $voicemail->extension->name_formatted ?? $voicemail->voicemail_id,
+                        'name' => $voicemail->extension ? $voicemail->extension->name_formatted : $voicemail->voicemail_id . ' - Team Voicemail',
                     ];
                 }
             }

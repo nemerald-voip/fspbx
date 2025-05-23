@@ -4,7 +4,7 @@ namespace App\Data;
 
 use Spatie\LaravelData\Data;
 
-class ExtensionData extends Data
+class ExtensionListData extends Data
 {
     public function __construct(
         public string $extension_uuid,

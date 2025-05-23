@@ -49,19 +49,79 @@
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
-                                    extension_uuid: options.item.extension_uuid,
-                                    directory_first_name: options.item.directory_first_name,
-                                    directory_last_name: options.item.directory_last_name,
-                                    extension: options.item.extension,
-                                    last_name: options.item.last_name,
-                                    voicemail_mail_to: options.item.email,
-                                    description: options.item.description,
-                                    suspended: options.item.suspended,
-                                    enabled: options.item.enabled,
-                                    directory_visible: options.item.directory_visible,
-                                    directory_exten_visible: options.item.directory_exten_visible,
+                                    extension_uuid: options.item.extension_uuid ?? '',
+                                    directory_first_name: options.item.directory_first_name ?? '',
+                                    directory_last_name: options.item.directory_last_name ?? '',
+                                    extension: options.item.extension ?? '',
+                                    last_name: options.item.last_name ?? '',
+                                    voicemail_mail_to: options.item.email ?? '',
+                                    description: options.item.description ?? '',
+                                    suspended: options.item.suspended ?? false,
+                                    enabled: options.item.enabled ?? 'true',
+                                    directory_visible: options.item.directory_visible ?? '',
+                                    directory_exten_visible: options.item.directory_exten_visible ?? '',
                                     outbound_caller_id_number: options.item.outbound_caller_id_number_e164 ?? '',
                                     emergency_caller_id_number: options.item.emergency_caller_id_number_e164 ?? '',
+                                    forward_all_enabled: props.options.item.forward_all_enabled ?? 'false',
+                                    forward_all_action: props.options.item.forward_all_action ?? '',
+
+                                    // only set forward_external_target when forwarding_action==='external'
+                                    forward_external_target: props.options.item.forward_all_action === 'external'
+                                        ? props.options.item.forward_all_target_extension ?? null
+                                        : null,
+
+                                    // for any other action, set forward_target
+                                    forward_all_target: props.options.item.forward_all_action != 'external'
+                                        ? { value: props.options.item.forward_all_target_uuid ?? null, extension: props.options.item.forward_all_target_extension ?? null, name: props.options.item.forward_all_target_name ?? null }
+                                        : null,
+
+                                    forward_busy_enabled: props.options.item.forward_busy_enabled ?? 'false',
+                                    forward_busy_action: props.options.item.forward_busy_action ?? '',
+
+                                    // only set forward_busy_external_target when action is 'external'
+                                    forward_busy_external_target: props.options.item.forward_busy_action === 'external'
+                                        ? props.options.item.forward_busy_target_extension ?? null
+                                        : null,
+
+                                    // for any other action, set forward_busy_target
+                                    forward_busy_target: props.options.item.forward_busy_action != 'external'
+                                        ? {
+                                            value: props.options.item.forward_busy_target_uuid ?? null,
+                                            extension: props.options.item.forward_busy_target_extension ?? null,
+                                            name: props.options.item.forward_busy_target_name ?? null,
+                                        }
+                                        : null,
+
+                                    forward_no_answer_enabled: props.options.item.forward_no_answer_enabled ?? 'false',
+                                    forward_no_answer_action: props.options.item.forward_no_answer_action ?? '',
+
+                                    forward_no_answer_external_target: props.options.item.forward_no_answer_action === 'external'
+                                        ? props.options.item.forward_no_answer_target_extension ?? null
+                                        : null,
+
+                                    forward_no_answer_target: props.options.item.forward_no_answer_action != 'external'
+                                        ? {
+                                            value: props.options.item.forward_no_answer_target_uuid ?? null,
+                                            extension: props.options.item.forward_no_answer_target_extension ?? null,
+                                            name: props.options.item.forward_no_answer_target_name ?? null,
+                                        }
+                                        : null,
+
+
+                                    forward_user_not_registered_enabled: props.options.item.forward_user_not_registered_enabled ?? 'false',
+                                    forward_user_not_registered_action: props.options.item.forward_user_not_registered_action ?? '',
+
+                                    forward_user_not_registered_external_target: props.options.item.forward_user_not_registered_action === 'external'
+                                        ? props.options.item.forward_user_not_registered_target_extension ?? null
+                                        : null,
+
+                                    forward_user_not_registered_target: props.options.item.forward_user_not_registered_action != 'external'
+                                        ? {
+                                            value: props.options.item.forward_user_not_registered_target_uuid ?? null,
+                                            extension: props.options.item.forward_user_not_registered_target_extension ?? null,
+                                            name: props.options.item.forward_user_not_registered_target_name ?? null,
+                                        }
+                                        : null,
 
                                     // groups: options.item.user_groups
                                     //     ? options.item.user_groups.map(ug => ug.group_uuid)
@@ -263,7 +323,8 @@
                                                         return [];  // Return an empty array in case of error
                                                     }
                                                 }" :search="true" label-prop="name" :native="false" label="Target"
-                                                    input-type="search" allow-absent :object="true" autocomplete="off"
+                                                    input-type="search" allow-absent :object="true"
+                                                    :format-data="formatTarget" autocomplete="off"
                                                     placeholder="Choose Target" :floating="false" :strict="false" :columns="{
                                                         sm: {
                                                             container: 6,
@@ -331,7 +392,8 @@
                                                         return [];  // Return an empty array in case of error
                                                     }
                                                 }" :search="true" label-prop="name" :native="false" label="Target"
-                                                    input-type="search" allow-absent :object="true" autocomplete="off"
+                                                    input-type="search" allow-absent :object="true"
+                                                    :format-data="formatTarget" autocomplete="off"
                                                     placeholder="Choose Target" :floating="false" :strict="false" :columns="{
                                                         sm: {
                                                             container: 6,
@@ -397,7 +459,8 @@
                                                         return [];  // Return an empty array in case of error
                                                     }
                                                 }" :search="true" label-prop="name" :native="false" label="Target"
-                                                    input-type="search" allow-absent :object="true" autocomplete="off"
+                                                    input-type="search" allow-absent :object="true"
+                                                    :format-data="formatTarget" autocomplete="off"
                                                     placeholder="Choose Target" :floating="false" :strict="false" :columns="{
                                                         sm: {
                                                             container: 6,
@@ -466,7 +529,8 @@
                                                         return [];  // Return an empty array in case of error
                                                     }
                                                 }" :search="true" label-prop="name" :native="false" label="Target"
-                                                    input-type="search" allow-absent :object="true" autocomplete="off"
+                                                    input-type="search" allow-absent :object="true"
+                                                    :format-data="formatTarget" autocomplete="off"
                                                     placeholder="Choose Target" :floating="false" :strict="false" :columns="{
                                                         sm: {
                                                             container: 6,
@@ -556,7 +620,7 @@ const submitForm = async (FormData, form$) => {
     const requestData = form$.requestData
     console.log(requestData);
 
-    // return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
+    return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
 };
 
 function clearErrorsRecursive(el$) {
@@ -571,6 +635,9 @@ function clearErrorsRecursive(el$) {
     }
 }
 
+const formatTarget = (name, value) => {
+    return { [name]: value?.extension ?? null } // must return an object
+}
 
 const requestResetPassword = () => {
     showResetConfirmationModal.value = true;

@@ -5,9 +5,10 @@ namespace App\Models;
 use Spatie\Activitylog\LogOptions;
 use libphonenumber\PhoneNumberFormat;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
+use App\Services\CallRoutingOptionsService;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use function PHPUnit\Framework\isEmpty;
 
 
 class Extensions extends Model
@@ -21,6 +22,7 @@ class Extensions extends Model
     protected $primaryKey = 'extension_uuid';
     public $incrementing = false;
     protected $keyType = 'string';
+    protected $forwardOptionDetailsCache = [];
 
     /**
      * The attributes that are mass assignable.
@@ -274,28 +276,162 @@ class Extensions extends Model
         return $this->extension . ' - ' . ((!empty($this->effective_caller_id_name)) ? $this->effective_caller_id_name : $this->description);
     }
 
-    public function isForwardAllEnabled(): bool
+    // public function isForwardAllEnabled(): bool
+    // {
+    //     return $this->forward_all_enabled == "true";
+    // }
+
+    // public function isForwardBusyEnabled(): bool
+    // {
+    //     return $this->forward_busy_enabled == "true";
+    // }
+
+    // public function isForwardNoAnswerEnabled(): bool
+    // {
+    //     return $this->forward_no_answer_enabled == "true";
+    // }
+
+    // public function isForwardUserNotRegisteredEnabled(): bool
+    // {
+    //     return $this->forward_user_not_registered_enabled == "true";
+    // }
+
+    // public function isFollowMeEnabled(): bool
+    // {
+    //     return $this->follow_me_enabled == "true";
+    // }
+
+
+    /**
+     * Get details for a given forwarding type.
+     */
+    protected function getForwardOptionDetails(string $type): ?array
     {
-        return $this->forward_all_enabled == "true";
+        // e.g., $type = 'forward_all', 'forward_busy', etc.
+        if (isset($this->forwardOptionDetailsCache[$type])) {
+            return $this->forwardOptionDetailsCache[$type];
+        }
+
+        
+        $destinationField = "{$type}_destination";
+        $enabledField = "{$type}_enabled";
+
+        if ($this->$enabledField != 'true' || !isEmpty($this->$destinationField)) {
+            return $this->forwardOptionDetailsCache[$type] = [
+                'type'      => null,
+                'extension' => null,
+                'option'    => null,
+                'name'      => null,
+            ];
+        }
+
+        $service = new CallRoutingOptionsService;
+        $parsed = $service->reverseEngineerForwardAction($this->$destinationField);
+
+        return $this->forwardOptionDetailsCache[$type] = $parsed;
     }
 
-    public function isForwardBusyEnabled(): bool
+    public function getForwardAllOptionDetailsAttribute(): ?array
     {
-        return $this->forward_busy_enabled == "true";
+        return $this->getForwardOptionDetails('forward_all');
+    }
+    public function getForwardAllTargetUuidAttribute(): ?string
+    {
+        return $this->forward_all_option_details['option'] ?? null;
+    }
+    public function getForwardAllActionAttribute(): ?string
+    {
+        return $this->forward_all_option_details['type'] ?? null;
+    }
+    public function getForwardAllActionDisplayAttribute(): ?string
+    {
+        $type = $this->forward_all_option_details['type'] ?? null;
+        return $type ? (new CallRoutingOptionsService)->getFriendlyTypeName($type) : null;
+    }
+    public function getForwardAllTargetNameAttribute(): ?string
+    {
+        return $this->forward_all_option_details['name'] ?? null;
+    }
+    public function getForwardAllTargetExtensionAttribute(): ?string
+    {
+        return $this->forward_all_option_details['extension'] ?? null;
     }
 
-    public function isForwardNoAnswerEnabled(): bool
+    public function getForwardBusyOptionDetailsAttribute(): ?array
     {
-        return $this->forward_no_answer_enabled == "true";
+        return $this->getForwardOptionDetails('forward_busy');
+    }
+    public function getForwardBusyTargetUuidAttribute(): ?string
+    {
+        return $this->forward_busy_option_details['option'] ?? null;
+    }
+    public function getForwardBusyActionAttribute(): ?string
+    {
+        return $this->forward_busy_option_details['type'] ?? null;
+    }
+    public function getForwardBusyActionDisplayAttribute(): ?string
+    {
+        $type = $this->forward_busy_option_details['type'] ?? null;
+        return $type ? (new CallRoutingOptionsService)->getFriendlyTypeName($type) : null;
+    }
+    public function getForwardBusyTargetNameAttribute(): ?string
+    {
+        return $this->forward_busy_option_details['name'] ?? null;
+    }
+    public function getForwardBusyTargetExtensionAttribute(): ?string
+    {
+        return $this->forward_busy_option_details['extension'] ?? null;
     }
 
-    public function isForwardUserNotRegisteredEnabled(): bool
+    public function getForwardNoAnswerOptionDetailsAttribute(): ?array
     {
-        return $this->forward_user_not_registered_enabled == "true";
+        return $this->getForwardOptionDetails('forward_no_answer');
+    }
+    public function getForwardNoAnswerTargetUuidAttribute(): ?string
+    {
+        return $this->forward_no_answer_option_details['option'] ?? null;
+    }
+    public function getForwardNoAnswerActionAttribute(): ?string
+    {
+        return $this->forward_no_answer_option_details['type'] ?? null;
+    }
+    public function getForwardNoAnswerActionDisplayAttribute(): ?string
+    {
+        $type = $this->forward_no_answer_option_details['type'] ?? null;
+        return $type ? (new CallRoutingOptionsService)->getFriendlyTypeName($type) : null;
+    }
+    public function getForwardNoAnswerTargetNameAttribute(): ?string
+    {
+        return $this->forward_no_answer_option_details['name'] ?? null;
+    }
+    public function getForwardNoAnswerTargetExtensionAttribute(): ?string
+    {
+        return $this->forward_no_answer_option_details['extension'] ?? null;
     }
 
-    public function isFollowMeEnabled(): bool
+    public function getForwardUserNotRegisteredOptionDetailsAttribute(): ?array
     {
-        return $this->follow_me_enabled == "true";
+        return $this->getForwardOptionDetails('forward_user_not_registered');
+    }
+    public function getForwardUserNotRegisteredTargetUuidAttribute(): ?string
+    {
+        return $this->forward_user_not_registered_option_details['option'] ?? null;
+    }
+    public function getForwardUserNotRegisteredActionAttribute(): ?string
+    {
+        return $this->forward_user_not_registered_option_details['type'] ?? null;
+    }
+    public function getForwardUserNotRegisteredActionDisplayAttribute(): ?string
+    {
+        $type = $this->forward_user_not_registered_option_details['type'] ?? null;
+        return $type ? (new CallRoutingOptionsService)->getFriendlyTypeName($type) : null;
+    }
+    public function getForwardUserNotRegisteredTargetNameAttribute(): ?string
+    {
+        return $this->forward_user_not_registered_option_details['name'] ?? null;
+    }
+    public function getForwardUserNotRegisteredTargetExtensionAttribute(): ?string
+    {
+        return $this->forward_user_not_registered_option_details['extension'] ?? null;
     }
 }

@@ -23,7 +23,7 @@ class UpdateExtensionRequest extends FormRequest
                 'required',
                 'numeric',
                 new UniqueExtension($this->input('extension_uuid') ?? null),
-            ],            
+            ],
             'voicemail_mail_to'               => ['nullable', 'email', 'max:255'],
             'description'              => ['nullable', 'string'],
             'suspended'                => ['boolean'],
@@ -32,6 +32,140 @@ class UpdateExtensionRequest extends FormRequest
             'directory_exten_visible'  => ['required', 'in:true,false,1,0'],
             'outbound_caller_id_number' => ['nullable', 'string'],
             'emergency_caller_id_number' => ['nullable', 'string'],
+
+            'forward_all_enabled' => [
+                'nullable',
+                'string'
+            ],
+
+            // Forward logic: action + optional target
+            // only required when forward_all_enabled === true
+            'forward_all_action'        => ['required_if:forward_all_enabled,true'],
+
+            // if you also want to validate the targets:
+            'forward_all_external_target' => [
+                'required_if:forward_action,external',
+                'string', // or 'uuid' if it must be a UUID
+            ],
+
+            'forward_all_target' => [
+                'sometimes',
+                'present',
+                function ($attribute, $value, $fail) {
+                    $enabled = $this->boolean('forward_all_enabled');
+                    $action = $this->input('forward_all_action');
+
+                    if ($enabled && $action && $action !== 'external' && empty($value)) {
+                        $fail('The forward target is required');
+                    }
+                },
+            ],
+
+            'forward_all_external_target' => [
+                'sometimes',
+                'present',
+                function ($attribute, $value, $fail) {
+                    $enabled = $this->boolean('forward_all_enabled');
+                    $action = $this->input('forward_all_action');
+
+                    if ($enabled && $action === 'external' && empty($value)) {
+                        $fail('The forward target is required');
+                    }
+                },
+            ],
+
+            // === BUSY ===
+            'forward_busy_enabled' => [
+                'nullable',
+                'string',
+            ],
+            'forward_busy_action' => [
+                'required_if:forward_busy_enabled,true',
+            ],
+            'forward_busy_target' => [
+                'sometimes',
+                'present',
+                function ($attribute, $value, $fail) {
+                    $enabled = $this->boolean('forward_busy_enabled');
+                    $action = $this->input('forward_busy_action');
+                    if ($enabled && $action && $action !== 'external' && empty($value)) {
+                        $fail('The forward target is required');
+                    }
+                },
+            ],
+            'forward_busy_external_target' => [
+                'sometimes',
+                'present',
+                function ($attribute, $value, $fail) {
+                    $enabled = $this->boolean('forward_busy_enabled');
+                    $action = $this->input('forward_busy_action');
+                    if ($enabled && $action === 'external' && empty($value)) {
+                        $fail('The forward target is required');
+                    }
+                },
+            ],
+
+            // === NO ANSWER ===
+            'forward_no_answer_enabled' => [
+                'nullable',
+                'string',
+            ],
+            'forward_no_answer_action' => [
+                'required_if:forward_no_answer_enabled,true',
+            ],
+            'forward_no_answer_target' => [
+                'sometimes',
+                'present',
+                function ($attribute, $value, $fail) {
+                    $enabled = $this->boolean('forward_no_answer_enabled');
+                    $action = $this->input('forward_no_answer_action');
+                    if ($enabled && $action && $action !== 'external' && empty($value)) {
+                        $fail('The forward target is required');
+                    }
+                },
+            ],
+            'forward_no_answer_external_target' => [
+                'sometimes',
+                'present',
+                function ($attribute, $value, $fail) {
+                    $enabled = $this->boolean('forward_no_answer_enabled');
+                    $action = $this->input('forward_no_answer_action');
+                    if ($enabled && $action === 'external' && empty($value)) {
+                        $fail('The forward target is required');
+                    }
+                },
+            ],
+
+            // === USER NOT REGISTERED ===
+            'forward_user_not_registered_enabled' => [
+                'nullable',
+                'string',
+            ],
+            'forward_user_not_registered_action' => [
+                'required_if:forward_user_not_registered_enabled,true',
+            ],
+            'forward_user_not_registered_target' => [
+                'sometimes',
+                'present',
+                function ($attribute, $value, $fail) {
+                    $enabled = $this->boolean('forward_user_not_registered_enabled');
+                    $action = $this->input('forward_user_not_registered_action');
+                    if ($enabled && $action && $action !== 'external' && empty($value)) {
+                        $fail('The forward target is required');
+                    }
+                },
+            ],
+            'forward_user_not_registered_external_target' => [
+                'sometimes',
+                'present',
+                function ($attribute, $value, $fail) {
+                    $enabled = $this->boolean('forward_user_not_registered_enabled');
+                    $action = $this->input('forward_user_not_registered_action');
+                    if ($enabled && $action === 'external' && empty($value)) {
+                        $fail('The forward target is required');
+                    }
+                },
+            ],
         ];
     }
 
@@ -39,6 +173,10 @@ class UpdateExtensionRequest extends FormRequest
     {
         return [
             'directory_first_name.required' => 'The first name field is required.',
+            'forward_all_action.required_if' => 'The action field is required when unconditional forwarding is enabled.',
+            'forward_busy_action.required_if' => 'The action field is required when busy forwarding is enabled.',
+            'forward_no_answer_action.required_if' => 'The action field is required when no answer forwarding is enabled.',
+            'forward_user_not_registered_action.required_if' => 'The action field is required when forwarding for unregistered users is enabled.',
             // You can add more custom messages here as needed
         ];
     }
