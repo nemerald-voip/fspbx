@@ -3,6 +3,7 @@
 namespace App\Data;
 
 use Spatie\LaravelData\Data;
+use App\Data\FollowMeDestinationData;
 
 class ExtensionDetailData extends Data
 {
@@ -55,5 +56,10 @@ class ExtensionDetailData extends Data
         public ?string $forward_user_not_registered_action_display,
         public ?string $forward_user_not_registered_target_name,
         public ?string $forward_user_not_registered_target_extension,
+
+        // --- Follow Me ---
+        public ?string $follow_me_enabled,
+        /** @var FollowMeDestinationData[]|null */
+        public ?array $follow_me_destinations,
     ) {}
 }

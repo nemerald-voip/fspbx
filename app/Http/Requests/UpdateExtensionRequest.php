@@ -166,7 +166,27 @@ class UpdateExtensionRequest extends FormRequest
                     }
                 },
             ],
+
+            'follow_me_enabled' => ['sometimes', 'string'],
+            'follow_me_ring_my_phone_timeout' => ['nullable', 'numeric', 'min:0'],
+            // follow_me_destinations may be omitted 
+            'follow_me_destinations' => ['array'],
+
+            // only validate each sub‑field if members was provided
+            'follow_me_destinations.*.destination' => ['required_with:follow_me_destinations', 'numeric'],
+            'follow_me_destinations.*.delay'       => ['required_with:follow_me_destinations', 'numeric', 'min:0'],
+            'follow_me_destinations.*.timeout'     => ['required_with:follow_me_destinations', 'numeric', 'min:0'],
+            'follow_me_destinations.*.prompt'      => ['required_with:follow_me_destinations', 'boolean'],
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            if ($this->input('follow_me_enabled') === 'true' && empty($this->input('follow_me_destinations'))) {
+                $validator->errors()->add('follow_me_enabled', 'You must add at least one backup number or contact when Call Sequence is enabled.');
+            }
+        });
     }
 
     public function messages()
@@ -177,6 +197,8 @@ class UpdateExtensionRequest extends FormRequest
             'forward_busy_action.required_if' => 'The action field is required when busy forwarding is enabled.',
             'forward_no_answer_action.required_if' => 'The action field is required when no answer forwarding is enabled.',
             'forward_user_not_registered_action.required_if' => 'The action field is required when forwarding for unregistered users is enabled.',
+            'follow_me_destinations.*.delay.required_with' =>  'The destination setting is required',
+            'follow_me_destinations.*.timeout.required_with' =>  'The destination setting is required',
             // You can add more custom messages here as needed
         ];
     }

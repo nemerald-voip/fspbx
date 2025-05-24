@@ -256,16 +256,6 @@ class Extensions extends Model
         return $this->hasOne(FollowMe::class, 'follow_me_uuid', 'follow_me_uuid');
     }
 
-    public function getFollowMe()
-    {
-        return $this->hasOne(FollowMe::class, 'follow_me_uuid', 'follow_me_uuid')->first();
-    }
-
-    public function getFollowMeDestinations()
-    {
-        return $this->belongsTo(FollowMeDestinations::class, 'follow_me_uuid', 'follow_me_uuid')->orderBy('follow_me_order')->get();
-    }
-
     public function getId()
     {
         return $this->extension;

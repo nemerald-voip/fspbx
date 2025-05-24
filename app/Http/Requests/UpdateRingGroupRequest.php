@@ -168,7 +168,7 @@ class UpdateRingGroupRequest extends FormRequest
     {
         return [
             'fallback_action.required' => 'The no answer action is required.',
-            'members.*.delay.required_with' =>  'The member setting field is required',
+            'members.*.delay.required_with' =>  'The member setting is required',
             'members.*.timeout.required_with' =>  'The member setting is required',
             'forward_action.required_if' =>  'The action is required when call forwarding is enabled.',
             'notification_email.required_if' => 'The notification email is required when missed call notifications are enabled.',

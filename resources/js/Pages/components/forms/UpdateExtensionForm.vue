@@ -123,6 +123,26 @@
                                         }
                                         : null,
 
+
+
+                                    follow_me_enabled: options.item.follow_me_enabled ?? 'false',
+                                    // follow_me_destinations: options.item.follow_me_destinations ?? [],
+                                    follow_me_destinations: (
+                                        options.item.follow_me_destinations?.length > 0 &&
+                                            options.item.follow_me_destinations[0].destination == options.item.extension
+                                            ? options.item.follow_me_destinations.slice(1).map(dest => ({
+                                                ...dest,
+                                                delay: Math.max(0, (dest.delay ?? 0) - (options.item.follow_me_destinations[0].timeout ?? 0)),
+                                            }))
+                                            : (options.item.follow_me_destinations ?? [])
+                                    ),
+                                    follow_me_ring_my_phone_timeout: (
+                                        options.item.follow_me_destinations?.length > 0 &&
+                                            options.item.follow_me_destinations[0].destination == options.item.extension
+                                            ? options.item.follow_me_destinations[0].timeout
+                                            : 0
+                                    ),
+
                                     // groups: options.item.user_groups
                                     //     ? options.item.user_groups.map(ug => ug.group_uuid)
                                     //     : []
@@ -190,6 +210,14 @@
                                                     'forward_user_not_registered_target',
                                                     'forward_user_not_registered_external_target',
                                                     'divider8',
+                                                    'follow_me_title',
+                                                    'follow_me_enabled',
+                                                    'divider9',
+                                                    'follow_me_destinations',
+                                                    'members_title',
+                                                    'selectedDestinations',
+                                                    'follow_me_ring_my_phone_timeout',
+                                                    'addFollowMeDestinationsButton',
                                                     'submit',
 
                                                 ]" :conditions="[() => options.permissions.api_key]" />
@@ -555,6 +583,101 @@
 
                                                 <StaticElement name="divider8" tag="hr" />
 
+
+                                                <StaticElement name="follow_me_title" tag="h4" content="Call Sequence"
+                                                    description="Calls ring all your devices first, then your backup destinations one at a time until someone answers" />
+
+                                                <ToggleElement name="follow_me_enabled" :labels="{
+                                                    on: 'On',
+                                                    off: 'Off',
+                                                }" true-value="true" false-value="false" />
+
+                                                <SelectElement name="follow_me_ring_my_phone_timeout"
+                                                    :items="timeoutOptions" :search="true" :native="false"
+                                                    label="Ring my devices first for" input-type="search" allow-absent
+                                                    autocomplete="off" :columns="{
+
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" size="sm"
+                                                    info="How long to ring your devices before trying your other destinations or contacts."
+                                                    placeholder="Select option" :floating="false"
+                                                    :conditions="[['follow_me_enabled', '==', 'true']]" />
+
+
+                                                <TagsElement name="selectedDestinations" :close-on-select="true"
+                                                    :items="availableDestinations" :create="true" :search="true"
+                                                    :groups="true" :native="false"
+                                                    label="Add Backup Destinations or Contacts" input-type="search"
+                                                    autocomplete="off"
+                                                    placeholder="Search by name, extension, or enter a number"
+                                                    :floating="false" :hide-selected="false" :object="true"
+                                                    :group-hide-empty="true" :append-new-option="false" :submit="false"
+                                                    description="Choose from the list of available options or enter an external number manually."
+                                                    :conditions="[['follow_me_enabled', '==', 'true']]" />
+
+                                                <ButtonElement @click="addSelectedDestinations"
+                                                    name="addFollowMeDestinationsButton" button-label="Add to Sequence"
+                                                    :secondary="true" align="center" :full="false"
+                                                    :conditions="[['follow_me_enabled', '==', 'true']]" />
+
+                                                <ListElement name="follow_me_destinations" :sort="true"
+                                                    :controls="{ add: false }"
+                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }"
+                                                    :conditions="[['follow_me_enabled', '==', 'true']]">
+                                                    <template #default="{ index }">
+                                                        <ObjectElement :name="index">
+                                                            <HiddenElement name="destination" :meta="true" />
+                                                            <StaticElement name="p_1" tag="p" :content="(el$) => {
+                                                                const num = el$.parent.value.destination;
+                                                                return getDestinationLabel(num);
+                                                            }"
+                                                                :columns="{ default: { container: 8, }, sm: { container: 4, }, }"
+                                                                label="Destination"
+                                                                :attrs="{ class: 'text-base font-semibold' }" />
+
+                                                            <SelectElement name="delay" :items="delayOptions" :search="true"
+                                                                :native="false" label="Delay" input-type="search"
+                                                                allow-absent autocomplete="off" :columns="{
+                                                                    default: {
+                                                                        container: 6,
+                                                                    },
+                                                                    sm: {
+                                                                        container: 4,
+                                                                    },
+                                                                }" size="sm"
+                                                                info="How many seconds to wait before starting to ring this member."
+                                                                placeholder="Select option" :floating="false" />
+
+
+                                                            <SelectElement name="timeout" :items="timeoutOptions"
+                                                                :search="true" :native="false" label="Ring for"
+                                                                input-type="search" allow-absent autocomplete="off"
+                                                                :columns="{
+                                                                    default: {
+                                                                        container: 6,
+                                                                    },
+                                                                    sm: {
+                                                                        container: 4,
+                                                                    },
+                                                                }" size="sm"
+                                                                info="How many seconds to keep ringing this member before giving up."
+                                                                placeholder="Select option" :floating="false" />
+
+
+                                                            <ToggleElement name="prompt" align="left" size="sm"
+                                                                text="Enable answer confirmation"
+                                                                description="This prevents voicemails and automated systems from answering a call."
+                                                                info="Enable answer confirmation to prevent voicemails and automated systems from answering a call." />
+
+
+                                                        </ObjectElement>
+                                                    </template>
+                                                </ListElement>
+
+                                                <StaticElement name="divider9" tag="hr" />
+
                                                 <GroupElement name="container_3" />
 
                                                 <ButtonElement name="submit" button-label="Save" :submits="true"
@@ -587,7 +710,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import ConfirmationModal from "./../modal/ConfirmationModal.vue";
@@ -635,13 +758,59 @@ function clearErrorsRecursive(el$) {
     }
 }
 
+const availableDestinations = computed(() => {
+    const membersField = form$.value?.el$('follow_me_destinations');
+    const currentMembers = membersField?.value || [];
+
+    const selectedDestinations = currentMembers.map(m => m.destination);
+
+    return props.options.follow_me_destination_options.map(group => ({
+        label: group.groupLabel,
+        items: group.groupOptions.filter(opt =>
+            !selectedDestinations.includes(opt.destination)
+        ),
+    }));
+});
+
 const formatTarget = (name, value) => {
     return { [name]: value?.extension ?? null } // must return an object
 }
 
-const requestResetPassword = () => {
-    showResetConfirmationModal.value = true;
+// const addSelectedDestinations = () => {
+//     showResetConfirmationModal.value = true;
+// };
+
+const addSelectedDestinations = () => {
+    // console.log(form$.value.el$('selectedDestinations').value);
+    const selectedItems = form$.value.el$('selectedDestinations').value.map(item => {
+        return {
+            uuid: item.destination ? item.value : null,              // if a destination exists, use the item.value as uuid; otherwise, uuid is null
+            destination: item.destination ? item.destination : item.label,  // if item.destination exists, use it; otherwise, use the label
+            type: item.type ? item.type : "other",                     // if type exists, use it; else default to "other"
+            delay: "0",
+            timeout: "30",
+            prompt: false,
+        }
+    });
+
+    const currentMembers = form$.value.el$('follow_me_destinations').value
+
+    form$.value.update({
+        follow_me_destinations: [...currentMembers, ...selectedItems]
+    })
+
+    form$.value.el$('selectedDestinations').update([]); // clear selection
 };
+
+function getDestinationLabel(destination) {
+    // console.log(destination);
+    // Find the member option based on the extension number.
+    const allFollowMeDestinationOptions = props.options?.follow_me_destination_options?.flatMap(group => group.groupOptions);
+    const dest = allFollowMeDestinationOptions.find(opt => opt.destination === destination);
+    // If found, return the full label; otherwise, return the extension.
+    return dest ? dest.label : destination;
+};
+
 
 // const confirmResetPassword = async () => {
 //     showResetConfirmationModal.value = false;
@@ -716,6 +885,23 @@ const emitSuccessToParentFromChild = (message) => {
     emit('success', 'success', message);
 }
 
+const delayOptions = Array.from({ length: 21 }, (_, i) => {
+    const seconds = i * 5; // 0, 5, 10, ..., 100
+    const rings = Math.round(seconds / 5); // 1 ring = ~5 seconds
+    return {
+        value: String(seconds),
+        label: `${rings} ${rings === 1 ? 'Ring' : 'Rings'} (${seconds}s)`
+    };
+});
+
+const timeoutOptions = Array.from({ length: 21 }, (_, i) => {
+    const seconds = i * 5; // 0, 5, 10, ..., 100
+    const rings = Math.round(seconds / 5);
+    return {
+        value: String(seconds),
+        label: `${rings} ${rings === 1 ? 'Ring' : 'Rings'} (${seconds}s)`
+    };
+});
 
 const executeBulkDelete = async (items) => {
     isDeleteTokenLoading.value = true;
@@ -818,5 +1004,4 @@ div[data-lastpass-icon-root] {
 
 div[data-lastpass-root] {
     display: none !important
-}
-</style>
+}</style>
