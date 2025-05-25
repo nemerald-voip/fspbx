@@ -32,6 +32,7 @@ use Illuminate\Support\Facades\DB;
 use libphonenumber\PhoneNumberUtil;
 use App\Models\FollowMeDestinations;
 use App\Data\FollowMeDestinationData;
+use App\Data\VoicemailData;
 use App\Models\VoicemailDestinations;
 use libphonenumber\PhoneNumberFormat;
 use Spatie\QueryBuilder\QueryBuilder;
@@ -262,7 +263,19 @@ class ExtensionsController extends Controller
                 ->with([
                     'voicemail' => function ($query) use ($currentDomain) {
                         $query->where('domain_uuid', $currentDomain)
-                            ->select('voicemail_id', 'domain_uuid', 'voicemail_mail_to');
+                            ->select(
+                                'voicemail_uuid',
+                                'voicemail_id', 
+                                'domain_uuid', 
+                                'voicemail_password',
+                                'voicemail_mail_to',
+                                'voicemail_transcription_enabled',
+                                'voicemail_attach_file',
+                                'voicemail_file',
+                                'voicemail_local_after_email',
+                                'voicemail_enabled',
+                                'voicemail_description',
+                            );
                     },
                     'followMe.followMeDestinations' => function ($q) {
                         $q->select([
@@ -318,6 +331,9 @@ class ExtensionsController extends Controller
                 : [],
             ]);
             $updateRoute = route('extensions.update', ['extension' => $itemUuid]);
+
+            $voicemailDto = VoicemailData::from($extension->voicemail);
+
         } else {
             // “New extension defaults
             $userDto     = new ExtensionDetailData(
@@ -368,10 +384,6 @@ class ExtensionsController extends Controller
         $routes = [
             'store_route'  => route('extensions.store'),
             'update_route' => $updateRoute,
-            'password_reset' => route('users.password.email'),
-            'tokens' => route('tokens.index'),
-            'create_token' => route('tokens.store'),
-            'token_bulk_delete' => route('tokens.bulk.delete'),
             'get_routing_options' => route('routing.options'),
         ];
 
@@ -417,6 +429,7 @@ class ExtensionsController extends Controller
 
         return response()->json([
             'item'        => $extensionDto,
+            'voicemail' => $voicemailDto,
             'permissions' => $permissions,
             'routes'      => $routes,
             'phone_numbers' => $phone_numbers,

@@ -144,7 +144,12 @@
                                             : 0
                                     ),
 
-                                    // groups: options.item.user_groups
+                                    voicemail_password: options.voicemail.voicemail_password ?? '',
+                                    voicemail_description: options.voicemail.voicemail_description ?? '',
+                                    voicemail_transcription_enabled: options.voicemail.voicemail_transcription_enabled ?? 'true',
+                                    voicemail_attach_file: options.voicemail.voicemail_attach_file ?? 'true',
+                                    voicemail_local_after_email: options.voicemail.voicemail_local_after_email ?? 'true',
+
                                     //     ? options.item.user_groups.map(ug => ug.group_uuid)
                                     //     : []
 
