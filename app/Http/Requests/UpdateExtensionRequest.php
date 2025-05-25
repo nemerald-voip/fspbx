@@ -27,6 +27,7 @@ class UpdateExtensionRequest extends FormRequest
             'voicemail_mail_to'               => ['nullable', 'email', 'max:255'],
             'description'              => ['nullable', 'string'],
             'suspended'                => ['boolean'],
+            'do_not_disturb'          => ['required', 'in:true,false,1,0'],
             'enabled'                  => ['required', 'in:true,false,1,0'],
             'directory_visible'        => ['required', 'in:true,false,1,0'],
             'directory_exten_visible'  => ['required', 'in:true,false,1,0'],

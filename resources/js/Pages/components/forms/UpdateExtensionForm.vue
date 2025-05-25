@@ -58,6 +58,7 @@
                                     description: options.item.description ?? '',
                                     suspended: options.item.suspended ?? false,
                                     enabled: options.item.enabled ?? 'true',
+                                    do_not_disturb: options.item.do_not_disturb ?? 'false',
                                     directory_visible: options.item.directory_visible ?? '',
                                     directory_exten_visible: options.item.directory_exten_visible ?? '',
                                     outbound_caller_id_number: options.item.outbound_caller_id_number_e164 ?? '',
@@ -166,7 +167,9 @@
                                                     'suspended',
                                                     'directory_visible',
                                                     'directory_exten_visible',
+                                                    'do_not_disturb',
                                                     'divider',
+                                                    'divider1',
                                                     'divider2',
                                                     'divider3',
                                                     'container_2',
@@ -218,9 +221,28 @@
                                                     'selectedDestinations',
                                                     'follow_me_ring_my_phone_timeout',
                                                     'addFollowMeDestinationsButton',
+                                                    'container_3',
                                                     'submit',
 
-                                                ]" :conditions="[() => options.permissions.api_key]" />
+                                                ]" />
+                                                <FormTab name="voicemail" label="Voicemail" :elements="[
+                                                    'voicemail_title',
+                                                    'voicemail_enabled',
+                                                    'voicemail_password',
+                                                    'voicemail_mail_to2',
+                                                    'voicemail_description',
+                                                    'voicemail_transcription_enabled',
+                                                    'divider10',
+                                                    'voicemail_attach_file',
+                                                    'divider11',
+                                                    'voicemail_local_after_email',
+                                                    'voicemail_destinations',
+                                                    'divider12',
+                                                    'voicemail_greetings_title',
+                                                    'container_3',
+                                                    'submit',
+
+                                                ]" />
                                             </FormTabs>
                                         </div>
 
@@ -271,6 +293,18 @@
                                                     }" />
 
                                                 <StaticElement name="divider" tag="hr" />
+
+                                                <ToggleElement name="do_not_disturb" text="Do Not Disturb" true-value="true"
+                                                    false-value="false" :replace-class="{
+                                                        'toggle.toggleOn': {
+                                                            'form-bg-primary': 'bg-red-500',
+                                                            'form-border-color-primary': 'border-red-500',
+                                                            'form-color-on-primary': 'form-color-on-danger'
+
+                                                        }
+                                                    }" />
+
+                                                <StaticElement name="divider1" tag="hr" />
 
                                                 <ToggleElement name="enabled" text="Status" true-value="true"
                                                     false-value="false"
@@ -676,7 +710,51 @@
                                                     </template>
                                                 </ListElement>
 
-                                                <StaticElement name="divider9" tag="hr" />
+
+
+                                                <!-- Voicemail Tab -->
+
+                                                <StaticElement name="voicemail_title" tag="h4" content="Voicemail"
+                                                    description="Customize voicemail preferences" />
+                                                <ToggleElement name="voicemail_enabled" text="Status" true-value="true"
+                                                    false-value="false" default="true" />
+                                                <TextElement name="voicemail_mail_to2" label="Email Address" :columns="{
+                                                    sm: {
+                                                        container: 6,
+                                                    },
+                                                }" placeholder="Enter Email" :floating="false" :disabled="true" />
+                                                <TextElement name="voicemail_password" label="Password" :columns="{
+                                                    sm: {
+                                                        container: 6,
+                                                    },
+                                                }" />
+                                                <TextElement name="voicemail_description" label="Description"
+                                                    placeholder="Enter Description" :floating="false" />
+                                                <ToggleElement name="voicemail_transcription_enabled"
+                                                    text="Voicemail Transcription" true-value="true" false-value="false"
+                                                    description="Convert voicemail messages to text using AI-powered transcription." />
+                                                <StaticElement name="divider10" tag="hr" />
+                                                <ToggleElement name="voicemail_attach_file"
+                                                    text="Attach File to Email Notifications" true-value="true"
+                                                    false-value="false"
+                                                    description="Attach voicemail recording file to the email notification." />
+                                                <StaticElement name="divider11" tag="hr" />
+                                                <ToggleElement name="voicemail_local_after_email"
+                                                    text="Automatically Delete Voicemail After Email" true-value="false"
+                                                    false-value="true"
+                                                    description="Remove voicemail from the cloud once the email is sent." />
+                                                <TagsElement name="voicemail_destinations" :search="true" :items="[
+                                                    {
+                                                        value: 0,
+                                                        label: 'Label',
+                                                    },
+                                                ]" label="Copy Voicemail to Other Extensions" input-type="search" autocomplete="off"
+                                                    description="Automatically send a copy of the voicemail to selected additional extensions."
+                                                    :floating="false" placeholder="Enter name or extension" />
+                                                <StaticElement name="divider12" tag="hr" top="1" bottom="1" />
+                                                <StaticElement name="voicemail_greetings_title" tag="h4"
+                                                    content="Voicemail Greetings"
+                                                    description="Customize the message that callers hear when they reach your voicemail." />
 
                                                 <GroupElement name="container_3" />
 
@@ -1004,4 +1082,5 @@ div[data-lastpass-icon-root] {
 
 div[data-lastpass-root] {
     display: none !important
-}</style>
+}
+</style>

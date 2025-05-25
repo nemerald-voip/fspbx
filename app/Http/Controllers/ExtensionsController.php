@@ -105,7 +105,13 @@ class ExtensionsController extends Controller
                 'directory_last_name',
                 'directory_visible',
                 'enabled',
+                'do_not_disturb',
                 'description',
+                'forward_all_enabled',
+                'forward_busy_enabled',
+                'forward_no_answer_enabled',
+                'forward_user_not_registered_enabled',
+                'follow_me_enabled',
             ])
             ->allowedFilters([
                 AllowedFilter::callback('search', function ($query, $value)  use ($currentDomain) {
@@ -239,6 +245,7 @@ class ExtensionsController extends Controller
                     'directory_visible',
                     'directory_exten_visible',
                     'enabled',
+                    'do_not_disturb',
                     'description',
                     'do_not_disturb',
                     'forward_all_destination',
@@ -250,7 +257,7 @@ class ExtensionsController extends Controller
                     'forward_user_not_registered_destination',
                     'forward_user_not_registered_enabled',
                     'follow_me_uuid',
-
+                    'follow_me_enabled',
                 ])
                 ->with([
                     'voicemail' => function ($query) use ($currentDomain) {
@@ -306,7 +313,6 @@ class ExtensionsController extends Controller
 
             $extensionDto = ExtensionDetailData::from([
                 ...$extension->toArray(),
-                'follow_me_enabled' => $extension->followMe->follow_me_enabled ?? null,
                 'follow_me_destinations' => $extension->followMe
                 ? FollowMeDestinationData::collect($extension->followMe->followMeDestinations->sortBy('follow_me_order'))
                 : [],

@@ -22,8 +22,7 @@
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.ring_group_create" type="button"
-                    @click.prevent="handleCreateButtonClick()"
+                <button v-if="page.props.auth.can.extension_create" type="button" @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
@@ -47,9 +46,12 @@
                     <span class="pl-10">Extension</span>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Email" class="hidden px-2 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell" />
-                <TableColumnHeader header="Outbound Caller ID" class="whitespace-nowrap hidden px-2 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell" />
-                <TableColumnHeader header="Description" class="hidden px-2 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell" />
+                <TableColumnHeader header="Email"
+                    class="hidden px-2 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell" />
+                <TableColumnHeader header="Outbound Caller ID"
+                    class="whitespace-nowrap hidden px-2 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell" />
+                <TableColumnHeader header="Description"
+                    class="hidden px-2 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell" />
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
@@ -94,21 +96,30 @@
                                     title="Not registered" @click="toggleExpand(row.extension_uuid)">
                                 </span>
 
-                                <div :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.user_update, }"
-                                    @click="page.props.auth.can.user_update && handleEditButtonClick(row.extension_uuid)">
+                                <div :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.extension_update, }"
+                                    @click="page.props.auth.can.extension_update && handleEditButtonClick(row.extension_uuid)">
                                     <span class="flex flex-col lg:flex-row items-start gap-2">
                                         {{ row.name_formatted }}
                                         <span class="italic text-xs sm:hidden"> {{ row.email || '' }}</span>
                                         <Badge v-if="row.suspended" :text="'Suspended'" :backgroundColor="'bg-rose-100'"
                                             :textColor="'text-rose-800'" ringColor="ring-rose-400/20"
                                             class="px-2 py-1 text-xs" />
-                                        <Badge v-if="row.do_not_disturb == 'true'" :text="'DND'" :backgroundColor="'bg-rose-100'"
-                                            :textColor="'text-rose-800'" ringColor="ring-rose-400/20"
-                                            class="px-2 py-1 text-xs" />
-                                        <Badge v-if="row.forward_all_enabled == 'true'" :text="'FWD'" :backgroundColor="'bg-blue-100'"
-                                            :textColor="'text-blue-800'" ringColor="ring-blue-400/20"
-                                            class="px-2 py-1 text-xs" />
-                                        <Badge v-if="row.follow_me_enabled == 'true'" :text="'Sequence'"
+                                        <Badge v-if="row.do_not_disturb == 'true'" :text="'DND'"
+                                            :backgroundColor="'bg-rose-100'" :textColor="'text-rose-800'"
+                                            ringColor="ring-rose-400/20" class="px-2 py-1 text-xs" />
+                                        <Badge v-if="row.forward_all_enabled == 'true'" :text="'FWD All'"
+                                            :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
+                                            ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
+                                        <Badge v-if="row.forward_busy_enabled == 'true'" :text="'FWD Busy'"
+                                            :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
+                                            ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
+                                        <Badge v-if="row.forward_no_answer_enabled == 'true'" :text="'FWD no Ans'"
+                                            :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
+                                            ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
+                                        <Badge v-if="row.forward_user_not_registered_enabled == 'true'" :text="'FWD no Reg'"
+                                            :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
+                                            ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
+                                        <Badge v-if="row.follow_me_enabled =='true'" :text="'Sequence'"
                                             :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
                                             ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
                                     </span>
@@ -207,9 +218,9 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <UpdateExtensionForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading" :header="'Update Extension'"
-        @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
-        @refresh-data="handleSearchButtonClick" />
+    <UpdateExtensionForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"
+        :header="'Update Extension'" @close="showUpdateModal = false" @error="handleErrorResponse"
+        @success="showNotification" @refresh-data="handleSearchButtonClick" />
 
     <CreateUserForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading" :header="'Create User'"
         @close="showCreateModal = false" @error="handleErrorResponse" @success="showNotification"
@@ -292,7 +303,7 @@ const bulkActions = computed(() => {
     ];
 
     // Conditionally add the delete action if permission is granted
-    if (page.props.auth.can.user_destroy) {
+    if (page.props.auth.can.extension_destroy) {
         actions.push({
             id: 'bulk_delete',
             label: 'Delete',

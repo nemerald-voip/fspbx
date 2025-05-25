@@ -21,8 +21,14 @@ class ExtensionListData extends Data
         public ?string $directory_exten_visible,
         public ?string $email,
         public ?string $enabled,
+        public ?string $do_not_disturb,
         public ?bool $suspended,
         public ?string $description,
+        public ?string $forward_all_enabled,
+        public ?string $forward_busy_enabled,
+        public ?string $forward_no_answer_enabled,
+        public ?string $forward_user_not_registered_enabled,
+        public ?string $follow_me_enabled,
     ) {}
 }
 

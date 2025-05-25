@@ -22,6 +22,7 @@ class ExtensionDetailData extends Data
         public ?string $directory_exten_visible,
         public ?string $email,
         public ?string $enabled,
+        public ?string $do_not_disturb,
         public ?bool $suspended,
         public ?string $description,
 
