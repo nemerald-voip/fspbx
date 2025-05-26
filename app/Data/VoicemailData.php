@@ -14,13 +14,13 @@ class VoicemailData extends Data
         public ?int $voicemail_alternate_greet_id,
         public ?string $voicemail_mail_to,
         public ?string $voicemail_transcription_enabled,
-        public ?string $voicemail_attach_file,
         public ?string $voicemail_file,
         public ?string $voicemail_local_after_email,
         public ?string $voicemail_enabled,
         public ?string $voicemail_description,
         public ?string $voicemail_tutorial,
         public ?string $voicemail_recording_instructions,
+        public ?array $voicemail_destinations = null,
     ) {}
 }
 

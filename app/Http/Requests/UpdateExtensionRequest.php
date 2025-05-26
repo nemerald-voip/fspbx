@@ -178,6 +178,17 @@ class UpdateExtensionRequest extends FormRequest
             'follow_me_destinations.*.delay'       => ['required_with:follow_me_destinations', 'numeric', 'min:0'],
             'follow_me_destinations.*.timeout'     => ['required_with:follow_me_destinations', 'numeric', 'min:0'],
             'follow_me_destinations.*.prompt'      => ['required_with:follow_me_destinations', 'boolean'],
+
+
+            'voicemail_enabled' => ['required', 'in:true,false,1,0'],
+            'voicemail_file'        => ['nullable'],
+            'voicemail_local_after_email'        => ['required', 'in:true,false,1,0'],
+            'voicemail_transcription_enabled' => ['required', 'in:true,false,1,0'],
+            'voicemail_description' => ['nullable', 'string'],
+            'voicemail_destinations' => ['nullable','array'],
+            'voicemail_password' => ['numeric'],
+
+
         ];
     }
 

@@ -265,17 +265,19 @@ class ExtensionsController extends Controller
                         $query->where('domain_uuid', $currentDomain)
                             ->select(
                                 'voicemail_uuid',
-                                'voicemail_id', 
-                                'domain_uuid', 
+                                'voicemail_id',
+                                'domain_uuid',
                                 'voicemail_password',
                                 'voicemail_mail_to',
                                 'voicemail_transcription_enabled',
-                                'voicemail_attach_file',
                                 'voicemail_file',
                                 'voicemail_local_after_email',
                                 'voicemail_enabled',
                                 'voicemail_description',
-                            );
+                            )
+                            ->with(['voicemail_destinations' => function ($q) {
+                                $q->select('voicemail_destination_uuid', 'voicemail_uuid', 'voicemail_uuid_copy');
+                            }]);
                     },
                     'followMe.followMeDestinations' => function ($q) {
                         $q->select([
@@ -327,13 +329,20 @@ class ExtensionsController extends Controller
             $extensionDto = ExtensionDetailData::from([
                 ...$extension->toArray(),
                 'follow_me_destinations' => $extension->followMe
-                ? FollowMeDestinationData::collect($extension->followMe->followMeDestinations->sortBy('follow_me_order'))
-                : [],
+                    ? FollowMeDestinationData::collect($extension->followMe->followMeDestinations->sortBy('follow_me_order'))
+                    : [],
             ]);
             $updateRoute = route('extensions.update', ['extension' => $itemUuid]);
 
-            $voicemailDto = VoicemailData::from($extension->voicemail);
+            $voicemailDestinations = $extension->voicemail && $extension->voicemail->voicemail_destinations
+                ? $extension->voicemail->voicemail_destinations->pluck('voicemail_uuid_copy')->values()->all()
+                : [];
 
+            $voicemailDto = VoicemailData::from([
+                ...$extension->voicemail->toArray(),
+                'voicemail_destinations' => $voicemailDestinations,
+            ]);
+            
         } else {
             // “New extension defaults
             $userDto     = new ExtensionDetailData(
@@ -377,7 +386,32 @@ class ExtensionsController extends Controller
             ->values()
             ->toArray();
 
-        // logger($phone_numbers);
+
+        $allVoicemails =  Voicemails::where('domain_uuid', $currentDomain)
+            ->with(['extension' => function ($query) use ($currentDomain) {
+                $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
+                    ->where('domain_uuid', $currentDomain);
+            }])
+            ->select(
+                'voicemail_uuid',
+                'voicemail_id',
+                'voicemail_description',
+
+            )
+            ->orderBy('voicemail_id', 'asc')
+            ->get()
+            ->map(function ($voicemail) {
+                return [
+                    'value' => $voicemail->voicemail_uuid,
+                    'label' => $voicemail->extension
+                        ? $voicemail->extension->name_formatted
+                        : $voicemail->voicemail_id
+                        . ' - Team Voicemail'
+                        . ($voicemail->voicemail_description ? " ({$voicemail->voicemail_description})" : ''),
+                ];
+            })
+            ->values()
+            ->toArray();
 
 
         // 3) Any routes your front end needs
@@ -430,6 +464,7 @@ class ExtensionsController extends Controller
         return response()->json([
             'item'        => $extensionDto,
             'voicemail' => $voicemailDto,
+            'all_voicemails' => $allVoicemails,
             'permissions' => $permissions,
             'routes'      => $routes,
             'phone_numbers' => $phone_numbers,
@@ -1224,6 +1259,15 @@ class ExtensionsController extends Controller
             // Update related models
             $extension->voicemail->update($data);
             $extension->advSettings->update($data);
+
+            // Handle voicemail_destinations (copies)
+            if (
+                isset($data['voicemail_destinations'])
+                && is_array($data['voicemail_destinations'])
+                && $extension->voicemail
+            ) {
+                $extension->voicemail->syncCopies($data['voicemail_destinations']);
+            }
 
             logger($extension->toArray());
 

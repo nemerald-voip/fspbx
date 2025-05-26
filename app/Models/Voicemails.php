@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Extensions;
+use App\Models\VoicemailDestinations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -186,6 +187,22 @@ class Voicemails extends Model
     {
         return $this->voicemail_id . ' - ' . $this->voicemail_mail_to;
     }
+
+
+    public function syncCopies(array $copyUuids)
+    {
+        // Remove all current destinations
+        VoicemailDestinations::where('voicemail_uuid', $this->voicemail_uuid)->delete();
+
+        // Add the new destinations
+        foreach ($copyUuids as $copyUuid) {
+            $destination = new VoicemailDestinations();
+            $destination->voicemail_uuid = $this->voicemail_uuid;
+            $destination->voicemail_uuid_copy = $copyUuid;
+            $destination->save();
+        }
+    }
+
 
 
     /**

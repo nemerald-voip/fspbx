@@ -147,8 +147,10 @@
                                     voicemail_password: options.voicemail.voicemail_password ?? '',
                                     voicemail_description: options.voicemail.voicemail_description ?? '',
                                     voicemail_transcription_enabled: options.voicemail.voicemail_transcription_enabled ?? 'true',
-                                    voicemail_attach_file: options.voicemail.voicemail_attach_file ?? 'true',
+                                    voicemail_file: options.voicemail.voicemail_file === 'attach' ? 'attach' : '',
                                     voicemail_local_after_email: options.voicemail.voicemail_local_after_email ?? 'true',
+
+                                    voicemail_destinations:  options.voicemail.voicemail_destinations ?? [],
 
                                     //     ? options.item.user_groups.map(ug => ug.group_uuid)
                                     //     : []
@@ -234,11 +236,10 @@
                                                     'voicemail_title',
                                                     'voicemail_enabled',
                                                     'voicemail_password',
-                                                    'voicemail_mail_to2',
                                                     'voicemail_description',
                                                     'voicemail_transcription_enabled',
                                                     'divider10',
-                                                    'voicemail_attach_file',
+                                                    'voicemail_file',
                                                     'divider11',
                                                     'voicemail_local_after_email',
                                                     'voicemail_destinations',
@@ -723,11 +724,7 @@
                                                     description="Customize voicemail preferences" />
                                                 <ToggleElement name="voicemail_enabled" text="Status" true-value="true"
                                                     false-value="false" default="true" />
-                                                <TextElement name="voicemail_mail_to2" label="Email Address" :columns="{
-                                                    sm: {
-                                                        container: 6,
-                                                    },
-                                                }" placeholder="Enter Email" :floating="false" :disabled="true" />
+                                                
                                                 <TextElement name="voicemail_password" label="Password" :columns="{
                                                     sm: {
                                                         container: 6,
@@ -739,21 +736,16 @@
                                                     text="Voicemail Transcription" true-value="true" false-value="false"
                                                     description="Convert voicemail messages to text using AI-powered transcription." />
                                                 <StaticElement name="divider10" tag="hr" />
-                                                <ToggleElement name="voicemail_attach_file"
-                                                    text="Attach File to Email Notifications" true-value="true"
-                                                    false-value="false"
+                                                <ToggleElement name="voicemail_file"
+                                                    text="Attach File to Email Notifications" true-value="attach"
+                                                    false-value=""
                                                     description="Attach voicemail recording file to the email notification." />
                                                 <StaticElement name="divider11" tag="hr" />
                                                 <ToggleElement name="voicemail_local_after_email"
                                                     text="Automatically Delete Voicemail After Email" true-value="false"
                                                     false-value="true"
                                                     description="Remove voicemail from the cloud once the email is sent." />
-                                                <TagsElement name="voicemail_destinations" :search="true" :items="[
-                                                    {
-                                                        value: 0,
-                                                        label: 'Label',
-                                                    },
-                                                ]" label="Copy Voicemail to Other Extensions" input-type="search" autocomplete="off"
+                                                <TagsElement name="voicemail_destinations" :search="true" :items="options.all_voicemails" label="Copy Voicemail to Other Extensions" input-type="search" autocomplete="off"
                                                     description="Automatically send a copy of the voicemail to selected additional extensions."
                                                     :floating="false" placeholder="Enter name or extension" />
                                                 <StaticElement name="divider12" tag="hr" top="1" bottom="1" />
