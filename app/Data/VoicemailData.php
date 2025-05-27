@@ -10,7 +10,7 @@ class VoicemailData extends Data
         public string $voicemail_uuid,
         public string $voicemail_id,
         public ?string $voicemail_password,
-        public ?int $greeting_id,
+        public ?string $greeting_id,
         public ?int $voicemail_alternate_greet_id,
         public ?string $voicemail_mail_to,
         public ?string $voicemail_transcription_enabled,
@@ -21,6 +21,7 @@ class VoicemailData extends Data
         public ?string $voicemail_tutorial,
         public ?string $voicemail_recording_instructions,
         public ?array $voicemail_destinations = null,
+        public ?array $greetings = null,
     ) {}
 }
 

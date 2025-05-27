@@ -119,7 +119,7 @@
                                         <Badge v-if="row.forward_user_not_registered_enabled == 'true'" :text="'FWD no Reg'"
                                             :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
                                             ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
-                                        <Badge v-if="row.follow_me_enabled =='true'" :text="'Sequence'"
+                                        <Badge v-if="row.follow_me_enabled == 'true'" :text="'Sequence'"
                                             :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
                                             ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
                                     </span>

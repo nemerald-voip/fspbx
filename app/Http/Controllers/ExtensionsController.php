@@ -230,6 +230,8 @@ class ExtensionsController extends Controller
         $itemUuid = $request->input('item_uuid');
 
         $currentDomain = session('domain_uuid');
+
+        $routes = [];
         // 1) Base payload: either an existing user DTO or a “new extension stub
         if ($itemUuid) {
             $extension = QueryBuilder::for(Extensions::class)
@@ -267,6 +269,7 @@ class ExtensionsController extends Controller
                                 'voicemail_uuid',
                                 'voicemail_id',
                                 'domain_uuid',
+                                'greeting_id',
                                 'voicemail_password',
                                 'voicemail_mail_to',
                                 'voicemail_transcription_enabled',
@@ -275,9 +278,15 @@ class ExtensionsController extends Controller
                                 'voicemail_enabled',
                                 'voicemail_description',
                             )
-                            ->with(['voicemail_destinations' => function ($q) {
-                                $q->select('voicemail_destination_uuid', 'voicemail_uuid', 'voicemail_uuid_copy');
-                            }]);
+                            ->with([
+                                'voicemail_destinations' => function ($q) {
+                                    $q->select('voicemail_destination_uuid', 'voicemail_uuid', 'voicemail_uuid_copy');
+                                },
+                                'greetings' => function ($query) use ($currentDomain) {
+                                    $query->select('voicemail_id', 'greeting_id', 'greeting_name', 'greeting_description')
+                                        ->where('domain_uuid', $currentDomain);
+                                }
+                            ]);
                     },
                     'followMe.followMeDestinations' => function ($q) {
                         $q->select([
@@ -338,11 +347,45 @@ class ExtensionsController extends Controller
                 ? $extension->voicemail->voicemail_destinations->pluck('voicemail_uuid_copy')->values()->all()
                 : [];
 
+            $voicemailGreetings = $extension->voicemail && $extension->voicemail->greetings
+                ? $extension->voicemail->greetings
+                ->sortBy('greeting_id')
+                ->map(function ($greeting) {
+                    return [
+                        'value' => $greeting->greeting_id,
+                        'label' => $greeting->greeting_name,
+                        'description' => $greeting->greeting_description,
+                    ];
+                })->toArray()
+                : [];
+
+            // Add the default options at the beginning of the array
+            array_unshift(
+                $voicemailGreetings,
+                ['value' => '0', 'label' => 'None'],
+                ['value' => '-1', 'label' => 'System Default']
+            );
+
             $voicemailDto = VoicemailData::from([
                 ...$extension->voicemail->toArray(),
                 'voicemail_destinations' => $voicemailDestinations,
+                'greetings' => $voicemailGreetings,
             ]);
-            
+
+            if ($extension->voicemail) {
+                $routes = array_merge($routes, [
+                    'text_to_speech_route' => route('voicemails.textToSpeech', $extension->voicemail),
+                    'text_to_speech_route_for_name' => route('voicemails.textToSpeechForName', $extension->voicemail),
+                    'greeting_route' => route('voicemail.greeting', $extension->voicemail),
+                    'delete_greeting_route' => route('voicemails.deleteGreeting', $extension->voicemail),
+                    'upload_greeting_route' => route('voicemails.uploadGreeting', $extension->voicemail),
+                    'upload_greeting_route_for_name' => route('voicemails.uploadRecordedName', $extension->voicemail),
+                    'recorded_name_route' => route('voicemail.recorded_name', $extension->voicemail),
+                    'delete_recorded_name_route' => route('voicemails.deleteRecordedName', $extension->voicemail),
+                    'upload_recorded_name_route' => route('voicemails.uploadRecordedName', $extension->voicemail),
+                    'update_route' => route('voicemails.update', $extension->voicemail),
+                ]);
+            }
         } else {
             // “New extension defaults
             $userDto     = new ExtensionDetailData(
@@ -415,11 +458,11 @@ class ExtensionsController extends Controller
 
 
         // 3) Any routes your front end needs
-        $routes = [
+        $routes = array_merge($routes, [
             'store_route'  => route('extensions.store'),
             'update_route' => $updateRoute,
             'get_routing_options' => route('routing.options'),
-        ];
+        ]);
 
         $routingOptionsService = new CallRoutingOptionsService;
         $forwardingTypes = $routingOptionsService->forwardingTypes;
@@ -461,6 +504,29 @@ class ExtensionsController extends Controller
             ]
         ];
 
+        // Define the instructions for recording a voicemail greeting using a phone call
+        $phoneCallInstructions = [
+            'Dial <strong>*98</strong> from your phone.',
+            'Enter the mailbox number and press <strong>#</strong>.',
+            'Enter the voicemail password and press <strong>#</strong>.',
+            'Press <strong>5</strong> for mailbox options.',
+            'Press <strong>1</strong> to record an unavailable message.',
+            'Choose a greeting number (1-9) to record, then follow the prompts.',
+        ];
+
+        // Define the instructions for recording a name using a phone call
+        $phoneCallInstructionsForName = [
+            'Dial <strong>*98</strong> from your phone.',
+            'Enter the mailbox number and press <strong>#</strong>.',
+            'Enter the voicemail password and press <strong>#</strong>.',
+            'Press <strong>5</strong> for mailbox options.',
+            'Press <strong>3</strong> to record your name, then follow the prompts.',
+        ];
+
+        $sampleMessage = 'Thank you for calling. Please, leave us a message and will call you back as soon as possible';
+
+        $openAiService = app(\App\Services\OpenAIService::class);
+
         return response()->json([
             'item'        => $extensionDto,
             'voicemail' => $voicemailDto,
@@ -470,6 +536,12 @@ class ExtensionsController extends Controller
             'phone_numbers' => $phone_numbers,
             'forwarding_types' => $forwardingTypes,
             'follow_me_destination_options' => $followMeDestinationOptions,
+            'voices' => $openAiService->getVoices(),
+            'speeds' => $openAiService->getSpeeds(),
+            'phone_call_instructions' => $phoneCallInstructions,
+            'phone_call_instructions_for_name' => $phoneCallInstructionsForName,
+            'sample_message' => $sampleMessage,
+            'recorded_name' => Storage::disk('voicemail')->exists(session('domain_name') . '/' . $voicemailDto->voicemail_id . '/recorded_name.wav') ? 'Custom recording' : 'System Default',
         ]);
     }
 
@@ -2047,17 +2119,18 @@ class ExtensionsController extends Controller
     public function getUserPermissions()
     {
         $permissions = [];
-        $permissions['user_group_view'] = userCheckPermission('user_group_view');
-        $permissions['user_group_edit'] = userCheckPermission('user_group_edit');
-        $permissions['user_status'] = userCheckPermission('user_status');
-        $permissions['user_view_managed_accounts'] = userCheckPermission('user_view_managed_accounts');
-        $permissions['user_update_managed_accounts'] = userCheckPermission('user_update_managed_accounts');
-        $permissions['user_view_managed_account_groups'] = userCheckPermission('user_view_managed_account_groups');
-        $permissions['user_update_managed_account_groups'] = userCheckPermission('user_update_managed_account_groups');
-        $permissions['api_key'] = userCheckPermission('api_key');
-        $permissions['api_key_create'] = userCheckPermission('api_key_create');
-        $permissions['api_key_update'] = userCheckPermission('api_key_update');
-        $permissions['api_key_delete'] = userCheckPermission('api_key_delete');
+        // $permissions['user_group_view'] = userCheckPermission('user_group_view');
+        // $permissions['user_group_edit'] = userCheckPermission('user_group_edit');
+        // $permissions['user_status'] = userCheckPermission('user_status');
+        // $permissions['user_view_managed_accounts'] = userCheckPermission('user_view_managed_accounts');
+        // $permissions['user_update_managed_accounts'] = userCheckPermission('user_update_managed_accounts');
+        // $permissions['user_view_managed_account_groups'] = userCheckPermission('user_view_managed_account_groups');
+        // $permissions['user_update_managed_account_groups'] = userCheckPermission('user_update_managed_account_groups');
+
+        $permissions['manage_voicemail_copies'] = userCheckPermission('voicemail_forward');
+        $permissions['manage_voicemail_transcription'] = userCheckPermission('voicemail_transcription_enabled');
+        $permissions['manage_voicemail_auto_delete'] = userCheckPermission('voicemail_local_after_email');
+        $permissions['manage_voicemail_recording_instructions'] = userCheckPermission('voicemail_recording_instructions');
 
         return $permissions;
     }

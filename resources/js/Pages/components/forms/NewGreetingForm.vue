@@ -258,7 +258,7 @@ const uploadFile = () => {
                 });
                 selectedFileName.value = '';
                 fileToUpload.value = null;
-                successMessage.value = response.data.messages.success[0];
+                successMessage.value = response.data.messages.success;
 
                 // Dismiss success message after 5 seconds
                 setTimeout(() => {

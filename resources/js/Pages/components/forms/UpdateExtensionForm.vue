@@ -1,6 +1,6 @@
 <template>
     <TransitionRoot as="div" :show="show">
-        <Dialog as="div" class="relative z-10" :inert="showApiTokenModal">
+        <Dialog as="div" class="relative z-10" :inert="showNewGreetingModal || showNewNameGreetingModal">
             <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
                 <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
@@ -149,8 +149,9 @@
                                     voicemail_transcription_enabled: options.voicemail.voicemail_transcription_enabled ?? 'true',
                                     voicemail_file: options.voicemail.voicemail_file === 'attach' ? 'attach' : '',
                                     voicemail_local_after_email: options.voicemail.voicemail_local_after_email ?? 'true',
+                                    voicemail_destinations: options.voicemail.voicemail_destinations ?? [],
+                                    greeting_id: options.voicemail.greetings.find(g => g.value === (options.voicemail.greeting_id ?? '')) ?? greetings[0]
 
-                                    voicemail_destinations:  options.voicemail.voicemail_destinations ?? [],
 
                                     //     ? options.item.user_groups.map(ug => ug.group_uuid)
                                     //     : []
@@ -246,6 +247,12 @@
                                                     'divider12',
                                                     'voicemail_greetings_title',
                                                     'container_3',
+                                                    'voicemail_action_buttons',
+                                                    'greeting_id',
+                                                    'delete_button',
+                                                    'name_greeting_title',
+                                                    'divider13',
+                                                    'voicemail_name_action_buttons',
                                                     'submit',
 
                                                 ]" />
@@ -724,7 +731,7 @@
                                                     description="Customize voicemail preferences" />
                                                 <ToggleElement name="voicemail_enabled" text="Status" true-value="true"
                                                     false-value="false" default="true" />
-                                                
+
                                                 <TextElement name="voicemail_password" label="Password" :columns="{
                                                     sm: {
                                                         container: 6,
@@ -745,13 +752,223 @@
                                                     text="Automatically Delete Voicemail After Email" true-value="false"
                                                     false-value="true"
                                                     description="Remove voicemail from the cloud once the email is sent." />
-                                                <TagsElement name="voicemail_destinations" :search="true" :items="options.all_voicemails" label="Copy Voicemail to Other Extensions" input-type="search" autocomplete="off"
+                                                <TagsElement name="voicemail_destinations" :search="true"
+                                                    :items="options.all_voicemails"
+                                                    label="Copy Voicemail to Other Extensions" input-type="search"
+                                                    autocomplete="off"
                                                     description="Automatically send a copy of the voicemail to selected additional extensions."
                                                     :floating="false" placeholder="Enter name or extension" />
                                                 <StaticElement name="divider12" tag="hr" top="1" bottom="1" />
+
+                                                <!-- Voicemail Greetings -->
                                                 <StaticElement name="voicemail_greetings_title" tag="h4"
                                                     content="Voicemail Greetings"
                                                     description="Customize the message that callers hear when they reach your voicemail." />
+
+
+                                                <SelectElement name="greeting_id" :search="true" :native="false"
+                                                    label="Select Greeting" :items="greetings" input-type="search"
+                                                    autocomplete="off" placeholder="Select Greeting" :floating="false"
+                                                    :object="true" :format-data="formatGreeting" :strict="false" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        }
+                                                    }">
+                                                    <template #after>
+                                                        <span v-if="greetingTranscription" class="text-xs italic">
+                                                            "{{ greetingTranscription }}"
+                                                        </span>
+
+
+                                                    </template>
+                                                </SelectElement>
+
+                                                <GroupElement name="voicemail_action_buttons" :columns="{ container: 6, }">
+
+                                                    <ButtonElement v-if="!isAudioPlaying" @click="playGreeting" :columns="{
+                                                        container: 2,
+                                                    }" name="play_button" label="&nbsp;" :secondary="true"
+                                                        :conditions="[function (form$) { const val = form$.el$('greeting_id')?.value; return val?.value !== '0' && val?.value !== '-1' && val !== null; }]"
+                                                        :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                                        <PlayCircleIcon
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                    </ButtonElement>
+
+
+                                                    <ButtonElement v-if="isAudioPlaying" @click="pauseGreeting"
+                                                        name="pause_button" label="&nbsp;" :secondary="true" :columns="{
+                                                            container: 2,
+                                                        }"
+                                                        :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                                        <PauseCircleIcon
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+
+                                                    </ButtonElement>
+
+                                                    <ButtonElement v-if="!isDownloading" @click="downloadGreeting"
+                                                        name="download_button" label="&nbsp;" :secondary="true" :columns="{
+                                                            container: 2,
+                                                        }"
+                                                        :conditions="[function (form$) { const val = form$.el$('greeting_id')?.value; return val?.value !== '0' && val?.value !== '-1' && val !== null; }]"
+                                                        :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                                        <CloudArrowDownIcon
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                                                    </ButtonElement>
+
+                                                    <ButtonElement v-if="isDownloading" name="download_spinner_button"
+                                                        label="&nbsp;" :secondary="true" :columns="{
+                                                            container: 2,
+                                                        }"
+                                                        :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                                        <Spinner :show="true"
+                                                            class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                                                    </ButtonElement>
+
+                                                    <!-- <ButtonElement @click="editGreeting" name="edit_button" label="&nbsp;"
+                                                        :secondary="true" :columns="{
+                                                            container: 2,
+                                                        }"
+                                                        :conditions="[function (form$) { const val = form$.el$('greeting_id')?.value; return val?.value !== '0' && val?.value !== '-1' && val !== null; }]"
+                                                        :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                                        <PencilSquareIcon
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                                                    </ButtonElement> -->
+
+                                                    <ButtonElement @click="deleteGreeting" name="delete_button"
+                                                        label="&nbsp;" :secondary="true" :columns="{
+                                                            container: 2,
+                                                        }"
+                                                        :conditions="[function (form$) { const val = form$.el$('greeting_id')?.value; return val?.value !== '0' && val?.value !== '-1' && val !== null; }]"
+                                                        :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                                        <TrashIcon
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+
+                                                    </ButtonElement>
+
+                                                    <ButtonElement @click="handleNewGreetingButtonClick" name="add_button"
+                                                        label="&nbsp;" :secondary="true" :columns="{
+                                                            container: 2,
+                                                        }"
+                                                        :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                                        <PlusIcon
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                                                    </ButtonElement>
+
+                                                </GroupElement>
+
+
+                                                <StaticElement name="divider13" top="1" />
+
+                                                <StaticElement name="name_greeting_title" :columns="{
+                                                    sm: {
+                                                        container: 3,
+                                                    },
+                                                    md: {
+                                                        container: 2,
+                                                    },
+                                                    lg: {
+                                                        container: 3,
+                                                    },
+                                                }" label="Recorded Name" info="Used only in Dial by Name directory">
+                                                    <div class="pt-2 flex items-center  whitespace-nowrap space-x-2">
+                                                        <!-- <p>Recorded Name:</p> -->
+                                                        <Badge v-if="recorded_name == 'Custom recording'"
+                                                            :text="recorded_name" backgroundColor="bg-green-50"
+                                                            textColor="text-green-700" ringColor="ring-green-600/20" />
+
+                                                        <Badge v-if="recorded_name == 'System Default'"
+                                                            :text="recorded_name" backgroundColor="bg-blue-50"
+                                                            textColor="text-blue-700" ringColor="ring-blue-600/20" />
+
+                                                    </div>
+                                                </StaticElement>
+
+
+                                                <GroupElement name="voicemail_name_action_buttons"
+                                                    :columns="{ container: 6, }">
+
+                                                    <ButtonElement v-if="!isNameAudioPlaying" @click="playRecordedName"
+                                                        :columns="{
+                                                            container: 2,
+                                                        }" name="play_name_button" label="&nbsp;" :secondary="true"
+                                                        :conditions="[function () { return recorded_name == 'Custom recording' }]"
+                                                        :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                                        <PlayCircleIcon
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                    </ButtonElement>
+
+
+                                                    <ButtonElement v-if="isNameAudioPlaying" @click="pauseRecordedName"
+                                                        name="pause_name_button" label="&nbsp;" :secondary="true" :columns="{
+                                                            container: 2,
+                                                        }"
+                                                        :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                                        <PauseCircleIcon
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+
+                                                    </ButtonElement>
+
+                                                    <ButtonElement v-if="!isNameDownloading" @click="downloadRecordedName"
+                                                        name="download_name_button" label="&nbsp;" :secondary="true"
+                                                        :columns="{
+                                                            container: 2,
+                                                        }"
+                                                        :conditions="[function () { return recorded_name == 'Custom recording' }]"
+                                                        :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                                        <CloudArrowDownIcon
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                                                    </ButtonElement>
+
+                                                    <ButtonElement v-if="isNameDownloading"
+                                                        name="download_name_spinner_button" label="&nbsp;" :secondary="true"
+                                                        :columns="{
+                                                            container: 2,
+                                                        }"
+                                                        :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                                        <Spinner :show="true"
+                                                            class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                                                    </ButtonElement>
+
+                                                    <!-- <ButtonElement @click="editGreeting" name="edit_button" label="&nbsp;"
+                                                        :secondary="true" :columns="{
+                                                            container: 2,
+                                                        }"
+                                                        :conditions="[function (form$) { const val = form$.el$('greeting_id')?.value; return val?.value !== '0' && val?.value !== '-1' && val !== null; }]"
+                                                        :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                                        <PencilSquareIcon
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                                                    </ButtonElement> -->
+
+                                                    <ButtonElement @click="deleteRecordedName" name="delete_name_button"
+                                                        label="&nbsp;" :secondary="true" :columns="{
+                                                            container: 2,
+                                                        }"
+                                                        :conditions="[function () { return recorded_name == 'Custom recording' }]"
+                                                        :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                                        <TrashIcon
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+
+                                                    </ButtonElement>
+
+                                                    <ButtonElement @click="handleNewNameGreetingButtonClick"
+                                                        name="add_name_button" label="&nbsp;" :secondary="true" :columns="{
+                                                            container: 2,
+                                                        }"
+                                                        :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                                        <PlusIcon
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+
+                                                    </ButtonElement>
+
+                                                </GroupElement>
+
 
                                                 <GroupElement name="container_3" />
 
@@ -774,22 +991,46 @@
         </Dialog>
     </TransitionRoot>
 
-    <CreateApiTokenModal :show="showApiTokenModal" :options="options" @close="showApiTokenModal = false"
-        @error="emitErrorToParentFromChild" @success="emitSuccessToParentFromChild" @refresh-data="getTokens" />
+    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showNewGreetingModal" :header="''" :loading="loadingModal"
+        @close="handleModalClose">
+        <template #modal-body>
+            <NewGreetingForm :title="'New Voicemail Greeting'" :voices="options.voices" :speeds="options.speeds"
+                :phone_call_instructions="options.phone_call_instructions" :sample_message="options.sample_message"
+                :routes="getRoutesForGreetingForm" @greeting-saved="handleGreetingSaved" />
+        </template>
+    </AddEditItemModal>
 
+    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showNewNameGreetingModal" :header="''" :loading="loadingModal"
+        @close="handleModalClose">
+        <template #modal-body>
+            <NewGreetingForm :title="'New Recorded Name'" :voices="options.voices" :speeds="options.speeds"
+                :phone_call_instructions="options.phone_call_instructions_for_name" :sample_message="'John Dow'"
+                :routes="getRoutesForNameForm" @greeting-saved="handleNameSaved" />
+        </template>
+    </AddEditItemModal>
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
-        @confirm="confirmDeleteAction" :header="'Confirm Deletion'" :loading="isDeleteTokenLoading"
-        :text="'This action will permanently delete the selected API Key. Are you sure you want to proceed?'"
-        confirm-button-label="Delete" cancel-button-label="Cancel" />
+        @confirm="confirmDeleteAction" :header="'Confirm Deletion'"
+        :text="'This action will permanently delete this greeting. Are you sure you want to proceed?'"
+        :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+
+    <ConfirmationModal :show="showDeleteNameConfirmationModal" @close="showDeleteNameConfirmationModal = false"
+        @confirm="confirmDeleteNameAction" :header="'Confirm Deletion'"
+        :text="'This action will permanently delete this greeting. Are you sure you want to proceed?'"
+        :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
-import ConfirmationModal from "./../modal/ConfirmationModal.vue";
-import CreateApiTokenModal from "./../modal/CreateApiTokenModal.vue"
+import { PlusIcon, TrashIcon, PencilSquareIcon } from '@heroicons/vue/20/solid'
+import { PlayCircleIcon, CloudArrowDownIcon, PauseCircleIcon } from '@heroicons/vue/24/solid';
+import Spinner from "@generalComponents/Spinner.vue";
+import NewGreetingForm from './NewGreetingForm.vue';
+import AddEditItemModal from "../modal/AddEditItemModal.vue";
+import ConfirmationModal from "..//modal/ConfirmationModal.vue";
+import Badge from "@generalComponents/Badge.vue";
 
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
@@ -806,11 +1047,34 @@ const showResetConfirmationModal = ref(false);
 const isTokensLoading = ref(false)
 const isDeleteTokenLoading = ref(false)
 const showDeleteConfirmationModal = ref(false)
+const showDeleteNameConfirmationModal = ref(false)
 const tokens = ref([])
-const addTokenButtonLoading = ref(false)
 const showApiTokenModal = ref(false)
-const confirmDeleteAction = ref(null);
+const isDownloading = ref(false);
+const isNameAudioPlaying = ref(false);
+const isNameDownloading = ref(false);
+const currentNameAudio = ref(null);
+const showNewGreetingModal = ref(false);
+const showNewNameGreetingModal = ref(false);
+const loadingModal = ref(false);
+const greetings = ref(props.options?.voicemail?.greetings)
+const recorded_name = ref(props.options?.recorded_name)
 
+// Watch for changes in the prop and update the ref
+watch(
+    () => props.options?.voicemail?.greetings,
+    (newVal) => {
+        greetings.value = newVal
+    }
+)
+
+// Watch for changes in the prop and update the ref
+watch(
+    () => props.options?.recorded_name,
+    (newVal) => {
+        recorded_name.value = newVal
+    }
+)
 
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
@@ -851,9 +1115,10 @@ const formatTarget = (name, value) => {
     return { [name]: value?.extension ?? null } // must return an object
 }
 
-// const addSelectedDestinations = () => {
-//     showResetConfirmationModal.value = true;
-// };
+const formatGreeting = (name, value) => {
+    return { [name]: value?.value ?? null } // must return an object
+}
+
 
 const addSelectedDestinations = () => {
     // console.log(form$.value.el$('selectedDestinations').value);
@@ -946,11 +1211,6 @@ const getTokens = async () => {
 // };
 
 
-const handleDeleteTokenButtonClick = (uuid) => {
-    showDeleteConfirmationModal.value = true;
-    confirmDeleteAction.value = () => executeBulkDelete([uuid]);
-};
-
 
 const emitErrorToParentFromChild = (error) => {
     emit('error', error);
@@ -978,6 +1238,305 @@ const timeoutOptions = Array.from({ length: 21 }, (_, i) => {
     };
 });
 
+const handleNewGreetingButtonClick = () => {
+    showNewGreetingModal.value = true;
+};
+
+const handleNewNameGreetingButtonClick = () => {
+    showNewNameGreetingModal.value = true;
+};
+
+const greetingTranscription = computed(() => {
+    // Check that the ref is assigned and has a `value` property
+    return form$?.value?.data?.greeting_id?.description || null;
+})
+
+// Handler for the greeting-saved event
+const handleGreetingSaved = ({ greeting_id, greeting_name, description }) => {
+
+    // Add the new greeting to the greetings.value array
+    greetings.value.push({ value: String(greeting_id), label: greeting_name, description: description });
+
+    // Sort the greetings array by greeting_id
+    greetings.value.sort((a, b) => Number(a.value) - Number(b.value));
+
+    // Update the selected greeting ID
+    form$.value.update({
+        greeting_id: {
+            value: String(greeting_id),
+            label: greeting_name,
+            description: description
+        }
+    })
+
+    currentAudio.value = null;
+
+    showNewGreetingModal.value = false;
+
+    emit('success', 'success', { message: ['New greeting has been successfully added.'] });
+};
+
+
+const currentAudio = ref(null);
+const isAudioPlaying = ref(false);
+const currentAudioGreeting = ref(null);
+
+const playGreeting = () => {
+    const greeting = form$.value.data.greeting_id.value;
+
+    if (!greeting) return; // No greeting selected
+
+    // If there's already an audio playing for the SAME greeting
+    if (currentAudio.value && currentAudio.value.src && currentAudioGreeting.value === greeting) {
+        if (currentAudio.value.paused) {
+            currentAudio.value.play();
+            isAudioPlaying.value = true;
+        }
+        return; // Same greeting, don't reload
+    }
+
+    // Otherwise, stop the old audio
+    if (currentAudio.value) {
+        currentAudio.value.pause();
+        currentAudio.value.currentTime = 0;
+        currentAudio.value = null;
+    }
+    isAudioPlaying.value = false;
+
+    axios.post(props.options.routes.greeting_route, { greeting_id: greeting })
+        .then((response) => {
+            if (currentAudio.value) {
+                currentAudio.value.pause();
+                currentAudio.value.currentTime = 0;
+            }
+            if (response.data.success) {
+                isAudioPlaying.value = true;
+
+                currentAudio.value = new Audio(response.data.file_url);
+                currentAudioGreeting.value = greeting;
+                currentAudio.value.play().catch(() => {
+                    isAudioPlaying.value = false;
+                    emit('error', { message: 'Audio playback failed' });
+                });
+
+                currentAudio.value.addEventListener("ended", () => {
+                    isAudioPlaying.value = false;
+                });
+            }
+        }).catch((error) => {
+            emit('error', error);
+        });
+};
+
+
+
+const downloadGreeting = () => {
+    isDownloading.value = true; // Start the spinner
+
+    const greeting = form$.value.data.greeting_id.value;
+
+    if (!greeting) {
+        isDownloading.value = false;
+        return; // No greeting selected, stop
+    }
+
+    axios.post(props.options.routes.greeting_route, { greeting_id: greeting })
+        .then((response) => {
+            if (response.data.success) {
+                // Create a URL with the download parameter set to true
+                const downloadUrl = `${response.data.file_url}?download=true`;
+
+                // Create an invisible link element
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+
+                // Use the filename or a default name
+                const fileName = response.data.file_name;
+                link.download = fileName || 'greeting.wav';
+
+                // Append the link to the body
+                document.body.appendChild(link);
+
+                // Trigger the download
+                link.click();
+
+                // Remove the link
+                document.body.removeChild(link);
+            }
+        })
+        .catch((error) => {
+            emit('error', error);
+        })
+        .finally(() => {
+            isDownloading.value = false; // Stop the spinner after download completes
+        });
+};
+
+
+
+const pauseGreeting = () => {
+    if (currentAudio.value) {
+        currentAudio.value.pause();
+        isAudioPlaying.value = false;
+    }
+};
+
+const editGreeting = () => {
+    if (form$.value.data.greeting_id) {
+        greetingLabel.value = form$.value.data.greeting_id;
+        showEditModal.value = true;
+    }
+};
+
+
+const deleteGreeting = () => {
+    // Show the confirmation modal
+    showDeleteConfirmationModal.value = true;
+};
+
+const confirmDeleteAction = () => {
+    axios
+        .post(props.options.routes.delete_greeting_route, { greeting_id: form$.value.data.greeting_id.value })
+        .then((response) => {
+            if (response.data.success) {
+                // Remove the deleted greeting from the greetings.value array
+                greetings.value = greetings.value.filter(
+                    (greeting) => greeting.value !== String(form$.value.el$('greeting_id').value.value)
+                );
+
+                // Reset the selected greeting ID
+                form$.value.el$('greeting_id').update(greetings.value);
+
+                form$.value.el$('greeting_id').clear()
+
+                // Notify the parent component or show a local success message
+                emit('success', 'success', response.data.messages);
+            }
+        })
+        .catch((error) => {
+            emit('error', error); // Emit an error event if needed
+        })
+        .finally(() => {
+            showDeleteConfirmationModal.value = false; // Close the confirmation modal
+        });
+};
+
+
+// Handler for the greeting-saved event
+const handleNameSaved = ({ greeting_id, greeting_name }) => {
+    recorded_name.value = 'Custom recording';
+    currentNameAudio.value = null;
+
+    showNewNameGreetingModal.value = false;
+
+    emit('success', 'success', { message: ['New recorded name has been successfully added.'] });
+};
+
+// Methods for recorded name
+const playRecordedName = () => {
+    if (currentNameAudio.value && currentNameAudio.value.paused) {
+        currentNameAudio.value.play();
+        isNameAudioPlaying.value = true;
+        return;
+    }
+
+    axios.post(props.options.routes.recorded_name_route, { voicemail_id: form$.value.data.voicemail_id })
+        .then((response) => {
+            if (currentNameAudio.value) {
+                currentNameAudio.value.pause();
+                currentNameAudio.value.currentTime = 0;
+            }
+            if (response.data.success) {
+                isNameAudioPlaying.value = true;
+
+                // Add a cache-busting query parameter to the file URL
+                const fileUrlWithCacheBuster = `${response.data.file_url}?t=${new Date().getTime()}`;
+
+                currentNameAudio.value = new Audio(fileUrlWithCacheBuster);
+                currentNameAudio.value.play();
+
+                currentNameAudio.value.addEventListener("ended", () => {
+                    isNameAudioPlaying.value = false;
+                });
+            }
+        }).catch((error) => {
+            emits('error', error);
+        });
+};
+
+const pauseRecordedName = () => {
+    if (currentNameAudio.value) {
+        currentNameAudio.value.pause();
+        isNameAudioPlaying.value = false;
+    }
+};
+
+const downloadRecordedName = () => {
+    isNameDownloading.value = true;
+
+    axios.post(props.options.routes.recorded_name_route, { voicemail_id: form$.value.data.voicemail_id })
+        .then((response) => {
+            if (response.data.success) {
+                const downloadUrl = `${response.data.file_url}?download=true`;
+
+                const link = document.createElement('a');
+                link.href = downloadUrl;
+                link.download = response.data.file_name || 'recorded_name.wav';
+
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        })
+        .catch((error) => {
+            emit('error', error);
+        })
+        .finally(() => {
+            isNameDownloading.value = false;
+        });
+};
+
+const deleteRecordedName = () => {
+    showDeleteNameConfirmationModal.value = true; // Show confirmation modal
+};
+
+const confirmDeleteNameAction = () => {
+    axios
+        .post(props.options.routes.delete_recorded_name_route, { voicemail_id: form$.value.data.voicemail_id })
+        .then((response) => {
+            if (response.data.success) {
+                recorded_name.value = 'System Default';
+                emit('success', 'success', response.data.messages);
+            }
+        })
+        .catch((error) => {
+            emit('error', error);
+        })
+        .finally(() => {
+            showDeleteNameConfirmationModal.value = false;
+        });
+};
+
+
+// Computed property or method to dynamically set routes based on the form type
+const getRoutesForGreetingForm = computed(() => {
+    // Return routes specifically for the greeting form
+    return {
+        ...props.options.routes,
+        text_to_speech_route: props.options.routes.text_to_speech_route,
+        upload_greeting_route: props.options.routes.upload_greeting_route
+    };
+});
+
+const getRoutesForNameForm = computed(() => {
+    // Return routes specifically for the name form
+    return {
+        ...props.options.routes,
+        text_to_speech_route: props.options.routes.text_to_speech_route_for_name,
+        upload_greeting_route: props.options.routes.upload_greeting_route_for_name,
+    };
+});
+
 const executeBulkDelete = async (items) => {
     isDeleteTokenLoading.value = true;
 
@@ -1001,6 +1560,9 @@ const handleModalClose = () => {
     showResetConfirmationModal.value = false;
     showApiTokenModal.value = false
     showDeleteConfirmationModal.value = false;
+    showNewGreetingModal.value = false
+    showNewNameGreetingModal.value = false
+    showDeleteNameConfirmationModal.value = false;
 }
 
 const handleResponse = (response, form$) => {
@@ -1069,7 +1631,6 @@ const handleError = (error, details, form$) => {
     }
 }
 
-
 </script>
 
 <style>
@@ -1079,5 +1640,4 @@ div[data-lastpass-icon-root] {
 
 div[data-lastpass-root] {
     display: none !important
-}
-</style>
+}</style>

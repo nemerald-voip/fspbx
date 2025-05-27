@@ -89,7 +89,7 @@ class VoicemailController extends Controller
         }
 
         $data->getCollection()->each->append(['destroy_route', 'messages_route']);
-        
+
         return $data;
     }
 
@@ -323,7 +323,7 @@ class VoicemailController extends Controller
         ]);
     }
 
-    
+
     /**
      * Get voicemail greeting.
      *
@@ -626,30 +626,6 @@ class VoicemailController extends Controller
                 })->toArray();
             }
 
-            $openAiVoices = [
-                ['value' => 'alloy', 'name' => 'Alloy'],
-                ['value' => 'echo', 'name' => 'Echo'],
-                ['value' => 'fable', 'name' => 'Fable'],
-                ['value' => 'onyx', 'name' => 'Onyx'],
-                ['value' => 'nova', 'name' => 'Nova'],
-                ['value' => 'shimmer', 'name' => 'Shimmer'],
-            ];
-
-            $openAiSpeeds = [];
-
-            for ($i = 0.85; $i <= 1.3; $i += 0.05) {
-                if (floor($i) == $i) {
-                    // Whole number, format with one decimal place
-                    $formattedValue = sprintf('%.1f', $i);
-                } else {
-                    // Fractional number, format with two decimal places
-                    $formattedValue = sprintf('%.2f', $i);
-                }
-                $openAiSpeeds[] = ['value' => $formattedValue, 'name' => $formattedValue];
-            }
-
-
-
             // Define the instructions for recording a voicemail greeting using a phone call
             $phoneCallInstructions = [
                 'Dial <strong>*98</strong> from your phone.',
@@ -671,6 +647,8 @@ class VoicemailController extends Controller
 
             $sampleMessage = 'Thank you for calling. Please, leave us a message and will call you back as soon as possible';
 
+            $openAiService = app(\App\Services\OpenAIService::class);
+
             // Construct the itemOptions object
             $itemOptions = [
                 'navigation' => $navigation,
@@ -679,8 +657,8 @@ class VoicemailController extends Controller
                 'permissions' => $permissions,
                 'voicemail_copies' => $voicemailCopies,
                 'greetings' => $greetingsArray ?? null,
-                'voices' => $openAiVoices,
-                'speeds' => $openAiSpeeds,
+                'voices' => $openAiService->getVoices(),
+                'speeds' => $openAiService->getSpeeds(),
                 'routes' => $routes,
                 'phone_call_instructions' => $phoneCallInstructions,
                 'phone_call_instructions_for_name' => $phoneCallInstructionsForName,
@@ -896,7 +874,7 @@ class VoicemailController extends Controller
                 ], 500);
             }
 
-            $sanitizedDescription =  preg_replace('/\s+/', ' ',htmlspecialchars(strip_tags(trim(request('input'))), ENT_QUOTES, 'UTF-8'));
+            $sanitizedDescription =  preg_replace('/\s+/', ' ', htmlspecialchars(strip_tags(trim(request('input'))), ENT_QUOTES, 'UTF-8'));
 
             // Step 7: Save greeting info to the database
             $greeting = $voicemail->greetings()->create([
@@ -967,7 +945,7 @@ class VoicemailController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => ['success' => 'Your AI-generated recorded name has been saved and successfully activated.']
+                'messages' => ['success' => 'Your AI-generated recorded name has been saved and successfully activated.']
             ], 200);
         } catch (\Exception $e) {
             // Log the error message
@@ -1060,7 +1038,7 @@ class VoicemailController extends Controller
             // Return a successful JSON response
             return response()->json([
                 'success' => true,
-                'message' => ['success' => 'Greeting has been removed.']
+                'messages' => ['success' => ['Greeting has been removed.']]
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -1151,7 +1129,7 @@ class VoicemailController extends Controller
                     'success' => true,
                     'greeting_id' => $nextId,
                     'greeting_name' => "Uploaded File " . date('Ymd_His'),
-                    'message' => ['success' => 'Your greeting has been uploaded and successfully activated.']
+                    'messages' => ['success' => 'Your greeting has been uploaded and successfully activated.']
                 ], 200);
             } else {
                 // Log the error message if conversion failed
@@ -1162,7 +1140,7 @@ class VoicemailController extends Controller
                     'success' => false,
                     'greeting_id' => $nextId,
                     'greeting_name' => "Uploaded File " . date('Ymd_His'),
-                    'message' => ['success' => 'File uploaded, but conversion failed. Original file has been retained.']
+                    'messages' => ['success' => 'File uploaded, but conversion failed. Original file has been retained.']
                 ], 200); // Return 200 to indicate partial success
             }
         } catch (\Exception $e) {
@@ -1215,7 +1193,7 @@ class VoicemailController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => ['success' => 'Recorded name has been deleted.']
+                'messages' => ['success' => ['Recorded name has been deleted.']]
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -1271,7 +1249,7 @@ class VoicemailController extends Controller
                 // Return a successful JSON response
                 return response()->json([
                     'success' => true,
-                    'message' => ['success' => 'Recorded name has been uploaded and successfully activated.']
+                    'messages' => ['success' => 'Recorded name has been uploaded and successfully activated.']
                 ], 200);
             } else {
                 // Log the error message if conversion failed
@@ -1280,7 +1258,7 @@ class VoicemailController extends Controller
                 // Return a JSON response indicating conversion failure
                 return response()->json([
                     'success' => true,
-                    'message' => ['success' => 'File uploaded, but conversion failed. Original file has been retained.']
+                    'messages' => ['success' => 'File uploaded, but conversion failed. Original file has been retained.']
                 ], 200); // Return 200 to indicate partial success
             }
         } catch (\Exception $e) {

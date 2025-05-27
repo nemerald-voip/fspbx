@@ -535,30 +535,6 @@ class VirtualReceptionistController extends Controller
             $permissions = $this->getUserPermissions();
             // logger($permissions);
 
-            $openAiVoices = [
-                ['value' => 'alloy', 'name' => 'Alloy'],
-                ['value' => 'echo', 'name' => 'Echo'],
-                ['value' => 'fable', 'name' => 'Fable'],
-                ['value' => 'onyx', 'name' => 'Onyx'],
-                ['value' => 'nova', 'name' => 'Nova'],
-                ['value' => 'shimmer', 'name' => 'Shimmer'],
-            ];
-
-            $openAiSpeeds = [];
-
-            for ($i = 0.85; $i <= 1.3; $i += 0.05) {
-                if (floor($i) == $i) {
-                    // Whole number, format with one decimal place
-                    $formattedValue = sprintf('%.1f', $i);
-                } else {
-                    // Fractional number, format with two decimal places
-                    $formattedValue = sprintf('%.2f', $i);
-                }
-                $openAiSpeeds[] = ['value' => $formattedValue, 'name' => $formattedValue];
-            }
-
-
-
             // Define the instructions for recording a voicemail greeting using a phone call
             $phoneCallInstructions = [
                 'Dial <strong>*732</strong> from your phone.',
@@ -579,14 +555,16 @@ class VirtualReceptionistController extends Controller
             $ring_back_tones = getRingBackTonesCollection(session('domain_uuid'));
             $sounds = getSoundsCollection(session('domain_uuid'));
 
+            $openAiService = app(\App\Services\OpenAIService::class);
+            
             // Construct the itemOptions object
             $itemOptions = [
                 'navigation' => $navigation,
                 'ivr' => $ivr,
                 'permissions' => $permissions,
                 'greetings' => $greetingsArray ?? null,
-                'voices' => $openAiVoices,
-                'speeds' => $openAiSpeeds,
+                'voices' => $openAiService->getVoices(),
+                'speeds' => $openAiService->getSpeeds(),
                 'routes' => $routes,
                 'routing_types' => $routingTypes,
                 'phone_call_instructions' => $phoneCallInstructions,
