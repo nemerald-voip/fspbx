@@ -219,7 +219,7 @@
     </div>
 
     <UpdateExtensionForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"
-        :header="'Update Extension'" @close="showUpdateModal = false" @error="handleErrorResponse"
+        :header="'Update Extension - ' + itemOptions?.item?.name_formatted" @close="showUpdateModal = false" @error="handleErrorResponse"
         @success="showNotification" @refresh-data="handleSearchButtonClick" />
 
     <CreateUserForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading" :header="'Create User'"

@@ -172,7 +172,7 @@ class Extensions extends Model
 
     /**
      * This gets you “all possible” voicemails where ID matches extension, regardless of domain.
-     * Further filtering by domain is REQUIRED to avoid false positives and PERFORMANCE ISSUESyou  
+     * Further filtering by domain is REQUIRED to avoid false positives and PERFORMANCE ISSUES  
      */
     public function voicemail()
     {
@@ -229,20 +229,38 @@ class Extensions extends Model
         return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
     }
 
-    /**
-     * Get the Device object associated with this extension.
-     *  returns Eloqeunt Object
-     */
+    // Pull all device lines for this extension in the same domain
     public function deviceLines()
     {
-        return $this->hasMany(DeviceLines::class, 'user_id', 'extension');
+        return $this->hasMany(
+            DeviceLines::class,
+            // foreign key, local key
+            'auth_id',
+            'extension'
+        );
     }
 
+    // public function devices()
+    // {
+    //     return $this->belongsToMany(Devices::class, 'v_device_lines', 'user_id', 'device_uuid', 'extension')
+    //         ->withPivot('user_id', 'line_number', 'device_line_uuid')
+    //         ->where('v_devices.domain_uuid', $this->domain_uuid);
+    // }
+
+    // Devices through device lines
     public function devices()
     {
-        return $this->belongsToMany(Devices::class, 'v_device_lines', 'user_id', 'device_uuid', 'extension')
-            ->withPivot('user_id', 'line_number', 'device_line_uuid')
-            ->where('v_devices.domain_uuid', $this->domain_uuid);
+        // Many devices, through device lines, using a closure for domain matching
+        return $this->hasManyThrough(
+            Devices::class,
+            DeviceLines::class,
+            // First: DeviceLine local keys to match to this Extension
+            'auth_id', // Foreign key on DeviceLine...
+            'device_uuid', // Foreign key on Device...
+            'extension', // Local key on Extension...
+            'device_uuid' // Local key on DeviceLine...
+        )
+            ->whereColumn('v_device_lines.domain_uuid', 'v_extensions.domain_uuid');
     }
 
     public function agent()
@@ -266,32 +284,6 @@ class Extensions extends Model
         return $this->extension . ' - ' . ((!empty($this->effective_caller_id_name)) ? $this->effective_caller_id_name : $this->description);
     }
 
-    // public function isForwardAllEnabled(): bool
-    // {
-    //     return $this->forward_all_enabled == "true";
-    // }
-
-    // public function isForwardBusyEnabled(): bool
-    // {
-    //     return $this->forward_busy_enabled == "true";
-    // }
-
-    // public function isForwardNoAnswerEnabled(): bool
-    // {
-    //     return $this->forward_no_answer_enabled == "true";
-    // }
-
-    // public function isForwardUserNotRegisteredEnabled(): bool
-    // {
-    //     return $this->forward_user_not_registered_enabled == "true";
-    // }
-
-    // public function isFollowMeEnabled(): bool
-    // {
-    //     return $this->follow_me_enabled == "true";
-    // }
-
-
     /**
      * Get details for a given forwarding type.
      */
@@ -302,7 +294,7 @@ class Extensions extends Model
             return $this->forwardOptionDetailsCache[$type];
         }
 
-        
+
         $destinationField = "{$type}_destination";
         $enabledField = "{$type}_enabled";
 

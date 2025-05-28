@@ -4,14 +4,15 @@ use App\Models\DomainGroups;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TokenController;
 use App\Http\Controllers\UsersController;
+use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\UserLogsController;
+use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\BusinessHoursController;
 use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\EmergencyCallController;
-use App\Http\Controllers\ExtensionsController;
 
 /*
 |--------------------------------------------------------------------------
@@ -87,8 +88,12 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('extensions/bulk-delete', [ExtensionsController::class, 'bulkDelete'])->name('extensions.bulk.delete');
     Route::post('extensions/select-all', [ExtensionsController::class, 'selectAll'])->name('extensions.select.all');
     Route::get('/extensions/registrations', [ExtensionsController::class, 'registrations'])->name('extensions.registrations');
-
+    Route::get('/extensions/{extension}/devices', [ExtensionsController::class, 'devices'])->name('extensions.devices');
 
     // User logs
     Route::post('user-logs/select-all', [UserLogsController::class, 'selectAll'])->name('user-logs.select.all');
+
+    // Devices 
+    Route::post('devices/item-options', [DeviceController::class, 'getItemOptions'])->name('devices.item.options');
+
 });

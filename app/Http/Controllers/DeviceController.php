@@ -576,6 +576,7 @@ class DeviceController extends Controller
 
             // Construct the itemOptions object
             $itemOptions = [
+                'item' => $device ?? null,
                 'templates' => getVendorTemplateCollection(),
                 'profiles' => getProfileCollection($domain_uuid),
                 'extensions' => $extensionOptions,

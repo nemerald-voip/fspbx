@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use Throwable;
 use Inertia\Inertia;
 use App\Models\Devices;
+use App\Data\DeviceData;
 use App\Models\FollowMe;
 use App\Models\IvrMenus;
 use App\Models\Extensions;
 use App\Models\RingGroups;
 use App\Models\Voicemails;
+use App\Data\VoicemailData;
 use App\Jobs\DeleteAppUser;
 use App\Models\DeviceLines;
 use App\Models\FusionCache;
@@ -32,7 +34,6 @@ use Illuminate\Support\Facades\DB;
 use libphonenumber\PhoneNumberUtil;
 use App\Models\FollowMeDestinations;
 use App\Data\FollowMeDestinationData;
-use App\Data\VoicemailData;
 use App\Models\VoicemailDestinations;
 use libphonenumber\PhoneNumberFormat;
 use Spatie\QueryBuilder\QueryBuilder;
@@ -342,6 +343,7 @@ class ExtensionsController extends Controller
                     : [],
             ]);
             $updateRoute = route('extensions.update', ['extension' => $itemUuid]);
+            $deviceRoute = route('extensions.devices', ['extension' => $itemUuid]);
 
             $voicemailDestinations = $extension->voicemail && $extension->voicemail->voicemail_destinations
                 ? $extension->voicemail->voicemail_destinations->pluck('voicemail_uuid_copy')->values()->all()
@@ -384,6 +386,7 @@ class ExtensionsController extends Controller
                     'delete_recorded_name_route' => route('voicemails.deleteRecordedName', $extension->voicemail),
                     'upload_recorded_name_route' => route('voicemails.uploadRecordedName', $extension->voicemail),
                     'update_route' => route('voicemails.update', $extension->voicemail),
+                    'device_item_options' => route('devices.item.options'),
                 ]);
             }
         } else {
@@ -460,7 +463,8 @@ class ExtensionsController extends Controller
         // 3) Any routes your front end needs
         $routes = array_merge($routes, [
             'store_route'  => route('extensions.store'),
-            'update_route' => $updateRoute,
+            'update_route' => $updateRoute ?? null,
+            'devices' => $deviceRoute ?? null,
             'get_routing_options' => route('routing.options'),
         ]);
 
@@ -1137,6 +1141,55 @@ class ExtensionsController extends Controller
             'status' => 'success',
         ]);
     }
+
+
+    public function devices(Request $request, $extension_uuid)
+    {
+
+        $currentDomain = session('domain_uuid');
+        try {
+
+            $extension = QueryBuilder::for(\App\Models\Extensions::query())
+            ->with([
+                'deviceLines' => function ($q) use ($currentDomain) {
+                    $q->where('domain_uuid', $currentDomain)
+                        ->select('device_line_uuid', 'device_uuid', 'auth_id', 'domain_uuid')
+                        ->with(['device' => function ($query) {
+                            $query->select('device_uuid', 'device_profile_uuid', 'device_address', 'device_template')
+                                  ->with(['profile' => function ($profileQuery) {
+                                      $profileQuery->select('device_profile_uuid', 'device_profile_name'); // Add fields as needed
+                                  }]);
+                        }]);
+                }
+            ])
+            ->select('extension_uuid', 'extension')
+            ->where('extension_uuid', $extension_uuid)
+            ->first();
+
+
+            $devices = collect($extension->deviceLines)
+            ->pluck('device')
+            ->filter()            // Remove any nulls (just in case)
+            ->values();           // Re-index array
+
+            $devicesData = DeviceData::collect($devices);
+
+            // logger($devicesData->toArray());
+
+            return response()->json([
+                'success'  => true,
+                'data'  => $devicesData,
+            ]);
+        } catch (\Throwable $e) {
+            logger('ExtensionsController@devices error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            return response()->json([
+                'success'  => false,
+                'messages' => ['error' => [$e->getMessage()]],
+                'data'     => [],
+            ], 500);
+        }
+    }
+
 
     /**
      * Show the form for editing the specified resource.
@@ -2131,6 +2184,11 @@ class ExtensionsController extends Controller
         $permissions['manage_voicemail_transcription'] = userCheckPermission('voicemail_transcription_enabled');
         $permissions['manage_voicemail_auto_delete'] = userCheckPermission('voicemail_local_after_email');
         $permissions['manage_voicemail_recording_instructions'] = userCheckPermission('voicemail_recording_instructions');
+
+        $permissions['extension_device_create'] = userCheckPermission('extension_device_create');
+        $permissions['extension_device_update'] = userCheckPermission('extension_device_update');
+        $permissions['extension_device_assign'] = userCheckPermission('extension_device_assign');
+        $permissions['extension_device_unassign'] = userCheckPermission('extension_device_unassign');
 
         return $permissions;
     }

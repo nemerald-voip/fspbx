@@ -256,6 +256,14 @@
                                                     'submit',
 
                                                 ]" />
+
+                                                <FormTab name="devices" label="Devices" :elements="[
+                                                    'devices_title',
+                                                    'device_table',
+                                                    'add_device',
+                                                    'submit',
+
+                                                ]" />
                                             </FormTabs>
                                         </div>
 
@@ -970,6 +978,19 @@
                                                 </GroupElement>
 
 
+                                                <!-- Devices -->
+                                                <StaticElement name="devices_title" tag="h4" content="Assigned Devices" />
+
+                                                <ButtonElement name="add_device" button-label="Add Device" align="right"
+                                                    @click="handleAddDeviceButtonClick" :loading="addDeviceButtonLoading"
+                                                    :conditions="[() => options.permissions.extension_device_create]" />
+
+                                                <StaticElement name="device_table">
+                                                    <AssignedDevices :devices="devices" :loading="isDevicesLoading"
+                                                        :permissions="options.permissions" @edit-item="handleDeviceEditButtonClick"
+                                                        @delete-item="handleUnassignDeviceButtonClick" />
+                                                </StaticElement>
+
                                                 <GroupElement name="container_3" />
 
                                                 <ButtonElement name="submit" button-label="Save" :submits="true"
@@ -991,7 +1012,7 @@
         </Dialog>
     </TransitionRoot>
 
-    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showNewGreetingModal" :header="''" :loading="loadingModal"
+    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showNewGreetingModal" :header="''" :loading="isModalLoading"
         @close="handleModalClose">
         <template #modal-body>
             <NewGreetingForm :title="'New Voicemail Greeting'" :voices="options.voices" :speeds="options.speeds"
@@ -1000,7 +1021,7 @@
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showNewNameGreetingModal" :header="''" :loading="loadingModal"
+    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showNewNameGreetingModal" :header="''" :loading="isModalLoading"
         @close="handleModalClose">
         <template #modal-body>
             <NewGreetingForm :title="'New Recorded Name'" :voices="options.voices" :speeds="options.speeds"
@@ -1008,6 +1029,10 @@
                 :routes="getRoutesForNameForm" @greeting-saved="handleNameSaved" />
         </template>
     </AddEditItemModal>
+
+    <UpdateExtensionDeviceForm :show="showDeviceUpdateModal" :options="deviceItemOptions" :loading="isModalLoading" :header="'Update Device Settings'"
+        @close="showDeviceUpdateModal = false" @error="emitErrorToParentFromChild" @success="emitSuccessToParentFromChild"
+        @refresh-data="getDevices" />
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
         @confirm="confirmDeleteAction" :header="'Confirm Deletion'"
@@ -1029,9 +1054,10 @@ import { PlayCircleIcon, CloudArrowDownIcon, PauseCircleIcon } from '@heroicons/
 import Spinner from "@generalComponents/Spinner.vue";
 import NewGreetingForm from './NewGreetingForm.vue';
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
-import ConfirmationModal from "..//modal/ConfirmationModal.vue";
+import ConfirmationModal from "../modal/ConfirmationModal.vue";
+import UpdateExtensionDeviceForm from "../forms/UpdateExtensionDeviceForm.vue";
 import Badge from "@generalComponents/Badge.vue";
-
+import AssignedDevices from "../AssignedDevices.vue";
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
 
@@ -1044,11 +1070,12 @@ const props = defineProps({
 
 const form$ = ref(null)
 const showResetConfirmationModal = ref(false);
-const isTokensLoading = ref(false)
+const isDevicesLoading = ref(false)
 const isDeleteTokenLoading = ref(false)
 const showDeleteConfirmationModal = ref(false)
 const showDeleteNameConfirmationModal = ref(false)
-const tokens = ref([])
+const showDeviceUpdateModal = ref(false)
+const devices = ref([])
 const showApiTokenModal = ref(false)
 const isDownloading = ref(false);
 const isNameAudioPlaying = ref(false);
@@ -1056,9 +1083,11 @@ const isNameDownloading = ref(false);
 const currentNameAudio = ref(null);
 const showNewGreetingModal = ref(false);
 const showNewNameGreetingModal = ref(false);
-const loadingModal = ref(false);
+const isModalLoading = ref(false);
+const addDeviceButtonLoading = ref(false);
 const greetings = ref(props.options?.voicemail?.greetings)
 const recorded_name = ref(props.options?.recorded_name)
+const deviceItemOptions = ref(null)
 
 // Watch for changes in the prop and update the ref
 watch(
@@ -1152,48 +1181,53 @@ function getDestinationLabel(destination) {
 };
 
 
-// const confirmResetPassword = async () => {
-//     showResetConfirmationModal.value = false;
-
-//     try {
-//         await form$.value.$vueform.services.axios.post(
-//             props.options.routes.password_reset,
-//             {
-//                 email: props.options.item.voicemail_mail_to,
-//             }
-//         );
-
-//         emit("success", "success", { success: ["Password reset email sent successfully."] });
-//     } catch (error) {
-//         emit("error", error);
-//     }
-// };
-
-const handleAddTokenButtonClick = () => {
-    showApiTokenModal.value = true
+const handleDeviceEditButtonClick = (itemUuid) => {
+    showDeviceUpdateModal.value = true
+    getDeviceItemOptions(itemUuid);
 }
 
-const handleTabSelected = (activeTab, previousTab) => {
-    if (activeTab.name == 'api_tokens') {
-        getTokens()
-    }
-}
-
-const getTokens = async () => {
-    isTokensLoading.value = true
-    axios.get(props.options.routes.tokens, {
-        params: {
-            uuid: props.options.item.user_uuid
-        }
-    })
+const getDeviceItemOptions = (itemUuid = null) => {
+    const payload = itemUuid ? { 'itemUuid': itemUuid } : {}; // Conditionally add itemUuid to payload
+    isModalLoading.value = true
+    axios.post(props.options.routes.device_item_options, payload)
         .then((response) => {
-            tokens.value = response.data.data;
-            // console.log(tokens.value);
+            deviceItemOptions.value = response.data;
+            console.log(deviceItemOptions.value);
 
         }).catch((error) => {
             emit('error', error)
         }).finally(() => {
-            isTokensLoading.value = false
+            isModalLoading.value = false
+        })
+}
+
+
+const handleAddDeviceButtonClick = () => {
+    showApiTokenModal.value = true
+}
+
+const handleUnassignDeviceButtonClick = (uuid) => {
+    showDeleteConfirmationModal.value = true;
+    confirmDeleteAction.value = () => executeBulkDelete([uuid]);
+};
+
+const handleTabSelected = (activeTab, previousTab) => {
+    if (activeTab.name == 'devices') {
+        getDevices()
+    }
+}
+
+const getDevices = async () => {
+    isDevicesLoading.value = true
+    axios.get(props.options.routes.devices)
+        .then((response) => {
+            devices.value = response.data.data;
+            // console.log(devices.value);
+
+        }).catch((error) => {
+            emit('error', error)
+        }).finally(() => {
+            isDevicesLoading.value = false
         });
 }
 
@@ -1640,4 +1674,5 @@ div[data-lastpass-icon-root] {
 
 div[data-lastpass-root] {
     display: none !important
-}</style>
+}
+</style>

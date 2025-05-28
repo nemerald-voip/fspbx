@@ -228,6 +228,26 @@ class DatabaseSeeder extends Seeder
                 'permission_name'        => 'api_key_delete',
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
+            [
+                'application_name'       => 'Extensions',
+                'permission_name'        => 'extension_device_create',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'application_name'       => 'Extensions',
+                'permission_name'        => 'extension_device_assign',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'application_name'       => 'Extensions',
+                'permission_name'        => 'extension_device_unassign',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'application_name'       => 'Extensions',
+                'permission_name'        => 'extension_device_update',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
             // Add more permissions as needed
         ];
 
@@ -604,8 +624,70 @@ class DatabaseSeeder extends Seeder
                 'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
                 'insert_date'          => date("Y-m-d H:i:s"),
             ],
-
-
+            [
+                'permission_name'      => 'extension_device_create',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'extension_device_create',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "admin",
+                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'extension_device_assign',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'extension_device_assign',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "admin",
+                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'extension_device_unassign',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'extension_device_unassign',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "admin",
+                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'extension_device_update',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'extension_device_update',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "admin",
+                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
 
             
         ];
