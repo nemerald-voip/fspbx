@@ -77,6 +77,6 @@ class DeviceLines extends Model
             Extensions::class,
             // local key, foreign key
             'extension','auth_id'
-        )->whereColumn('v_extensions.domain_uuid', 'v_device_lines.domain_uuid');
+        );
     }
 }

@@ -1,6 +1,7 @@
 <template>
     <TransitionRoot as="div" :show="show">
-        <Dialog as="div" class="relative z-10" :inert="showNewGreetingModal || showNewNameGreetingModal">
+        <Dialog as="div" class="relative z-10"
+            :inert="showNewGreetingModal || showNewNameGreetingModal || showDeviceCreateModal || showDeviceAssignModal">
             <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
                 <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
@@ -261,6 +262,8 @@
                                                     'devices_title',
                                                     'device_table',
                                                     'add_device',
+                                                    'assign_existing',
+                                                    'container1',
                                                     'submit',
 
                                                 ]" />
@@ -979,17 +982,35 @@
 
 
                                                 <!-- Devices -->
-                                                <StaticElement name="devices_title" tag="h4" content="Assigned Devices" />
+                                                <StaticElement name="devices_title" tag="h4" content="Assigned Devices"
+                                                    description="View and manage devices assigned to this extension, or assign a new device." />
+
+
+                                                <GroupElement name="container1" />
+
+                                                <ButtonElement name="assign_existing" button-label="Assign Existing"
+                                                    @click="handleAssignDeviceButtonClick" :loading="isModalLoading"
+                                                    :columns="{
+                                                        container: 6,
+                                                    }" align="left" :secondary="true" />
 
                                                 <ButtonElement name="add_device" button-label="Add Device" align="right"
-                                                    @click="handleAddDeviceButtonClick" :loading="addDeviceButtonLoading"
-                                                    :conditions="[() => options.permissions.extension_device_create]" />
+                                                    @click="handleAddDeviceButtonClick" :loading="isModalLoading"
+                                                    :conditions="[() => options.permissions.extension_device_create]"
+                                                    :columns="{
+                                                        container: 6,
+                                                    }" />
+
+
+
 
                                                 <StaticElement name="device_table">
                                                     <AssignedDevices :devices="devices" :loading="isDevicesLoading"
-                                                        :permissions="options.permissions" @edit-item="handleDeviceEditButtonClick"
+                                                        :permissions="options.permissions"
+                                                        @edit-item="handleDeviceEditButtonClick"
                                                         @delete-item="handleUnassignDeviceButtonClick" />
                                                 </StaticElement>
+
 
                                                 <GroupElement name="container_3" />
 
@@ -1030,9 +1051,17 @@
         </template>
     </AddEditItemModal>
 
-    <UpdateExtensionDeviceForm :show="showDeviceUpdateModal" :options="deviceItemOptions" :loading="isModalLoading" :header="'Update Device Settings'"
-        @close="showDeviceUpdateModal = false" @error="emitErrorToParentFromChild" @success="emitSuccessToParentFromChild"
-        @refresh-data="getDevices" />
+    <CreateExtensionDeviceForm :show="showDeviceCreateModal" :extension="options.item" :options="deviceItemOptions"
+        :loading="isModalLoading" :header="'Create New Device'" @close="showDeviceCreateModal = false"
+        @error="emitErrorToParentFromChild" @success="emitSuccessToParentFromChild" @refresh-data="getDevices" />
+
+    <UpdateExtensionDeviceForm :show="showDeviceUpdateModal" :options="deviceItemOptions" :loading="isModalLoading"
+        :header="'Update Device Settings'" @close="showDeviceUpdateModal = false" @error="emitErrorToParentFromChild"
+        @success="emitSuccessToParentFromChild" @refresh-data="getDevices" />
+
+    <AssignExtensionDeviceForm :show="showDeviceAssignModal" :extension="options.item" :devices="options.all_devices" :options="deviceItemOptions"
+        :loading="isModalLoading" :header="'Assign Existing Device'" @close="showDeviceAssignModal = false"
+        @error="emitErrorToParentFromChild" @success="emitSuccessToParentFromChild" @refresh-data="getDevices" />
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
         @confirm="confirmDeleteAction" :header="'Confirm Deletion'"
@@ -1056,6 +1085,8 @@ import NewGreetingForm from './NewGreetingForm.vue';
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import ConfirmationModal from "../modal/ConfirmationModal.vue";
 import UpdateExtensionDeviceForm from "../forms/UpdateExtensionDeviceForm.vue";
+import CreateExtensionDeviceForm from "../forms/CreateExtensionDeviceForm.vue";
+import AssignExtensionDeviceForm from "../forms/AssignExtensionDeviceForm.vue";
 import Badge from "@generalComponents/Badge.vue";
 import AssignedDevices from "../AssignedDevices.vue";
 
@@ -1075,6 +1106,8 @@ const isDeleteTokenLoading = ref(false)
 const showDeleteConfirmationModal = ref(false)
 const showDeleteNameConfirmationModal = ref(false)
 const showDeviceUpdateModal = ref(false)
+const showDeviceCreateModal = ref(false)
+const showDeviceAssignModal = ref(false)
 const devices = ref([])
 const showApiTokenModal = ref(false)
 const isDownloading = ref(false);
@@ -1084,7 +1117,6 @@ const currentNameAudio = ref(null);
 const showNewGreetingModal = ref(false);
 const showNewNameGreetingModal = ref(false);
 const isModalLoading = ref(false);
-const addDeviceButtonLoading = ref(false);
 const greetings = ref(props.options?.voicemail?.greetings)
 const recorded_name = ref(props.options?.recorded_name)
 const deviceItemOptions = ref(null)
@@ -1192,7 +1224,7 @@ const getDeviceItemOptions = (itemUuid = null) => {
     axios.post(props.options.routes.device_item_options, payload)
         .then((response) => {
             deviceItemOptions.value = response.data;
-            console.log(deviceItemOptions.value);
+            // console.log(deviceItemOptions.value);
 
         }).catch((error) => {
             emit('error', error)
@@ -1203,7 +1235,13 @@ const getDeviceItemOptions = (itemUuid = null) => {
 
 
 const handleAddDeviceButtonClick = () => {
-    showApiTokenModal.value = true
+    showDeviceCreateModal.value = true
+    getDeviceItemOptions();
+}
+
+const handleAssignDeviceButtonClick = () => {
+    showDeviceAssignModal.value = true
+    getDeviceItemOptions();
 }
 
 const handleUnassignDeviceButtonClick = (uuid) => {

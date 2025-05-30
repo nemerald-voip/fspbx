@@ -508,6 +508,45 @@ class ExtensionsController extends Controller
             ]
         ];
 
+        $allDevices =  QueryBuilder::for(Devices::class)
+            ->where('domain_uuid', $currentDomain)
+            ->with(['lines' => function ($query) use ($currentDomain) {
+                $query->select('device_line_uuid', 'device_uuid', 'auth_id', 'domain_uuid')
+                    ->with([
+                        'extension' => function ($q) use ($currentDomain) {
+                            $q->select('extension_uuid', 'extension', 'effective_caller_id_name')
+                                ->where('domain_uuid', $currentDomain);
+                        },
+
+                    ]);
+            }])
+            ->select(
+                'device_uuid',
+                'device_address',
+            )
+            ->orderBy('device_address', 'asc')
+            ->get()
+            ->map(function ($device) {
+                // Get all extensions as name_formatted
+                $extensions = collect($device->lines)
+                    ->pluck('extension.name_formatted')
+                    ->filter() // Remove nulls
+                    ->all();
+
+                // Build the label
+                $label = $device->device_address_formatted;
+                if (count($extensions)) {
+                    $label .= ' (' . implode(', ', $extensions) . ')';
+                }
+
+                return [
+                    'value' => $device->device_address,
+                    'label' => $label,
+                ];
+            })
+            ->values()
+            ->toArray();
+
         // Define the instructions for recording a voicemail greeting using a phone call
         $phoneCallInstructions = [
             'Dial <strong>*98</strong> from your phone.',
@@ -535,6 +574,7 @@ class ExtensionsController extends Controller
             'item'        => $extensionDto,
             'voicemail' => $voicemailDto,
             'all_voicemails' => $allVoicemails,
+            'all_devices' => $allDevices,
             'permissions' => $permissions,
             'routes'      => $routes,
             'phone_numbers' => $phone_numbers,
@@ -1150,27 +1190,28 @@ class ExtensionsController extends Controller
         try {
 
             $extension = QueryBuilder::for(\App\Models\Extensions::query())
-            ->with([
-                'deviceLines' => function ($q) use ($currentDomain) {
-                    $q->where('domain_uuid', $currentDomain)
-                        ->select('device_line_uuid', 'device_uuid', 'auth_id', 'domain_uuid')
-                        ->with(['device' => function ($query) {
-                            $query->select('device_uuid', 'device_profile_uuid', 'device_address', 'device_template')
-                                  ->with(['profile' => function ($profileQuery) {
-                                      $profileQuery->select('device_profile_uuid', 'device_profile_name'); // Add fields as needed
-                                  }]);
-                        }]);
-                }
-            ])
-            ->select('extension_uuid', 'extension')
-            ->where('extension_uuid', $extension_uuid)
-            ->first();
+                ->with([
+                    'deviceLines' => function ($q) use ($currentDomain) {
+                        $q->where('domain_uuid', $currentDomain)
+                            ->select('device_line_uuid', 'device_uuid', 'auth_id', 'domain_uuid')
+                            ->with(['device' => function ($query) {
+                                $query->select('device_uuid', 'device_profile_uuid', 'device_address', 'device_template')
+                                    ->with(['profile' => function ($profileQuery) {
+                                        $profileQuery->select('device_profile_uuid', 'device_profile_name'); // Add fields as needed
+                                    }]);
+                            }]);
+                    }
+                ])
+                ->select('extension_uuid', 'extension')
+                ->where('extension_uuid', $extension_uuid)
+                ->first();
 
 
             $devices = collect($extension->deviceLines)
-            ->pluck('device')
-            ->filter()            // Remove any nulls (just in case)
-            ->values();           // Re-index array
+                ->pluck('device')
+                ->filter()            // Remove any nulls (just in case)
+                ->sortBy('device_address')
+                ->values();           // Re-index array
 
             $devicesData = DeviceData::collect($devices);
 
@@ -1341,8 +1382,9 @@ class ExtensionsController extends Controller
     public function update(UpdateExtensionRequest $request, $id)
     {
         try {
+            DB::beginTransaction();
             $data = $request->validated();
-            logger($data);
+            // logger($data);
 
             $currentDomain = session('domain_uuid');
 
@@ -1394,14 +1436,15 @@ class ExtensionsController extends Controller
                 $extension->voicemail->syncCopies($data['voicemail_destinations']);
             }
 
-            logger($extension->toArray());
+            DB::commit();
 
-
+            // logger($extension->toArray());
             return response()->json([
                 'messages' => ['success' => ['Extension updated successfully']],
                 'extension' => $extension->fresh(['voicemail', 'advSettings']),
             ], 200);
         } catch (\Throwable $e) {
+            DB::rollBack();
             logger('Error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'messages' => ['error' => ['An error occurred while updating the extension.', $e->getMessage()]],

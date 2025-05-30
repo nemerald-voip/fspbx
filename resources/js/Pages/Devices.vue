@@ -147,7 +147,7 @@
                                 <ejs-tooltip v-if="page.props.auth.can.device_destroy" :content="'Delete'"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
-                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
+                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.device_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
@@ -386,34 +386,34 @@ const handleUpdateRequest = (form) => {
 
 };
 
-const handleSingleItemDeleteRequest = (url) => {
+const handleSingleItemDeleteRequest = (uuid) => {
     confirmationModalTrigger.value = true;
-    confirmDeleteAction.value = () => executeSingleDelete(url);
+    confirmDeleteAction.value = () => executeBulkDelete([uuid]);
 }
 
-const executeSingleDelete = (url) => {
-    router.delete(url, {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: (page) => {
-            if (page.props.flash.error) {
-                showNotification('error', page.props.flash.error);
-            }
-            if (page.props.flash.message) {
-                showNotification('success', page.props.flash.message);
-            }
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onFinish: () => {
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onError: (errors) => {
-            console.log(errors);
-        },
-    });
-}
+// const executeSingleDelete = (url) => {
+//     router.delete(url, {
+//         preserveScroll: true,
+//         preserveState: true,
+//         onSuccess: (page) => {
+//             if (page.props.flash.error) {
+//                 showNotification('error', page.props.flash.error);
+//             }
+//             if (page.props.flash.message) {
+//                 showNotification('success', page.props.flash.message);
+//             }
+//             confirmationModalTrigger.value = false;
+//             confirmationModalDestroyPath.value = null;
+//         },
+//         onFinish: () => {
+//             confirmationModalTrigger.value = false;
+//             confirmationModalDestroyPath.value = null;
+//         },
+//         onError: (errors) => {
+//             console.log(errors);
+//         },
+//     });
+// }
 
 const handleBulkActionRequest = (action) => {
     if (action === 'bulk_delete') {
@@ -447,8 +447,8 @@ const executeBulkRestart = () => {
         });
 }
 
-const executeBulkDelete = () => {
-    axios.post(`${props.routes.bulk_delete}`, { items: selectedItems.value })
+const executeBulkDelete = (items = selectedItems.value) => {
+    axios.post(props.routes.bulk_delete, { items })
         .then((response) => {
             handleModalClose();
             showNotification('success', response.data.messages);

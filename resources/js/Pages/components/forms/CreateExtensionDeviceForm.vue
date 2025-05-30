@@ -49,11 +49,14 @@
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
-                                    device_profile_uuid: options.item.device_profile_uuid,
-                                    device_template: options.item.device_template,
-                                    device_uuid: options.item.device_uuid,
-                                    device_address: options.item.device_address,
-                                    lines: options.lines,
+                                    lines: [
+                                        {
+                                            line_number: '1',
+                                            user_id: extension.extension,
+                                            shared_line: null,
+                                            display_name: extension.extension,
+                                        }
+                                    ]
                                 }">
 
                                 <template #empty>
@@ -63,11 +66,12 @@
                                             <FormTabs view="vertical">
                                                 <FormTab name="page0" label="Settings" :elements="[
                                                     'h4',
+                                                    'device_address',
                                                     'device_template',
                                                     'device_profile_uuid',
                                                     'cancel_button',
                                                     'save_button',
-                                                
+
                                                 ]" />
 
                                             </FormTabs>
@@ -77,21 +81,23 @@
                                             class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                                             <FormElements>
 
-                                                <HiddenElement name="device_uuid" :meta="true" />
-                                                <HiddenElement name="device_address" :meta="true" />
                                                 <HiddenElement name="lines" :meta="true" />
                                                 <StaticElement name="h4" tag="h4" content="Settings" />
 
+                                                <TextElement name="device_address" label="MAC Address"
+                                                    placeholder="Enter MAC Address" :floating="false" />
 
-                                                <SelectElement name="device_template" :items="options.templates" label-prop="name" :search="true" :native="false" label="Template" input-type="search"
-                                                    autocomplete="off" :strict="false" placeholder="Select Template"
-                                                    :floating="false" />
-                                                <SelectElement name="device_profile_uuid" :items="options.profiles" label-prop="name" :search="true" :native="false" label="Profile" input-type="search"
-                                                    autocomplete="off" placeholder="Select Profile" :floating="false"
-                                                    :strict="false" />
+                                                <SelectElement name="device_template" :items="options.templates"
+                                                    label-prop="name" :search="true" :native="false" label="Template"
+                                                    input-type="search" autocomplete="off" :strict="false"
+                                                    placeholder="Select Template" :floating="false" />
+                                                <SelectElement name="device_profile_uuid" :items="options.profiles"
+                                                    label-prop="name" :search="true" :native="false" label="Profile"
+                                                    input-type="search" autocomplete="off" placeholder="Select Profile"
+                                                    :floating="false" :strict="false" />
 
-                                                <ButtonElement name="cancel_button" button-label="Cancel" :secondary="true" @click="emit('close')"
-                                                    :columns="{
+                                                <ButtonElement name="cancel_button" button-label="Cancel" :secondary="true"
+                                                    @click="emit('close')" :columns="{
                                                         container: 6,
                                                     }" :resets="true" />
                                                 <ButtonElement name="save_button" button-label="Save" :columns="{
@@ -110,7 +116,6 @@
             </div>
         </Dialog>
     </TransitionRoot>
-
 </template>
 
 <script setup>
@@ -123,6 +128,7 @@ const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
 
 const props = defineProps({
     show: Boolean,
+    extension: Object,
     options: Object,
     header: String,
     loading: Boolean,
@@ -130,15 +136,13 @@ const props = defineProps({
 
 const form$ = ref(null)
 
-
-
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
     // console.log(requestData);
 
-    return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
+    return await form$.$vueform.services.axios.post(props.options.routes.store_route, requestData)
 };
 
 function clearErrorsRecursive(el$) {

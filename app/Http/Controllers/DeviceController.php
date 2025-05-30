@@ -245,6 +245,7 @@ class DeviceController extends Controller
         $inputs = $request->validated();
 
         try {
+            DB::beginTransaction();
             // Create a new instance of the device model
             $instance = $this->model;
 
@@ -313,13 +314,15 @@ class DeviceController extends Controller
             // Update the instance with the label
             $instance->save();
 
+            DB::commit();
             // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['New item created']]
             ], 201);
         } catch (\Exception $e) {
+            DB::rollBack();
             // Log the error message
-            logger($e->getMessage());
+            logger('DeviceController@store error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             // Handle any other exception that may occur
             return response()->json([
@@ -507,8 +510,12 @@ class DeviceController extends Controller
                 }
             }
 
+            $routes = [
+                'store_route' => route('devices.store'),
+            ];
+
             $lines = [];
-            if (request('itemUuid')) {
+            if ($device) {
                 $lines = DeviceLines::where('device_uuid', request('itemUuid'))
                     ->get([
                         'device_line_uuid',
@@ -535,6 +542,10 @@ class DeviceController extends Controller
                     });
 
                 // logger($lines);
+
+                $routes = array_merge($routes, [
+                    'update_route' => route('devices.update', $device),
+                ]);
             }
 
             $navigation = [
@@ -585,12 +596,13 @@ class DeviceController extends Controller
                 'lines' => $lines,
                 'line_key_types' => $lineKeyTypes,
                 'sip_transport_types' => $sipTransportTypes,
+                'routes' => $routes,
                 // Define options for other fields as needed
             ];
 
             return $itemOptions;
         } catch (\Exception $e) {
-            logger($e->getMessage());
+            logger('DeviceController@getItemOptions error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,

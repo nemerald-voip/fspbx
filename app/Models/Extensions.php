@@ -128,16 +128,6 @@ class Extensions extends Model
         return null;
     }
 
-    /* Use this if you want the entire voicemail record
-    */
-    public function getMatchingVoicemail()
-    {
-        if ($this->relationLoaded('voicemail') && $this->voicemail && $this->voicemail->domain_uuid === $this->domain_uuid) {
-            return $this->voicemail;
-        }
-        return null;
-    }
-
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
@@ -248,20 +238,20 @@ class Extensions extends Model
     // }
 
     // Devices through device lines
-    public function devices()
-    {
-        // Many devices, through device lines, using a closure for domain matching
-        return $this->hasManyThrough(
-            Devices::class,
-            DeviceLines::class,
-            // First: DeviceLine local keys to match to this Extension
-            'auth_id', // Foreign key on DeviceLine...
-            'device_uuid', // Foreign key on Device...
-            'extension', // Local key on Extension...
-            'device_uuid' // Local key on DeviceLine...
-        )
-            ->whereColumn('v_device_lines.domain_uuid', 'v_extensions.domain_uuid');
-    }
+    // public function devices()
+    // {
+    //     // Many devices, through device lines, using a closure for domain matching
+    //     return $this->hasManyThrough(
+    //         Devices::class,
+    //         DeviceLines::class,
+    //         // First: DeviceLine local keys to match to this Extension
+    //         'auth_id', // Foreign key on DeviceLine...
+    //         'device_uuid', // Foreign key on Device...
+    //         'extension', // Local key on Extension...
+    //         'device_uuid' // Local key on DeviceLine...
+    //     )
+    //         ->whereColumn('v_device_lines.domain_uuid', 'v_extensions.domain_uuid');
+    // }
 
     public function agent()
     {
