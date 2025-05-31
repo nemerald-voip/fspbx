@@ -7,8 +7,8 @@ use Spatie\LaravelData\Data;
 class VoicemailData extends Data
 {
     public function __construct(
-        public string $voicemail_uuid,
-        public string $voicemail_id,
+        public ?string $voicemail_uuid,
+        public ?string $voicemail_id,
         public ?string $voicemail_password,
         public ?string $greeting_id,
         public ?int $voicemail_alternate_greet_id,

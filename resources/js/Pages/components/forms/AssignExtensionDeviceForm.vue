@@ -67,6 +67,7 @@
                                                 <FormTab name="page0" label="Settings" :elements="[
                                                     'h4',
                                                     'device_address',
+                                                    'line_number',
                                                     'device_template',
                                                     'device_profile_uuid',
                                                     'cancel_button',
@@ -84,12 +85,28 @@
                                                 <HiddenElement name="lines" :meta="true" />
                                                 <StaticElement name="h4" tag="h4" content="Settings" />
 
-                                                <SelectElement name="device_address" :items="devices"
-                                                    :search="true" :native="false" label="Device"
-                                                    :track-by="['value', 'label']"
+                                                <SelectElement name="device_address" :items="devices" :search="true"
+                                                    :native="false" label="Device" :track-by="['value', 'label']"
                                                     input-type="search" autocomplete="off" placeholder="Select Device"
                                                     :floating="false" :strict="false" />
 
+                                                <TextElement name="line_number" input-type="number" :rules="[
+                                                    'nullable',
+                                                    'min:1',
+                                                    'max:96',
+                                                    'numeric',
+                                                ]" autocomplete="off" label="Line" default="1"
+                                                    :columns="{ wrapper: 3, }" @change="(newValue, oldValue, el$) => {
+                                                        el$.form$.el$('lines').update([
+                                                            {
+                                                                line_number: newValue,
+                                                                user_id: extension.extension,
+                                                                shared_line: null,
+                                                                display_name: extension.extension,
+                                                            }
+                                                        ])
+                                                        
+                                                    }" />
 
                                                 <SelectElement name="device_template" :items="options.templates"
                                                     label-prop="name" :search="true" :native="false" label="Template"
@@ -145,9 +162,9 @@ const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
-    console.log(requestData);
+    // console.log(requestData);
 
-    // return await form$.$vueform.services.axios.post(props.options.routes.store_route, requestData)
+    return await form$.$vueform.services.axios.post(props.options.routes.assign_route, requestData)
 };
 
 function clearErrorsRecursive(el$) {

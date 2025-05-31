@@ -15,13 +15,10 @@ use App\Data\VoicemailData;
 use App\Jobs\DeleteAppUser;
 use App\Models\DeviceLines;
 use App\Models\FusionCache;
-use App\Models\MusicOnHold;
 use Illuminate\Support\Str;
 use App\Models\Destinations;
-use App\Models\DeviceVendor;
 use Illuminate\Http\Request;
 use App\Jobs\SendEventNotify;
-use App\Models\DeviceProfile;
 use App\Models\ExtensionUser;
 use App\Models\MobileAppUsers;
 use App\Data\ExtensionListData;
@@ -31,7 +28,6 @@ use App\Data\ExtensionDetailData;
 use App\Imports\ExtensionsImport;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
-use libphonenumber\PhoneNumberUtil;
 use App\Models\FollowMeDestinations;
 use App\Data\FollowMeDestinationData;
 use App\Models\VoicemailDestinations;
@@ -278,6 +274,8 @@ class ExtensionsController extends Controller
                                 'voicemail_local_after_email',
                                 'voicemail_enabled',
                                 'voicemail_description',
+                                'voicemail_tutorial',
+                                'voicemail_recording_instructions',
                             )
                             ->with([
                                 'voicemail_destinations' => function ($q) {
@@ -368,11 +366,27 @@ class ExtensionsController extends Controller
                 ['value' => '-1', 'label' => 'System Default']
             );
 
-            $voicemailDto = VoicemailData::from([
-                ...$extension->voicemail->toArray(),
-                'voicemail_destinations' => $voicemailDestinations,
-                'greetings' => $voicemailGreetings,
-            ]);
+            if ($extension->voicemail) {
+                $voicemailDto = VoicemailData::from([
+                    ...$extension->voicemail->toArray(),
+                    'voicemail_destinations' => $voicemailDestinations,
+                    'greetings' => $voicemailGreetings,
+                ]);
+            } else {
+                $voicemailDto = VoicemailData::from([
+                    'voicemail_enabled' => 'false',
+                    'voicemail_id' => $extension->extension,
+                    'voicemail_password' => get_domain_setting('password_complexity') =='true' ? $attributes['voicemail_password'] = str_pad(mt_rand(0, 9999), 4, '0', STR_PAD_LEFT) : $extension->extension,
+                    'voicemail_transcription_enabled' => 'true',
+                    'voicemail_file' => 'attach',
+                    'voicemail_local_after_email' => 'true',
+                    'greeting_id' => '-1',
+                    'voicemail_transcription_enabled' => 'true',
+                    'voicemail_recording_instructions' => 'true',
+                    'voicemail_tutorial' => 'false',
+                    'greetings' => $voicemailGreetings,
+                ]);
+            }
 
             if ($extension->voicemail) {
                 $routes = array_merge($routes, [
@@ -385,7 +399,7 @@ class ExtensionsController extends Controller
                     'recorded_name_route' => route('voicemail.recorded_name', $extension->voicemail),
                     'delete_recorded_name_route' => route('voicemails.deleteRecordedName', $extension->voicemail),
                     'upload_recorded_name_route' => route('voicemails.uploadRecordedName', $extension->voicemail),
-                    'update_route' => route('voicemails.update', $extension->voicemail),
+                    // 'update_route' => route('voicemails.update', $extension->voicemail),
                     'device_item_options' => route('devices.item.options'),
                 ]);
             }
@@ -466,6 +480,7 @@ class ExtensionsController extends Controller
             'update_route' => $updateRoute ?? null,
             'devices' => $deviceRoute ?? null,
             'get_routing_options' => route('routing.options'),
+            'device_bulk_unassign' => route('devices.bulk.unassign'),
         ]);
 
         $routingOptionsService = new CallRoutingOptionsService;
@@ -570,6 +585,14 @@ class ExtensionsController extends Controller
 
         $openAiService = app(\App\Services\OpenAIService::class);
 
+        $recordedName = 'System Default';
+        if ($voicemailDto && $voicemailDto->voicemail_id) {
+            $filePath = session('domain_name') . '/' . $voicemailDto->voicemail_id . '/recorded_name.wav';
+            if (Storage::disk('voicemail')->exists($filePath)) {
+                $recordedName = 'Custom recording';
+            }
+        }
+
         return response()->json([
             'item'        => $extensionDto,
             'voicemail' => $voicemailDto,
@@ -585,7 +608,7 @@ class ExtensionsController extends Controller
             'phone_call_instructions' => $phoneCallInstructions,
             'phone_call_instructions_for_name' => $phoneCallInstructionsForName,
             'sample_message' => $sampleMessage,
-            'recorded_name' => Storage::disk('voicemail')->exists(session('domain_name') . '/' . $voicemailDto->voicemail_id . '/recorded_name.wav') ? 'Custom recording' : 'System Default',
+            'recorded_name' => $recordedName,
         ]);
     }
 
@@ -1424,7 +1447,17 @@ class ExtensionsController extends Controller
             $extension->update($data);
 
             // Update related models
-            $extension->voicemail->update($data);
+            if ($extension->voicemail) {
+                $extension->voicemail->update($data);
+            } else {
+                // If enabling voicemail and no voicemail exists, create one
+                if ($data['voicemail_enabled'] == 'true') {
+                    $data['extension_uuid'] = $extension->extension_uuid;
+                    $data['domain_uuid'] = $currentDomain;
+                    $voicemail = Voicemails::create($data);
+                    logger($voicemail);
+                }
+            }
             $extension->advSettings->update($data);
 
             // Handle voicemail_destinations (copies)
@@ -1445,7 +1478,7 @@ class ExtensionsController extends Controller
             ], 200);
         } catch (\Throwable $e) {
             DB::rollBack();
-            logger('Error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            logger('ExtensionsController@update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'messages' => ['error' => ['An error occurred while updating the extension.', $e->getMessage()]],
             ], 500);
@@ -1942,64 +1975,6 @@ class ExtensionsController extends Controller
     }
 
 
-    public function assignDevice(AssignDeviceRequest $request, Extensions $extension)
-    {
-        $inputs = $request->validated();
-
-        $deviceExist = DeviceLines::query()->where(['device_uuid' => $inputs['device_uuid']])->first();
-
-        if ($deviceExist) {
-            $deviceExist->delete();
-            /*return response()->json([
-                'status' => 'alert',
-                'message' => 'Device is already assigned.'
-            ]);*/
-        }
-
-        $extension->deviceLines()->create([
-            'device_uuid' => $inputs['device_uuid'],
-            'line_number' => $inputs['line_number'] ?? '1',
-            'server_address' => Session::get('domain_name'),
-            'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
-            'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
-            'server_address_primary' => get_domain_setting('server_address_primary'),
-            'server_address_secondary' => get_domain_setting('server_address_secondary'),
-            'display_name' => $extension->extension,
-            'user_id' => $extension->extension,
-            'auth_id' => $extension->extension,
-            'label' => $extension->extension,
-            'password' => $extension->password,
-            'sip_port' => get_domain_setting('line_sip_port'),
-            'sip_transport' => get_domain_setting('line_sip_transport'),
-            'register_expires' => get_domain_setting('line_register_expires'),
-            'enabled' => 'true',
-        ]);
-
-        $device = Devices::where('device_uuid', $inputs['device_uuid'])->firstOrFail();
-        $device->device_label = $extension->extension;
-        $device->save();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Device has been assigned successfully.'
-        ]);
-    }
-
-    public function unAssignDevice(Extensions $extension, DeviceLines $deviceLine)
-    {
-        if ($deviceLine->device->device_label == $extension->extension) {
-            $deviceLine->device->device_label = "";
-            $deviceLine->device->save();
-        }
-
-        $deviceLine->delete();
-
-        return response()->json([
-            'status' => 'success',
-            'message' => 'Device has been unassigned successfully.'
-        ]);
-    }
-
     public function clearCallforwardDestination(Extensions $extension, Request $request)
     {
         $type = $request->route('type');
@@ -2157,60 +2132,6 @@ class ExtensionsController extends Controller
         ]);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  UpdateDeviceRequest  $request
-     * @param  Devices  $device
-     * @return JsonResponse
-     */
-    public function oldUpdateDevice(OldUpdateDeviceRequest $request, Extensions $extension, Devices $device): JsonResponse
-    {
-        $inputs = $request->validated();
-        $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0];
-        $device->update($inputs);
-
-        if ($request['extension_uuid']) {
-            $extension = Extensions::find($request['extension_uuid']);
-            if (($device->extension() && $device->extension()->extension_uuid != $request['extension_uuid']) or !$device->extension()) {
-                $deviceLinesExist = DeviceLines::query()->where(['device_uuid' => $device->device_uuid])->first();
-                if ($deviceLinesExist) {
-                    $deviceLinesExist->delete();
-                }
-
-                // Create device lines
-                $deviceLines = new DeviceLines();
-                $deviceLines->fill([
-                    'device_uuid' => $device->device_uuid,
-                    'line_number' => '1',
-                    'server_address' => Session::get('domain_name'),
-                    'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
-                    'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
-                    'server_address_primary' => get_domain_setting('server_address_primary'),
-                    'server_address_secondary' => get_domain_setting('server_address_secondary'),
-                    'display_name' => $extension->extension,
-                    'user_id' => $extension->extension,
-                    'auth_id' => $extension->extension,
-                    'label' => $extension->extension,
-                    'password' => $extension->password,
-                    'sip_port' => get_domain_setting('line_sip_port'),
-                    'sip_transport' => get_domain_setting('line_sip_transport'),
-                    'register_expires' => get_domain_setting('line_register_expires'),
-                    'enabled' => 'true',
-                    'domain_uuid' => $device->domain_uuid
-                ]);
-                $deviceLines->save();
-                $device->device_label = $extension->extension;
-                $device->save();
-            }
-        }
-
-        return response()->json([
-            'status' => 'success',
-            'device' => $device,
-            'message' => 'Device has been updated.'
-        ]);
-    }
 
     public function getUserPermissions()
     {

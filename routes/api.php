@@ -95,5 +95,6 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // Devices 
     Route::post('devices/item-options', [DeviceController::class, 'getItemOptions'])->name('devices.item.options');
-
+    Route::post('devices/assign', [DeviceController::class, 'assign'])->name('devices.assign');
+    Route::post('devices/bulk-unassign', [DeviceController::class, 'bulkUnassign'])->name('devices.bulk.unassign');
 });

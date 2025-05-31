@@ -20,41 +20,6 @@
                                 </th>
                             </tr>
                         </thead>
-                        <!-- <tbody v-if="!loading && devices.length" class="divide-y divide-gray-200 bg-white">
-                            <tr v-for="device in devices" :key="device.id">
-                                <td class="px-6 py-4 text-sm font-medium text-gray-900">
-                                    {{ device.name }}
-
-                                    <div class="px-6 py-2 text-sm text-gray-500 sm:hidden">
-                                        {{ device.created_at }}
-                                    </div>
-
-                                    <div class="px-6 py-2 text-sm text-gray-500 sm:hidden">
-                                        <span v-if="device.last_used_at">Last used: {{ device.last_used_at }}</span>
-                                        <span v-else>Never used</span>
-                                    </div>
-                                </td>
-
-                                <td class="hidden px-6 py-2 text-sm text-gray-500 sm:table-cell">
-                                    {{ device.created_at }}
-                                </td>
-                                <td class="hidden px-6 py-2 text-sm text-gray-500 sm:table-cell">
-                                    <span v-if="device.last_used_at">{{ device.last_used_at }}</span>
-                                    <span v-else>Never used</span>
-                                </td>
-
-                                <td class="whitespace-nowrap px-6 py-2 text-right text-sm font-medium">
-                                    <div class="flex items-center justify-end space-x-2">
-                                     
-                                        <ejs-tooltip v-if="permissions.api_key_delete" :content="'Revoke'"
-                                            position='TopCenter'>
-                                            <TrashIcon @click="handleSingleItemDeleteRequest(device.id)"
-                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
-                                        </ejs-tooltip>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody> -->
 
                         <tbody v-if="!loading && devices.length" class="divide-y divide-gray-200 bg-white">
                             <tr v-for="device in devices" :key="device.device_uuid">

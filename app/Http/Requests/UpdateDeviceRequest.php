@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Validation\ValidationException;
@@ -32,8 +31,7 @@ class UpdateDeviceRequest extends FormRequest
             'device_address_modified' => [
                 'nullable',
                 Rule::unique('App\Models\Devices', 'device_address')
-                    ->ignore($this->device_address_modified, 'device_address')
-                    ->where('domain_uuid', Session::get('domain_uuid')),
+                    ->ignore($this->device_address_modified, 'device_address'),
             ],
             'device_profile_uuid' => [
                 'nullable',

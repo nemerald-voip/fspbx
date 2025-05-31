@@ -145,13 +145,17 @@
                                             : 0
                                     ),
 
-                                    voicemail_password: options.voicemail.voicemail_password ?? '',
-                                    voicemail_description: options.voicemail.voicemail_description ?? '',
-                                    voicemail_transcription_enabled: options.voicemail.voicemail_transcription_enabled ?? 'true',
-                                    voicemail_file: options.voicemail.voicemail_file === 'attach' ? 'attach' : '',
-                                    voicemail_local_after_email: options.voicemail.voicemail_local_after_email ?? 'true',
-                                    voicemail_destinations: options.voicemail.voicemail_destinations ?? [],
-                                    greeting_id: options.voicemail.greetings.find(g => g.value === (options.voicemail.greeting_id ?? '')) ?? greetings[0]
+                                    voicemail_enabled: options.voicemail?.voicemail_enabled ?? 'false',
+                                    voicemail_id: options.voicemail?.voicemail_id ?? '',
+                                    voicemail_password: options.voicemail?.voicemail_password ?? options.item.voicemail,
+                                    voicemail_description: options.voicemail?.voicemail_description ?? '',
+                                    voicemail_transcription_enabled: options.voicemail?.voicemail_transcription_enabled ?? 'true',
+                                    voicemail_file: options.voicemail?.voicemail_file === 'attach' ? 'attach' : '',
+                                    voicemail_local_after_email: options.voicemail?.voicemail_local_after_email ?? 'true',
+                                    voicemail_destinations: options.voicemail?.voicemail_destinations ?? [],
+                                    greeting_id: options.voicemail?.greetings?.find(g => g.value === (options.voicemail.greeting_id ?? '')) ?? options.voicemail.greeting_id,
+                                    voicemail_tutorial: options.voicemail?.voicemail_tutorial ?? 'false',
+                                    voicemail_recording_instructions: options.voicemail?.voicemail_recording_instructions ?? 'true',
 
 
                                     //     ? options.item.user_groups.map(ug => ug.group_uuid)
@@ -254,6 +258,11 @@
                                                     'name_greeting_title',
                                                     'divider13',
                                                     'voicemail_name_action_buttons',
+                                                    'divider14',
+                                                    'voicemail_advanced_title',
+                                                    'voicemail_tutorial',
+                                                    'divider15',
+                                                    'voicemail_recording_instructions',
                                                     'submit',
 
                                                 ]" />
@@ -341,7 +350,7 @@
                                                     description="Controls whether this extension appears in the company’s dial-by-name directory. Hide extensions for devices (door phones, intercoms) or private users (e.g., executives)."
                                                     true-value="true" false-value="false" />
 
-                                                <StaticElement name="divide3" tag="hr" />
+                                                <StaticElement name="divider3" tag="hr" />
 
                                                 <ToggleElement name="directory_exten_visible"
                                                     text="Announce extension after name in directory"
@@ -743,38 +752,58 @@
                                                 <ToggleElement name="voicemail_enabled" text="Status" true-value="true"
                                                     false-value="false" default="true" />
 
+                                                <HiddenElement name="voicemail_id" :meta="true"
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
+
                                                 <TextElement name="voicemail_password" label="Password" :columns="{
                                                     sm: {
                                                         container: 6,
                                                     },
-                                                }" />
+                                                }" :conditions="[['voicemail_enabled', '==', 'true']]" />
+
                                                 <TextElement name="voicemail_description" label="Description"
-                                                    placeholder="Enter Description" :floating="false" />
+                                                    placeholder="Enter Description" :floating="false"
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
+
                                                 <ToggleElement name="voicemail_transcription_enabled"
                                                     text="Voicemail Transcription" true-value="true" false-value="false"
-                                                    description="Convert voicemail messages to text using AI-powered transcription." />
-                                                <StaticElement name="divider10" tag="hr" />
+                                                    description="Convert voicemail messages to text using AI-powered transcription."
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
+
+                                                <StaticElement name="divider10" tag="hr"
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
+
                                                 <ToggleElement name="voicemail_file"
                                                     text="Attach File to Email Notifications" true-value="attach"
                                                     false-value=""
-                                                    description="Attach voicemail recording file to the email notification." />
-                                                <StaticElement name="divider11" tag="hr" />
+                                                    description="Attach voicemail recording file to the email notification."
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
+
+                                                <StaticElement name="divider11" tag="hr"
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
+
                                                 <ToggleElement name="voicemail_local_after_email"
                                                     text="Automatically Delete Voicemail After Email" true-value="false"
                                                     false-value="true"
-                                                    description="Remove voicemail from the cloud once the email is sent." />
+                                                    description="Remove voicemail from the cloud once the email is sent."
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
+
                                                 <TagsElement name="voicemail_destinations" :search="true"
                                                     :items="options.all_voicemails"
                                                     label="Copy Voicemail to Other Extensions" input-type="search"
                                                     autocomplete="off"
                                                     description="Automatically send a copy of the voicemail to selected additional extensions."
-                                                    :floating="false" placeholder="Enter name or extension" />
-                                                <StaticElement name="divider12" tag="hr" top="1" bottom="1" />
+                                                    :floating="false" placeholder="Enter name or extension"
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
+
+                                                <StaticElement name="divider12" tag="hr" top="1" bottom="1"
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <!-- Voicemail Greetings -->
                                                 <StaticElement name="voicemail_greetings_title" tag="h4"
                                                     content="Voicemail Greetings"
-                                                    description="Customize the message that callers hear when they reach your voicemail." />
+                                                    description="Customize the message that callers hear when they reach your voicemail."
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
 
 
                                                 <SelectElement name="greeting_id" :search="true" :native="false"
@@ -784,17 +813,16 @@
                                                         sm: {
                                                             container: 6,
                                                         }
-                                                    }">
+                                                    }" :conditions="[['voicemail_enabled', '==', 'true']]">
                                                     <template #after>
                                                         <span v-if="greetingTranscription" class="text-xs italic">
                                                             "{{ greetingTranscription }}"
                                                         </span>
-
-
                                                     </template>
                                                 </SelectElement>
 
-                                                <GroupElement name="voicemail_action_buttons" :columns="{ container: 6, }">
+                                                <GroupElement name="voicemail_action_buttons" :columns="{ container: 6, }"
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]">
 
                                                     <ButtonElement v-if="!isAudioPlaying" @click="playGreeting" :columns="{
                                                         container: 2,
@@ -872,7 +900,8 @@
                                                 </GroupElement>
 
 
-                                                <StaticElement name="divider13" top="1" />
+                                                <StaticElement name="divider13" top="1"
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <StaticElement name="name_greeting_title" :columns="{
                                                     sm: {
@@ -884,7 +913,8 @@
                                                     lg: {
                                                         container: 3,
                                                     },
-                                                }" label="Recorded Name" info="Used only in Dial by Name directory">
+                                                }" label="Recorded Name" info="Used only in Dial by Name directory"
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]">
                                                     <div class="pt-2 flex items-center  whitespace-nowrap space-x-2">
                                                         <!-- <p>Recorded Name:</p> -->
                                                         <Badge v-if="recorded_name == 'Custom recording'"
@@ -900,6 +930,7 @@
 
 
                                                 <GroupElement name="voicemail_name_action_buttons"
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]"
                                                     :columns="{ container: 6, }">
 
                                                     <ButtonElement v-if="!isNameAudioPlaying" @click="playRecordedName"
@@ -981,6 +1012,28 @@
                                                 </GroupElement>
 
 
+                                                <StaticElement name="divider14" tag="hr" top="1" bottom="1"
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
+
+                                                <!-- Voicemail Advanced -->
+                                                <StaticElement name="voicemail_advanced_title" tag="h4" content="Advanced"
+                                                    description="Set advanced settings for this voicemail."
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
+
+
+                                                <ToggleElement name="voicemail_tutorial" text="Play Voicemail Tutorial"
+                                                    true-value="true" false-value="false"
+                                                    description="Provide user with a guided tutorial when accessing voicemail for the first time."
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
+
+                                                <StaticElement name="divider15" tag="hr"
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
+
+                                                <ToggleElement name="voicemail_recording_instructions"
+                                                    text="Play Recording Instructions" true-value="true" false-value="false"
+                                                    description='Play a prompt instructing callers to "Record your message after the tone. Stop speaking to end the recording.'
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
+
                                                 <!-- Devices -->
                                                 <StaticElement name="devices_title" tag="h4" content="Assigned Devices"
                                                     description="View and manage devices assigned to this extension, or assign a new device." />
@@ -1059,14 +1112,20 @@
         :header="'Update Device Settings'" @close="showDeviceUpdateModal = false" @error="emitErrorToParentFromChild"
         @success="emitSuccessToParentFromChild" @refresh-data="getDevices" />
 
-    <AssignExtensionDeviceForm :show="showDeviceAssignModal" :extension="options.item" :devices="options.all_devices" :options="deviceItemOptions"
-        :loading="isModalLoading" :header="'Assign Existing Device'" @close="showDeviceAssignModal = false"
-        @error="emitErrorToParentFromChild" @success="emitSuccessToParentFromChild" @refresh-data="getDevices" />
+    <AssignExtensionDeviceForm :show="showDeviceAssignModal" :extension="options.item" :devices="options.all_devices"
+        :options="deviceItemOptions" :loading="isModalLoading" :header="'Assign Existing Device'"
+        @close="showDeviceAssignModal = false" @error="emitErrorToParentFromChild" @success="emitSuccessToParentFromChild"
+        @refresh-data="getDevices" />
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
-        @confirm="confirmDeleteAction" :header="'Confirm Deletion'"
+        @confirm="confirmGreetingDeleteAction" :header="'Confirm Deletion'"
         :text="'This action will permanently delete this greeting. Are you sure you want to proceed?'"
         :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+
+    <ConfirmationModal :show="showUnassignConfirmationModal" @close="showUnassignConfirmationModal = false"
+        @confirm="confirmUnassignAction" :header="'Confirm Unassigning Device'" :loading="isUnassignDeviceLoading"
+        :text="'This action will unassign this device and keep it in your inventory. Are you sure you want to proceed?'"
+        :confirm-button-label="'Unassign'" cancel-button-label="Cancel" />
 
     <ConfirmationModal :show="showDeleteNameConfirmationModal" @close="showDeleteNameConfirmationModal = false"
         @confirm="confirmDeleteNameAction" :header="'Confirm Deletion'"
@@ -1102,8 +1161,9 @@ const props = defineProps({
 const form$ = ref(null)
 const showResetConfirmationModal = ref(false);
 const isDevicesLoading = ref(false)
-const isDeleteTokenLoading = ref(false)
+const isUnassignDeviceLoading = ref(false)
 const showDeleteConfirmationModal = ref(false)
+const showUnassignConfirmationModal = ref(false)
 const showDeleteNameConfirmationModal = ref(false)
 const showDeviceUpdateModal = ref(false)
 const showDeviceCreateModal = ref(false)
@@ -1120,6 +1180,7 @@ const isModalLoading = ref(false);
 const greetings = ref(props.options?.voicemail?.greetings)
 const recorded_name = ref(props.options?.recorded_name)
 const deviceItemOptions = ref(null)
+const confirmUnassignAction = ref(null)
 
 // Watch for changes in the prop and update the ref
 watch(
@@ -1245,8 +1306,32 @@ const handleAssignDeviceButtonClick = () => {
 }
 
 const handleUnassignDeviceButtonClick = (uuid) => {
-    showDeleteConfirmationModal.value = true;
-    confirmDeleteAction.value = () => executeBulkDelete([uuid]);
+    showUnassignConfirmationModal.value = true;
+    confirmUnassignAction.value = () => executeBulkUnassign([uuid]);
+};
+
+const executeBulkUnassign = async (items) => {
+    isUnassignDeviceLoading.value = true;
+
+    const extension_uuid = props.options.item.extension_uuid;
+
+    try {
+        const response = await axios.post(
+            props.options.routes.device_bulk_unassign,
+            {
+                items,              // array of device UUIDs
+                extension_uuid      // the extension UUID to unassign
+            }
+        );
+        emit('success', 'success', response.data.messages);
+        getDevices();
+    } catch (error) {
+        emit('error', error);
+    } finally {
+        // hide both the delete and the confirmation modals
+        handleModalClose();
+        isUnassignDeviceLoading.value = false;
+    }
 };
 
 const handleTabSelected = (activeTab, previousTab) => {
@@ -1466,7 +1551,7 @@ const deleteGreeting = () => {
     showDeleteConfirmationModal.value = true;
 };
 
-const confirmDeleteAction = () => {
+const confirmGreetingDeleteAction = () => {
     axios
         .post(props.options.routes.delete_greeting_route, { greeting_id: form$.value.data.greeting_id.value })
         .then((response) => {
@@ -1609,25 +1694,6 @@ const getRoutesForNameForm = computed(() => {
     };
 });
 
-const executeBulkDelete = async (items) => {
-    isDeleteTokenLoading.value = true;
-
-    try {
-        const response = await axios.post(
-            props.options.routes.token_bulk_delete,
-            { items }
-        );
-        emit('success', 'success', response.data.messages);
-        getTokens();
-    } catch (error) {
-        emit('error', error);
-    } finally {
-        // hide both the delete and the confirmation modals
-        handleModalClose();
-        isDeleteTokenLoading.value = false;
-    }
-};
-
 const handleModalClose = () => {
     showResetConfirmationModal.value = false;
     showApiTokenModal.value = false
@@ -1635,6 +1701,7 @@ const handleModalClose = () => {
     showNewGreetingModal.value = false
     showNewNameGreetingModal.value = false
     showDeleteNameConfirmationModal.value = false;
+    showUnassignConfirmationModal.value = false
 }
 
 const handleResponse = (response, form$) => {

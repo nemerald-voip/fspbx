@@ -13,11 +13,11 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick"/>
+                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick"/>
+                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
@@ -121,8 +121,20 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_template" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.profile?.device_profile_name" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.lines[0]?.extension?.name_formatted" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <template #default>
+                            <div v-if="row.lines.length === 0">—</div>
+                            <div v-else>
+                                <div v-for="line in [...row.lines].sort((a, b) => Number(a.line_number) - Number(b.line_number))"
+                                    :key="line.device_line_uuid">
+                                    <span v-if="row.lines.length > 1" class="font-semibold">
+                                        Line {{ line.line_number }}:
+                                    </span>
+                                    <span>{{ line.extension?.name_formatted || line.auth_id }}</span>
+                                </div>
+                            </div>
+                        </template>
+                    </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
@@ -187,14 +199,16 @@
         :text="'Restart request has been submitted'" @update:show="restartRequestNotificationSuccessTrigger = false" />
 
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="createModalTrigger" :header="'Add New'" :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="createModalTrigger" :header="'Add New'" :loading="loadingModal"
+        @close="handleModalClose">
         <template #modal-body>
             <CreateDeviceForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
                 @submit="handleCreateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="editModalTrigger" :header="'Edit Device'" :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="editModalTrigger" :header="'Edit Device'" :loading="loadingModal"
+        @close="handleModalClose">
         <template #modal-body>
             <UpdateDeviceForm :item="itemData" :options="itemOptions" :errors="formErrors"
                 :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"
@@ -202,8 +216,8 @@
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="loadingModal"
-        @close="handleModalClose">
+    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="bulkUpdateModalTrigger" :header="'Bulk Edit'"
+        :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
                 :is-submitting="bulkUpdateFormSubmiting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose"
@@ -686,5 +700,7 @@ registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHV
 
 </script>
 
-<style>@import "@syncfusion/ej2-base/styles/tailwind.css";
-@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";</style>
+<style>
+@import "@syncfusion/ej2-base/styles/tailwind.css";
+@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";
+</style>

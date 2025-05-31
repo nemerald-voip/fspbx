@@ -181,12 +181,15 @@ class UpdateExtensionRequest extends FormRequest
 
 
             'voicemail_enabled' => ['required', 'in:true,false,1,0'],
+            'voicemail_id' => ['sometimes','required'],
             'voicemail_file'        => ['nullable'],
-            'voicemail_local_after_email'        => ['required', 'in:true,false,1,0'],
-            'voicemail_transcription_enabled' => ['required', 'in:true,false,1,0'],
+            'voicemail_local_after_email'        => ['sometimes','required', 'in:true,false,1,0'],
+            'voicemail_transcription_enabled' => ['sometimes','required', 'in:true,false,1,0'],
             'voicemail_description' => ['nullable', 'string'],
             'voicemail_destinations' => ['nullable','array'],
             'voicemail_password' => ['numeric'],
+            'voicemail_tutorial'        => ['sometimes','required', 'in:true,false,1,0'],
+            'voicemail_recording_instructions' => ['sometimes','required', 'in:true,false,1,0'],
 
 
         ];
