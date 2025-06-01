@@ -23,6 +23,7 @@ class ExtensionDetailData extends Data
         public ?string $email,
         public ?string $enabled,
         public ?string $do_not_disturb,
+        public ?string $call_timeout,
         public ?bool $suspended,
         public ?string $description,
 

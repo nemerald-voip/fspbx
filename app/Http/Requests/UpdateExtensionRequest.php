@@ -29,6 +29,7 @@ class UpdateExtensionRequest extends FormRequest
             'suspended'                => ['boolean'],
             'do_not_disturb'          => ['required', 'in:true,false,1,0'],
             'enabled'                  => ['required', 'in:true,false,1,0'],
+            'call_timeout'              => ['sometimes','required', 'string'],
             'directory_visible'        => ['required', 'in:true,false,1,0'],
             'directory_exten_visible'  => ['required', 'in:true,false,1,0'],
             'outbound_caller_id_number' => ['nullable', 'string'],

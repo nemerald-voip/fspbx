@@ -64,6 +64,8 @@
                                     directory_exten_visible: options.item.directory_exten_visible ?? '',
                                     outbound_caller_id_number: options.item.outbound_caller_id_number_e164 ?? '',
                                     emergency_caller_id_number: options.item.emergency_caller_id_number_e164 ?? '',
+                                    call_timeout: options.item.call_timeout ?? null,
+                                    call_screen_enabled: options.item.call_screen_enabled ?? 'false',
                                     forward_all_enabled: props.options.item.forward_all_enabled ?? 'false',
                                     forward_all_action: props.options.item.forward_all_action ?? '',
 
@@ -178,13 +180,11 @@
                                                     'user_enabled',
                                                     'enabled',
                                                     'suspended',
-                                                    'directory_visible',
-                                                    'directory_exten_visible',
                                                     'do_not_disturb',
+                                                    'call_timeout',
                                                     'divider',
                                                     'divider1',
                                                     'divider2',
-                                                    'divider3',
                                                     'container_2',
                                                     'container_3',
                                                     'submit',
@@ -270,8 +270,19 @@
                                                 <FormTab name="devices" label="Devices" :elements="[
                                                     'devices_title',
                                                     'device_table',
-                                                    'add_device',
-                                                    'assign_existing',
+
+                                                    'container1',
+                                                    'submit',
+
+                                                ]" />
+
+                                                <FormTab name="advanced" label="Advanced Settings" :elements="[
+                                                    'advanced_title',
+                                                    'directory_visible',
+                                                    'directory_exten_visible',
+                                                    'call_screen_enabled',
+                                                    'divider3',
+                                                    'divider4',
                                                     'container1',
                                                     'submit',
 
@@ -345,17 +356,15 @@
 
                                                 <StaticElement name="divider2" tag="hr" />
 
-                                                <ToggleElement name="directory_visible"
-                                                    text="Show in company dial-by-name directory"
-                                                    description="Controls whether this extension appears in the company’s dial-by-name directory. Hide extensions for devices (door phones, intercoms) or private users (e.g., executives)."
-                                                    true-value="true" false-value="false" />
-
-                                                <StaticElement name="divider3" tag="hr" />
-
-                                                <ToggleElement name="directory_exten_visible"
-                                                    text="Announce extension after name in directory"
-                                                    description="Controls whether the extension number is played after the user’s name in the directory. Useful for making it easier for callers to reach the extension directly. Disable for privacy or security reasons."
-                                                    true-value="true" false-value="false" />
+                                                <SelectElement name="call_timeout" :items="delayOptions" :search="true"
+                                                    :native="false" label="Send unanswered calls to voicemail after"
+                                                    input-type="search" allow-absent autocomplete="off" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }"
+                                                    info="Set how many seconds to ring before redirecting unanswered calls to voicemail."
+                                                    placeholder="Select option" :floating="false" />
 
 
                                                 <!-- Caller ID Tab -->
@@ -1055,14 +1064,37 @@
                                                     }" />
 
 
-
-
                                                 <StaticElement name="device_table">
                                                     <AssignedDevices :devices="devices" :loading="isDevicesLoading"
                                                         :permissions="options.permissions"
                                                         @edit-item="handleDeviceEditButtonClick"
                                                         @delete-item="handleUnassignDeviceButtonClick" />
                                                 </StaticElement>
+
+
+                                                <!-- Advaced settings -->
+
+                                                <StaticElement name="advanced_title" tag="h4" content="Advanced Settings"
+                                                    description="" :conditions="[['voicemail_enabled', '==', 'true']]" />
+
+                                                <ToggleElement name="directory_visible"
+                                                    text="Show in company dial-by-name directory"
+                                                    description="Controls whether this extension appears in the company’s dial-by-name directory. Hide extensions for devices (door phones, intercoms) or private users (e.g., executives)."
+                                                    true-value="true" false-value="false" />
+
+                                                <StaticElement name="divider3" tag="hr" />
+
+                                                <ToggleElement name="directory_exten_visible"
+                                                    text="Announce extension after name in directory"
+                                                    description="Controls whether the extension number is played after the user’s name in the directory. Useful for making it easier for callers to reach the extension directly. Disable for privacy or security reasons."
+                                                    true-value="true" false-value="false" />
+
+                                                <StaticElement name="divider4" tag="hr" />
+
+                                                <ToggleElement name="call_screen_enabled"
+                                                    text="Enable call screening"
+                                                    description="You can use Call Screen to find out who’s calling and why before you pick up a call."
+                                                    true-value="true" false-value="false" />
 
 
                                                 <GroupElement name="container_3" />

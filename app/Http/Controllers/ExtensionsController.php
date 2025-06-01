@@ -40,13 +40,10 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\HeadingRowImport;
 use Illuminate\Support\Facades\Validator;
-use App\Http\Requests\AssignDeviceRequest;
-use App\Http\Requests\UpdateDeviceRequest;
 use Spatie\Activitylog\Contracts\Activity;
 use App\Services\CallRoutingOptionsService;
 use Propaganistas\LaravelPhone\PhoneNumber;
 use App\Http\Requests\OldStoreDeviceRequest;
-use App\Http\Requests\OldUpdateDeviceRequest;
 use App\Http\Requests\UpdateExtensionRequest;
 use Spatie\Activitylog\Facades\CauserResolver;
 use Propaganistas\LaravelPhone\Exceptions\NumberParseException;
@@ -247,6 +244,7 @@ class ExtensionsController extends Controller
                     'enabled',
                     'do_not_disturb',
                     'description',
+                    'call_timeout',
                     'do_not_disturb',
                     'forward_all_destination',
                     'forward_all_enabled',
@@ -376,7 +374,7 @@ class ExtensionsController extends Controller
                 $voicemailDto = VoicemailData::from([
                     'voicemail_enabled' => 'false',
                     'voicemail_id' => $extension->extension,
-                    'voicemail_password' => get_domain_setting('password_complexity') =='true' ? $attributes['voicemail_password'] = str_pad(mt_rand(0, 9999), 4, '0', STR_PAD_LEFT) : $extension->extension,
+                    'voicemail_password' => get_domain_setting('password_complexity') == 'true' ? $attributes['voicemail_password'] = str_pad(mt_rand(0, 9999), 4, '0', STR_PAD_LEFT) : $extension->extension,
                     'voicemail_transcription_enabled' => 'true',
                     'voicemail_file' => 'attach',
                     'voicemail_local_after_email' => 'true',
@@ -1470,6 +1468,28 @@ class ExtensionsController extends Controller
             }
 
             DB::commit();
+
+            //clear fusionpbx cache
+            FusionCache::clear("directory:" . $extension->extension . "@" . $extension->user_context);
+
+            //clear the destinations session array
+            if (isset($_SESSION['destinations']['array'])) {
+                unset($_SESSION['destinations']['array']);
+            }
+
+            // dispatch the job to update app user
+            // $mobile_app = $extension->mobile_app;
+            // if (isset($mobile_app) && isset($attributes['exclude_from_ringotel_stale_users'])) {
+            //     if (Schema::hasColumn('mobile_app_users', 'exclude_from_stale_report')) {
+            //         $mobile_app->exclude_from_stale_report = $attributes['exclude_from_ringotel_stale_users'];
+            //         $mobile_app->save();
+            //     }
+            //     $mobile_app->name = $attributes['effective_caller_id_name'];
+            //     $mobile_app->email = $attributes['voicemail_mail_to'] ?? "";
+            //     $mobile_app->ext = $attributes['extension'];
+            //     $mobile_app->password = $extension->password;
+            //     UpdateAppSettings::dispatch($mobile_app->attributesToArray())->onQueue('default');
+            // }
 
             // logger($extension->toArray());
             return response()->json([
