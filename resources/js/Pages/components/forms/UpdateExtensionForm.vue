@@ -66,6 +66,11 @@
                                     emergency_caller_id_number: options.item.emergency_caller_id_number_e164 ?? '',
                                     call_timeout: options.item.call_timeout ?? null,
                                     call_screen_enabled: options.item.call_screen_enabled ?? 'false',
+                                    max_registrations: options.item.max_registrations ?? '',
+                                    limit_max: options.item.limit_max ?? '',
+                                    limit_destination: options.item.limit_destination ?? '',
+                                    toll_allow: options.item.toll_allow ?? '',
+                                    call_group: options.item.call_group ?? '',
                                     forward_all_enabled: props.options.item.forward_all_enabled ?? 'false',
                                     forward_all_action: props.options.item.forward_all_action ?? '',
 
@@ -281,8 +286,14 @@
                                                     'directory_visible',
                                                     'directory_exten_visible',
                                                     'call_screen_enabled',
+                                                    'max_registrations',
+                                                    'limit_destination',
+                                                    'toll_allow',
+                                                    'call_group',
+                                                    'limit_max',
                                                     'divider3',
                                                     'divider4',
+                                                    'divider5',
                                                     'container1',
                                                     'submit',
 
@@ -1091,10 +1102,62 @@
 
                                                 <StaticElement name="divider4" tag="hr" />
 
-                                                <ToggleElement name="call_screen_enabled"
-                                                    text="Enable call screening"
+                                                <ToggleElement name="call_screen_enabled" text="Enable call screening"
                                                     description="You can use Call Screen to find out who’s calling and why before you pick up a call."
                                                     true-value="true" false-value="false" />
+
+                                                <StaticElement name="divider5" tag="hr" />
+
+                                                <TextElement name="max_registrations" input-type="number" :rules="[
+                                                    'nullable',
+                                                    'numeric',
+                                                ]" autocomplete="off" label="Maximum registrations"
+                                                    description="Enter the maximum registration allowed for this user"
+                                                    :columns="{
+                                                        default: {
+                                                            wrapper: 6,
+                                                        },
+                                                        sm: {
+                                                            container: 6,
+                                                            wrapper: 4,
+                                                        },
+                                                    }" />
+                                                <TextElement name="limit_max" input-type="number" :rules="[
+                                                    'nullable',
+                                                    'numeric',
+                                                ]" autocomplete="off" label="Max number of outbound calls"
+                                                    description="Enter the max number of outgoing calls for this user."
+                                                    :columns="{
+                                                        default: {
+                                                            wrapper: 6,
+                                                        },
+                                                        sm: {
+                                                            container: 6,
+                                                            wrapper: 4,
+                                                        },
+                                                    }" />
+
+                                                <TextElement name="limit_destination"
+                                                    label="Hangup Cause when limit is reached" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        }
+                                                    }"
+                                                    description="Enter the destination to send the calls when the max number of outgoing calls has been reached." />
+
+                                                <TextElement name="toll_allow" label="Toll Allow" :columns="{
+                                                    sm: {
+                                                        container: 6,
+                                                    }
+                                                }" description="Examples: domestic,international,local" />
+
+                                                <TextElement name="call_group" label="Call Group"
+                                                    description="A user in a call group can perform a call pickup (or an intercept) of a ringing phone belonging to another user who is also in the call group."
+                                                    :columns="{
+                                                        sm: {
+                                                            wrapper: 6,
+                                                        },
+                                                    }" />
 
 
                                                 <GroupElement name="container_3" />

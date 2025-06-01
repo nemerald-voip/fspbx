@@ -32,6 +32,7 @@ class UpdateExtensionRequest extends FormRequest
             'call_timeout'              => ['sometimes','required', 'string'],
             'directory_visible'        => ['required', 'in:true,false,1,0'],
             'directory_exten_visible'  => ['required', 'in:true,false,1,0'],
+            'call_screen_enabled'  => ['required', 'in:true,false,1,0'],
             'outbound_caller_id_number' => ['nullable', 'string'],
             'emergency_caller_id_number' => ['nullable', 'string'],
 

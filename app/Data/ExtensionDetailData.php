@@ -24,6 +24,12 @@ class ExtensionDetailData extends Data
         public ?string $enabled,
         public ?string $do_not_disturb,
         public ?string $call_timeout,
+        public ?string $call_screen_enabled,
+        public ?string $max_registrations,
+        public ?string $limit_max,
+        public ?string $limit_destination,
+        public ?string $toll_allow,
+        public ?string $call_group,
         public ?bool $suspended,
         public ?string $description,
 
