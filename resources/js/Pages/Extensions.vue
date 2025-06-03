@@ -147,6 +147,15 @@
 
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap justify-end">
+
+                                    <ejs-tooltip v-if="!!row.user_record"  :content="'Recording Enabled'"
+                                        position='TopCenter' target="#destination_tooltip_target">
+                                        <div id="destination_tooltip_target">
+                                            <MicrophoneIcon
+                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-rose-400 hover:bg-rose-200 hover:text-rose-600 active:bg-rose-300 active:duration-150 cursor-pointer" />
+                                        </div>
+                                    </ejs-tooltip>
+
                                     <ejs-tooltip v-if="page.props.auth.can.extension_update" :content="'Edit'"
                                         position='TopCenter' target="#destination_tooltip_target">
                                         <div id="destination_tooltip_target">
@@ -256,6 +265,8 @@ import CreateUserForm from "./components/forms/CreateUserForm.vue";
 import UpdateExtensionForm from "./components/forms/UpdateExtensionForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
+import { MicrophoneIcon } from "@heroicons/vue/24/outline";
+
 
 
 const page = usePage()

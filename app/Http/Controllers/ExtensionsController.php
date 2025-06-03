@@ -11,6 +11,7 @@ use App\Models\IvrMenus;
 use App\Models\Extensions;
 use App\Models\RingGroups;
 use App\Models\Voicemails;
+use App\Data\MobileAppData;
 use App\Data\VoicemailData;
 use App\Jobs\DeleteAppUser;
 use App\Models\DeviceLines;
@@ -102,6 +103,7 @@ class ExtensionsController extends Controller
                 'enabled',
                 'do_not_disturb',
                 'description',
+                'user_record',
                 'forward_all_enabled',
                 'forward_busy_enabled',
                 'forward_no_answer_enabled',
@@ -252,6 +254,18 @@ class ExtensionsController extends Controller
                     'limit_destination',
                     'toll_allow',
                     'call_group',
+                    'hold_music',
+                    'cidr',
+                    'auth_acl',
+                    'sip_force_contact',
+                    'sip_force_expires',
+                    'sip_bypass_media',
+                    'mwi_account',
+                    'absolute_codec_string',
+                    'dial_string',
+                    'force_ping',
+                    'user_context',
+                    'user_record',
                     'forward_all_destination',
                     'forward_all_enabled',
                     'forward_busy_destination',
@@ -290,6 +304,17 @@ class ExtensionsController extends Controller
                                         ->where('domain_uuid', $currentDomain);
                                 }
                             ]);
+                    },
+                    'mobile_app' => function ($q) {
+                        $q->select([
+                            'mobile_app_user_uuid',
+                            'extension_uuid',
+                            'org_id',
+                            'conn_id',
+                            'user_id',
+                            'status',
+                            'exclude_from_stale_report',
+                        ]);
                     },
                     'followMe.followMeDestinations' => function ($q) {
                         $q->select([
@@ -343,9 +368,13 @@ class ExtensionsController extends Controller
                 'follow_me_destinations' => $extension->followMe
                     ? FollowMeDestinationData::collect($extension->followMe->followMeDestinations->sortBy('follow_me_order'))
                     : [],
+
+                'mobile_app' => $extension->mobile_app ? MobileAppData::from($extension->mobile_app->toArray()) : null,
+
             ]);
             $updateRoute = route('extensions.update', ['extension' => $itemUuid]);
             $deviceRoute = route('extensions.devices', ['extension' => $itemUuid]);
+            $routes['sip_credentials'] = route('extensions.sip.credentials', $extension);
 
             $voicemailDestinations = $extension->voicemail && $extension->voicemail->voicemail_destinations
                 ? $extension->voicemail->voicemail_destinations->pluck('voicemail_uuid_copy')->values()->all()
@@ -490,6 +519,7 @@ class ExtensionsController extends Controller
         $routingOptionsService = new CallRoutingOptionsService;
         $forwardingTypes = $routingOptionsService->forwardingTypes;
 
+        $music_on_hold_options = getMusicOnHoldCollection(session('domain_uuid'));
 
         $extensions = Extensions::where('domain_uuid', $currentDomain)
             ->select('extension_uuid', 'extension', 'effective_caller_id_name')
@@ -613,6 +643,7 @@ class ExtensionsController extends Controller
             'phone_call_instructions_for_name' => $phoneCallInstructionsForName,
             'sample_message' => $sampleMessage,
             'recorded_name' => $recordedName,
+            'music_on_hold_options' => $music_on_hold_options,
         ]);
     }
 
@@ -1197,16 +1228,36 @@ class ExtensionsController extends Controller
      * @param \App\Models\Extentions $extention
      * @return \Illuminate\Http\Response
      */
-    public function sipShow(Request $request, Extensions $extension)
+    public function sipCredentials($extension_uuid)
     {
+        try {
+            $extension = QueryBuilder::for(Extensions::class)
+                ->select([
+                    'extension_uuid',
+                    'extension',
+                    'password',
+                    'user_context',
+                ])
+                ->whereKey($extension_uuid)
+                ->firstOrFail();
 
-        return response()->json([
-            'username' => $extension->extension,
-            'password' => $extension->password,
-            'domain' => $extension->domain->domain_name,
-            // 'user' => $response,
-            'status' => 'success',
-        ]);
+
+            return response()->json([
+                'success'  => true,
+                'data'  => [
+                    'extension' => $extension->extension,
+                    'password' => $extension->password,
+                    'context' => $extension->user_context,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            logger('ExtensionsController@sipCredentials error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            return response()->json([
+                'success'  => false,
+                'messages' => ['error' => [$e->getMessage()]],
+                'data'     => [],
+            ], 500);
+        }
     }
 
 

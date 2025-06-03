@@ -4,6 +4,8 @@ namespace App\Data;
 
 use Spatie\LaravelData\Data;
 use App\Data\FollowMeDestinationData;
+use App\Data\MobileAppData;
+
 
 class ExtensionDetailData extends Data
 {
@@ -30,9 +32,22 @@ class ExtensionDetailData extends Data
         public ?string $limit_destination,
         public ?string $toll_allow,
         public ?string $call_group,
+        public ?string $hold_music,
+        public ?string $cidr,
+        public ?string $auth_acl,
+        public ?string $sip_force_contact,
+        public ?string $sip_force_expires,
+        public ?string $sip_bypass_media,
+        public ?string $mwi_account,
+        public ?string $absolute_codec_string,
+        public ?string $dial_string,
+        public ?string $force_ping,
+        public ?string $user_context,
+        public ?bool $exclude_from_ringotel_stale_users,
+        public ?string $user_record,
         public ?bool $suspended,
         public ?string $description,
-
+        
         // Forwarding: Unconditional
         public ?string $forward_all_enabled,
         public ?string $forward_all_target_uuid,
@@ -69,5 +84,7 @@ class ExtensionDetailData extends Data
         public ?string $follow_me_enabled,
         /** @var FollowMeDestinationData[]|null */
         public ?array $follow_me_destinations,
+
+        public ?MobileAppData $mobile_app,
     ) {}
 }

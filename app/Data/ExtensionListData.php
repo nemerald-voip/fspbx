@@ -22,6 +22,7 @@ class ExtensionListData extends Data
         public ?string $email,
         public ?string $enabled,
         public ?string $do_not_disturb,
+        public ?string $user_record,
         public ?bool $suspended,
         public ?string $description,
         public ?string $forward_all_enabled,

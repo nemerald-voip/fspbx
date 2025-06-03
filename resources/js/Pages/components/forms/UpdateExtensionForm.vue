@@ -71,6 +71,20 @@
                                     limit_destination: options.item.limit_destination ?? '',
                                     toll_allow: options.item.toll_allow ?? '',
                                     call_group: options.item.call_group ?? '',
+                                    hold_music: options.item.hold_music ?? '',
+                                    auth_acl: options.item.auth_acl ?? '',
+                                    cidr: options.item.cidr ?? '',
+                                    sip_force_contact: options.item.sip_force_contact ?? '',
+                                    sip_force_expires: options.item.sip_force_expires ?? '',
+                                    sip_bypass_media: options.item.sip_bypass_media ?? '',
+                                    mwi_account: options.item.mwi_account ?? '',
+                                    absolute_codec_string: options.item.absolute_codec_string ?? '',
+                                    dial_string: options.item.dial_string ?? '',
+                                    force_ping: options.item.force_ping ?? 'false',
+                                    user_context: options.item.user_context ?? '',
+                                    exclude_from_ringotel_stale_users: options.item?.mobile_app?.exclude_from_ringotel_stale_users ?? false,
+                                    recording: !!options.item.user_record,
+                                    user_record: options.item.user_record ?? null,
                                     forward_all_enabled: props.options.item.forward_all_enabled ?? 'false',
                                     forward_all_action: props.options.item.forward_all_action ?? '',
 
@@ -190,6 +204,9 @@
                                                     'divider',
                                                     'divider1',
                                                     'divider2',
+                                                    'recording',
+                                                    'user_record',
+                                                    'divider17',
                                                     'container_2',
                                                     'container_3',
                                                     'submit',
@@ -281,6 +298,13 @@
 
                                                 ]" />
 
+                                                <FormTab name="sip_credentials" label="SIP Credentials" :elements="[
+                                                    'sip_credentials_title',
+                                                    'show_sip_credentials',
+                                                    'sip_credentials',
+
+                                                ]" />
+
                                                 <FormTab name="advanced" label="Advanced Settings" :elements="[
                                                     'advanced_title',
                                                     'directory_visible',
@@ -291,9 +315,21 @@
                                                     'toll_allow',
                                                     'call_group',
                                                     'limit_max',
+                                                    'hold_music',
+                                                    'cidr',
+                                                    'sip_force_contact',
+                                                    'sip_force_expires',
+                                                    'sip_bypass_media',
+                                                    'mwi_account',
+                                                    'absolute_codec_string',
+                                                    'dial_string',
+                                                    'force_ping',
+                                                    'user_context',
+                                                    'exclude_from_ringotel_stale_users',
+                                                    'auth_acl',
                                                     'divider3',
                                                     'divider4',
-                                                    'divider5',
+                                                    'divider16',
                                                     'container1',
                                                     'submit',
 
@@ -366,6 +402,30 @@
                                                     description="Activate or deactivate the extension. When deactivated, devices cannot connect and calls cannot be placed or received." />
 
                                                 <StaticElement name="divider2" tag="hr" />
+
+                                                <ToggleElement name="recording" text="Record Calls" :submit="false"
+                                                    description="Activate or deactivate call recording for the extension." />
+
+                                                <RadiogroupElement name="user_record" :items="[
+                                                    {
+                                                        value: 'all',
+                                                        label: 'All',
+                                                    },
+                                                    {
+                                                        value: 'local',
+                                                        label: 'Local',
+                                                    },
+                                                    {
+                                                        value: 'outbound',
+                                                        label: 'Outbound',
+                                                    },
+                                                    {
+                                                        value: 'inbound',
+                                                        label: 'Inbound',
+                                                    },
+                                                ]" label="Record" :conditions="[['recording', '==', true,],]" />
+
+                                                <StaticElement name="divider17" tag="hr" />
 
                                                 <SelectElement name="call_timeout" :items="delayOptions" :search="true"
                                                     :native="false" label="Send unanswered calls to voicemail after"
@@ -1082,6 +1142,65 @@
                                                         @delete-item="handleUnassignDeviceButtonClick" />
                                                 </StaticElement>
 
+                                                <!-- SIP Credentials -->
+
+                                                <StaticElement name="sip_credentials_title" tag="h4"
+                                                    content="Show SIP Credentials" description="" />
+
+                                                <ButtonElement name="show_sip_credentials" button-label="Show"
+                                                    @click="handleSipCredentialsButtonClick" label="SIP Credentials"
+                                                    :loading="isSipCredentialsLoading" />
+
+                                                <StaticElement name="sip_credentials"
+                                                    :conditions="[() => { return !!sip_credentials }]">
+                                                    <div class="space-y-8 sm:space-y-6">
+                                                        <div>
+                                                            <dt
+                                                                class="text-sm font-medium text-gray-500 sm:w-40 sm:shrink-0">
+                                                                Username</dt>
+                                                            <dd
+                                                                class="flex flex-row items-center mt-1 gap-2 text-sm text-gray-900 sm:col-span-2">
+                                                                {{ sip_credentials?.extension }}
+
+                                                                <div  @click="handleCopyToClipboard(sip_credentials?.extension)">
+                                                                    <ClipboardDocumentIcon
+                                                                        class="h-5 w-5 text-gray-500 hover:text-gray-900 cursor-pointer" />
+                                                                </div>
+
+                                                            </dd>
+                                                        </div>
+                                                        <div>
+                                                            <dt
+                                                                class="text-sm font-medium text-gray-500 sm:w-40 sm:shrink-0">
+                                                                Password</dt>
+                                                            <dd
+                                                                class="flex flex-row items-center mt-1 gap-2 text-sm text-gray-900 sm:col-span-2">
+                                                                {{ sip_credentials?.password }}
+
+                                                                <div  @click="handleCopyToClipboard(sip_credentials?.password)">
+                                                                    <ClipboardDocumentIcon
+                                                                        class="h-5 w-5 text-gray-500 hover:text-gray-900 cursor-pointer" />
+                                                                </div>
+
+                                                            </dd>
+                                                        </div>
+                                                        <div>
+                                                            <dt
+                                                                class="text-sm font-medium text-gray-500 sm:w-40 sm:shrink-0">
+                                                                Domain</dt>
+                                                                <dd
+                                                                class="flex flex-row items-center mt-1 gap-2 text-sm text-gray-900 sm:col-span-2">
+                                                                {{ sip_credentials?.context }}
+
+                                                                <div  @click="handleCopyToClipboard(sip_credentials?.context)">
+                                                                    <ClipboardDocumentIcon
+                                                                        class="h-5 w-5 text-gray-500 hover:text-gray-900 cursor-pointer" />
+                                                                </div>
+
+                                                            </dd>
+                                                        </div>
+                                                    </div>
+                                                </StaticElement>
 
                                                 <!-- Advaced settings -->
 
@@ -1106,7 +1225,7 @@
                                                     description="You can use Call Screen to find out who’s calling and why before you pick up a call."
                                                     true-value="true" false-value="false" />
 
-                                                <StaticElement name="divider5" tag="hr" />
+                                                <StaticElement name="divider16" tag="hr" />
 
                                                 <TextElement name="max_registrations" input-type="number" :rules="[
                                                     'nullable',
@@ -1158,6 +1277,89 @@
                                                             wrapper: 6,
                                                         },
                                                     }" />
+
+
+                                                <SelectElement name="hold_music" :items="options.music_on_hold_options"
+                                                    :groups="true" default="" :search="true" :native="false"
+                                                    label="Select custom Music On Hold" input-type="search"
+                                                    autocomplete="off" :strict="false" :columns="{
+                                                        sm: {
+                                                            wrapper: 6,
+                                                        },
+                                                    }" />
+
+                                                <TextElement name="auth_acl" label="Auth ACL" :columns="{
+                                                    sm: {
+                                                        container: 6,
+                                                    }
+                                                }" />
+
+                                                <TextElement name="cidr" label="CIDR" :columns="{
+                                                    sm: {
+                                                        container: 6,
+                                                    }
+                                                }" />
+
+
+                                                <SelectElement name="sip_force_contact" :items="[
+                                                    {
+                                                        value: 'NDLB-connectile-dysfunction',
+                                                        label: 'Rewrite Contact IP and Port',
+                                                    },
+                                                    {
+                                                        value: 'NDLB-connectile-dysfunction-2.0',
+                                                        label: 'Rewrite Contact IP and Port 2.0',
+                                                    },
+                                                    {
+                                                        value: 'NDLB-tls-connectile-dysfunction',
+                                                        label: 'Rewrite TLS Contact Port',
+                                                    },
+                                                ]" :search="true" :native="false" label="SIP Force Contact"
+                                                    input-type="search" autocomplete="off"
+                                                    :columns="{ sm: { container: 6 }, }" />
+
+                                                <TextElement name="sip_force_expires" label="SIP Force Expires" :columns="{
+                                                    sm: {
+                                                        container: 6,
+                                                    },
+                                                }" />
+                                                <SelectElement name="sip_bypass_media" :items="[
+                                                    {
+                                                        value: 'bypass-media',
+                                                        label: 'Bypass Media',
+                                                    },
+                                                    {
+                                                        value: 'bypass-media-after-bridge',
+                                                        label: 'Bypass Media After Bridge',
+                                                    },
+                                                    {
+                                                        value: 'proxy-media',
+                                                        label: 'Proxy Media',
+                                                    },
+                                                ]" :search="true" :native="false" label="SIP Bypass Media "
+                                                    input-type="search" autocomplete="off"
+                                                    :columns="{ sm: { wrapper: 6, }, }" />
+
+                                                <TextElement name="mwi_account" label="Monitor MWI Account"
+                                                    description="MWI Account with user@domain of the voicemail to monitor." />
+
+                                                <TextElement name="absolute_codec_string" label="Absolute Codec String"
+                                                    description="Absolute Codec String for the extension" />
+
+                                                <TextElement name="dial_string" label="Dial String" />
+
+                                                <ToggleElement name="force_ping" text="Force ping"
+                                                    description="Use OPTIONS to detect if extension is reachable"
+                                                    true-value="true" false-value="false" />
+
+                                                <TextElement name="user_context" label="Context" :columns="{
+                                                    sm: {
+                                                        container: 6,
+                                                    },
+                                                }" />
+                                                <ToggleElement name="exclude_from_ringotel_stale_users"
+                                                    text="Exclude this user from the App Stale Users report"
+                                                    description="If enabled, this user will not appear in the App Stale Users report, preventing them from being flagged as inactive." />
 
 
                                                 <GroupElement name="container_3" />
@@ -1243,6 +1445,8 @@ import CreateExtensionDeviceForm from "../forms/CreateExtensionDeviceForm.vue";
 import AssignExtensionDeviceForm from "../forms/AssignExtensionDeviceForm.vue";
 import Badge from "@generalComponents/Badge.vue";
 import AssignedDevices from "../AssignedDevices.vue";
+import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
+
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
 
@@ -1256,6 +1460,7 @@ const props = defineProps({
 const form$ = ref(null)
 const showResetConfirmationModal = ref(false);
 const isDevicesLoading = ref(false)
+const isSipCredentialsLoading = ref(false)
 const isUnassignDeviceLoading = ref(false)
 const showDeleteConfirmationModal = ref(false)
 const showUnassignConfirmationModal = ref(false)
@@ -1264,6 +1469,7 @@ const showDeviceUpdateModal = ref(false)
 const showDeviceCreateModal = ref(false)
 const showDeviceAssignModal = ref(false)
 const devices = ref([])
+const sip_credentials = ref(null)
 const showApiTokenModal = ref(false)
 const isDownloading = ref(false);
 const isNameAudioPlaying = ref(false);
@@ -1449,18 +1655,28 @@ const getDevices = async () => {
         });
 }
 
-// const handleUpdateTokenButtonClick = async uuid => {
-//     updateTokenButtonLoading.value = true;
-//     try {
-//         await getHolidayItemOptions(uuid);
-//         showUpdateTokenModal.value = true;
-//     } catch (err) {
-//         handleModalClose();
-//         emit('error', err);
-//     } finally {
-//         updateTokenButtonLoading.value = false;
-//     }
-// };
+const handleSipCredentialsButtonClick = async () => {
+    isSipCredentialsLoading.value = true
+    axios.get(props.options.routes.sip_credentials)
+        .then((response) => {
+            sip_credentials.value = response.data.data;
+            // console.log(sip_credentials.value);
+
+        }).catch((error) => {
+            emit('error', error)
+        }).finally(() => {
+            isSipCredentialsLoading.value = false
+        });
+}
+
+const handleCopyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        emit('success', 'success', { message: ['Copied to clipboard.'] });
+    }).catch((error) => {
+        // Handle the error case
+        emit('error', { response: { data: { errors: { request: ['Failed to copy to clipboard.'] } } } });
+    });
+}
 
 
 
@@ -1874,5 +2090,4 @@ div[data-lastpass-icon-root] {
 
 div[data-lastpass-root] {
     display: none !important
-}
-</style>
+}</style>

@@ -212,9 +212,6 @@ Route::group(['middleware' => 'auth'], function () {
         ->name('ivr.message.file.serve')
         ->where('file_name', '(.*)');
 
-    // SIP Credentials
-    Route::get('/extensions/{extension}/sip/show', [ExtensionsController::class, 'sipShow'])->name('extensions.sip.show');
-
     // Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout']);

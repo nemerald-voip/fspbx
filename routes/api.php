@@ -89,6 +89,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('extensions/select-all', [ExtensionsController::class, 'selectAll'])->name('extensions.select.all');
     Route::get('/extensions/registrations', [ExtensionsController::class, 'registrations'])->name('extensions.registrations');
     Route::get('/extensions/{extension}/devices', [ExtensionsController::class, 'devices'])->name('extensions.devices');
+    Route::get('/extensions/{extension}/sip-credentials', [ExtensionsController::class, 'sipCredentials'])->name('extensions.sip.credentials');
 
     // User logs
     Route::post('user-logs/select-all', [UserLogsController::class, 'selectAll'])->name('user-logs.select.all');
