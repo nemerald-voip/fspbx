@@ -110,24 +110,6 @@ if (!function_exists('getFusionPBXPreviousURL')) {
 }
 
 
-// THERE IS A NEW VERSION OF THIS FUCNTION
-if (!function_exists('appsGetOrganizationDetails')) {
-    function appsGetOrganizationDetails($domain_uuid)
-    {
-        // Get Org ID
-        $domainSettingsModel = DomainSettings::where('domain_uuid', $domain_uuid)
-            ->where('domain_setting_category', 'app shell')
-            ->where('domain_setting_subcategory', 'org_id')
-            ->where('domain_setting_enabled', true)
-            ->first();
-
-        if (isset($domainSettingsModel)) {
-            return $domainSettingsModel->domain_setting_value;
-        }
-        return null;
-    }
-}
-
 if (!function_exists('appsGetOrganization')) {
     function appsGetOrganization($org_id)
     {
@@ -157,108 +139,7 @@ if (!function_exists('appsGetOrganization')) {
 }
 
 
-// Get a list of connections that belong to requested organization via Ringotel API call
-// THERE IS a NEW VERSION OF THIS FUNCTION
-if (!function_exists('appsGetConnections')) {
-    function appsGetConnections($org_id)
-    {
-        $data = array(
-            'method' => 'getBranches',
-            'params' => array(
-                'orgid' => $org_id,
-            )
-        );
-
-        $response = Http::ringotel()
-            //->dd()
-            ->timeout(30)
-            ->withBody(json_encode($data), 'application/json')
-            ->post('/')
-            ->throw(function ($response, $e) {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => "Unable to retrieve connections",
-                    ],
-                ])->getData(true);
-            })
-            ->json();
-        return $response;
-    }
-}
-
-// Delete connection that belong to requested organization via Ringotel API call
-// if (!function_exists('appsDeleteConnection')) {
-//     function appsDeleteConnection($org_id, $conn_id)
-//     {
-//         $data = array(
-//             'method' => 'deleteBranch',
-//             'params' => array(
-//                 'id' => $conn_id,
-//                 'orgid' => $org_id,
-//             )
-//         );
-
-//         $response = Http::ringotel()
-//             //->dd()
-//             ->timeout(30)
-//             ->withBody(json_encode($data), 'application/json')
-//             ->post('/')
-//             ->throw(function ($response, $e) {
-//                 return response()->json([
-//                     'status' => 401,
-//                     'error' => [
-//                         'message' => "Unable to delete connection",
-//                     ],
-//                 ])->getData(true);
-//             })
-//             ->json();
-
-//         return $response;
-//     }
-// }
-
-
-// Create mobile app user via Ringotel API call
-if (!function_exists('appsCreateUser')) {
-    function appsCreateUser($mobile_app)
-    {
-
-        $data = array(
-            'method' => 'createUser',
-            'params' => array(
-                'orgid' => $mobile_app['org_id'],
-                'branchid' => $mobile_app['conn_id'],
-                'name' => $mobile_app['name'],
-                'email' => $mobile_app['email'],
-                'extension' => $mobile_app['ext'],
-                'username' => $mobile_app['username'],
-                'domain' => $mobile_app['domain'],
-                'authname' => $mobile_app['authname'],
-                'password' => $mobile_app['password'],
-                'status' => $mobile_app['status'],
-                'noemail' => $mobile_app['no_email'] ?? false
-            )
-        );
-
-        $response = Http::ringotel()
-            //->dd()
-            ->timeout(30)
-            ->withBody(json_encode($data), 'application/json')
-            ->post('/')
-            ->throw(function ($response, $e) {
-                return response()->json([
-                    'error' => 401,
-                    'message' => 'Unable to create a new user'
-                ]);
-            })
-            ->json();
-
-        return $response;
-    }
-}
-
-
+// DEPRECIATED
 // Delete mobile app user via Ringotel API call
 if (!function_exists('appsDeleteUser')) {
     function appsDeleteUser($org_id, $user_id)
@@ -290,76 +171,6 @@ if (!function_exists('appsDeleteUser')) {
     }
 }
 
-// Update mobile app user via Ringotel API call
-if (!function_exists('appsUpdateUser')) {
-    function appsUpdateUser($mobile_app)
-    {
-        $data = array(
-            'method' => 'updateUser',
-            'params' => array(
-                'id' => $mobile_app['user_id'],
-                'orgid' => $mobile_app['org_id'],
-                'name' => $mobile_app['name'],
-                'email' => $mobile_app['email'],
-                'extension' => $mobile_app['ext'],
-                'username' => $mobile_app['ext'],
-                'authname' => $mobile_app['ext'],
-                'password' => $mobile_app['password'],
-                'status' => $mobile_app['status'],
-                'noemail' => $mobile_app['no_email'] ?? false
-            )
-        );
-
-        $response = Http::ringotel()
-            //->dd()
-            ->timeout(30)
-            ->withBody(json_encode($data), 'application/json')
-            ->post('/')
-            ->throw(function ($response, $e) {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => "Unable to update user",
-                    ],
-                ])->getData(true);
-            })
-            ->json();
-
-        return $response;
-    }
-}
-
-// Reset password for mobile app user via Ringotel API call
-if (!function_exists('appsResetPassword')) {
-    function appsResetPassword($org_id, $user_id, $no_email = false)
-    {
-        $data = array(
-            'method' => 'resetUserPassword',
-            'params' => array(
-                'id' => $user_id,
-                'orgid' => $org_id,
-                'noemail' => $no_email
-            )
-        );
-
-        $response = Http::ringotel()
-            //->dd()
-            ->timeout(30)
-            ->withBody(json_encode($data), 'application/json')
-            ->post('/')
-            ->throw(function ($response, $e) {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => "Unable to reset password",
-                    ],
-                ])->getData(true);
-            })
-            ->json();
-
-        return $response;
-    }
-}
 
 // Set Status for mobile app user via Ringotel API call
 if (!function_exists('appsSetStatus')) {

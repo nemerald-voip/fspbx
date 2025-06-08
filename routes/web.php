@@ -274,7 +274,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/apps/organization/destroy', [AppsController::class, 'destroyOrganization'])->name('apps.organization.destroy');
     Route::post('/apps/organization/all', [AppsController::class, 'getOrganizations'])->name('apps.organization.all');
     Route::post('/apps/organization/pair', [AppsController::class, 'pairOrganization'])->name('apps.organization.pair');
-    Route::post('/apps/users/{extension}', [AppsController::class, 'mobileAppUserSettings'])->name('mobileAppUserSettings');
+    Route::post('/apps/mobile-app-options', [AppsController::class, 'getMobileAppOptions'])->name('apps.user.options');
     //Route::get('/apps/organization/update', [AppsController::class, 'updateOrganization']) ->name('appsUpdateOrganization');
     Route::post('/apps/connection/create', [AppsController::class, 'createConnection'])->name('apps.connection.create');
     Route::put('/apps/connection/update', [AppsController::class, 'updateConnection'])->name('apps.connection.update');
@@ -282,11 +282,12 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/apps/connection/update', [AppsController::class, 'updateConnection'])->name('appsUpdateConnection');
     Route::post('/apps/token/get', [AppsController::class, 'getToken'])->name('apps.token.get');
     Route::post('/apps/token/update', [AppsController::class, 'updateToken'])->name('apps.token.update');
-    Route::post('/apps/user/create', [AppsController::class, 'createUser'])->name('appsCreateUser');
-    // Route::post('/apps/{domain}/user/sync', [AppsController::class, 'syncUsers'])->name('appsSyncUsers');
+    Route::post('/apps/user/create', [AppsController::class, 'createUser'])->name('apps.user.create');
+    Route::post('/apps/user/delete', [AppsController::class, 'deleteUser'])->name('apps.user.delete');
+    Route::post('/apps/user/activate', [AppsController::class, 'activateUser'])->name('apps.user.activate');
+    Route::post('/apps/user/deactivate', [AppsController::class, 'deactivateUser'])->name('apps.user.deactivate');
     Route::post('/apps/sync-users', [AppsController::class, 'syncUsers'])->name('apps.users.sync');
-    Route::delete('/apps/users/{extension}', [AppsController::class, 'deleteUser'])->name('appsDeleteUser');
-    Route::post('/apps/users/{extension}/resetpassword', [AppsController::class, 'ResetPassword'])->name('appsResetPassword');
+    Route::post('/apps/user/reset-password', [AppsController::class, 'resetPassword'])->name('apps.user.reset');
     Route::post('/apps/users/{extension}/status', [AppsController::class, 'SetStatus'])->name('appsSetStatus');
     Route::get('/apps/email', [AppsController::class, 'emailUser'])->name('emailUser');
 

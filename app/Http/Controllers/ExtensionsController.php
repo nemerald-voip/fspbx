@@ -7,7 +7,6 @@ use Inertia\Inertia;
 use App\Models\Devices;
 use App\Data\DeviceData;
 use App\Models\FollowMe;
-use App\Models\IvrMenus;
 use App\Models\Extensions;
 use App\Models\RingGroups;
 use App\Models\Voicemails;
@@ -44,7 +43,6 @@ use Illuminate\Support\Facades\Validator;
 use Spatie\Activitylog\Contracts\Activity;
 use App\Services\CallRoutingOptionsService;
 use Propaganistas\LaravelPhone\PhoneNumber;
-use App\Http\Requests\OldStoreDeviceRequest;
 use App\Http\Requests\UpdateExtensionRequest;
 use Spatie\Activitylog\Facades\CauserResolver;
 use Propaganistas\LaravelPhone\Exceptions\NumberParseException;
@@ -375,6 +373,13 @@ class ExtensionsController extends Controller
             $updateRoute = route('extensions.update', ['extension' => $itemUuid]);
             $deviceRoute = route('extensions.devices', ['extension' => $itemUuid]);
             $routes['sip_credentials'] = route('extensions.sip.credentials', $extension);
+            $routes['regenerate_sip_credentials'] = route('extensions.sip.credentials.regenerate', $extension);
+            $routes['mobile_app_options'] = route('apps.user.options', $extension);
+            $routes['create_mobile_app'] = route('apps.user.create');
+            $routes['delete_mobile_app'] = route('apps.user.delete');
+            $routes['reset_mobile_app'] = route('apps.user.reset');
+            $routes['activate_mobile_app'] = route('apps.user.activate');
+            $routes['deactivate_mobile_app'] = route('apps.user.deactivate');
 
             $voicemailDestinations = $extension->voicemail && $extension->voicemail->voicemail_destinations
                 ? $extension->voicemail->voicemail_destinations->pluck('voicemail_uuid_copy')->values()->all()
@@ -1260,6 +1265,40 @@ class ExtensionsController extends Controller
         }
     }
 
+    /**
+     * Create new SIP Credentials for specified resource.
+     *
+     * @param \App\Models\Extentions $extention
+     * @return \Illuminate\Http\Response
+     */
+    public function regenerateSipCredentials($extension_uuid)
+    {
+        try {
+            $extension = Extensions::whereKey($extension_uuid)->firstOrFail();
+
+            // Update the password in the database
+            $extension->password = generate_password();
+            $extension->save();
+
+            // Return new credentials
+            return response()->json([
+                'success'  => true,
+                'data'  => [
+                    'extension' => $extension->extension,
+                    'password'  => $extension->password,
+                    'context'   => $extension->user_context,
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            logger('ExtensionsController@regenerateSipCredentials error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            return response()->json([
+                'success'  => false,
+                'messages' => ['error' => [$e->getMessage()]],
+                'data'     => [],
+            ], 500);
+        }
+    }
+
 
     public function devices(Request $request, $extension_uuid)
     {
@@ -1470,6 +1509,18 @@ class ExtensionsController extends Controller
                 ->with(['voicemail' => function ($query) use ($currentDomain) {
                     $query->where('domain_uuid', $currentDomain);
                 }])
+                ->with(['mobile_app' => function ($q) {
+                    $q->select([
+                        'mobile_app_user_uuid',
+                        'extension_uuid',
+                        'org_id',
+                        'conn_id',
+                        'user_id',
+                        'status',
+                        'exclude_from_stale_report',
+                    ]);
+                },
+                ])
                 ->where('extension_uuid', $id)
                 ->firstOrFail();
 
@@ -1524,6 +1575,33 @@ class ExtensionsController extends Controller
                 $extension->voicemail->syncCopies($data['voicemail_destinations']);
             }
 
+            // update mobile app
+            if ($extension->mobile_app) {
+                // Update only actual DB columns
+                if (isset($data['exclude_from_ringotel_stale_users']) && Schema::hasColumn('mobile_app_users', 'exclude_from_stale_report')) {
+                    $extension->mobile_app->exclude_from_stale_report = $data['exclude_from_ringotel_stale_users'];
+                    if ($extension->mobile_app->isDirty()) {
+                        $extension->mobile_app->save();
+                    }
+                }
+            
+                // Prepare payload for API/job (this data is NOT saved to DB, just sent to the API)
+                $mobileAppPayload = [
+                    'user_id'   => $extension->mobile_app->user_id,
+                    'org_id'    => $extension->mobile_app->org_id,
+                    'conn_id'   => $extension->mobile_app->conn_id,
+                    'status'    => $extension->mobile_app->status,
+                    'no_email'  => $extension->mobile_app->no_email ?? true,
+                    'name'      => $data['effective_caller_id_name'] ?? '',
+                    'email'     => $data['voicemail_mail_to'] ?? "",
+                    'ext'       => $data['extension'],
+                    'password'  => $extension->password,
+                ];
+            
+                // Dispatch job
+                UpdateAppSettings::dispatch($mobileAppPayload)->onQueue('default');
+            }
+
             DB::commit();
 
             //clear fusionpbx cache
@@ -1534,19 +1612,7 @@ class ExtensionsController extends Controller
                 unset($_SESSION['destinations']['array']);
             }
 
-            // dispatch the job to update app user
-            // $mobile_app = $extension->mobile_app;
-            // if (isset($mobile_app) && isset($attributes['exclude_from_ringotel_stale_users'])) {
-            //     if (Schema::hasColumn('mobile_app_users', 'exclude_from_stale_report')) {
-            //         $mobile_app->exclude_from_stale_report = $attributes['exclude_from_ringotel_stale_users'];
-            //         $mobile_app->save();
-            //     }
-            //     $mobile_app->name = $attributes['effective_caller_id_name'];
-            //     $mobile_app->email = $attributes['voicemail_mail_to'] ?? "";
-            //     $mobile_app->ext = $attributes['extension'];
-            //     $mobile_app->password = $extension->password;
-            //     UpdateAppSettings::dispatch($mobile_app->attributesToArray())->onQueue('default');
-            // }
+
 
             // logger($extension->toArray());
             return response()->json([
@@ -2087,127 +2153,6 @@ class ExtensionsController extends Controller
         ]);
     }
 
-    private function getDestinationExtensions()
-    {
-        $extensions = Extensions::where('domain_uuid', Session::get('domain_uuid'))
-            //->whereNotIn('extension_uuid', [$extension->extension_uuid])
-            ->orderBy('extension')
-            ->get();
-        $ivrMenus = IvrMenus::where('domain_uuid', Session::get('domain_uuid'))
-            //->whereNotIn('extension_uuid', [$extension->extension_uuid])
-            ->orderBy('ivr_menu_extension')
-            ->get();
-        $ringGroups = RingGroups::where('domain_uuid', Session::get('domain_uuid'))
-            //->whereNotIn('extension_uuid', [$extension->extension_uuid])
-            ->orderBy('ring_group_extension')
-            ->get();
-
-        /* NOTE: disabling voicemails as a call forward destination
-         * $voicemails = Voicemails::where('domain_uuid', Session::get('domain_uuid'))
-            //->whereNotIn('extension_uuid', [$extension->extension_uuid])
-            ->orderBy('voicemail_id')
-            ->get();*/
-        return [
-            'Extensions' => $extensions,
-            'Ivr Menus' => $ivrMenus,
-            'Ring Groups' => $ringGroups,
-            //'Voicemails' => $voicemails
-        ];
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \App\Http\Requests\StoreDeviceRequest  $request
-     * @return JsonResponse
-     */
-    public function oldStoreDevice(OldStoreDeviceRequest $request, Extensions $extension): JsonResponse
-    {
-        $inputs = $request->validated();
-
-        if ($inputs['extension_uuid']) {
-            $extension = Extensions::find($inputs['extension_uuid']);
-        } else {
-            $extension = null;
-        }
-
-        $device = new Devices();
-        $device->fill([
-            'device_address' => tokenizeMacAddress($inputs['device_address']),
-            'device_label' => $extension->extension ?? null,
-            'device_vendor' => explode("/", $inputs['device_template'])[0],
-            'device_enabled' => 'true',
-            'device_enabled_date' => date('Y-m-d H:i:s'),
-            'device_template' => $inputs['device_template'],
-            'device_profile_uuid' => $inputs['device_profile_uuid'],
-            'device_description' => '',
-        ]);
-        $device->save();
-
-        if ($extension) {
-            // Create device lines
-            $device->lines = new DeviceLines();
-            $device->lines->fill([
-                'device_uuid' => $device->device_uuid,
-                'line_number' => '1',
-                'server_address' => Session::get('domain_name'),
-                'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
-                'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
-                'server_address_primary' => get_domain_setting('server_address_primary'),
-                'server_address_secondary' => get_domain_setting('server_address_secondary'),
-                'display_name' => $extension->extension,
-                'user_id' => $extension->extension,
-                'auth_id' => $extension->extension,
-                'label' => $extension->extension,
-                'password' => $extension->password,
-                'sip_port' => get_domain_setting('line_sip_port'),
-                'sip_transport' => get_domain_setting('line_sip_transport'),
-                'register_expires' => get_domain_setting('line_register_expires'),
-                'enabled' => 'true',
-            ]);
-            $device->lines->save();
-        }
-
-
-        return response()->json([
-            'status' => 'success',
-            'device' => $device,
-            'message' => 'Device has been created and assigned.'
-        ]);
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  Request  $request
-     * @param  Devices  $device
-     * @return JsonResponse
-     */
-    public function oldEditDevice(Request $request, Extensions $extension, Devices $device): JsonResponse
-    {
-        if (!$request->ajax()) {
-            return response()->json([
-                'message' => 'XHR request expected'
-            ], 405);
-        }
-
-        if ($device->extension()) {
-            $device->extension_uuid = $device->extension()->extension_uuid;
-        }
-
-        $device->device_address = formatMacAddress($device->device_address);
-        $device->update_path = route('devices.update', $device);
-        $device->options = [
-            'templates' => getVendorTemplateCollection(),
-            'profiles' => getProfileCollection($device->domain_uuid),
-            'extensions' => getExtensionCollection($device->domain_uuid)
-        ];
-
-        return response()->json([
-            'status' => 'success',
-            'device' => $device
-        ]);
-    }
 
 
     public function getUserPermissions()

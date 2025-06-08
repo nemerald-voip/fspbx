@@ -298,10 +298,32 @@
 
                                                 ]" />
 
+                                                <FormTab name="mobile_app" label="Mobile App" :elements="[
+                                                    'mobile_app_title',
+                                                    'mobile_app_status',
+                                                    'enable_mobile_app',
+                                                    'enable_mobile_app_contact',
+                                                    'mobile_app_connection',
+                                                    'mobile_app_credentials',
+                                                    'submit_enabling_mobile_app',
+                                                    'reset_mobile_app_password',
+                                                    'deactivate_mobile_app',
+                                                    'activate_mobile_app',
+                                                    'remove_mobile_app',
+                                                    'mobile_app_loading',
+                                                    'mobile_app_error',
+                                                    'container2',
+                                                    'container3',
+                                                    'container4',
+                                                    'container5',
+
+                                                ]" />
+
                                                 <FormTab name="sip_credentials" label="SIP Credentials" :elements="[
                                                     'sip_credentials_title',
                                                     'show_sip_credentials',
                                                     'sip_credentials',
+                                                    'regenerate_sip_credentials',
 
                                                 ]" />
 
@@ -1114,7 +1136,7 @@
                                                     description='Play a prompt instructing callers to "Record your message after the tone. Stop speaking to end the recording.'
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
-                                                <!-- Devices -->
+                                                <!-- Devices tab-->
                                                 <StaticElement name="devices_title" tag="h4" content="Assigned Devices"
                                                     description="View and manage devices assigned to this extension, or assign a new device." />
 
@@ -1142,14 +1164,228 @@
                                                         @delete-item="handleUnassignDeviceButtonClick" />
                                                 </StaticElement>
 
+                                                <!-- Mobile App tab -->
+
+                                                <StaticElement name="mobile_app_title" tag="h4"
+                                                    content="Mobile App Settings"
+                                                    description="Manage mobile app assigned to this extension" />
+
+
+                                                <StaticElement name="mobile_app_status"
+                                                    :conditions="[() => mobileAppOptions]">
+                                                    <div v-if="mobileAppOptions?.mobile_app && mobileAppOptions?.mobile_app?.status == 1"
+                                                        class="flex items-center gap-x-3">
+                                                        <div
+                                                            class="flex-none rounded-full bg-green-400/10 p-1 text-green-400">
+                                                            <div class="size-2 rounded-full bg-current" />
+                                                        </div>
+                                                        <h1 class="flex gap-x-3 text-md">
+                                                            <span class="font-semibold ">Mobile App Status:</span>
+                                                            <Badge backgroundColor="bg-green-100" textColor="text-green-700"
+                                                                :text="'Active'" ringColor="ring-green-400/20"
+                                                                class="px-2 py-1 text-xs font-semibold" />
+                                                        </h1>
+                                                    </div>
+                                                    <div v-if="mobileAppOptions?.mobile_app && mobileAppOptions?.mobile_app?.status == -1"
+                                                        class="flex items-center gap-x-3">
+                                                        <div
+                                                            class="flex-none rounded-full bg-green-400/10 p-1 text-green-400">
+                                                            <div class="size-2 rounded-full bg-current" />
+                                                        </div>
+                                                        <h1 class="flex gap-x-3 text-md">
+                                                            <span class="font-semibold ">Mobile App Status:</span>
+                                                            <Badge backgroundColor="bg-blue-100" textColor="text-blue-700"
+                                                                :text="'Contact Only'" ringColor="ring-blue-400/20"
+                                                                class="px-2 py-1 text-xs font-semibold" />
+                                                        </h1>
+                                                    </div>
+                                                    <div v-if="!mobileAppOptions?.mobile_app"
+                                                        class="flex items-center gap-x-3">
+                                                        <div
+                                                            class="flex-none rounded-full bg-gray-400/10 p-1 text-gray-400">
+                                                            <div class="size-2 rounded-full bg-current" />
+                                                        </div>
+                                                        <h1 class="flex gap-x-3 text-md">
+                                                            <span class="font-semibold ">Mobile App Status:</span>
+                                                            <Badge backgroundColor="bg-gray-100" textColor="text-gray-700"
+                                                                :text="'Not Enabled'" ringColor="ring-gray-400/20"
+                                                                class="px-2 py-1 text-xs font-semibold" />
+                                                        </h1>
+                                                    </div>
+                                                </StaticElement>
+
+                                                <ButtonElement name="enable_mobile_app" button-label="Enable"
+                                                    label="Step 1: Enable Mobile App for Extension"
+                                                    @click="handleMobileAppEnableButtonClick"
+                                                    description="Allow this extension to sign in and use the mobile app."
+                                                    :conditions="[() => !mobileAppOptions?.mobile_app && mobileAppOptions && !creatingInitiated]" />
+
+                                                <GroupElement name="container2"
+                                                    :conditions="[() => !mobileAppOptions?.mobile_app && mobileAppOptions]" />
+
+                                                <ButtonElement name="enable_mobile_app_contact" button-label="Add Contact"
+                                                    label="OR Step 1: Add to Address Book" :secondary="true"
+                                                    @click="handleMobileAppContactButtonClick"
+                                                    description="Create a new contact entry for this extension in the company address book."
+                                                    :conditions="[() => !mobileAppOptions?.mobile_app && mobileAppOptions && !creatingInitiated]" />
+
+
+                                                <SelectElement name="mobile_app_connection"
+                                                    :items="mobileAppOptions?.connections" :search="true" :native="false"
+                                                    label="Step 2: Select connection" label-prop="name" value-prop="id"
+                                                    input-type="search" autocomplete="off" :strict="false" :columns="{
+                                                        sm: {
+                                                            wrapper: 6,
+                                                        },
+                                                    }"
+                                                    :conditions="[() => !!mobileAppOptions?.connections && creatingInitiated]" />
+
+                                                <StaticElement name="mobile_app_credentials"
+                                                    :conditions="[() => !!mobileApp]">
+                                                    <div v-if="mobileApp && mobileApp.user"
+                                                        class="flex bg-white p-6 rounded-lg shadow-md ">
+
+                                                        <div class="grow">
+                                                            <h3 class="text-lg font-semibold mb-4">Mobile App Details</h3>
+                                                            <ul class="mb-4 space-y-1 text-sm">
+                                                                <li
+                                                                    class="flex flex-col sm:flex-row sm:items-center mt-1 gap-1 text-sm ">
+                                                                    <strong>Username:</strong> {{ mobileApp.user.username }}
+                                                                    <button type="button"
+                                                                        @click="handleCopyToClipboard(mobileApp.user.username)">
+                                                                        <ClipboardDocumentIcon
+                                                                            class="h-5 w-5 text-blue-500 hover:text-blue-900 cursor-pointer" />
+                                                                    </button>
+                                                                </li>
+
+                                                                <li
+                                                                    class="flex flex-col sm:flex-row sm:items-center mt-1 gap-1 text-sm ">
+                                                                    <strong>Domain:</strong> {{ mobileApp.user.domain }}
+                                                                    <button type="button"
+                                                                        @click="handleCopyToClipboard(mobileApp.user.domain)">
+                                                                        <ClipboardDocumentIcon
+                                                                            class="h-5 w-5 text-blue-500 hover:text-blue-900 cursor-pointer" />
+                                                                    </button>
+                                                                </li>
+
+                                                                <li
+                                                                    class="flex flex-col sm:flex-row sm:items-center mt-1 gap-1 text-sm ">
+                                                                    <strong>Password:</strong>
+                                                                    <span class="font-mono">{{
+                                                                        mobileApp.user.password }}</span>
+                                                                    <button type="button"
+                                                                        @click="handleCopyToClipboard(mobileApp.user.password)">
+                                                                        <ClipboardDocumentIcon
+                                                                            class="h-5 w-5 text-blue-500 hover:text-blue-900 cursor-pointer" />
+                                                                    </button>
+                                                                </li>
+
+                                                            </ul>
+                                                        </div>
+
+                                                        <div v-if="mobileApp.qrcode" class="">
+                                                            <h4 class="text-md font-semibold mb-2">QR Code</h4>
+                                                            <img :src="`data:image/png;base64,${mobileApp.qrcode}`"
+                                                                alt="QR Code" class="w-30 h-30 border rounded" />
+                                                            <!-- <p class="text-xs text-gray-400 mt-1">Scan this code in the
+                                                                mobile app to sign in.</p> -->
+                                                        </div>
+                                                    </div>
+
+                                                </StaticElement>
+
+                                                <ButtonElement name="submit_enabling_mobile_app" button-label="Submit"
+                                                    @click="handleMobileAppSubmitButtonClick"
+                                                    :loading="isMobileAppLoading.submit"
+                                                    :conditions="[() => !mobileAppOptions?.mobile_app && mobileAppOptions && creatingInitiated]" />
+
+                                                <ButtonElement name="reset_mobile_app_password"
+                                                    button-label="Reset Credentials" label="Reset Mobile App Login"
+                                                    :loading="isMobileAppLoading.reset"
+                                                    @click="handleMobileAppResetButtonClick"
+                                                    description="Generate new app credentials and sign out all currently logged-in devices."
+                                                    :conditions="[() => !!mobileAppOptions?.mobile_app && mobileAppOptions?.mobile_app?.status == 1]" />
+
+                                                <GroupElement name="container3"
+                                                    :conditions="[() => !!mobileAppOptions?.mobile_app && mobileAppOptions?.mobile_app?.status == 1]" />
+
+                                                <ButtonElement name="deactivate_mobile_app" button-label="Deactivate"
+                                                    label="Suspend Mobile App Access"
+                                                    :loading="isMobileAppLoading.deactivate"
+                                                    @click="handleMobileAppDeactivateButtonClick"
+                                                    description="Prevent this extension from signing in to the mobile app. The user will remain visible in the address book."
+                                                    :secondary="true"
+                                                    :conditions="[() => !!mobileAppOptions?.mobile_app && mobileAppOptions?.mobile_app?.status == 1]" />
+
+
+                                                <ButtonElement name="activate_mobile_app" button-label="Activate"
+                                                    label="Activate Mobile App"
+                                                    :loading="isMobileAppLoading.activate"
+                                                    @click="handleMobileAppActivateButtonClick"
+                                                    description="Allow this extension to sign in and use the mobile app."
+                                                    :conditions="[() => !!mobileAppOptions?.mobile_app && mobileAppOptions?.mobile_app?.status == -1]" />
+
+                                                <GroupElement name="container4"
+                                                    :conditions="[() => !!mobileAppOptions?.mobile_app && mobileAppOptions?.mobile_app?.status == -1]" />
+
+                                                <ButtonElement name="remove_mobile_app" button-label="Remove"
+                                                    label="Remove Mobile App" @click="handleMobileAppRemoveButtonClick"
+                                                    :loading="isMobileAppLoading.remove"
+                                                    description="Permanently delete the mobile app association for this extension."
+                                                    :danger="true" :conditions="[() => !!mobileAppOptions?.mobile_app]" />
+
+                                                <GroupElement name="container5"
+                                                    :conditions="[() => !!mobileAppOptions?.mobile_app]" />
+
+
+                                                <StaticElement name="mobile_app_loading">
+                                                    <div v-if="isMobileAppOptionsLoading"
+                                                        class="text-center my-5 text-sm text-gray-500">
+                                                        <div class="animate-pulse flex space-x-4">
+                                                            <div class="flex-1 space-y-6 py-1">
+                                                                <div class="h-2 bg-slate-200 rounded"></div>
+                                                                <div class="h-2 bg-slate-200 rounded"></div>
+                                                                <div class="h-2 bg-slate-200 rounded"></div>
+                                                                <div class="h-2 bg-slate-200 rounded"></div>
+
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </StaticElement>
+
+                                                <StaticElement name="mobile_app_error">
+                                                    <div v-if="mobileAppError"
+                                                        class="border-l-4 border-yellow-400 bg-yellow-50 p-4">
+                                                        <div class="flex">
+                                                            <div class="shrink-0">
+                                                                <ExclamationTriangleIcon class="size-5 text-yellow-400"
+                                                                    aria-hidden="true" />
+                                                            </div>
+                                                            <div class="ml-3">
+                                                                <p class="text-sm text-yellow-700">
+                                                                    {{ mobileAppError }}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </StaticElement>
+
+
                                                 <!-- SIP Credentials -->
 
                                                 <StaticElement name="sip_credentials_title" tag="h4"
                                                     content="Show SIP Credentials" description="" />
 
                                                 <ButtonElement name="show_sip_credentials" button-label="Show"
+                                                    :conditions="[() => { return !sip_credentials }]"
                                                     @click="handleSipCredentialsButtonClick" label="SIP Credentials"
                                                     :loading="isSipCredentialsLoading" />
+
+                                                <ButtonElement name="regenerate_sip_credentials" button-label="Regenerate"
+                                                    :conditions="[() => { return !!sip_credentials }]"
+                                                    @click="handleSipCredentialsRegenerateClick" :secondary="true"
+                                                    label="Regenerate SIP Credentials"
+                                                    :loading="isSipCredentialsRegenerateLoading" />
 
                                                 <StaticElement name="sip_credentials"
                                                     :conditions="[() => { return !!sip_credentials }]">
@@ -1162,7 +1398,8 @@
                                                                 class="flex flex-row items-center mt-1 gap-2 text-sm text-gray-900 sm:col-span-2">
                                                                 {{ sip_credentials?.extension }}
 
-                                                                <div  @click="handleCopyToClipboard(sip_credentials?.extension)">
+                                                                <div
+                                                                    @click="handleCopyToClipboard(sip_credentials?.extension)">
                                                                     <ClipboardDocumentIcon
                                                                         class="h-5 w-5 text-gray-500 hover:text-gray-900 cursor-pointer" />
                                                                 </div>
@@ -1177,7 +1414,8 @@
                                                                 class="flex flex-row items-center mt-1 gap-2 text-sm text-gray-900 sm:col-span-2">
                                                                 {{ sip_credentials?.password }}
 
-                                                                <div  @click="handleCopyToClipboard(sip_credentials?.password)">
+                                                                <div
+                                                                    @click="handleCopyToClipboard(sip_credentials?.password)">
                                                                     <ClipboardDocumentIcon
                                                                         class="h-5 w-5 text-gray-500 hover:text-gray-900 cursor-pointer" />
                                                                 </div>
@@ -1188,11 +1426,12 @@
                                                             <dt
                                                                 class="text-sm font-medium text-gray-500 sm:w-40 sm:shrink-0">
                                                                 Domain</dt>
-                                                                <dd
+                                                            <dd
                                                                 class="flex flex-row items-center mt-1 gap-2 text-sm text-gray-900 sm:col-span-2">
                                                                 {{ sip_credentials?.context }}
 
-                                                                <div  @click="handleCopyToClipboard(sip_credentials?.context)">
+                                                                <div
+                                                                    @click="handleCopyToClipboard(sip_credentials?.context)">
                                                                     <ClipboardDocumentIcon
                                                                         class="h-5 w-5 text-gray-500 hover:text-gray-900 cursor-pointer" />
                                                                 </div>
@@ -1431,7 +1670,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, reactive } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import { PlusIcon, TrashIcon, PencilSquareIcon } from '@heroicons/vue/20/solid'
@@ -1446,6 +1685,7 @@ import AssignExtensionDeviceForm from "../forms/AssignExtensionDeviceForm.vue";
 import Badge from "@generalComponents/Badge.vue";
 import AssignedDevices from "../AssignedDevices.vue";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
+import { ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
 
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
@@ -1460,7 +1700,10 @@ const props = defineProps({
 const form$ = ref(null)
 const showResetConfirmationModal = ref(false);
 const isDevicesLoading = ref(false)
+const isMobileAppOptionsLoading = ref(false)
+const mobileAppError = ref(false)
 const isSipCredentialsLoading = ref(false)
+const isSipCredentialsRegenerateLoading = ref(false)
 const isUnassignDeviceLoading = ref(false)
 const showDeleteConfirmationModal = ref(false)
 const showUnassignConfirmationModal = ref(false)
@@ -1470,6 +1713,8 @@ const showDeviceCreateModal = ref(false)
 const showDeviceAssignModal = ref(false)
 const devices = ref([])
 const sip_credentials = ref(null)
+const mobileApp = ref(null)
+const mobileAppOptions = ref(null)
 const showApiTokenModal = ref(false)
 const isDownloading = ref(false);
 const isNameAudioPlaying = ref(false);
@@ -1482,6 +1727,15 @@ const greetings = ref(props.options?.voicemail?.greetings)
 const recorded_name = ref(props.options?.recorded_name)
 const deviceItemOptions = ref(null)
 const confirmUnassignAction = ref(null)
+const creatingInitiated = ref(false)
+const isMobileAppLoading = reactive({
+    submit: false,
+    reset: false,
+    activate: false,
+    deactivate: false,
+    remove: false,
+})
+const mobileAppContactOnly = ref(false)
 
 // Watch for changes in the prop and update the ref
 watch(
@@ -1639,6 +1893,13 @@ const handleTabSelected = (activeTab, previousTab) => {
     if (activeTab.name == 'devices') {
         getDevices()
     }
+    if (activeTab.name == 'mobile_app') {
+        mobileAppOptions.value = null
+        creatingInitiated.value = false
+        mobileApp.value = null
+        getMobileAppOptions()
+    }
+
 }
 
 const getDevices = async () => {
@@ -1655,6 +1916,159 @@ const getDevices = async () => {
         });
 }
 
+const getMobileAppOptions = async () => {
+    isMobileAppOptionsLoading.value = true
+    mobileAppError.value = false
+    axios.post(props.options.routes.mobile_app_options,
+        {
+            extension_uuid: props.options.item.extension_uuid,
+        }
+    )
+        .then((response) => {
+            mobileAppOptions.value = response.data;
+            // console.log(mobileAppOptions.value);
+            form$.value.el$('mobile_app_connection').update(mobileAppOptions?.value?.connections[0]?.id)
+
+        }).catch((error) => {
+            emit('error', error)
+            mobileAppError.value = error?.response?.data?.errors?.error[0] ?? null
+        }).finally(() => {
+            isMobileAppOptionsLoading.value = false
+        });
+}
+
+const handleMobileAppEnableButtonClick = async () => {
+    creatingInitiated.value = true
+    mobileAppContactOnly.value = false
+}
+
+const handleMobileAppContactButtonClick = async () => {
+    creatingInitiated.value = true
+    mobileAppContactOnly.value = true
+}
+
+const handleMobileAppSubmitButtonClick = async () => {
+    isMobileAppLoading.submit = true
+    axios.post(props.options.routes.create_mobile_app,
+        {
+            extension_uuid: props.options.item.extension_uuid,
+            connection: form$.value.el$('mobile_app_connection').value,
+            org_id: mobileAppOptions.value.org_id,
+            app_domain: mobileAppOptions.value.app_domain,
+            status: mobileAppContactOnly.value ? -1 : 1,
+        }
+    )
+        .then((response) => {
+            if (mobileAppContactOnly.value) {
+                mobileApp.value = response.data;
+                // console.log(mobileApp.value);
+            }
+
+            getMobileAppOptions()
+            creatingInitiated.value = false
+
+        }).catch((error) => {
+            emit('error', error)
+        }).finally(() => {
+            isMobileAppLoading.submit = false
+        });
+}
+
+const handleMobileAppRemoveButtonClick = async () => {
+    isMobileAppLoading.remove = true
+    axios.post(props.options.routes.delete_mobile_app,
+        {
+            mobile_app_user_uuid: mobileAppOptions?.value?.mobile_app?.mobile_app_user_uuid,
+            org_id: mobileAppOptions?.value?.mobile_app?.org_id,
+            user_id: mobileAppOptions?.value?.mobile_app?.user_id
+        }
+    )
+        .then((response) => {
+            emit('success', 'success', response.data.messages);
+
+            getMobileAppOptions()
+
+        }).catch((error) => {
+            emit('error', error)
+        }).finally(() => {
+            isMobileAppLoading.remove = false
+            mobileApp.value = false
+        });
+}
+
+const handleMobileAppResetButtonClick = async () => {
+    isMobileAppLoading.reset = true
+    axios.post(props.options.routes.reset_mobile_app,
+        {
+            extension_uuid: props.options.item.extension_uuid,
+            email: props.options.item.email,
+            org_id: mobileAppOptions?.value?.mobile_app?.org_id,
+            user_id: mobileAppOptions?.value?.mobile_app?.user_id
+        }
+    )
+        .then((response) => {
+            mobileApp.value = response.data;
+            console.log(mobileApp.value);
+
+            emit('success', 'success', response.data.messages);
+
+            getMobileAppOptions()
+
+        }).catch((error) => {
+            emit('error', error)
+        }).finally(() => {
+            isMobileAppLoading.reset = false
+        });
+}
+
+const handleMobileAppDeactivateButtonClick = async () => {
+    isMobileAppLoading.deactivate = true
+    axios.post(props.options.routes.deactivate_mobile_app,
+        {
+            mobile_app_user_uuid: mobileAppOptions?.value?.mobile_app?.mobile_app_user_uuid,
+            org_id: mobileAppOptions?.value?.mobile_app?.org_id,
+            user_id: mobileAppOptions?.value?.mobile_app?.user_id
+        }
+    )
+        .then((response) => {
+
+            emit('success', 'success', response.data.messages);
+
+            getMobileAppOptions()
+
+        }).catch((error) => {
+            emit('error', error)
+        }).finally(() => {
+            isMobileAppLoading.deactivate = false
+        });
+}
+
+const handleMobileAppActivateButtonClick = async () => {
+    isMobileAppLoading.activate = true
+    axios.post(props.options.routes.activate_mobile_app,
+        {
+            extension_uuid: props.options.item.extension_uuid,
+            email: props.options.item.email,
+            org_id: mobileAppOptions?.value?.mobile_app?.org_id,
+            user_id: mobileAppOptions?.value?.mobile_app?.user_id
+        }
+    )
+        .then((response) => {
+            mobileApp.value = response.data;
+            // console.log(mobileApp.value);
+
+            emit('success', 'success', response.data.messages);
+
+            getMobileAppOptions()
+
+        }).catch((error) => {
+            emit('error', error)
+        }).finally(() => {
+            isMobileAppLoading.activate = false
+        });
+}
+
+
 const handleSipCredentialsButtonClick = async () => {
     isSipCredentialsLoading.value = true
     axios.get(props.options.routes.sip_credentials)
@@ -1666,6 +2080,20 @@ const handleSipCredentialsButtonClick = async () => {
             emit('error', error)
         }).finally(() => {
             isSipCredentialsLoading.value = false
+        });
+}
+
+const handleSipCredentialsRegenerateClick = async () => {
+    isSipCredentialsRegenerateLoading.value = true
+    axios.get(props.options.routes.regenerate_sip_credentials)
+        .then((response) => {
+            sip_credentials.value = response.data.data;
+            // console.log(sip_credentials.value);
+
+        }).catch((error) => {
+            emit('error', error)
+        }).finally(() => {
+            isSipCredentialsRegenerateLoading.value = false
         });
 }
 
