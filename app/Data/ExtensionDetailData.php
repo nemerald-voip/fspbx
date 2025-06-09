@@ -43,7 +43,7 @@ class ExtensionDetailData extends Data
         public ?string $dial_string,
         public ?string $force_ping,
         public ?string $user_context,
-        public ?bool $exclude_from_ringotel_stale_users,
+        public ?string $accountcode,
         public ?string $user_record,
         public ?bool $suspended,
         public ?string $description,

@@ -110,34 +110,6 @@ if (!function_exists('getFusionPBXPreviousURL')) {
 }
 
 
-if (!function_exists('appsGetOrganization')) {
-    function appsGetOrganization($org_id)
-    {
-        $data = array(
-            'method' => 'getOrganization',
-            'params' => array(
-                'id' => $org_id,
-            )
-        );
-
-        $response = Http::ringotel()
-            //->dd()
-            ->timeout(30)
-            ->withBody(json_encode($data), 'application/json')
-            ->post('/')
-            ->throw(function ($response, $e) {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => "Unable to retrieve organization",
-                    ],
-                ])->getData(true);
-            })
-            ->json();
-        return $response;
-    }
-}
-
 
 // DEPRECIATED
 // Delete mobile app user via Ringotel API call
@@ -204,46 +176,6 @@ if (!function_exists('appsSetStatus')) {
     }
 }
 
-// Delete organizaion via Ringotel API call
-if (!function_exists('appsDeleteOrganization')) {
-    function appsDeleteOrganization($org_id)
-    {
-        $data = array(
-            'method' => 'deleteOrganization',
-            'params' => array(
-                'id' => $org_id,
-            )
-        );
-
-        $response = Http::ringotel()
-            //->dd()
-            ->timeout(30)
-            ->withBody(json_encode($data), 'application/json')
-            ->post('/')
-            ->throw(function ($response, $e) {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => "Unable to delete organization",
-                    ],
-                ])->getData(true);
-            })
-            ->json();
-
-        Log::info($response);
-
-        if (!isset($array) || empty($array)) {
-            return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => "Organization not found",
-                ],
-            ])->getData(true);
-        }
-
-        return $response;
-    }
-}
 
 if (!function_exists('event_socket_create')) {
     function event_socket_create($host, $port, $password)

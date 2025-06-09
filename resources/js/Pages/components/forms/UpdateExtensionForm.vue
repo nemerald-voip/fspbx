@@ -82,7 +82,8 @@
                                     dial_string: options.item.dial_string ?? '',
                                     force_ping: options.item.force_ping ?? 'false',
                                     user_context: options.item.user_context ?? '',
-                                    exclude_from_ringotel_stale_users: options.item?.mobile_app?.exclude_from_ringotel_stale_users ?? false,
+                                    accountcode: options.item.accountcode ?? '',
+                                    exclude_from_ringotel_stale_users: options.item?.mobile_app?.exclude_from_stale_report ?? false,
                                     recording: !!options.item.user_record,
                                     user_record: options.item.user_record ?? null,
                                     forward_all_enabled: props.options.item.forward_all_enabled ?? 'false',
@@ -208,8 +209,8 @@
                                                     'user_record',
                                                     'divider17',
                                                     'container_2',
-                                                    'container_3',
-                                                    'submit',
+                                                    'container_basic',
+                                                    'submit_basic',
 
                                                 ]" />
                                                 <FormTab name="caller_id" label="Caller ID" :elements="[
@@ -217,10 +218,11 @@
                                                     'emergency_caller_id_title',
                                                     'outbound_caller_id_number',
                                                     'emergency_caller_id_number',
-                                                    'container_3',
-                                                    'submit',
+                                                    'container_caller_id',
+                                                    'submit_caller_id',
 
-                                                ]" />
+                                                ]"
+                                                    :conditions="[() => options.permissions.manage_external_caller_id_number || options.permissions.manage_emergency_caller_id_number]" />
                                                 <FormTab name="call_forward" label="Call Forward" :elements="[
                                                     'forward_all_calls_title',
                                                     'forward_all_enabled',
@@ -256,10 +258,10 @@
                                                     'selectedDestinations',
                                                     'follow_me_ring_my_phone_timeout',
                                                     'addFollowMeDestinationsButton',
-                                                    'container_3',
-                                                    'submit',
+                                                    'container_forward',
+                                                    'submit_forward',
 
-                                                ]" />
+                                                ]" :conditions="[() => options.permissions.manage_forwarding]" />
                                                 <FormTab name="voicemail" label="Voicemail" :elements="[
                                                     'voicemail_title',
                                                     'voicemail_enabled',
@@ -286,15 +288,16 @@
                                                     'divider15',
                                                     'voicemail_recording_instructions',
                                                     'submit',
+                                                    'container_voicemail',
+                                                    'submit_voicemail',
 
                                                 ]" />
 
                                                 <FormTab name="devices" label="Devices" :elements="[
                                                     'devices_title',
                                                     'device_table',
-
-                                                    'container1',
-                                                    'submit',
+                                                    'container_devices',
+                                                    'submit_devices',
 
                                                 ]" />
 
@@ -316,6 +319,8 @@
                                                     'container3',
                                                     'container4',
                                                     'container5',
+                                                    'container_mobile_app',
+                                                    'submit_mobile_app',
 
                                                 ]" />
 
@@ -324,8 +329,10 @@
                                                     'show_sip_credentials',
                                                     'sip_credentials',
                                                     'regenerate_sip_credentials',
+                                                    'container_sip_credentials',
+                                                    'submit_sip_credentials',
 
-                                                ]" />
+                                                ]" :conditions="[() => options.permissions.extension_password]"/>
 
                                                 <FormTab name="advanced" label="Advanced Settings" :elements="[
                                                     'advanced_title',
@@ -347,15 +354,16 @@
                                                     'dial_string',
                                                     'force_ping',
                                                     'user_context',
+                                                    'accountcode',
                                                     'exclude_from_ringotel_stale_users',
                                                     'auth_acl',
                                                     'divider3',
                                                     'divider4',
                                                     'divider16',
-                                                    'container1',
-                                                    'submit',
+                                                    'container_advanced',
+                                                    'submit_advanced',
 
-                                                ]" />
+                                                ]" :conditions="[() => options.permissions.extension_advanced]"/>
                                             </FormTabs>
                                         </div>
 
@@ -384,7 +392,8 @@
                                                         sm: {
                                                             container: 6,
                                                         }
-                                                    }" />
+                                                    }" :disabled="!options.permissions.extension_extension"/>
+                                                    
                                                 <TextElement name="voicemail_mail_to" label="Email"
                                                     placeholder="Enter Email" :floating="false" :columns="{
                                                         container: 6,
@@ -403,7 +412,7 @@
                                                             'form-color-on-primary': 'form-color-on-danger'
 
                                                         }
-                                                    }" />
+                                                    }" :disabled="!options.permissions.extension_suspended"/>
 
                                                 <StaticElement name="divider" tag="hr" />
 
@@ -415,18 +424,20 @@
                                                             'form-color-on-primary': 'form-color-on-danger'
 
                                                         }
-                                                    }" />
+                                                    }" :conditions="[() => options.permissions.extension_do_not_disturb]"/>
 
-                                                <StaticElement name="divider1" tag="hr" />
+                                                <StaticElement name="divider1" tag="hr" :conditions="[() => options.permissions.extension_do_not_disturb]"/>
 
                                                 <ToggleElement name="enabled" text="Status" true-value="true"
                                                     false-value="false"
-                                                    description="Activate or deactivate the extension. When deactivated, devices cannot connect and calls cannot be placed or received." />
+                                                    description="Activate or deactivate the extension. When deactivated, devices cannot connect and calls cannot be placed or received." 
+                                                    :conditions="[() => options.permissions.extension_enabled]"/>
 
-                                                <StaticElement name="divider2" tag="hr" />
+                                                <StaticElement name="divider2" tag="hr" :conditions="[() => options.permissions.extension_enabled]"/>
 
                                                 <ToggleElement name="recording" text="Record Calls" :submit="false"
-                                                    description="Activate or deactivate call recording for the extension." />
+                                                    description="Activate or deactivate call recording for the extension." 
+                                                    :conditions="[() => options.permissions.extension_user_record]"/>
 
                                                 <RadiogroupElement name="user_record" :items="[
                                                     {
@@ -447,7 +458,7 @@
                                                     },
                                                 ]" label="Record" :conditions="[['recording', '==', true,],]" />
 
-                                                <StaticElement name="divider17" tag="hr" />
+                                                <StaticElement name="divider17" tag="hr" :conditions="[() => options.permissions.extension_user_record]"/>
 
                                                 <SelectElement name="call_timeout" :items="delayOptions" :search="true"
                                                     :native="false" label="Send unanswered calls to voicemail after"
@@ -460,32 +471,50 @@
                                                     placeholder="Select option" :floating="false" />
 
 
+                                                <GroupElement name="container_basic" />
+
+                                                <ButtonElement name="submit_basic" button-label="Save" :submits="true"
+                                                    align="right" />
+
+
                                                 <!-- Caller ID Tab -->
                                                 <StaticElement name="external_caller_id_title" tag="h4"
                                                     content="External Caller ID"
-                                                    description="Define the External Caller ID that will be displayed on the recipient's device when dialing outside the company." />
+                                                    description="Define the External Caller ID that will be displayed on the recipient's device when dialing outside the company."
+                                                    :conditions="[() => options.permissions.manage_external_caller_id_number]" />
 
                                                 <SelectElement name="outbound_caller_id_number"
                                                     :items="options.phone_numbers" :search="true" :native="false"
-                                                    input-type="search" autocomplete="off" />
+                                                    input-type="search" autocomplete="off"
+                                                    :conditions="[() => options.permissions.manage_external_caller_id_number]" />
+
                                                 <StaticElement name="emergency_caller_id_title" tag="h4"
                                                     content="Emergency Caller ID"
-                                                    description="Define the Emergency Caller ID that will be displayed when dialing emergency services." />
+                                                    description="Define the Emergency Caller ID that will be displayed when dialing emergency services."
+                                                    :conditions="[() => options.permissions.manage_emergency_caller_id_number]" />
 
                                                 <SelectElement name="emergency_caller_id_number"
                                                     :items="options.phone_numbers" :search="true" :native="false"
-                                                    input-type="search" autocomplete="off" />
+                                                    input-type="search" autocomplete="off"
+                                                    :conditions="[() => options.permissions.manage_emergency_caller_id_number]" />
 
+                                                <GroupElement name="container_caller_id" />
+
+                                                <ButtonElement name="submit_caller_id" button-label="Save" :submits="true"
+                                                    align="right" />
 
                                                 <!-- Call Forward Tab -->
 
                                                 <StaticElement name="forward_all_calls_title" tag="h4"
                                                     content="Forward All Calls"
-                                                    description="Instantly and unconditionally forward all incoming calls to another destination. No calls will ring to your phone until forwarding is disabled." />
+                                                    description="Instantly and unconditionally forward all incoming calls to another destination. No calls will ring to your phone until forwarding is disabled."
+                                                    :conditions="[() => options.permissions.extension_forward_all]" />
+
                                                 <ToggleElement name="forward_all_enabled" :labels="{
                                                     on: 'On',
                                                     off: 'Off',
-                                                }" true-value="true" false-value="false" />
+                                                }" true-value="true" false-value="false"
+                                                    :conditions="[() => options.permissions.extension_forward_all]" />
 
                                                 <SelectElement name="forward_all_action" :items="options.forwarding_types"
                                                     :search="true" :native="false" label="Choose Action" input-type="search"
@@ -542,18 +571,21 @@
     ['forward_all_action', 'not_empty'],
     ['forward_all_action', 'in', ['external']]
 ]" />
-                                                <StaticElement name="divider5" tag="hr" />
+                                                <StaticElement name="divider5" tag="hr"
+                                                    :conditions="[() => options.permissions.extension_forward_all]" />
 
 
 
                                                 <StaticElement name="forward_busy_title" tag="h4"
                                                     content="When user is busy"
-                                                    description="Automatically redirect incoming calls to a different destination when your line is busy or Do Not Disturb is active." />
+                                                    description="Automatically redirect incoming calls to a different destination when your line is busy or Do Not Disturb is active."
+                                                    :conditions="[() => options.permissions.extension_forward_busy]" />
 
                                                 <ToggleElement name="forward_busy_enabled" :labels="{
                                                     on: 'On',
                                                     off: 'Off',
-                                                }" true-value="true" false-value="false" />
+                                                }" true-value="true" false-value="false"
+                                                    :conditions="[() => options.permissions.extension_forward_busy]" />
 
                                                 <SelectElement name="forward_busy_action" :items="options.forwarding_types"
                                                     :search="true" :native="false" label="Choose Action" input-type="search"
@@ -611,16 +643,19 @@
     ['forward_busy_action', 'not_empty'],
     ['forward_busy_action', 'in', ['external']]
 ]" />
-                                                <StaticElement name="divider6" tag="hr" />
+                                                <StaticElement name="divider6" tag="hr"
+                                                    :conditions="[() => options.permissions.extension_forward_busy]" />
 
                                                 <StaticElement name="forward_no_answer_title" tag="h4"
                                                     content="When user does not answer the call"
-                                                    description="Automatically redirect incoming calls to another number if you do not answer within a set time." />
+                                                    description="Automatically redirect incoming calls to another number if you do not answer within a set time."
+                                                    :conditions="[() => options.permissions.extension_forward_no_answer]" />
 
                                                 <ToggleElement name="forward_no_answer_enabled" :labels="{
                                                     on: 'On',
                                                     off: 'Off',
-                                                }" true-value="true" false-value="false" />
+                                                }" true-value="true" false-value="false"
+                                                    :conditions="[() => options.permissions.extension_forward_no_answer]" />
 
                                                 <SelectElement name="forward_no_answer_action"
                                                     :items="options.forwarding_types" :search="true" :native="false"
@@ -679,17 +714,20 @@
     ['forward_no_answer_action', 'in', ['external']]
 ]" />
 
-                                                <StaticElement name="divider7" tag="hr" />
+                                                <StaticElement name="divider7" tag="hr"
+                                                    :conditions="[() => options.permissions.extension_forward_no_answer]" />
 
 
                                                 <StaticElement name="forward_user_not_registered_title" tag="h4"
                                                     content="When Device Is Not Registered (Internet Outage)"
-                                                    description="Redirect calls to a different number if your device is not registered or unreachable." />
+                                                    description="Redirect calls to a different number if your device is not registered or unreachable."
+                                                    :conditions="[() => options.permissions.extension_forward_not_registered]" />
 
                                                 <ToggleElement name="forward_user_not_registered_enabled" :labels="{
                                                     on: 'On',
                                                     off: 'Off',
-                                                }" true-value="true" false-value="false" />
+                                                }" true-value="true" false-value="false"
+                                                    :conditions="[() => options.permissions.extension_forward_not_registered]" />
 
                                                 <SelectElement name="forward_user_not_registered_action"
                                                     :items="options.forwarding_types" :search="true" :native="false"
@@ -750,16 +788,19 @@
     ['forward_user_not_registered_action', 'in', ['external']]
 ]" />
 
-                                                <StaticElement name="divider8" tag="hr" />
+                                                <StaticElement name="divider8" tag="hr"
+                                                    :conditions="[() => options.permissions.extension_forward_not_registered]" />
 
 
                                                 <StaticElement name="follow_me_title" tag="h4" content="Call Sequence"
-                                                    description="Calls ring all your devices first, then your backup destinations one at a time until someone answers" />
+                                                    description="Calls ring all your devices first, then your backup destinations one at a time until someone answers"
+                                                    :conditions="[() => options.permissions.extension_call_sequence]" />
 
                                                 <ToggleElement name="follow_me_enabled" :labels="{
                                                     on: 'On',
                                                     off: 'Off',
-                                                }" true-value="true" false-value="false" />
+                                                }" true-value="true" false-value="false"
+                                                    :conditions="[() => options.permissions.extension_call_sequence]" />
 
                                                 <SelectElement name="follow_me_ring_my_phone_timeout"
                                                     :items="timeoutOptions" :search="true" :native="false"
@@ -844,6 +885,11 @@
                                                         </ObjectElement>
                                                     </template>
                                                 </ListElement>
+
+                                                <GroupElement name="container_forward" />
+
+                                                <ButtonElement name="submit_forward" button-label="Save" :submits="true"
+                                                    align="right" />
 
 
 
@@ -1117,6 +1163,7 @@
                                                 <StaticElement name="divider14" tag="hr" top="1" bottom="1"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
+
                                                 <!-- Voicemail Advanced -->
                                                 <StaticElement name="voicemail_advanced_title" tag="h4" content="Advanced"
                                                     description="Set advanced settings for this voicemail."
@@ -1135,6 +1182,11 @@
                                                     text="Play Recording Instructions" true-value="true" false-value="false"
                                                     description='Play a prompt instructing callers to "Record your message after the tone. Stop speaking to end the recording.'
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
+
+                                                <GroupElement name="container_voicemail" />
+
+                                                <ButtonElement name="submit_voicemail" button-label="Save" :submits="true"
+                                                    align="right" />
 
                                                 <!-- Devices tab-->
                                                 <StaticElement name="devices_title" tag="h4" content="Assigned Devices"
@@ -1163,6 +1215,11 @@
                                                         @edit-item="handleDeviceEditButtonClick"
                                                         @delete-item="handleUnassignDeviceButtonClick" />
                                                 </StaticElement>
+
+                                                <GroupElement name="container_devices" />
+
+                                                <ButtonElement name="submit_devices" button-label="Save" :submits="true"
+                                                    align="right" />
 
                                                 <!-- Mobile App tab -->
 
@@ -1319,8 +1376,7 @@
 
 
                                                 <ButtonElement name="activate_mobile_app" button-label="Activate"
-                                                    label="Activate Mobile App"
-                                                    :loading="isMobileAppLoading.activate"
+                                                    label="Activate Mobile App" :loading="isMobileAppLoading.activate"
                                                     @click="handleMobileAppActivateButtonClick"
                                                     description="Allow this extension to sign in and use the mobile app."
                                                     :conditions="[() => !!mobileAppOptions?.mobile_app && mobileAppOptions?.mobile_app?.status == -1]" />
@@ -1369,6 +1425,11 @@
                                                         </div>
                                                     </div>
                                                 </StaticElement>
+
+                                                <GroupElement name="container_mobile_app" />
+
+                                                <ButtonElement name="submit_mobile_app" button-label="Save" :submits="true"
+                                                    align="right" />
 
 
                                                 <!-- SIP Credentials -->
@@ -1441,6 +1502,11 @@
                                                     </div>
                                                 </StaticElement>
 
+                                                <GroupElement name="container_sip_credentials" />
+
+                                                <ButtonElement name="submit_sip_credentials" button-label="Save"
+                                                    :submits="true" align="right" />
+
                                                 <!-- Advaced settings -->
 
                                                 <StaticElement name="advanced_title" tag="h4" content="Advanced Settings"
@@ -1449,22 +1515,25 @@
                                                 <ToggleElement name="directory_visible"
                                                     text="Show in company dial-by-name directory"
                                                     description="Controls whether this extension appears in the company’s dial-by-name directory. Hide extensions for devices (door phones, intercoms) or private users (e.g., executives)."
-                                                    true-value="true" false-value="false" />
+                                                    true-value="true" false-value="false" 
+                                                    :conditions="[() => options.permissions.extension_directory]"/>
 
-                                                <StaticElement name="divider3" tag="hr" />
+                                                <StaticElement name="divider3" tag="hr" :conditions="[() => options.permissions.extension_directory]"/>
 
                                                 <ToggleElement name="directory_exten_visible"
                                                     text="Announce extension after name in directory"
                                                     description="Controls whether the extension number is played after the user’s name in the directory. Useful for making it easier for callers to reach the extension directly. Disable for privacy or security reasons."
-                                                    true-value="true" false-value="false" />
+                                                    true-value="true" false-value="false" 
+                                                    :conditions="[() => options.permissions.extension_directory]"/>
 
-                                                <StaticElement name="divider4" tag="hr" />
+                                                <StaticElement name="divider4" tag="hr" :conditions="[() => options.permissions.extension_directory]"/>
 
                                                 <ToggleElement name="call_screen_enabled" text="Enable call screening"
                                                     description="You can use Call Screen to find out who’s calling and why before you pick up a call."
-                                                    true-value="true" false-value="false" />
+                                                    true-value="true" false-value="false" 
+                                                    :conditions="[() => options.permissions.extension_call_screen]"/>
 
-                                                <StaticElement name="divider16" tag="hr" />
+                                                <StaticElement name="divider16" tag="hr" :conditions="[() => options.permissions.extension_call_screen]"/>
 
                                                 <TextElement name="max_registrations" input-type="number" :rules="[
                                                     'nullable',
@@ -1479,7 +1548,8 @@
                                                             container: 6,
                                                             wrapper: 4,
                                                         },
-                                                    }" />
+                                                    }" :conditions="[() => options.permissions.extension_max_registrations]"/>
+
                                                 <TextElement name="limit_max" input-type="number" :rules="[
                                                     'nullable',
                                                     'numeric',
@@ -1493,7 +1563,7 @@
                                                             container: 6,
                                                             wrapper: 4,
                                                         },
-                                                    }" />
+                                                    }" :conditions="[() => options.permissions.extension_limit]"/>
 
                                                 <TextElement name="limit_destination"
                                                     label="Hangup Cause when limit is reached" :columns="{
@@ -1501,13 +1571,15 @@
                                                             container: 6,
                                                         }
                                                     }"
-                                                    description="Enter the destination to send the calls when the max number of outgoing calls has been reached." />
+                                                    description="Enter the destination to send the calls when the max number of outgoing calls has been reached." 
+                                                    :conditions="[() => options.permissions.extension_limit]"/>
 
                                                 <TextElement name="toll_allow" label="Toll Allow" :columns="{
                                                     sm: {
                                                         container: 6,
                                                     }
-                                                }" description="Examples: domestic,international,local" />
+                                                }" description="Examples: domestic,international,local" 
+                                                :conditions="[() => options.permissions.extension_toll]"/>
 
                                                 <TextElement name="call_group" label="Call Group"
                                                     description="A user in a call group can perform a call pickup (or an intercept) of a ringing phone belonging to another user who is also in the call group."
@@ -1515,7 +1587,7 @@
                                                         sm: {
                                                             wrapper: 6,
                                                         },
-                                                    }" />
+                                                    }" :conditions="[() => options.permissions.extension_call_group]"/>
 
 
                                                 <SelectElement name="hold_music" :items="options.music_on_hold_options"
@@ -1525,7 +1597,7 @@
                                                         sm: {
                                                             wrapper: 6,
                                                         },
-                                                    }" />
+                                                    }" :conditions="[() => options.permissions.extension_hold_music]"/>
 
                                                 <TextElement name="auth_acl" label="Auth ACL" :columns="{
                                                     sm: {
@@ -1537,7 +1609,7 @@
                                                     sm: {
                                                         container: 6,
                                                     }
-                                                }" />
+                                                }" :conditions="[() => options.permissions.extension_cidr]"/>
 
 
                                                 <SelectElement name="sip_force_contact" :items="[
@@ -1583,27 +1655,37 @@
                                                     description="MWI Account with user@domain of the voicemail to monitor." />
 
                                                 <TextElement name="absolute_codec_string" label="Absolute Codec String"
-                                                    description="Absolute Codec String for the extension" />
+                                                    description="Absolute Codec String for the extension"
+                                                    :conditions="[() => options.permissions.extension_absolute_codec_string]" />
 
-                                                <TextElement name="dial_string" label="Dial String" />
+                                                <TextElement name="dial_string" label="Dial String" 
+                                                :conditions="[() => options.permissions.extension_dial_string]"/>
 
                                                 <ToggleElement name="force_ping" text="Force ping"
                                                     description="Use OPTIONS to detect if extension is reachable"
-                                                    true-value="true" false-value="false" />
+                                                    true-value="true" false-value="false" 
+                                                    :conditions="[() => options.permissions.extension_force_ping]"/>
 
                                                 <TextElement name="user_context" label="Context" :columns="{
                                                     sm: {
                                                         container: 6,
                                                     },
                                                 }" />
+
+                                                <TextElement name="accountcode" label="Account Code" :columns="{
+                                                    sm: {
+                                                        container: 6,
+                                                    },
+                                                }" :conditions="[() => options.permissions.extension_accountcode]" />
+
                                                 <ToggleElement name="exclude_from_ringotel_stale_users"
                                                     text="Exclude this user from the App Stale Users report"
                                                     description="If enabled, this user will not appear in the App Stale Users report, preventing them from being flagged as inactive." />
 
 
-                                                <GroupElement name="container_3" />
+                                                <GroupElement name="container_advanced" />
 
-                                                <ButtonElement name="submit" button-label="Save" :submits="true"
+                                                <ButtonElement name="submit_advanced" button-label="Save" :submits="true"
                                                     align="right" />
 
 
@@ -1757,7 +1839,11 @@ const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
-    console.log(requestData);
+    // console.log(requestData);
+
+    if(!form$.el$('recording').value) {
+        requestData['user_record'] = null;
+    }
 
     return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
 };
@@ -1827,7 +1913,6 @@ function getDestinationLabel(destination) {
     // If found, return the full label; otherwise, return the extension.
     return dest ? dest.label : destination;
 };
-
 
 const handleDeviceEditButtonClick = (itemUuid) => {
     showDeviceUpdateModal.value = true

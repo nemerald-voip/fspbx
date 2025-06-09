@@ -263,6 +263,7 @@ class ExtensionsController extends Controller
                     'dial_string',
                     'force_ping',
                     'user_context',
+                    'accountcode',
                     'user_record',
                     'forward_all_destination',
                     'forward_all_enabled',
@@ -2158,13 +2159,36 @@ class ExtensionsController extends Controller
     public function getUserPermissions()
     {
         $permissions = [];
-        // $permissions['user_group_view'] = userCheckPermission('user_group_view');
-        // $permissions['user_group_edit'] = userCheckPermission('user_group_edit');
-        // $permissions['user_status'] = userCheckPermission('user_status');
-        // $permissions['user_view_managed_accounts'] = userCheckPermission('user_view_managed_accounts');
-        // $permissions['user_update_managed_accounts'] = userCheckPermission('user_update_managed_accounts');
-        // $permissions['user_view_managed_account_groups'] = userCheckPermission('user_view_managed_account_groups');
-        // $permissions['user_update_managed_account_groups'] = userCheckPermission('user_update_managed_account_groups');
+
+        $permissions['extension_enabled'] = userCheckPermission('extension_enabled');
+        $permissions['extension_extension'] = userCheckPermission('extension_extension');
+        $permissions['extension_password'] = userCheckPermission('extension_password');
+        $permissions['extension_suspended'] = userCheckPermission('extension_suspended');
+        $permissions['extension_do_not_disturb'] = userCheckPermission('extension_do_not_disturb');
+        $permissions['extension_user_record'] = userCheckPermission('extension_user_record');
+
+        $permissions['extension_advanced'] = userCheckPermission('extension_advanced');
+        $permissions['extension_absolute_codec_string'] = userCheckPermission('extension_absolute_codec_string');
+        $permissions['extension_accountcode'] = userCheckPermission('extension_accountcode');
+        $permissions['extension_call_group'] = userCheckPermission('extension_call_group');
+        $permissions['extension_call_screen'] = userCheckPermission('extension_call_screen');
+        $permissions['extension_cidr'] = userCheckPermission('extension_cidr');
+        $permissions['extension_dial_string'] = userCheckPermission('extension_dial_string');
+        $permissions['extension_directory'] = userCheckPermission('extension_directory');
+        $permissions['extension_force_ping'] = userCheckPermission('extension_force_ping');
+        $permissions['extension_hold_music'] = userCheckPermission('extension_hold_music');
+        $permissions['extension_limit'] = userCheckPermission('extension_limit');
+        $permissions['extension_max_registrations'] = userCheckPermission('extension_max_registrations');
+        $permissions['extension_toll'] = userCheckPermission('extension_toll');
+        
+        $permissions['manage_external_caller_id_number'] = userCheckPermission('outbound_caller_id_number');
+        $permissions['manage_emergency_caller_id_number'] = userCheckPermission('emergency_caller_id_number');
+        $permissions['extension_forward_all'] = userCheckPermission('extension_forward_all');
+        $permissions['extension_forward_busy'] = userCheckPermission('extension_forward_busy');
+        $permissions['extension_forward_no_answer']  = userCheckPermission('extension_forward_no_answer');
+        $permissions['extension_forward_not_registered'] = userCheckPermission('extension_forward_not_registered');
+        $permissions['extension_call_sequence'] = userCheckPermission('extension_call_sequence');
+        $permissions['manage_forwarding'] = $permissions['extension_forward_all'] ||  $permissions['extension_forward_busy']  ||  $permissions['extension_forward_busy'] || $permissions['extension_forward_no_answer'] || $permissions['extension_forward_not_registered'] || $permissions['extension_call_sequence'];
 
         $permissions['manage_voicemail_copies'] = userCheckPermission('voicemail_forward');
         $permissions['manage_voicemail_transcription'] = userCheckPermission('voicemail_transcription_enabled');
