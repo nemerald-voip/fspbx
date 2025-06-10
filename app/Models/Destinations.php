@@ -64,6 +64,8 @@ class Destinations extends Model
         'group_uuid',
     ];
 
+    protected $appends = ['destination_number_formatted'];
+
     public function __construct(array $attributes = [])
     {
         parent::__construct();
@@ -71,6 +73,25 @@ class Destinations extends Model
         $this->attributes['insert_date'] = date('Y-m-d H:i:s');
         $this->attributes['insert_user'] = Session::get('user_uuid');
         $this->fill($attributes);
+    }
+
+    public function getDestinationNumberFormattedAttribute()
+    {
+        return formatPhoneNumber($this->destination_number, 'US', PhoneNumberFormat::NATIONAL);
+    }
+
+    public function getDestinationNumberE164Attribute()
+    {
+        return formatPhoneNumber($this->destination_number, 'US', PhoneNumberFormat::E164);
+    }
+
+    public function getLabelAttribute()
+    {
+        $phoneNumberFormatted = $this->destination_number_formatted;
+        if (!empty($this->destination_description)) {
+            return $phoneNumberFormatted . ' - ' . $this->destination_description;
+        }
+        return $phoneNumberFormatted;
     }
 
     /**
@@ -83,7 +104,6 @@ class Destinations extends Model
     {
         static::saving(function ($model) {
             // Remove attributes before saving to database
-            unset($model->destination_number_formatted);
             unset($model->destroy_route);
             unset($model->destination_actions_formatted);
             unset($model->routing_options);
@@ -103,20 +123,6 @@ class Destinations extends Model
         });
 
         static::retrieved(function ($model) {
-            if ($model->destination_number) {
-                $phoneNumberUtil = PhoneNumberUtil::getInstance();
-                try {
-                    $phoneNumberObject = $phoneNumberUtil->parse($model->destination_number, 'US');
-                    if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                        $model->destination_number_formatted = $phoneNumberUtil
-                            ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
-                    } else {
-                        $model->destination_number_formatted = $model->destination_number;
-                    }
-                } catch (NumberParseException $e) {
-                    $model->destination_number_formatted = $model->destination_number;
-                }
-            }
 
             if (!empty($model->destination_actions)) {
 
@@ -173,7 +179,7 @@ class Destinations extends Model
     public function to_regex($array)
     {
         $regex_parts = [];
-    
+
         // If all elements are present
         if (!empty($array['destination_prefix']) && !empty($array['destination_trunk_prefix']) && !empty($array['destination_area_code']) && !empty($array['destination_number'])) {
             $regex_parts[] = "\+?{$array['destination_prefix']}?({$array['destination_area_code']}{$array['destination_number']})";
@@ -184,22 +190,20 @@ class Destinations extends Model
         elseif (!empty($array['destination_prefix']) && !empty($array['destination_trunk_prefix']) && !empty($array['destination_number'])) {
             $regex_parts[] = "\+?{$array['destination_prefix']}?({$array['destination_number']})";
             $regex_parts[] = "{$array['destination_trunk_prefix']}?({$array['destination_number']})";
-        }
-        elseif (!empty($array['destination_prefix']) && !empty($array['destination_area_code']) && !empty($array['destination_number'])) {
+        } elseif (!empty($array['destination_prefix']) && !empty($array['destination_area_code']) && !empty($array['destination_number'])) {
             $regex_parts[] = "\+?{$array['destination_prefix']}?({$array['destination_area_code']}{$array['destination_number']})";
-        }
-        elseif (!empty($array['destination_number'])) {
+        } elseif (!empty($array['destination_number'])) {
             $destination_prefix = $array['destination_prefix'] ?? '';
             $destination_number = $array['destination_number'];
-    
+
             // Add capturing group for the destination number
             $destination_regex = "($destination_number)";
-    
+
             // Escape "+" in the number if present
             if (strpos($destination_number, '+') === 0) {
                 $destination_regex = "\\+?" . substr($destination_number, 1);
             }
-    
+
             // Add prefix handling
             if (!empty($destination_prefix)) {
                 $destination_prefix = str_replace("+", "", $destination_prefix);
@@ -210,25 +214,25 @@ class Destinations extends Model
                     $destination_prefix = $plus . '(?:' . $destination_prefix . ')?';
                 }
             }
-    
+
             // Convert N, X, Z patterns to regex
             $destination_regex = str_ireplace(["N", "X", "Z"], ["[2-9]", "[0-9]", "[1-9]"], $destination_regex);
-    
+
             // Ensure regex starts with "^" and ends with "$"
             $destination_regex = "^" . $destination_prefix . $destination_regex . "$";
-            
+
             return $destination_regex;
         }
-    
+
         // Combine regex parts into one pattern with capturing group
         if (!empty($regex_parts)) {
             return "^(" . implode('|', $regex_parts) . ")$";
         }
-    
+
         return ''; // Return empty string if no valid regex is generated
     }
-    
-    
+
+
 
 
     // /**

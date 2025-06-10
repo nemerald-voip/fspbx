@@ -299,29 +299,6 @@ class RingGroupsController extends Controller
 
             ]);
 
-            $openAiVoices = [
-                ['value' => 'alloy', 'name' => 'Alloy'],
-                ['value' => 'echo', 'name' => 'Echo'],
-                ['value' => 'fable', 'name' => 'Fable'],
-                ['value' => 'onyx', 'name' => 'Onyx'],
-                ['value' => 'nova', 'name' => 'Nova'],
-                ['value' => 'shimmer', 'name' => 'Shimmer'],
-            ];
-
-            $openAiSpeeds = [];
-
-            for ($i = 0.85; $i <= 1.3; $i += 0.05) {
-                if (floor($i) == $i) {
-                    // Whole number, format with one decimal place
-                    $formattedValue = sprintf('%.1f', $i);
-                } else {
-                    // Fractional number, format with two decimal places
-                    $formattedValue = sprintf('%.2f', $i);
-                }
-                $openAiSpeeds[] = ['value' => $formattedValue, 'name' => $formattedValue];
-            }
-
-
 
             // Define the instructions for recording a voicemail greeting using a phone call
             $phoneCallInstructions = [
@@ -334,6 +311,8 @@ class RingGroupsController extends Controller
 
             $ring_back_tones = getRingBackTonesCollectionGrouped(session('domain_uuid'));
 
+            $openAiService = app(\App\Services\OpenAIService::class);
+            
             // Construct the itemOptions object
             $itemOptions = [
                 'ring_group' => $item,
@@ -343,8 +322,8 @@ class RingGroupsController extends Controller
                 'routes' => $routes,
                 'routing_types' => $routingTypes,
                 'forwarding_types' => $forwardingTypes,
-                'voices' => $openAiVoices,
-                'speeds' => $openAiSpeeds,
+                'voices' => $openAiService->getVoices(),
+                'speeds' => $openAiService->getSpeeds(),
                 'phone_call_instructions' => $phoneCallInstructions,
                 'sample_message' => $sampleMessage,
                 'greetings' => $greetingsArray,

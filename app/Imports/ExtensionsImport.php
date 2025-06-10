@@ -8,6 +8,7 @@ use App\Models\Voicemails;
 use App\Models\DeviceLines;
 use App\Models\FusionCache;
 use Illuminate\Support\Str;
+use App\Rules\UniqueExtension;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Session;
@@ -31,11 +32,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
             '*.extension' => [
                 'required',
                 'numeric',
-                Rule::unique('App\Models\Extensions', 'extension')
-                    // ->ignore($extension->extension_uuid,'extension_uuid')
-                    ->where('domain_uuid', Session::get('domain_uuid')),
-                Rule::unique('App\Models\Voicemails', 'voicemail_id')
-                    ->where('domain_uuid', Session::get('domain_uuid'))
+                new UniqueExtension(),
             ],
             '*.first_name' => [
                 'required',
@@ -133,11 +130,12 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
 
             //Create extension
             $extension = Extensions::create([
+                'domain_uuid' => session('domain_uuid'),
                 'extension' => $row['extension'],
-                'password' => Str::random(30),
+                'password' => generate_password(),
                 'directory_first_name' => $row['first_name'],
                 'directory_last_name' => $row['last_name'],
-                'effective_caller_id_name' => $row['first_name'] . ' ' . $row['last_name'],
+                'effective_caller_id_name' => trim($row['first_name'] . ' ' . $row['last_name']),
                 'effective_caller_id_number' => $row['extension'],
                 'outbound_caller_id_number' => $row['outbound_caller_id_number'],
                 'description' => $row['description'],
@@ -145,7 +143,8 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
                 'directory_exten_visible' => 'true',
                 'limit_max' => '5',
                 'limit_destination' => '!USER_BUSY',
-                'user_context' => Session::get('domain_name'),
+                'user_context' => session('domain_name'),
+                'accountcode' => session('domain_name'),
                 'call_timeout' => 25,
                 'call_screen_enabled' => 'false',
                 'force_ping' => 'false',
@@ -161,6 +160,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
                 $voicemail_password = $row['extension'];
             }
             $extension->voicemail->fill([
+                'domain_uuid' => session('domain_uuid'),
                 'voicemail_id' => $row['extension'],
                 'voicemail_password' => $voicemail_password,
                 'voicemail_mail_to' => $row['email'],
@@ -178,6 +178,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
                 $row['device_address'] = str_replace(':', '', $row['device_address']);
                 $device = new Devices();
                 $device->fill([
+                    'domain_uuid' => session('domain_uuid'),
                     'device_address' => $row['device_address'],
                     'device_label' => $row['extension'],
                     'device_vendor' => $row['device_vendor'],
@@ -191,6 +192,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
                 // Create device lines
                 $device->lines = new DeviceLines();
                 $device->lines->fill([
+                    'domain_uuid' => session('domain_uuid'),
                     'device_uuid' => $device->device_uuid,
                     'line_number' => '1',
                     'server_address' => Session::get('domain_name'),

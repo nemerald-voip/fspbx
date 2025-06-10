@@ -2,9 +2,9 @@
 
 namespace App\Jobs;
 
-use App\Models\MobileAppUsers;
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\Log;
+use App\Models\MobileAppUsers;
+use App\Services\RingotelApiService;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -16,7 +16,7 @@ use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 class DeleteAppUser implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    public $mobile_app;
+    public $attributes;
 
     /**
      * The number of times the job may be attempted.
@@ -65,9 +65,9 @@ class DeleteAppUser implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($mobile_app)
+    public function __construct($attributes)
     {
-        $this->mobile_app = $mobile_app;
+        $this->attributes = $attributes;
     }
 
     /**
@@ -80,39 +80,20 @@ class DeleteAppUser implements ShouldQueue
         return [(new RateLimitedWithRedis('email'))];
     }
 
-    /**
-     * Execute the job.
-     *
-     * @return void
-     */
-    public function handle()
+
+    public function handle(RingotelApiService $ringotelApiService)
     {
         // Allow only 2 tasks every 1 second
-        Redis::throttle('ringotel')->allow(2)->every(1)->then(function () {
-
-            // Log::info("scheduled deleting app");
-            //If there is no app then just return
-            if(!isset($this->mobile_app)) return;
-
-            // Send request to delеte user
-            $response = appsDeleteUser($this->mobile_app['org_id'], $this->mobile_app['user_id']);
-
-            //If there is an error return failed status and requeue the job
-            if (isset($response['error'])) {
-                return $this->release(5);
-            } elseif (!isset($response['result'])) {
-                return $this->release(5);
-            }
+        Redis::throttle('ringotel')->allow(2)->every(1)->then(function () use ($ringotelApiService) {
+            $result = $ringotelApiService->deleteUser($this->attributes);
 
             // Delete app info from database
-            $appUser = MobileAppUsers::where('mobile_app_user_uuid', $this->mobile_app->mobile_app_user_uuid);
-            if ($appUser) $appUser->delete();
-
+            MobileAppUsers::where('mobile_app_user_uuid', $this->attributes['mobile_app_user_uuid'])->delete();
 
         }, function () {
-            // Could not obtain lock; this job will be re-queued
-            return $this->release(5);
+            throw new \Exception('Could not obtain Redis lock for Ringotel throttling.');
         });
 
     }
+
 }

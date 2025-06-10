@@ -42,6 +42,7 @@ class StoreVoicemailRequest extends FormRequest
             'voicemail_recording_instructions' => 'present',
             'voicemail_copies' => 'nullable|array',
             'extension' => "uuid",
+            'domain_uuid' => "present",
         ];
     }
 

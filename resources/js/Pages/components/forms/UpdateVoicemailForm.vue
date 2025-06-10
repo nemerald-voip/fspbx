@@ -589,8 +589,9 @@ const confirmDeleteAction = () => {
                 // Reset the selected greeting ID
                 form.greeting_id = '-1'; // Or set it to another default if needed
 
+                console.log(response.data);
                 // Notify the parent component or show a local success message
-                emits('success', response.data.message.success); // Or handle locally
+                emits('success', 'success', response.data.messages); // Or handle locally
             }
         })
         .catch((error) => {
@@ -681,7 +682,7 @@ const confirmDeleteNameAction = () => {
         .then((response) => {
             if (response.data.success) {
                 localOptions.recorded_name = 'System Default';
-                emits('success', response.data.message.success);
+                emits('success', 'success', response.data.messages);
             }
         })
         .catch((error) => {
@@ -716,12 +717,12 @@ const getRoutesForNameForm = computed(() => {
 
 </script>
 
-<style scoped>
-/* This will mask the text input to behave like a password field */
-.password-field {
-    -webkit-text-security: disc;
-    /* For Chrome and Safari */
-    -moz-text-security: disc;
-    /* For Firefox */
+<style>
+div[data-lastpass-icon-root] {
+    display: none !important
+}
+
+div[data-lastpass-root] {
+    display: none !important
 }
 </style>

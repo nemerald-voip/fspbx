@@ -164,7 +164,7 @@
                                                 // console.log(response.data.options);
                                                 return response.data.options;
                                             } catch (error) {
-                                                emits('error', error);
+                                                emit('error', error);
                                                 return [];  // Return an empty array in case of error
                                             }
                                         }" :search="true" label-prop="name" :native="false" label="Target"

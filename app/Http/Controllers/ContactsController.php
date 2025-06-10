@@ -459,13 +459,6 @@ class ContactsController extends Controller
             ], 500);
         }
 
-
-        return response()->json([
-            'status' => 200,
-            'success' => [
-                'message' => 'Extensions were successfully uploaded'
-            ]
-        ]);
     }
 
 

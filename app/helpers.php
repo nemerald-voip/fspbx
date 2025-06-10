@@ -110,257 +110,6 @@ if (!function_exists('getFusionPBXPreviousURL')) {
 }
 
 
-// THERE IS A NEW VERSION OF THIS FUCNTION
-if (!function_exists('appsGetOrganizationDetails')) {
-    function appsGetOrganizationDetails($domain_uuid)
-    {
-        // Get Org ID
-        $domainSettingsModel = DomainSettings::where('domain_uuid', $domain_uuid)
-            ->where('domain_setting_category', 'app shell')
-            ->where('domain_setting_subcategory', 'org_id')
-            ->where('domain_setting_enabled', true)
-            ->first();
-
-        if (isset($domainSettingsModel)) {
-            return $domainSettingsModel->domain_setting_value;
-        }
-        return null;
-    }
-}
-
-if (!function_exists('appsGetOrganization')) {
-    function appsGetOrganization($org_id)
-    {
-        $data = array(
-            'method' => 'getOrganization',
-            'params' => array(
-                'id' => $org_id,
-            )
-        );
-
-        $response = Http::ringotel()
-            //->dd()
-            ->timeout(30)
-            ->withBody(json_encode($data), 'application/json')
-            ->post('/')
-            ->throw(function ($response, $e) {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => "Unable to retrieve organization",
-                    ],
-                ])->getData(true);
-            })
-            ->json();
-        return $response;
-    }
-}
-
-
-// Get a list of connections that belong to requested organization via Ringotel API call
-// THERE IS a NEW VERSION OF THIS FUNCTION
-if (!function_exists('appsGetConnections')) {
-    function appsGetConnections($org_id)
-    {
-        $data = array(
-            'method' => 'getBranches',
-            'params' => array(
-                'orgid' => $org_id,
-            )
-        );
-
-        $response = Http::ringotel()
-            //->dd()
-            ->timeout(30)
-            ->withBody(json_encode($data), 'application/json')
-            ->post('/')
-            ->throw(function ($response, $e) {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => "Unable to retrieve connections",
-                    ],
-                ])->getData(true);
-            })
-            ->json();
-        return $response;
-    }
-}
-
-// Delete connection that belong to requested organization via Ringotel API call
-// if (!function_exists('appsDeleteConnection')) {
-//     function appsDeleteConnection($org_id, $conn_id)
-//     {
-//         $data = array(
-//             'method' => 'deleteBranch',
-//             'params' => array(
-//                 'id' => $conn_id,
-//                 'orgid' => $org_id,
-//             )
-//         );
-
-//         $response = Http::ringotel()
-//             //->dd()
-//             ->timeout(30)
-//             ->withBody(json_encode($data), 'application/json')
-//             ->post('/')
-//             ->throw(function ($response, $e) {
-//                 return response()->json([
-//                     'status' => 401,
-//                     'error' => [
-//                         'message' => "Unable to delete connection",
-//                     ],
-//                 ])->getData(true);
-//             })
-//             ->json();
-
-//         return $response;
-//     }
-// }
-
-
-// Create mobile app user via Ringotel API call
-if (!function_exists('appsCreateUser')) {
-    function appsCreateUser($mobile_app)
-    {
-
-        $data = array(
-            'method' => 'createUser',
-            'params' => array(
-                'orgid' => $mobile_app['org_id'],
-                'branchid' => $mobile_app['conn_id'],
-                'name' => $mobile_app['name'],
-                'email' => $mobile_app['email'],
-                'extension' => $mobile_app['ext'],
-                'username' => $mobile_app['username'],
-                'domain' => $mobile_app['domain'],
-                'authname' => $mobile_app['authname'],
-                'password' => $mobile_app['password'],
-                'status' => $mobile_app['status'],
-                'noemail' => $mobile_app['no_email'] ?? false
-            )
-        );
-
-        $response = Http::ringotel()
-            //->dd()
-            ->timeout(30)
-            ->withBody(json_encode($data), 'application/json')
-            ->post('/')
-            ->throw(function ($response, $e) {
-                return response()->json([
-                    'error' => 401,
-                    'message' => 'Unable to create a new user'
-                ]);
-            })
-            ->json();
-
-        return $response;
-    }
-}
-
-
-// Delete mobile app user via Ringotel API call
-if (!function_exists('appsDeleteUser')) {
-    function appsDeleteUser($org_id, $user_id)
-    {
-        $data = array(
-            'method' => 'deleteUser',
-            'params' => array(
-                'id' => $user_id,
-                'orgid' => $org_id,
-            )
-        );
-
-        $response = Http::ringotel()
-            //->dd()
-            ->timeout(30)
-            ->withBody(json_encode($data), 'application/json')
-            ->post('/')
-            ->throw(function ($response, $e) {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => "Unable to delete user",
-                    ],
-                ])->getData(true);
-            })
-            ->json();
-
-        return $response;
-    }
-}
-
-// Update mobile app user via Ringotel API call
-if (!function_exists('appsUpdateUser')) {
-    function appsUpdateUser($mobile_app)
-    {
-        $data = array(
-            'method' => 'updateUser',
-            'params' => array(
-                'id' => $mobile_app['user_id'],
-                'orgid' => $mobile_app['org_id'],
-                'name' => $mobile_app['name'],
-                'email' => $mobile_app['email'],
-                'extension' => $mobile_app['ext'],
-                'username' => $mobile_app['ext'],
-                'authname' => $mobile_app['ext'],
-                'password' => $mobile_app['password'],
-                'status' => $mobile_app['status'],
-                'noemail' => $mobile_app['no_email'] ?? false
-            )
-        );
-
-        $response = Http::ringotel()
-            //->dd()
-            ->timeout(30)
-            ->withBody(json_encode($data), 'application/json')
-            ->post('/')
-            ->throw(function ($response, $e) {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => "Unable to update user",
-                    ],
-                ])->getData(true);
-            })
-            ->json();
-
-        return $response;
-    }
-}
-
-// Reset password for mobile app user via Ringotel API call
-if (!function_exists('appsResetPassword')) {
-    function appsResetPassword($org_id, $user_id, $no_email = false)
-    {
-        $data = array(
-            'method' => 'resetUserPassword',
-            'params' => array(
-                'id' => $user_id,
-                'orgid' => $org_id,
-                'noemail' => $no_email
-            )
-        );
-
-        $response = Http::ringotel()
-            //->dd()
-            ->timeout(30)
-            ->withBody(json_encode($data), 'application/json')
-            ->post('/')
-            ->throw(function ($response, $e) {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => "Unable to reset password",
-                    ],
-                ])->getData(true);
-            })
-            ->json();
-
-        return $response;
-    }
-}
-
 // Set Status for mobile app user via Ringotel API call
 if (!function_exists('appsSetStatus')) {
     function appsSetStatus($org_id, $user_id, $status)
@@ -393,46 +142,6 @@ if (!function_exists('appsSetStatus')) {
     }
 }
 
-// Delete organizaion via Ringotel API call
-if (!function_exists('appsDeleteOrganization')) {
-    function appsDeleteOrganization($org_id)
-    {
-        $data = array(
-            'method' => 'deleteOrganization',
-            'params' => array(
-                'id' => $org_id,
-            )
-        );
-
-        $response = Http::ringotel()
-            //->dd()
-            ->timeout(30)
-            ->withBody(json_encode($data), 'application/json')
-            ->post('/')
-            ->throw(function ($response, $e) {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => "Unable to delete organization",
-                    ],
-                ])->getData(true);
-            })
-            ->json();
-
-        Log::info($response);
-
-        if (!isset($array) || empty($array)) {
-            return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => "Organization not found",
-                ],
-            ])->getData(true);
-        }
-
-        return $response;
-    }
-}
 
 if (!function_exists('event_socket_create')) {
     function event_socket_create($host, $port, $password)
@@ -1443,6 +1152,96 @@ if (!function_exists('getRingBackTonesCollection')) {
             'Recordings' => $recordings,
             'Ringtones' => $ringtones,
             'Streams' => $streams,
+        ];
+    }
+}
+
+if (!function_exists('getMusicOnHoldCollection')) {
+    function getMusicOnHoldCollection(string $domain = null): array
+    {
+        $musicOnHold = [];
+        $musicOnHoldCollection = MusicOnHold::query();
+        if ($domain) {
+            $musicOnHoldCollection->where('domain_uuid', $domain)
+                ->orWhere('domain_uuid', null);
+        }
+        $musicOnHoldCollection = $musicOnHoldCollection->orderBy('music_on_hold_name')->get()->unique('music_on_hold_name');
+        foreach ($musicOnHoldCollection as $item) {
+            $musicOnHold[] = [
+                'label' => $item->music_on_hold_name,
+                'value' => 'local_stream://' . $item->music_on_hold_name
+            ];
+        }
+
+        $recordings = [];
+        $recordingsCollection = Recordings::query()
+            ->with(['domain' => function ($query) {
+                $query->select('domain_uuid', 'domain_name'); // Select only the fields you need from the domain
+            }])
+            ->select('domain_uuid', 'recording_filename', 'recording_name');
+        if ($domain) {
+            $recordingsCollection->where('domain_uuid', $domain);
+        }
+        $recordingsCollection = $recordingsCollection->orderBy('recording_name')->get();
+        $recording_path = DefaultSettings::where('default_setting_category', 'switch')
+            ->where('default_setting_subcategory', 'recordings')
+            ->where('default_setting_enabled', true)
+            ->value('default_setting_value');
+
+        // logger($recordingsCollection);
+        foreach ($recordingsCollection as $item) {
+            $recordings[] = [
+                'label' => $item->recording_name,
+                'value' => $recording_path . '/' . $item->domain->domain_name . '/' . $item->recording_filename
+            ];
+        }
+        // logger($recordings);
+
+        $streamsCollection = MusicStreams::where('stream_enabled', 'true')
+            ->orderBy('stream_name')
+            ->select('stream_uuid', 'stream_name', 'stream_location');
+        if ($domain) {
+            $streamsCollection->where('domain_uuid', $domain)
+                ->orWhere('domain_uuid', null);
+        }
+        $streamsCollection = $streamsCollection->get();
+        $streams = [];
+        foreach ($streamsCollection as $item) {
+            $streams[] = [
+                'label' => $item->stream_name,
+                'value' => $item->stream_location
+            ];
+        }
+
+        unset($musicOnHoldCollection, $recordingsCollection, $ringtonesCollection, $item);
+        return [
+            [
+                'label' => 'Music on Hold',
+                'items' => array_map(function ($item) {
+                    return [
+                        'label' => $item['label'],
+                        'value' => $item['value'],
+                    ];
+                }, $musicOnHold),
+            ],
+            [
+                'label' => 'Recordings',
+                'items' => array_map(function ($item) {
+                    return [
+                        'label' => $item['label'],
+                        'value' => $item['value'],
+                    ];
+                }, $recordings),
+            ],
+            [
+                'label' => 'Streams',
+                'items' => array_map(function ($item) {
+                    return [
+                        'label' => $item['label'],
+                        'value' => $item['value'],
+                    ];
+                }, $streams),
+            ],
         ];
     }
 }

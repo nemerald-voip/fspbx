@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use libphonenumber\PhoneNumberFormat;
+use Illuminate\Database\Eloquent\Model;
+use App\Services\CallRoutingOptionsService;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use function PHPUnit\Framework\isEmpty;
 
 
 class Extensions extends Model
@@ -20,6 +22,7 @@ class Extensions extends Model
     protected $primaryKey = 'extension_uuid';
     public $incrementing = false;
     protected $keyType = 'string';
+    protected $forwardOptionDetailsCache = [];
 
     /**
      * The attributes that are mass assignable.
@@ -87,6 +90,9 @@ class Extensions extends Model
         'update_user',
     ];
 
+    protected $appends = ['name_formatted', 'suspended', 'email'];
+    protected $with = ['advSettings'];
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -97,45 +103,40 @@ class Extensions extends Model
         'advSettings'
     ];
 
-    public function __construct(array $attributes = [])
+    protected $attributes = [
+        'enabled' => 'true',
+        'do_not_disturb' => 'false',
+        'call_timeout' => '25',
+        'call_screen_enabled' => 'false',
+        'limit_max' => '5',
+        'limit_destination' => '!USER_BUSY',
+        'force_ping' => 'false',
+        'user_record' => null,
+    ];
+
+    // Accessor for name_formatted
+    public function getNameFormattedAttribute()
     {
-        parent::__construct();
-        $this->attributes['domain_uuid'] = Session::get('domain_uuid');
-        $this->attributes['insert_date'] = date('Y-m-d H:i:s');
-        $this->attributes['insert_user'] = Session::get('user_uuid');
-        $this->fill($attributes);
+        return !empty($this->effective_caller_id_name)
+            ? trim($this->extension . ' - ' . $this->effective_caller_id_name)
+            : trim($this->extension);
     }
 
-    /**
-     * The booted method of the model
-     *
-     * Define all attributes here like normal code
-
-     */
-    protected static function booted()
+    // Accessor for suspended
+    public function getSuspendedAttribute()
     {
-        static::saving(function ($model) {
-            // Remove 'destination_formatted' attribute before saving to database
-            unset($model->name_formatted);
-            unset($model->suspended);
-        });
+        return $this->advSettings ? (bool) ($this->advSettings->suspended ?? false) : false;
+    }
 
-        static::retrieved(function ($model) {
-            // Format the name to look like "202 - Chris Fourmont"
-            $model->name_formatted = !empty($model->effective_caller_id_name)
-                ? trim($model->extension . ' - ' . $model->effective_caller_id_name)
-                : trim($model->extension);
-
-            if ($model->advSettings) {
-                $model->suspended = $model->advSettings->suspended;
-            } else {
-                $model->suspended = false;
+    public function getEmailAttribute()
+    {
+        if ($this->relationLoaded('voicemail') && $this->voicemail) {
+            // Only return if domain matches
+            if ($this->voicemail->domain_uuid === $this->domain_uuid) {
+                return $this->voicemail->voicemail_mail_to;
             }
-        });
-
-        static::deleting(function ($extension) {
-            $extension->advSettings()->delete();
-        });
+        }
+        return null;
     }
 
     public function getActivitylogOptions(): LogOptions
@@ -155,14 +156,28 @@ class Extensions extends Model
         // Chain fluent methods for configuration options
     }
 
+    public function getOutboundCallerIdNumberFormattedAttribute()
+    {
+        return formatPhoneNumber($this->outbound_caller_id_number, 'US', PhoneNumberFormat::NATIONAL);
+    }
+
+    public function getEmergencyCallerIdNumberE164Attribute()
+    {
+        return formatPhoneNumber($this->emergency_caller_id_number, 'US', PhoneNumberFormat::E164);
+    }
+
+    public function getOutboundCallerIdNumberE164Attribute()
+    {
+        return formatPhoneNumber($this->outbound_caller_id_number, 'US', PhoneNumberFormat::E164);
+    }
+
     /**
-     * Get the voicemail associated with this extension.
-     *  returns Eloqeunt Object
+     * This gets you “all possible” voicemails where ID matches extension, regardless of domain.
+     * Further filtering by domain is REQUIRED to avoid false positives and PERFORMANCE ISSUES  
      */
     public function voicemail()
     {
-        return $this->hasOne(Voicemails::class, 'voicemail_id', 'extension')
-            ->where('domain_uuid', $this->domain_uuid);
+        return $this->hasOne(Voicemails::class, 'voicemail_id', 'extension');
     }
 
     /**
@@ -215,21 +230,39 @@ class Extensions extends Model
         return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
     }
 
-    /**
-     * Get the Device object associated with this extension.
-     *  returns Eloqeunt Object
-     */
+    // Pull all device lines for this extension in the same domain
     public function deviceLines()
     {
-        return $this->hasMany(DeviceLines::class, 'user_id', 'extension');
+        return $this->hasMany(
+            DeviceLines::class,
+            // foreign key, local key
+            'auth_id',
+            'extension'
+        );
     }
 
-    public function devices()
-    {
-        return $this->belongsToMany(Devices::class, 'v_device_lines', 'user_id', 'device_uuid', 'extension')
-            ->withPivot('user_id', 'line_number', 'device_line_uuid')
-            ->where('v_devices.domain_uuid', $this->domain_uuid);
-    }
+    // public function devices()
+    // {
+    //     return $this->belongsToMany(Devices::class, 'v_device_lines', 'user_id', 'device_uuid', 'extension')
+    //         ->withPivot('user_id', 'line_number', 'device_line_uuid')
+    //         ->where('v_devices.domain_uuid', $this->domain_uuid);
+    // }
+
+    // Devices through device lines
+    // public function devices()
+    // {
+    //     // Many devices, through device lines, using a closure for domain matching
+    //     return $this->hasManyThrough(
+    //         Devices::class,
+    //         DeviceLines::class,
+    //         // First: DeviceLine local keys to match to this Extension
+    //         'auth_id', // Foreign key on DeviceLine...
+    //         'device_uuid', // Foreign key on Device...
+    //         'extension', // Local key on Extension...
+    //         'device_uuid' // Local key on DeviceLine...
+    //     )
+    //         ->whereColumn('v_device_lines.domain_uuid', 'v_extensions.domain_uuid');
+    // }
 
     public function agent()
     {
@@ -242,16 +275,6 @@ class Extensions extends Model
         return $this->hasOne(FollowMe::class, 'follow_me_uuid', 'follow_me_uuid');
     }
 
-    public function getFollowMe()
-    {
-        return $this->hasOne(FollowMe::class, 'follow_me_uuid', 'follow_me_uuid')->first();
-    }
-
-    public function getFollowMeDestinations()
-    {
-        return $this->belongsTo(FollowMeDestinations::class, 'follow_me_uuid', 'follow_me_uuid')->orderBy('follow_me_order')->get();
-    }
-
     public function getId()
     {
         return $this->extension;
@@ -262,28 +285,136 @@ class Extensions extends Model
         return $this->extension . ' - ' . ((!empty($this->effective_caller_id_name)) ? $this->effective_caller_id_name : $this->description);
     }
 
-    public function isForwardAllEnabled(): bool
+    /**
+     * Get details for a given forwarding type.
+     */
+    protected function getForwardOptionDetails(string $type): ?array
     {
-        return $this->forward_all_enabled == "true";
+        // e.g., $type = 'forward_all', 'forward_busy', etc.
+        if (isset($this->forwardOptionDetailsCache[$type])) {
+            return $this->forwardOptionDetailsCache[$type];
+        }
+
+
+        $destinationField = "{$type}_destination";
+        $enabledField = "{$type}_enabled";
+
+        if ($this->$enabledField != 'true' || !isEmpty($this->$destinationField)) {
+            return $this->forwardOptionDetailsCache[$type] = [
+                'type'      => null,
+                'extension' => null,
+                'option'    => null,
+                'name'      => null,
+            ];
+        }
+
+        $service = new CallRoutingOptionsService;
+        $parsed = $service->reverseEngineerForwardAction($this->$destinationField);
+
+        return $this->forwardOptionDetailsCache[$type] = $parsed;
     }
 
-    public function isForwardBusyEnabled(): bool
+    public function getForwardAllOptionDetailsAttribute(): ?array
     {
-        return $this->forward_busy_enabled == "true";
+        return $this->getForwardOptionDetails('forward_all');
+    }
+    public function getForwardAllTargetUuidAttribute(): ?string
+    {
+        return $this->forward_all_option_details['option'] ?? null;
+    }
+    public function getForwardAllActionAttribute(): ?string
+    {
+        return $this->forward_all_option_details['type'] ?? null;
+    }
+    public function getForwardAllActionDisplayAttribute(): ?string
+    {
+        $type = $this->forward_all_option_details['type'] ?? null;
+        return $type ? (new CallRoutingOptionsService)->getFriendlyTypeName($type) : null;
+    }
+    public function getForwardAllTargetNameAttribute(): ?string
+    {
+        return $this->forward_all_option_details['name'] ?? null;
+    }
+    public function getForwardAllTargetExtensionAttribute(): ?string
+    {
+        return $this->forward_all_option_details['extension'] ?? null;
     }
 
-    public function isForwardNoAnswerEnabled(): bool
+    public function getForwardBusyOptionDetailsAttribute(): ?array
     {
-        return $this->forward_no_answer_enabled == "true";
+        return $this->getForwardOptionDetails('forward_busy');
+    }
+    public function getForwardBusyTargetUuidAttribute(): ?string
+    {
+        return $this->forward_busy_option_details['option'] ?? null;
+    }
+    public function getForwardBusyActionAttribute(): ?string
+    {
+        return $this->forward_busy_option_details['type'] ?? null;
+    }
+    public function getForwardBusyActionDisplayAttribute(): ?string
+    {
+        $type = $this->forward_busy_option_details['type'] ?? null;
+        return $type ? (new CallRoutingOptionsService)->getFriendlyTypeName($type) : null;
+    }
+    public function getForwardBusyTargetNameAttribute(): ?string
+    {
+        return $this->forward_busy_option_details['name'] ?? null;
+    }
+    public function getForwardBusyTargetExtensionAttribute(): ?string
+    {
+        return $this->forward_busy_option_details['extension'] ?? null;
     }
 
-    public function isForwardUserNotRegisteredEnabled(): bool
+    public function getForwardNoAnswerOptionDetailsAttribute(): ?array
     {
-        return $this->forward_user_not_registered_enabled == "true";
+        return $this->getForwardOptionDetails('forward_no_answer');
+    }
+    public function getForwardNoAnswerTargetUuidAttribute(): ?string
+    {
+        return $this->forward_no_answer_option_details['option'] ?? null;
+    }
+    public function getForwardNoAnswerActionAttribute(): ?string
+    {
+        return $this->forward_no_answer_option_details['type'] ?? null;
+    }
+    public function getForwardNoAnswerActionDisplayAttribute(): ?string
+    {
+        $type = $this->forward_no_answer_option_details['type'] ?? null;
+        return $type ? (new CallRoutingOptionsService)->getFriendlyTypeName($type) : null;
+    }
+    public function getForwardNoAnswerTargetNameAttribute(): ?string
+    {
+        return $this->forward_no_answer_option_details['name'] ?? null;
+    }
+    public function getForwardNoAnswerTargetExtensionAttribute(): ?string
+    {
+        return $this->forward_no_answer_option_details['extension'] ?? null;
     }
 
-    public function isFollowMeEnabled(): bool
+    public function getForwardUserNotRegisteredOptionDetailsAttribute(): ?array
     {
-        return $this->follow_me_enabled == "true";
+        return $this->getForwardOptionDetails('forward_user_not_registered');
+    }
+    public function getForwardUserNotRegisteredTargetUuidAttribute(): ?string
+    {
+        return $this->forward_user_not_registered_option_details['option'] ?? null;
+    }
+    public function getForwardUserNotRegisteredActionAttribute(): ?string
+    {
+        return $this->forward_user_not_registered_option_details['type'] ?? null;
+    }
+    public function getForwardUserNotRegisteredActionDisplayAttribute(): ?string
+    {
+        $type = $this->forward_user_not_registered_option_details['type'] ?? null;
+        return $type ? (new CallRoutingOptionsService)->getFriendlyTypeName($type) : null;
+    }
+    public function getForwardUserNotRegisteredTargetNameAttribute(): ?string
+    {
+        return $this->forward_user_not_registered_option_details['name'] ?? null;
+    }
+    public function getForwardUserNotRegisteredTargetExtensionAttribute(): ?string
+    {
+        return $this->forward_user_not_registered_option_details['extension'] ?? null;
     }
 }

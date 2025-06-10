@@ -137,6 +137,10 @@ class HandleInertiaRequests extends Middleware
         $permissions['user_update'] = userCheckPermission('user_edit');
         $permissions['user_destroy'] = userCheckPermission('user_delete');
 
+        $permissions['extension_create'] = userCheckPermission('extension_add');
+        $permissions['extension_update'] = userCheckPermission('extension_edit');
+        $permissions['extension_destroy'] = userCheckPermission('extension_delete');
+
         // logger($permissions);
         return $permissions;
     }

@@ -9,14 +9,14 @@ use App\Models\Extensions;
 use App\Models\DeviceLines;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use App\Services\DeviceActionService;
 use App\Services\LineKeyTypesService;
+use App\Services\FreeswitchEslService;
 use Illuminate\Support\Facades\Session;
 use App\Http\Requests\StoreDeviceRequest;
 use Illuminate\Database\Eloquent\Builder;
 use App\Http\Requests\UpdateDeviceRequest;
 use App\Http\Requests\BulkUpdateDeviceRequest;
-use App\Services\DeviceActionService;
-use App\Services\FreeswitchEslService;
 
 /**
  * The DeviceController class is responsible for handling device-related operations, such as listing, creating, and storing devices.
@@ -137,20 +137,6 @@ class DeviceController extends Controller
                 ->get(['domain_uuid', 'extension', 'effective_caller_id_name']);
         }
 
-        foreach ($data as $device) {
-            // Check each line in the device if it exists
-            $device->lines->each(function ($line) use ($extensions, $device) {
-                // Find the first matching extension
-                $firstMatch = $extensions->first(function ($extension) use ($line, $device) {
-                    return $extension->domain_uuid === $device->domain_uuid && $extension->extension === $line->label;
-                });
-
-                // Assign the first matching extension to the line
-                $line->extension = $firstMatch;
-            });
-            // logger($device->lines);
-        }
-
         return $data;
     }
 
@@ -161,6 +147,7 @@ class DeviceController extends Controller
     public function builder(array $filters = []): Builder
     {
         $data =  $this->model::query();
+        $domainUuid = Session::get('domain_uuid');
 
         if (isset($filters['showGlobal']) and $filters['showGlobal']) {
             $data->with(['domain' => function ($query) {
@@ -173,7 +160,6 @@ class DeviceController extends Controller
             });
         } else {
             // Directly filter by the session's domain_uuid
-            $domainUuid = Session::get('domain_uuid');
             $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
         }
 
@@ -181,8 +167,15 @@ class DeviceController extends Controller
             $query->select('device_profile_uuid', 'device_profile_name', 'device_profile_description');
         }]);
 
-        $data->with(['lines' => function ($query) {
-            $query->select('domain_uuid', 'device_line_uuid', 'device_uuid', 'line_number', 'label');
+        $data->with(['lines' => function ($query) use ($domainUuid) {
+            $query->select('domain_uuid', 'device_line_uuid', 'device_uuid', 'auth_id', 'line_number')
+                ->with([
+                    'extension' => function ($q) use ($domainUuid) {
+                        $q->select('extension_uuid', 'extension', 'effective_caller_id_name')
+                            ->where('domain_uuid', $domainUuid);
+                    },
+
+                ]);
         }]);
 
         $data->select(
@@ -245,6 +238,7 @@ class DeviceController extends Controller
         $inputs = $request->validated();
 
         try {
+            DB::beginTransaction();
             // Create a new instance of the device model
             $instance = $this->model;
 
@@ -313,13 +307,15 @@ class DeviceController extends Controller
             // Update the instance with the label
             $instance->save();
 
+            DB::commit();
             // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['New item created']]
             ], 201);
         } catch (\Exception $e) {
+            DB::rollBack();
             // Log the error message
-            logger($e->getMessage());
+            logger('DeviceController@store error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             // Handle any other exception that may occur
             return response()->json([
@@ -428,7 +424,7 @@ class DeviceController extends Controller
                 'messages' => ['success' => ['Item updated.']]
             ], 200);
         } catch (\Exception $e) {
-            logger($e->getMessage());
+            logger('DeviceController@update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
@@ -442,6 +438,146 @@ class DeviceController extends Controller
         ], 500); // 500 Internal Server Error for any other errors
 
     }
+
+
+    public function assign(UpdateDeviceRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+
+        // Find the device by address (or address_modified)
+        $device = Devices::where('device_address', $data['device_address_modified'] ?? $data['device_address'])->first();
+
+        if (!$device) {
+            return response()->json([
+                'success' => false,
+                'errors' => ['model' => ['Device not found']]
+            ], 404);
+        }
+
+        try {
+            // Assign or update lines
+            if (!empty($data['lines']) && is_array($data['lines'])) {
+                foreach ($data['lines'] as $index => $line) {
+                    $extension = Extensions::where('extension', $line['user_id'])
+                        ->where('domain_uuid', $data['domain_uuid'])
+                        ->first();
+
+                    if ($extension) {
+                        $sharedLine = $line['shared_line'] !== null ? "1" : null;
+
+                        // Try to find an existing line for this device/line_number
+                        $deviceLine = DeviceLines::where('device_uuid', $device->device_uuid)
+                            ->where('line_number', $line['line_number'])
+                            ->first();
+
+                        $deviceLineData = [
+                            'device_uuid' => $device->device_uuid,
+                            'line_number' => $line['line_number'],
+                            'server_address' => $line['server_address'] ?? session('domain_name'),
+                            'outbound_proxy_primary' => $line['outbound_proxy_primary'] ?? get_domain_setting('outbound_proxy_primary'),
+                            'outbound_proxy_secondary' => $line['outbound_proxy_secondary'] ?? get_domain_setting('outbound_proxy_secondary'),
+                            'server_address_primary' => $line['server_address_primary'] ?? get_domain_setting('server_address_primary'),
+                            'server_address_secondary' => $line['server_address_secondary'] ?? get_domain_setting('server_address_secondary'),
+                            'display_name' => $line['display_name'],
+                            'user_id' => $extension->extension,
+                            'auth_id' => $extension->extension,
+                            'label' => $extension->extension,
+                            'password' => $extension->password,
+                            'sip_port' => $line['sip_port'] ?? get_domain_setting('line_sip_port'),
+                            'sip_transport' => $line['sip_transport'] ?? get_domain_setting('line_sip_transport'),
+                            'register_expires' => $line['register_expires'] ?? get_domain_setting('line_register_expires'),
+                            'shared_line' => $sharedLine,
+                            'enabled' => 'true',
+                            'domain_uuid' => $device->domain_uuid,
+                        ];
+
+                        if ($deviceLine) {
+                            // Update existing line
+                            $deviceLine->fill($deviceLineData)->save();
+                        } else {
+                            // Create new line
+                            $deviceLine = new DeviceLines();
+                            $deviceLine->fill($deviceLineData)->save();
+                        }
+
+                        // Set device label based on first extension
+                        if ($index === 0) {
+                            $device->device_label = $extension->extension;
+                        }
+                    }
+                }
+                $device->save();
+            }
+
+            return response()->json([
+                'messages' => ['success' => ['Device assigned/updated.']]
+            ], 200);
+        } catch (\Exception $e) {
+            logger('DeviceController@assign error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to assign device']]
+            ], 500);
+        }
+    }
+
+    /**
+     * Remove the specified users from storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function bulkUnassign()
+    {
+        if (! userCheckPermission('user_delete')) {
+            return response()->json([
+                'messages' => ['error' => ['Access denied.']]
+            ], 403);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $uuids = request('items', []); // Device UUIDs
+            $extension_uuid = request('extension_uuid');
+
+            if (empty($uuids) || !$extension_uuid) {
+                return response()->json([
+                    'messages' => ['error' => ['No devices or extension provided.']]
+                ], 400);
+            }
+
+            // Get the actual extension value (number), not just UUID, if you map by extension string
+            $extension = Extensions::where('extension_uuid', $extension_uuid)->first();
+            if (! $extension) {
+                return response()->json([
+                    'messages' => ['error' => ['Extension not found.']]
+                ], 404);
+            }
+
+            $affected = DeviceLines::whereIn('device_uuid', $uuids)
+            ->where('auth_id', $extension->extension)
+            ->where('domain_uuid', session('domain_uuid'))
+            ->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'messages' => ['success' => ["Unassigned extension from {$affected} device line(s)."]]
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger('DeviceControler@bulkUnassign error: '
+                . $e->getMessage()
+                . " at " . $e->getFile() . ":" . $e->getLine());
+    
+            return response()->json([
+                'messages' => ['error' => ['An error occurred while unassigning the selected devices.']]
+            ], 500);
+        }
+    }
+
 
     /**
      * Remove the specified resource from storage.
@@ -507,8 +643,13 @@ class DeviceController extends Controller
                 }
             }
 
+            $routes = [
+                'store_route' => route('devices.store'),
+                'assign_route' => route('devices.assign'),
+            ];
+
             $lines = [];
-            if (request('itemUuid')) {
+            if ($device) {
                 $lines = DeviceLines::where('device_uuid', request('itemUuid'))
                     ->get([
                         'device_line_uuid',
@@ -535,6 +676,10 @@ class DeviceController extends Controller
                     });
 
                 // logger($lines);
+
+                $routes = array_merge($routes, [
+                    'update_route' => route('devices.update', $device),
+                ]);
             }
 
             $navigation = [
@@ -576,6 +721,7 @@ class DeviceController extends Controller
 
             // Construct the itemOptions object
             $itemOptions = [
+                'item' => $device ?? null,
                 'templates' => getVendorTemplateCollection(),
                 'profiles' => getProfileCollection($domain_uuid),
                 'extensions' => $extensionOptions,
@@ -584,12 +730,13 @@ class DeviceController extends Controller
                 'lines' => $lines,
                 'line_key_types' => $lineKeyTypes,
                 'sip_transport_types' => $sipTransportTypes,
+                'routes' => $routes,
                 // Define options for other fields as needed
             ];
 
             return $itemOptions;
         } catch (\Exception $e) {
-            logger($e->getMessage());
+            logger('DeviceController@getItemOptions error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
