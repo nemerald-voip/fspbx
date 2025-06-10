@@ -26,6 +26,12 @@
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
+
+                <button v-if="page.props.auth.can.contact_upload" type="button" @click.prevent="handleImportButtonClick()"
+                    class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    <DocumentArrowUpIcon class="h-5 w-5" aria-hidden="true" />
+                    Upload CSV
+                </button>
             </template>
 
             <template #navigation>
@@ -148,7 +154,7 @@
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap justify-end">
 
-                                    <ejs-tooltip v-if="!!row.user_record"  :content="'Recording Enabled'"
+                                    <ejs-tooltip v-if="!!row.user_record" :content="'Recording Enabled'"
                                         position='TopCenter' target="#destination_tooltip_target">
                                         <div id="destination_tooltip_target">
                                             <MicrophoneIcon
@@ -228,21 +234,24 @@
     </div>
 
     <UpdateExtensionForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"
-        :header="'Update Extension - ' + itemOptions?.item?.name_formatted" @close="showUpdateModal = false" @error="handleErrorResponse"
-        @success="showNotification" @refresh-data="handleSearchButtonClick" />
+        :header="'Update Extension - ' + (itemOptions?.item?.name_formatted ?? 'loading')" @close="showUpdateModal = false"
+        @error="handleErrorResponse" @success="showNotification" @refresh-data="handleSearchButtonClick" />
 
-    <CreateUserForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading" :header="'Create User'"
-        @close="showCreateModal = false" @error="handleErrorResponse" @success="showNotification"
-        @open-edit-form="handleEditButtonClick" @refresh-data="handleSearchButtonClick" />
+    <CreateExtensionForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading"
+        :header="'Create Extension'" @close="showCreateModal = false" @error="handleErrorResponse"
+        @success="showNotification" @open-edit-form="handleEditButtonClick" @refresh-data="handleSearchButtonClick" />
 
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
-        @confirm="confirmDeleteAction" :header="'Confirm Deletion'"
-        :text="'This action will permanently delete the selected user(s). Are you sure you want to proceed?'"
+        @confirm="confirmDeleteAction" :header="'Confirm Deletion'" :loading="isModalLoading"
+        :text="'This action will permanently delete the selected extension(s). Are you sure you want to proceed?'"
         :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
+
+    <UploadModal :show="showUploadModal" @close="showUploadModal = false" :header="'Upload File'" @upload="uploadFile"
+        @download-template="downloadTemplateFile" :is-submitting="isUploadingFile" :errors="uploadErrors" />
 </template>
 
 <script setup>
@@ -261,12 +270,13 @@ import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
-import CreateUserForm from "./components/forms/CreateUserForm.vue";
+import CreateExtensionForm from "./components/forms/CreateExtensionForm.vue";
 import UpdateExtensionForm from "./components/forms/UpdateExtensionForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { MicrophoneIcon } from "@heroicons/vue/24/outline";
-
+import UploadModal from "./components/modal/UploadModal.vue";
+import { DocumentArrowUpIcon, DocumentArrowDownIcon } from "@heroicons/vue/24/outline";
 
 
 const page = usePage()
@@ -284,6 +294,9 @@ const notificationMessages = ref(null);
 const notificationShow = ref(null);
 const showDeleteConfirmationModal = ref(false);
 const isRegsLoading = ref(false)
+const showUploadModal = ref(false);
+const isUploadingFile = ref(null);
+const uploadErrors = ref(null);
 
 const props = defineProps({
     data: Object,
@@ -340,6 +353,60 @@ onMounted(async () => {
     }
 })
 
+
+const handleImportButtonClick = () => {
+    uploadErrors.value = null;
+    showUploadModal.value = true;
+};
+
+const uploadFile = (file) => {
+    isUploadingFile.value = true;
+    uploadErrors.value = null;
+    const formData = new FormData();
+    formData.append('file', file);
+
+    axios.post(props.routes.import, formData)
+        .then((response) => {
+            showNotification('success', response.data.messages);
+            handleModalClose();
+            handleSearchButtonClick();
+        })
+        .catch((error) => {
+            handleClearSelection();
+            handleErrorResponse(error);
+            if (error.response) {
+                uploadErrors.value = error.response.data.errors;
+            }
+        })
+        .finally(() => {
+            isUploadingFile.value = false;
+        });
+}
+
+function downloadTemplateFile() {
+    // Make a GET request to your Laravel route
+    axios.get(props.routes.download_template, {
+        responseType: 'blob' // Important: so we get back a Blob object
+    })
+        .then((response) => {
+            // Create a Blob from the response data
+            const fileBlob = new Blob([response.data], { type: 'text/csv' })
+            // Create a URL for the blob
+            const fileURL = window.URL.createObjectURL(fileBlob)
+
+            // Create a hidden link element, set it to the blob URL, and trigger a download
+            const link = document.createElement('a')
+            link.href = fileURL
+            link.setAttribute('download', 'template.csv') // The filename you want
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+        })
+        .catch((error) => {
+            console.error('Error downloading template:', error)
+        })
+}
+
 const handleEditButtonClick = (itemUuid) => {
     showUpdateModal.value = true
     getItemOptions(itemUuid);
@@ -351,16 +418,19 @@ const handleSingleItemDeleteRequest = (uuid) => {
 };
 
 const executeBulkDelete = (items = selectedItems.value) => {
+    isModalLoading.value = true
     axios.post(props.routes.bulk_delete, { items })
         .then((response) => {
-            handleModalClose();
             showNotification('success', response.data.messages);
             handleSearchButtonClick();
         })
         .catch((error) => {
-            handleModalClose();
             handleErrorResponse(error);
-        });
+        })
+        .finally(() => {
+            handleModalClose();
+            isModalLoading.value = false
+        })
 }
 
 const handleBulkActionRequest = (action) => {
@@ -445,6 +515,7 @@ const renderRequestedPage = (url) => {
 
 
 const getItemOptions = (itemUuid = null) => {
+    itemOptions.value = {}
     const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
     isModalLoading.value = true
     axios.post(props.routes.item_options, payload)

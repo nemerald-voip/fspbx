@@ -14,7 +14,7 @@
                         leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
 
                         <DialogPanel
-                            class="relative transform  rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-6">
+                            class="relative transform  rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
 
                             <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
                                 {{ header }}
@@ -49,32 +49,36 @@
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
-                                    lines: [
-                                        {
-                                            line_number: '1',
-                                            user_id: extension.extension,
-                                            shared_line: null,
-                                            display_name: extension.extension,
-                                        }
-                                    ]
+                                    extension_uuid: options.item.extension_uuid ?? '',
+                                    directory_first_name: options.item.directory_first_name ?? '',
+                                    directory_last_name: options.item.directory_last_name ?? '',
+                                    extension: options.item.extension ?? '',
+                                    last_name: options.item.last_name ?? '',
+                                    voicemail_mail_to: options.item.email ?? '',
+                                    description: options.item.description ?? '',
+                                    suspended: options.item.suspended ?? false,
+                                    
+
                                 }">
 
                                 <template #empty>
 
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
-                                            <FormTabs view="vertical">
-                                                <FormTab name="page0" label="Device" :elements="[
-                                                    'h4',
-                                                    'device_address',
-                                                    'line_number',
-                                                    'device_template',
-                                                    'device_profile_uuid',
-                                                    'cancel_button',
-                                                    'save_button',
+                                            <FormTabs view="vertical" @select="handleTabSelected">
+                                                <FormTab name="page0" label="Basic Info" :elements="[
+                                                    'basic_info_title',
+                                                    'directory_first_name',
+                                                    'directory_last_name',
+                                                    'extension',
+                                                    'voicemail_mail_to',
+                                                    'description',
+                                                    
+                                                    'container_basic',
+                                                    'submit_basic',
 
                                                 ]" />
-
+                                                
                                             </FormTabs>
                                         </div>
 
@@ -82,48 +86,45 @@
                                             class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                                             <FormElements>
 
-                                                <HiddenElement name="lines" :meta="true" />
-                                                <StaticElement name="h4" tag="h4" content="Choose Device" />
+                                                <HiddenElement name="extension_uuid" :meta="true" />
 
-                                                <SelectElement name="device_address" :items="devices" :search="true"
-                                                    :native="false" label="Device" :track-by="['value', 'label']"
-                                                    input-type="search" autocomplete="off" placeholder="Select Device"
-                                                    :floating="false" :strict="false" />
-
-                                                <TextElement name="line_number" input-type="number" :rules="[
-                                                    'nullable',
-                                                    'min:1',
-                                                    'max:96',
-                                                    'numeric',
-                                                ]" autocomplete="off" label="Line" default="1"
-                                                    :columns="{ wrapper: 3, }" @change="(newValue, oldValue, el$) => {
-                                                        el$.form$.el$('lines').update([
-                                                            {
-                                                                line_number: newValue,
-                                                                user_id: extension.extension,
-                                                                shared_line: null,
-                                                                display_name: extension.extension,
-                                                            }
-                                                        ])
-                                                        
+                                                <StaticElement name="basic_info_title" tag="h4" content="Basic Info"
+                                                    description="Fill in basic details to identify and describe this extension." />
+                                                <TextElement name="directory_first_name" label="First Name"
+                                                    placeholder="Enter First Name" :floating="false" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
                                                     }" />
-
-                                                <!-- <SelectElement name="device_template" :items="options.templates"
-                                                    label-prop="name" :search="true" :native="false" label="Template"
-                                                    input-type="search" autocomplete="off" :strict="false"
-                                                    placeholder="Select Template" :floating="false" />
-                                                <SelectElement name="device_profile_uuid" :items="options.profiles"
-                                                    label-prop="name" :search="true" :native="false" label="Profile"
-                                                    input-type="search" autocomplete="off" placeholder="Select Profile"
-                                                    :floating="false" :strict="false" /> -->
-
-                                                <ButtonElement name="cancel_button" button-label="Cancel" :secondary="true"
-                                                    @click="emit('close')" :columns="{
+                                                <TextElement name="directory_last_name" label="Last Name"
+                                                    placeholder="Enter Last Name" :floating="false" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" />
+                                                <TextElement name="extension" label="Extension"
+                                                    placeholder="Enter Extension" :floating="false" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        }
+                                                    }" :disabled="!options.permissions.extension_extension"/>
+                                                    
+                                                <TextElement name="voicemail_mail_to" label="Email"
+                                                    placeholder="Enter Email" :floating="false" :columns="{
                                                         container: 6,
-                                                    }" :resets="true" />
-                                                <ButtonElement name="save_button" button-label="Save" :columns="{
-                                                    container: 6,
-                                                }" align="right" :submits="true" />
+                                                    }" />
+                                                <TextElement name="description" label="Description"
+                                                    placeholder="Enter Description" :floating="false" />
+
+                                                
+                                                <GroupElement name="container_basic" />
+
+                                                <ButtonElement name="submit_basic" button-label="Save" :submits="true"
+                                                    align="right" />
+
+
+                                                
+
                                             </FormElements>
                                         </div>
                                     </div>
@@ -137,6 +138,7 @@
             </div>
         </Dialog>
     </TransitionRoot>
+
 </template>
 
 <script setup>
@@ -145,12 +147,11 @@ import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } fro
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 
 
+
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
 
 const props = defineProps({
     show: Boolean,
-    extension: Object,
-    devices: Object,
     options: Object,
     header: String,
     loading: Boolean,
@@ -158,28 +159,19 @@ const props = defineProps({
 
 const form$ = ref(null)
 
+
+const handleTabSelected = (activeTab, previousTab) => {
+
+}
+
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
     // console.log(requestData);
 
-    return await form$.$vueform.services.axios.post(props.options.routes.assign_route, requestData)
+    return await form$.$vueform.services.axios.post(props.options.routes.store_route, requestData)
 };
-
-function clearErrorsRecursive(el$) {
-    // clear this element’s errors
-    el$.messageBag?.clear()
-
-    // if it has child elements, recurse into each
-    if (el$.children$) {
-        Object.values(el$.children$).forEach(childEl$ => {
-            clearErrorsRecursive(childEl$)
-        })
-    }
-}
-
-
 
 const handleResponse = (response, form$) => {
     // Clear form including nested elements 
@@ -197,12 +189,24 @@ const handleResponse = (response, form$) => {
     }
 }
 
+function clearErrorsRecursive(el$) {
+    // clear this element’s errors
+    el$.messageBag?.clear()
+
+    // if it has child elements, recurse into each
+    if (el$.children$) {
+        Object.values(el$.children$).forEach(childEl$ => {
+            clearErrorsRecursive(childEl$)
+        })
+    }
+}
+
 const handleSuccess = (response, form$) => {
     // console.log(response) // axios response
     // console.log(response.status) // HTTP status code
     // console.log(response.data) // response data
 
-    emit('success', response.data.messages);
+    emit('success', 'success', response.data.messages);
     emit('close');
     emit('refresh-data');
 }
@@ -247,5 +251,13 @@ const handleError = (error, details, form$) => {
     }
 }
 
-
 </script>
+
+<style>
+div[data-lastpass-icon-root] {
+    display: none !important
+}
+
+div[data-lastpass-root] {
+    display: none !important
+}</style>

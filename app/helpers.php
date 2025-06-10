@@ -110,40 +110,6 @@ if (!function_exists('getFusionPBXPreviousURL')) {
 }
 
 
-
-// DEPRECIATED
-// Delete mobile app user via Ringotel API call
-if (!function_exists('appsDeleteUser')) {
-    function appsDeleteUser($org_id, $user_id)
-    {
-        $data = array(
-            'method' => 'deleteUser',
-            'params' => array(
-                'id' => $user_id,
-                'orgid' => $org_id,
-            )
-        );
-
-        $response = Http::ringotel()
-            //->dd()
-            ->timeout(30)
-            ->withBody(json_encode($data), 'application/json')
-            ->post('/')
-            ->throw(function ($response, $e) {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => "Unable to delete user",
-                    ],
-                ])->getData(true);
-            })
-            ->json();
-
-        return $response;
-    }
-}
-
-
 // Set Status for mobile app user via Ringotel API call
 if (!function_exists('appsSetStatus')) {
     function appsSetStatus($org_id, $user_id, $status)

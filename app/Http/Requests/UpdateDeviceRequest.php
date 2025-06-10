@@ -44,7 +44,7 @@ class UpdateDeviceRequest extends FormRequest
                     )
             ],
             'device_template' => [
-                'required',
+                'nullable',
                 'string',
                 Rule::notIn(['NULL']),
             ],

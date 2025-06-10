@@ -295,9 +295,12 @@
 
                                                 <FormTab name="devices" label="Devices" :elements="[
                                                     'devices_title',
+                                                    'container1',
+                                                    'assign_existing',
                                                     'device_table',
                                                     'container_devices',
                                                     'submit_devices',
+                                                    'add_device',
 
                                                 ]" />
 

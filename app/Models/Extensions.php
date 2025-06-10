@@ -103,6 +103,17 @@ class Extensions extends Model
         'advSettings'
     ];
 
+    protected $attributes = [
+        'enabled' => 'true',
+        'do_not_disturb' => 'false',
+        'call_timeout' => '25',
+        'call_screen_enabled' => 'false',
+        'limit_max' => '5',
+        'limit_destination' => '!USER_BUSY',
+        'force_ping' => 'false',
+        'user_record' => null,
+    ];
+
     // Accessor for name_formatted
     public function getNameFormattedAttribute()
     {

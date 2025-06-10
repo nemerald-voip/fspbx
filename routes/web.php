@@ -96,7 +96,6 @@ Route::group(['middleware' => 'auth'], function () {
     // Extensions
     Route::get('extensions', [ExtensionsController::class, 'index'])->name('extensions.index');
     // Route::resource('extensions', ExtensionsController::class);
-    Route::post('/extensions/import', [ExtensionsController::class, 'import'])->name('extensions.import');
     Route::post('/extensions/{extension}/assign-device', [ExtensionsController::class, 'assignDevice'])->name('extensions.assign-device');
     Route::post('/extensions/{extension}/device', [ExtensionsController::class, 'oldStoreDevice'])->name('extensions.store-device');
     Route::get('/extensions/{extension}/device/{device}/edit', [ExtensionsController::class, 'oldEditDevice'])->name('extensions.edit-device');
