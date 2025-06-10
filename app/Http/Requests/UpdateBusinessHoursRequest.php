@@ -21,6 +21,9 @@ class UpdateBusinessHoursRequest extends FormRequest
 
     public function rules(): array
     {
+        //get current UUID from route model binding
+        $currentUuid = $this->input('uuid');
+
         return [
             'custom_hours'              => ['present'],
             'name' => [
@@ -31,7 +34,7 @@ class UpdateBusinessHoursRequest extends FormRequest
             'extension' => [
                 'required',
                 'numeric',
-                new UniqueExtension(),
+                new UniqueExtension($currentUuid),
             ],
 
             'timezone' => [

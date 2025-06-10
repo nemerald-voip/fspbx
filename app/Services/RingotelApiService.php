@@ -55,7 +55,7 @@ class RingotelApiService
         $token = $this->getRingotelApiToken();
 
         if (empty($token)) {
-            throw new \Exception("Ringotel API token is missing. Please configure it in the DefaultSettings table or .env file.");
+            throw new \Exception("API token is missing.");
         }
 
         return $token;
@@ -640,6 +640,198 @@ class RingotelApiService
             return RingotelUserDTO::fromArray($item);
         });
     }
+
+    function createUser($params)
+    {
+        $this->ensureApiTokenExists();
+
+        $data = array(
+            'method' => 'createUser',
+            'params' => array(
+                'orgid' => $params['org_id'],
+                'branchid' => $params['conn_id'],
+                'name' => $params['name'],
+                'email' => $params['email'],
+                'extension' => $params['ext'],
+                'username' => $params['username'],
+                // 'domain' => $params['domain'],
+                'authname' => $params['authname'],
+                'password' => $params['password'],
+                'status' => $params['status'],
+                'noemail' => $params['noemail'] ?? true
+            )
+        );
+
+        $response = Http::ringotel()
+            ->timeout($this->timeout)
+            ->withBody(json_encode($data), 'application/json')
+            ->post('/')
+            ->throw(function ($response, $e) {
+                throw new \Exception("Unable to create user.");
+            })
+            ->json();
+
+        if (isset($response['error'])) {
+            throw new \Exception($response['error']['message']);
+        }
+
+        if (!isset($response['result'])) {
+            throw new \Exception("An unknown error has occurred");
+        }
+        // return $response['result'];
+
+        return $response['result'];
+    }
+
+    // Update mobile app user via Ringotel API call
+    function updateUser($params)
+    {
+        $data = array(
+            'method' => 'updateUser',
+            'params' => array(
+                'id' => $params['user_id'],
+                'orgid' => $params['org_id'],
+                'name' => $params['name'],
+                'email' => $params['email'],
+                'extension' => $params['ext'],
+                'username' => $params['ext'],
+                'authname' => $params['ext'],
+                'password' => $params['password'],
+                'status' => $params['status'],
+                'noemail' => $params['no_email'] ?? true
+            )
+        );
+
+        $response = Http::ringotel()
+            ->timeout($this->timeout)
+            ->withBody(json_encode($data), 'application/json')
+            ->post('/')
+            ->throw(function ($response, $e) {
+                throw new \Exception("Unable to create user.");
+            })
+            ->json();
+
+        if (isset($response['error'])) {
+            throw new \Exception($response['error']['message']);
+        }
+
+        if (!isset($response['result'])) {
+            throw new \Exception("An unknown error has occurred");
+        }
+        // return $response['result'];
+
+        return $response['result'];
+    }
+
+
+
+    function deleteUser($params)
+    {
+        $this->ensureApiTokenExists();
+
+        $data = array(
+            'method' => 'deleteUser',
+            'params' => array(
+                'id' => $params['user_id'],
+                'orgid' => $params['org_id'],
+            )
+        );
+
+        $response = Http::ringotel()
+            ->timeout($this->timeout)
+            ->withBody(json_encode($data), 'application/json')
+            ->post('/')
+            ->throw(function ($response, $e) {
+                throw new \Exception("Unable to create user.");
+            })
+            ->json();
+
+        if (isset($response['error'])) {
+            throw new \Exception($response['error']['message']);
+        }
+
+        if (!isset($response['result'])) {
+            throw new \Exception("An unknown error has occurred");
+        }
+        // return $response['result'];
+
+        return $response['result'];
+    }
+
+
+    // Reset password for mobile app user via Ringotel API call
+    function resetPassword($params)
+    {
+        $data = array(
+            'method' => 'resetUserPassword',
+            'params' => array(
+                'id' => $params['user_id'],
+                'orgid' => $params['org_id'],
+                'noemail' => $params['noemail'] ?? true
+            )
+        );
+
+        $response = Http::ringotel()
+            //->dd()
+            ->timeout($this->timeout)
+            ->withBody(json_encode($data), 'application/json')
+            ->post('/')
+            ->throw(function ($response, $e) {
+                return response()->json([
+                    'status' => 401,
+                    'error' => [
+                        'message' => "Unable to reset password",
+                    ],
+                ])->getData(true);
+            })
+            ->json();
+
+        if (isset($response['error'])) {
+            throw new \Exception($response['error']['message']);
+        }
+
+        if (!isset($response['result'])) {
+            throw new \Exception("An unknown error has occurred");
+        }
+        // return $response['result'];
+
+        return $response['result'];
+    }
+
+
+    function deactivateUser($params)
+    {
+        $this->ensureApiTokenExists();
+
+        $data = array(
+            'method' => 'deactivateUser',
+            'params' => array(
+                'id' => $params['user_id'],
+                'orgid' => $params['org_id'],
+            )
+        );
+
+        $response = Http::ringotel()
+            ->timeout($this->timeout)
+            ->withBody(json_encode($data), 'application/json')
+            ->post('/')
+            ->throw(function ($response, $e) {
+                throw new \Exception("Unable to create user.");
+            })
+            ->json();
+
+        if (isset($response['error'])) {
+            throw new \Exception($response['error']['message']);
+        }
+
+        if (!isset($response['result'])) {
+            throw new \Exception("An unknown error has occurred");
+        }
+        // return $response['result'];
+
+        return $response['result'];
+    }
+
 
     public function getRegions()
     {

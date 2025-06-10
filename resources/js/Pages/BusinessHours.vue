@@ -195,7 +195,6 @@ import MainLayout from "../Layouts/MainLayout.vue";
 import CreateBusinessHoursForm from "./components/forms/CreateBusinessHoursForm.vue";
 import UpdateBusinessHoursForm from "./components/forms/UpdateBusinessHoursForm.vue";
 import Notification from "./components/notifications/Notification.vue";
-import Badge from "@generalComponents/Badge.vue";
 
 
 

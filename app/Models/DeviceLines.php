@@ -59,10 +59,6 @@ class DeviceLines extends Model
         $this->fill($attributes);
     }
 
-    public function extension()
-    {
-        return Extensions::where('extension', $this->attributes['label'])->where('domain_uuid', $this->attributes['domain_uuid'])->first();
-    }
 
     /**
      * Get the Device object associated with this device line.
@@ -70,6 +66,17 @@ class DeviceLines extends Model
      */
     public function device()
     {
-        return $this->hasOne(Devices::class, 'device_uuid', 'device_uuid');
+        return $this->belongsTo(Devices::class, 'device_uuid', 'device_uuid');
+    }
+
+
+    // Extension relationship is NOT a simple foreign key, so use custom logic
+    public function extension()
+    {
+        return $this->hasOne(
+            Extensions::class,
+            // local key, foreign key
+            'extension','auth_id'
+        );
     }
 }
