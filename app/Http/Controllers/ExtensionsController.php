@@ -15,6 +15,7 @@ use App\Data\VoicemailData;
 use App\Jobs\DeleteAppUser;
 use App\Models\FusionCache;
 use Illuminate\Support\Str;
+use App\Jobs\SuspendAppUser;
 use App\Models\Destinations;
 use Illuminate\Http\Request;
 use App\Jobs\SendEventNotify;
@@ -34,12 +35,12 @@ use Spatie\QueryBuilder\AllowedFilter;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\HeadingRowImport;
 use App\Services\CallRoutingOptionsService;
+use Maatwebsite\Excel\Excel as ExcelWriter;
 use Propaganistas\LaravelPhone\PhoneNumber;
 use App\Http\Requests\StoreExtensionRequest;
 use App\Http\Requests\UpdateExtensionRequest;
 use Spatie\Activitylog\Facades\CauserResolver;
 use Propaganistas\LaravelPhone\Exceptions\NumberParseException;
-use Maatwebsite\Excel\Excel as ExcelWriter;
 
 
 class ExtensionsController extends Controller
@@ -1020,7 +1021,7 @@ class ExtensionsController extends Controller
                     $data['extension_uuid'] = $extension->extension_uuid;
                     $data['domain_uuid'] = $currentDomain;
                     $voicemail = Voicemails::create($data);
-                    logger($voicemail);
+                    // logger($voicemail);
                 }
             }
 
@@ -1048,7 +1049,7 @@ class ExtensionsController extends Controller
                     }
                 }
 
-                // Prepare payload for API/job (this data is NOT saved to DB, just sent to the API)
+                // Prepare payload for API/job 
                 $mobileAppPayload = [
                     'user_id'   => $extension->mobile_app->user_id,
                     'org_id'    => $extension->mobile_app->org_id,
@@ -1063,6 +1064,12 @@ class ExtensionsController extends Controller
 
                 // Dispatch job
                 UpdateAppSettings::dispatch($mobileAppPayload)->onQueue('default');
+
+                if ($data['suspended'] && $extension->mobile_app->status != -1) {
+                    logger('suspended');
+                    SuspendAppUser::dispatch($mobileAppPayload)->onQueue('default');
+                    
+                }
             }
 
             DB::commit();

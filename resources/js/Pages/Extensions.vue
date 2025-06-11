@@ -110,7 +110,7 @@
                                         <Badge v-if="row.suspended" :text="'Suspended'" :backgroundColor="'bg-rose-100'"
                                             :textColor="'text-rose-800'" ringColor="ring-rose-400/20"
                                             class="px-2 py-1 text-xs" />
-                                        <Badge v-if="row.do_not_disturb == 'true'" :text="'DND'"
+                                        <Badge v-if="row.do_not_disturb == 'true' && !row.suspended" :text="'DND'"
                                             :backgroundColor="'bg-rose-100'" :textColor="'text-rose-800'"
                                             ringColor="ring-rose-400/20" class="px-2 py-1 text-xs" />
                                         <Badge v-if="row.forward_all_enabled == 'true'" :text="'FWD All'"

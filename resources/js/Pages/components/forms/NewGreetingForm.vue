@@ -63,7 +63,7 @@
 
                 <div class="col-span-3 sm:col-span-2 text-sm font-medium leading-6 text-gray-900">
                     <LabelInputOptional label="Speed" class="truncate mb-1" />
-                    <ComboBox :options="speeds" :search="true" :placeholder="'Choose Speed'" :selectedItem="'1.0'"
+                    <ComboBox :options="speeds" :search="true" :placeholder="'Choose Speed'" :selectedItem="'1.00'"
                         @update:model-value="handleUpdateSpeed" :error="!!errors?.speed" />
                     <div v-if="errors?.speed" class="mt-2 text-xs text-red-600">
                         {{ errors.speed[0] }}
@@ -190,6 +190,8 @@ const props = defineProps({
     sample_message: String,
     phone_call_instructions: Object,
 });
+
+console.log(props.speeds);
 
 const emits = defineEmits(['greeting-saved']);
 
