@@ -3,6 +3,7 @@
 namespace App\Data;
 
 use Spatie\LaravelData\Data;
+use App\Data\MobileAppData;
 
 class ExtensionListData extends Data
 {
@@ -30,6 +31,8 @@ class ExtensionListData extends Data
         public ?string $forward_no_answer_enabled,
         public ?string $forward_user_not_registered_enabled,
         public ?string $follow_me_enabled,
+
+        public ?MobileAppData $mobile_app,
     ) {}
 }
 

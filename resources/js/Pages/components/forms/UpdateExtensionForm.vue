@@ -89,8 +89,8 @@
                                     forward_all_enabled: props.options.item.forward_all_enabled ?? 'false',
                                     forward_all_action: props.options.item.forward_all_action ?? '',
 
-                                    // only set forward_external_target when forwarding_action==='external'
-                                    forward_external_target: props.options.item.forward_all_action === 'external'
+                                    // only set forward_all_external_target when forwarding_action==='external'
+                                    forward_all_external_target: props.options.item.forward_all_action === 'external'
                                         ? props.options.item.forward_all_target_extension ?? null
                                         : null,
 

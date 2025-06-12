@@ -30,7 +30,7 @@
                 <button v-if="page.props.auth.can.contact_upload" type="button" @click.prevent="handleImportButtonClick()"
                     class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     <DocumentArrowUpIcon class="h-5 w-5" aria-hidden="true" />
-                    Upload CSV
+                    Import CSV
                 </button>
             </template>
 
@@ -57,6 +57,8 @@
                 <TableColumnHeader header="Outbound Caller ID"
                     class="whitespace-nowrap hidden px-2 py-3.5 text-left text-sm font-semibold text-gray-900 md:table-cell" />
                 <TableColumnHeader header="Description"
+                    class="hidden px-2 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell" />
+                <TableColumnHeader header="Services"
                     class="hidden px-2 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell" />
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
@@ -148,19 +150,26 @@
                         <TableField class="hidden px-2 py-2 text-sm text-gray-500 lg:table-cell">
                             {{ row.description }}
                         </TableField>
-                        <!-- Actions -->
+
+                        <TableField class="hidden whitespace-nowrap px-2 py-1 text-sm text-gray-500 lg:table-cell">
+
+                            <template #action-buttons>
+                                <div class="flex items-center whitespace-nowrap">
+                                    <DevicePhoneMobileIcon v-if="!!row.mobile_app"
+                                        class="h-5 w-5  text-blue-400 hover:text-blue-600 active:bg-blue-300" />
+                                    <MicrophoneIcon v-if="!!row.user_record"
+                                        class="h-5 w-5 text-rose-400 hover:text-rose-600 active:bg-rose-300" />
+
+                                </div>
+                            </template>
+
+
+                        </TableField>
+
                         <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
 
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap justify-end">
-
-                                    <ejs-tooltip v-if="!!row.user_record" :content="'Recording Enabled'"
-                                        position='TopCenter' target="#destination_tooltip_target">
-                                        <div id="destination_tooltip_target">
-                                            <MicrophoneIcon
-                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-rose-400 hover:bg-rose-200 hover:text-rose-600 active:bg-rose-300 active:duration-150 cursor-pointer" />
-                                        </div>
-                                    </ejs-tooltip>
 
                                     <ejs-tooltip v-if="page.props.auth.can.extension_update" :content="'Edit'"
                                         position='TopCenter' target="#destination_tooltip_target">
@@ -276,7 +285,7 @@ import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { MicrophoneIcon } from "@heroicons/vue/24/outline";
 import UploadModal from "./components/modal/UploadModal.vue";
-import { DocumentArrowUpIcon, DocumentArrowDownIcon } from "@heroicons/vue/24/outline";
+import { DocumentArrowUpIcon, DevicePhoneMobileIcon } from "@heroicons/vue/24/outline";
 
 
 const page = usePage()
@@ -572,6 +581,7 @@ const handleModalClose = () => {
     showUpdateModal.value = false;
     showDeleteConfirmationModal.value = false;
     bulkUpdateModalTrigger.value = false;
+    showUploadModal.value = false;
 }
 
 const hideNotification = () => {
