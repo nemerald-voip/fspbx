@@ -1162,6 +1162,7 @@ class AppsController extends Controller
      */
     public function deactivateUser(RingotelApiService $ringotelApiService)
     {
+        logger(request()->all());
         $this->ringotelApiService = $ringotelApiService;
         try {
 
@@ -1173,9 +1174,16 @@ class AppsController extends Controller
             // Send request to deactivate user
             $response = $this->ringotelApiService->deactivateUser($params);
 
-            $mobile_app->user_id = $response[0] ?? null;
-            $mobile_app->status = -1;
-            $mobile_app->save();
+            $users = $ringotelApiService->getUsers(request('org_id'), request('conn_id'));
+
+            $user = collect($users)->firstWhere('username', request('ext'));
+
+            if ($user) {
+                $mobile_app = MobileAppUsers::where('user_id', request('user_id'))->first();
+                $mobile_app->user_id = $user->id;
+                $mobile_app->status = -1;
+                $mobile_app->save();
+            }
 
             return response()->json([
                 'messages' => ['success' => ['Mobile app has been deactivated']]

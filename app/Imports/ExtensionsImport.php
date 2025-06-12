@@ -52,7 +52,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
             ],
             '*.email' => [
                 'nullable',
-                'email:rfc,dns',
+                'email:rfc',
             ],
             '*.device_address' => [
                 'mac_address',

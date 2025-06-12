@@ -6,6 +6,7 @@ use App\Models\{
     BusinessHour,
     CallCenterQueues,
     CallFlows,
+    Conferences,
     Dialplans,
     Extensions,
     Faxes,
@@ -31,6 +32,7 @@ class CallRoutingOptionsService
         ['value' => 'faxes', 'name' => 'Fax'],
         ['value' => 'call_flows', 'name' => 'Call Flow'],
         ['value' => 'recordings', 'name' => 'Play Greeting'],
+        ['value' => 'conferences', 'name' => 'Conferences'],
         ['value' => 'check_voicemail', 'name' => 'Check Voicemail'],
         ['value' => 'company_directory', 'name' => 'Company Directory'],
         ['value' => 'hangup', 'name' => 'Hang up'],
@@ -62,6 +64,7 @@ class CallRoutingOptionsService
         'business_hours'   => \App\Models\BusinessHour::class,
         'time_conditions'  => \App\Models\Dialplans::class,
         'contact_centers'  => \App\Models\CallCenterQueues::class,
+        'conferences'      => \App\Models\Conferences::class,
         'faxes'            => \App\Models\Faxes::class,
         'call_flows'       => \App\Models\CallFlows::class,
         'recordings'       => \App\Models\Recordings::class,
@@ -99,6 +102,8 @@ class CallRoutingOptionsService
                 return $this->buildOptions(BusinessHour::class, 'extension', 'name');
             case 'time_conditions':
                 return $this->buildOptions(Dialplans::class, 'dialplan_number', 'dialplan_name');
+            case 'conferences':
+                return $this->buildOptions(Conferences::class, 'conference_extension', 'conference_name');
             case 'voicemails':
                 return $this->buildOptions(Voicemails::class, 'voicemail_id', 'voicemail_description');
             case 'other':
@@ -501,6 +506,7 @@ class CallRoutingOptionsService
             'call_flows' => '/call_flow_uuid=([0-9a-fA-F-]+)/',
             'time_conditions' => '/\b(year|yday|mon|mday|week|mweek|wday|hour|minute|minute-of-day|time-of-day|date-time)=("[^"]+"|\'[^\']+\'|\S+)/',
             'faxes' => '/fax_uuid=([0-9a-fA-F-]+)/',
+            'conferences' => '/conference_uuid=([0-9a-fA-F-]+)/',
             'check_voicemail' => '/app.lua voicemail/',
             'company_directory' => '/directory.lua/',
         ];

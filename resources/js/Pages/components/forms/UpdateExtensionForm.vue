@@ -89,8 +89,8 @@
                                     forward_all_enabled: props.options.item.forward_all_enabled ?? 'false',
                                     forward_all_action: props.options.item.forward_all_action ?? '',
 
-                                    // only set forward_external_target when forwarding_action==='external'
-                                    forward_external_target: props.options.item.forward_all_action === 'external'
+                                    // only set forward_all_external_target when forwarding_action==='external'
+                                    forward_all_external_target: props.options.item.forward_all_action === 'external'
                                         ? props.options.item.forward_all_target_extension ?? null
                                         : null,
 
@@ -427,9 +427,9 @@
                                                             'form-color-on-primary': 'form-color-on-danger'
 
                                                         }
-                                                    }" :conditions="[() => options.permissions.extension_do_not_disturb]"/>
+                                                    }" :conditions="[(form$) => options.permissions.extension_do_not_disturb && form$.el$('suspended')?.value != true]"/>
 
-                                                <StaticElement name="divider1" tag="hr" :conditions="[() => options.permissions.extension_do_not_disturb]"/>
+                                                <StaticElement name="divider1" tag="hr" :conditions="[(form$) => options.permissions.extension_do_not_disturb && form$.el$('suspended')?.value != true]"/>
 
                                                 <ToggleElement name="enabled" text="Status" true-value="true"
                                                     false-value="false"
@@ -2114,7 +2114,9 @@ const handleMobileAppDeactivateButtonClick = async () => {
     axios.post(props.options.routes.deactivate_mobile_app,
         {
             mobile_app_user_uuid: mobileAppOptions?.value?.mobile_app?.mobile_app_user_uuid,
+            ext: props.options.item.extension,
             org_id: mobileAppOptions?.value?.mobile_app?.org_id,
+            conn_id: mobileAppOptions?.value?.mobile_app?.conn_id,
             user_id: mobileAppOptions?.value?.mobile_app?.user_id
         }
     )

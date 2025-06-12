@@ -488,8 +488,14 @@ class PhoneNumbersController extends Controller
             $phone_number->update($inputs);
 
             $this->generateDialPlanXML($phone_number);
+
+            return response()->json([
+                'messages' => ['success' => ['Phone number updated successfully']],
+                'phone_number' => $phone_number,
+            ], 200);
+
         } catch (\Exception $e) {
-            logger($e);
+            logger('PhoneNumbersController@update error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,

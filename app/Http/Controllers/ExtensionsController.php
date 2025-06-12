@@ -15,6 +15,7 @@ use App\Data\VoicemailData;
 use App\Jobs\DeleteAppUser;
 use App\Models\FusionCache;
 use Illuminate\Support\Str;
+use App\Jobs\SuspendAppUser;
 use App\Models\Destinations;
 use Illuminate\Http\Request;
 use App\Jobs\SendEventNotify;
@@ -24,6 +25,7 @@ use App\Jobs\UpdateAppSettings;
 use App\Data\ExtensionDetailData;
 use App\Imports\ExtensionsImport;
 use Illuminate\Support\Facades\DB;
+use App\Exports\ExtensionsTemplate;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Data\FollowMeDestinationData;
 use libphonenumber\PhoneNumberFormat;
@@ -34,12 +36,12 @@ use Spatie\QueryBuilder\AllowedFilter;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\HeadingRowImport;
 use App\Services\CallRoutingOptionsService;
+use Maatwebsite\Excel\Excel as ExcelWriter;
 use Propaganistas\LaravelPhone\PhoneNumber;
 use App\Http\Requests\StoreExtensionRequest;
 use App\Http\Requests\UpdateExtensionRequest;
 use Spatie\Activitylog\Facades\CauserResolver;
 use Propaganistas\LaravelPhone\Exceptions\NumberParseException;
-use Maatwebsite\Excel\Excel as ExcelWriter;
 
 
 class ExtensionsController extends Controller
@@ -80,6 +82,9 @@ class ExtensionsController extends Controller
             ->with(['voicemail' => function ($query) use ($currentDomain) {
                 $query->where('domain_uuid', $currentDomain)
                     ->select('voicemail_id', 'domain_uuid', 'voicemail_mail_to');
+            }])
+            ->with(['mobile_app' => function ($query) {
+                $query->select('mobile_app_user_uuid', 'extension_uuid');
             }])
             ->select([
                 'extension_uuid',
@@ -148,29 +153,6 @@ class ExtensionsController extends Controller
                 ]
             ]
         );
-
-        $searchString = $request->get('search');
-
-        // Get all registered devices for this domain
-        $registrations = get_registrations();
-
-
-        $extensions = $extensions->paginate(50)->onEachSide(1);
-
-        foreach ($extensions as $extension) {
-
-            //check against registrations and add them to array
-            $all_regs = [];
-            foreach ($registrations as $registration) {
-                if ($registration['sip-auth-user'] == $extension['extension']) {
-                    array_push($all_regs, $registration);
-                }
-            }
-            if (count($all_regs) > 0) {
-                $extension->setAttribute("registrations", $all_regs);
-                unset($all_regs);
-            }
-        }
     }
 
     public function registrations(FreeswitchEslService $esl)
@@ -879,11 +861,30 @@ class ExtensionsController extends Controller
     public function regenerateSipCredentials($extension_uuid)
     {
         try {
-            $extension = Extensions::whereKey($extension_uuid)->firstOrFail();
+            DB::beginTransaction();
+            $currentDomain = session('domain_uuid');
 
-            // Update the password in the database
-            $extension->password = generate_password();
+            $extension = Extensions::with([
+                'deviceLines' => function ($q) use ($currentDomain) {
+                    $q->where('domain_uuid', $currentDomain)
+                        ->select('device_line_uuid', 'device_uuid', 'auth_id', 'domain_uuid', 'password');
+                }
+            ])->whereKey($extension_uuid)->firstOrFail();
+
+            // Generate new password
+            $newPassword = generate_password();
+
+            // Update the extension password
+            $extension->password = $newPassword;
             $extension->save();
+
+            // Update all related device line passwords for this domain
+            foreach ($extension->deviceLines as $deviceLine) {
+                $deviceLine->password = $newPassword; // Use correct field name!
+                $deviceLine->save();
+            }
+
+            DB::commit();
 
             // Return new credentials
             return response()->json([
@@ -895,6 +896,7 @@ class ExtensionsController extends Controller
                 ],
             ]);
         } catch (\Throwable $e) {
+            DB::rollback();
             logger('ExtensionsController@regenerateSipCredentials error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
                 'success'  => false,
@@ -1020,14 +1022,14 @@ class ExtensionsController extends Controller
                     $data['extension_uuid'] = $extension->extension_uuid;
                     $data['domain_uuid'] = $currentDomain;
                     $voicemail = Voicemails::create($data);
-                    logger($voicemail);
+                    // logger($voicemail);
                 }
             }
 
             $extension->advSettings()->updateOrCreate(
-                ['extension_uuid' => $extension->extension_uuid], 
+                ['extension_uuid' => $extension->extension_uuid],
                 $data
-            );            
+            );
 
             // Handle voicemail_destinations (copies)
             if (
@@ -1048,7 +1050,7 @@ class ExtensionsController extends Controller
                     }
                 }
 
-                // Prepare payload for API/job (this data is NOT saved to DB, just sent to the API)
+                // Prepare payload for API/job 
                 $mobileAppPayload = [
                     'user_id'   => $extension->mobile_app->user_id,
                     'org_id'    => $extension->mobile_app->org_id,
@@ -1063,6 +1065,11 @@ class ExtensionsController extends Controller
 
                 // Dispatch job
                 UpdateAppSettings::dispatch($mobileAppPayload)->onQueue('default');
+
+                if ($data['suspended'] && $extension->mobile_app->status != -1) {
+                    logger('suspended');
+                    SuspendAppUser::dispatch($mobileAppPayload)->onQueue('default');
+                }
             }
 
             DB::commit();
@@ -1543,7 +1550,7 @@ class ExtensionsController extends Controller
     public function downloadTemplate()
     {
         // Download as CSV (third parameter sets the writer type)
-        return Excel::download(new ContactTemplate, 'template.csv', ExcelWriter::CSV);
+        return Excel::download(new ExtensionsTemplate, 'template.csv', ExcelWriter::CSV);
     }
 
 
