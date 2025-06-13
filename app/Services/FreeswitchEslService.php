@@ -117,7 +117,7 @@ class FreeswitchEslService
                     $contactData = [];
 
                     // Example of using regular expressions to extract information
-                    if (preg_match('/sip:([^@]+)@([^;]+);transport=([^;]+);/', $contact, $matches)) {
+                    if (preg_match('/sips?:([^@]+)@([^;]+);transport=([^;]+);/', $contact, $matches)) {
                         $contactData['user'] = $matches[1];
                         $contactData['ip_with_port'] = $matches[2];
                         $contactData['transport'] = $matches[3];
@@ -129,7 +129,7 @@ class FreeswitchEslService
                     }
 
                     // Extracting the WAN IP from fs_path
-                    if (preg_match('/fs_path=sip%3A([^;]+)/', $contact, $fsPathMatches)) {
+                    if (preg_match('/fs_path=sips?%3A([^;]+)/', $contact, $fsPathMatches)) {
                         $decodedFsPath = urldecode($fsPathMatches[1]);
                         // Extract the IP from the decoded string
                         if (preg_match('/(\d+\.\d+\.\d+\.\d+)/', $decodedFsPath, $ipMatches)) {
@@ -173,7 +173,7 @@ class FreeswitchEslService
                         'expsecs' => (string)$expsecs,
                     ];
                 }
-                // logger($registrations);
+                 // logger($registrations);
             }
         }
 

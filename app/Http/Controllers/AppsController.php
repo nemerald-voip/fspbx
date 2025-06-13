@@ -1113,10 +1113,10 @@ class AppsController extends Controller
 
                     'mobile_app' => function ($query) {
                         $query->select(
-                                'mobile_app_user_uuid',
-                                'extension_uuid',
-                                'conn_id',
-                            );
+                            'mobile_app_user_uuid',
+                            'extension_uuid',
+                            'conn_id',
+                        );
                     },
 
                 ])
@@ -1135,13 +1135,29 @@ class AppsController extends Controller
                 'password'  => $extension->password,
             ];
 
-            $response = $ringotelApiService->updateUser($params);
+            $user = $ringotelApiService->updateUser($params);
 
             $extension->mobile_app->status = 1;
             $extension->mobile_app->save();
 
 
+            // We don't show the password and QR code for the organisations that has dont_send_user_credentials=true
+            $hidePassInEmail = get_domain_setting('dont_send_user_credentials');
+            if ($hidePassInEmail === null) {
+                $hidePassInEmail = 'false';
+            }
+
+            $qrcode = "";
+            if ($hidePassInEmail == 'false') {
+                    $qrcode = QrCode::format('png')->generate('{"domain":"' . $user['domain'] .
+                        '","username":"' . $user['username'] . '","password":"' .  $user['password'] . '"}');
+            } else {
+                $user['password'] = null;
+            }
+
             return response()->json([
+                'user' => $user,
+                'qrcode' => ($qrcode != "") ? base64_encode($qrcode) : null,
                 'messages' => ['success' => ['Mobile app has been activated']]
             ], 200);
         } catch (\Exception $e) {
@@ -1162,7 +1178,7 @@ class AppsController extends Controller
      */
     public function deactivateUser(RingotelApiService $ringotelApiService)
     {
-        logger(request()->all());
+        // logger(request()->all());
         $this->ringotelApiService = $ringotelApiService;
         try {
 
