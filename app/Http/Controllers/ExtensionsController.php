@@ -26,6 +26,7 @@ use App\Data\ExtensionDetailData;
 use App\Imports\ExtensionsImport;
 use Illuminate\Support\Facades\DB;
 use App\Exports\ExtensionsTemplate;
+use Nwidart\Modules\Facades\Module;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Data\FollowMeDestinationData;
 use libphonenumber\PhoneNumberFormat;
@@ -84,7 +85,7 @@ class ExtensionsController extends Controller
                     ->select('voicemail_id', 'domain_uuid', 'voicemail_mail_to');
             }])
             ->with(['mobile_app' => function ($query) {
-                $query->select('mobile_app_user_uuid', 'extension_uuid');
+                $query->select('mobile_app_user_uuid', 'extension_uuid', 'status');
             }])
             ->select([
                 'extension_uuid',
@@ -150,6 +151,7 @@ class ExtensionsController extends Controller
                     'registrations' => route('extensions.registrations'),
                     'download_template' => route('extensions.template.download'),
                     'import' => route('extensions.import'),
+                    'create_contact_center_user' => (Module::has('ContactCenter') && Module::collections()->has('ContactCenter')) ? route('contact-center.user.store') : null,
                 ]
             ]
         );

@@ -155,7 +155,7 @@
 
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap">
-                                    <DevicePhoneMobileIcon v-if="!!row.mobile_app"
+                                    <DevicePhoneMobileIcon v-if="!!row.mobile_app && row.mobile_app.status!='-1'"
                                         class="h-5 w-5  text-blue-400 hover:text-blue-600 active:bg-blue-300" />
                                     <MicrophoneIcon v-if="!!row.user_record"
                                         class="h-5 w-5 text-rose-400 hover:text-rose-600 active:bg-rose-300" />
@@ -187,6 +187,9 @@
                                                 class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                         </div>
                                     </ejs-tooltip>
+
+                                    <AdvancedActionButton :actions="advancedActions" @advanced-action="(action) => handleAdvancedActionRequest(action, row.extension_uuid)"/>
+
                                 </div>
                             </template>
 
@@ -278,6 +281,7 @@ import { registerLicense } from '@syncfusion/ej2-base';
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
+import AdvancedActionButton from "./components/general/AdvancedActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import CreateExtensionForm from "./components/forms/CreateExtensionForm.vue";
 import UpdateExtensionForm from "./components/forms/UpdateExtensionForm.vue";
@@ -346,6 +350,17 @@ const bulkActions = computed(() => {
 
     return actions;
 });
+
+
+const advancedActions = computed(() => [
+    {
+        category: "Contact Center",
+        actions: [
+            { id: 'make_agent', label: 'Make Agent', icon: 'PencilSquareIcon' },
+            { id: 'make_admin', label: 'Make Admin', icon: 'TrashIcon' },
+        ],
+    },
+]);
 
 
 onMounted(async () => {
@@ -455,6 +470,39 @@ const handleBulkActionRequest = (action) => {
     }
 
 }
+
+const handleAdvancedActionRequest = (action, extension_uuid) => {
+    let role = null;
+
+    if (action === 'make_agent') {
+        role = 'user';
+    } else if (action === 'make_admin') {
+        role = 'admin';
+    } else {
+        return; // ignore other actions
+    }
+
+    const payload = {
+        extension_uuid,
+        role,
+    };
+
+    axios.post(props.routes.create_contact_center_user, payload)
+        .then((response) => {
+            console.log('success');
+            // show success, update UI, etc.
+            // Example: showNotification('User created!');
+        })
+        .catch((error) => {
+            console.log('jer');
+            handleErrorResponse(error);
+        })
+        .finally(() => {
+            // reset loading state, close modal, etc.
+        });
+};
+
+
 
 
 const handleCreateButtonClick = () => {

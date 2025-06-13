@@ -2134,6 +2134,7 @@ const handleMobileAppDeactivateButtonClick = async () => {
 }
 
 const handleMobileAppActivateButtonClick = async () => {
+    mobileApp.value = false
     isMobileAppLoading.activate = true
     axios.post(props.options.routes.activate_mobile_app,
         {
@@ -2145,7 +2146,7 @@ const handleMobileAppActivateButtonClick = async () => {
     )
         .then((response) => {
             mobileApp.value = response.data;
-            // console.log(mobileApp.value);
+            console.log(mobileApp.value);
 
             emit('success', 'success', response.data.messages);
 
