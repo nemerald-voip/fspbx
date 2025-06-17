@@ -245,7 +245,6 @@ class UpdateExtensionRequest extends FormRequest
 
     public function prepareForValidation()
     {
-        logger($this);
         $first = $this->input('directory_first_name', '');
         $last = $this->input('directory_last_name', '');
 
