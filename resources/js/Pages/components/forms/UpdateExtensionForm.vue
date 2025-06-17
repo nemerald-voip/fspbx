@@ -1284,7 +1284,7 @@
                                                     :conditions="[() => !mobileAppOptions?.mobile_app && mobileAppOptions]" />
 
                                                 <ButtonElement name="enable_mobile_app_contact" button-label="Add Contact"
-                                                    label="OR Step 1: Add to Address Book" :secondary="true"
+                                                    label="OR Step 1: Add to Address Book (BLF)" :secondary="true"
                                                     @click="handleMobileAppContactButtonClick"
                                                     description="Create a new contact entry for this extension in the company address book."
                                                     :conditions="[() => !mobileAppOptions?.mobile_app && mobileAppOptions && !creatingInitiated]" />
