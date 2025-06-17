@@ -258,6 +258,10 @@ class UpdateExtensionRequest extends FormRequest
             'effective_caller_id_number' => $this->extension,
         ]);
 
+        $this->merge([
+            'voicemail_mail_to' => $this->voicemail_mail_to ? strtolower($this->voicemail_mail_to) : null,
+        ]);        
+
         // List of all forwarding external target keys
         $forwardingTargets = [
             'forward_all_external_target',

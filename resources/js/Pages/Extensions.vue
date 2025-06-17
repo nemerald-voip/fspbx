@@ -475,7 +475,7 @@ const handleAdvancedActionRequest = (action, extension_uuid) => {
     let role = null;
 
     if (action === 'make_agent') {
-        role = 'user';
+        role = 'agent';
     } else if (action === 'make_admin') {
         role = 'admin';
     } else {
@@ -489,12 +489,9 @@ const handleAdvancedActionRequest = (action, extension_uuid) => {
 
     axios.post(props.routes.create_contact_center_user, payload)
         .then((response) => {
-            console.log('success');
-            // show success, update UI, etc.
-            // Example: showNotification('User created!');
+            showNotification('success', response.data.messages);
         })
         .catch((error) => {
-            console.log('jer');
             handleErrorResponse(error);
         })
         .finally(() => {
