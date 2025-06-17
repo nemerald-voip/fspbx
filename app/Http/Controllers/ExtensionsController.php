@@ -29,6 +29,7 @@ use App\Exports\ExtensionsTemplate;
 use Nwidart\Modules\Facades\Module;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Data\FollowMeDestinationData;
+use Illuminate\Support\Facades\Route;
 use libphonenumber\PhoneNumberFormat;
 use Spatie\QueryBuilder\QueryBuilder;
 use App\Services\FreeswitchEslService;
@@ -151,7 +152,7 @@ class ExtensionsController extends Controller
                     'registrations' => route('extensions.registrations'),
                     'download_template' => route('extensions.template.download'),
                     'import' => route('extensions.import'),
-                    'create_contact_center_user' => (Module::has('ContactCenter') && Module::collections()->has('ContactCenter')) ? route('contact-center.user.store') : null,
+                    'create_contact_center_user' => (Module::has('ContactCenter') && Module::collections()->has('ContactCenter') && Route::has('contact-center.user.store')) ? route('contact-center.user.store') : null,
                 ]
             ]
         );
@@ -194,7 +195,7 @@ class ExtensionsController extends Controller
             logger('ExtensionsController@registrations error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
                 'success' => false,
-                'messages' => ['error' => [$e->getMessage()]],
+                'errors' => ['error' => [$e->getMessage()]],
             ], 500);
         }
     }
@@ -902,7 +903,7 @@ class ExtensionsController extends Controller
             logger('ExtensionsController@regenerateSipCredentials error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
                 'success'  => false,
-                'messages' => ['error' => [$e->getMessage()]],
+                'errors' => ['error' => [$e->getMessage()]],
                 'data'     => [],
             ], 500);
         }

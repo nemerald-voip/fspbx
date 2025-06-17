@@ -170,7 +170,7 @@
                         <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap justify-center">
-                                    <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'View details'"
+                                    <ejs-tooltip v-if="page.props.auth.can.cdr_view_details" :content="'View details'"
                                         position='TopCenter' target="#view_tooltip_target">
                                         <div id="view_tooltip_target">
                                             <MagnifyingGlassIcon @click="handleViewRequest(row.xml_cdr_uuid)"

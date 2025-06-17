@@ -1328,16 +1328,18 @@
                                                                     </button>
                                                                 </li>
 
-                                                                <li
+                                                                <li 
                                                                     class="flex flex-col sm:flex-row sm:items-center mt-1 gap-1 text-sm ">
                                                                     <strong>Password:</strong>
-                                                                    <span class="font-mono">{{
+                                                                    <span v-if="mobileApp.user.password" class="font-mono">{{
                                                                         mobileApp.user.password }}</span>
-                                                                    <button type="button"
+                                                                    <button v-if="mobileApp.user.password" type="button"
                                                                         @click="handleCopyToClipboard(mobileApp.user.password)">
                                                                         <ClipboardDocumentIcon
                                                                             class="h-5 w-5 text-blue-500 hover:text-blue-900 cursor-pointer" />
                                                                     </button>
+                                                                    <a v-if="mobileApp.user.password_url" :href="mobileApp.user.password_url" target="_blank">Click here to get password</a>
+                                                                    <span v-if="!mobileApp.user.password && !mobileApp.user.password_url" class="font-mono">**********</span>
                                                                 </li>
 
                                                             </ul>
@@ -2096,7 +2098,7 @@ const handleMobileAppResetButtonClick = async () => {
     )
         .then((response) => {
             mobileApp.value = response.data;
-            console.log(mobileApp.value);
+            // console.log(mobileApp.value);
 
             emit('success', 'success', response.data.messages);
 
@@ -2130,11 +2132,12 @@ const handleMobileAppDeactivateButtonClick = async () => {
             emit('error', error)
         }).finally(() => {
             isMobileAppLoading.deactivate = false
+            mobileApp.value = null
         });
 }
 
 const handleMobileAppActivateButtonClick = async () => {
-    mobileApp.value = false
+    mobileApp.value = null
     isMobileAppLoading.activate = true
     axios.post(props.options.routes.activate_mobile_app,
         {
@@ -2146,7 +2149,7 @@ const handleMobileAppActivateButtonClick = async () => {
     )
         .then((response) => {
             mobileApp.value = response.data;
-            console.log(mobileApp.value);
+            // console.log(mobileApp.value);
 
             emit('success', 'success', response.data.messages);
 

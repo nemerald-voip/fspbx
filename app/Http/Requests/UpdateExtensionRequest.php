@@ -245,6 +245,7 @@ class UpdateExtensionRequest extends FormRequest
 
     public function prepareForValidation()
     {
+        logger($this);
         $first = $this->input('directory_first_name', '');
         $last = $this->input('directory_last_name', '');
 
@@ -257,6 +258,10 @@ class UpdateExtensionRequest extends FormRequest
         $this->merge([
             'effective_caller_id_number' => $this->extension,
         ]);
+
+        $this->merge([
+            'voicemail_mail_to' => $this->voicemail_mail_to ? strtolower($this->voicemail_mail_to) : null,
+        ]);        
 
         // List of all forwarding external target keys
         $forwardingTargets = [

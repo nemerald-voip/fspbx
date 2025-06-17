@@ -1034,7 +1034,7 @@ class AppsController extends Controller
             // If success and user is activated send user email with credentials
             if ($user) {
                 if ($hidePassInEmail == 'true') {
-                    // Include get-password link and remove password value
+                    // Include get-password link
                     $passwordToken = Str::random(40);
                     MobileAppPasswordResetLinks::where('extension_uuid', request('extension_uuid'))->delete();
                     $appCredentials = new MobileAppPasswordResetLinks();
@@ -1051,7 +1051,6 @@ class AppsController extends Controller
                     SendAppCredentials::dispatch($user)->onQueue('emails');
                 }
             }
-
 
             $qrcode = "";
             if ($hidePassInEmail == 'false') {

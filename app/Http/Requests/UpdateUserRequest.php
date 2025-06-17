@@ -43,6 +43,8 @@ class UpdateUserRequest extends FormRequest
 
     protected function prepareForValidation()
     {
-
+        $this->merge([
+            'user_email' => $this->user_email ? strtolower($this->user_email) : null,
+        ]);
     }
 }

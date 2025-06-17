@@ -88,6 +88,10 @@ class UpdateVoicemailRequest extends FormRequest
             ]);
         }
 
+        $this->merge([
+            'voicemail_mail_to' => $this->voicemail_mail_to ? strtolower($this->voicemail_mail_to) : null,
+        ]);
+
         if ($this->has('voicemail_tutorial')) {
             $this->merge([
                 'voicemail_tutorial' => $this->voicemail_tutorial ? 'true' : 'false',
