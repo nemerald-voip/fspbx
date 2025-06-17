@@ -2049,9 +2049,8 @@ const handleMobileAppSubmitButtonClick = async () => {
         }
     )
         .then((response) => {
-            if (mobileAppContactOnly.value) {
+            if (!mobileAppContactOnly.value) {
                 mobileApp.value = response.data;
-                // console.log(mobileApp.value);
             }
 
             getMobileAppOptions()

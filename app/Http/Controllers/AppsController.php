@@ -1139,17 +1139,37 @@ class AppsController extends Controller
             $extension->mobile_app->status = 1;
             $extension->mobile_app->save();
 
-
             // We don't show the password and QR code for the organisations that has dont_send_user_credentials=true
             $hidePassInEmail = get_domain_setting('dont_send_user_credentials');
             if ($hidePassInEmail === null) {
                 $hidePassInEmail = 'false';
             }
 
+            // If success and user is activated send user email with credentials
+            if ($user) {
+                if ($hidePassInEmail == 'true') {
+                    // Include get-password link
+                    $passwordToken = Str::random(40);
+                    MobileAppPasswordResetLinks::where('extension_uuid', request('extension_uuid'))->delete();
+                    $appCredentials = new MobileAppPasswordResetLinks();
+                    $appCredentials->token = $passwordToken;
+                    $appCredentials->extension_uuid = request('extension_uuid');
+                    $appCredentials->domain = $user['domain'];
+                    $appCredentials->save();
+
+                    $passwordUrlShow = userCheckPermission('mobile_apps_password_url_show') ?? 'false';
+                    $includePasswordUrl = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
+                    $user['password_url'] = $includePasswordUrl;
+                }
+                if ($extension->email) {
+                    SendAppCredentials::dispatch($user)->onQueue('emails');
+                }
+            }
+
             $qrcode = "";
             if ($hidePassInEmail == 'false') {
-                    $qrcode = QrCode::format('png')->generate('{"domain":"' . $user['domain'] .
-                        '","username":"' . $user['username'] . '","password":"' .  $user['password'] . '"}');
+                $qrcode = QrCode::format('png')->generate('{"domain":"' . $user['domain'] .
+                    '","username":"' . $user['username'] . '","password":"' .  $user['password'] . '"}');
             } else {
                 $user['password'] = null;
             }
