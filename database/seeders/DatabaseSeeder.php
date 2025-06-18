@@ -1308,6 +1308,22 @@ class DatabaseSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "Default setting for Allow Member Follow Me Rules",
             ],
+            [
+                'default_setting_category'      => 'voicemail',
+                'default_setting_subcategory'   => 'transcribe_provider',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "openai",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "openai,google,azure,watson",
+            ],
+            [
+                'default_setting_category'      => 'voicemail',
+                'default_setting_subcategory'   => 'openai_transcription_model',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "whisper-1",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "gpt-4o-transcribe - best quality, gpt-4o-mini-transcribe - faster/cheaper/less accurate, whisper-1 - good, but older",
+            ],
 
         ];
 

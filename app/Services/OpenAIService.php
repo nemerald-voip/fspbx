@@ -84,4 +84,33 @@ class OpenAIService
 
         return $openAiSpeeds;
     }
+
+    public function transcribeAudio($filePath, $model = 'whisper-1', $language = null)
+    {
+        if (empty($this->apiKey)) {
+            throw new \Exception('OpenAI API key is not configured. Please set the API key in your environment file.');
+        }
+
+        $url = 'https://api.openai.com/v1/audio/transcriptions';
+
+        $params = [
+            'model' => $model,
+        ];
+        if ($language) {
+            $params['language'] = $language;
+        }
+
+        $response = Http::withToken($this->apiKey)
+            ->attach('file', fopen($filePath, 'r'), basename($filePath))
+            ->post($url, $params);
+
+        if ($response->successful()) {
+            return [
+                'message' => $response->json('text')
+            ];
+        } else {
+            logger()->error('OpenAI transcription failed: ' . $response->body());
+            return null;
+        }
+    }
 }
