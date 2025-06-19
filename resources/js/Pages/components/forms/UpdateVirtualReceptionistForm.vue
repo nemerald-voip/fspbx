@@ -151,7 +151,7 @@
 
 
                 <!-- New Greeting Form -->
-                <NewGreetingForm v-if="showGreetingForm" :title="'New Greeting Message'" :voices="localOptions.voices"
+                <NewGreetingForm v-if="showGreetingForm" :title="'New Greeting Message'" :voices="localOptions.voices" :default_voice="localOptions.default_voice"
                     :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions"
                     :sample_message="localOptions.sample_message" :routes="getRoutesForGreetingForm"
                     @greeting-saved="handleGreetingSaved" />

@@ -564,6 +564,7 @@ class VirtualReceptionistController extends Controller
                 'permissions' => $permissions,
                 'greetings' => $greetingsArray ?? null,
                 'voices' => $openAiService->getVoices(),
+                'default_voice' => isset($openAiService) && $openAiService ? $openAiService->getDefaultVoice() : null,
                 'speeds' => $openAiService->getSpeeds(),
                 'routes' => $routes,
                 'routing_types' => $routingTypes,

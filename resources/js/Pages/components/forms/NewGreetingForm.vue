@@ -57,7 +57,7 @@
                 <div class="col-span-3 sm:col-span-2 text-sm font-medium leading-6 text-gray-900">
                     <LabelInputOptional label="Voice" class="truncate mb-1" />
                     <ComboBox :options="voices" :search="true" :placeholder="'Choose voice'"
-                        :selectedItem="voices[0]?.value" @update:model-value="handleUpdateVoice"
+                        :selectedItem="default_voice ?? voices[0]?.value" @update:model-value="handleUpdateVoice"
                         :error="!!errors?.voice" />
                     <div v-if="errors?.voice" class="mt-2 text-xs text-red-600">
                         {{ errors.voice[0] }}
@@ -198,8 +198,6 @@ const props = defineProps({
     sample_message: String,
     phone_call_instructions: Object,
 });
-
-console.log(props.default_voice);
 
 const emits = defineEmits(['greeting-saved']);
 

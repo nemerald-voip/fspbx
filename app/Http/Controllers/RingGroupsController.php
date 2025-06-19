@@ -323,6 +323,7 @@ class RingGroupsController extends Controller
                 'routing_types' => $routingTypes,
                 'forwarding_types' => $forwardingTypes,
                 'voices' => $openAiService->getVoices(),
+                'default_voice' => isset($openAiService) && $openAiService ? $openAiService->getDefaultVoice() : null,
                 'speeds' => $openAiService->getSpeeds(),
                 'phone_call_instructions' => $phoneCallInstructions,
                 'sample_message' => $sampleMessage,
