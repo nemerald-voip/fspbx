@@ -69,6 +69,11 @@ class OpenAIService
         ];
     }
 
+    public function getDefaultVoice()
+    {
+        return get_domain_setting('openai_default_voice'); 
+    }
+
     public function getSpeeds()
     {
         $openAiSpeeds = [];

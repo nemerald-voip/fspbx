@@ -658,6 +658,7 @@ class VoicemailController extends Controller
                 'voicemail_copies' => $voicemailCopies,
                 'greetings' => $greetingsArray ?? null,
                 'voices' => $openAiService->getVoices(),
+                'default_voice' => isset($openAiService) && $openAiService ? $openAiService->getDefaultVoice() : null,
                 'speeds' => $openAiService->getSpeeds(),
                 'routes' => $routes,
                 'phone_call_instructions' => $phoneCallInstructions,

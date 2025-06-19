@@ -585,7 +585,7 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
     <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showNewGreetingModal" :header="''" :loading="loadingModal"
         @close="handleModalClose">
         <template #modal-body>
-            <NewGreetingForm :title="'New Greeting Message'" :voices="localOptions.voices" :speeds="localOptions.speeds"
+            <NewGreetingForm :title="'New Greeting Message'" :voices="localOptions.voices" :speeds="localOptions.speeds" :default_voice="localOptions.default_voice"
                 :phone_call_instructions="localOptions.phone_call_instructions"
                 :sample_message="localOptions.sample_message" :routes="getRoutesForGreetingForm"
                 @greeting-saved="handleGreetingSaved" />

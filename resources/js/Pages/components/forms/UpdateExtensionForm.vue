@@ -1712,7 +1712,7 @@
     <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showNewGreetingModal" :header="''" :loading="isModalLoading"
         @close="handleModalClose">
         <template #modal-body>
-            <NewGreetingForm :title="'New Voicemail Greeting'" :voices="options.voices" :speeds="options.speeds"
+            <NewGreetingForm :title="'New Voicemail Greeting'" :voices="options.voices" :speeds="options.speeds" :default_voice="options.default_voice"
                 :phone_call_instructions="options.phone_call_instructions" :sample_message="options.sample_message"
                 :routes="getRoutesForGreetingForm" @greeting-saved="handleGreetingSaved" />
         </template>
@@ -1721,7 +1721,7 @@
     <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showNewNameGreetingModal" :header="''" :loading="isModalLoading"
         @close="handleModalClose">
         <template #modal-body>
-            <NewGreetingForm :title="'New Recorded Name'" :voices="options.voices" :speeds="options.speeds"
+            <NewGreetingForm :title="'New Recorded Name'" :voices="options.voices" :speeds="options.speeds" :default_voice="options.default_voice"
                 :phone_call_instructions="options.phone_call_instructions_for_name" :sample_message="'John Dow'"
                 :routes="getRoutesForNameForm" @greeting-saved="handleNameSaved" />
         </template>

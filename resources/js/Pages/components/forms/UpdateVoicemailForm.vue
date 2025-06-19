@@ -244,13 +244,13 @@
                 </div>
 
                 <!-- New Greeting Form -->
-                <NewGreetingForm v-if="showGreetingForm" :title="'New Voicemail Greeting'" :voices="localOptions.voices"
+                <NewGreetingForm v-if="showGreetingForm" :title="'New Voicemail Greeting'" :voices="localOptions.voices" :default_voice="localOptions.default_voice"
                     :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions"
                     :sample_message="localOptions.sample_message" :routes="getRoutesForGreetingForm"
                     @greeting-saved="handleGreetingSaved" />
 
                 <!-- Recorded Name Form -->
-                <NewGreetingForm v-if="showNameForm" :title="'New Recorded Name'" :voices="localOptions.voices"
+                <NewGreetingForm v-if="showNameForm" :title="'New Recorded Name'" :voices="localOptions.voices" :default_voice="localOptions.default_voice"
                     :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions_for_name"
                     sample_message="John Dow" :routes="getRoutesForNameForm" @greeting-saved="handleNameSaved" />
             </div>

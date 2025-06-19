@@ -1324,6 +1324,14 @@ class DatabaseSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "gpt-4o-transcribe - best quality, gpt-4o-mini-transcribe - faster/cheaper/less accurate, whisper-1 - good, but older",
             ],
+            [
+                'default_setting_category'      => 'recordings',
+                'default_setting_subcategory'   => 'openai_default_voice',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "alloy",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "alloy, echo, fable, onyx, nova, shimmer",
+            ],
 
         ];
 

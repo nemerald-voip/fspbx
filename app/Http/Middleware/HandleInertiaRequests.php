@@ -99,7 +99,7 @@ class HandleInertiaRequests extends Middleware
 
         $permissions['registrations_view_global'] = userCheckPermission('registration_all');
 
-        $permissions['active_calls_view_global'] = userCheckPermission('active_call_all');
+        $permissions['active_calls_view_global'] = userCheckPermission('call_active_all');
 
         $permissions['phone_numbers_view_global'] = userCheckPermission('destination_all');
         $permissions['phone_numbers_create'] = userCheckPermission('destination_add');
