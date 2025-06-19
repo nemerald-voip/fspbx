@@ -13,6 +13,7 @@ use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\BusinessHoursController;
 use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\EmergencyCallController;
+use App\Http\Controllers\VoicemailController;
 
 /*
 |--------------------------------------------------------------------------

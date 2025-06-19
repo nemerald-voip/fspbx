@@ -310,6 +310,213 @@ if (!function_exists('outbound_route_to_bridge')) {
     }
 }
 
+if (!function_exists('getDestinationByCategory')) {
+    /**
+     * @deprecated Please consider to use Services/ActionsService instead
+     */
+    function getDestinationByCategory($category, $data = null) 
+    {
+        $output = [];
+        $selectedCategory = null;
+        $selectedDestination = null;
+        $rows = null;
+
+        switch ($category) {
+            case 'ringgroup':
+                $rows = RingGroups::where('domain_uuid', Session::get('domain_uuid'))
+                    ->where('ring_group_enabled', 'true')
+                    //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+                    ->orderBy('ring_group_extension')
+                    ->get();
+                break;
+            case 'dialplans':
+                $rows = Dialplans::where('domain_uuid', Session::get('domain_uuid'))
+                    ->where('dialplan_enabled', 'true')
+                    ->where('dialplan_destination', 'true')
+                    ->where('dialplan_number', '<>', '')
+                    ->orderBy('dialplan_name')
+                    ->get();
+                break;
+            case 'extensions':
+                $rows = Extensions::where('domain_uuid', Session::get('domain_uuid'))
+                    //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+                    ->orderBy('extension')
+                    ->get();
+                break;
+            case 'ivrs':
+                $rows = IvrMenus::where('domain_uuid', Session::get('domain_uuid'))
+                    //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+                    ->orderBy('ivr_menu_extension')
+                    ->get();
+                break;
+            case 'recordings':
+                $rows = Recordings::where('domain_uuid', Session::get('domain_uuid'))
+                    //->whereNotIn('extension_uuid', [$extension->extension_uuid])
+                    ->orderBy('recording_name')
+                    ->get();
+                break;
+            case 'voicemails':
+                $rows = Voicemails::where('domain_uuid', Session::get('domain_uuid'))
+                    ->where('voicemail_enabled', 'true')
+                    ->orderBy('voicemail_id')
+                    ->get();
+                break;
+            case 'others':
+                $rows = [
+                    [
+                        'id' => sprintf('*98 XML %s', Session::get('domain_name')),
+                        'label' => 'Check Voicemail'
+                    ],
+                    [
+                        'id' => sprintf('*411 XML %s', Session::get('domain_name')),
+                        'label' => 'Company Directory'
+                    ],
+                    [
+                        'id' => 'hangup:',
+                        'label' => 'Hangup'
+                    ],
+                    [
+                        'id' => sprintf('*732 XML %s', Session::get('domain_name')),
+                        'label' => 'Record'
+                    ]
+                ];
+                break;
+            default:
+        }
+
+        if ($rows) {
+            foreach ($rows as $row) {
+                switch ($category) {
+                    case 'ringgroup':
+                        $id = sprintf('%s XML %s', $row->ring_group_extension, Session::get('domain_name'));
+                        $label = $row->ring_group_extension . " - " . $row->ring_group_name;
+                        $app_name = "Ring Group";
+                        break;
+                    case 'extensions':
+                        $id = sprintf('%s XML %s', $row->extension, Session::get('domain_name'));
+                        $label = $row->extension . " - " . $row->effective_caller_id_name;
+                        $app_name = "Extension";
+                        break;
+                    case 'voicemails':
+                        $id = sprintf('*99%s XML %s', $row->voicemail_id, Session::get('domain_name'));
+                        $label = $row->voicemail_id;
+                        if ($row->extension) {
+                            $label .= " - " . $row->extension->effective_caller_id_name;
+                        } elseif ($row->voicemail_description != '') {
+                            $label .= " - " . $row->voicemail_description;
+                        }
+                        $app_name = "Voicemail";
+                        break;
+                    case 'ivrs':
+                        $id = sprintf('%s XML %s', $row->ivr_menu_extension, Session::get('domain_name'));
+                        $label = $row->ivr_menu_extension . " - " . $row->ivr_menu_name;
+                        $app_name = "Auto Receptionist";
+                        break;
+                    case 'recordings':
+                        $id = sprintf('streamfile.lua %s', $row->recording_filename);
+                        $label = $row->recording_name;
+                        $app_name = "Recordings";
+                        break;
+                    case 'others':
+                        $id = $row['id'];
+                        $label = $row['label'];
+                        $app_name = "Miscellaneous";
+                        break;
+                    default:
+                        break; // Skip unknown categories
+                }
+
+                if (isset($id)) {
+                    // Check if the id matches the data
+                    if ($id == $data || 'transfer:' . $id == $data) {
+                        $selectedCategory = $category;
+                        $selectedDestination = $id;
+                    }
+
+                    // Add to the output array
+                    $output[] = [
+                        'id' => $id,
+                        'label' => $label,
+                        'app_name' => $app_name,
+                    ];
+                }
+            }
+        }
+
+        return [
+            'selectedCategory' => $selectedCategory,
+            'selectedDestination' => $selectedDestination,
+            'list' => $output
+        ];
+    }
+}
+
+if (!function_exists('getTimeoutDestinations')) {
+    /**
+     * @deprecated Please consider to use Services/ActionsService instead
+     */
+    function getTimeoutDestinations($domain = null)
+    {
+        if ($domain !== null) {
+            logger('getTimeoutDestinations does not support $domain argument yet. ' . __FILE__);
+        }
+        // TODO: refactor the getDestinationByCategory function to use $domain        // TODO: refactor the getDestinationByCategory function to use $domain
+        $output = [
+            'categories' => [],
+            'targets' => [],
+        ];
+        foreach (
+            [
+                'ringgroup',
+                'dialplans',
+                'extensions',
+                'timeconditions',
+                'voicemails',
+                'ivrs',
+                'others'
+            ] as $i => $category
+        ) {
+            $data = getDestinationByCategory($category)['list'];            $data = getDestinationByCategory($category)['list'];
+            foreach ($data as $b => $d) {
+                $output['categories'][$category] = [
+                    'name' => $d['app_name'],
+                    'value' => $category
+                ];
+
+                //[$i] = ;
+                //$output['categories'][$i] = ;
+                $output['targets'][$category][] = [
+                    'name' => $d['label'],
+                    'value' => $d['id']
+                ];
+            }
+        }
+
+        return $output;
+    }
+}
+
+if (!function_exists('getTimeoutDestinationsLabels')) {
+    /**
+     * @deprecated Please consider to use Services/ActionsService instead
+     */
+    function getTimeoutDestinationsLabels(array $actions, $domain = null): array
+    {
+        $destinations = getTimeoutDestinations($domain);
+        $output = [];
+        foreach ($actions as $action) {
+            foreach ($destinations["targets"] as $category => $values) {
+                foreach ($values as $data) {
+                    if ($data["value"] == $action['destination_data']) {
+                        $output[] = $destinations["categories"][(string) $category]["name"] . ' ' . $data["name"];
+                    }
+                }
+            }
+        }
+        return $output;
+    }
+}
+
 // * depreciated
 if (!function_exists('get_registrations')) {
     function get_registrations($show = null)

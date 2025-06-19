@@ -1002,4 +1002,30 @@ class RingotelApiService
 
         return $staleUsers;
     }
+
+    public function message($params)
+    {
+        $this->ensureApiTokenExists();
+
+        $response = Http::ringotel_api()
+        ->withBody(json_encode([
+            'method' => 'message',
+            'params' => $params,
+        ]), 'application/json')
+        ->post('/')
+        ->throw()
+        ->json();
+
+        if (isset($response['error'])) {
+            throw new \Exception($response['error']['message']);
+        }
+    
+        if (!isset($response['result'])) {
+            throw new \Exception("An unknown error has occurred");
+        }
+        // return $response['result'];
+    
+        return $response['result'];
+    }
+
 }
