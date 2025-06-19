@@ -260,7 +260,7 @@ class ProFeaturesController extends Controller
                         Artisan::call('module:enable', ['module' => 'ContactCenter']);
 
                         // Run the module:seed command after extraction
-                        Artisan::call('module:seed', ['module' => 'ContactCenter']);
+                        Artisan::call('module:seed', ['module' => 'ContactCenter','--force' => true]);
 
                         // Run the 'app:update' command using Symfony Process
                         // $process = new Process(['php', 'artisan', 'app:update']);
