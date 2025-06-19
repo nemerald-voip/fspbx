@@ -262,6 +262,9 @@ class ProFeaturesController extends Controller
                         // Run the module:seed command after extraction
                         Artisan::call('module:seed', ['module' => 'ContactCenter','--force' => true]);
 
+                        // Cache new routes
+                        Artisan::call('route:cache');
+
                         // Run the 'app:update' command using Symfony Process
                         // $process = new Process(['php', 'artisan', 'app:update']);
                         // $process->setWorkingDirectory(base_path());  // Set the Laravel root directory
