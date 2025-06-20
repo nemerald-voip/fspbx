@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Extensions;
+use App\Models\VoicemailDestinations;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -54,31 +55,20 @@ class Voicemails extends Model
      */
     protected $hidden = [];
 
-    /**
-     * The booted method of the model
-     *
-     * Define all attributes here like normal code
 
-     */
-    protected static function booted()
+    public function getDestroyRouteAttribute()
     {
-        static::creating(function ($model) {
-            $model->insert_date = date('Y-m-d H:i:s');
-            $model->insert_user = session('user_uuid');
-        });
+        return route('voicemails.destroy', $this);
+    }
 
-        static::saving(function ($model) {
-            if (!$model->domain_uuid) {
-                $model->domain_uuid = session('domain_uuid');
-            }
-            unset($model->destroy_route);
-            unset($model->messages_route);
-        });
+    public function getMessagesRouteAttribute()
+    {
+        return route('voicemails.messages.index', $this);
+    }
 
-        static::retrieved(function ($model) {
-            $model->destroy_route = route('voicemails.destroy', $model);
-            $model->messages_route = route('voicemails.messages.index', $model);
-        });
+    public function setDomainUuidAttribute($value)
+    {
+        $this->attributes['domain_uuid'] = $value ?: session('domain_uuid');
     }
 
     // Accessor for greeting_id
@@ -170,6 +160,22 @@ class Voicemails extends Model
     {
         return $this->voicemail_id . ' - ' . $this->voicemail_mail_to;
     }
+
+
+    public function syncCopies(array $copyUuids)
+    {
+        // Remove all current destinations
+        VoicemailDestinations::where('voicemail_uuid', $this->voicemail_uuid)->delete();
+
+        // Add the new destinations
+        foreach ($copyUuids as $copyUuid) {
+            $destination = new VoicemailDestinations();
+            $destination->voicemail_uuid = $this->voicemail_uuid;
+            $destination->voicemail_uuid_copy = $copyUuid;
+            $destination->save();
+        }
+    }
+
 
 
     /**

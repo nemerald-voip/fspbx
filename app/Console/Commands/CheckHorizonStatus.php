@@ -61,9 +61,10 @@ class CheckHorizonStatus extends Command
             $request['slack_message'] = "*" . strtoupper(gethostname()) . " Horizon*: status has changed to " . $currentStatus;
             // SendSystemStatusNotificationToSlack::dispatch($message)->onQueue('slack');
 
-            Notification::route('slack', config('slack.system_status'))
-            ->notify(new SendHorizonStatusNotification($request));
-
+            if (config('slack.system_status')) {
+                Notification::route('slack', config('slack.system_status'))
+                ->notify(new SendHorizonStatusNotification($request));
+            }
             // Update the cached status
             Cache::put('horizon_status', $currentStatus);
         }

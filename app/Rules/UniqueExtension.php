@@ -2,6 +2,7 @@
 
 namespace App\Rules;
 
+use App\Models\BusinessHour;
 use Closure;
 use App\Models\Faxes;
 use App\Models\IvrMenus;
@@ -39,7 +40,7 @@ class UniqueExtension implements ValidationRule
     {
         // Add validation for 911 as a reserved value
         if ($value == '911') {
-            $fail('911 can not be used as extension number. It is reserved for emergency calls only.');
+            $fail('Extension 911 is reserved for emergency services and cannot be used.');
             return;
         }
 
@@ -121,6 +122,14 @@ class UniqueExtension implements ValidationRule
                 return $query->where('conference_uuid', '!=', $this->currentUuid);
             });
 
+        // Add this subquery for Business Hours
+        $subqueries[] = BusinessHour::select('extension') // Aliasing column to match others
+            ->where('extension', $value)
+            ->where('domain_uuid', $this->domainUuid)
+            ->when($this->currentUuid, function ($query) {
+                return $query->where('uuid', '!=', $this->currentUuid);
+            });
+
         // Combine all subqueries using UNION
         $combinedQuery = $subqueries[0];
         for ($i = 1; $i < count($subqueries); $i++) {
@@ -128,7 +137,7 @@ class UniqueExtension implements ValidationRule
         }
 
         if ($combinedQuery->exists()) {
-            $fail('This extension is already in use.');
+            $fail('This extension number is already in use.');
             return;
         }
     }

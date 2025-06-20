@@ -83,19 +83,31 @@ class HandleInertiaRequests extends Middleware
         $permissions['polycom_api_token_edit'] = userCheckPermission('polycom_api_token_edit');
 
         $permissions['destination_add'] = userCheckPermission('destination_add');
-        $permissions['destination_edit'] = userCheckPermission('destination_edit');
-        $permissions['destination_delete'] = userCheckPermission('destination_delete');
+        $permissions['destination_update'] = userCheckPermission('destination_edit');
+        $permissions['destination_destroy'] = userCheckPermission('destination_delete');
         $permissions['destination_edit_domain'] = userCheckPermission('destination_domain');
 
         $permissions['cdrs_view_global'] = userCheckPermission('xml_cdr_all');
         $permissions['cdrs_export'] = userCheckPermission('xml_cdr_export');
+        $permissions['cdr_view_details'] = userCheckPermission('xml_cdr_details');
 
         $permissions['voicemail_create'] = userCheckPermission('voicemail_add');
         $permissions['voicemail_update'] = userCheckPermission('voicemail_edit');
         $permissions['voicemail_destroy'] = userCheckPermission('voicemail_delete');
         $permissions['voicemail_message_index'] = userCheckPermission('voicemail_message_view');
 
+        $permissions['ring_group_create'] = userCheckPermission('ring_group_add');
+        $permissions['ring_group_update'] = userCheckPermission('ring_group_edit');
+        $permissions['ring_group_destroy'] = userCheckPermission('ring_group_delete');
+
         $permissions['registrations_view_global'] = userCheckPermission('registration_all');
+
+        $permissions['active_calls_view_global'] = userCheckPermission('call_active_all');
+
+        $permissions['phone_numbers_view_global'] = userCheckPermission('destination_all');
+        $permissions['phone_numbers_create'] = userCheckPermission('destination_add');
+        $permissions['phone_numbers_update'] = userCheckPermission('destination_edit');
+        $permissions['phone_numbers_destroy'] = userCheckPermission('destination_delete');
 
         $permissions['virtual_receptionist_create'] = userCheckPermission('ivr_menu_add');
         $permissions['virtual_receptionist_update'] = userCheckPermission('ivr_menu_edit');
@@ -114,6 +126,24 @@ class HandleInertiaRequests extends Middleware
         $permissions['contact_upload'] = userCheckPermission('contact_upload');
 
         $permissions['account_settings_index'] = userCheckPermission('account_settings_list_view');
+
+        $permissions['business_hours_create'] = userCheckPermission('business_hours_create');
+        $permissions['business_hours_update'] = userCheckPermission('business_hours_update');
+        $permissions['business_hours_destroy'] = userCheckPermission('business_hours_delete');
+
+
+        $permissions['group_create'] = userCheckPermission('group_add');
+        $permissions['group_update'] = userCheckPermission('group_edit');
+        $permissions['group_destroy'] = userCheckPermission('group_delete');
+        $permissions['domain_groups_view'] = userCheckPermission('domain_groups_list_view');
+
+        $permissions['user_create'] = userCheckPermission('user_add');
+        $permissions['user_update'] = userCheckPermission('user_edit');
+        $permissions['user_destroy'] = userCheckPermission('user_delete');
+
+        $permissions['extension_create'] = userCheckPermission('extension_add');
+        $permissions['extension_update'] = userCheckPermission('extension_edit');
+        $permissions['extension_destroy'] = userCheckPermission('extension_delete');
 
         // logger($permissions);
         return $permissions;

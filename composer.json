@@ -31,11 +31,12 @@
         "propaganistas/laravel-phone": "^5.0",
         "simplesoftwareio/simple-qrcode": "^4.2",
         "spatie/laravel-activitylog": "^4.8",
+        "spatie/laravel-data": "^4.8",
+        "spatie/laravel-query-builder": "^5.7",
         "spatie/laravel-webhook-client": "^3.2",
         "spatie/simple-excel": "^3.6",
         "symfony/http-client": "^6.4",
-        "symfony/postmark-mailer": "^6.4",
-        "tightenco/ziggy": "^1.8"
+        "symfony/postmark-mailer": "^6.4"
     },
     "require-dev": {
         "spatie/laravel-ignition": "^2.0",

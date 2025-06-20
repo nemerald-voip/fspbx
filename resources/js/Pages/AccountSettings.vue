@@ -22,9 +22,9 @@
 
                 <div v-if="activeTab === 'general'" class="space-y-6 sm:px-6 lg:col-span-10 lg:px-0">
                     <section aria-labelledby="settings-heading">
-                        <div class="shadow  sm:rounded-md">
+                        <div class="shadow bg-white sm:rounded-md">
 
-                            <div class="space-y-6 bg-white px-4 py-6 sm:p-6">
+                            <div class="space-y-6 px-4 py-6 sm:p-6">
                                 <div class="flex justify-between items-center">
                                     <h3 id="settings-heading" class="text-base font-semibold leading-6 text-gray-900">
                                         General</h3>
@@ -64,7 +64,7 @@
                                 </div>
 
                             </div>
-                            <div class="bg-white px-4 py-3 text-right sm:px-6">
+                            <div class="px-4 py-3 text-right sm:px-6">
 
                                 <button @click.prevent="saveSettings"
                                     class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
@@ -80,15 +80,15 @@
                     <!-- <section class="bg-white p-6 shadow rounded-md space-y-6">
                         <h3 class="text-lg font-semibold text-gray-900">Voicemail Settings</h3> -->
 
-                        <!-- Password Min Length -->
-                        <!-- <div v-if="getSetting('password_min_length').uuid">
+                    <!-- Password Min Length -->
+                    <!-- <div v-if="getSetting('password_min_length').uuid">
                             <LabelInputOptional target="password_min_length" label="Password Min Length" />
                             <InputField v-model="getSetting('password_min_length').value" type="number"
                                 id="password_min_length" name="password_min_length" class="mt-2"
                                 placeholder="Enter minimum password length" />
                         </div> -->
 
-                        <!-- <div>
+                    <!-- <div>
                             <LabelInputOptional target="password_min_length" label="Password Min Length" />
 
                             <div class="relative mt-2">
@@ -107,27 +107,27 @@
                         </div> -->
 
 
-                        <!-- Password Complexity -->
-                        <!-- <div v-if="getSetting('password_complexity').uuid">
+                    <!-- Password Complexity -->
+                    <!-- <div v-if="getSetting('password_complexity').uuid">
                             <Toggle label="Require Complex Passwords" v-model="getSetting('password_complexity').value"
                                 :true-value="'true'" :false-value="'false'" />
                         </div> -->
 
-                        <!-- Keep Voicemails Locally -->
-                        <!-- <div v-if="getSetting('keep_local').uuid">
+                    <!-- Keep Voicemails Locally -->
+                    <!-- <div v-if="getSetting('keep_local').uuid">
                             <Toggle label="Keep Local Voicemail Copies" v-model="getSetting('keep_local').value"
                                 :true-value="'true'" :false-value="'false'" />
                         </div> -->
 
-                        <!-- Transcription Enabled by Default -->
-                        <!-- <div v-if="getSetting('transcription_enabled_default').uuid">
+                    <!-- Transcription Enabled by Default -->
+                    <!-- <div v-if="getSetting('transcription_enabled_default').uuid">
                             <Toggle label="Enable Transcription by Default"
                                 v-model="getSetting('transcription_enabled_default').value" :true-value="'true'"
                                 :false-value="'false'" />
                         </div> -->
 
-                        <!-- Voicemail File Delivery -->
-                        <!-- <div v-if="getSetting('voicemail_file').uuid">
+                    <!-- Voicemail File Delivery -->
+                    <!-- <div v-if="getSetting('voicemail_file').uuid">
                             <label for="voicemail_file" class="block text-sm font-medium text-gray-700">Voicemail File
                                 Delivery</label>
                             <select id="voicemail_file" v-model="getSetting('voicemail_file').value"
@@ -301,9 +301,6 @@
                                                         <th scope="col"
                                                             class="px-6 py-3 text-left text-sm font-semibold text-gray-900">
                                                             Amount</th>
-                                                        <!--
-                              `relative` is added here due to a weird bug in Safari that causes `sr-only` headings to introduce overflow on the body on mobile.
-                            -->
                                                         <th scope="col"
                                                             class="relative px-6 py-3 text-left text-sm font-medium text-gray-500">
                                                             <span class="sr-only">View receipt</span>
@@ -337,6 +334,37 @@
                     </section>
                 </div>
 
+                <div v-if="activeTab === 'emergency'" class="space-y-6 sm:px-6 lg:col-span-10 lg:px-0">
+                    <section aria-labelledby="settings-heading">
+                        <div class="shadow bg-white sm:rounded-md">
+
+                            <EmergencyCalls :routes="routes" />
+                        </div>
+                    </section>
+
+                    <section aria-labelledby="settings-heading">
+                        <div class="shadow bg-white sm:rounded-md">
+
+                            <div class="space-y-6 px-4 py-6 sm:p-6">
+                                <div class="flex justify-between items-center">
+                                    <h3 id="settings-heading" class="text-base font-semibold leading-6 text-gray-900">
+                                        Service Status</h3>
+
+                                    <!-- <p class="mt-1 text-sm text-gray-500"></p> -->
+                                </div>
+                            </div>
+
+                            <EmergencyServiceStatus :routes="routes"/>
+                            
+
+                        </div>
+                    </section>
+
+
+
+
+                </div>
+
 
             </div>
         </main>
@@ -348,21 +376,22 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, reactive } from 'vue'
-import { router } from "@inertiajs/vue3";
+import { ref, computed, reactive } from 'vue'
 import MainLayout from '../Layouts/MainLayout.vue'
-import { Cog6ToothIcon, AdjustmentsHorizontalIcon, BellIcon } from '@heroicons/vue/24/outline';
+import { Cog6ToothIcon, BellIcon } from '@heroicons/vue/24/outline';
 import LabelInputOptional from "@generalComponents/LabelInputOptional.vue";
 import InputField from "@generalComponents/InputField.vue";
 import Toggle from "@generalComponents/Toggle.vue";
 import Spinner from "@generalComponents/Spinner.vue";
 import Notification from "./components/notifications/Notification.vue";
 import ListboxGroup from "@generalComponents/ListboxGroup.vue";
-
-
-import { MagnifyingGlassIcon, QuestionMarkCircleIcon, ExclamationCircleIcon } from '@heroicons/vue/20/solid'
+import EmergencyCalls from "./components/EmergencyCalls.vue";
+import EmergencyServiceStatus from "./components/EmergencyServiceStatus.vue";
+import { CheckCircleIcon, QuestionMarkCircleIcon, ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { CreditCardIcon } from '@heroicons/vue/24/outline'
 import { ChevronDownIcon } from '@heroicons/vue/16/solid'
+
+
 
 
 const props = defineProps({

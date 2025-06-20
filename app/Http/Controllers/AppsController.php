@@ -13,6 +13,7 @@ use App\Models\DefaultSettings;
 use App\Jobs\SendAppCredentials;
 use App\Services\RingotelApiService;
 use Illuminate\Support\Facades\Cache;
+use Spatie\QueryBuilder\QueryBuilder;
 use App\Models\MobileAppPasswordResetLinks;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\Http\Requests\UpdateRingotelApiTokenRequest;
@@ -292,7 +293,7 @@ class AppsController extends Controller
                 }
 
                 // Add additional navigation item if ringotel status is true
-                if($model->ringotel_status == 'true'){
+                if ($model->ringotel_status == 'true') {
                     $navigation[] = [
                         'name' => 'Users',
                         'icon' => 'UsersIcon',
@@ -747,7 +748,7 @@ class AppsController extends Controller
      */
     public function syncUsers(RingotelApiService $ringotelApiService)
     {
-        logger(request()->all());
+        // logger(request()->all());
         $this->ringotelApiService = $ringotelApiService;
 
         try {
@@ -810,65 +811,43 @@ class AppsController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function mobileAppUserSettings(Request $request, Extensions $extension)
+    public function getMobileAppOptions(RingotelApiService $ringotelApiService)
     {
-        // Check if the user already exists
-        $mobile_app = $extension->mobile_app;
-        if ($mobile_app) {
+        $this->ringotelApiService = $ringotelApiService;
+
+        try {
+
+            $mobile_app = QueryBuilder::for(MobileAppUsers::query())
+                ->select('mobile_app_user_uuid', 'org_id', 'conn_id', 'user_id', 'status')
+                ->where('extension_uuid', request('extension_uuid'))
+                ->first();
+
+
+            $org_id = DomainSettings::where('domain_uuid', session('domain_uuid'))
+                ->where('domain_setting_category', 'app shell')
+                ->where('domain_setting_subcategory', 'org_id')
+                ->where('domain_setting_enabled', true)
+                ->value('domain_setting_value');
+
+            if (empty($org_id)) {
+                throw new \Exception("Contact your administrator to enable mobile apps.");
+            }
+
+            $connections = $this->ringotelApiService->getConnections($org_id);
+
             return response()->json([
                 'mobile_app' => $mobile_app,
-                'extension' => $extension->extension,
-                'name' => $extension->effective_caller_id_name,
-                'status' => '200',
+                'org_id' => $org_id,
+                'connections' => $connections,
             ]);
-        }
-
-        // If the user doesn't exist prepare to create a new one
-        $org_id = appsGetOrganizationDetails($extension->domain_uuid);
-
-        // If Organization isn't set up return
-        if (!isset($org_id)) {
+        } catch (\Throwable $e) {
+            logger('ExtensionsController@getMobileAppOptions error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => "Mobile apps are not activated. Please, contact your administrator",
-                ],
-            ]);
+                'success'  => false,
+                'errors' => ['error' => [$e->getMessage()]],
+                'data'     => [],
+            ], 404);
         }
-
-        // Get all connections for this organization
-        $response = appsGetConnections($org_id);
-
-        // If successful continue
-        if (isset($response['result'])) {
-            $connections = $response['result'];
-            $app_domain = $response['result'][0]['domain'];
-
-            // Otherwise return failed status
-        } elseif (isset($response['error'])) {
-            return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => $response['error']['message'],
-                ],
-            ]);
-        } else {
-            return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => 'Unknown error',
-                ],
-            ]);
-        }
-
-        // If success return response with values
-        return response()->json([
-            'app_domain' => $app_domain,
-            'connections' => $connections,
-            'org_id' => $org_id,
-            'extension_uuid' => $extension->extension_uuid,
-            'status' => 'success',
-        ]);
     }
 
 
@@ -877,102 +856,121 @@ class AppsController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function createUser(Request $request)
+    public function createUser(RingotelApiService $ringotelApiService)
     {
-        $extension = Extensions::find($request->extension_uuid);
+        $this->ringotelApiService = $ringotelApiService;
+        try {
+            $currentDomain = session('domain_uuid');
 
-        // We don't show the password and QR code for the organisations that has dont_send_user_credentials=true
-        $hidePassInEmail = get_domain_setting('dont_send_user_credentials', $extension->domain()->first()->domain_uuid);
-        if ($hidePassInEmail === null) {
-            $hidePassInEmail = 'false';
-        }
+            $extension = QueryBuilder::for(Extensions::class)
+                ->select([
+                    'extension_uuid',
+                    'domain_uuid',
+                    'extension',
+                    'password',
+                    'effective_caller_id_name',
+                    'effective_caller_id_number',
 
-        $mobile_app = [
-            'org_id' => $request->org_id,
-            'conn_id' => $request->connection,
-            'name' => $extension->effective_caller_id_name,
-            'email' => ($extension->voicemail) ? $extension->voicemail->voicemail_mail_to : "",
-            'ext' => $extension->extension,
-            'username' => $extension->extension,
-            'domain' => $request->app_domain,
-            'authname' => $extension->extension,
-            'password' => $extension->password,
-            'status' => ($request->activate == 'on') ? 1 : -1,
-            'no_email' => $hidePassInEmail == 'true'
-        ];
+                ])
+                ->with([
+                    'voicemail' => function ($query) use ($currentDomain) {
+                        $query->where('domain_uuid', $currentDomain)
+                            ->select(
+                                'voicemail_uuid',
+                                'domain_uuid',
+                                'voicemail_id',
+                                'voicemail_mail_to',
+                            );
+                    },
 
-        // Send request to create user
-        $response = appsCreateUser($mobile_app);
+                ])
+                ->whereKey(request('extension_uuid'))
+                ->firstOrFail();
 
-        //If there is an error return failed status
-        if (isset($response['error'])) {
+
+
+            // We don't show the password and QR code for the organisations that has dont_send_user_credentials=true
+            $hidePassInEmail = get_domain_setting('dont_send_user_credentials');
+            if ($hidePassInEmail === null) {
+                $hidePassInEmail = 'false';
+            }
+
+            $params = [
+                'org_id' => request('org_id'),
+                'conn_id' => request('connection'),
+                'name' => $extension->effective_caller_id_name,
+                'email' => $extension->email ? $extension->email : "",
+                'ext' => $extension->extension,
+                'username' => $extension->extension,
+                // 'domain' => $request->app_domain,
+                'authname' => $extension->extension,
+                'password' => $extension->password,
+                'status' => request('status'),
+                'noemail' => true,
+            ];
+
+            // Send request to create user
+            $user = $this->ringotelApiService->createUser($params);
+
+            // If success and user is activated send user email with credentials
+            if ($user) {
+                if ($hidePassInEmail == 'true' && request('status') == 1) {
+                    // Include get-password link and remove password value
+                    $passwordToken = Str::random(40);
+                    MobileAppPasswordResetLinks::where('extension_uuid', $extension->extension_uuid)->delete();
+                    $appCredentials = new MobileAppPasswordResetLinks();
+                    $appCredentials->token = $passwordToken;
+                    $appCredentials->extension_uuid = $extension->extension_uuid;
+                    $appCredentials->domain = $user['domain'];
+                    $appCredentials->save();
+
+                    $passwordUrlShow = userCheckPermission('mobile_apps_password_url_show') ?? 'false';
+                    $includePasswordUrl = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
+                    $user['password_url'] = $includePasswordUrl;
+                }
+                if ($extension->email) {
+                    SendAppCredentials::dispatch($user)->onQueue('emails');
+                }
+            }
+
+            // Delete any prior info from database
+            MobileAppUsers::where('extension_uuid', $extension->extension_uuid)->delete();
+
+            // Save returned user info in database
+            $appUser = new MobileAppUsers();
+            $appUser->extension_uuid = $extension->extension_uuid;
+            $appUser->domain_uuid = $extension->domain_uuid;
+            $appUser->org_id = request('org_id');
+            $appUser->conn_id = request('connection');
+            $appUser->user_id = $user['id'];
+            $appUser->status = $user['status'];
+            $appUser->save();
+            // Log::info($response);
+
+            $qrcode = "";
+            if ($hidePassInEmail == 'false') {
+                if (request('status') == 1) {
+                    // Generate QR code
+                    $qrcode = QrCode::format('png')->generate('{"domain":"' . $user['domain'] .
+                        '","username":"' . $user['username'] . '","password":"' .  $user['password'] . '"}');
+                }
+            } else {
+                $user['password'] = null;
+            }
+
             return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => $response['error']['message'],
-                ],
-            ])->getData(true);
-        } elseif (!isset($response['result'])) {
+                'user' => $user,
+                'qrcode' => ($qrcode != "") ? base64_encode($qrcode) : null,
+                'messages' => ['success' => ['Mobile app has been enabled']]
+            ]);
+        } catch (\Throwable $e) {
+            logger('ExtensionsController@createUser error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => "An unknown error has occurred",
-                ],
-            ])->getData(true);
+                'success'  => false,
+                'errors' => ['error' => [$e->getMessage()]],
+                'data'     => [],
+            ], 404);
         }
-
-        // If success and user is activated send user email with credentials
-        if ($response['result']['status'] == 1) {
-            if ($hidePassInEmail == 'true' && $request->activate == 'on') {
-                // Include get-password link and remove password value
-                $passwordToken = Str::random(40);
-                MobileAppPasswordResetLinks::where('extension_uuid', $extension->extension_uuid)->delete();
-                $appCredentials = new MobileAppPasswordResetLinks();
-                $appCredentials->token = $passwordToken;
-                $appCredentials->extension_uuid = $extension->extension_uuid;
-                $appCredentials->domain = $response['result']['domain'];
-                $appCredentials->save();
-
-                $passwordUrlShow = userCheckPermission('mobile_apps_password_url_show') ?? 'false';
-                $includePasswordUrl = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
-                $response['result']['password_url'] = $includePasswordUrl;
-            }
-            if (isset($extension->voicemail->voicemail_mail_to)) {
-                SendAppCredentials::dispatch($response['result'])->onQueue('emails');
-            }
-        }
-
-        // Delete any prior info from database
-        MobileAppUsers::where('extension_uuid', $extension->extension_uuid)->delete();
-
-        // Save returned user info in database
-        $appUser = new MobileAppUsers();
-        $appUser->extension_uuid = $extension->extension_uuid;
-        $appUser->domain_uuid = $extension->domain_uuid;
-        $appUser->org_id = $request->org_id;
-        $appUser->conn_id = $request->connection;
-        $appUser->user_id = $response['result']['id'];
-        $appUser->status = $response['result']['status'];
-        $appUser->save();
-        // Log::info($response);
-
-        $qrcode = "";
-        if ($hidePassInEmail == 'false') {
-            if ($request->activate == 'on') {
-                // Generate QR code
-                $qrcode = QrCode::format('png')->generate('{"domain":"' . $response['result']['domain'] .
-                    '","username":"' . $response['result']['username'] . '","password":"' .  $response['result']['password'] . '"}');
-            }
-        } else {
-            $response['result']['password'] = null;
-        }
-
-        return response()->json([
-            'user' => $response['result'],
-            'qrcode' => ($qrcode != "") ? base64_encode($qrcode) : null,
-            'status' => 'success',
-            'message' => 'The user has been successfully created'
-        ]);
     }
 
     /**
@@ -980,42 +978,31 @@ class AppsController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function deleteUser(Request $request, Extensions $extension)
+    public function deleteUser(RingotelApiService $ringotelApiService)
     {
+        $this->ringotelApiService = $ringotelApiService;
+        try {
 
-        $mobile_app = $request->mobile_app;
+            MobileAppUsers::find(request('mobile_app_user_uuid'))->delete();
 
-        // Delete any prior info from database
-        $appUser = $extension->mobile_app;
-        if ($appUser) $appUser->delete();
+            $params['org_id'] = request('org_id');
+            $params['user_id'] = request('user_id');
 
-        // Send request to delеte user
-        $response = appsDeleteUser($mobile_app['org_id'], $mobile_app['user_id']);
+            // Send request to delеte user
+            $response = $this->ringotelApiService->deleteUser($params);
 
-        //If there is an error return failed status
-        if (isset($response['error'])) {
             return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => $response['error']['message'],
-                ],
-            ])->getData(true);
-        } elseif (!isset($response['result'])) {
+                'messages' => ['success' => ['Mobile app has been removed']]
+            ], 200);
+        } catch (\Exception $e) {
+            logger('ExtensionsController@deleteUser error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
-                'status' => 401,
+                'status' => 500,
                 'error' => [
-                    'message' => "An unknown error has occurred",
+                    'message' => 'An unexpected error occurred. Please try again later.',
                 ],
-            ])->getData(true);
+            ]);
         }
-
-        return response()->json([
-            'user' => $response['result'],
-            'status' => 200,
-            'success' => [
-                'message' => 'The mobile app user has been successfully deleted'
-            ]
-        ]);
     }
 
 
@@ -1024,265 +1011,227 @@ class AppsController extends Controller
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function resetPassword(Request $request, Extensions $extension)
+    public function resetPassword(RingotelApiService $ringotelApiService)
     {
+        $this->ringotelApiService = $ringotelApiService;
+        try {
 
-        $mobile_app = $request->mobile_app;
+            $params = [
+                'org_id' => request('org_id'),
+                'user_id' => request('user_id'),
+                'noemail' => true,
+            ];
 
-        // We don't show the password and QR code for the organisations that has dont_send_user_credentials=true
-        $hidePassInEmail = get_domain_setting('dont_send_user_credentials', $extension->domain()->first()->domain_uuid);
-        if ($hidePassInEmail === null) {
-            $hidePassInEmail = 'false';
-        }
+            // We don't show the password and QR code for the organisations that has dont_send_user_credentials=true
+            $hidePassInEmail = get_domain_setting('dont_send_user_credentials');
+            if ($hidePassInEmail === null) {
+                $hidePassInEmail = 'false';
+            }
 
-        // Send request to reset password
-        $response = appsResetPassword($mobile_app['org_id'], $mobile_app['user_id'], $hidePassInEmail == 'true');
+            // Send request to reset password
+            $user = $this->ringotelApiService->resetPassword($params);
 
-        //If there is an error return failed status
-        if (isset($response['error'])) {
+            // If success and user is activated send user email with credentials
+            if ($user) {
+                if ($hidePassInEmail == 'true') {
+                    // Include get-password link
+                    $passwordToken = Str::random(40);
+                    MobileAppPasswordResetLinks::where('extension_uuid', request('extension_uuid'))->delete();
+                    $appCredentials = new MobileAppPasswordResetLinks();
+                    $appCredentials->token = $passwordToken;
+                    $appCredentials->extension_uuid = request('extension_uuid');
+                    $appCredentials->domain = $user['domain'];
+                    $appCredentials->save();
+
+                    $passwordUrlShow = userCheckPermission('mobile_apps_password_url_show') ?? 'false';
+                    $includePasswordUrl = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
+                    $user['password_url'] = $includePasswordUrl;
+                }
+                if (request('email')) {
+                    SendAppCredentials::dispatch($user)->onQueue('emails');
+                }
+            }
+
+            $qrcode = "";
+            if ($hidePassInEmail == 'false') {
+                // Generate QR code
+                $qrcode = QrCode::format('png')->generate('{"domain":"' . $user['domain'] .
+                    '","username":"' . $user['username'] . '","password":"' .  $user['password'] . '"}');
+            } else {
+                $user['password'] = null;
+            }
+
             return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => $response['error']['message'],
-                ],
-            ])->getData(true);
-        } elseif (!isset($response['result'])) {
+                'user' => $user,
+                'qrcode' => ($qrcode != "") ? base64_encode($qrcode) : null,
+                'messages' => ['success' => ['Mobile app credentials have been reset']]
+            ]);
+        } catch (\Throwable $e) {
+            logger('ExtensionsController@resetPassword error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
-                'status' => 401,
+                'success'  => false,
+                'errors' => ['error' => [$e->getMessage()]],
+            ], 404);
+        }
+    }
+
+
+    /**
+     * Submit activate user request to Ringotel API
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function activateUser(RingotelApiService $ringotelApiService)
+    {
+        $this->ringotelApiService = $ringotelApiService;
+        try {
+
+
+            $currentDomain = session('domain_uuid');
+
+            $extension = QueryBuilder::for(Extensions::class)
+                ->select([
+                    'extension_uuid',
+                    'domain_uuid',
+                    'extension',
+                    'password',
+                    'effective_caller_id_name',
+                    'effective_caller_id_number',
+
+                ])
+                ->with([
+                    'voicemail' => function ($query) use ($currentDomain) {
+                        $query->where('domain_uuid', $currentDomain)
+                            ->select(
+                                'voicemail_uuid',
+                                'domain_uuid',
+                                'voicemail_id',
+                                'voicemail_mail_to',
+                            );
+                    },
+
+                    'mobile_app' => function ($query) {
+                        $query->select(
+                            'mobile_app_user_uuid',
+                            'extension_uuid',
+                            'conn_id',
+                        );
+                    },
+
+                ])
+                ->whereKey(request('extension_uuid'))
+                ->firstOrFail();
+
+            $params = [
+                'user_id'   => request('user_id'),
+                'org_id'    => request('org_id'),
+                'conn_id'   => $extension->mobile_app->conn_id,
+                'status'    => 1,
+                'no_email'  => true,
+                'name'      => $extension->effective_caller_id_name,
+                'email'     => $extension->email ?? '',
+                'ext'       => $extension->extension,
+                'password'  => $extension->password,
+            ];
+
+            $user = $ringotelApiService->updateUser($params);
+
+            $extension->mobile_app->status = 1;
+            $extension->mobile_app->save();
+
+            // We don't show the password and QR code for the organisations that has dont_send_user_credentials=true
+            $hidePassInEmail = get_domain_setting('dont_send_user_credentials');
+            if ($hidePassInEmail === null) {
+                $hidePassInEmail = 'false';
+            }
+
+            // If success and user is activated send user email with credentials
+            if ($user) {
+                if ($hidePassInEmail == 'true') {
+                    // Include get-password link
+                    $passwordToken = Str::random(40);
+                    MobileAppPasswordResetLinks::where('extension_uuid', request('extension_uuid'))->delete();
+                    $appCredentials = new MobileAppPasswordResetLinks();
+                    $appCredentials->token = $passwordToken;
+                    $appCredentials->extension_uuid = request('extension_uuid');
+                    $appCredentials->domain = $user['domain'];
+                    $appCredentials->save();
+
+                    $passwordUrlShow = userCheckPermission('mobile_apps_password_url_show') ?? 'false';
+                    $includePasswordUrl = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
+                    $user['password_url'] = $includePasswordUrl;
+                }
+                if ($extension->email) {
+                    SendAppCredentials::dispatch($user)->onQueue('emails');
+                }
+            }
+
+            $qrcode = "";
+            if ($hidePassInEmail == 'false') {
+                $qrcode = QrCode::format('png')->generate('{"domain":"' . $user['domain'] .
+                    '","username":"' . $user['username'] . '","password":"' .  $user['password'] . '"}');
+            } else {
+                $user['password'] = null;
+            }
+
+            return response()->json([
+                'user' => $user,
+                'qrcode' => ($qrcode != "") ? base64_encode($qrcode) : null,
+                'messages' => ['success' => ['Mobile app has been activated']]
+            ], 200);
+        } catch (\Exception $e) {
+            logger('ExtensionsController@activateUser error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return response()->json([
+                'status' => 500,
                 'error' => [
-                    'message' => "An unknown error has occurred",
+                    'message' => 'An unexpected error occurred. Please try again later.',
                 ],
-            ])->getData(true);
+            ]);
         }
-
-        // If success and user is activated send user email with credentials
-        if ($hidePassInEmail == 'true') {
-            // Include get-password link and remove password value
-            $passwordToken = Str::random(40);
-            MobileAppPasswordResetLinks::where('extension_uuid', $extension->extension_uuid)->delete();
-            $appCredentials = new MobileAppPasswordResetLinks();
-            $appCredentials->token = $passwordToken;
-            $appCredentials->extension_uuid = $extension->extension_uuid;
-            $appCredentials->domain = $response['result']['domain'];
-            $appCredentials->save();
-            $passwordUrlShow = userCheckPermission('mobile_apps_password_url_show') ?? 'false';
-            $includePasswordUrl = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
-            $response['result']['password_url'] = $includePasswordUrl;
-        }
-        if (isset($extension->voicemail->voicemail_mail_to)) {
-            SendAppCredentials::dispatch($response['result'])->onQueue('emails');
-        }
-
-        $qrcode = "";
-        if ($hidePassInEmail == 'false') {
-            // Generate QR code
-            $qrcode = QrCode::format('png')->generate('{"domain":"' . $response['result']['domain'] .
-                '","username":"' . $response['result']['username'] . '","password":"' .  $response['result']['password'] . '"}');
-        } else {
-            $response['result']['password'] = null;
-        }
-
-        return response()->json([
-            'user' => $response['result'],
-            'qrcode' => ($qrcode != "") ? base64_encode($qrcode) : null,
-            'status' => 200,
-            'success' => [
-                'message' => 'The mobile app password was successfully reset'
-            ]
-        ]);
-    }
-
-
-    /**
-     * Submit set status request to Ringotel API
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function setStatus(Request $request, Extensions $extension)
-    {
-        // We don't show the password and QR code for the organisations that has dont_send_user_credentials=true
-        $hidePassInEmail = get_domain_setting('dont_send_user_credentials', $extension->domain()->first()->domain_uuid);
-        if ($hidePassInEmail === null) {
-            $hidePassInEmail = 'false';
-        }
-
-        $mobile_app = $request->mobile_app;
-        $mobile_app['status'] = (int)$mobile_app['status'];
-
-        $mobile_app['name'] = $extension['effective_caller_id_name'];
-        $mobile_app['email'] = ($extension->voicemail['voicemail_mail_to']) ? $extension->voicemail['voicemail_mail_to'] : "";
-        $mobile_app['ext'] = $extension['extension'];
-        $mobile_app['password'] = $extension->password;
-        $mobile_app['no_email'] = $hidePassInEmail == 'true';
-
-        $appUser = $extension->mobile_app;
-
-        if ($mobile_app['status'] == 1) {
-            // Send request to update user settings
-            $response = appsUpdateUser($mobile_app);
-
-            //If there is an error return failed status
-            if (isset($response['error'])) {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => $response['error']['message'],
-                    ],
-                ])->getData(true);
-            } elseif (!isset($response['result'])) {
-                return response()->json([
-                    'status' => 401,
-                    'result' => $response,
-                    'error' => [
-                        'message' => "An unknown error has occurred",
-                    ],
-                ])->getData(true);
-            }
-
-            // Update user info in database
-            if ($appUser) {
-                $appUser->status = $mobile_app['status'];
-                $appUser->save();
-            }
-        } else if ($mobile_app['status'] == -1) {
-
-            // Send request to delete user first and then recreate it
-            $response = appsDeleteUser($mobile_app['org_id'], $mobile_app['user_id']);
-
-            //If there is an error return failed status
-            if (isset($response['error'])) {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => $response['error']['message'],
-                    ],
-                ])->getData(true);
-            } elseif (!isset($response['result'])) {
-                return response()->json([
-                    'status' => 401,
-                    'result' => $response,
-                    'error' => [
-                        'message' => "An unknown error has occurred",
-                    ],
-                ])->getData(true);
-            }
-
-            // Delete any prior info from database
-            if ($appUser) $appUser->delete();
-
-            // Send request to get org details
-            $response = appsGetOrganization($mobile_app['org_id']);
-
-            //If there is an error return failed status
-            if (isset($response['error'])) {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => $response['error']['message'],
-                    ],
-                ])->getData(true);
-            } elseif (!isset($response['result'])) {
-                return response()->json([
-                    'status' => 401,
-                    'result' => $response,
-                    'error' => [
-                        'message' => "An unknown error has occurred",
-                    ],
-                ])->getData(true);
-            }
-
-            // Send request to create a new deactivated user
-            $mobile_app['username'] = $extension->extension;
-            $mobile_app['authname'] = $extension->extension;
-            $mobile_app['domain'] = $response['result']['domain'];
-            $response = appsCreateUser($mobile_app);
-
-            //If there is an error return failed status
-            if (isset($response['error'])) {
-                return response()->json([
-                    'status' => 401,
-                    'error' => [
-                        'message' => $response['error']['message'],
-                    ],
-                ])->getData(true);
-            } elseif (!isset($response['result'])) {
-                return response()->json([
-                    'status' => 401,
-                    'result' => $response,
-                    'error' => [
-                        'message' => "An unknown error has occurred",
-                    ],
-                ])->getData(true);
-            }
-
-            // Save returned user info in database
-            $appUser = new MobileAppUsers();
-            $appUser->extension_uuid = $extension->extension_uuid;
-            $appUser->domain_uuid = $extension->domain_uuid;
-            $appUser->org_id = $mobile_app['org_id'];
-            $appUser->conn_id = $mobile_app['conn_id'];
-            $appUser->user_id = $response['result']['id'];
-            $appUser->status = $response['result']['status'];
-            $appUser->save();
-        }
-
-
-        $message = ($mobile_app['status'] == 1) ? 'The mobile app has been activated successfully' : "The mobile app has been deactivated";
-        return response()->json([
-            //'user' => $response['result'],
-            'status' => 200,
-            'success' => [
-                'message' => $message,
-            ]
-        ]);
-    }
-
-
-
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Submit deactivate user request to Ringotel API
      *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function edit($id)
+    public function deactivateUser(RingotelApiService $ringotelApiService)
     {
-        //
-    }
+        // logger(request()->all());
+        $this->ringotelApiService = $ringotelApiService;
+        try {
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
+            $mobile_app = MobileAppUsers::find(request('mobile_app_user_uuid'));
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
+            $params['org_id'] = request('org_id');
+            $params['user_id'] = request('user_id');
+
+            // Send request to deactivate user
+            $response = $this->ringotelApiService->deactivateUser($params);
+
+            $users = $ringotelApiService->getUsers(request('org_id'), request('conn_id'));
+
+            $user = collect($users)->firstWhere('username', request('ext'));
+
+            if ($user) {
+                $mobile_app = MobileAppUsers::where('user_id', request('user_id'))->first();
+                $mobile_app->user_id = $user->id;
+                $mobile_app->status = -1;
+                $mobile_app->save();
+            }
+
+            return response()->json([
+                'messages' => ['success' => ['Mobile app has been deactivated']]
+            ], 200);
+        } catch (\Exception $e) {
+            logger('ExtensionsController@deactivateUser error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return response()->json([
+                'status' => 500,
+                'error' => [
+                    'message' => 'An unexpected error occurred. Please try again later.',
+                ],
+            ]);
+        }
     }
 
     public function emailUser()

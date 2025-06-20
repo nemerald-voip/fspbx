@@ -21,11 +21,13 @@ class ProcessSinchWebhookJob extends SpatieProcessWebhookJob
     protected $messageConfig;
     protected $domain_uuid;
     protected $message;
+    protected $media;
     protected $extension_uuid;
     protected $source;
     protected $destinations;
     protected $curentDestination;
     protected $email;
+    protected $type;
     protected $ext;
 
     /**
@@ -97,6 +99,7 @@ class ProcessSinchWebhookJob extends SpatieProcessWebhookJob
                 $this->handleIncomingMessageType();
                 return true;
             } catch (\Exception $e) {
+                logger('ProcessSinchWebhook@handle error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
                 return $this->handleError($e);
             }
         }, function () {
@@ -123,8 +126,19 @@ class ProcessSinchWebhookJob extends SpatieProcessWebhookJob
         foreach($this->destinations as $destination) {
             $this->curentDestination = formatPhoneNumber($destination, 'US', PhoneNumberFormat::E164);
 
-            $this->message = $payload['text'];
+            $this->message = isset($payload['text']) ? $payload['text'] : '';
+            $this->media =  isset($payload['mediaUrls']) ? $payload['mediaUrls'] : '';
             $this->messageConfig = $this->getPhoneNumberSmsConfig($this->curentDestination);
+
+            // Decide type
+            if (!empty($this->media) && is_array($this->media) && count($this->media) > 0) {
+                $type = 'mms';
+            } else {
+                $type = 'sms';
+            }
+
+            $this->type = $type;
+
             $this->handleSms();
         }
 
@@ -220,9 +234,10 @@ class ProcessSinchWebhookJob extends SpatieProcessWebhookJob
         $messageModel->domain_uuid = (isset($this->domain_uuid)) ? $this->domain_uuid : null;
         $messageModel->source =  (isset($this->source)) ? $this->source : "";
         $messageModel->destination =  (isset($this->curentDestination)) ? $this->curentDestination : "";
-        $messageModel->message = $this->message;
+        $messageModel->message =  $this->message;
+        $messageModel->media = is_array($this->media) ? json_encode($this->media) : $this->media;
         $messageModel->direction = "in";
-        $messageModel->type = 'sms';
+        $messageModel->type = $this->type;
         $messageModel->status = $status;
         $messageModel->save();
 

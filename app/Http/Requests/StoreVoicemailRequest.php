@@ -42,6 +42,7 @@ class StoreVoicemailRequest extends FormRequest
             'voicemail_recording_instructions' => 'present',
             'voicemail_copies' => 'nullable|array',
             'extension' => "uuid",
+            'domain_uuid' => "present",
         ];
     }
 
@@ -102,6 +103,10 @@ class StoreVoicemailRequest extends FormRequest
         if ($this->has('voicemail_play_recording_instructions')) {
             $this->merge([
                 'voicemail_recording_instructions' => $this->voicemail_play_recording_instructions ? 'true' : 'false',
+            ]);
+        } else {
+            $this->merge([
+                'voicemail_recording_instructions' => 'true' 
             ]);
         }
 

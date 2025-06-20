@@ -33,9 +33,9 @@ This project started as a fork of the FusionPBX system but has been extensively 
 
 <img width="1600" alt="image" src="https://github.com/user-attachments/assets/fe3a5405-9f4b-4452-ac12-223cf4c92831">
 
-<img width="2392" alt="image" src="https://github.com/user-attachments/assets/2778637b-e5aa-4174-8e8c-0c637847e45e">
+![Image](https://github.com/user-attachments/assets/507dfa97-0264-480d-a186-767f1bcf7da8)
 
-<img width="2409" alt="image" src="https://github.com/user-attachments/assets/4bdc239b-4e15-4099-8304-1a179423296d">
+![Image](https://github.com/user-attachments/assets/c1dcb6da-1a17-44b5-8bc3-cde49faeca07)
 
 <img width="2417" alt="image" src="https://github.com/user-attachments/assets/5c885878-053c-4e4d-800f-7ad4d919894d">
 
@@ -59,9 +59,11 @@ After completing the installation steps, you can access the application at your 
 
 
 ## How to update
-After pulling the updates, run this command to install them.
+Pull new updates and install them by running these commands:
 
    ```bash
+   cd /var/www/fspbx
+   git pull
    php artisan app:update
    ```
 Check if there are any pending database updates.

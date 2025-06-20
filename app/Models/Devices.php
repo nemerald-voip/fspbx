@@ -57,6 +57,8 @@ class Devices extends Model
         'device_username'
     ];
 
+    protected $appends = ['device_address_formatted'];
+
     public function __construct(array $attributes = [])
     {
         parent::__construct();
@@ -66,43 +68,9 @@ class Devices extends Model
         $this->fill($attributes);
     }
 
-    /**
-     * The booted method of the model
-     *
-     * Define all attributes here like normal code
-     */
-    protected static function booted()
+    public function getDeviceAddressFormattedAttribute()
     {
-        static::saving(function ($model) {
-            /** @var Devices $model */
-            // Remove attributes before saving to database
-            unset(
-                $model->device_address_formatted,
-                $model->destroy_route,
-                $model->send_notify_path
-            );
-        });
-
-        static::retrieved(function ($model) {
-            if ($model->device_address) {
-                $model->device_address_formatted = $model->formatMacAddress($model->device_address);
-            }
-            $model->destroy_route = route('devices.destroy', $model);
-            return $model;
-        });
-
-        static::deleted(function ($model) {
-            /** @var Devices $model */
-            // If device is deleted
-            // TODO: better if we would know that the device was provisioned before sending deregister request
-            $model->deregisterOnZtp(null, null, true);
-        });
-    }
-
-    private function formatMacAddress(string $macAddress, $uppercase = true): string
-    {
-        $macAddress = ($uppercase) ? strtoupper($macAddress) : strtolower($macAddress);
-        return implode(":", str_split($macAddress, 2));
+        return $this->device_address ? formatMacAddress($this->device_address) : null;
     }
 
     /**

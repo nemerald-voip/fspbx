@@ -15,6 +15,7 @@ use App\Http\Controllers\ContactsController;
 use App\Http\Controllers\FaxQueueController;
 use App\Http\Controllers\FirewallController;
 use App\Http\Controllers\MessagesController;
+use App\Http\Controllers\UserLogsController;
 use App\Http\Controllers\CsrfTokenController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GreetingsController;
@@ -31,6 +32,7 @@ use App\Http\Controllers\WakeupCallsController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\UserSettingsController;
+use App\Http\Controllers\BusinessHoursController;
 use App\Http\Controllers\RegistrationsController;
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\AppsCredentialsController;
@@ -68,6 +70,7 @@ Route::get('/polycom/log/{name}', [PolycomLogController::class, 'show'])->withou
 Route::webhooks('webhook/postmark', 'postmark');
 Route::webhooks('webhook/commio/sms', 'commio_messaging');
 Route::webhooks('webhook/sinch/sms', 'sinch_messaging');
+Route::webhooks('webhook/bandwidth/sms', 'bandwidth_messaging');
 Route::webhooks('/sms/ringotelwebhook', 'ringotel_messaging');
 
 // Routes for 2FA email challenge. Used as a backup when 2FA is not enabled.
@@ -93,8 +96,8 @@ Route::post('/mobile-app/get-password/{token}', [AppsCredentialsController::clas
 Route::group(['middleware' => 'auth'], function () {
 
     // Extensions
-    Route::resource('extensions', ExtensionsController::class);
-    Route::post('/extensions/import', [ExtensionsController::class, 'import'])->name('extensions.import');
+    Route::get('extensions', [ExtensionsController::class, 'index'])->name('extensions.index');
+    // Route::resource('extensions', ExtensionsController::class);
     Route::post('/extensions/{extension}/assign-device', [ExtensionsController::class, 'assignDevice'])->name('extensions.assign-device');
     Route::post('/extensions/{extension}/device', [ExtensionsController::class, 'oldStoreDevice'])->name('extensions.store-device');
     Route::get('/extensions/{extension}/device/{device}/edit', [ExtensionsController::class, 'oldEditDevice'])->name('extensions.edit-device');
@@ -119,13 +122,13 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('domains/extensions', [DomainController::class, 'countExtensionsInDomains']);
 
     //Users
-    Route::resource('users', UsersController::class);
-    Route::post('user/{user}/settings', [UserSettingsController::class, 'store'])->name('users.settings.store');
-    Route::delete('user/settings/{setting}', [UserSettingsController::class, 'destroy'])->name('users.settings.destroy');
+    Route::get('users', [UsersController::class, 'index'])->name('users.index');
+    // Route::post('user/{user}/settings', [UserSettingsController::class, 'store'])->name('users.settings.store');
+    // Route::delete('user/settings/{setting}', [UserSettingsController::class, 'destroy'])->name('users.settings.destroy');
     Route::post('user/password/email', [ForgotPasswordController::class, 'sendResetLinkEmail'])->name('users.password.email');
 
     // Groups
-    Route::resource('groups', GroupsController::class);
+    Route::get('groups', [GroupsController::class, 'index'])->name('groups.index');
 
     //Fax
     Route::resource('faxes', FaxesController::class);
@@ -143,7 +146,16 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/faxes/send', [FaxesController::class, 'sendFax'])->name('faxes.sendFax');
 
     // Domain Groups
-    Route::resource('domaingroups', DomainGroupsController::class);
+    Route::get('domain-groups', [DomainGroupsController::class, 'index'])->name('domain-groups.index');
+
+    // Ring Groups
+    Route::get('ring-groups', [RingGroupsController::class, 'index'])->name('ring-groups.index');
+
+    // User Logs
+    Route::get('user-logs', [UserLogsController::class, 'index'])->name('user-logs.index');
+
+    // Business hours
+    Route::get('business-hours', [BusinessHoursController::class, 'index'])->name('business-hours.index');
 
     //Voicemails
     Route::resource('voicemails', VoicemailController::class);
@@ -200,9 +212,6 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/ivr/message/serve/{file_name}', [GreetingsController::class, 'serveIvrMessageFile'])
         ->name('ivr.message.file.serve')
         ->where('file_name', '(.*)');
-
-    // SIP Credentials
-    Route::get('/extensions/{extension}/sip/show', [ExtensionsController::class, 'sipShow'])->name('extensions.sip.show');
 
     // Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
@@ -266,7 +275,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/apps/organization/destroy', [AppsController::class, 'destroyOrganization'])->name('apps.organization.destroy');
     Route::post('/apps/organization/all', [AppsController::class, 'getOrganizations'])->name('apps.organization.all');
     Route::post('/apps/organization/pair', [AppsController::class, 'pairOrganization'])->name('apps.organization.pair');
-    Route::post('/apps/users/{extension}', [AppsController::class, 'mobileAppUserSettings'])->name('mobileAppUserSettings');
+    Route::post('/apps/mobile-app-options', [AppsController::class, 'getMobileAppOptions'])->name('apps.user.options');
     //Route::get('/apps/organization/update', [AppsController::class, 'updateOrganization']) ->name('appsUpdateOrganization');
     Route::post('/apps/connection/create', [AppsController::class, 'createConnection'])->name('apps.connection.create');
     Route::put('/apps/connection/update', [AppsController::class, 'updateConnection'])->name('apps.connection.update');
@@ -274,11 +283,12 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/apps/connection/update', [AppsController::class, 'updateConnection'])->name('appsUpdateConnection');
     Route::post('/apps/token/get', [AppsController::class, 'getToken'])->name('apps.token.get');
     Route::post('/apps/token/update', [AppsController::class, 'updateToken'])->name('apps.token.update');
-    Route::post('/apps/user/create', [AppsController::class, 'createUser'])->name('appsCreateUser');
-    // Route::post('/apps/{domain}/user/sync', [AppsController::class, 'syncUsers'])->name('appsSyncUsers');
+    Route::post('/apps/user/create', [AppsController::class, 'createUser'])->name('apps.user.create');
+    Route::post('/apps/user/delete', [AppsController::class, 'deleteUser'])->name('apps.user.delete');
+    Route::post('/apps/user/activate', [AppsController::class, 'activateUser'])->name('apps.user.activate');
+    Route::post('/apps/user/deactivate', [AppsController::class, 'deactivateUser'])->name('apps.user.deactivate');
     Route::post('/apps/sync-users', [AppsController::class, 'syncUsers'])->name('apps.users.sync');
-    Route::delete('/apps/users/{extension}', [AppsController::class, 'deleteUser'])->name('appsDeleteUser');
-    Route::post('/apps/users/{extension}/resetpassword', [AppsController::class, 'ResetPassword'])->name('appsResetPassword');
+    Route::post('/apps/user/reset-password', [AppsController::class, 'resetPassword'])->name('apps.user.reset');
     Route::post('/apps/users/{extension}/status', [AppsController::class, 'SetStatus'])->name('appsSetStatus');
     Route::get('/apps/email', [AppsController::class, 'emailUser'])->name('emailUser');
 
@@ -330,9 +340,6 @@ Route::group(['middleware' => 'auth'], function () {
     Route::resource('faxqueue', FaxQueueController::class);
     Route::post('/faxqueue/retry', [FaxQueueController::class, 'retry'])->name('faxqueue.retry');
     Route::post('/faxqueue/select-all', [FaxQueueController::class, 'selectAll'])->name('faxqueue.select.all');
-
-    // Ring Groups
-    Route::resource('ring-groups', RingGroupsController::class);
 
     // Recordings
     Route::get('recordings', [RecordingsController::class, 'index'])->name('recordings.index');

@@ -68,48 +68,6 @@
                         </div>
 
                         <div class="grid grid-cols-6 gap-6">
-                            <!-- <div class="col-span-3 sm:col-span-2">
-                                <LabelInputRequired target="voicemail_id" label="Voicemail Extension" class="truncate" />
-                                <InputField v-model="form.voicemail_id" type="text" name="voicemail_id" id="voicemail_id"
-                                    class="mt-2" :error="!!errors?.voicemail_id" />
-                                <div v-if="errors?.voicemail_id" class="mt-2 text-xs text-red-600">
-                                    {{ errors.voicemail_id[0] }}
-                                </div>
-                            </div>
-
-                            <div class="col-span-3 sm:col-span-2">
-                                <LabelInputOptional target="voicemail_password" label="Password" class="truncate" />
-                                <InputFieldWithIcon v-model="form.voicemail_password" id="voicemail_password"
-                                    name="voicemail_password" type="text" autocomplete="shut-up-google"
-                                    :error="!!errors?.voicemail_password" class="password-field">
-                                    <template #icon>
-                                        <VisibilityIcon @click="togglePasswordVisibility"
-                                            class="h-8 w-8 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                            aria-hidden="true" />
-                                    </template>
-                                </InputFieldWithIcon>
-                                <div v-if="errors?.voicemail_password" class="mt-2 text-xs text-red-600">
-                                    {{ errors.voicemail_password[0] }}
-                                </div>
-                            </div> -->
-
-                            <!-- <div class="col-span-6 sm:col-span-3">
-                                <LabelInputOptional target="voicemail_mail_to" label="Email address" class="truncate" />
-                                <InputField v-model="form.voicemail_mail_to" type="text" name="voicemail_mail_to"
-                                    id="voicemail_mail_to" class="mt-2" :error="!!errors?.voicemail_mail_to" />
-                                <div v-if="errors?.voicemail_mail_to" class="mt-2 text-xs text-red-600">
-                                    {{ errors.voicemail_mail_to[0] }}
-                                </div>
-                            </div> -->
-                            <!-- 
-                            <div class="col-span-3 sm:col-span-2">
-                                <LabelInputOptional :target="'destination_hold_music'" :label="'Music on Hold'" />
-                                <div class="mt-2">
-                                    <ComboBoxGroup :options="options.music_on_hold" :allowEmpty="true"
-                                        :selectedItem="form.destination_hold_music" :placeholder="'Choose music on hold'"
-                                        @update:model-value="handleMusicOnHoldUpdate" />
-                                </div>
-                            </div> -->
 
                             <div class="col-span-6">
                                 <LabelInputOptional target="destination_description" label="Description" class="truncate" />
@@ -122,27 +80,6 @@
                                     {{ errors.destination_description[0] }}
                                 </div>
                             </div>
-
-
-                            <!-- <div class="divide-y divide-gray-200 col-span-6">
-
-                                <Toggle v-if="localOptions.permissions.manage_voicemail_transcription"
-                                    label="Voicemail Transcription"
-                                    description="Convert voicemail messages to text using AI-powered transcription."
-                                    v-model="form.voicemail_transcription_enabled" customClass="py-4" />
-
-                                <Toggle label="Attach File to Email Notifications"
-                                    description="Attach voicemail recording file to the email notification."
-                                    v-model="form.voicemail_email_attachment" customClass="py-4" />
-
-                                <Toggle v-if="localOptions.permissions.manage_voicemail_auto_delete"
-                                    label="Automatically Delete Voicemail After Email"
-                                    description="Remove voicemail from the cloud once the email is sent."
-                                    v-model="form.voicemail_delete" customClass="py-4" />
-
-                            </div> -->
-
-
 
                         </div>
 
@@ -170,7 +107,7 @@
                         </div>
 
                         <div class="divide-y divide-gray-200 col-span-6">
-                            <div class="col-span-6">
+                            <div v-if="options.permissions.manage_recording_setting" class="col-span-6">
                                 <Toggle :target="'destination_record'" :label="'Record Inbound Calls'"
                                     description="Enable this setting to automatically record all inbound calls for this phone number. Once activated, every incoming call will be captured and stored for future reference, ensuring that no important conversation is missed. Note: Ensure compliance with local call recording laws before enabling."
                                     v-model="form.destination_record" customClass="py-4" />
@@ -193,7 +130,7 @@
                                         :placeholder="'Choose fax'" @update:model-value="handleFaxUpdate" />
                                 </div>
                             </div>
-                            <div class="col-span-6">
+                            <div v-if="options.permissions.manage_destination_prefix" class="col-span-6">
                                 <LabelInputOptional :target="'destination_cid_name_prefix'"
                                     :label="'Caller ID name prefix'" />
                                 <div class="mt-2">
@@ -204,56 +141,7 @@
                                 </div>
                             </div>
 
-                            <!-- Conditions -->
-                            <!-- <div class="col-span-6">
-                                <LabelInputOptional :target="'destination_conditions'"
-                                    :label="'If the condition matches, perform action'" />
-                                <div class="border rounded-md pl-4 pr-4 pb-2">
-                                    <div v-for="(condition, index) in conditions" :key="condition.id">
-                                        <div class="mt-4 grid grid-cols-3 gap-x-2">
-                                            <div>
-                                                <ComboBox :options="page.props.conditions" :selectedItem="condition.condition_field"
-                                                    :placeholder="'Choose condition'"
-                                                    @update:model-value="value => handleConditionUpdate(value, index)" />
-                                            </div>
-                                            <div v-if="condition.condition_field">
-                                                <InputField v-model="condition.condition_expression" type="text"
-                                                    placeholder="Enter phone number" />
-                                            </div>
-                                            <div v-else />
-                                            <div class="relative">
-                                                <div class="absolute right-0">
-                                                    <div id="delete_condition_tooltip" class="relative">
-                                                        <div class="absolute right-0">
-                                                            <ejs-tooltip :content="'Remove condition'" position='RightTop'
-                                                                :target="'#delete_condition_tooltip' + index">
-                                                                <MinusIcon @click="() => removeCondition(condition.id)"
-                                                                    class="h-8 w-8 border text-black-500 hover:text-black-900 active:h-8 active:w-8 cursor-pointer" />
-                                                            </ejs-tooltip>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div v-if="condition.condition_expression" class="grid grid-cols-3 gap-x-2 border-b pb-4">
-                                            <ArrowCurvedRightIcon class="mt-2 h-10 w-10" />
-                                            <ConditionDestinations :options="options.actions"
-                                                :selectedItems="condition.condition_target" :initWith="1"
-                                                :customClass="'grid-cols-4 col-span-2'"
-                                                @update:model-value="value => handleConditionActionsUpdate(value, index)" />
-                                        </div>
-                                    </div>
-                                    <div class="w-fit">
-                                        <ejs-tooltip v-if="conditions.length < conditionsMaxLimit" :content="'Add condition'"
-                                            position='RightTop' target="#add_condition_tooltip">
-                                            <div id="add_condition_tooltip">
-                                                <PlusIcon @click="addCondition"
-                                                    class="mt-2 h-8 w-8 border text-black-500 hover:text-black-900 active:h-8 active:w-8 cursor-pointer" />
-                                            </div>
-                                        </ejs-tooltip>
-                                    </div>
-                                </div>
-                            </div> -->
+                            
                             <div class="col-span-6">
                                 <LabelInputOptional :target="'destination_accountcode'" :label="'Account code'" />
                                 <div class="mt-2">

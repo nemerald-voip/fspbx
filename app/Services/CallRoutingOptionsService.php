@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\{
+    BusinessHour,
     CallCenterQueues,
     CallFlows,
+    Conferences,
     Dialplans,
     Extensions,
     Faxes,
@@ -24,15 +26,48 @@ class CallRoutingOptionsService
         ['value' => 'voicemails', 'name' => 'Voicemail'],
         ['value' => 'ring_groups', 'name' => 'Ring Group'],
         ['value' => 'ivrs', 'name' => 'Virtual Receptionist'],
+        ['value' => 'business_hours', 'name' => 'Business Hours'],
         ['value' => 'time_conditions', 'name' => 'Schedule'],
         ['value' => 'contact_centers', 'name' => 'Contact Center'],
         ['value' => 'faxes', 'name' => 'Fax'],
         ['value' => 'call_flows', 'name' => 'Call Flow'],
         ['value' => 'recordings', 'name' => 'Play Greeting'],
+        ['value' => 'conferences', 'name' => 'Conferences'],
         ['value' => 'check_voicemail', 'name' => 'Check Voicemail'],
         ['value' => 'company_directory', 'name' => 'Company Directory'],
         ['value' => 'hangup', 'name' => 'Hang up'],
         // ['value' => 'other', 'name' => 'Other']
+    ];
+
+    public array $forwardingTypes = [
+        ['value' => 'extensions', 'label' => 'Extension'],
+        ['value' => 'voicemails', 'label' => 'Voicemail'],
+        ['value' => 'ring_groups', 'label' => 'Ring Group'],
+        ['value' => 'ivrs', 'label' => 'Virtual Receptionist'],
+        ['value' => 'business_hours', 'label' => 'Business Hours'],
+        ['value' => 'time_conditions', 'label' => 'Schedule'],
+        ['value' => 'contact_centers', 'label' => 'Contact Center'],
+        ['value' => 'faxes', 'label' => 'Fax'],
+        ['value' => 'call_flows', 'label' => 'Call Flow'],
+        // ['value' => 'recordings', 'label' => 'Play Greeting'],
+        ['value' => 'external', 'label' => 'External Number'],
+    ];
+
+    /**
+     * Map of slot-action keys to their Eloquent model classes.
+     */
+    private const MODEL_MAP = [
+        'extensions'       => \App\Models\Extensions::class,
+        'ivrs'             => \App\Models\IvrMenus::class,
+        'voicemails'       => \App\Models\Voicemails::class,
+        'ring_groups'      => \App\Models\RingGroups::class,
+        'business_hours'   => \App\Models\BusinessHour::class,
+        'time_conditions'  => \App\Models\Dialplans::class,
+        'contact_centers'  => \App\Models\CallCenterQueues::class,
+        'conferences'      => \App\Models\Conferences::class,
+        'faxes'            => \App\Models\Faxes::class,
+        'call_flows'       => \App\Models\CallFlows::class,
+        'recordings'       => \App\Models\Recordings::class,
     ];
 
     private const TRANSFER_FORMAT = '%s:%s XML %s';
@@ -63,8 +98,12 @@ class CallRoutingOptionsService
                 return $this->buildOptions(Recordings::class, 'recording_filename', 'recording_name');
             case 'ring_groups':
                 return $this->buildOptions(RingGroups::class, 'ring_group_extension', 'ring_group_name');
+            case 'business_hours':
+                return $this->buildOptions(BusinessHour::class, 'extension', 'name');
             case 'time_conditions':
                 return $this->buildOptions(Dialplans::class, 'dialplan_number', 'dialplan_name');
+            case 'conferences':
+                return $this->buildOptions(Conferences::class, 'conference_extension', 'conference_name');
             case 'voicemails':
                 return $this->buildOptions(Voicemails::class, 'voicemail_id', 'voicemail_description');
             case 'other':
@@ -241,11 +280,146 @@ class CallRoutingOptionsService
                     );
                     break;
 
-                    // Add more cases for other IVR actions as needed
+                // Add more cases for other IVR actions as needed
 
                 default:
                     throw new \Exception("Unsupported IVR action type: $actionType");
             }
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return null;
+        }
+    }
+
+    /**
+     * Reverse engineer Ring Group exit options based on the provided parameter.
+     *
+     * @param string $ivrAction A string containing the action details (e.g., "transfer 201 XML api.us.nemerald.net").
+     * @return array Reverse-engineered IVR option details.
+     */
+    public function reverseEngineerRingGroupExitAction($action)
+    {
+        try {
+            $action = trim($action);
+            // Split the string by spaces to extract details
+            $parts = explode(' ', $action);
+
+            if (count($parts) < 3 && $action != "hangup") {
+                throw new \Exception("Invalid Ring Group action format");
+            }
+
+            // Extract relevant data
+            $actionType = $parts[0]; // e.g., "transfer"
+            if ($actionType != 'hangup') {
+                $destination = $parts[1]; // e.g., "201"
+                $context = $parts[2]; // e.g., "XML"
+                $domain = $parts[3] ?? null; // e.g., "api.us.domain.net"
+            }
+
+            // Reverse engineer based on the action type
+            switch ($actionType) {
+                case 'transfer':
+                    return $this->reverseEngineerTransferAction("$destination $context $domain");
+                    break;
+                case 'lua':
+                    return $this->extractRecordingUuidFromData("$destination $context $domain");
+                    break;
+
+                case 'hangup':
+                    return array(
+                        'type' => 'hangup',
+                    );
+                    break;
+
+                // Add more cases for other IVR actions as needed
+
+                default:
+                    throw new \Exception("Unsupported Ring Group action type: $actionType");
+            }
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return null;
+        }
+    }
+
+    /**
+     * Reverse engineer Forward options based on the provided parameter.
+     *
+     * @param string $destination A string containing the forwarding destination
+     * @return array Reverse-engineered forward option details.
+     */
+    public function reverseEngineerForwardAction($destination)
+    {
+        try {
+
+            if (!filled($destination)) {
+                return [
+                    'type' => null,
+                    'extension' => null,
+                    'option' => null,
+                    'name' => null
+                ];
+            }
+
+            $dialplan = Dialplans::where(function ($query) use ($destination) {
+                $query->where('dialplan_number', $destination)
+                    ->orWhere('dialplan_number', '=', '1' . $destination);
+            })
+                ->where('dialplan_enabled', 'true')
+                ->where(function ($query) {
+                    $query->where('domain_uuid', session('domain_uuid'))
+                        ->orWhereNull('domain_uuid');
+                })
+                ->where('dialplan_context', '!=', 'public')
+                ->select('dialplan_uuid', 'dialplan_name', 'dialplan_number', 'dialplan_xml', 'dialplan_order')
+                ->first();
+
+            // If a Dialplan match is found, reverse-engineer it based on the XML and determine the type
+            if ($dialplan) {
+                return $this->mapDialplanToRoutingOption($dialplan, $destination);
+            }
+
+            // Check if destination is voicemail
+            if ((substr($destination, 0, 3) == '*99') !== false) {
+                $voicemail = Voicemails::where('domain_uuid', session('domain_uuid'))
+                    ->where('voicemail_id', substr($destination, 3))
+                    ->with(['extension' => function ($query) {
+                        $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
+                            ->where('domain_uuid', session('domain_uuid'));
+                    }])
+                    ->first();
+
+                if ($voicemail) {
+                    return [
+                        'type' => 'voicemails',
+                        'extension' => $voicemail->voicemail_id,
+                        'option' => $voicemail->voicemail_uuid,
+                        'name' => $voicemail->extension ? $voicemail->extension->name_formatted : $voicemail->voicemail_id . ' - Team Voicemail',
+                    ];
+                }
+            }
+
+            // Check if it's an extension
+            $ext = Extensions::where('domain_uuid', session('domain_uuid'))
+                ->where('extension', $destination)
+                ->first();
+            if ($ext) {
+
+                return [
+                    'type' => 'extensions',
+                    'extension' => $ext->extension,
+                    'option' => $ext->extension_uuid,
+                    'name' => $ext->name_formatted,
+                ];
+            }
+
+            // Assuming it's some external destination
+            return [
+                'type' => 'external',
+                'extension' => $destination,
+                'option' => '',
+                'name' => '',
+            ];
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return null;
@@ -328,15 +502,26 @@ class CallRoutingOptionsService
             'ring_groups' => '/ring_group_uuid=([0-9a-fA-F-]+)/',
             'ivrs' => '/ivr_menu_uuid=([0-9a-fA-F-]+)/',
             'contact_centers' => '/call_center_queue_uuid=([0-9a-fA-F-]+)/',
+            'business_hours' => '/business_hours=([0-9a-fA-F-]+)/',
             'call_flows' => '/call_flow_uuid=([0-9a-fA-F-]+)/',
             'time_conditions' => '/\b(year|yday|mon|mday|week|mweek|wday|hour|minute|minute-of-day|time-of-day|date-time)=("[^"]+"|\'[^\']+\'|\S+)/',
             'faxes' => '/fax_uuid=([0-9a-fA-F-]+)/',
+            'conferences' => '/conference_uuid=([0-9a-fA-F-]+)/',
             'check_voicemail' => '/app.lua voicemail/',
             'company_directory' => '/directory.lua/',
         ];
 
         foreach ($patterns as $type => $pattern) {
             if (preg_match($pattern, $dialplan->dialplan_xml, $matches)) {
+                if ($type === 'business_hours') {
+                    // For business hours, return the dialplan UUID as the option
+                    return [
+                        'type' => $type,
+                        'extension' => $extension,
+                        'option' => $matches[1],
+                        'name' => $dialplan->dialplan_name,
+                    ];
+                }
                 if ($type === 'time_conditions') {
                     // For time conditions, return the dialplan UUID as the option
                     return [
@@ -430,14 +615,32 @@ class CallRoutingOptionsService
             'ivrs' => 'Virtual Receptionist',
             'contact_centers' => 'Contact Center',
             'faxes' => "Fax",
+            'business_hours' => 'Business Hours',
             'time_conditions' => 'Schedules',
             'call_flows' => 'Call Flow',
             'recordings' => 'Play recording',
             'company_directory' => 'Company Directory',
             'check_voicemail' => 'Check Voicemail',
             'hangup' => 'Hang up',
+            'external' => "External Number"
         ];
 
         return $typeMapping[$type] ?? 'Unknown';
+    }
+
+    /**
+     * Given an action key, return the corresponding Eloquent model class.
+     *
+     * @param  string  $action
+     * @return class-string<Model>
+
+     */
+    public function mapActionToModel(string $action)
+    {
+        if (! array_key_exists($action, self::MODEL_MAP)) {
+            return null;
+        }
+
+        return self::MODEL_MAP[$action];
     }
 }
