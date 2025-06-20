@@ -217,7 +217,7 @@ const voicemail_uuid = ref(null);
 
 const greetingForm = reactive({
     input: null,
-    voice: props.voices[0].value,
+    voice: props.default_voice ?? props.voices[0].value,
     speed: '1.0',
     _token: page.props.csrf_token,
 });
