@@ -354,10 +354,17 @@ const bulkActions = computed(() => {
 
 const advancedActions = computed(() => [
     {
+        category: "User",
+        actions: [
+            { id: 'make_user', label: 'Make User', icon: 'PencilSquareIcon' },
+            { id: 'make_admin', label: 'Make Admin', icon: 'TrashIcon' },
+        ],
+    },
+    {
         category: "Contact Center",
         actions: [
-            { id: 'make_agent', label: 'Make Agent', icon: 'PencilSquareIcon' },
-            { id: 'make_admin', label: 'Make Admin', icon: 'TrashIcon' },
+            { id: 'make_cc_agent', label: 'Make Agent', icon: 'PencilSquareIcon' },
+            { id: 'make_cc_admin', label: 'Make Admin', icon: 'TrashIcon' },
         ],
     },
 ]);
@@ -473,11 +480,20 @@ const handleBulkActionRequest = (action) => {
 
 const handleAdvancedActionRequest = (action, extension_uuid) => {
     let role = null;
+    let url = null;
 
-    if (action === 'make_agent') {
+    if (action === 'make_cc_agent') {
+        url = props.routes.create_contact_center_user
         role = 'agent';
-    } else if (action === 'make_admin') {
+    } else if (action === 'make_cc_admin') {
+        url = props.routes.create_contact_center_user
         role = 'admin';
+    } else if (action === 'make_admin') {
+        url = props.routes.create_user
+        role = 'admin';
+    } else if (action === 'make_user') {
+        url = props.routes.create_user
+        role = 'user';
     } else {
         return; // ignore other actions
     }
@@ -487,7 +503,7 @@ const handleAdvancedActionRequest = (action, extension_uuid) => {
         role,
     };
 
-    axios.post(props.routes.create_contact_center_user, payload)
+    axios.post(url, payload)
         .then((response) => {
             showNotification('success', response.data.messages);
         })
