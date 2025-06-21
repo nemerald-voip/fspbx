@@ -17,7 +17,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Session;
 
-class CloudProvisioningController extends Controller
+class DeviceCloudProvisioningController extends Controller
 {
     public Domain $model;
     public array $filters = [];

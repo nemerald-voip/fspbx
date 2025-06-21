@@ -104,7 +104,7 @@
                                 :value="row.device_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9"
                                 :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.device_update, }"
-                                @click="page.props.auth.can.device_update && handleEditRequest(row.device_uuid)">
+                                @click="page.props.auth.can.device_update && handleEditButtonClick(row.device_uuid)">
                                 {{ row.device_address_formatted }}
                             </div>
                             <ejs-tooltip :content="tooltipCopyContent" position='TopLeft' class="ml-2"
@@ -130,7 +130,7 @@
                         :text="row.profile?.device_profile_name" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <template #default>
-                            <div v-if="row.lines.length === 0">—</div>
+                            <div v-if="row.lines?.length === 0">—</div>
                             <div v-else>
                                 <div v-for="line in [...row.lines].sort((a, b) => Number(a.line_number) - Number(b.line_number))"
                                     :key="line.device_line_uuid">
@@ -219,7 +219,7 @@
         :text="'Restart request has been submitted'" @update:show="restartRequestNotificationSuccessTrigger = false" />
 
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="createModalTrigger" :header="'Add New'" :loading="loadingModal"
+    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="createModalTrigger" :header="'Add New'" :loading="isModalLoading"
         @close="handleModalClose">
         <template #modal-body>
             <CreateDeviceForm
@@ -232,7 +232,11 @@
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="editModalTrigger" :header="'Edit Device'" :loading="loadingModal"
+    <UpdateDeviceForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"
+        :header="'Update Device - ' + (itemOptions?.item?.device_address_formatted ?? 'loading')" @close="showUpdateModal = false"
+        @error="handleErrorResponse" @success="showNotification" @refresh-data="handleSearchButtonClick" />
+
+    <!-- <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showUpdateModal" :header="'Edit Device'" :loading="isModalLoading"
         @close="handleModalClose">
         <template #modal-body>
             <UpdateDeviceForm
@@ -245,10 +249,10 @@
                 @domain-selected="getItemOptions"
             />
         </template>
-    </AddEditItemModal>
+    </AddEditItemModal> -->
 
     <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="bulkUpdateModalTrigger" :header="'Bulk Edit'"
-        :loading="loadingModal" @close="handleModalClose">
+        :loading="isModalLoading" @close="handleModalClose">
         <template #modal-body>
             <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
                 :is-submitting="bulkUpdateFormSubmitting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose"
@@ -256,7 +260,7 @@
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="cloudProvisioningModalTrigger" :header="'Cloud Provisioning'" :loading="loadingModal"
+    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="cloudProvisioningModalTrigger" :header="'Cloud Provisioning'" :loading="isModalLoading"
                       @close="handleModalClose">
         <template #modal-body>
             <CloudProvisioningListing
@@ -307,15 +311,16 @@ import Notification from "./components/notifications/Notification.vue";
 import CloudProvisioningListing from "./components/listings/CloudProvisioningListing.vue";
 
 const page = usePage()
+const itemOptions = ref({})
 const loading = ref(false)
-const loadingModal = ref(false)
+const isModalLoading = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const restartRequestNotificationSuccessTrigger = ref(false);
 const restartRequestNotificationErrorTrigger = ref(false);
 const createModalTrigger = ref(false);
-const editModalTrigger = ref(false);
+const showUpdateModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationRestartTrigger = ref(false);
@@ -337,15 +342,12 @@ let tooltipCopyContent = ref('Copy to Clipboard');
 
 const props = defineProps({
     data: Object,
-    showGlobal: Boolean,
     routes: Object,
-    itemData: Object,
-    itemOptions: Object,
 });
 
 const filterData = ref({
     search: null,
-    showGlobal: props.showGlobal,
+    showGlobal: false,
 });
 
 const showGlobal = ref(props.showGlobal);
@@ -382,7 +384,7 @@ onBeforeUnmount(() => {
 });
 
 onMounted(() => {
-    handleUpdateCloudProvisioningStatuses();
+    // handleUpdateCloudProvisioningStatuses();
 });
 
 watch(
@@ -435,33 +437,26 @@ const handleUpdateCloudProvisioningStatuses = () => {
         });
 }
 
-const handleEditRequest = (itemUuid) => {
-    editModalTrigger.value = true
-    formErrors.value = null;
-    loadingModal.value = true
+const handleEditButtonClick = (itemUuid) => {
+    showUpdateModal.value = true
+    getItemOptions(itemUuid);
+}
 
-    router.get(props.routes.current_page,
-        {
-            itemUuid: itemUuid,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: [
-                'itemData',
-                'itemOptions',
-            ],
-            onSuccess: (page) => {
-                loadingModal.value = false;
-            },
-            onFinish: () => {
-                loadingModal.value = false;
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
+const getItemOptions = (itemUuid = null) => {
+    itemOptions.value = {}
+    const payload = itemUuid ? { itemUuid: itemUuid } : {}; // Conditionally add itemUuid to payload
+    isModalLoading.value = true
+    axios.post(props.routes.item_options, payload)
+        .then((response) => {
+            itemOptions.value = response.data;
+            console.log(itemOptions.value);
 
-        });
+        }).catch((error) => {
+            handleModalClose();
+            handleErrorResponse(error);
+        }).finally(() => {
+            isModalLoading.value = false
+        })
 }
 
 const handleCreateRequest = (form) => {
@@ -539,7 +534,7 @@ const handleBulkActionRequest = (action) => {
     if (action === 'bulk_update') {
         formErrors.value = [];
         getItemOptions();
-        loadingModal.value = true
+        isModalLoading.value = true
         bulkUpdateModalTrigger.value = true;
     }
     if (action === 'bulk_restart') {
@@ -595,7 +590,7 @@ const handleBulkUpdateRequest = (form) => {
 const handleCreateButtonClick = () => {
     createModalTrigger.value = true
     formErrors.value = null;
-    loadingModal.value = true
+    isModalLoading.value = true
     getItemOptions();
 }
 
@@ -615,14 +610,14 @@ const handleSelectAll = () => {
 
 const handleCloudProvisioningButtonClick = () => {
     cloudProvisioningModalTrigger.value = true
-    loadingModal.value = true
+    isModalLoading.value = true
     formErrors.value = null;
     getItemOptions();
         /*axios.post(props.routes.cloud_provisioning_item_options, {}).then(response => {
 
             availableDomains.value = response.data.tenants || [];
             console.log(availableDomains.value)
-            loadingModal.value = false
+            isModalLoading.value = false
             //
             //formErrors.value = null;
             //
@@ -681,19 +676,19 @@ const handleSearchButtonClick = () => {
     loading.value = true;
     router.visit(props.routes.current_page, {
         data: {
-            filterData: filterData._rawValue,
+            filter: {
+                search: filterData.value.search,
+                showGlobal: filterData.value.showGlobal,
+            },
         },
         preserveScroll: true,
         preserveState: true,
         only: [
             "data",
-            'showGlobal',
         ],
         onSuccess: (page) => {
             loading.value = false;
             handleClearSelection();
-            console.log('Search clicked')
-            handleUpdateCloudProvisioningStatuses();
         }
     });
 };
@@ -702,7 +697,7 @@ const handleFiltersReset = () => {
     filterData.value.search = null;
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();
-    handleUpdateCloudProvisioningStatuses();
+    // handleUpdateCloudProvisioningStatuses();
 }
 
 
@@ -722,29 +717,6 @@ const renderRequestedPage = (url) => {
 };
 
 
-const getItemOptions = (domain_uuid) => {
-    router.get(props.routes.current_page,
-        {
-            'domain_uuid': domain_uuid,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: [
-                'itemOptions',
-            ],
-            onSuccess: (page) => {
-                loadingModal.value = false;
-            },
-            onFinish: () => {
-                loadingModal.value = false;
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
-
-        });
-}
 
 const getAvailableDomains = () => {
     router.get(props.routes.cloud_provisioning_domains,
@@ -758,10 +730,10 @@ const getAvailableDomains = () => {
                 'availableDomains',
             ],
             onSuccess: (page) => {
-                loadingModal.value = false;
+                isModalLoading.value = false;
             },
             onFinish: () => {
-                loadingModal.value = false;
+                isModalLoading.value = false;
             },
             onError: (errors) => {
                 console.log(errors);
@@ -836,7 +808,7 @@ const handleClearSelection = () => {
 
 const handleModalClose = () => {
     createModalTrigger.value = false;
-    editModalTrigger.value = false;
+    showUpdateModal.value = false;
     confirmationModalTrigger.value = false;
     confirmationRestartTrigger.value = false;
     bulkUpdateModalTrigger.value = false;

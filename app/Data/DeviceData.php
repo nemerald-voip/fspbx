@@ -11,7 +11,11 @@ class DeviceData extends Data
         public ?string $device_profile_uuid,
         public string $device_address,
         public string $device_template,
-        public ?string $device_address_formatted = null, // Optional if you use accessors
+        public ?string $device_address_formatted = null, 
+        public ?string $device_vendor = null, 
+        public ?string $domain_uuid = null, 
+        /** @var DeviceLineData[]|null */
+        public ?array $lines = null,
         public ?DeviceProfileData $profile = null, 
     ) {}
 }

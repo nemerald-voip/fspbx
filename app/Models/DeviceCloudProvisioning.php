@@ -5,11 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class CloudProvisioningStatus extends Model
+class DeviceCloudProvisioning extends Model
 {
     use HasFactory, \App\Models\Traits\TraitUuid;
 
-    protected $table = "cloud_provisioning_status";
+    protected $table = "device_cloud_provisioning";
 
     public $timestamps = false;
 

@@ -37,7 +37,7 @@ use App\Http\Controllers\RegistrationsController;
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\AppsCredentialsController;
 use App\Http\Controllers\MessageSettingsController;
-use App\Http\Controllers\CloudProvisioningController;
+use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\SansayActiveCallsController;
 use App\Http\Controllers\VoicemailMessagesController;
 use App\Http\Controllers\CallRoutingOptionsController;
@@ -225,12 +225,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/domains/filter/', [DomainController::class, 'filterDomainsFusionPBX'])->name('filterDomainsFusionPBX');
 
     //Devices
-    Route::get('/devices/options', [DeviceController::class, 'options'])->name('devices.options');
-    Route::post('/devices/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('devices.bulk.update');
-    Route::post('/devices/bulk-delete', [DeviceController::class, 'bulkDelete'])->name('devices.bulk.delete');
-    Route::resource('devices', DeviceController::class);
-    Route::post('/devices/restart', [DeviceController::class, 'restart'])->name('devices.restart');
-    Route::post('/devices/select-all', [DeviceController::class, 'selectAll'])->name('devices.select.all');
+    Route::get('devices', [DeviceController::class, 'index'])->name('devices.index');
 
     //Phone Numbers
     Route::resource('phone-numbers', PhoneNumbersController::class);
@@ -414,25 +409,25 @@ Route::group(['middleware' => 'auth'], function () {
 
 
     // Cloud Provisioning
-    //Route::resource('cloud-provisioning', CloudProvisioningController::class);
-    Route::post('/cloud-provisioning/domains', [CloudProvisioningController::class, 'getAvailableDomains'])->name('cloud-provisioning.domains');
-    Route::post('/cloud-provisioning/item-options', [CloudProvisioningController::class, 'getItemOptions'])->name('cloud-provisioning.item.options');
-    Route::post('/cloud-provisioning/organization/create', [CloudProvisioningController::class, 'createOrganization'])->name('cloud-provisioning.organization.create');
-    Route::put('/cloud-provisioning/organization/update', [CloudProvisioningController::class, 'updateOrganization'])->name('cloud-provisioning.organization.update');
-    Route::post('/cloud-provisioning/organization/destroy', [CloudProvisioningController::class, 'destroyOrganization'])->name('cloud-provisioning.organization.destroy');
-    Route::post('/cloud-provisioning/organization/pair', [CloudProvisioningController::class, 'pairOrganization'])->name('cloud-provisioning.organization.pair');
-    Route::post('/cloud-provisioning/organization/all', [CloudProvisioningController::class, 'getOrganizations'])->name('cloud-provisioning.organization.all');
-    Route::post('/cloud-provisioning/token/get', [CloudProvisioningController::class, 'getToken'])->name('cloud-provisioning.token.get');
-    Route::post('/cloud-provisioning/token/update', [CloudProvisioningController::class, 'updateToken'])->name('cloud-provisioning.token.update');
+    //Route::resource('cloud-provisioning', DeviceCloudProvisioningController::class);
+    Route::post('/cloud-provisioning/domains', [DeviceCloudProvisioningController::class, 'getAvailableDomains'])->name('cloud-provisioning.domains');
+    Route::post('/cloud-provisioning/item-options', [DeviceCloudProvisioningController::class, 'getItemOptions'])->name('cloud-provisioning.item.options');
+    Route::post('/cloud-provisioning/organization/create', [DeviceCloudProvisioningController::class, 'createOrganization'])->name('cloud-provisioning.organization.create');
+    Route::put('/cloud-provisioning/organization/update', [DeviceCloudProvisioningController::class, 'updateOrganization'])->name('cloud-provisioning.organization.update');
+    Route::post('/cloud-provisioning/organization/destroy', [DeviceCloudProvisioningController::class, 'destroyOrganization'])->name('cloud-provisioning.organization.destroy');
+    Route::post('/cloud-provisioning/organization/pair', [DeviceCloudProvisioningController::class, 'pairOrganization'])->name('cloud-provisioning.organization.pair');
+    Route::post('/cloud-provisioning/organization/all', [DeviceCloudProvisioningController::class, 'getOrganizations'])->name('cloud-provisioning.organization.all');
+    Route::post('/cloud-provisioning/token/get', [DeviceCloudProvisioningController::class, 'getToken'])->name('cloud-provisioning.token.get');
+    Route::post('/cloud-provisioning/token/update', [DeviceCloudProvisioningController::class, 'updateToken'])->name('cloud-provisioning.token.update');
     // Route::post('/cloud-provisioning/select-all', [ActiveCallsController::class, 'selectAll'])->name('active-calls.select.all');
     // Route::post('/cloud-provisioning/action', [ActiveCallsController::class, 'handleAction'])->name('active-calls.action');
-    Route::post('/cloud-provisioning/sync-devices', [CloudProvisioningController::class, 'syncDevices'])->name('cloud-provisioning.devices.sync');
-    Route::post('/cloud-provisioning/status', [CloudProvisioningController::class, 'status'])->name('cloud-provisioning.status');
-    Route::post('/cloud-provisioning/register', [CloudProvisioningController::class, 'register'])->name('cloud-provisioning.register');
-    Route::post('/cloud-provisioning/deregister', [CloudProvisioningController::class, 'deregister'])->name('cloud-provisioning.deregister');
-    //Route::post('/cloud-provisioning/devices/organizations', [CloudProvisioningController::class, 'devicesOrganizations'])->name('cloudProvisioning.devices.organizations');
-    //Route::post('/cloud-provisioning/devices/organizations', [CloudProvisioningController::class, 'devicesOrganizations'])->name('cloudProvisioning.devices.organizations');
-    //Route::post('/cloud-provisioning/devices/organizations', [CloudProvisioningController::class, 'devicesOrganizations'])->name('cloudProvisioning.devices.organizations');
+    Route::post('/cloud-provisioning/sync-devices', [DeviceCloudProvisioningController::class, 'syncDevices'])->name('cloud-provisioning.devices.sync');
+    Route::post('/cloud-provisioning/status', [DeviceCloudProvisioningController::class, 'status'])->name('cloud-provisioning.status');
+    Route::post('/cloud-provisioning/register', [DeviceCloudProvisioningController::class, 'register'])->name('cloud-provisioning.register');
+    Route::post('/cloud-provisioning/deregister', [DeviceCloudProvisioningController::class, 'deregister'])->name('cloud-provisioning.deregister');
+    //Route::post('/cloud-provisioning/devices/organizations', [DeviceCloudProvisioningController::class, 'devicesOrganizations'])->name('cloudProvisioning.devices.organizations');
+    //Route::post('/cloud-provisioning/devices/organizations', [DeviceCloudProvisioningController::class, 'devicesOrganizations'])->name('cloudProvisioning.devices.organizations');
+    //Route::post('/cloud-provisioning/devices/organizations', [DeviceCloudProvisioningController::class, 'devicesOrganizations'])->name('cloudProvisioning.devices.organizations');
 
 
     // Whitelisted Numbers

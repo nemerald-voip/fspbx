@@ -2,13 +2,13 @@
 
 namespace App\Models;
 
-use App\Jobs\SendZtpRequest;
 use App\Models\DeviceLines;
-use App\Services\CloudProvisioningService;
-use App\Services\Interfaces\ZtpProviderInterface;
+use App\Jobs\SendZtpRequest;
 use App\Services\PolycomZtpProvider;
+use App\Models\DeviceCloudProvisioning;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
+use App\Services\Interfaces\ZtpProviderInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Devices extends Model
@@ -89,6 +89,11 @@ class Devices extends Model
     public function profile()
     {
         return $this->hasOne(DeviceProfile::class, 'device_profile_uuid', 'device_profile_uuid');
+    }
+
+    public function cloudProvisioning(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(DeviceCloudProvisioning::class, 'device_uuid', 'device_uuid');
     }
 
     /**
@@ -218,10 +223,5 @@ class Devices extends Model
         }
 
         return $orgId;
-    }
-
-    public function cloudProvisioningStatus(): \Illuminate\Database\Eloquent\Relations\HasOne
-    {
-        return $this->hasOne(CloudProvisioningStatus::class, 'device_uuid', 'device_uuid');
     }
 }

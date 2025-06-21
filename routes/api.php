@@ -99,6 +99,12 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('user-logs/select-all', [UserLogsController::class, 'selectAll'])->name('user-logs.select.all');
 
     // Devices 
+    Route::post('devices', [DeviceController::class, 'store'])->name('devices.store');
+    Route::put('devices/{device}', [DeviceController::class, 'update'])->name('devices.update');
+    Route::post('/devices/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('devices.bulk.update');
+    Route::post('/devices/bulk-delete', [DeviceController::class, 'bulkDelete'])->name('devices.bulk.delete');
+    Route::post('/devices/restart', [DeviceController::class, 'restart'])->name('devices.restart');
+    Route::post('/devices/select-all', [DeviceController::class, 'selectAll'])->name('devices.select.all');
     Route::post('devices/item-options', [DeviceController::class, 'getItemOptions'])->name('devices.item.options');
     Route::post('devices/assign', [DeviceController::class, 'assign'])->name('devices.assign');
     Route::post('devices/bulk-unassign', [DeviceController::class, 'bulkUnassign'])->name('devices.bulk.unassign');

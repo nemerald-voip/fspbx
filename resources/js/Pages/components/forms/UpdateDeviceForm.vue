@@ -1,215 +1,140 @@
 <template>
-    <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
-        <aside class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
-            <nav class="space-y-1">
-                <a v-for="item in options.navigation" :key="item.name" href="#"
-                    :class="[activeTab === item.slug ? 'bg-gray-200 text-indigo-700 hover:bg-gray-100 hover:text-indigo-700' : 'text-gray-900 hover:bg-gray-200 hover:text-gray-900', 'group flex items-center rounded-md px-3 py-2 text-sm font-medium']"
-                    @click.prevent="setActiveTab(item.slug)" :aria-current="item.current ? 'page' : undefined">
-                    <component :is="iconComponents[item.icon]"
-                        :class="[item.current ? 'text-indigo-500 group-hover:text-indigo-500' : 'text-gray-400 group-hover:text-gray-500', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']"
-                        aria-hidden="true" />
-                    <span class="truncate">{{ item.name }}</span>
-                    <ExclamationCircleIcon
-                        v-if="((errors?.device_address || errors?.device_template) && item.slug === 'settings')"
-                        class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
+    <TransitionRoot as="div" :show="show">
+        <Dialog as="div" class="relative z-10">
+            <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
+                leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+            </TransitionChild>
+            <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+                <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                    <TransitionChild as="template" enter="ease-out duration-300"
+                        enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                        enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200"
+                        leave-from="opacity-100 translate-y-0 sm:scale-100"
+                        leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
 
-                </a>
-            </nav>
-        </aside>
+                        <DialogPanel
+                            class="relative transform  rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
 
-        <form @submit.prevent="submitForm" class="sm:px-6 lg:col-span-9 lg:px-0">
-            <div v-if="activeTab === 'settings'">
-                <div class="bg-gray-100  px-4 py-6 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-                    <div class="sm:col-span-12">
-                        <LabelInputRequired :target="'device_address'" :label="'MAC Address'" />
-                        <div class="mt-2">
-                            <InputField v-model="form.device_address" type="text" name="device_address"
-                                placeholder="Enter MAC Address" :disabled="!page.props.auth.can.device_edit_address"
-                                :error="errors?.device_address && errors.device_address.length > 0" />
-                        </div>
-                        <div v-if="errors?.device_address" class="mt-2 text-sm text-red-600">
-                            {{ errors.device_address[0] }}
-                        </div>
-                    </div>
+                            <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
+                                {{ header }}
+                            </DialogTitle>
 
+                            <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
+                                <button type="button"
+                                    class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                    @click="emit('close')">
+                                    <span class="sr-only">Close</span>
+                                    <XMarkIcon class="h-6 w-6" aria-hidden="true" />
+                                </button>
+                            </div>
 
-                    <div v-if="page.props.auth.can.device_edit_template" class="sm:col-span-12">
-                        <LabelInputRequired :target="'template'" :label="'Device Template'" />
-                        <div class="mt-2">
-                            <ComboBox :options="options.templates" :selectedItem="form.device_template" :search="true"
-                                :placeholder="'Choose template'" @update:model-value="handleTemplateUpdate"
-                                :error="errors?.device_template && errors.device_template.length > 0" />
-                        </div>
-                        <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
-                    forwarded.</p> -->
-                        <div v-if="errors?.device_template" class="mt-2 text-sm text-red-600">
-                            {{ errors.device_template[0] }}
-                        </div>
-                    </div>
-
-                    <div class="sm:col-span-12">
-                        <LabelInputOptional :target="'profile'" :label="'Device Profile'" />
-                        <div class="mt-2">
-                            <ComboBox :options="options.profiles" :selectedItem="form.device_profile_uuid" :search="true"
-                                :placeholder="'Choose profile'" @update:model-value="handleProfileUpdate" />
-                        </div>
-                    </div>
-
-                    <!--
-                    <div v-if="page.props.auth.can.device_edit_line" class="sm:col-span-12">
-                        <LabelInputOptional :target="'extension'" :label="'Assigned Extension'" />
-                        <div class="mt-2">
-                            <ComboBox :options="options.extensions" :selectedItem="form.extension" :search="true"
-                                :placeholder="'Choose extension'" @update:model-value="handleExtensionUpdate" />
-                        </div>
-                    </div> -->
-
-                    <div v-if="page.props.auth.can.domain_select && page.props.auth.can.device_edit_domain"
-                        class="sm:col-span-12">
-                        <LabelInputRequired :target="'domain'" :label="'Owned By (Company Name)'" />
-                        <div class="mt-2">
-                            <ComboBox :options="options.domains" :selectedItem="form.domain_uuid" :search="true"
-                                :placeholder="'Choose company'" @update:model-value="handleDomainUpdate"
-                                :error="errors?.domain_uuid && errors.domain_uuid.length > 0" />
-                        </div>
-                        <div v-if="errors?.domain_uuid" class="mt-2 text-sm text-red-600">
-                            {{ errors.domain_uuid[0] }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div v-if="activeTab === 'lines'">
-                <div class="shadow sm:rounded-md">
-                    <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
-                        <div>
-                            <h3 class="text-base font-semibold leading-6 text-gray-900">Line Keys</h3>
-                            <p class="mt-1 text-sm text-gray-500">Assign functions to the line keys for this device.</p>
-                        </div>
-
-                        <div class="grid grid-cols-12 gap-6">
-
-                            <template v-for="(row, index) in form.lines" :key="row.device_line_uuid">
-                                <div class="pt-2 text-sm font-medium leading-6 text-gray-900">
-                                    {{ index + 1 }}
+                            <div v-if="loading" class="w-full h-full">
+                                <div class="flex justify-center items-center space-x-3">
+                                    <div>
+                                        <svg class="animate-spin  h-10 w-10 text-blue-600"
+                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                                stroke-width="4">
+                                            </circle>
+                                            <path class="opacity-75" fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
                                 </div>
+                            </div>
 
-                                <div class="col-span-3 text-sm font-medium leading-6 text-gray-900">
-                                    <ComboBox :options="options.line_key_types" :selectedItem="row.line_type_id"
-                                        :search="true" :placeholder="'Choose key type'"
-                                        @update:model-value="(value) => handleKeyTypeUpdate(value, index)" />
-                                </div>
 
-                                <div class="col-span-4 text-sm font-medium leading-6 text-gray-900">
-                                    <ComboBox :options="options.extensions" :selectedItem="row.user_id" :search="true"
-                                        :placeholder="'Choose extension'"
-                                        @update:model-value="(value) => handleExtensionUpdate(value, index)" />
-                                </div>
+                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                                @error="handleError" @response="handleResponse" :display-errors="false" :default="{
+                                    device_address: options.item.device_address ?? null,
+                                    device_template: options.item.device_template ?? null,
+                                    device_profile_uuid: options.item.device_profile_uuid,
+                                    domain_uuid: options.item.domain_uuid,
+                                    // user_enabled: options.item.user_enabled,
+                                    // language: options.item.language,
+                                    // groups: options.item.user_groups
+                                    //     ? options.item.user_groups.map(ug => ug.group_uuid)
+                                    //     : []
 
-                                <div class="col-span-3 text-sm font-medium leading-6 text-gray-900">
-                                    <InputField v-model="row.display_name" type="text" name="ip_address"
-                                        placeholder="Enter display name"
-                                        :error="errors?.display_name && errors.display_name.length > 0" />
-                                </div>
+                                }">
 
-                                <div class="text-sm font-medium leading-6 text-gray-900">
-                                    <!-- <EllipsisVerticalIcon @click="handleEditRequest(row.device_uuid)"
-                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-900 active:bg-gray-300 active:duration-150 cursor-pointer" /> -->
+                                <template #empty>
 
-                                    <Menu as="div" class="relative inline-block text-left">
-                                        <div>
-                                            <MenuButton
-                                                class="flex items-center rounded-full bg-gray-100 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100">
-                                                <span class="sr-only">Open options</span>
-                                                <EllipsisVerticalIcon
-                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-900 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                                    aria-hidden="true" />
-                                            </MenuButton>
+                                    <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
+                                        <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
+                                            <FormTabs view="vertical" @select="handleTabSelected">
+                                                <FormTab name="page0" label="Device Settings" :elements="[
+                                                    'h4',
+                                                    'device_address',
+                                                    'device_template',
+                                                    'device_profile_uuid',
+                                                    'domain_uuid',
+                                            
+                                                    'container_3',
+                                                    'submit',
+
+                                                ]" />
+                                                <FormTab name="page1" label="Lines" :elements="[
+                                                    'password_reset',
+                                                    'security_title',
+
+                                                ]" />
+                                                <FormTab name="api_tokens" label="API Keys" :elements="[
+                                                    'html',
+                                                    'add_token',
+                                                    'token_title',
+
+                                                ]" />
+                                            </FormTabs>
                                         </div>
 
-                                        <transition enter-active-class="transition ease-out duration-100"
-                                            enter-from-class="transform opacity-0 scale-95"
-                                            enter-to-class="transform opacity-100 scale-100"
-                                            leave-active-class="transition ease-in duration-75"
-                                            leave-from-class="transform opacity-100 scale-100"
-                                            leave-to-class="transform opacity-0 scale-95">
-                                            <MenuItems
-                                                class="absolute right-0 z-10 mt-2 w-36 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                                                <div class="py-1">
-                                                    <MenuItem v-slot="{ active }">
-                                                    <a href="#" @click.prevent="showLineAdvSettings(index)"
-                                                        :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Advanced</a>
-                                                    </MenuItem>
-                                                    <MenuItem v-slot="{ active }">
-                                                    <a href="#" @click.prevent="deleteLineKey(index)"
-                                                        :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Delete</a>
-                                                    </MenuItem>
+                                        <div
+                                            class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
+                                            <FormElements>
 
-                                                </div>
-                                            </MenuItems>
-                                        </transition>
-                                    </Menu>
+                                                <StaticElement name="h4" tag="h4" content="Device Settings" />
 
-                                </div>
+                                                <TextElement name="device_address" label="MAC Address"
+                                                    placeholder="Enter MAC address" :floating="false" />
 
-                            </template>
+                                                <SelectElement name="device_template" :items="options.templates" :search="true" :native="false" label="Device Template" input-type="search" autocomplete="off"
+                                                label-prop="name" value-prop="value" :floating="false"
+                                                    placeholder="Select Template" />
 
-                        </div>
+                                                <SelectElement name="device_profile_uuid" :items="options.profiles" :search="true" :native="false" label="Device Profile" input-type="search" autocomplete="off"
+                                                label-prop="name" value-prop="value" 
+                                                    placeholder="Select Profile (Optional)" :floating="false" />
 
-                        <div
-                            class="flex justify-center bg-gray-100 px-4 py-4 text-center text-sm font-medium text-indigo-500 hover:text-indigo-700 sm:rounded-b-lg">
-                            <button href="#" @click.prevent="addNewLineKey" class="flex items-center gap-2">
-                                <PlusIcon class="h-6 w-6 text-black-500 hover:text-black-900 active:h-8 active:w-8 " />
-                                <span>
-                                    Add new line key
-                                </span>
-                            </button>
-                        </div>
+                                                <SelectElement name="domain_uuid" :items="options.domains" :search="true" :native="false" label="Assigned To (Account)" input-type="search" autocomplete="off"
+                                                label-prop="name" value-prop="value" 
+                                                    placeholder="Select Account" :floating="false" />
 
-                    </div>
+                                                <GroupElement name="container_3" />
+
+                                                <ButtonElement name="submit" button-label="Save" :submits="true"
+                                                    align="right" />
 
 
+                                            </FormElements>
+                                        </div>
+                                    </div>
+                                </template>
+                            </Vueform>
+                        </DialogPanel>
+
+
+                    </TransitionChild>
                 </div>
             </div>
-
-            <div v-if="activeTab === 'provisioning'">
-                <div class="shadow sm:rounded-md">
-                    <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
-                        <div v-if="isProvisioningAllowed">
-                            <h3 class="text-base font-semibold leading-6 text-gray-900">Cloud Provisioning Status</h3>
-                            <Toggle :target="'enable_provisioning'" :label="'Provision this device'"
-                                    description="Activate this setting if you want to provision this device with cloud provider immediately."
-                                    v-model="form.device_provisioning" customClass="py-4" :disabled="isCloudProvisioned.isLoading" />
-
-                            <div>Status:
-                                <span class="text-rose-600" v-if="!isCloudProvisioned.status">Device is not provisioned</span>
-                                <span class="text-emerald-600" v-if="isCloudProvisioned.status">Device is provisioned</span>
-                            </div>
-                            <div v-if="isCloudProvisioned.error">Error: {{isCloudProvisioned.error}}</div>
-                        </div>
-                        <div v-else>
-                            <div class="text-center">Cloud provisioning is not supported for this device</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-gray-100 px-4 py-3 text-right sm:px-6">
-
-                <button type="submit"
-                    class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                    ref="saveButtonRef" :disabled="isSubmitting">
-                    <Spinner :show="isSubmitting" />
-                    Save
-                </button>
-
-            </div>
-
-        </form>
-    </div>
+        </Dialog>
+    </TransitionRoot>
 
     <AddEditItemModal :show="isLineAdvSettingsModalShown" :header="'Edit SIP Settings'" @close="handleModalClose">
         <template #modal-body>
-            <div class="bg-white px-4 py-6 sm:px-6 lg:px-8">
+            <!-- <div class="bg-white px-4 py-6 sm:px-6 lg:px-8">
                 <div class="grid grid-cols-1 gap-6 ">
                     <div>
                         <LabelInputOptional :target="'server_address'" :label="'Domain'" />
@@ -267,7 +192,7 @@
                     </button>
                 </div>
 
-            </div>
+            </div> -->
 
         </template>
 
@@ -278,10 +203,7 @@
 import { reactive, ref, onMounted } from "vue";
 import { usePage } from '@inertiajs/vue3';
 
-import ComboBox from "../general/ComboBox.vue";
-import InputField from "../general/InputField.vue";
-import LabelInputOptional from "../general/LabelInputOptional.vue";
-import LabelInputRequired from "../general/LabelInputRequired.vue";
+import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import Spinner from "../general/Spinner.vue";
 import { PlusIcon } from "@heroicons/vue/24/solid";
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
@@ -289,30 +211,30 @@ import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { Cog6ToothIcon, AdjustmentsHorizontalIcon, EllipsisVerticalIcon, CloudIcon } from '@heroicons/vue/24/outline';
 import axios from "axios";
-import Toggle from "../general/Toggle.vue";
+import { XMarkIcon } from "@heroicons/vue/24/solid";
 
 
 const props = defineProps({
-    item: Object,
+    show: Boolean,
     options: Object,
-    isSubmitting: Boolean,
-    errors: Object,
+    header: String,
+    loading: Boolean,
 });
 
 const page = usePage();
 
-const form = reactive({
-    device_address: props.item.device_address,
-    device_template: props.item.device_template,
-    device_profile_uuid: props.item.device_profile_uuid,
-    device_provisioning: false,
-    // extension: props.item.device_label,
-    lines: props.options.lines,
-    domain_uuid: props.item.domain_uuid,
-    _token: page.props.csrf_token,
-})
+// const form = reactive({
+//     device_address: props.item.device_address,
+//     device_template: props.item.device_template,
+//     device_profile_uuid: props.item.device_profile_uuid,
+//     device_provisioning: false,
+//     // extension: props.item.device_label,
+//     lines: props.options.lines,
+//     domain_uuid: props.item.domain_uuid,
+//     _token: page.props.csrf_token,
+// })
 
-const emits = defineEmits(['submit', 'cancel', 'domain-selected']);
+const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
 
 const isCloudProvisioned = ref({
     isLoading: false,
@@ -323,8 +245,6 @@ const isCloudProvisioned = ref({
 const isProvisioningAllowed = ref(false);
 const isLineAdvSettingsModalShown = ref(false);
 
-// Initialize activeTab with the currently active tab from props
-const activeTab = ref(props.options.navigation.find(item => item.slug)?.slug || props.options.navigation[0].slug);
 
 const submitForm = () => {
     emits('submit', form); // Emit the event with the form data
@@ -407,42 +327,114 @@ const handleSipTransportUpdate = (newSelectedItem, index) => {
     form.lines[index].sip_transport = newSelectedItem.value;
 };
 
-onMounted(() => {
-    isProvisioningAllowed.value = form.device_template.toLowerCase().includes('poly') || form.device_template.toLowerCase().includes('polycom')
-    fetchProvisioningStatus();
-});
+const handleTabSelected = (activeTab, previousTab) => {
+    if (activeTab.name == 'api_tokens') {
+        getTokens()
+    }
+}
 
-const fetchProvisioningStatus = () => {
-    isCloudProvisioned.value.isLoading = true;
-    axios.post(page.props.routes.cloud_provisioning_status, {
-        'items': [props.item.device_uuid]
+const handleResponse = (response, form$) => {
+    // Clear form including nested elements 
+    Object.values(form$.elements$).forEach(el$ => {
+        clearErrorsRecursive(el$)
     })
-        .then(response => {
-            const device = response.data.devicesData.find(d => d.device_uuid === props.item.device_uuid);
-            if (device) {
-                if (device.status === 'provisioned') {
-                    isCloudProvisioned.value.status = true;
-                    isCloudProvisioned.value.error = null;
-                    form.device_provisioning = true;
-                } else {
-                    isCloudProvisioned.value.status = false;
-                    isCloudProvisioned.value.error = device.error;
-                    form.device_provisioning = false;
-                }
-            } else {
-                isCloudProvisioned.value.status = false;
-                isCloudProvisioned.value.error = 'Not found';
-                form.device_provisioning = false;
+
+    // Display custom errors for elements
+    if (response.data.errors) {
+        Object.keys(response.data.errors).forEach((elName) => {
+            if (form$.el$(elName)) {
+                form$.el$(elName).messageBag.append(response.data.errors[elName][0])
             }
         })
-        .catch(error => {
-            console.error(error);
-            isCloudProvisioned.value.status = false;
-            form.device_provisioning = false;
-            isCloudProvisioned.value.error = error.response?.data?.error;
-        })
-        .finally(() => {
-            isCloudProvisioned.value.isLoading = false;
-        });
-};
+    }
+}
+
+const handleSuccess = (response, form$) => {
+    // console.log(response) // axios response
+    // console.log(response.status) // HTTP status code
+    // console.log(response.data) // response data
+
+    emit('success', 'success', response.data.messages);
+    emit('close');
+    emit('refresh-data');
+}
+
+const handleError = (error, details, form$) => {
+    form$.messageBag.clear() // clear message bag
+
+    switch (details.type) {
+        // Error occured while preparing elements (no submit happened)
+        case 'prepare':
+            console.log(error) // Error object
+
+            form$.messageBag.append('Could not prepare form')
+            break
+
+        // Error occured because response status is outside of 2xx
+        case 'submit':
+            emit('error', error);
+            console.log(error) // AxiosError object
+            // console.log(error.response) // axios response
+            // console.log(error.response.status) // HTTP status code
+            // console.log(error.response.data) // response data
+
+            // console.log(error.response.data.errors)
+
+
+            break
+
+        // Request cancelled (no response object)
+        case 'cancel':
+            console.log(error) // Error object
+
+            form$.messageBag.append('Request cancelled')
+            break
+
+        // Some other errors happened (no response object)
+        case 'other':
+            console.log(error) // Error object
+
+            form$.messageBag.append('Couldn\'t submit form')
+            break
+    }
+}
+
+// onMounted(() => {
+//     isProvisioningAllowed.value = form.device_template.toLowerCase().includes('poly') || form.device_template.toLowerCase().includes('polycom')
+//     fetchProvisioningStatus();
+// });
+
+// const fetchProvisioningStatus = () => {
+//     isCloudProvisioned.value.isLoading = true;
+//     axios.post(page.props.routes.cloud_provisioning_status, {
+//         'items': [props.item.device_uuid]
+//     })
+//         .then(response => {
+//             const device = response.data.devicesData.find(d => d.device_uuid === props.item.device_uuid);
+//             if (device) {
+//                 if (device.status === 'provisioned') {
+//                     isCloudProvisioned.value.status = true;
+//                     isCloudProvisioned.value.error = null;
+//                     form.device_provisioning = true;
+//                 } else {
+//                     isCloudProvisioned.value.status = false;
+//                     isCloudProvisioned.value.error = device.error;
+//                     form.device_provisioning = false;
+//                 }
+//             } else {
+//                 isCloudProvisioned.value.status = false;
+//                 isCloudProvisioned.value.error = 'Not found';
+//                 form.device_provisioning = false;
+//             }
+//         })
+//         .catch(error => {
+//             console.error(error);
+//             isCloudProvisioned.value.status = false;
+//             form.device_provisioning = false;
+//             isCloudProvisioned.value.error = error.response?.data?.error;
+//         })
+//         .finally(() => {
+//             isCloudProvisioned.value.isLoading = false;
+//         });
+// };
 </script>
