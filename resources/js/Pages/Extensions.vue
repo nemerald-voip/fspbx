@@ -354,17 +354,17 @@ const bulkActions = computed(() => {
 
 const advancedActions = computed(() => [
     {
-        category: "User",
+        category: "Users",
         actions: [
-            { id: 'make_user', label: 'Make User', icon: 'PencilSquareIcon' },
-            { id: 'make_admin', label: 'Make Admin', icon: 'TrashIcon' },
+            { id: 'make_user', label: 'Make User', icon: 'UserPlusIcon' },
+            { id: 'make_admin', label: 'Make Admin', icon: 'KeyIcon' },
         ],
     },
     {
         category: "Contact Center",
         actions: [
-            { id: 'make_cc_agent', label: 'Make Agent', icon: 'PencilSquareIcon' },
-            { id: 'make_cc_admin', label: 'Make Admin', icon: 'TrashIcon' },
+            { id: 'make_cc_agent', label: 'Make Agent', icon: 'SupportAgent' },
+            { id: 'make_cc_admin', label: 'Make Admin', icon: 'KeyIcon' },
         ],
     },
 ]);
