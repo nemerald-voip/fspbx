@@ -6,10 +6,9 @@ use App\Models\Messages;
 use App\Models\Extensions;
 use App\Models\DomainSettings;
 use App\Models\SmsDestinations;
-use App\Jobs\DeliverSinchInboundSMS;
-use App\Jobs\DeliverSinchSMSToEmail;
 use Illuminate\Support\Facades\Redis;
 use libphonenumber\PhoneNumberFormat;
+use App\Jobs\DeliverBandwidthInboundSMS;
 use App\Jobs\SendSmsNotificationToSlack;
 use Spatie\WebhookClient\Models\WebhookCall;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
@@ -99,7 +98,7 @@ class ProcessBandwidthWebhookJob extends SpatieProcessWebhookJob
                 $this->handleIncomingMessageType();
                 return true;
             } catch (\Exception $e) {
-                logger('ProcessSinchWebhook@handle error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+                logger('ProcessBandwidthWebhook@handle error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
                 return $this->handleError($e);
             }
         }, function () {
@@ -110,25 +109,28 @@ class ProcessBandwidthWebhookJob extends SpatieProcessWebhookJob
 
     private function handleIncomingMessageType()
     {
-        if ($this->webhookCall->payload['deliveryReceipt']) {
-            $this->handleDeliveryStatusUpdate($this->webhookCall->payload);
-        } else {
-            $this->processMessage($this->webhookCall->payload);
-        } 
+        foreach ($this->webhookCall->payload as $payload) {
+            // if (isset($payload['deliveryReceipt']) && $payload['deliveryReceipt']) {
+            //     $this->handleDeliveryStatusUpdate($payload);
+            // }
+            if (isset($payload['type']) && $payload['type'] == 'message-received') {
+                $this->processMessage($payload);
+            }
+        }
     }
 
     private function processMessage($payload)
     {
         //convert all numbers to e.164 format
-        $this->source = formatPhoneNumber($payload['from'], 'US', PhoneNumberFormat::E164);
-        $this->destinations = $payload['to'];
+        $this->source = formatPhoneNumber($payload['message']['from'], 'US', PhoneNumberFormat::E164);
+        $this->destinations = $payload['message']['to'];
 
-        foreach($this->destinations as $destination) {
+        foreach ($this->destinations as $destination) {
+
             $this->curentDestination = formatPhoneNumber($destination, 'US', PhoneNumberFormat::E164);
 
-            $this->message = isset($payload['text']) ? $payload['text'] : '';
-            $this->media =  isset($payload['mediaUrls']) ? $payload['mediaUrls'] : '';
-            $this->messageConfig = $this->getPhoneNumberSmsConfig($this->curentDestination);
+            $this->message = isset($payload['message']['text']) ? $payload['message']['text'] : '';
+            $this->media =  isset($payload['message']['media']) ? $payload['message']['media'] : '';
 
             // Decide type
             if (!empty($this->media) && is_array($this->media) && count($this->media) > 0) {
@@ -139,9 +141,10 @@ class ProcessBandwidthWebhookJob extends SpatieProcessWebhookJob
 
             $this->type = $type;
 
+            $this->messageConfig = $this->getPhoneNumberSmsConfig($this->curentDestination);
+
             $this->handleSms();
         }
-
     }
 
     private function handleSms()
@@ -169,7 +172,7 @@ class ProcessBandwidthWebhookJob extends SpatieProcessWebhookJob
         $message = $this->storeMessage('queued');
 
         if ($this->ext != "") {
-            DeliverSinchInboundSMS::dispatch([
+            DeliverBandwidthInboundSMS::dispatch([
                 'org_id' => $this->fetchOrgId(),
                 'message_uuid' => $message->message_uuid,
                 'extension' => $this->ext,
@@ -177,7 +180,7 @@ class ProcessBandwidthWebhookJob extends SpatieProcessWebhookJob
         }
 
         if ($this->email != "") {
-            DeliverSinchSMSToEmail::dispatch([
+            DeliverBandwidthSMSToEmail::dispatch([
                 'org_id' => $this->fetchOrgId(),
                 'message_uuid' => $message->message_uuid,
                 'email' => $this->email,

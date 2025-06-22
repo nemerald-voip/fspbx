@@ -10,7 +10,7 @@ class BandwidthSignatureValidator implements SignatureValidator
     public function isValid(Request $request, WebhookConfig $config) : bool {
         
 
-        logger($request);
+        // logger($request);
 
         // logger('messageId: '. $messageId);
         // logger('apiKey: '. $apiKey);
