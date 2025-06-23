@@ -69,6 +69,7 @@ Route::get('/polycom/log/{name}', [PolycomLogController::class, 'show'])->withou
 Route::webhooks('webhook/postmark', 'postmark');
 Route::webhooks('webhook/commio/sms', 'commio_messaging');
 Route::webhooks('webhook/sinch/sms', 'sinch_messaging');
+Route::webhooks('webhook/bandwidth/sms', 'bandwidth_messaging');
 Route::webhooks('/sms/ringotelwebhook', 'ringotel_messaging');
 
 // Routes for 2FA email challenge. Used as a backup when 2FA is not enabled.

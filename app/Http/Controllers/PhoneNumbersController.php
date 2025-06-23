@@ -1099,7 +1099,8 @@ class PhoneNumbersController extends Controller
     public function getUserPermissions()
     {
         $permissions = [];
-        // $permissions['manage_voicemail_copies'] = userCheckPermission('voicemail_forward');
+        $permissions['manage_recording_setting'] = userCheckPermission('destination_record');
+        $permissions['manage_destination_prefix'] = userCheckPermission('destination_prefix');
 
         return $permissions;
     }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\Sinch;
+namespace App\Models\Bandwidth;
 
 use App\Mail\SmsToEmail;
 use App\Models\Messages;
@@ -16,7 +16,7 @@ use App\Services\RingotelApiService;
  * @property string|null $email
  * @property string|null $extension
  */
-class SinchInboundSMS extends Model
+class BandwidthInboundSMS extends Model
 {
     public $org_id;
     public $message_uuid;

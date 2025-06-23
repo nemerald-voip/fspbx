@@ -148,6 +148,7 @@ class FSPBXInitialDBSeed extends Command
 
         DefaultSettings::where('default_setting_category', 'switch')->delete();
         $this->runUpgradeDefaults();
+        $this->runUpgradeDomains();
 
         // Step 16: Display Installation Summary
         $this->displayCompletionMessage($username, $password);
@@ -162,13 +163,6 @@ class FSPBXInitialDBSeed extends Command
         $this->info("Upgrade schema executed successfully.");
     }
 
-    private function runUpgradeDomains()
-    {
-        $this->info("Running upgrade domains script...");
-        shell_exec("cd /var/www/fspbx/public && /usr/bin/php /var/www/fspbx/public/core/upgrade/upgrade_domains.php > /dev/null 2>&1");
-        $this->info("Upgrade domains executed successfully.");
-    }
-
     private function runUpgradeDefaults()
     {
         $this->info("Running upgrade defaults script...");
@@ -176,6 +170,12 @@ class FSPBXInitialDBSeed extends Command
         $this->info("Upgrade defaults executed successfully.");
     }
 
+    private function runUpgradeDomains()
+    {
+        $this->info("Running upgrade domains script...");
+        shell_exec("cd /var/www/fspbx/public && /usr/bin/php /var/www/fspbx/public/core/upgrade/upgrade_domains.php > /dev/null 2>&1");
+        $this->info("Upgrade domains executed successfully.");
+    }
 
     private function installAndBuildNpm()
     {
