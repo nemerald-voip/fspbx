@@ -225,6 +225,8 @@ class FSPBXInitialDBSeed extends Command
     {
         $this->info("Restarting FreeSWITCH...");
         $process = new Process(['/bin/systemctl', 'restart', 'freeswitch']);
+        // Set timeout to 300 seconds (5 minutes)
+        $process->setTimeout(300); 
         $process->run();
 
         if (!$process->isSuccessful()) {
