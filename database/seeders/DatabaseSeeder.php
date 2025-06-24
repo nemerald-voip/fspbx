@@ -215,6 +215,11 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'application_name'       => 'User Manager',
+                'permission_name'        => 'user_status',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'application_name'       => 'User Manager',
                 'permission_name'        => 'api_key_create',
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
@@ -621,9 +626,16 @@ class DatabaseSeeder extends Seeder
                 'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
                 'insert_date'          => date("Y-m-d H:i:s"),
             ],
-
             [
                 'permission_name'      => 'user_update_managed_accounts',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'user_status',
                 'permission_protected' => 'true',
                 'permission_assigned'  => 'true',
                 'group_name'           => "superadmin",
