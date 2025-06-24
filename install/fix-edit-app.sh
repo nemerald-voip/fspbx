@@ -2,22 +2,22 @@
 set -e
 
 TARGET="/var/www/fspbx/public/app/edit"
-
-# Install svn if it's not already installed
-if ! command -v svn &> /dev/null; then
-    echo "Installing subversion (svn)..."
-    apt-get update
-    apt-get install -y subversion
-fi
+TMPDIR="/var/www/fspbx-tmp-$$"
 
 echo "Removing existing folder: $TARGET"
 rm -rf "$TARGET"
 
-echo "Downloading latest edit app folder from GitHub..."
-svn export --force https://github.com/nemerald-voip/fusionpbx/trunk/app/edit "$TARGET"
+echo "Cloning latest repo to $TMPDIR ..."
+git clone --depth 1 --branch master https://github.com/nemerald-voip/fusionpbx.git "$TMPDIR"
+
+echo "Copying 'edit' app folder into place..."
+cp -r "$TMPDIR/app/edit" "$TARGET"
+
+echo "Cleaning up temporary files..."
+rm -rf "$TMPDIR"
 
 echo "Setting ownership and permissions..."
 chown -R www-data:www-data "$TARGET"
 chmod -R 755 "$TARGET"
 
-echo "✅ /var/www/fspbx/public/app/edit has been updated from GitHub."
+echo "✅ Edit app has been updated from GitHub."
