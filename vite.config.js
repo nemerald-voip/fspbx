@@ -61,14 +61,26 @@ async function getConfig() {
 
     const allPaths = await collectModuleAssetsPaths(paths, 'Modules');
 
+
+    const keyPath = '/etc/nginx/ssl/private/privkey.pem'
+    const certPath = '/etc/nginx/ssl/fullchain.pem'
+
+    let httpsConfig = null
+
+    if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+        httpsConfig = {
+            key: fs.readFileSync(keyPath),
+            cert: fs.readFileSync(certPath),
+        }
+    } else {
+        httpsConfig = false    // Or use null, but Vite expects false for HTTP fallback
+    }
+
     return defineConfig({
         server: {
             host: VITE_HOST,
             port: VITE_PORT,
-            https: {
-                key: fs.readFileSync('/etc/nginx/ssl/private/privkey.pem'),      // Adjust path as needed
-                cert: fs.readFileSync('/etc/nginx/ssl/fullchain.pem'),           // Adjust path as needed
-            },
+            https: httpsConfig,
             watch: {
                 usePolling: true,
                 interval: 1000,
@@ -107,10 +119,10 @@ async function getConfig() {
         resolve: {
             alias: {
                 '~bootstrap': path.resolve(__dirname, 'node_modules/bootstrap'),
-                '@modules' : path.resolve(__dirname + '/modules'),
+                '@modules': path.resolve(__dirname + '/modules'),
                 '@layouts': path.resolve(__dirname, 'resources/js/Layouts'),
                 '@icons': path.resolve(__dirname, 'resources/js/Pages/components/icons'),
-                '@generalComponents' : path.resolve(__dirname, 'resources/js/Pages/components/general'),
+                '@generalComponents': path.resolve(__dirname, 'resources/js/Pages/components/general'),
             }
         }
     });
