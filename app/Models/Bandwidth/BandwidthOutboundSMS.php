@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\Sinch;
+namespace App\Models\Bandwidth;
 
 use App\Models\Messages;
 use Illuminate\Support\Facades\Http;
