@@ -2,8 +2,11 @@ import laravel from 'laravel-vite-plugin';
 import { defineConfig } from 'vite';
 import path from 'path';
 import vue from '@vitejs/plugin-vue';
-import basicSsl from '@vitejs/plugin-basic-ssl';
 import collectModuleAssetsPaths from './vite-module-loader.js';
+import fs from 'fs';
+
+const VITE_HOST = process.env.VITE_HOST || 'localhost';
+const VITE_PORT = process.env.VITE_PORT || 3000;
 
 async function getConfig() {
     const paths = [
@@ -60,12 +63,18 @@ async function getConfig() {
 
     return defineConfig({
         server: {
-            host: '45.33.51.29',
-            public: 'freeswitchpbx.us.nemerald.net',
-            port: 3000
+            host: VITE_HOST,
+            port: VITE_PORT,
+            https: {
+                key: fs.readFileSync('/etc/nginx/ssl/private/privkey.pem'),      // Adjust path as needed
+                cert: fs.readFileSync('/etc/nginx/ssl/fullchain.pem'),           // Adjust path as needed
+            },
+            watch: {
+                usePolling: true,
+                interval: 1000,
+            }
         },
         plugins: [
-            basicSsl(),
             laravel({
                 hotFile: 'storage/vite.hot', // Customize the "hot" file...
                 buildDirectory: 'storage/vite', // Customize the build directory...
