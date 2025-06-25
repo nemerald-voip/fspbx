@@ -287,7 +287,6 @@ const props = defineProps({
 onMounted(() => {
     //request list of entities
     getEntities();
-    console.log(page)
 })
 
 const filterData = ref({
