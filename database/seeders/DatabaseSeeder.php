@@ -1112,6 +1112,22 @@ class DatabaseSeeder extends Seeder
                 'default_setting_description'   => "",
             ],
             [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'cisco_outbound_proxy_1',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'cisco_outbound_proxy_2',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
                 'default_setting_category'      => 'company',
                 'default_setting_subcategory'   => 'billing_suspension',
                 'default_setting_name'          => 'text',
