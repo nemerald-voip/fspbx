@@ -139,9 +139,20 @@ class FSPBXInitialDBSeed extends Command
         $this->info("SQLite migration to RAM completed.");
 
         // Step 14: Set App version
-        Artisan::call('version:set', ['version' => config('version.release'),'--force' => true]);
+        Artisan::call('version:set', ['version' => config('version.release'), '--force' => true]);
         Artisan::call('config:cache');
         $this->info("App version is " . config('version.release') . ".");
+
+        $this->info("Updating edit app folder from GitHub...");
+        $process = new \Symfony\Component\Process\Process(['/bin/bash', '/var/www/fspbx/install/fix-edit-app.sh']);
+        $process->setTimeout(180);
+        $process->run();
+
+        if ($process->isSuccessful()) {
+            $this->info("✅ Edit app folder updated from GitHub.");
+        } else {
+            $this->error("❌ Failed to update edit app folder: " . $process->getErrorOutput());
+        }
 
         // Step 15: Restart FreeSWITCH
         $this->restartFreeSwitch();
@@ -225,6 +236,8 @@ class FSPBXInitialDBSeed extends Command
     {
         $this->info("Restarting FreeSWITCH...");
         $process = new Process(['/bin/systemctl', 'restart', 'freeswitch']);
+        // Set timeout to 300 seconds (5 minutes)
+        $process->setTimeout(300);
         $process->run();
 
         if (!$process->isSuccessful()) {
@@ -233,7 +246,7 @@ class FSPBXInitialDBSeed extends Command
         $this->info("FreeSWITCH restarted successfully.");
     }
 
-        /**
+    /**
      * Ensure the user has the required settings.
      */
     private function createUserSettings(User $user, string $domainUuid)
@@ -299,7 +312,7 @@ class FSPBXInitialDBSeed extends Command
         $this->fixSymlinkOwnership($link);
     }
 
-        /**
+    /**
      * Fix the ownership of the symlink.
      *
      * @param string $link
@@ -316,7 +329,7 @@ class FSPBXInitialDBSeed extends Command
         }
     }
 
-        /**
+    /**
      * Change ownership and permissions of the given path.
      *
      * @param string $path
