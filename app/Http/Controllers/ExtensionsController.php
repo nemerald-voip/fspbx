@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use Throwable;
+use App\Models\User;
 use Inertia\Inertia;
+use App\Models\Groups;
 use App\Models\Devices;
 use App\Data\DeviceData;
 use App\Models\FollowMe;
+use App\Models\UserGroup;
 use App\Models\Extensions;
 use App\Models\RingGroups;
 use App\Models\Voicemails;
@@ -27,6 +30,8 @@ use App\Imports\ExtensionsImport;
 use Illuminate\Support\Facades\DB;
 use App\Exports\ExtensionsTemplate;
 use Nwidart\Modules\Facades\Module;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Data\FollowMeDestinationData;
 use Illuminate\Support\Facades\Route;
@@ -152,6 +157,7 @@ class ExtensionsController extends Controller
                     'registrations' => route('extensions.registrations'),
                     'download_template' => route('extensions.template.download'),
                     'import' => route('extensions.import'),
+                    'create_user' => route('extensions.make.user'),
                     'create_contact_center_user' => (Module::has('ContactCenter') && Module::collections()->has('ContactCenter') && Route::has('contact-center.user.store')) ? route('contact-center.user.store') : null,
                 ]
             ]
@@ -1214,55 +1220,6 @@ class ExtensionsController extends Controller
         }
     }
 
-    /**
-     * Import the specified resource
-     *
-     * @param Request $request
-     * @return \Illuminate\Http\Response
-     */
-    // public function import(Request $request)
-    // {
-    //     try {
-
-    //         $headings = (new HeadingRowImport)->toArray(request()->file('file'));
-
-    //         // Excel::import(new ExtensionsImport, request()->file('file'));
-
-    //         $import = new ExtensionsImport;
-    //         $import->import(request()->file('file'));
-
-    //         // Get array of failures and combine into html
-    //         if ($import->failures()->isNotEmpty()) {
-    //             $errormessage = 'Some errors were detected. Please, check the details: <ul>';
-    //             foreach ($import->failures() as $failure) {
-    //                 foreach ($failure->errors() as $error) {
-    //                     $value = (isset($failure->values()[$failure->attribute()]) ? $failure->values()[$failure->attribute()] : "NULL");
-    //                     $errormessage .= "<li>Skipping row <strong>" . $failure->row() . "</strong>. Invalid value <strong>'" . $value . "'</strong> for field <strong>'" . $failure->attribute() . "'</strong>. " . $error . "</li>";
-    //                 }
-    //             }
-    //             $errormessage .= '</ul>';
-
-    //             // Send response in format that Dropzone understands
-    //             return response()->json([
-    //                 'error' => $errormessage,
-    //             ], 400);
-    //         }
-    //     } catch (Throwable $e) {
-    //         // Log::alert($e);
-    //         // Send response in format that Dropzone understands
-    //         return response()->json([
-    //             'error' => $e->getMessage(),
-    //         ], 400);
-    //     }
-
-
-    //     return response()->json([
-    //         'status' => 200,
-    //         'success' => [
-    //             'message' => 'Extensions were successfully uploaded'
-    //         ]
-    //     ]);
-    // }
 
     public function bulkDelete(Request $request)
     {
@@ -1364,7 +1321,117 @@ class ExtensionsController extends Controller
         }
     }
 
+    public function makeUser()
+    {
+        $group_name = request('role');
 
+        try {
+            DB::beginTransaction();
+
+            $currentDomain = session('domain_uuid');
+
+            $extension = QueryBuilder::for(Extensions::class)
+                // only extensions in the current domain
+                ->where('domain_uuid', $currentDomain)
+                ->with(['voicemail' => function ($query) use ($currentDomain) {
+                    $query->where('domain_uuid', $currentDomain)
+                        ->select('voicemail_id', 'domain_uuid', 'voicemail_mail_to');
+                }])
+                ->select([
+                    'extension_uuid',
+                    'domain_uuid',
+                    'extension',
+                    'directory_first_name',
+                    'directory_last_name',
+                ])
+                ->whereKey(request('extension_uuid'))
+                ->firstOrFail();
+
+
+            // Check if user exists
+            if (User::where('user_email', $extension->email)->exists()) {
+                throw new \Exception('A user with this email already exists.');
+            }
+
+            // Create a new user
+            $user = new User();
+
+            $user->password      = Hash::make(Str::random(25));
+            $user->domain_uuid   = $currentDomain;
+            $user->add_user      = Auth::user()->username;
+            $user->insert_date   = now();
+            $user->insert_user   = session('user_uuid');
+            $user->username      = trim($user->first_name . (!empty($user->last_name) ? '_' . $user->last_name : ''));
+            $user->user_email    = $extension->email ?? '';
+            $user->user_enabled  = 'true'; 
+
+            $user->save();
+
+            $user->user_adv_fields()->create([
+                'user_uuid'   => $user->user_uuid,
+                'first_name'  => $extension->directory_first_name,
+                'last_name'   => $extension->directory_last_name,
+            ]);
+
+            $user->settings()->createMany([
+                [
+                    'user_uuid'                => $user->user_uuid,
+                    'domain_uuid'              => $user->domain_uuid,
+                    'user_setting_category'    => 'domain',
+                    'user_setting_subcategory' => 'language',
+                    'user_setting_name'        => 'code',
+                    'user_setting_value'       => get_domain_setting('language'),
+                    'user_setting_enabled'     => true,
+                    'insert_date'              => now(),
+                    'insert_user'              => session('user_uuid'),
+                ],
+                [
+                    'user_uuid'                => $user->user_uuid,
+                    'domain_uuid'              => $user->domain_uuid,
+                    'user_setting_category'    => 'domain',
+                    'user_setting_subcategory' => 'time_zone',
+                    'user_setting_name'        => 'name',
+                    'user_setting_value'       => get_local_time_zone($currentDomain),
+                    'user_setting_enabled'     => true,
+                    'insert_date'              => now(),
+                    'insert_user'              => session('user_uuid'),
+                ]
+            ]);
+
+            $group = Groups::where('group_name', $group_name)->first();
+
+            if ($group) {
+                UserGroup::firstOrCreate(
+                    [
+                        'group_uuid' => $group->group_uuid,
+                        'user_uuid'  => $user->user_uuid,
+                    ],
+                    [
+                        'domain_uuid' => $currentDomain,
+                        'group_name'  => $group_name,
+                        'insert_date' => now(),
+                        'insert_user' => session('user_uuid'),
+                    ]
+                );
+            }
+
+
+
+            DB::commit();
+
+            return response()->json([
+                'messages' => ['success' => [ucfirst($group_name) . ' created successfully']],
+                'agent' => $agent ?? null,
+            ], 200);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger('UserController@store error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            return response()->json([
+                'success' => false,
+                'errors' => ['error' => [$e->getMessage()]],
+            ], 500);
+        }
+    }
 
     /**
      * Restart devices for selected extensions.

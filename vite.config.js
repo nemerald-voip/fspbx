@@ -2,8 +2,11 @@ import laravel from 'laravel-vite-plugin';
 import { defineConfig } from 'vite';
 import path from 'path';
 import vue from '@vitejs/plugin-vue';
-import basicSsl from '@vitejs/plugin-basic-ssl';
 import collectModuleAssetsPaths from './vite-module-loader.js';
+import fs from 'fs';
+
+const VITE_HOST = process.env.VITE_HOST || 'localhost';
+const VITE_PORT = process.env.VITE_PORT || 3000;
 
 async function getConfig() {
     const paths = [
@@ -58,14 +61,32 @@ async function getConfig() {
 
     const allPaths = await collectModuleAssetsPaths(paths, 'Modules');
 
+
+    const keyPath = '/etc/nginx/ssl/private/privkey.pem'
+    const certPath = '/etc/nginx/ssl/fullchain.pem'
+
+    let httpsConfig = null
+
+    if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+        httpsConfig = {
+            key: fs.readFileSync(keyPath),
+            cert: fs.readFileSync(certPath),
+        }
+    } else {
+        httpsConfig = false    // Or use null, but Vite expects false for HTTP fallback
+    }
+
     return defineConfig({
         server: {
-            host: '45.33.51.29',
-            public: 'freeswitchpbx.us.nemerald.net',
-            port: 3000
+            host: VITE_HOST,
+            port: VITE_PORT,
+            https: httpsConfig,
+            watch: {
+                usePolling: true,
+                interval: 1000,
+            }
         },
         plugins: [
-            basicSsl(),
             laravel({
                 hotFile: 'storage/vite.hot', // Customize the "hot" file...
                 buildDirectory: 'storage/vite', // Customize the build directory...
@@ -98,10 +119,10 @@ async function getConfig() {
         resolve: {
             alias: {
                 '~bootstrap': path.resolve(__dirname, 'node_modules/bootstrap'),
-                '@modules' : path.resolve(__dirname + '/modules'),
+                '@modules': path.resolve(__dirname + '/modules'),
                 '@layouts': path.resolve(__dirname, 'resources/js/Layouts'),
                 '@icons': path.resolve(__dirname, 'resources/js/Pages/components/icons'),
-                '@generalComponents' : path.resolve(__dirname, 'resources/js/Pages/components/general'),
+                '@generalComponents': path.resolve(__dirname, 'resources/js/Pages/components/general'),
             }
         }
     });

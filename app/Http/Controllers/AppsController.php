@@ -915,6 +915,7 @@ class AppsController extends Controller
             // If success and user is activated send user email with credentials
             if ($user) {
                 if ($hidePassInEmail == 'true' && request('status') == 1) {
+                    logger('hide Password');
                     // Include get-password link and remove password value
                     $passwordToken = Str::random(40);
                     MobileAppPasswordResetLinks::where('extension_uuid', $extension->extension_uuid)->delete();
@@ -925,7 +926,7 @@ class AppsController extends Controller
                     $appCredentials->save();
 
                     $passwordUrlShow = userCheckPermission('mobile_apps_password_url_show') ?? 'false';
-                    $includePasswordUrl = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
+                    $includePasswordUrl = route('appsGetPasswordByToken', $passwordToken);
                     $user['password_url'] = $includePasswordUrl;
                 }
                 if ($extension->email) {
@@ -955,6 +956,7 @@ class AppsController extends Controller
                         '","username":"' . $user['username'] . '","password":"' .  $user['password'] . '"}');
                 }
             } else {
+                $user['password_url'] = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
                 $user['password'] = null;
             }
 
@@ -1085,8 +1087,6 @@ class AppsController extends Controller
     {
         $this->ringotelApiService = $ringotelApiService;
         try {
-
-
             $currentDomain = session('domain_uuid');
 
             $extension = QueryBuilder::for(Extensions::class)
@@ -1158,7 +1158,7 @@ class AppsController extends Controller
                     $appCredentials->save();
 
                     $passwordUrlShow = userCheckPermission('mobile_apps_password_url_show') ?? 'false';
-                    $includePasswordUrl = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
+                    $includePasswordUrl = route('appsGetPasswordByToken', $passwordToken);
                     $user['password_url'] = $includePasswordUrl;
                 }
                 if ($extension->email) {
@@ -1171,6 +1171,7 @@ class AppsController extends Controller
                 $qrcode = QrCode::format('png')->generate('{"domain":"' . $user['domain'] .
                     '","username":"' . $user['username'] . '","password":"' .  $user['password'] . '"}');
             } else {
+                $user['password_url'] = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
                 $user['password'] = null;
             }
 

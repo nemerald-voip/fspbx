@@ -154,14 +154,14 @@
                             <template v-if="(row.record_name && row.record_path) || row.record_path === 'S3'
                                 " #action-buttons>
                                 <div class="flex items-center space-x-2 whitespace-nowrap">
-                                    <PlayCircleIcon v-if="currentAudioUuid !== row.xml_cdr_uuid || !isAudioPlaying
+                                    <PlayCircleIcon v-if="page.props.auth.can.call_recording_play && (currentAudioUuid !== row.xml_cdr_uuid || !isAudioPlaying)
                                         " @click="fetchAndPlayAudio(row.xml_cdr_uuid)"
                                         class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" />
                                     <PauseCircleIcon v-if="currentAudioUuid === row.xml_cdr_uuid && isAudioPlaying"
                                         @click="pauseAudio"
                                         class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" />
 
-                                    <CloudArrowDownIcon @click="downloadAudio(row.xml_cdr_uuid)"
+                                    <CloudArrowDownIcon v-if="page.props.auth.can.call_recording_download" @click="downloadAudio(row.xml_cdr_uuid)"
                                         class="h-6 w-6 text-gray-500 hover:text-gray-700 active:h-5 active:w-5 cursor-pointer" />
                                 </div>
                             </template>

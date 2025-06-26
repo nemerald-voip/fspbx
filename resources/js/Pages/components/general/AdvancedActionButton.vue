@@ -54,7 +54,10 @@ import { EllipsisVerticalIcon } from "@heroicons/vue/24/outline";
 const RestartIcon = defineAsyncComponent(() => import('../icons/RestartIcon.vue'));
 const LinkOffIcon = defineAsyncComponent(() => import('../icons/LinkOffIcon.vue'));
 const SyncIcon = defineAsyncComponent(() => import('../icons/SyncIcon.vue'));
+const SupportAgent = defineAsyncComponent(() => import('../icons/SupportAgent.vue'));
 const PencilSquareIcon = defineAsyncComponent(() => import('@heroicons/vue/20/solid/PencilSquareIcon'));
+const UserPlusIcon = defineAsyncComponent(() => import('@heroicons/vue/24/outline/UserPlusIcon'));
+const KeyIcon = defineAsyncComponent(() => import('@heroicons/vue/24/outline/KeyIcon'));
 const TrashIcon = defineAsyncComponent(() => import('@heroicons/vue/20/solid/TrashIcon'));
 
 const props = defineProps({
@@ -67,7 +70,10 @@ const iconMap = {
   PencilSquareIcon,
   TrashIcon,
   LinkOffIcon,
-  SyncIcon
+  SyncIcon,
+  UserPlusIcon,
+  KeyIcon,
+  SupportAgent
 };
 
 const getIconComponent = (iconKey) => {

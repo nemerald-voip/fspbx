@@ -113,9 +113,9 @@
 
                     <!-- Enabled badge -->
                     <TableField class="px-2 py-2 text-sm">
-                        <Badge :text="row.user_enabled ? 'Enabled' : 'Disabled'"
-                            :backgroundColor="row.user_enabled ? 'bg-green-100' : 'bg-red-100'"
-                            :textColor="row.user_enabled ? 'text-green-800' : 'text-red-800'" class="px-2 py-1 text-xs " />
+                        <Badge :text="row.user_enabled == 'true' ? 'Enabled' : 'Disabled'"
+                            :backgroundColor="row.user_enabled == 'true' ? 'bg-green-100' : 'bg-red-100'"
+                            :textColor="row.user_enabled == 'true' ? 'text-green-800' : 'text-red-800'" class="px-2 py-1 text-xs " />
                     </TableField>
 
                     <!-- Action buttons -->

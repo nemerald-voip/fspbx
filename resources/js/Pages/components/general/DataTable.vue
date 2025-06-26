@@ -51,7 +51,7 @@
 
             <div class="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                 <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                    <div class="relative overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
+                    <div class="relative overflow-visible shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
                         <slot name="navigation"></slot>
                         
                         <!-- <slot name="current-selection"></slot> -->
@@ -76,8 +76,10 @@
                         <slot name="empty"></slot>
 
                         <slot name="footer" />
+                        
 
                     </div>
+                    <div class="pb-20 bg-gray-100"></div>
                 </div>
             </div>
         </div>

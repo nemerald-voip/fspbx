@@ -94,6 +94,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/extensions/{extension}/regenerate-sip-credentials', [ExtensionsController::class, 'regenerateSipCredentials'])->name('extensions.sip.credentials.regenerate');
     Route::get('/extensions/template/download', [ExtensionsController::class, 'downloadTemplate'])->name('extensions.template.download');
     Route::post('/extensions/import', [ExtensionsController::class, 'import'])->name('extensions.import');
+    Route::post('/extensions/make-user', [ExtensionsController::class, 'makeUser'])->name('extensions.make.user');
     
     // User logs
     Route::post('user-logs/select-all', [UserLogsController::class, 'selectAll'])->name('user-logs.select.all');

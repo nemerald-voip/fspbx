@@ -215,7 +215,7 @@ return [
             /*
              * This class determines if the webhook call should be stored and processed.
              */
-            'webhook_profile' => \App\Http\Webhooks\WebhookProfiles\SinchWebhookProfile::class,
+            'webhook_profile' => \App\Http\Webhooks\WebhookProfiles\BandwidthWebhookProfile::class,
 
             /*
              * This class determines the response on a valid webhook call.
@@ -243,7 +243,7 @@ return [
              *
              * This should be set to a class that extends \Spatie\WebhookClient\Jobs\ProcessWebhookJob.
              */
-            'process_webhook_job' => \App\Http\Webhooks\Jobs\ProcessSinchWebhookJob::class,
+            'process_webhook_job' => \App\Http\Webhooks\Jobs\ProcessBandwidthWebhookJob::class,
         ],
 
 

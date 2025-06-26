@@ -147,6 +147,19 @@ class KeygenAPIService
         return $response->json()['data'] ?? [];
     }
 
+    public function getEntitlementsByLicense($license)
+    {
+        $url = "{$this->baseUrl}/v1/accounts/{$this->accountId}/licenses/{$license['data']['id']}/entitlements";
+
+        $response = Http::withHeaders([
+            'Accept' => 'application/vnd.api+json',
+            'Authorization' => 'License ' . $license['data']['attributes']['key']
+        ])
+            ->get($url);
+
+        return $response->json()['data'] ?? [];
+    }
+
 
     public function getReleases($licenseKey)
     {
