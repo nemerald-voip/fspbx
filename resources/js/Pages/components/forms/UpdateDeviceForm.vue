@@ -53,6 +53,7 @@
                                     device_template: options.item?.device_template ?? null,
                                     device_profile_uuid: options.item?.device_profile_uuid,
                                     domain_uuid: options.item?.domain_uuid,
+                                    device_keys: options.lines,
                                 }">
 
                                 <template #empty>
@@ -79,6 +80,9 @@
                                                     'assign_existing',
                                                     'add_key',
                                                     'device_keys',
+                                                    'advanced',
+                                                    'keys_container2',
+                                                    'submit_keys',
 
                                                 ]" />
                                                 <FormTab name="api_tokens" label="API Keys" :elements="[
@@ -136,6 +140,9 @@
                                                     :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index">
+                                                            <HiddenElement name="device_line_uuid" :meta="true" />
+                                                            <HiddenElement name="domain_uuid" :meta="true" />
+
                                                             <TextElement name="line_number" label="Key" :rules="[
                                                                 'nullable',
                                                                 'numeric',
@@ -146,7 +153,7 @@
                                                                 },
                                                             }" />
 
-                                                            <SelectElement name="select" label="Function"
+                                                            <SelectElement name="line_type_id" label="Function"
                                                                 :items="options.line_key_types" :search="true"
                                                                 label-prop="name" :native="false" input-type="search"
                                                                 autocomplete="off" :columns="{
@@ -156,7 +163,7 @@
                                                                     },
                                                                 }" placeholder="Choose Function" :floating="false" />
 
-                                                            <SelectElement name="select_1" label="Ext/Number"
+                                                            <SelectElement name="auth_id" label="Ext/Number"
                                                                 :items="options.extensions" label-prop="name"
                                                                 :search="true" :native="false" input-type="search"
                                                                 autocomplete="off" :columns="{
@@ -164,19 +171,26 @@
                                                                     sm: {
                                                                         container: 4,
                                                                     },
-                                                                }" placeholder="Choose Ext/Number" :floating="false" />
+                                                                }" placeholder="Choose Ext/Number" :floating="false"
+                                                                @change="(newValue, oldValue, el$) => {
 
-                                                            <TextElement name="text" label="Display Name" :columns="{
+                                                                    let display_name = el$.form$.el$('device_keys').children$[index].children$['display_name']
+                                                                    display_name.update(newValue);
 
-                                                                default: {
-                                                                    container: 10,
-                                                                },
-                                                                sm: {
-                                                                    container: 3,
-                                                                },
-                                                            }" placeholder="Display Name" :floating="false" />
+                                                                }" />
 
-                                                            <StaticElement label="&nbsp;" name="key_table" :columns="{
+                                                            <TextElement name="display_name" label="Display Name"
+                                                                :columns="{
+
+                                                                    default: {
+                                                                        container: 10,
+                                                                    },
+                                                                    sm: {
+                                                                        container: 3,
+                                                                    },
+                                                                }" placeholder="Display Name" :floating="false" />
+
+                                                            <StaticElement label="&nbsp;" name="key_advanced" :columns="{
 
                                                                 default: {
                                                                     container: 1,
@@ -185,9 +199,9 @@
                                                                     container: 1,
                                                                 },
                                                             }">
-                                                                <div
+                                                                <!-- <div
                                                                     class="text-sm font-medium leading-6 text-gray-900 text-end">
-                                                                    
+
                                                                     <Menu as="div"
                                                                         class="relative inline-block text-left">
                                                                         <div>
@@ -227,8 +241,55 @@
                                                                         </transition>
                                                                     </Menu>
 
-                                                                </div>
+                                                                </div> -->
+
+                                                                <Cog8ToothIcon @click="showLineAdvSettings(index)"
+                                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+
                                                             </StaticElement>
+
+                                                            <FormChildModal :show="advModalIndex === index"
+                                                                header="Advanced Line Settings" :loading="false"
+                                                                @close="closeAdvSettings">
+                                                                <div class="px-5 grid gap-y-4">
+                                                                    <TextElement name="server_address" label="Domain"
+                                                                        placeholder="Enter domain name"
+                                                                        :floating="false" />
+
+                                                                    <TextElement name="server_address_primary"
+                                                                        label="Primary Server Address"
+                                                                        placeholder="Enter primary server address"
+                                                                        :floating="false" />
+
+                                                                    <TextElement name="server_address_secondary"
+                                                                        label="Secondary Server Address"
+                                                                        placeholder="Enter secondary server address"
+                                                                        :floating="false" />
+
+                                                                    <TextElement name="sip_port" label="SIP Port"
+                                                                        placeholder="Enter SIP port"
+                                                                        :floating="false" />
+
+                                                                    <SelectElement name="sip_transport"
+                                                                        label="SIP Transport"
+                                                                        :items="options.sip_transport_types"
+                                                                        :search="true" label-prop="name" :native="false"
+                                                                        input-type="search" autocomplete="off"
+                                                                        placeholder="Select SIP Transport"
+                                                                        :floating="false" />
+
+                                                                    <TextElement name="register_expires"
+                                                                        label="Register Expires (Seconds)"
+                                                                        placeholder="Enter expiry time (seconds)"
+                                                                        :floating="false" />
+
+                                                                    <ButtonElement name="close_advanced"
+                                                                        button-label="Close" align="center" :full="true"
+                                                                        @click="closeAdvSettings" />
+                                                                </div>
+                                                            </FormChildModal>
+
+
                                                         </ObjectElement>
                                                     </template>
                                                 </ListElement>
@@ -245,9 +306,9 @@
                                                         @delete-item="handleDeleteKeyButtonClick" />
                                                 </StaticElement> -->
 
-                                                <GroupElement name="container_devices" />
+                                                <GroupElement name="keys_container2" />
 
-                                                <ButtonElement name="submit_devices" button-label="Save" :submits="true"
+                                                <ButtonElement name="submit_keys" button-label="Save" :submits="true"
                                                     align="right" />
 
                                             </FormElements>
@@ -345,6 +406,8 @@ import { Cog6ToothIcon, AdjustmentsHorizontalIcon, EllipsisVerticalIcon, CloudIc
 import axios from "axios";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import DeviceKeys from "../DeviceKeys.vue";
+import FormChildModal from "../FormChildModal.vue"
+import { Cog8ToothIcon } from "@heroicons/vue/24/outline";
 
 
 const props = defineProps({
@@ -357,6 +420,7 @@ const props = defineProps({
 const page = usePage();
 const isKeysLoading = ref(false)
 const isModalLoading = ref(false)
+const advModalIndex = ref(null)
 
 // const form = reactive({
 //     device_address: props.item.device_address,
@@ -380,6 +444,13 @@ const isCloudProvisioned = ref({
 const isProvisioningAllowed = ref(false);
 const isLineAdvSettingsModalShown = ref(false);
 
+function showLineAdvSettings(index) {
+    advModalIndex.value = index
+}
+
+function closeAdvSettings() {
+    advModalIndex.value = null
+}
 
 const handleAddKeyButtonClick = () => {
     showDeviceCreateModal.value = true
@@ -399,10 +470,14 @@ const handleDeleteKeyButtonClick = (uuid) => {
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
-    const requestData = form$.requestData
+    // const requestData = form$.requestData
     // console.log(requestData);
 
-    return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
+    // Using form$.data will INCLUDE conditional elements and it
+    // will submit the form as "Content-Type: application/json".
+    const data = form$.data
+
+    return await form$.$vueform.services.axios.put(props.options.routes.update_route, data)
 };
 
 const handleTemplateUpdate = (newSelectedItem) => {
@@ -469,10 +544,6 @@ const deleteLineKey = (index) => {
 
 const activeLineIndex = ref(null);
 
-const showLineAdvSettings = (index) => {
-    activeLineIndex.value = index;
-    isLineAdvSettingsModalShown.value = true;
-};
 
 const handleModalClose = () => {
     isLineAdvSettingsModalShown.value = false;

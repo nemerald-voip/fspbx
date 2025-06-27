@@ -48,7 +48,7 @@ class UpdateDeviceRequest extends FormRequest
                 'string',
                 Rule::notIn(['NULL']),
             ],
-            'lines' => [
+            'device_keys' => [
                 'nullable',
                 'array'
             ],

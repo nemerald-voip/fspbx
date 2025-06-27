@@ -713,6 +713,7 @@ class DeviceController extends Controller
                         'device_line_uuid',
                         'line_number',
                         'user_id',
+                        'auth_id',
                         'display_name',
                         'shared_line',
                         'server_address',
