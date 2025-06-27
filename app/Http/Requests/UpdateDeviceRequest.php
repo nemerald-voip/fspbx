@@ -57,7 +57,6 @@ class UpdateDeviceRequest extends FormRequest
             ],
             'domain_uuid' => [
                 'required',
-                Rule::notIn(['NULL']), // Ensures 'domain_uuid' is not 'NULL'
             ],
         ];
     }

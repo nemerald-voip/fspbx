@@ -49,16 +49,10 @@
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
-                                    device_address: options.item.device_address ?? null,
-                                    device_template: options.item.device_template ?? null,
-                                    device_profile_uuid: options.item.device_profile_uuid,
-                                    domain_uuid: options.item.domain_uuid,
-                                    // user_enabled: options.item.user_enabled,
-                                    // language: options.item.language,
-                                    // groups: options.item.user_groups
-                                    //     ? options.item.user_groups.map(ug => ug.group_uuid)
-                                    //     : []
-
+                                    device_address: options.item?.device_address ?? null,
+                                    device_template: options.item?.device_template ?? null,
+                                    device_profile_uuid: options.item?.device_profile_uuid,
+                                    domain_uuid: options.item?.domain_uuid,
                                 }">
 
                                 <template #empty>
@@ -72,20 +66,26 @@
                                                     'device_template',
                                                     'device_profile_uuid',
                                                     'domain_uuid',
-                                            
+
                                                     'container_3',
                                                     'submit',
 
                                                 ]" />
-                                                <FormTab name="page1" label="Lines" :elements="[
+                                                <FormTab name="page1" label="Keys" :elements="[
                                                     'password_reset',
                                                     'security_title',
+                                                    'keys_container',
+                                                    'keys_title',
+                                                    'assign_existing',
+                                                    'add_key',
+                                                    'device_keys',
 
                                                 ]" />
                                                 <FormTab name="api_tokens" label="API Keys" :elements="[
                                                     'html',
                                                     'add_token',
                                                     'token_title',
+
 
                                                 ]" />
                                             </FormTabs>
@@ -100,23 +100,155 @@
                                                 <TextElement name="device_address" label="MAC Address"
                                                     placeholder="Enter MAC address" :floating="false" />
 
-                                                <SelectElement name="device_template" :items="options.templates" :search="true" :native="false" label="Device Template" input-type="search" autocomplete="off"
-                                                label-prop="name" value-prop="value" :floating="false"
+                                                <SelectElement name="device_template" :items="options.templates"
+                                                    :search="true" :native="false" label="Device Template"
+                                                    input-type="search" autocomplete="off" label-prop="name"
+                                                    value-prop="value" :floating="false"
                                                     placeholder="Select Template" />
 
-                                                <SelectElement name="device_profile_uuid" :items="options.profiles" :search="true" :native="false" label="Device Profile" input-type="search" autocomplete="off"
-                                                label-prop="name" value-prop="value" 
-                                                    placeholder="Select Profile (Optional)" :floating="false" />
+                                                <SelectElement name="device_profile_uuid" :items="options.profiles"
+                                                    :search="true" :native="false" label="Device Profile"
+                                                    input-type="search" autocomplete="off" label-prop="name"
+                                                    value-prop="value" placeholder="Select Profile (Optional)"
+                                                    :floating="false" />
 
-                                                <SelectElement name="domain_uuid" :items="options.domains" :search="true" :native="false" label="Assigned To (Account)" input-type="search" autocomplete="off"
-                                                label-prop="name" value-prop="value" 
-                                                    placeholder="Select Account" :floating="false" />
+                                                <SelectElement name="domain_uuid" :items="options.domains"
+                                                    :search="true" :native="false" label="Assigned To (Account)"
+                                                    input-type="search" autocomplete="off" label-prop="name"
+                                                    value-prop="value" placeholder="Select Account" :floating="false" />
 
                                                 <GroupElement name="container_3" />
 
                                                 <ButtonElement name="submit" button-label="Save" :submits="true"
                                                     align="right" />
 
+
+                                                <!-- Lines tab-->
+                                                <StaticElement name="keys_title" tag="h4" content="Device Keys"
+                                                    description="Assign functions to the device keys." />
+
+
+                                                <GroupElement name="keys_container" />
+
+                                                <ListElement name="device_keys" :sort="true" size="sm"
+                                                    store-order="line_number"
+                                                    :controls="{ add: options.permissions.device_key_create, remove: options.permissions.destination_delete, sort: options.permissions.destination_update }"
+                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                                    <template #default="{ index }">
+                                                        <ObjectElement :name="index">
+                                                            <TextElement name="line_number" label="Key" :rules="[
+                                                                'nullable',
+                                                                'numeric',
+                                                            ]" autocomplete="off" :columns="{
+
+                                                                sm: {
+                                                                    container: 1,
+                                                                },
+                                                            }" />
+
+                                                            <SelectElement name="select" label="Function"
+                                                                :items="options.line_key_types" :search="true"
+                                                                label-prop="name" :native="false" input-type="search"
+                                                                autocomplete="off" :columns="{
+
+                                                                    sm: {
+                                                                        container: 3,
+                                                                    },
+                                                                }" placeholder="Choose Function" :floating="false" />
+
+                                                            <SelectElement name="select_1" label="Ext/Number"
+                                                                :items="options.extensions" label-prop="name"
+                                                                :search="true" :native="false" input-type="search"
+                                                                autocomplete="off" :columns="{
+
+                                                                    sm: {
+                                                                        container: 4,
+                                                                    },
+                                                                }" placeholder="Choose Ext/Number" :floating="false" />
+
+                                                            <TextElement name="text" label="Display Name" :columns="{
+
+                                                                default: {
+                                                                    container: 10,
+                                                                },
+                                                                sm: {
+                                                                    container: 3,
+                                                                },
+                                                            }" placeholder="Display Name" :floating="false" />
+
+                                                            <StaticElement label="&nbsp;" name="key_table" :columns="{
+
+                                                                default: {
+                                                                    container: 1,
+                                                                },
+                                                                sm: {
+                                                                    container: 1,
+                                                                },
+                                                            }">
+                                                                <div
+                                                                    class="text-sm font-medium leading-6 text-gray-900 text-end">
+                                                                    
+                                                                    <Menu as="div"
+                                                                        class="relative inline-block text-left">
+                                                                        <div>
+                                                                            <MenuButton
+                                                                                class="flex items-center rounded-full bg-gray-100 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100">
+                                                                                <span class="sr-only">Open
+                                                                                    options</span>
+                                                                                <EllipsisVerticalIcon
+                                                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-900 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                                                                    aria-hidden="true" />
+                                                                            </MenuButton>
+                                                                        </div>
+
+                                                                        <transition
+                                                                            enter-active-class="transition ease-out duration-100"
+                                                                            enter-from-class="transform opacity-0 scale-95"
+                                                                            enter-to-class="transform opacity-100 scale-100"
+                                                                            leave-active-class="transition ease-in duration-75"
+                                                                            leave-from-class="transform opacity-100 scale-100"
+                                                                            leave-to-class="transform opacity-0 scale-95">
+                                                                            <MenuItems
+                                                                                class="absolute right-0 z-10 mt-2 w-36 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                                                                <div class="py-1">
+                                                                                    <MenuItem v-slot="{ active }">
+                                                                                    <a href="#"
+                                                                                        @click.prevent="showLineAdvSettings(index)"
+                                                                                        :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Advanced</a>
+                                                                                    </MenuItem>
+                                                                                    <MenuItem v-slot="{ active }">
+                                                                                    <a href="#"
+                                                                                        @click.prevent="deleteLineKey(index)"
+                                                                                        :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Delete</a>
+                                                                                    </MenuItem>
+
+                                                                                </div>
+                                                                            </MenuItems>
+                                                                        </transition>
+                                                                    </Menu>
+
+                                                                </div>
+                                                            </StaticElement>
+                                                        </ObjectElement>
+                                                    </template>
+                                                </ListElement>
+
+                                                <!-- <ButtonElement name="add_key" button-label="Add Key" align="right"
+                                                    @click="handleAddKeyButtonClick" :loading="isModalLoading"
+                                                    :conditions="[() => options.permissions.device_key_create]"/>
+
+
+                                                <StaticElement name="key_table">
+                                                    <DeviceKeys :keys="options.lines" :loading="isKeysLoading"
+                                                        :permissions="options.permissions"
+                                                        @edit-item="handleKeyEditButtonClick"
+                                                        @delete-item="handleDeleteKeyButtonClick" />
+                                                </StaticElement> -->
+
+                                                <GroupElement name="container_devices" />
+
+                                                <ButtonElement name="submit_devices" button-label="Save" :submits="true"
+                                                    align="right" />
 
                                             </FormElements>
                                         </div>
@@ -212,6 +344,7 @@ import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { Cog6ToothIcon, AdjustmentsHorizontalIcon, EllipsisVerticalIcon, CloudIcon } from '@heroicons/vue/24/outline';
 import axios from "axios";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
+import DeviceKeys from "../DeviceKeys.vue";
 
 
 const props = defineProps({
@@ -222,6 +355,8 @@ const props = defineProps({
 });
 
 const page = usePage();
+const isKeysLoading = ref(false)
+const isModalLoading = ref(false)
 
 // const form = reactive({
 //     device_address: props.item.device_address,
@@ -246,9 +381,29 @@ const isProvisioningAllowed = ref(false);
 const isLineAdvSettingsModalShown = ref(false);
 
 
-const submitForm = () => {
-    emits('submit', form); // Emit the event with the form data
+const handleAddKeyButtonClick = () => {
+    showDeviceCreateModal.value = true
+    getDeviceItemOptions();
 }
+
+const handleKeyEditButtonClick = (itemUuid) => {
+    showDeviceUpdateModal.value = true
+    getDeviceItemOptions(itemUuid);
+}
+
+const handleDeleteKeyButtonClick = (uuid) => {
+    showUnassignConfirmationModal.value = true;
+    confirmUnassignAction.value = () => executeBulkUnassign([uuid]);
+};
+
+const submitForm = async (FormData, form$) => {
+    // Using form$.requestData will EXCLUDE conditional elements and it 
+    // will submit the form as Content-Type: application/json . 
+    const requestData = form$.requestData
+    // console.log(requestData);
+
+    return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
+};
 
 const handleTemplateUpdate = (newSelectedItem) => {
     isProvisioningAllowed.value = form.device_provisioning = newSelectedItem.value.toLowerCase().includes('poly') || newSelectedItem.value.toLowerCase().includes('polycom')
@@ -330,6 +485,18 @@ const handleSipTransportUpdate = (newSelectedItem, index) => {
 const handleTabSelected = (activeTab, previousTab) => {
     if (activeTab.name == 'api_tokens') {
         getTokens()
+    }
+}
+
+function clearErrorsRecursive(el$) {
+    // clear this element’s errors
+    el$.messageBag?.clear()
+
+    // if it has child elements, recurse into each
+    if (el$.children$) {
+        Object.values(el$.children$).forEach(childEl$ => {
+            clearErrorsRecursive(childEl$)
+        })
     }
 }
 

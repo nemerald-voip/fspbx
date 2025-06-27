@@ -338,9 +338,15 @@ class DeviceController extends Controller
      * @param  Devices  $device
      * @return JsonResponse
      */
-    public function update(UpdateDeviceRequest $request, Devices $device): JsonResponse
+    public function update(UpdateDeviceRequest $request, Devices $device)
     {
 
+
+        $validated   = $request->validated();
+
+        logger($validated );
+
+        return;
         if (!$device) {
             // If the model is not found, return an error response
             return response()->json([
@@ -650,7 +656,7 @@ class DeviceController extends Controller
                     ->firstOrFail();
 
                 $deviceDto = DeviceData::from($device);
-                $updateRoute = route('users.update', ['user' => $itemUuid]);
+                $updateRoute = route('devices.update', ['device' => $itemUuid]);
             } else {
                 // New device defaults
                 $deviceDto     = new DeviceData(
@@ -784,6 +790,7 @@ class DeviceController extends Controller
                 'sip_transport_types' => $sipTransportTypes,
                 'cloud_providers' => $cloudProviders,
                 'routes' => $routes,
+                'permissions' => $this->getUserPermissions(),
                 // Define options for other fields as needed
             ];
 
@@ -1114,5 +1121,16 @@ class DeviceController extends Controller
                 'errors' => ['server' => ['Server returned an error while deleting the selected items.']]
             ], 500); // 500 Internal Server Error for any other errors
         }
+    }
+
+    public function getUserPermissions()
+    {
+        $permissions = [];
+        $permissions['device_key_create'] = userCheckPermission('device_key_add');
+        $permissions['device_key_update'] = userCheckPermission('device_key_edit');
+        $permissions['device_key_destroy'] = userCheckPermission('device_key_delete');
+
+
+        return $permissions;
     }
 }
