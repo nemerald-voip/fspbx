@@ -41,17 +41,32 @@ class UpdateDeviceRequest extends FormRequest
                         return $input['device_profile_uuid'] !== 'NULL';
                     },
                     Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid'),
-                    )
+                )
             ],
             'device_template' => [
                 'nullable',
                 'string',
-                Rule::notIn(['NULL']),
             ],
             'device_keys' => [
                 'nullable',
                 'array'
             ],
+            // Required fields for each key:
+            'device_keys.*.line_type_id' => ['required', 'string'],
+            'device_keys.*.auth_id' => ['required', 'string'],
+            'device_keys.*.line_number' => ['required', 'numeric'],
+
+            // These fields must be present, but can be null/empty:
+            'device_keys.*.display_name' => ['present'],
+            'device_keys.*.server_address' => ['present'],
+            'device_keys.*.server_address_primary' => ['present'],
+            'device_keys.*.server_address_secondary' => ['present'],
+            'device_keys.*.sip_port' => ['present'],
+            'device_keys.*.sip_transport' => ['present'],
+            'device_keys.*.register_expires' => ['present'],
+            'device_keys.*.domain_uuid' => ['present'],
+            'device_keys.*.device_line_uuid' => ['present'],
+            
             'device_provisioning' => [
                 'boolean'
             ],
@@ -92,16 +107,18 @@ class UpdateDeviceRequest extends FormRequest
         return [
             'device_address.required' => 'MAC address is required',
             'device_address.mac_address' => 'MAC address is invalid',
-            'device_profile_uuid.required' => 'Profile is required',
             'device_template.required' => 'Template is required',
             'device_address_modified.unique' => 'Duplicate MAC address has been found',
-            'domain_uuid.not_in' => 'Company must be selected.',
-            'device_template.not_in' => 'Device template must be selected.'
+            'domain_uuid.required' => 'Acccount must be selected.',
+            'device_keys.*.line_type_id.required' => 'The key type is required for each device key.',
+            'device_keys.*.auth_id.required' => 'The extension/number is required for each device key.',
+            'device_keys.*.line_number.required' => 'Key is required.',
         ];
     }
 
     public function prepareForValidation(): void
     {
+
         $macAddress = strtolower(trim(tokenizeMacAddress($this->get('device_address') ?? '')));
         $this->merge([
             'device_address' => formatMacAddress($macAddress),

@@ -4,11 +4,9 @@ namespace App\Models;
 
 use App\Models\DeviceLines;
 use App\Jobs\SendZtpRequest;
-use App\Services\PolycomZtpProvider;
 use App\Models\DeviceCloudProvisioning;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
-use App\Services\Interfaces\ZtpProviderInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Devices extends Model
@@ -22,10 +20,6 @@ class Devices extends Model
     protected $primaryKey = 'device_uuid';
     public $incrementing = false;
     protected $keyType = 'string';
-
-    protected array $supportedCloudProviders = [
-        'polycom'
-    ];
 
     /**
      * The attributes that are mass assignable.
@@ -91,7 +85,7 @@ class Devices extends Model
         return $this->hasOne(DeviceProfile::class, 'device_profile_uuid', 'device_profile_uuid');
     }
 
-    public function cloudProvisioning(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function cloudProvisioning()
     {
         return $this->hasOne(DeviceCloudProvisioning::class, 'device_uuid', 'device_uuid');
     }
@@ -176,27 +170,6 @@ class Devices extends Model
         logger($exception->getMessage(), ['exception' => $exception]);
     }
 
-    /**
-     * @param  string|null  $deviceVendor
-     * @return bool
-     */
-    public function hasSupportedCloudProvider(string $deviceVendor = null): bool
-    {
-        return in_array((empty($deviceVendor) ? $this->device_vendor : $deviceVendor), $this->supportedCloudProviders);
-    }
-
-    /**
-     * @throws \Exception
-     */
-    public function getCloudProvider(string $deviceVendor = null): ZtpProviderInterface
-    {
-        // TODO: probably here we should prevent Exception if the provider isn't found
-        return match ((empty($deviceVendor)) ? $this->device_vendor : $deviceVendor) {
-            'polycom' => new PolycomZtpProvider(),
-            //'yealink' => new YealinkZTPApiProvider(),
-            default => throw new \Exception("Unsupported provider"),
-        };
-    }
 
     /**
      * @throws \Exception

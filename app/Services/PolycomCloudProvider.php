@@ -2,25 +2,23 @@
 
 namespace App\Services;
 
-use App\DTO\OrganizationDTOInterface;
-use App\DTO\PolycomOrganizationDTO;
-use App\DTO\RingotelOrganizationDTO;
-use App\Models\DefaultSettings;
-use App\Models\Devices;
 use App\Models\DomainSettings;
-use App\Services\Exceptions\ZtpProviderException;
-use App\Services\Interfaces\ZtpProviderInterface;
-use Illuminate\Http\Client\Response;
+use App\Models\DefaultSettings;
 use Illuminate\Support\Collection;
+use App\DTO\PolycomOrganizationDTO;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use App\DTO\OrganizationDTOInterface;
+use App\Services\Exceptions\ZtpProviderException;
+use App\Services\Interfaces\CloudProviderInterface;
 
-class PolycomZtpProvider implements ZtpProviderInterface
+class PolycomCloudProvider implements CloudProviderInterface
 {
     protected string $providerName = 'polycom';
-    protected int $timeout = 30;
+    protected int $timeout = 60;
 
     /**
-     * Constructor for PolycomZtpProvider.
+     * Constructor for PolycomCloudProvider.
      * Initializes necessary service objects or parameters.
      */
     public function __construct()
@@ -29,15 +27,15 @@ class PolycomZtpProvider implements ZtpProviderInterface
     }
 
     /**
-     * Retrieve the Polycom API token from the database or configuration.
+     * Retrieve the Polycom API token from the database.
      *
      * @return string The API token.
      */
-    public function getApiToken(): string
+    public function getApiToken()
     {
         // Check the DefaultSettings table
         $value = DefaultSettings::where([
-            ['default_setting_category', '=', 'cloud provision'],
+            ['default_setting_category', '=', 'cloud_provision'],
             ['default_setting_subcategory', '=', 'polycom_api_token'],
             ['default_setting_enabled', '=', 'true'],
         ])->value('default_setting_value');
@@ -45,9 +43,7 @@ class PolycomZtpProvider implements ZtpProviderInterface
         if ($value !== null) {
             return $value;
         }
-
-        // Fallback to config and .env
-        return config("services.ztp.polycom.api_key", '');
+        return null;
     }
 
     /**
@@ -56,12 +52,12 @@ class PolycomZtpProvider implements ZtpProviderInterface
      * @return string The validated API token.
      * @throws \Exception If the API token is missing.
      */
-    protected function ensureApiTokenExists(): string
+    public function ensureApiTokenExists(): string
     {
         $token = $this->getApiToken();
 
         if (empty($token)) {
-            throw new \Exception("Polycom API token is missing. Please configure it in the DefaultSettings table or .env file.");
+            throw new \Exception("Polycom API token is missing. Please configure it in the Default Settings");
         }
 
         return $token;
@@ -160,10 +156,12 @@ class PolycomZtpProvider implements ZtpProviderInterface
 
         $response = Http::polycom()
             ->timeout($this->timeout)
-            ->delete('/devices/'.$id)
-            ->throw(function ($error) {
-                throw new \Exception("Unable to delete device: ".json_encode($error));
-            });
+            ->delete('/devices/'.$id);
+            // ->throw(function ($error) {
+            //     throw new \Exception("Unable to delete device: ".json_encode($error));
+            // });
+
+        logger($response);
 
         return $this->handleResponse($response);
     }

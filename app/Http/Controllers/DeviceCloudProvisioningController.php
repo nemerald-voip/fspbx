@@ -11,8 +11,7 @@ use App\Models\DefaultSettings;
 use App\Models\Devices;
 use App\Models\Domain;
 use App\Models\DomainSettings;
-use App\Services\Interfaces\ZtpProviderInterface;
-use App\Services\PolycomZtpProvider;
+use App\Services\PolycomCloudProvider;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Session;
@@ -24,7 +23,7 @@ class DeviceCloudProvisioningController extends Controller
     public string $sortField;
     public string $sortOrder;
     protected string $viewName = 'CloudProvisioning';
-    protected PolycomZtpProvider $polycomZtpProvider;
+    protected PolycomCloudProvider $PolycomCloudProvider;
 
     //protected array $searchable = ['source', 'destination', 'message'];
 
@@ -79,9 +78,9 @@ class DeviceCloudProvisioningController extends Controller
         return $data;
     }
 
-    public function getItemOptions(PolycomZtpProvider $polycomZtpProvider)
+    public function getItemOptions(PolycomCloudProvider $PolycomCloudProvider)
     {
-        $this->polycomZtpProvider = $polycomZtpProvider;
+        $this->PolycomCloudProvider = $PolycomCloudProvider;
         try {
             $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
 
@@ -176,7 +175,7 @@ class DeviceCloudProvisioningController extends Controller
             $permissions = $this->getUserPermissions();
 
             if ($model && $model->org_id) {
-                $organization = $this->polycomZtpProvider->getOrganization($model->org_id);
+                $organization = $this->PolycomCloudProvider->getOrganization($model->org_id);
             }
 
             // We have to remove the credentials from the response if the user isn't permitted to see it
@@ -306,14 +305,14 @@ class DeviceCloudProvisioningController extends Controller
      * Submit API request to ZTP to create a new organization
      *
      * @param  StoreZtpOrganizationRequest  $request
-     * @param  PolycomZtpProvider  $polycomZtpProvider
+     * @param  PolycomCloudProvider  $PolycomCloudProvider
      * @return JsonResponse
      */
     public function createOrganization(
         StoreZtpOrganizationRequest $request,
-        PolycomZtpProvider $polycomZtpProvider
+        PolycomCloudProvider $PolycomCloudProvider
     ): JsonResponse {
-        $this->polycomZtpProvider = $polycomZtpProvider;
+        $this->PolycomCloudProvider = $PolycomCloudProvider;
 
         $inputs = $request->validated();
 
@@ -331,7 +330,7 @@ class DeviceCloudProvisioningController extends Controller
             }
 
             // Send API request to create organization
-            $organizationId = $this->polycomZtpProvider->createOrganization($inputs);
+            $organizationId = $this->PolycomCloudProvider->createOrganization($inputs);
 
             // Check for existing records
             $existingSetting = DomainSettings::where('domain_uuid', $inputs['domain_uuid'])
@@ -416,14 +415,14 @@ class DeviceCloudProvisioningController extends Controller
      * Submit API request to ZTP to create a new organization
      *
      * @param  UpdateZtpOrganizationRequest  $request
-     * @param  PolycomZtpProvider  $polycomZtpProvider
+     * @param  PolycomCloudProvider  $PolycomCloudProvider
      * @return JsonResponse
      */
     public function updateOrganization(
         UpdateZtpOrganizationRequest $request,
-        PolycomZtpProvider $polycomZtpProvider
+        PolycomCloudProvider $PolycomCloudProvider
     ): JsonResponse {
-        $this->polycomZtpProvider = $polycomZtpProvider;
+        $this->PolycomCloudProvider = $PolycomCloudProvider;
 
         $inputs = $request->validated();
 
@@ -441,7 +440,7 @@ class DeviceCloudProvisioningController extends Controller
             }
 
             // Send API request to update organization
-            $this->polycomZtpProvider->updateOrganization($inputs['organization_id'], $inputs);
+            $this->PolycomCloudProvider->updateOrganization($inputs['organization_id'], $inputs);
 
             // Return a JSON response indicating success
             return response()->json([
@@ -463,14 +462,14 @@ class DeviceCloudProvisioningController extends Controller
      *
      * @return JsonResponse
      */
-    public function destroyOrganization(PolycomZtpProvider $polycomZtpProvider)
+    public function destroyOrganization(PolycomCloudProvider $PolycomCloudProvider)
     {
-        $this->polycomZtpProvider = $polycomZtpProvider;
+        $this->PolycomCloudProvider = $PolycomCloudProvider;
 
         try {
             // Get Org ID from database
             $domain_uuid = request('domain_uuid');
-            $org_id = $this->polycomZtpProvider->getOrgIdByDomainUuid($domain_uuid);
+            $org_id = $this->PolycomCloudProvider->getOrgIdByDomainUuid($domain_uuid);
 
             // Remove local references from the database
             DomainSettings::where('domain_uuid', $domain_uuid)
@@ -486,7 +485,7 @@ class DeviceCloudProvisioningController extends Controller
             }
 
             // Delete the organization
-            $deleteResponse = $this->polycomZtpProvider->deleteOrganization($org_id);
+            $deleteResponse = $this->PolycomCloudProvider->deleteOrganization($org_id);
             if ($deleteResponse) {
                 $items = CloudProvisioningStatus::where(['ztp_profile_id' => $org_id])->get();
                 foreach ($items as $item) {
@@ -523,15 +522,15 @@ class DeviceCloudProvisioningController extends Controller
     }
 
     /**
-     * @param  PolycomZtpProvider  $polycomZtpProvider
+     * @param  PolycomCloudProvider  $PolycomCloudProvider
      * @return JsonResponse|Collection
      */
-    public function getOrganizations(PolycomZtpProvider $polycomZtpProvider): JsonResponse|Collection
+    public function getOrganizations(PolycomCloudProvider $PolycomCloudProvider): JsonResponse|Collection
     {
-        $this->polycomZtpProvider = $polycomZtpProvider;
+        $this->PolycomCloudProvider = $PolycomCloudProvider;
 
         try {
-            $organizations = $this->polycomZtpProvider->getOrganizations();
+            $organizations = $this->PolycomCloudProvider->getOrganizations();
 
             return collect($organizations)->map(function ($org) {
                 return [
@@ -599,7 +598,7 @@ class DeviceCloudProvisioningController extends Controller
         // Hardcode the provider for now
         try {
             $deviceModel = new Devices();
-            $providerInstance = new PolycomZtpProvider();
+            $providerInstance = new PolycomCloudProvider();
             $next = null; // Start with no next token
             $limit = 50;  // Define the batch size
             do {

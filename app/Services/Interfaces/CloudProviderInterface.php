@@ -5,8 +5,8 @@ namespace App\Services\Interfaces;
 use App\DTO\OrganizationDTOInterface;
 use \Illuminate\Support\Collection;
 
-interface ZtpProviderInterface {
-    public function getApiToken(): string;
+interface CloudProviderInterface {
+    public function getApiToken();
     public function getProviderName(): string;
     public function getDevices(int $limit, string $cursor): array;
     public function getDevice(string $id): array;

@@ -141,7 +141,25 @@
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index">
                                                             <HiddenElement name="device_line_uuid" :meta="true" />
-                                                            <HiddenElement name="domain_uuid" :meta="true" />
+                                                            <HiddenElement name="domain_uuid" :meta="true"
+                                                                :default="options.default_line_options?.domain_uuid" />
+                                                            <HiddenElement name="server_address" :meta="true"
+                                                                :default="options.default_line_options?.server_address" />
+                                                            <HiddenElement name="server_address_primary" :meta="true"
+                                                                :default="options.default_line_options?.server_address_primary" />
+                                                            <HiddenElement name="server_address_secondary" :meta="true"
+                                                                :default="options.default_line_options?.server_address_secondary" />
+                                                            <HiddenElement name="sip_port" :meta="true"
+                                                                :default="options.default_line_options?.sip_port" />
+                                                            <HiddenElement name="sip_transport" :meta="true"
+                                                                :default="options.default_line_options?.sip_transport" />
+                                                            <HiddenElement name="register_expires" :meta="true"
+                                                                :default="options.default_line_options?.register_expires" />
+                                                            <HiddenElement name="user_id" :meta="true"
+                                                                :default="null" />
+                                                            <HiddenElement name="shared_line" :meta="true"
+                                                                :default="null" />
+
 
                                                             <TextElement name="line_number" label="Key" :rules="[
                                                                 'nullable',
@@ -161,7 +179,17 @@
                                                                     sm: {
                                                                         container: 3,
                                                                     },
-                                                                }" placeholder="Choose Function" :floating="false" />
+                                                                }" placeholder="Choose Function" :floating="false"
+                                                                @change="(newValue, oldValue, el$) => {
+
+                                                                    if (newValue == 'sharedline') {
+                                                                        el$.form$.el$('device_keys').children$[index].children$['shared_line'].update('1');
+                                                                    } else {
+                                                                        el$.form$.el$('device_keys').children$[index].children$['shared_line'].update(null);
+                                                                    }
+
+
+                                                                }" />
 
                                                             <SelectElement name="auth_id" label="Ext/Number"
                                                                 :items="options.extensions" label-prop="name"
@@ -174,8 +202,9 @@
                                                                 }" placeholder="Choose Ext/Number" :floating="false"
                                                                 @change="(newValue, oldValue, el$) => {
 
-                                                                    let display_name = el$.form$.el$('device_keys').children$[index].children$['display_name']
-                                                                    display_name.update(newValue);
+                                                                    el$.form$.el$('device_keys').children$[index].children$['display_name'].update(newValue);
+                                                                    el$.form$.el$('device_keys').children$[index].children$['user_id'].update(newValue);
+
 
                                                                 }" />
 
@@ -254,12 +283,14 @@
                                                                 <div class="px-5 grid gap-y-4">
                                                                     <TextElement name="server_address" label="Domain"
                                                                         placeholder="Enter domain name"
-                                                                        :floating="false" />
+                                                                        :floating="false"
+                                                                        :default="options.default_line_options?.server_address" />
 
                                                                     <TextElement name="server_address_primary"
                                                                         label="Primary Server Address"
                                                                         placeholder="Enter primary server address"
-                                                                        :floating="false" />
+                                                                        :floating="false"
+                                                                        :default="options.default_line_options?.server_address_primary" />
 
                                                                     <TextElement name="server_address_secondary"
                                                                         label="Secondary Server Address"
@@ -267,8 +298,8 @@
                                                                         :floating="false" />
 
                                                                     <TextElement name="sip_port" label="SIP Port"
-                                                                        placeholder="Enter SIP port"
-                                                                        :floating="false" />
+                                                                        placeholder="Enter SIP port" :floating="false"
+                                                                        :default="options.default_line_options?.sip_port" />
 
                                                                     <SelectElement name="sip_transport"
                                                                         label="SIP Transport"
@@ -276,12 +307,14 @@
                                                                         :search="true" label-prop="name" :native="false"
                                                                         input-type="search" autocomplete="off"
                                                                         placeholder="Select SIP Transport"
-                                                                        :floating="false" />
+                                                                        :floating="false"
+                                                                        :default="options.default_line_options?.sip_transport" />
 
                                                                     <TextElement name="register_expires"
                                                                         label="Register Expires (Seconds)"
                                                                         placeholder="Enter expiry time (seconds)"
-                                                                        :floating="false" />
+                                                                        :floating="false"
+                                                                        :default="options.default_line_options?.register_expires" />
 
                                                                     <ButtonElement name="close_advanced"
                                                                         button-label="Close" align="center" :full="true"
@@ -325,71 +358,6 @@
         </Dialog>
     </TransitionRoot>
 
-    <AddEditItemModal :show="isLineAdvSettingsModalShown" :header="'Edit SIP Settings'" @close="handleModalClose">
-        <template #modal-body>
-            <!-- <div class="bg-white px-4 py-6 sm:px-6 lg:px-8">
-                <div class="grid grid-cols-1 gap-6 ">
-                    <div>
-                        <LabelInputOptional :target="'server_address'" :label="'Domain'" />
-                        <div class="mt-2">
-                            <InputField v-model="form.lines[activeLineIndex].server_address" type="text"
-                                name="server_address" placeholder="Enter domain" />
-                        </div>
-                    </div>
-
-                    <div>
-                        <LabelInputOptional :target="'server_address_primary'" :label="'Primary Server Address'" />
-                        <div class="mt-2">
-                            <InputField v-model="form.lines[activeLineIndex].server_address_primary" type="text"
-                                name="server_address_primary" placeholder="Enter primary server address" />
-                        </div>
-                    </div>
-
-                    <div>
-                        <LabelInputOptional :target="'server_address_secondary'" :label="'Secondary Server Address'" />
-                        <div class="mt-2">
-                            <InputField v-model="form.lines[activeLineIndex].server_address_secondary" type="text"
-                                name="server_address_secondary" placeholder="Enter secondary server address" />
-                        </div>
-                    </div>
-
-                    <div>
-                        <LabelInputOptional :target="'sip_port'" :label="'SIP Port'" />
-                        <div class="mt-2">
-                            <InputField v-model="form.lines[activeLineIndex].sip_port" type="number" name="sip_port"
-                                placeholder="Enter SIP port" />
-                        </div>
-                    </div>
-
-                    <div>
-                        <LabelInputOptional :target="'sip_transport'" :label="'SIP Transport'" />
-                        <div class="mt-2">
-                            <ComboBox :options="options.sip_transport_types"
-                                :selectedItem="form.lines[activeLineIndex].sip_transport" :search="true"
-                                placeholder="Choose SIP transport"
-                                @update:model-value="(value) => handleSipTransportUpdate(value, activeLineIndex)" />
-                        </div>
-                    </div>
-
-                    <div>
-                        <LabelInputOptional :target="'register_expires'" :label="'Register Expires (Seconds)'" />
-                        <div class="mt-2">
-                            <InputField v-model="form.lines[activeLineIndex].register_expires" type="number"
-                                name="register_expires" placeholder="Enter expiry time (seconds)" />
-                        </div>
-                    </div>
-
-                    <button @click.prevent="handleModalClose"
-                        class="flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ">
-                        Close
-                    </button>
-                </div>
-
-            </div> -->
-
-        </template>
-
-    </AddEditItemModal>
 </template>
 
 <script setup>
@@ -422,17 +390,6 @@ const isKeysLoading = ref(false)
 const isModalLoading = ref(false)
 const advModalIndex = ref(null)
 
-// const form = reactive({
-//     device_address: props.item.device_address,
-//     device_template: props.item.device_template,
-//     device_profile_uuid: props.item.device_profile_uuid,
-//     device_provisioning: false,
-//     // extension: props.item.device_label,
-//     lines: props.options.lines,
-//     domain_uuid: props.item.domain_uuid,
-//     _token: page.props.csrf_token,
-// })
-
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
 
 const isCloudProvisioned = ref({
@@ -442,7 +399,7 @@ const isCloudProvisioned = ref({
     message: null
 });
 const isProvisioningAllowed = ref(false);
-const isLineAdvSettingsModalShown = ref(false);
+
 
 function showLineAdvSettings(index) {
     advModalIndex.value = index
@@ -467,6 +424,12 @@ const handleDeleteKeyButtonClick = (uuid) => {
     confirmUnassignAction.value = () => executeBulkUnassign([uuid]);
 };
 
+const activeLineIndex = ref(null);
+
+const handleTabSelected = (activeTab, previousTab) => {
+
+}
+
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
@@ -480,84 +443,6 @@ const submitForm = async (FormData, form$) => {
     return await form$.$vueform.services.axios.put(props.options.routes.update_route, data)
 };
 
-const handleTemplateUpdate = (newSelectedItem) => {
-    isProvisioningAllowed.value = form.device_provisioning = newSelectedItem.value.toLowerCase().includes('poly') || newSelectedItem.value.toLowerCase().includes('polycom')
-    form.device_template = newSelectedItem.value
-}
-
-const handleProfileUpdate = (newSelectedItem) => {
-    form.device_profile_uuid = newSelectedItem.value
-}
-
-const handleExtensionUpdate = (newSelectedItem, index) => {
-    form.lines[index].user_id = newSelectedItem.value;
-    form.lines[index].display_name = newSelectedItem.value;
-};
-
-const handleKeyTypeUpdate = (newSelectedItem, index) => {
-    const newValue = newSelectedItem.value === 'sharedline' ? 'true' : null;
-
-    // Only update if the value is different
-    if (form.lines[index].shared_line !== newValue) {
-        form.lines[index].shared_line = newValue;
-    }
-};
-
-const addNewLineKey = () => {
-    // console.log(form.lines);
-    // Define the new line key object with default values
-    const newLineKey = {
-        line_number: form.lines.length + 1, // Increment line number based on the array length
-        user_id: null,                      // Set initial user_id to null or any default value
-        display_name: '',                   // Set initial display_name to an empty string
-        shared_line: null,                  // Set initial shared_line to null or any default value
-        device_line_uuid: null
-    };
-
-    // Push the new line key to the form.lines array
-    form.lines.push(newLineKey);
-};
-
-const handleDomainUpdate = (newSelectedItem) => {
-    form.domain_uuid = newSelectedItem.value;
-    form.device_profile_uuid = null;
-    form.extension = null;
-    if (newSelectedItem.value !== "NULL") {
-        emits('domain-selected', newSelectedItem.value); // Emit 'domain-selected' event when the domain is updated
-    }
-}
-
-const iconComponents = {
-    'Cog6ToothIcon': Cog6ToothIcon,
-    'AdjustmentsHorizontalIcon': AdjustmentsHorizontalIcon,
-    'CloudIcon': CloudIcon,
-};
-
-
-const setActiveTab = (tabSlug) => {
-    activeTab.value = tabSlug;
-};
-
-const deleteLineKey = (index) => {
-    form.lines.splice(index, 1);  // Remove the line key at the specified index
-};
-
-const activeLineIndex = ref(null);
-
-
-const handleModalClose = () => {
-    isLineAdvSettingsModalShown.value = false;
-};
-
-const handleSipTransportUpdate = (newSelectedItem, index) => {
-    form.lines[index].sip_transport = newSelectedItem.value;
-};
-
-const handleTabSelected = (activeTab, previousTab) => {
-    if (activeTab.name == 'api_tokens') {
-        getTokens()
-    }
-}
 
 function clearErrorsRecursive(el$) {
     // clear this element’s errors

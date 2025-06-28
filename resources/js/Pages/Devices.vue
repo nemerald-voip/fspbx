@@ -27,7 +27,7 @@
                     Create
                 </button>
 
-                <button v-if="page.props.auth.can.cloud_provisioning_list_view" type="button" @click.prevent="handleCloudProvisioningButtonClick()"
+                <button v-if="page.props.auth.can.manage_cloud_provision_providers" type="button" @click.prevent="handleCloudProvisioningButtonClick()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Cloud
                 </button>
@@ -143,19 +143,21 @@
                         </template>
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <ejs-tooltip :content="deviceProvisionStatus[row.device_uuid] === 'provisioned' ? 'Provisioned' : deviceProvisionStatus[row.device_uuid] === 'pending' ? 'Pending': deviceProvisionStatus[row.device_uuid] === 'error' ? 'Error' : 'Not provisioned'" position='BottomLeft'
+                        <div class="flex items-center whitespace-nowrap">
+                        <ejs-tooltip :content="row.cloud_provisioning.status === 'provisioned' ? 'Provisioned' : row.cloud_provisioning.status === 'pending' ? 'Pending': row.cloud_provisioning.status === 'error' ? 'Error' : 'Not provisioned'" position='TopCenter'
                                      target="#cloud_status_tooltip_target" >
                             <div id="cloud_status_tooltip_target">
                                 <CloudIcon
                                     :class="[
                                         'h-9 w-9 py-2 rounded-full',
-                                        deviceProvisionStatus[row.device_uuid] === 'provisioned' ? 'text-green-600' :
-                                        deviceProvisionStatus[row.device_uuid] === 'error' ? 'text-red-600' :
-                                        deviceProvisionStatus[row.device_uuid] === 'pending' ? 'text-yellow-600' : 'text-gray-300'
+                                        row.cloud_provisioning.status === 'provisioned' ? 'text-green-600' :
+                                        row.cloud_provisioning.status === 'error' ? 'text-red-600' :
+                                        row.cloud_provisioning.status === 'pending' ? 'text-yellow-500' : 'text-gray-300'
                                     ]"
                                 />
                             </div>
                         </ejs-tooltip>
+                    </div>
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
@@ -219,7 +221,7 @@
         :text="'Restart request has been submitted'" @update:show="restartRequestNotificationSuccessTrigger = false" />
 
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="createModalTrigger" :header="'Add New'" :loading="isModalLoading"
+    <!-- <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="createModalTrigger" :header="'Add New'" :loading="isModalLoading"
         @close="handleModalClose">
         <template #modal-body>
             <CreateDeviceForm
@@ -230,7 +232,11 @@
                 @cancel="handleModalClose"
             />
         </template>
-    </AddEditItemModal>
+    </AddEditItemModal> -->
+
+    <CreateDeviceForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading"
+        :header="'Create New Device'" @close="showCreateModal = false"
+        @error="handleErrorResponse" @success="showNotification" @refresh-data="handleSearchButtonClick" />
 
     <UpdateDeviceForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"
         :header="'Update Device - ' + (itemOptions?.item?.device_address_formatted ?? 'loading')" @close="showUpdateModal = false"
@@ -321,6 +327,7 @@ const restartRequestNotificationSuccessTrigger = ref(false);
 const restartRequestNotificationErrorTrigger = ref(false);
 const createModalTrigger = ref(false);
 const showUpdateModal = ref(false);
+const showCreateModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationRestartTrigger = ref(false);
@@ -344,6 +351,8 @@ const props = defineProps({
     data: Object,
     routes: Object,
 });
+
+// console.log(props.data);
 
 const filterData = ref({
     search: null,
@@ -387,55 +396,6 @@ onMounted(() => {
     // handleUpdateCloudProvisioningStatuses();
 });
 
-watch(
-    () => deviceProvisionStatus.value,
-    (newStatuses) => {
-        // If any device status is still "pending", start watching
-        if (Object.values(newStatuses).includes("pending")) {
-            startStatusWatching(); // Start the polling process
-        } else {
-            stopStatusWatching(); // Stop polling if no device is "pending"
-        }
-    },
-    { deep: true } // Watch deeply to react to changes inside the object
-);
-
-const startStatusWatching = () => {
-    if (!deviceProvisionStatusCheckInterval.value) {
-        // Avoid starting multiple intervals
-        deviceProvisionStatusCheckInterval.value = setInterval(() => {
-            handleUpdateCloudProvisioningStatuses();
-        }, 5000);
-    }
-};
-
-// Function to stop watching when no statuses are pending
-const stopStatusWatching = () => {
-    if (deviceProvisionStatusCheckInterval.value) {
-        clearInterval(deviceProvisionStatusCheckInterval.value);
-        deviceProvisionStatusCheckInterval.value = null;
-    }
-};
-
-const handleUpdateCloudProvisioningStatuses = () => {
-    const deviceUuids = props.data.data.map(device => device.device_uuid);
-    axios.post(props.routes.cloud_provisioning_status, {items: deviceUuids})
-        .then(response => {
-            if (response.data.status) {
-                deviceProvisionStatus.value = response.data.devicesData.reduce(
-                    (acc, device) => {
-                        acc[device.device_uuid] =
-                            device.status || (device.error ? "error" : "not_provisioned");
-                        return acc;
-                    },
-                    {}
-                );
-            }
-        })
-        .catch(error => {
-            console.warn('Failed to fetch cloud provisioning statuses:', error);
-        });
-}
 
 const handleEditButtonClick = (itemUuid) => {
     showUpdateModal.value = true
@@ -457,6 +417,12 @@ const getItemOptions = (itemUuid = null) => {
         }).finally(() => {
             isModalLoading.value = false
         })
+}
+
+const handleCreateButtonClick = () => {
+    showCreateModal.value = true
+    isModalLoading.value = true
+    getItemOptions();
 }
 
 const handleCreateRequest = (form) => {
@@ -585,13 +551,6 @@ const handleBulkUpdateRequest = (form) => {
             bulkUpdateFormSubmitting.value = false;
             handleFormErrorResponse(error);
         });
-}
-
-const handleCreateButtonClick = () => {
-    createModalTrigger.value = true
-    formErrors.value = null;
-    isModalLoading.value = true
-    getItemOptions();
 }
 
 const handleSelectAll = () => {

@@ -42,7 +42,6 @@ return [
     'ztp' => [
         'polycom' => [
             'api_url' => env('POLYCOM_API_URL', 'https://api.ztp.poly.com/v1'),
-            'api_key' => env('POLYCOM_ZTP_API_KEY'),
         ]
     ],
 

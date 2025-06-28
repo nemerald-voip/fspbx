@@ -100,7 +100,7 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'application_name'       => 'Cloud Provisioning',
-                'permission_name'        => 'cloud_provisioning_list_view',
+                'permission_name'        => 'manage_cloud_provision_providers',
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
             [
@@ -145,7 +145,7 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'application_name'       => 'Cloud Provisioning',
-                'permission_name'        => 'polycom_api_token_edit',
+                'permission_name'        => 'polycom_api_token_update',
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
             [
@@ -360,7 +360,23 @@ class DatabaseSeeder extends Seeder
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
             [
-                'permission_name'        => 'cloud_provisioning_list_view',
+                'permission_name'        => 'manage_cloud_provision_providers',
+                'permission_protected'   => 'true',
+                'permission_assigned'    => 'true',
+                'group_name'            => "superadmin",
+                'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'        => 'cloud_provisioning_show_credentials',
+                'permission_protected'   => 'true',
+                'permission_assigned'    => 'true',
+                'group_name'            => "superadmin",
+                'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'        => 'polycom_api_token_update',
                 'permission_protected'   => 'true',
                 'permission_assigned'    => 'true',
                 'group_name'            => "superadmin",
@@ -1454,6 +1470,14 @@ class DatabaseSeeder extends Seeder
                 'default_setting_value'         => "alloy",
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "alloy, echo, fable, onyx, nova, shimmer",
+            ],
+            [
+                'default_setting_category'      => 'cloud_provision',
+                'default_setting_subcategory'   => 'polycom_api_token',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
             ],
 
         ];

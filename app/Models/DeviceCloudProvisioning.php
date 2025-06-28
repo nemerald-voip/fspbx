@@ -13,7 +13,7 @@ class DeviceCloudProvisioning extends Model
 
     public $timestamps = false;
 
-    protected $primaryKey = null;
+    protected $primaryKey = 'uuid';
     public $incrementing = false;
     protected $keyType = 'string';
 
@@ -24,7 +24,6 @@ class DeviceCloudProvisioning extends Model
      */
     protected $fillable = [
         'device_uuid',
-        'device_address',
         'provider',
         'status',
         'error'

@@ -32,25 +32,46 @@ class StoreDeviceRequest extends FormRequest
             'device_address_modified' => [
                 'nullable',
                 Rule::unique('App\Models\Devices', 'device_address')
+                    ->ignore($this->device_address_modified, 'device_address'),
             ],
             'device_profile_uuid' => [
                 'nullable',
-                Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid')
-                    ->where('domain_uuid', Session::get('domain_uuid'))
+                Rule::when(
+                    function ($input) {
+                        // Check if the value is not the literal string "NULL"
+                        return $input['device_profile_uuid'] !== 'NULL';
+                    },
+                    Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid'),
+                )
             ],
             'device_template' => [
-                'required',
+                'nullable',
                 'string',
             ],
-            'lines' => [
+            'device_keys' => [
                 'nullable',
                 'array'
             ],
+            // Required fields for each key:
+            'device_keys.*.line_type_id' => ['required', 'string'],
+            'device_keys.*.auth_id' => ['required', 'string'],
+            'device_keys.*.line_number' => ['required', 'numeric'],
+
+            // These fields must be present, but can be null/empty:
+            'device_keys.*.display_name' => ['present'],
+            'device_keys.*.server_address' => ['present'],
+            'device_keys.*.server_address_primary' => ['present'],
+            'device_keys.*.server_address_secondary' => ['present'],
+            'device_keys.*.sip_port' => ['present'],
+            'device_keys.*.sip_transport' => ['present'],
+            'device_keys.*.register_expires' => ['present'],
+            'device_keys.*.device_line_uuid' => ['present'],
+            
             'device_provisioning' => [
                 'boolean'
             ],
             'domain_uuid' => [
-                'nullable',
+                'required',
             ],
         ];
     }
