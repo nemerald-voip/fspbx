@@ -56,16 +56,17 @@ class UpdateDeviceRequest extends FormRequest
             'device_keys.*.auth_id' => ['required', 'string'],
             'device_keys.*.line_number' => ['required', 'numeric'],
 
-            // These fields must be present, but can be null/empty:
-            'device_keys.*.display_name' => ['present'],
-            'device_keys.*.server_address' => ['present'],
-            'device_keys.*.server_address_primary' => ['present'],
-            'device_keys.*.server_address_secondary' => ['present'],
-            'device_keys.*.sip_port' => ['present'],
-            'device_keys.*.sip_transport' => ['present'],
-            'device_keys.*.register_expires' => ['present'],
-            'device_keys.*.domain_uuid' => ['present'],
-            'device_keys.*.device_line_uuid' => ['present'],
+            // These fields can be null/empty:
+            'device_keys.*.display_name' => ['nullable'],
+            'device_keys.*.server_address' => ['nullable'],
+            'device_keys.*.server_address_primary' => ['nullable'],
+            'device_keys.*.server_address_secondary' => ['nullable'],
+            'device_keys.*.sip_port' => ['nullable'],
+            'device_keys.*.sip_transport' => ['nullable'],
+            'device_keys.*.register_expires' => ['nullable'],
+            'device_keys.*.domain_uuid' => ['nullable'],
+            'device_keys.*.device_line_uuid' => ['nullable'],
+            'device_keys.*.user_id' => ['nullable'],
             
             'device_provisioning' => [
                 'boolean'
@@ -118,7 +119,6 @@ class UpdateDeviceRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
-
         $macAddress = strtolower(trim(tokenizeMacAddress($this->get('device_address') ?? '')));
         $this->merge([
             'device_address' => formatMacAddress($macAddress),

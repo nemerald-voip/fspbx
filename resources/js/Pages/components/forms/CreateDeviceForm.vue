@@ -398,7 +398,7 @@ const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
-    // console.log(requestData);
+    console.log(requestData);
 
     // Using form$.data will INCLUDE conditional elements and it
     // will submit the form as "Content-Type: application/json".

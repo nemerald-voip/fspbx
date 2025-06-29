@@ -49,12 +49,14 @@
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
-                                    lines: [
+                                    device_keys: [
                                         {
                                             line_number: '1',
                                             user_id: extension.extension,
+                                            auth_id: extension.extension,
                                             shared_line: null,
                                             display_name: extension.extension,
+                                            line_type_id: 'line',
                                         }
                                     ]
                                 }">
@@ -81,7 +83,7 @@
                                             class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                                             <FormElements>
 
-                                                <HiddenElement name="lines" :meta="true" />
+                                                <HiddenElement name="device_keys" :meta="true" />
                                                 <StaticElement name="h4" tag="h4" content="Settings" />
 
                                                 <TextElement name="device_address" label="MAC Address"

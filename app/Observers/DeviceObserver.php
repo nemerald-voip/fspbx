@@ -22,9 +22,7 @@ class DeviceObserver
      */
     public function updated(Devices $device)
     {
-        try {
-            DB::beginTransaction();
-            
+        try {            
             $original = $device->getOriginal();
             $macChanged = $device->device_address !== $original['device_address'];
             $vendorChanged = $device->device_vendor !== $original['device_vendor'];
@@ -47,16 +45,11 @@ class DeviceObserver
             $provisioning->status = 'pending';
             $provisioning->error = null;
             $provisioning->save();
-            logger('device updated');
-            DB::commit();
             
             // Dispatch job for async provisioning (recommended)
             RegisterDeviceWithCloudProvider::dispatch($device, $original['device_address'], $original['device_vendor'], $provisioning->uuid);
-            
-            logger('job dispatched');
     
         } catch (\Throwable $e) {
-            DB::rollBack();
             logger('DeviceObserver@updated error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
         }
     }

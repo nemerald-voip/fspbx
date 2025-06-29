@@ -22,12 +22,14 @@
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.device_create" type="button" @click.prevent="handleCreateButtonClick()"
+                <button v-if="page.props.auth.can.device_create" type="button"
+                    @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
 
-                <button v-if="page.props.auth.can.manage_cloud_provision_providers" type="button" @click.prevent="handleCloudProvisioningButtonClick()"
+                <button v-if="page.props.auth.can.manage_cloud_provision_providers" type="button"
+                    @click.prevent="handleCloudProvisioningButtonClick()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Cloud
                 </button>
@@ -68,12 +70,13 @@
                 <TableColumnHeader v-if="showGlobal" header="Domain"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
-                <TableColumnHeader header="Template" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Template"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Profile" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Assigned extension"
-                                   class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Cloud Provisioning"
-                                   class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
@@ -119,7 +122,8 @@
 
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.domain?.domain_description">
-                        <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft' target="#domain_tooltip_target">
+                        <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft'
+                            target="#domain_tooltip_target">
                             <div id="domain_tooltip_target">
                                 {{ row.domain?.domain_description }}
                             </div>
@@ -144,26 +148,30 @@
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <div class="flex items-center whitespace-nowrap">
-                        <ejs-tooltip :content="row.cloud_provisioning.status === 'provisioned' ? 'Provisioned' : row.cloud_provisioning.status === 'pending' ? 'Pending': row.cloud_provisioning.status === 'error' ? 'Error' : 'Not provisioned'" position='TopCenter'
-                                     target="#cloud_status_tooltip_target" >
-                            <div id="cloud_status_tooltip_target">
-                                <CloudIcon
-                                    :class="[
+                            <ejs-tooltip :content="!row.cloud_provisioning ? 'Not provisioned'
+                                : row.cloud_provisioning.status === 'provisioned' ? 'Provisioned'
+                                    : row.cloud_provisioning.status === 'pending' ? 'Pending'
+                                        : row.cloud_provisioning.status === 'error' ? 'Error'
+                                            : 'Not provisioned'" position='TopCenter'
+                                target="#cloud_status_tooltip_target">
+                                <div id="cloud_status_tooltip_target">
+                                    <CloudIcon :class="[
                                         'h-9 w-9 py-2 rounded-full',
-                                        row.cloud_provisioning.status === 'provisioned' ? 'text-green-600' :
-                                        row.cloud_provisioning.status === 'error' ? 'text-red-600' :
-                                        row.cloud_provisioning.status === 'pending' ? 'text-yellow-500' : 'text-gray-300'
-                                    ]"
-                                />
-                            </div>
-                        </ejs-tooltip>
-                    </div>
+                                        !row.cloud_provisioning ? 'text-gray-300'
+                                            : row.cloud_provisioning.status === 'provisioned' ? 'text-green-600'
+                                                : row.cloud_provisioning.status === 'error' ? 'text-red-600'
+                                                    : row.cloud_provisioning.status === 'pending' ? 'text-yellow-500'
+                                                        : 'text-gray-300'
+                                    ]" />
+                                </div>
+                            </ejs-tooltip>
+                        </div>
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap">
-                                <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'" position='TopCenter'
-                                    target="#destination_tooltip_target">
+                                <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'"
+                                    position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditRequest(row.device_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
@@ -235,12 +243,13 @@
     </AddEditItemModal> -->
 
     <CreateDeviceForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading"
-        :header="'Create New Device'" @close="showCreateModal = false"
-        @error="handleErrorResponse" @success="showNotification" @refresh-data="handleSearchButtonClick" />
+        :header="'Create New Device'" @close="showCreateModal = false" @error="handleErrorResponse"
+        @success="showNotification" @refresh-data="handleSearchButtonClick" />
 
     <UpdateDeviceForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"
-        :header="'Update Device - ' + (itemOptions?.item?.device_address_formatted ?? 'loading')" @close="showUpdateModal = false"
-        @error="handleErrorResponse" @success="showNotification" @refresh-data="handleSearchButtonClick" />
+        :header="'Update Device - ' + (itemOptions?.item?.device_address_formatted ?? 'loading')"
+        @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
+        @refresh-data="handleSearchButtonClick" />
 
     <!-- <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showUpdateModal" :header="'Edit Device'" :loading="isModalLoading"
         @close="handleModalClose">
@@ -266,15 +275,12 @@
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="cloudProvisioningModalTrigger" :header="'Cloud Provisioning'" :loading="isModalLoading"
-                      @close="handleModalClose">
+    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="cloudProvisioningModalTrigger" :header="'Cloud Provisioning'"
+        :loading="isModalLoading" @close="handleModalClose">
         <template #modal-body>
-            <CloudProvisioningListing
-                :options="itemOptions"
-                :routes="routes"
+            <CloudProvisioningListing :options="itemOptions" :routes="routes"
                 :canEditPolycomToken="page.props.auth.can.polycom_api_token_edit"
-                @notification:show="showNotification"
-            />
+                @notification:show="showNotification" />
         </template>
     </AddEditItemModal>
 
@@ -290,7 +296,7 @@
 </template>
 
 <script setup>
-import {computed, onMounted, onBeforeUnmount, ref, watch} from "vue";
+import { computed, onMounted, onBeforeUnmount, ref, watch } from "vue";
 import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
@@ -572,19 +578,19 @@ const handleCloudProvisioningButtonClick = () => {
     isModalLoading.value = true
     formErrors.value = null;
     getItemOptions();
-        /*axios.post(props.routes.cloud_provisioning_item_options, {}).then(response => {
+    /*axios.post(props.routes.cloud_provisioning_item_options, {}).then(response => {
 
-            availableDomains.value = response.data.tenants || [];
-            console.log(availableDomains.value)
-            isModalLoading.value = false
-            //
-            //formErrors.value = null;
-            //
-            //getItemOptions();
-        }).catch((error) => {
-            handleClearSelection();
-            handleErrorResponse(error);
-        });*/
+        availableDomains.value = response.data.tenants || [];
+        console.log(availableDomains.value)
+        isModalLoading.value = false
+        //
+        //formErrors.value = null;
+        //
+        //getItemOptions();
+    }).catch((error) => {
+        handleClearSelection();
+        handleErrorResponse(error);
+    });*/
     //getAvailableDomains();
 }
 
@@ -700,12 +706,12 @@ const getAvailableDomains = () => {
 
         });
 
-   /* try {
-        const response = await axios.post(props.routes.cloud_provisioning_domains, {});
-        availableDomains.value = response.data.data || [];
-    } catch (error) {
-        console.error(error);
-    }*/
+    /* try {
+         const response = await axios.post(props.routes.cloud_provisioning_domains, {});
+         availableDomains.value = response.data.data || [];
+     } catch (error) {
+         console.error(error);
+     }*/
 };
 
 

@@ -4,7 +4,6 @@ namespace App\Jobs;
 
 use App\Models\Devices;
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
 use App\Models\DeviceCloudProvisioning;
@@ -12,7 +11,6 @@ use App\Services\CloudProviderSelector;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\Middleware\RateLimited;
 
 class RegisterDeviceWithCloudProvider implements ShouldQueue
 {
@@ -54,12 +52,16 @@ class RegisterDeviceWithCloudProvider implements ShouldQueue
                 $cloudProvider = $cloudProviderSelector->getCloudProvider($device->device_vendor);
                 $cloudProvider->ensureApiTokenExists();
 
-                $result = $cloudProvider->deleteDevice($this->oldMac);
-                logger($result);
-                $result = $cloudProvider->createDevice($device->device_address, $polycom_ztp_profile_id);
-                logger($result);
+                try {
+                    // Try deleting old device
+                    $cloudProvider->deleteDevice($this->oldMac);
+                } catch (\Exception $e) {
+                        logger("Device {$this->oldMac} not found in cloud provider, continuing with creating a new device.");
+                }
+                // Create device
+                $cloudProvider->createDevice($device->device_address, $polycom_ztp_profile_id);
     
-                $provisioning->status = 'success';
+                $provisioning->status = 'provisioned';
                 $provisioning->error = null;
                 $provisioning->save();
     
@@ -69,11 +71,10 @@ class RegisterDeviceWithCloudProvider implements ShouldQueue
                 $provisioning->error = $e->getMessage();
                 $provisioning->save();
     
-                Log::error("RegisterDeviceWithCloudProvider@handle Error: " . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+                logger("RegisterDeviceWithCloudProvider@handle Error: " . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
                 return false;
             }
         }, function () {
-            Log::info('[RegisterDeviceWithCloudProvider] Throttled, will retry.');
             return $this->release(30);
         });
     }

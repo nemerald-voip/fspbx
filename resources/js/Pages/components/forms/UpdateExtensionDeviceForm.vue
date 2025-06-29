@@ -53,7 +53,7 @@
                                     device_template: options.item.device_template,
                                     device_uuid: options.item.device_uuid,
                                     device_address: options.item.device_address,
-                                    lines: options.lines,
+                                    device_keys: options.device_keys,
                                 }">
 
                                 <template #empty>
@@ -79,7 +79,7 @@
 
                                                 <HiddenElement name="device_uuid" :meta="true" />
                                                 <HiddenElement name="device_address" :meta="true" />
-                                                <HiddenElement name="lines" :meta="true" />
+                                                <HiddenElement name="device_keys" :meta="true" />
                                                 <StaticElement name="h4" tag="h4" content="Settings" />
 
 

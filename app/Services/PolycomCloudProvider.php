@@ -161,8 +161,6 @@ class PolycomCloudProvider implements CloudProviderInterface
             //     throw new \Exception("Unable to delete device: ".json_encode($error));
             // });
 
-        logger($response);
-
         return $this->handleResponse($response);
     }
 
