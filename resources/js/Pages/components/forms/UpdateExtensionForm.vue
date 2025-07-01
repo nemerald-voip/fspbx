@@ -1840,6 +1840,17 @@ watch(
     }
 )
 
+watch(
+  () => props.show,
+  (newVal) => {
+    if (newVal) {
+      // Modal just opened
+      sip_credentials.value = null;
+      // Reset any other refs as needed
+    }
+  }
+);
+
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
@@ -2163,6 +2174,7 @@ const handleMobileAppActivateButtonClick = async () => {
 
 
 const handleSipCredentialsButtonClick = async () => {
+    sip_credentials.value = null
     isSipCredentialsLoading.value = true
     axios.get(props.options.routes.sip_credentials)
         .then((response) => {
