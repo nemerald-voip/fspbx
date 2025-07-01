@@ -911,11 +911,12 @@ class AppsController extends Controller
 
             // Send request to create user
             $user = $this->ringotelApiService->createUser($params);
+            
+            $passwordUrlShow = null;
 
             // If success and user is activated send user email with credentials
             if ($user) {
                 if ($hidePassInEmail == 'true' && request('status') == 1) {
-                    logger('hide Password');
                     // Include get-password link and remove password value
                     $passwordToken = Str::random(40);
                     MobileAppPasswordResetLinks::where('extension_uuid', $extension->extension_uuid)->delete();
