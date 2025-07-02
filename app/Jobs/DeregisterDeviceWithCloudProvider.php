@@ -12,7 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 
-class RegisterDeviceWithCloudProvider implements ShouldQueue
+class DeregisterDeviceWithCloudProvider implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -30,11 +30,9 @@ class RegisterDeviceWithCloudProvider implements ShouldQueue
 
     public function __construct(Devices $device, $oldMac, $oldVendor)
     {
-        logger('construct');
         $this->device = $device;
         $this->oldMac = $oldMac;
         $this->oldVendor = $oldVendor;
-        logger($this->device);
     }
 
     public function handle()
@@ -47,7 +45,7 @@ class RegisterDeviceWithCloudProvider implements ShouldQueue
 
             try {
                 $cloudProviderSelector = app()->make(CloudProviderSelector::class);
-                $cloudProvider = $cloudProviderSelector->getCloudProvider($this->device->device_vendor);
+                $cloudProvider = $cloudProviderSelector->getCloudProvider($this->oldVendor);
 
                 if (!$cloudProvider) {
                     return false;
@@ -55,20 +53,18 @@ class RegisterDeviceWithCloudProvider implements ShouldQueue
 
                 $cloudProvider->ensureApiTokenExists();
 
-                // Create device
-                $result = $cloudProvider->createDevice($this->device);
+                // Delete device
+                $this->device->device_address = $this->oldMac;
+                $result = $cloudProvider->deleteDevice($this->device);
 
-                logger('register result:');
+                logger('deregister result:');
                 logger($result);
 
                 if ($result['success'] == true) {
-                    $this->device->cloudProvisioning->status = 'provisioned';
-                    $this->device->cloudProvisioning->last_action = 'register';
-                    $this->device->cloudProvisioning->error = null;
-                    $this->device->cloudProvisioning->save();
+                    $this->device->cloudProvisioning->delete();
                 } else {
                     $this->device->cloudProvisioning->status = 'error';
-                    $this->device->cloudProvisioning->last_action = 'register';
+                    $this->device->cloudProvisioning->last_action = 'deregister';
                     $this->device->cloudProvisioning->error = $result['error'];
                     $this->device->cloudProvisioning->save();
                 }

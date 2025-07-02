@@ -2,19 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Domain;
+use App\Models\Devices;
+use App\Models\DomainSettings;
+use App\Models\DefaultSettings;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Collection;
+use Spatie\QueryBuilder\QueryBuilder;
+use App\Services\PolycomCloudProvider;
+use App\Models\CloudProvisioningStatus;
+use Illuminate\Support\Facades\Session;
+use App\Services\DeviceCloudProvisioningService;
 use App\Http\Requests\PairZtpOrganizationRequest;
 use App\Http\Requests\StoreZtpOrganizationRequest;
 use App\Http\Requests\UpdatePolycomApiTokenRequest;
 use App\Http\Requests\UpdateZtpOrganizationRequest;
-use App\Models\CloudProvisioningStatus;
-use App\Models\DefaultSettings;
-use App\Models\Devices;
-use App\Models\Domain;
-use App\Models\DomainSettings;
-use App\Services\PolycomCloudProvider;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Session;
 
 class DeviceCloudProvisioningController extends Controller
 {
@@ -32,10 +34,7 @@ class DeviceCloudProvisioningController extends Controller
         $this->model = new Domain();
     }
 
-    public function index(): void
-    {
-
-    }
+    public function index(): void {}
 
     public function getData()
     {
@@ -61,8 +60,13 @@ class DeviceCloudProvisioningController extends Controller
             ->where('domain_uuid', Session::get('domain_uuid'))
             ->with([
                 'settings' => function ($query) {
-                    $query->select('domain_uuid', 'domain_setting_uuid', 'domain_setting_category',
-                        'domain_setting_subcategory', 'domain_setting_value')
+                    $query->select(
+                        'domain_uuid',
+                        'domain_setting_uuid',
+                        'domain_setting_category',
+                        'domain_setting_subcategory',
+                        'domain_setting_value'
+                    )
                         ->where('domain_setting_category', 'cloud provision')
                         ->where('domain_setting_subcategory', 'polycom_ztp_profile_id')
                         ->where('domain_setting_enabled', true);
@@ -142,8 +146,13 @@ class DeviceCloudProvisioningController extends Controller
                     )
                     ->with([
                         'settings' => function ($query) {
-                            $query->select('domain_uuid', 'domain_setting_uuid', 'domain_setting_category',
-                                'domain_setting_subcategory', 'domain_setting_value')
+                            $query->select(
+                                'domain_uuid',
+                                'domain_setting_uuid',
+                                'domain_setting_category',
+                                'domain_setting_subcategory',
+                                'domain_setting_value'
+                            )
                                 ->where('domain_setting_category', 'cloud provision')
                                 ->where('domain_setting_subcategory', 'polycom_ztp_profile_id')
                                 ->where('domain_setting_enabled', true);
@@ -199,7 +208,7 @@ class DeviceCloudProvisioningController extends Controller
             ];
         } catch (\Exception $e) {
             // Log the error message
-            logger($e->getMessage()." at ".$e->getFile().":".$e->getLine());
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             // report($e);
 
             // Handle any other exception that may occur
@@ -321,11 +330,11 @@ class DeviceCloudProvisioningController extends Controller
         try {
             // Populate the credentials from default settings, if it's not provided within the request payload
             $defaultSettings = $this->getProvisioningSettings($inputs['domain_uuid']);
-            if(!$inputs['provisioning_server_password']) {
+            if (!$inputs['provisioning_server_password']) {
                 $inputs['provisioning_server_password'] = $defaultSettings['http_auth_password'];
             }
 
-            if(!$inputs['provisioning_server_username']) {
+            if (!$inputs['provisioning_server_username']) {
                 $inputs['provisioning_server_username'] = $defaultSettings['http_auth_username'];
             }
 
@@ -344,7 +353,7 @@ class DeviceCloudProvisioningController extends Controller
             }
 
             // Save the new record
-           DomainSettings::create([
+            DomainSettings::create([
                 'domain_uuid' => $inputs['domain_uuid'],
                 'domain_setting_category' => 'cloud provision',
                 'domain_setting_subcategory' => 'polycom_ztp_profile_id',
@@ -359,7 +368,7 @@ class DeviceCloudProvisioningController extends Controller
                 'messages' => ['success' => ['Organization successfully activated']]
             ], 201);
         } catch (\Exception $e) {
-            logger($e->getMessage()." at ".$e->getFile().":".$e->getLine());
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
@@ -431,11 +440,11 @@ class DeviceCloudProvisioningController extends Controller
         try {
             // Populate the credentials from default settings, if it's not provided within the request payload
             $defaultSettings = $this->getProvisioningSettings($inputs['domain_uuid']);
-            if(!$inputs['provisioning_server_password']) {
+            if (!$inputs['provisioning_server_password']) {
                 $inputs['provisioning_server_password'] = $defaultSettings['http_auth_password'];
             }
 
-            if(!$inputs['provisioning_server_username']) {
+            if (!$inputs['provisioning_server_username']) {
                 $inputs['provisioning_server_username'] = $defaultSettings['http_auth_username'];
             }
 
@@ -448,7 +457,7 @@ class DeviceCloudProvisioningController extends Controller
                 'messages' => ['success' => ['Organization successfully updated']]
             ], 201);
         } catch (\Exception $e) {
-            logger($e->getMessage()." at ".$e->getFile().":".$e->getLine());
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
@@ -539,7 +548,7 @@ class DeviceCloudProvisioningController extends Controller
                 ];
             });
         } catch (\Exception $e) {
-            logger($e->getMessage()." at ".$e->getFile().":".$e->getLine());
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => [$e->getMessage()]]
@@ -548,50 +557,74 @@ class DeviceCloudProvisioningController extends Controller
     }
 
     /**
-     * Retrieves the status of devices including their provisioning status, errors, and corresponding cloud data.
+     * Retrieves the cloud provisioning status for specified device
      *
-     * @return JsonResponse
+     * @param  string  $device_uuid
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function status(): JsonResponse
+    public function status($device_uuid)
     {
+        $currentDomain = session('domain_uuid');
         try {
-            $requestedItems = request('items');
-            $model = new Devices();
-            $items = $model::whereIn($model->getKeyName(), $requestedItems)->get();
-            $devicesData = [];
+            $provisioning = QueryBuilder::for(\App\Models\DeviceCloudProvisioning::query())
+                ->where('device_uuid', $device_uuid)
+                ->where('domain_uuid', $currentDomain)
+                ->first();
 
-            // Group devices by their providers
-            foreach ($items as $item) {
-                /** @var Devices $item */
-                if ($item->hasSupportedCloudProvider()) {
-                    $localStatus = $item->cloudProvisioningStatus()->first();
-                    if($localStatus) {
-                        $devicesData[] = [
-                            'device_uuid' => $item->device_uuid,
-                            'status' => $localStatus->status,
-                            'error' => $localStatus->error
-                        ];
-                    } else {
-                        $devicesData[] = [
-                            'device_uuid' => $item->device_uuid,
-                            'status' => 'not_provisioned',
-                            'error' => null
-                        ];
-                    }
-                }
-            }
             return response()->json([
-                'status' => true,
-                'devicesData' => $devicesData,
-            ], 201);
-        } catch (\Exception $e) {
-            logger($e->getMessage());
+                'success' => true,
+                'data'    => $provisioning,
+            ]);
+        } catch (\Throwable $e) {
+            logger('DeviceCloudProvisioningController@status error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
-                'error' => $e->getMessage(),
-                'deviceData' => null,
+                'success'  => false,
+                'messages' => ['error' => [$e->getMessage()]],
+                'data'     => [],
             ], 500);
         }
     }
+
+    /**
+     * Deletes the local cloud provisioning entry for the specified device.
+     *
+     * @param  string  $device_uuid
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function reset($device_uuid)
+    {
+        $currentDomain = session('domain_uuid');
+        try {
+            $provisioning = QueryBuilder::for(\App\Models\DeviceCloudProvisioning::query())
+                ->where('device_uuid', $device_uuid)
+                ->where('domain_uuid', $currentDomain)
+                ->first();
+
+            if (!$provisioning) {
+                return response()->json([
+                    'success' => false,
+                    'messages' => ['error' => ['Provisioning entry not found.']],
+                    'data' => [],
+                ], 404);
+            }
+
+            $provisioning->delete();
+
+            return response()->json([
+                'success' => true,
+                'messages' => ['success' => ['Provisioning entry has been reset (deleted).']],
+                'data' => [],
+            ]);
+        } catch (\Throwable $e) {
+            logger('DeviceCloudProvisioningController@reset error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            return response()->json([
+                'success'  => false,
+                'messages' => ['error' => [$e->getMessage()]],
+                'data'     => [],
+            ], 500);
+        }
+    }
+
 
     public function syncDevices(): JsonResponse
     {
@@ -636,7 +669,7 @@ class DeviceCloudProvisioningController extends Controller
                 'messages' => ['success' => ['Devices are successfully synced']]
             ], 200);
         } catch (\Exception $e) {
-            logger($e->getMessage()." at ".$e->getFile().":".$e->getLine());
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'status' => 500,
                 'error' => [
@@ -656,48 +689,22 @@ class DeviceCloudProvisioningController extends Controller
     public function register(): JsonResponse
     {
         try {
-            //$cloudProvisioningService = new CloudProvisioningService();
-            //Get items info as a collection
-            $items = $this->model::whereIn($this->model->getKeyName(), request('items'))->get();
-            $devicesData = [];
+            //Get devices info as a collection
+            $items = Devices::whereIn('device_uuid', request('items'))->get();
+
             foreach ($items as $item) {
-                /** @var Devices $item */
-                if ($item->hasSupportedCloudProvider()) {
-                    try {
-                        $cloudProvider = $item->getCloudProvider();
-                        $cloudProvider->createDevice(
-                            $item->device_address,
-                            $item->getCloudProviderOrganizationId()
-                        );
-                        $provisioned = true;
-                        $error = null;
-                    } catch (\Exception $e) {
-                        logger($e);
-                        $provisioned = false;
-                        $error = $e->getMessage();
-                    }
-                } else {
-                    $provisioned = false;
-                    $error = 'Unsupported provider';
-                }
-                $devicesData[] = [
-                    'device_uuid' => $item->device_uuid,
-                    'provisioned' => $provisioned,
-                    'error' => $error,
-                ];
+                app(DeviceCloudProvisioningService::class)->register($item);
             }
 
             // Return a JSON response indicating success
             return response()->json([
-                'status' => true,
-                'devicesData' => $devicesData,
+                'messages' => ['success' => ['Request has been accepted for processing']],
             ], 201);
         } catch (\Exception $e) {
-            logger($e->getMessage());
+            logger('DeviceCloudProvisioningController@register error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             // Handle any other exception that may occur
             return response()->json([
-                'error' => $e->getMessage(),
-                'deviceData' => null
+                'messages' => ['error' => [$e->getMessage()]],
             ], 500);
         }
     }
@@ -712,42 +719,22 @@ class DeviceCloudProvisioningController extends Controller
     public function deregister(): JsonResponse
     {
         try {
-            //$cloudProvisioningService = new CloudProvisioningService();
-            //Get items info as a collection
-            $items = $this->model::whereIn($this->model->getKeyName(), request('items'))->get();
-            $devicesData = [];
+            //Get devices info as a collection
+            $items = Devices::whereIn('device_uuid', request('items'))->get();
+
             foreach ($items as $item) {
-                /** @var Devices $item */
-                if ($item->hasSupportedCloudProvider()) {
-                    try {
-                        $cloudProvider = $item->getCloudProvider();
-                        $cloudProvider->deleteDevice($item->device_address);
-                        $error = null;
-                    } catch (\Exception $e) {
-                        logger($e);
-                        $error = $e->getMessage();
-                    }
-                } else {
-                    $error = 'Unsupported provider';
-                }
-                $devicesData[] = [
-                    'device_uuid' => $item->device_uuid,
-                    'provisioned' => false,
-                    'error' => $error
-                ];
+                app(DeviceCloudProvisioningService::class)->deregister($item);
             }
 
             // Return a JSON response indicating success
             return response()->json([
-                'status' => true,
-                'devicesData' => $devicesData,
+                'messages' => ['success' => ['Request has been accepted for processing']],
             ], 201);
         } catch (\Exception $e) {
-            logger($e->getMessage());
+            logger('DeviceCloudProvisioningController@deregister error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             // Handle any other exception that may occur
             return response()->json([
-                'error' => $e->getMessage(),
-                'deviceData' => null
+                'messages' => ['error' => [$e->getMessage()]],
             ], 500);
         }
     }

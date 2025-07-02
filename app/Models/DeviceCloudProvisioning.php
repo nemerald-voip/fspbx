@@ -24,6 +24,7 @@ class DeviceCloudProvisioning extends Model
      */
     protected $fillable = [
         'device_uuid',
+        'domain_uuid',
         'provider',
         'status',
         'error'

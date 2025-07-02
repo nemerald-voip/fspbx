@@ -6,6 +6,7 @@ use App\Models\Devices;
 use Illuminate\Support\Facades\DB;
 use App\Services\CloudProviderSelector;
 use App\Jobs\RegisterDeviceWithCloudProvider;
+use App\Services\DeviceCloudProvisioningService;
 
 class DeviceObserver
 {
@@ -28,26 +29,15 @@ class DeviceObserver
             $vendorChanged = $device->device_vendor !== $original['device_vendor'];
     
             // Only proceed if either changed
-            if (!($macChanged || $vendorChanged)) {
+            if (!($macChanged || $vendorChanged || !$device->cloudProvisioning)) {
                 return;
             }
-    
-            $cloudProviderSelector = app()->make(CloudProviderSelector::class);
-            $cloudProvider = $cloudProviderSelector->getCloudProvider($device->device_vendor);
-    
-            // Only proceed if a cloud provider is available
-            if (!$cloudProvider) {
-                return;
-            }
-            // Create/update provisioning record with status 'pending'
-            $provisioning = $device->cloudProvisioning()->firstOrNew([]);
-            $provisioning->provider = $device->device_vendor;
-            $provisioning->status = 'pending';
-            $provisioning->error = null;
-            $provisioning->save();
+
+            logger('deregister');
+            app(DeviceCloudProvisioningService::class)->deregister($device);
             
-            // Dispatch job for async provisioning (recommended)
-            RegisterDeviceWithCloudProvider::dispatch($device, $original['device_address'], $original['device_vendor'], $provisioning->uuid);
+            logger('register');
+            app(DeviceCloudProvisioningService::class)->register($device);
     
         } catch (\Throwable $e) {
             logger('DeviceObserver@updated error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());

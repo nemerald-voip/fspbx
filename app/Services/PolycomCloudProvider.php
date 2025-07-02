@@ -9,6 +9,7 @@ use App\DTO\PolycomOrganizationDTO;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use App\DTO\OrganizationDTOInterface;
+use App\Models\Devices;
 use App\Services\Exceptions\ZtpProviderException;
 use App\Services\Interfaces\CloudProviderInterface;
 
@@ -125,20 +126,19 @@ class PolycomCloudProvider implements CloudProviderInterface
      * @return array The response from the API.
      * @throws \Exception If the API request fails.
      */
-    public function createDevice(string $id, string $orgId): array
+    public function createDevice(Devices $device): array
     {
         $this->ensureApiTokenExists();
+
+        $orgId = $this->getOrgIdByDomainUuid($device->domain_uuid);
 
         $response = Http::polycom()
             ->timeout($this->timeout)
             ->withBody(json_encode([
-                'id' => $id,
+                'id' => $device->device_address,
                 'profile' => $orgId
             ]), 'application/json')
-            ->post('/devices')
-            ->throw(function ($error) {
-                throw new \Exception("Unable to create device: ".json_encode($error));
-            });
+            ->post('/devices');
 
         return $this->handleResponse($response);
     }
@@ -150,16 +150,14 @@ class PolycomCloudProvider implements CloudProviderInterface
      * @return array The response from the API.
      * @throws \Exception If the API request fails.
      */
-    public function deleteDevice(string $id): array
+    public function deleteDevice(Devices $device): array
     {
         $this->ensureApiTokenExists();
 
+        logger($device->device_address);
         $response = Http::polycom()
             ->timeout($this->timeout)
-            ->delete('/devices/'.$id);
-            // ->throw(function ($error) {
-            //     throw new \Exception("Unable to delete device: ".json_encode($error));
-            // });
+            ->delete('/devices/'.$device->device_address);
 
         return $this->handleResponse($response);
     }
@@ -330,21 +328,62 @@ class PolycomCloudProvider implements CloudProviderInterface
      *
      * @param  Response  $response  The HTTP response.
      * @return array The decoded JSON response.
-     * @throws ZtpProviderException If an error occurs during processing.
+     * @throws Exception If an error occurs during processing.
      */
-    private function handleResponse(Response $response): array
+    protected function handleResponse($response): array
     {
+        // Laravel HTTP client uses $response->successful(), $response->failed(), etc.
         if ($response->successful()) {
-            return (!empty($response->body())) ? json_decode($response->body(), true) : [];
+            // Attempt to decode JSON, fallback to raw
+            $json = $response->json();
+            if (is_array($json)) {
+                return [
+                    'success' => true,
+                    'data' => $json,
+                    'status' => $response->status(),
+                ];
+            } else {
+                // In case response isn't JSON
+                return [
+                    'success' => true,
+                    'data' => $response->body(),
+                    'status' => $response->status(),
+                ];
+            }
         }
 
-        if ($response->clientError() or $response->serverError()) {
-            throw new ZtpProviderException($response->body());
+        logger()->warning('Polycom ZTP API error', [
+            'status' => $response->status(),
+            'body' => $response->body(),
+            'headers' => $response->headers(),
+            'url' => $response->effectiveUri() ?? null, 
+        ]);
+    
+        // If it wasn't a 2xx
+        $error = $response->json();
+        $errorMessage = null;
+    
+        // Many OpenAPI APIs send 'error', 'message', or similar
+        if (is_array($error)) {
+            $errorMessage = $error['error'] ?? $error['message'] ?? json_encode($error);
         }
-
-        // Handle unexpected errors
-        throw new ZtpProviderException($response);
+    
+        // Fallback to status text if nothing in body
+        if (!$errorMessage) {
+            $errorMessage = $response->body() ?: $response->status();
+        }
+    
+        // Optionally, you can throw or return an error array
+        // throw new \Exception("API Error ({$response->status()}): " . $errorMessage);
+    
+        // Or, if you want to return an error array instead of throwing:
+        return [
+            'success' => false,
+            'error' => $errorMessage,
+            'status' => $response->status(),
+        ];
     }
+    
 
     public function getOrgIdByDomainUuid(string $domainUuid): mixed
     {

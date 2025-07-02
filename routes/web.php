@@ -422,7 +422,6 @@ Route::group(['middleware' => 'auth'], function () {
     // Route::post('/cloud-provisioning/select-all', [ActiveCallsController::class, 'selectAll'])->name('active-calls.select.all');
     // Route::post('/cloud-provisioning/action', [ActiveCallsController::class, 'handleAction'])->name('active-calls.action');
     Route::post('/cloud-provisioning/sync-devices', [DeviceCloudProvisioningController::class, 'syncDevices'])->name('cloud-provisioning.devices.sync');
-    Route::post('/cloud-provisioning/status', [DeviceCloudProvisioningController::class, 'status'])->name('cloud-provisioning.status');
     Route::post('/cloud-provisioning/register', [DeviceCloudProvisioningController::class, 'register'])->name('cloud-provisioning.register');
     Route::post('/cloud-provisioning/deregister', [DeviceCloudProvisioningController::class, 'deregister'])->name('cloud-provisioning.deregister');
     //Route::post('/cloud-provisioning/devices/organizations', [DeviceCloudProvisioningController::class, 'devicesOrganizations'])->name('cloudProvisioning.devices.organizations');

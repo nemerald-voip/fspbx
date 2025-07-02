@@ -85,11 +85,16 @@
                                                     'submit_keys',
 
                                                 ]" />
-                                                <FormTab name="api_tokens" label="API Keys" :elements="[
-                                                    'html',
-                                                    'add_token',
-                                                    'token_title',
-
+                                                <FormTab name="cloud_provisioning" label="Cloud Provisioning" :elements="[
+                                                    'cloud_provisioning_title',
+                                                    'cloud_provisioning_status',
+                                                    'cloud_provisioning_register',
+                                                    'cloud_provisioning_deregister',
+                                                    'cloud_provisioning_refresh',
+                                                    'cloud_provisioning_retry',
+                                                    'cloud_provisioning_container',
+                                                    'provisioning_loading',
+                                                    'cloud_provisioning_reset',
 
                                                 ]" />
                                             </FormTabs>
@@ -344,6 +349,149 @@
                                                 <ButtonElement name="submit_keys" button-label="Save" :submits="true"
                                                     align="right" />
 
+                                                <!-- Cloud Provisioning tab-->
+                                                <StaticElement name="cloud_provisioning_title" tag="h4"
+                                                    content="Cloud Provisioning"
+                                                    description="View and manage this device’s status in the external cloud provisioning service." />
+
+                                                <StaticElement name="provisioning_loading"
+                                                :conditions="[() => isCloudProvisioningLoading.loading ]">
+                                                    <div class="text-center my-5 text-sm text-gray-500">
+                                                        <div class="animate-pulse flex space-x-4">
+                                                            <div class="flex-1 space-y-6 py-1">
+                                                                <div class="h-2 bg-slate-200 rounded"></div>
+                                                                <div class="h-2 bg-slate-200 rounded"></div>
+                                                                <div class="h-2 bg-slate-200 rounded"></div>
+                                                                
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </StaticElement>
+                                                
+
+
+                                                <StaticElement name="cloud_provisioning_status"
+                                                :conditions="[() => !isCloudProvisioningLoading.loading ]">
+                                                    <div v-if="provisioning && provisioning.status == 'provisioned'"
+                                                        class="flex items-center gap-x-3">
+                                                        <div
+                                                            class="flex-none rounded-full bg-green-400/10 p-1 text-green-400">
+                                                            <div class="size-3 rounded-full bg-current" />
+                                                        </div>
+                                                        <h1 class="flex gap-x-3 text-lg">
+                                                            <span class="font-semibold ">Status:</span>
+                                                            <Badge backgroundColor="bg-green-100"
+                                                                textColor="text-green-700" :text="'Active'"
+                                                                ringColor="ring-green-400/20"
+                                                                class="px-2 py-1 text-xs font-semibold" />
+                                                        </h1>
+                                                    </div>
+                                                    <div v-if="provisioning && provisioning.status == 'error'"
+                                                        class="flex items-center gap-x-3">
+                                                        <div
+                                                            class="flex-none rounded-full bg-rose-400/10 p-1 text-rose-400">
+                                                            <div class="size-3 rounded-full bg-current" />
+                                                        </div>
+                                                        <h1 class="flex gap-x-3 text-lg">
+                                                            <span class="font-semibold ">Status:</span>
+                                                            <Badge backgroundColor="bg-rose-100"
+                                                                textColor="text-rose-700" :text="'Error'"
+                                                                ringColor="ring-rose-400/20"
+                                                                class="px-2 py-1 text-xs font-semibold" />
+                                                        </h1>
+                                                    </div>
+
+
+                                                    <div v-if="provisioning && provisioning.status == 'error'"
+                                                        class="mt-3 rounded-md bg-red-50 p-4">
+                                                        <div class="flex">
+                                                            <div class="shrink-0">
+                                                                <XCircleIcon class="size-5 text-red-400"
+                                                                    aria-hidden="true" />
+                                                            </div>
+                                                            <div class="ml-3">
+                                                                <!-- <h3 class="text-sm font-medium text-red-800">There were
+                                                                    2 errors with your submission</h3> -->
+                                                                    <div class="text-sm text-red-700">
+                                                                    <span>Last Action: {{ provisioning.last_action }}</span>
+                                                                </div>
+                                                                <div class="text-sm text-red-700">
+                                                                    <span>Error: {{ provisioning.error }}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div v-if="provisioning && provisioning.status == 'pending'"
+                                                        class="flex items-center gap-x-3">
+                                                        <div
+                                                            class="flex-none rounded-full bg-amber-400/10 p-1 text-amber-400">
+                                                            <div class="size-3 rounded-full bg-current" />
+                                                        </div>
+                                                        <h1 class="flex gap-x-3 text-lg">
+                                                            <span class="font-semibold ">Status:</span>
+                                                            <Badge backgroundColor="bg-amber-100"
+                                                                textColor="text-amber-700" :text="'Pending'"
+                                                                ringColor="ring-amber-400/20"
+                                                                class="px-2 py-1 text-xs font-semibold" />
+                                                        </h1>
+                                                    </div>
+
+                                                    <div v-if="!provisioning"
+                                                        class="flex items-center gap-x-3">
+                                                        <div
+                                                            class="flex-none rounded-full bg-gray-400/10 p-1 text-gray-400">
+                                                            <div class="size-3 rounded-full bg-current" />
+                                                        </div>
+                                                        <h1 class="flex gap-x-3 text-lg">
+                                                            <span class="font-semibold ">Status:</span>
+                                                            <Badge backgroundColor="bg-gray-100"
+                                                                textColor="text-gray-700" :text="'Not Registered'"
+                                                                ringColor="ring-gray-400/20"
+                                                                class="px-2 py-1 text-xs font-semibold" />
+                                                        </h1>
+                                                    </div>
+                                                </StaticElement>
+
+                                                <ButtonElement name="cloud_provisioning_register"
+                                                    button-label="Register device"
+                                                    :loading="isCloudProvisioningLoading.register"
+                                                    @click="handleCloudProvisioningRegisterButtonClick"
+                                                    description="Register device in the external cloud provisioning service."
+                                                    :conditions="[() => !provisioning && provisioning?.status != 'provisioned']" />
+
+                                                <GroupElement name="cloud_provisioning_container"
+                                                    :conditions="[() => !provisioning && provisioning?.status != 'provisioned']" />
+
+                                                <ButtonElement name="cloud_provisioning_refresh" button-label="Refresh"
+                                                    :loading="isCloudProvisioningLoading.refresh"
+                                                    @click="handleCloudProvisioningRefreshButtonClick"
+                                                    description="Refresh status." :secondary="true"
+                                                    :conditions="[() => provisioning && provisioning?.status == 'pending']" />
+
+                                                <ButtonElement name="cloud_provisioning_deregister"
+                                                    button-label="Deregister"
+                                                    :loading="isCloudProvisioningLoading.deregister"
+                                                    @click="handleCloudProvisioningDeregisterButtonClick"
+                                                    description="Remove this device from the external cloud provisioning service."
+                                                    :danger="true"
+                                                    :conditions="[() => provisioning && provisioning?.status == 'provisioned']" />
+
+
+                                                <ButtonElement name="cloud_provisioning_retry" button-label="Retry"
+                                                    @click="handleCloudProvisioningRetryButtonClick"
+                                                    description="Retry the last provisioning action."
+                                                    :loading="isCloudProvisioningLoading.retry"
+                                                    :conditions="[() => provisioning && provisioning?.status == 'error']" />
+
+                                                    <ButtonElement name="cloud_provisioning_reset" button-label="Reset"
+                                                    @click="handleCloudProvisioningResetButtonClick"
+                                                    description="Reset local cache for this device."
+                                                    :loading="isCloudProvisioningLoading.reset"
+                                                    :danger="true"
+                                                    :conditions="[() => provisioning && provisioning?.status == 'error']" />
+
+
                                             </FormElements>
                                         </div>
                                     </div>
@@ -361,21 +509,14 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from "vue";
-import { usePage } from '@inertiajs/vue3';
+import { ref, reactive } from "vue";
 
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
-import Spinner from "../general/Spinner.vue";
-import { PlusIcon } from "@heroicons/vue/24/solid";
-import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import AddEditItemModal from "../modal/AddEditItemModal.vue";
-import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
-import { Cog6ToothIcon, AdjustmentsHorizontalIcon, EllipsisVerticalIcon, CloudIcon } from '@heroicons/vue/24/outline';
-import axios from "axios";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
-import DeviceKeys from "../DeviceKeys.vue";
 import FormChildModal from "../FormChildModal.vue"
 import { Cog8ToothIcon } from "@heroicons/vue/24/outline";
+import Badge from "@generalComponents/Badge.vue";
+import { XCircleIcon } from '@heroicons/vue/20/solid'
 
 
 const props = defineProps({
@@ -385,21 +526,19 @@ const props = defineProps({
     loading: Boolean,
 });
 
-const page = usePage();
-const isKeysLoading = ref(false)
-const isModalLoading = ref(false)
 const advModalIndex = ref(null)
+const isCloudProvisioningLoading = reactive({
+    register: false,
+    deregister: false,
+    refresh: false,
+    retry: false,
+    reset: false,
+    loading: false,
+})
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
 
-const isCloudProvisioned = ref({
-    isLoading: false,
-    status: false,
-    error: null,
-    message: null
-});
-const isProvisioningAllowed = ref(false);
-
+const provisioning = ref(null);
 
 function showLineAdvSettings(index) {
     advModalIndex.value = index
@@ -409,26 +548,129 @@ function closeAdvSettings() {
     advModalIndex.value = null
 }
 
-const handleAddKeyButtonClick = () => {
-    showDeviceCreateModal.value = true
-    getDeviceItemOptions();
-}
 
-const handleKeyEditButtonClick = (itemUuid) => {
-    showDeviceUpdateModal.value = true
-    getDeviceItemOptions(itemUuid);
-}
-
-const handleDeleteKeyButtonClick = (uuid) => {
-    showUnassignConfirmationModal.value = true;
-    confirmUnassignAction.value = () => executeBulkUnassign([uuid]);
-};
 
 const activeLineIndex = ref(null);
 
 const handleTabSelected = (activeTab, previousTab) => {
-
+    if (activeTab.name == 'cloud_provisioning') {
+        getCloudProvisioningStatus();
+    }
 }
+
+const getCloudProvisioningStatus = async () => {
+    isCloudProvisioningLoading.loading = true
+    axios.get(props.options.routes.cloud_provisioning_status_route)
+        .then((response) => {
+            provisioning.value = response.data.data;
+            // console.log(provisioning.value);
+
+        }).catch((error) => {
+            emit('error', error)
+        }).finally(() => {
+            isCloudProvisioningLoading.loading = false
+        });
+}
+
+const handleCloudProvisioningRegisterButtonClick = async () => {
+    isCloudProvisioningLoading.register = true
+    axios.post(props.options.routes.cloud_provisioning_register_route,
+        {
+            items: [props.options.item.device_uuid],
+
+        }
+    )
+        .then((response) => {
+            // console.log(response.data);
+
+            emit('success', 'success', response.data.messages);
+
+            getCloudProvisioningStatus();
+
+        }).catch((error) => {
+            emit('error', error)
+        }).finally(() => {
+            isCloudProvisioningLoading.register = false
+        });
+}
+
+const handleCloudProvisioningDeregisterButtonClick = async () => {
+    isCloudProvisioningLoading.deregister = true
+
+    axios.post(props.options.routes.cloud_provisioning_deregister_route,
+        {
+            items: [props.options.item.device_uuid],
+        }
+    )
+        .then((response) => {
+            emit('success', 'success', response.data.messages);
+
+            getCloudProvisioningStatus();
+
+        }).catch((error) => {
+            emit('error', error)
+        }).finally(() => {
+            isCloudProvisioningLoading.deregister = false
+        });
+}
+
+const handleCloudProvisioningResetButtonClick = async () => {
+    isCloudProvisioningLoading.deregister = true
+
+    axios.post(props.options.routes.cloud_provisioning_reset_route,
+        {
+            items: [props.options.item.device_uuid],
+        }
+    )
+        .then((response) => {
+            emit('success', 'success', response.data.messages);
+
+            getCloudProvisioningStatus();
+
+        }).catch((error) => {
+            emit('error', error)
+        }).finally(() => {
+            isCloudProvisioningLoading.deregister = false
+        });
+}
+
+
+const handleCloudProvisioningRetryButtonClick = async () => {
+    isCloudProvisioningLoading.retry = true
+
+    const lastAction = provisioning?.value.last_action;
+    let route;
+
+
+    if (lastAction === 'register') {
+        route = props.options.routes.cloud_provisioning_register_route;
+    } else if (lastAction === 'deregister') {
+        route = props.options.routes.cloud_provisioning_deregister_route;
+    } else {
+        return;
+    }
+
+    axios.post(route,
+        {
+            items: [props.options.item.device_uuid],
+        }
+    )
+        .then((response) => {
+            emit('success', 'success', response.data.messages);
+
+            getCloudProvisioningStatus();
+
+        }).catch((error) => {
+            emit('error', error)
+        }).finally(() => {
+            isCloudProvisioningLoading.retry = false
+        });
+}
+
+const handleCloudProvisioningRefreshButtonClick = async () => {
+    getCloudProvisioningStatus();
+}
+
 
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 

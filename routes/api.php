@@ -7,13 +7,14 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\UserLogsController;
+use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\BusinessHoursController;
 use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\EmergencyCallController;
-use App\Http\Controllers\VoicemailController;
+use App\Http\Controllers\DeviceCloudProvisioningController;
 
 /*
 |--------------------------------------------------------------------------
@@ -109,4 +110,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('devices/item-options', [DeviceController::class, 'getItemOptions'])->name('devices.item.options');
     Route::post('devices/assign', [DeviceController::class, 'assign'])->name('devices.assign');
     Route::post('devices/bulk-unassign', [DeviceController::class, 'bulkUnassign'])->name('devices.bulk.unassign');
+
+    //Cloud Provisioning
+    Route::get('/cloud-provisioning/{device}/status', [DeviceCloudProvisioningController::class, 'status'])->name('cloud-provisioning.status');
+    Route::post('/cloud-provisioning/{device}/reset', [DeviceCloudProvisioningController::class, 'reset'])->name('cloud-provisioning.reset');
 });

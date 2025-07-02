@@ -138,11 +138,6 @@ class DeviceController extends Controller
                     'bulk_update' => route('devices.bulk.update'),
                     'item_options' => route('devices.item.options'),
                     'restart' => route('devices.restart'),
-                    //'cloud_provisioning_domains' => route('cloud-provisioning.domains'),
-                    //'cloud_provisioning' => route('cloud-provisioning.index'),
-                    'cloud_provisioning_status' => route('cloud-provisioning.status'),
-                    'cloud_provisioning_register' => route('cloud-provisioning.register'),
-                    'cloud_provisioning_deregister' => route('cloud-provisioning.deregister'),
                     'cloud_provisioning_create_organization' => route('cloud-provisioning.organization.create'),
                     'cloud_provisioning_update_organization' => route('cloud-provisioning.organization.update'),
                     'cloud_provisioning_destroy_organization' => route('cloud-provisioning.organization.destroy'),
@@ -558,6 +553,8 @@ class DeviceController extends Controller
 
             $itemUuid = request('itemUuid');
 
+            $routes = [];
+
             // 1) Base payload: either an existing user DTO or a “new user” stub
             if ($itemUuid) {
                 $device = QueryBuilder::for(Devices::class)
@@ -583,14 +580,20 @@ class DeviceController extends Controller
                     ->with(['profile' => function ($query) {
                         $query->select('device_profile_uuid', 'device_profile_name', 'device_profile_description');
                     }])
-                    ->with(['cloudProvisioning' => function ($query) {
-                        $query->select('uuid', 'device_uuid', 'status');
-                    }])
+                    // ->with(['cloudProvisioning' => function ($query) {
+                    //     $query->select('uuid', 'device_uuid', 'last_action', 'status', 'error');
+                    // }])
                     ->whereKey($itemUuid)
                     ->firstOrFail();
 
                 $deviceDto = DeviceData::from($device);
-                $updateRoute = route('devices.update', ['device' => $itemUuid]);
+
+                $routes = array_merge($routes, [
+                    'update_route' => route('devices.update', ['device' => $itemUuid]),
+                    'cloud_provisioning_status_route' => route('cloud-provisioning.status', ['device' => $itemUuid]),
+                    'cloud_provisioning_reset_route' => route('cloud-provisioning.reset', ['device' => $itemUuid]),
+                ]);
+
             } else {
                 // New device defaults
                 $deviceDto     = new DeviceData(
@@ -599,7 +602,7 @@ class DeviceController extends Controller
                     device_address: '',
                     device_template: '',
                 );
-                $updateRoute = null;
+
             }
 
             // $device = $this->model::find(request('itemUuid'));
@@ -635,11 +638,13 @@ class DeviceController extends Controller
                 }
             }
 
-            $routes = [
+            $routes = array_merge($routes, [
                 'store_route' => route('devices.store'),
                 'assign_route' => route('devices.assign'),
-                // 'unassign_route' => route('devices.store'),
-            ];
+                'cloud_provisioning_register_route' => route('cloud-provisioning.register'),
+                'cloud_provisioning_deregister_route' => route('cloud-provisioning.deregister'),
+            ]);
+
 
             $lines = [];
             if ($deviceDto) {
@@ -678,9 +683,6 @@ class DeviceController extends Controller
 
                 // logger($lines);
 
-                $routes = array_merge($routes, [
-                    'update_route' => $updateRoute,
-                ]);
             }
 
             $lineKeyTypes = [];

@@ -17,8 +17,10 @@ return new class extends Migration
         if (!Schema::hasTable('device_cloud_provisioning')) {
             Schema::create('device_cloud_provisioning', function (Blueprint $table) {
                 $table->uuid('uuid')->unique()->default(DB::raw('uuid_generate_v4()'));
+                $table->uuid('domain_uuid');
                 $table->uuid('device_uuid');
                 $table->text('provider')->nullable();
+                $table->string('last_action')->nullable();
                 $table->text('status')->nullable();
                 $table->text('error')->nullable();
             });
