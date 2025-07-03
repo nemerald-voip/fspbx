@@ -53,7 +53,7 @@
                                     device_template: options.item.device_template,
                                     device_uuid: options.item.device_uuid,
                                     device_address: options.item.device_address,
-                                    device_keys: options.device_keys,
+                                    device_keys: options.lines,
                                 }">
 
                                 <template #empty>
@@ -136,7 +136,7 @@ const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
-    // console.log(requestData);
+    console.log(requestData);
 
     return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
 };

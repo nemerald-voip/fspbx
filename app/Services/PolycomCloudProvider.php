@@ -172,14 +172,11 @@ class PolycomCloudProvider implements CloudProviderInterface
 
         $response = Http::polycom()
             ->timeout($this->timeout)
-            ->get('/profiles')
-            ->throw(function ($error) {
-                throw new \Exception("Unable to retrieve organizations: ".json_encode($error));
-            });
+            ->get('/profiles');
 
         $response = $this->handleResponse($response);
 
-        return collect($response['results'])->map(function ($item) {
+        return collect($response['data'])->map(function ($item) {
             return PolycomOrganizationDTO::fromArray($item);
         });
     }
