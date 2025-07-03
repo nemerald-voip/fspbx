@@ -23,57 +23,48 @@ class DeregisterDeviceWithCloudProvider implements ShouldQueue
     public $backoff = 300;
     public $deleteWhenMissingModels = true;
 
-    protected $device;
-    protected $oldMac;
-    protected $oldVendor;
-    protected $provisioningUuid;
+    protected $params;
 
-    public function __construct(Devices $device, $oldMac, $oldVendor)
+    public function __construct($params)
     {
-        $this->device = $device;
-        $this->oldMac = $oldMac;
-        $this->oldVendor = $oldVendor;
+        $this->params = $params;
     }
 
     public function handle()
     {
+        
         Redis::throttle('cloud-provider-jobs')->allow(1)->every(2)->then(function () {
 
-            if (!$this->device) {
-                return true;
-            }
-
             try {
+                $provisioning = DeviceCloudProvisioning::find($this->params['provisioning_uuid']);
+                
                 $cloudProviderSelector = app()->make(CloudProviderSelector::class);
-                $cloudProvider = $cloudProviderSelector->getCloudProvider($this->oldVendor);
+                $cloudProvider = $cloudProviderSelector->getCloudProvider($this->params['device_vendor']);
 
                 if (!$cloudProvider) {
                     return false;
                 }
 
-                $cloudProvider->ensureApiTokenExists();
-
                 // Delete device
-                $this->device->device_address = $this->oldMac;
-                $result = $cloudProvider->deleteDevice($this->device);
-
-                logger('deregister result:');
-                logger($result);
+                $result = $cloudProvider->deleteDevice($this->params);
 
                 if ($result['success'] == true) {
-                    $this->device->cloudProvisioning->delete();
+                    $provisioning->status = 'success';
+                    $provisioning->last_action = 'deregister';
+                    $provisioning->error = null;
+                    $provisioning->save();
                 } else {
-                    $this->device->cloudProvisioning->status = 'error';
-                    $this->device->cloudProvisioning->last_action = 'deregister';
-                    $this->device->cloudProvisioning->error = $result['error'];
-                    $this->device->cloudProvisioning->save();
+                    $provisioning->status = 'error';
+                    $provisioning->last_action = 'deregister';
+                    $provisioning->error = $result['error'];
+                    $provisioning->save();
                 }
 
                 return true;
             } catch (\Throwable $e) {
-                $this->device->cloudProvisioning->status = 'error';
-                $this->device->cloudProvisioning->error = $e->getMessage();
-                $this->device->cloudProvisioning->save();
+                $provisioning->status = 'error';
+                $provisioning->error = $e->getMessage();
+                $provisioning->save();
 
                 logger("RegisterDeviceWithCloudProvider@handle Error: " . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
                 return false;

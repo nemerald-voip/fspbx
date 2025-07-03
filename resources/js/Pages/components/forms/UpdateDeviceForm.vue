@@ -54,6 +54,7 @@
                                     device_profile_uuid: options.item?.device_profile_uuid,
                                     domain_uuid: options.item?.domain_uuid,
                                     device_keys: options.lines,
+                                    device_description: options.item?.device_description ?? null,
                                 }">
 
                                 <template #empty>
@@ -67,7 +68,7 @@
                                                     'device_template',
                                                     'device_profile_uuid',
                                                     'domain_uuid',
-
+                                                    'device_description',
                                                     'container_3',
                                                     'submit',
 
@@ -95,8 +96,11 @@
                                                     'cloud_provisioning_container',
                                                     'provisioning_loading',
                                                     'cloud_provisioning_reset',
+                                                    'cloud_container',
+                                                    'submit_cloud',
 
-                                                ]" />
+                                                ]" :conditions="[() => options?.permissions?.manage_device_cloud_provisioning_settings && options.cloud_provider_available]"/>
+                                                
                                             </FormTabs>
                                         </div>
 
@@ -107,13 +111,15 @@
                                                 <StaticElement name="h4" tag="h4" content="Device Settings" />
 
                                                 <TextElement name="device_address" label="MAC Address"
-                                                    placeholder="Enter MAC address" :floating="false" />
+                                                    placeholder="Enter MAC address" :floating="false" 
+                                                    :disabled="[() => !options?.permissions?.device_address_update]"/>
 
                                                 <SelectElement name="device_template" :items="options.templates"
                                                     :search="true" :native="false" label="Device Template"
                                                     input-type="search" autocomplete="off" label-prop="name"
                                                     value-prop="value" :floating="false"
-                                                    placeholder="Select Template" />
+                                                    placeholder="Select Template" 
+                                                    :conditions="[() => options?.permissions?.device_template_update]"/>
 
                                                 <SelectElement name="device_profile_uuid" :items="options.profiles"
                                                     :search="true" :native="false" label="Device Profile"
@@ -121,10 +127,14 @@
                                                     value-prop="value" placeholder="Select Profile (Optional)"
                                                     :floating="false" />
 
+                                                <TextElement name="device_description" label="Description"
+                                                    placeholder="Enter description" :floating="false" />
+
                                                 <SelectElement name="domain_uuid" :items="options.domains"
                                                     :search="true" :native="false" label="Assigned To (Account)"
                                                     input-type="search" autocomplete="off" label-prop="name"
-                                                    value-prop="value" placeholder="Select Account" :floating="false" />
+                                                    value-prop="value" placeholder="Select Account" :floating="false" 
+                                                    :conditions="[() => options?.permissions?.device_domain_update]"/>
 
                                                 <GroupElement name="container_3" />
 
@@ -355,24 +365,24 @@
                                                     description="View and manage this device’s status in the external cloud provisioning service." />
 
                                                 <StaticElement name="provisioning_loading"
-                                                :conditions="[() => isCloudProvisioningLoading.loading ]">
+                                                    :conditions="[() => isCloudProvisioningLoading.loading]">
                                                     <div class="text-center my-5 text-sm text-gray-500">
                                                         <div class="animate-pulse flex space-x-4">
                                                             <div class="flex-1 space-y-6 py-1">
                                                                 <div class="h-2 bg-slate-200 rounded"></div>
                                                                 <div class="h-2 bg-slate-200 rounded"></div>
                                                                 <div class="h-2 bg-slate-200 rounded"></div>
-                                                                
+
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </StaticElement>
-                                                
+
 
 
                                                 <StaticElement name="cloud_provisioning_status"
-                                                :conditions="[() => !isCloudProvisioningLoading.loading ]">
-                                                    <div v-if="provisioning && provisioning.status == 'provisioned'"
+                                                    :conditions="[() => !isCloudProvisioningLoading.loading]">
+                                                    <div v-if="provisioning && provisioning.last_action == 'register' && provisioning.status == 'success'"
                                                         class="flex items-center gap-x-3">
                                                         <div
                                                             class="flex-none rounded-full bg-green-400/10 p-1 text-green-400">
@@ -412,8 +422,9 @@
                                                             <div class="ml-3">
                                                                 <!-- <h3 class="text-sm font-medium text-red-800">There were
                                                                     2 errors with your submission</h3> -->
-                                                                    <div class="text-sm text-red-700">
-                                                                    <span>Last Action: {{ provisioning.last_action }}</span>
+                                                                <div class="text-sm text-red-700">
+                                                                    <span>Last Action: {{ provisioning.last_action
+                                                                        }}</span>
                                                                 </div>
                                                                 <div class="text-sm text-red-700">
                                                                     <span>Error: {{ provisioning.error }}</span>
@@ -437,7 +448,7 @@
                                                         </h1>
                                                     </div>
 
-                                                    <div v-if="!provisioning"
+                                                    <div v-if="!provisioning || (provisioning.last_action == 'deregister' && provisioning.status == 'success')"
                                                         class="flex items-center gap-x-3">
                                                         <div
                                                             class="flex-none rounded-full bg-gray-400/10 p-1 text-gray-400">
@@ -458,7 +469,7 @@
                                                     :loading="isCloudProvisioningLoading.register"
                                                     @click="handleCloudProvisioningRegisterButtonClick"
                                                     description="Register device in the external cloud provisioning service."
-                                                    :conditions="[() => !provisioning && provisioning?.status != 'provisioned']" />
+                                                    :conditions="[() => !provisioning || (provisioning?.last_action != 'register' && provisioning?.status == 'success')]" />
 
                                                 <GroupElement name="cloud_provisioning_container"
                                                     :conditions="[() => !provisioning && provisioning?.status != 'provisioned']" />
@@ -475,7 +486,7 @@
                                                     @click="handleCloudProvisioningDeregisterButtonClick"
                                                     description="Remove this device from the external cloud provisioning service."
                                                     :danger="true"
-                                                    :conditions="[() => provisioning && provisioning?.status == 'provisioned']" />
+                                                    :conditions="[() => provisioning && provisioning?.last_action == 'register' && provisioning?.status == 'success']" />
 
 
                                                 <ButtonElement name="cloud_provisioning_retry" button-label="Retry"
@@ -484,13 +495,17 @@
                                                     :loading="isCloudProvisioningLoading.retry"
                                                     :conditions="[() => provisioning && provisioning?.status == 'error']" />
 
-                                                    <ButtonElement name="cloud_provisioning_reset" button-label="Reset"
+                                                <ButtonElement name="cloud_provisioning_reset" button-label="Reset"
                                                     @click="handleCloudProvisioningResetButtonClick"
                                                     description="Reset local cache for this device."
-                                                    :loading="isCloudProvisioningLoading.reset"
-                                                    :danger="true"
-                                                    :conditions="[() => provisioning && provisioning?.status == 'error']" />
+                                                    :loading="isCloudProvisioningLoading.reset" :danger="true"
+                                                    :conditions="[() => provisioning && (provisioning?.status == 'error' || provisioning?.status == 'pending')]" />
 
+
+                                                <GroupElement name="cloud_container" />
+
+                                                <ButtonElement name="submit_cloud" button-label="Save" :submits="true"
+                                                    align="right" />
 
                                             </FormElements>
                                         </div>

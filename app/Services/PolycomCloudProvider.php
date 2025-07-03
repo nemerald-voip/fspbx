@@ -121,21 +121,20 @@ class PolycomCloudProvider implements CloudProviderInterface
     /**
      * Create a new device with the given ID and organization ID.
      *
-     * @param  string  $id  The device ID.
-     * @param  string  $orgId  The organization ID.
+     * @param  array  $params 
      * @return array The response from the API.
      * @throws \Exception If the API request fails.
      */
-    public function createDevice(Devices $device): array
+    public function createDevice($params): array
     {
         $this->ensureApiTokenExists();
 
-        $orgId = $this->getOrgIdByDomainUuid($device->domain_uuid);
+        $orgId = $this->getOrgIdByDomainUuid($params['domain_uuid']);
 
         $response = Http::polycom()
             ->timeout($this->timeout)
             ->withBody(json_encode([
-                'id' => $device->device_address,
+                'id' => $params['device_address'],
                 'profile' => $orgId
             ]), 'application/json')
             ->post('/devices');
@@ -150,14 +149,13 @@ class PolycomCloudProvider implements CloudProviderInterface
      * @return array The response from the API.
      * @throws \Exception If the API request fails.
      */
-    public function deleteDevice(Devices $device): array
+    public function deleteDevice($params): array
     {
         $this->ensureApiTokenExists();
 
-        logger($device->device_address);
         $response = Http::polycom()
             ->timeout($this->timeout)
-            ->delete('/devices/'.$device->device_address);
+            ->delete('/devices/'.$params['device_address']);
 
         return $this->handleResponse($response);
     }

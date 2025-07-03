@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Models\Devices;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
@@ -23,61 +22,47 @@ class RegisterDeviceWithCloudProvider implements ShouldQueue
     public $backoff = 300;
     public $deleteWhenMissingModels = true;
 
-    protected $device;
-    protected $oldMac;
-    protected $oldVendor;
-    protected $provisioningUuid;
+    protected $params;
 
-    public function __construct(Devices $device, $oldMac, $oldVendor)
+    public function __construct($params)
     {
-        logger('construct');
-        $this->device = $device;
-        $this->oldMac = $oldMac;
-        $this->oldVendor = $oldVendor;
-        logger($this->device);
+        $this->params = $params;
     }
 
     public function handle()
     {
         Redis::throttle('cloud-provider-jobs')->allow(1)->every(2)->then(function () {
-
-            if (!$this->device) {
-                return true;
-            }
-
             try {
+
+                $provisioning = DeviceCloudProvisioning::find($this->params['provisioning_uuid']);
+
                 $cloudProviderSelector = app()->make(CloudProviderSelector::class);
-                $cloudProvider = $cloudProviderSelector->getCloudProvider($this->device->device_vendor);
+                $cloudProvider = $cloudProviderSelector->getCloudProvider($this->params['device_vendor']);
 
                 if (!$cloudProvider) {
                     return false;
                 }
 
-                $cloudProvider->ensureApiTokenExists();
-
                 // Create device
-                $result = $cloudProvider->createDevice($this->device);
-
-                logger('register result:');
-                logger($result);
+                $result = $cloudProvider->createDevice($this->params);
 
                 if ($result['success'] == true) {
-                    $this->device->cloudProvisioning->status = 'provisioned';
-                    $this->device->cloudProvisioning->last_action = 'register';
-                    $this->device->cloudProvisioning->error = null;
-                    $this->device->cloudProvisioning->save();
+                    $provisioning->status = 'success';
+                    $provisioning->last_action = 'register';
+                    $provisioning->error = null;
+                    $provisioning->save();
                 } else {
-                    $this->device->cloudProvisioning->status = 'error';
-                    $this->device->cloudProvisioning->last_action = 'register';
-                    $this->device->cloudProvisioning->error = $result['error'];
-                    $this->device->cloudProvisioning->save();
+                    $provisioning->status = 'error';
+                    $provisioning->last_action = 'register';
+                    $provisioning->error = $result['error'];
+                    $provisioning->save();
                 }
 
                 return true;
             } catch (\Throwable $e) {
-                $this->device->cloudProvisioning->status = 'error';
-                $this->device->cloudProvisioning->error = $e->getMessage();
-                $this->device->cloudProvisioning->save();
+                $provisioning->status = 'error';
+                $provisioning->error = $e->getMessage();
+                $provisioning->save();
 
                 logger("RegisterDeviceWithCloudProvider@handle Error: " . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
                 return false;

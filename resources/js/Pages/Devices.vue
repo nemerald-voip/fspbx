@@ -73,11 +73,12 @@
                 <TableColumnHeader header="Template"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Profile" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Assigned extension"
+                <TableColumnHeader v-if="!showGlobal"  header="Assigned extension"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Cloud Provisioning"
+                <TableColumnHeader header="Description"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Cloud" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
@@ -132,7 +133,7 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_template" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.profile?.device_profile_name" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField v-if="!showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <template #default>
                             <div v-if="row.lines?.length === 0">—</div>
                             <div v-else>
@@ -146,10 +147,11 @@
                             </div>
                         </template>
                     </TableField>
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_description" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <div class="flex items-center whitespace-nowrap">
                             <ejs-tooltip :content="!row.cloud_provisioning ? 'Not provisioned'
-                                : row.cloud_provisioning.status === 'provisioned' ? 'Provisioned'
+                                : (row.cloud_provisioning.status === 'success' && row.cloud_provisioning.last_action === 'register') ? 'Provisioned'
                                     : row.cloud_provisioning.status === 'pending' ? 'Pending'
                                         : row.cloud_provisioning.status === 'error' ? 'Error'
                                             : 'Not provisioned'" position='TopCenter'
@@ -158,7 +160,7 @@
                                     <CloudIcon :class="[
                                         'h-9 w-9 py-2 rounded-full',
                                         !row.cloud_provisioning ? 'text-gray-300'
-                                            : row.cloud_provisioning.status === 'provisioned' ? 'text-green-600'
+                                            : (row.cloud_provisioning.status === 'success' && row.cloud_provisioning.last_action === 'register') ? 'text-green-600'
                                                 : row.cloud_provisioning.status === 'error' ? 'text-red-600'
                                                     : row.cloud_provisioning.status === 'pending' ? 'text-yellow-500'
                                                         : 'text-gray-300'
@@ -169,7 +171,7 @@
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
-                            <div class="flex items-center whitespace-nowrap">
+                            <div class="flex items-center whitespace-nowrap justify-end">
                                 <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'"
                                     position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
@@ -337,7 +339,6 @@ const showCreateModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationRestartTrigger = ref(false);
-const confirmationModalDestroyPath = ref(null);
 const createFormSubmitting = ref(null);
 const updateFormSubmitting = ref(null);
 const confirmDeleteAction = ref(null);
@@ -348,9 +349,6 @@ const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
-const deviceProvisionStatus = ref({});
-const deviceProvisionStatusCheckInterval = ref(null);
-const availableDomains = ref([]);
 let tooltipCopyContent = ref('Copy to Clipboard');
 
 const props = defineProps({
@@ -394,15 +392,6 @@ const bulkActions = computed(() => {
     return actions;
 });
 
-onBeforeUnmount(() => {
-    stopStatusWatching();
-});
-
-onMounted(() => {
-    // handleUpdateCloudProvisioningStatuses();
-});
-
-
 const handleEditButtonClick = (itemUuid) => {
     showUpdateModal.value = true
     getItemOptions(itemUuid);
@@ -415,7 +404,7 @@ const getItemOptions = (itemUuid = null) => {
     axios.post(props.routes.item_options, payload)
         .then((response) => {
             itemOptions.value = response.data;
-            console.log(itemOptions.value);
+            // console.log(itemOptions.value);
 
         }).catch((error) => {
             handleModalClose();
@@ -474,29 +463,6 @@ const handleSingleItemDeleteRequest = (uuid) => {
     confirmDeleteAction.value = () => executeBulkDelete([uuid]);
 }
 
-// const executeSingleDelete = (url) => {
-//     router.delete(url, {
-//         preserveScroll: true,
-//         preserveState: true,
-//         onSuccess: (page) => {
-//             if (page.props.flash.error) {
-//                 showNotification('error', page.props.flash.error);
-//             }
-//             if (page.props.flash.message) {
-//                 showNotification('success', page.props.flash.message);
-//             }
-//             confirmationModalTrigger.value = false;
-//             confirmationModalDestroyPath.value = null;
-//         },
-//         onFinish: () => {
-//             confirmationModalTrigger.value = false;
-//             confirmationModalDestroyPath.value = null;
-//         },
-//         onError: (errors) => {
-//             console.log(errors);
-//         },
-//     });
-// }
 
 const handleBulkActionRequest = (action) => {
     if (action === 'bulk_delete') {
@@ -627,14 +593,12 @@ const handleShowGlobal = () => {
     filterData.value.showGlobal = true;
     showGlobal.value = true;
     handleSearchButtonClick();
-    handleUpdateCloudProvisioningStatuses();
 }
 
 const handleShowLocal = () => {
     filterData.value.showGlobal = false;
     showGlobal.value = false;
     handleSearchButtonClick();
-    handleUpdateCloudProvisioningStatuses();
 }
 
 const handleSearchButtonClick = () => {
@@ -662,7 +626,6 @@ const handleFiltersReset = () => {
     filterData.value.search = null;
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();
-    // handleUpdateCloudProvisioningStatuses();
 }
 
 
@@ -778,7 +741,6 @@ const handleModalClose = () => {
     confirmationRestartTrigger.value = false;
     bulkUpdateModalTrigger.value = false;
     cloudProvisioningModalTrigger.value = false;
-    handleUpdateCloudProvisioningStatuses();
 }
 
 const hideNotification = () => {

@@ -22,6 +22,7 @@ use App\Http\Requests\StoreDeviceRequest;
 use App\Http\Requests\UpdateDeviceRequest;
 use App\Services\CloudProvisioningService;
 use App\Http\Requests\BulkUpdateDeviceRequest;
+use App\Services\DeviceCloudProvisioningService;
 
 /**
  * The DeviceController class is responsible for handling device-related operations, such as listing, creating, and storing devices.
@@ -73,6 +74,7 @@ class DeviceController extends Controller
                 'device_label',
                 'device_profile_uuid',
                 'device_address',
+                'device_description',
             ])
             // allow ?filter[username]=foo or ?filter[user_email]=bar
             ->allowedFilters([
@@ -113,14 +115,17 @@ class DeviceController extends Controller
                 $query->select('device_profile_uuid', 'device_profile_name', 'device_profile_description');
             }])
             ->with(['cloudProvisioning' => function ($query) {
-                $query->select('uuid', 'device_uuid', 'status');
+                $query->select('uuid', 'device_uuid', 'last_action', 'status');
+            }])
+            ->with(['domain' => function ($query) {
+                $query->select('domain_uuid', 'domain_name', 'domain_description');
             }])
 
             ->allowedSorts(['device_address'])
             ->defaultSort('device_address')
             ->paginate($perPage);
 
-        // wrap in your DTO
+        // wrap in DTO
         $devicesDto = DeviceData::collect($devices);
 
         // logger( $devicesDto);
@@ -444,7 +449,6 @@ class DeviceController extends Controller
                             $deviceLine = new DeviceLines();
                             $deviceLine->fill($deviceLineData)->save();
                         }
-
                     }
                 }
                 $device->save();
@@ -566,6 +570,7 @@ class DeviceController extends Controller
                         'device_profile_uuid',
                         'device_address',
                         'device_vendor',
+                        'device_description',
                     ])
                     ->with(['lines' => function ($query) {
                         $query->select('device_line_uuid', 'line_number', 'device_uuid', 'auth_id', 'domain_uuid');
@@ -593,7 +598,6 @@ class DeviceController extends Controller
                     'cloud_provisioning_status_route' => route('cloud-provisioning.status', ['device' => $itemUuid]),
                     'cloud_provisioning_reset_route' => route('cloud-provisioning.reset', ['device' => $itemUuid]),
                 ]);
-
             } else {
                 // New device defaults
                 $deviceDto     = new DeviceData(
@@ -602,7 +606,6 @@ class DeviceController extends Controller
                     device_address: '',
                     device_template: '',
                 );
-
             }
 
             // $device = $this->model::find(request('itemUuid'));
@@ -725,6 +728,8 @@ class DeviceController extends Controller
                 'domain_uuid' => $domain_uuid,
             ];
 
+            $cloudProviderSelector = app()->make(\App\Services\CloudProviderSelector::class);
+
             // Construct the itemOptions object
             $itemOptions = [
                 'item' => $deviceDto ?? null,
@@ -739,6 +744,8 @@ class DeviceController extends Controller
                 'cloud_providers' => $cloudProviders,
                 'routes' => $routes,
                 'permissions' => $this->getUserPermissions(),
+                // Boolean field indicating if a cloud provider exists for this vendor:
+                'cloud_provider_available' => $deviceDto && $cloudProviderSelector->getCloudProvider($deviceDto->device_vendor) !== null,
                 // Define options for other fields as needed
             ];
 
@@ -1035,17 +1042,41 @@ class DeviceController extends Controller
 
             // Retrieve all devices at once with their lines
             $devices = $this->model::whereIn('device_uuid', request('items'))
-                ->with(['lines' => function ($query) {
-                    $query->select('device_uuid', 'device_line_uuid');
-                }])
-                ->get(['device_uuid']);
+                ->with([
+                    'lines' => function ($query) {
+                        $query->select('device_uuid', 'device_line_uuid');
+                    },
+                    'cloudProvisioning',
+                ])
+                ->get([
+                    'device_uuid',
+                    'domain_uuid',
+                    'device_vendor',
+                    'device_address',
+                ]);
 
             foreach ($devices as $device) {
                 // Delete all related lines for each device
-                if ($device->lines) { // Using eager loaded 'lines'
+                if ($device->lines) {
                     foreach ($device->lines as $line) {
                         $line->delete();
                     }
+                }
+
+                // Delete related cloud provisioning record
+                if ($device->cloudProvisioning) {
+
+                    $params = [
+                        'device_uuid' => $device->device_uuid,
+                        'domain_uuid' => $device->domain_uuid,
+                        'device_vendor' => $device->device_vendor,
+                        'device_address' => $device->device_address,
+                    ];
+
+                    $deregisterJob = (new DeviceCloudProvisioningService)->deregister($params);
+                    $resetJob = app(DeviceCloudProvisioningService::class)->reset($params);
+
+                    dispatch($deregisterJob->chain([$resetJob]));
                 }
 
                 // Delete the device itself
@@ -1062,8 +1093,8 @@ class DeviceController extends Controller
             // Rollback Transaction if any error occurs
             DB::rollBack();
 
-            // Log the error message
-            logger($e->getMessage());
+            logger('DeviceControler@bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => ['Server returned an error while deleting the selected items.']]
@@ -1077,7 +1108,10 @@ class DeviceController extends Controller
         $permissions['device_key_create'] = userCheckPermission('device_key_add');
         $permissions['device_key_update'] = userCheckPermission('device_key_edit');
         $permissions['device_key_destroy'] = userCheckPermission('device_key_delete');
-
+        $permissions['device_address_update'] = userCheckPermission('device_address');
+        $permissions['device_template_update'] = userCheckPermission('device_template');
+        $permissions['device_domain_update'] = userCheckPermission('device_domain');
+        $permissions['manage_device_cloud_provisioning_settings'] = userCheckPermission('manage_device_cloud_provisioning_settings');
 
         return $permissions;
     }

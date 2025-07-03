@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Validation\ValidationException;
@@ -73,6 +72,12 @@ class StoreDeviceRequest extends FormRequest
             'domain_uuid' => [
                 'required',
             ],
+            'device_description' => [
+                'nullable',
+            ],
+            'device_enabled' => [
+                'nullable',
+            ],
         ];
     }
 
@@ -115,7 +120,6 @@ class StoreDeviceRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
-        logger($this);
         $macAddress = strtolower(trim(tokenizeMacAddress($this->get('device_address') ?? '')));
         $this->merge([
             'device_address' => formatMacAddress($macAddress),

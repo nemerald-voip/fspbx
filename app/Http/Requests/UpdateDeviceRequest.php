@@ -74,6 +74,9 @@ class UpdateDeviceRequest extends FormRequest
             'domain_uuid' => [
                 'required',
             ],
+            'device_description' => [
+                'nullable',
+            ],
         ];
     }
 

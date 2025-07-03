@@ -692,8 +692,17 @@ class DeviceCloudProvisioningController extends Controller
             //Get devices info as a collection
             $items = Devices::whereIn('device_uuid', request('items'))->get();
 
-            foreach ($items as $item) {
-                app(DeviceCloudProvisioningService::class)->register($item);
+            foreach ($items as $device) {
+
+                $params = [
+                    'device_uuid' => $device->device_uuid,
+                    'domain_uuid' => $device->domain_uuid,
+                    'device_vendor' => $device->device_vendor,
+                    'device_address' => $device->device_address,
+                ];
+
+                $job = (new DeviceCloudProvisioningService)->register($params);
+                dispatch($job);
             }
 
             // Return a JSON response indicating success
@@ -722,8 +731,18 @@ class DeviceCloudProvisioningController extends Controller
             //Get devices info as a collection
             $items = Devices::whereIn('device_uuid', request('items'))->get();
 
-            foreach ($items as $item) {
-                app(DeviceCloudProvisioningService::class)->deregister($item);
+            foreach ($items as $device) {
+                $original = $device->getOriginal();
+
+                $params = [
+                    'device_uuid' => $device->device_uuid,
+                    'domain_uuid' => $device->domain_uuid,
+                    'device_vendor' => $original['device_vendor'],
+                    'device_address' => $original['device_address'],
+                ];
+
+                $job = (new DeviceCloudProvisioningService)->deregister($params);
+                dispatch($job);
             }
 
             // Return a JSON response indicating success

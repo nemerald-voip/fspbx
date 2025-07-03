@@ -104,6 +104,11 @@ class DatabaseSeeder extends Seeder
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
             [
+                'application_name'       => 'Cloud Provisioning',
+                'permission_name'        => 'manage_device_cloud_provisioning_settings',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
                 'application_name'       => 'Whitelisted Numbers',
                 'permission_name'        => 'whitelisted_numbers_list_view',
                 'insert_date'           => date("Y-m-d H:i:s"),
@@ -361,6 +366,14 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'permission_name'        => 'manage_cloud_provision_providers',
+                'permission_protected'   => 'true',
+                'permission_assigned'    => 'true',
+                'group_name'            => "superadmin",
+                'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'        => 'manage_device_cloud_provisioning_settings',
                 'permission_protected'   => 'true',
                 'permission_assigned'    => 'true',
                 'group_name'            => "superadmin",

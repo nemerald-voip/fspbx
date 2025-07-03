@@ -2,56 +2,55 @@
 
 namespace App\Services;
 
-use App\Models\Devices;
 use App\Jobs\RegisterDeviceWithCloudProvider;
 use App\Jobs\DeregisterDeviceWithCloudProvider;
+use App\Jobs\DeleteDeviceCloudProvisioningRecord;
+use App\Models\DeviceCloudProvisioning;
 
 class DeviceCloudProvisioningService
 {
-    public function register(Devices $device)
+    public function register($params)
     {
-        // If old values are not passed, get them from the model
-        $original = $device->getOriginal();
-        $oldMac = $original['device_address'] ?? null;
-        $oldVendor = $original['device_vendor'] ?? null;
-
         // Create/update provisioning record with status 'pending'
-        $provisioning = $device->cloudProvisioning()->firstOrNew([
-            'device_uuid' => $device->device_uuid,
-            'domain_uuid' => $device->domain_uuid,
+        $provisioning = DeviceCloudProvisioning::firstOrNew([
+            'device_uuid' => $params['device_uuid'],
+            'domain_uuid' => $params['domain_uuid'],
         ]);
-        $provisioning->provider = $device->device_vendor;
+        $provisioning->provider = $params['device_vendor'];
         $provisioning->last_action = 'register';
         $provisioning->status = 'pending';
         $provisioning->error = null;
         $provisioning->save();
 
-        // Dispatch job for async provisioning
-        RegisterDeviceWithCloudProvider::dispatch($device, $oldMac, $oldVendor);
+        $params['provisioning_uuid'] = $provisioning->uuid;
 
-        return $provisioning;
+        return new RegisterDeviceWithCloudProvider($params);
     }
 
-    public function deregister(Devices $device)
+    public function deregister($params)
     {
-        // If old values are not passed, get them from the model
-        $original = $device->getOriginal();
-        $oldMac = $original['device_address'] ?? null;
-        $oldVendor = $original['device_vendor'] ?? null;
-
         // Update provisioning record with status 'pending'
-        $provisioning = $device->cloudProvisioning;
+        $provisioning = DeviceCloudProvisioning::where(
+            'device_uuid', $params['device_uuid'],
+          )->first();
         if ($provisioning) {
-            $provisioning->provider = $device->device_vendor;
+            $provisioning->provider = $params['device_vendor'];
             $provisioning->last_action = 'deregister';
             $provisioning->status = 'pending';
             $provisioning->error = null;
             $provisioning->save();
+
+            $params['provisioning_uuid'] = $provisioning->uuid;
     
-            // Dispatch job for async provisioning
-            DeregisterDeviceWithCloudProvider::dispatch($device, $oldMac, $oldVendor);
+            return new DeregisterDeviceWithCloudProvider($params);
         }
 
-        return $provisioning;
+        return null;
+    }
+
+    // Deletes local cache from DB
+    public function reset($params)
+    {
+        return new DeleteDeviceCloudProvisioningRecord($params);
     }
 }

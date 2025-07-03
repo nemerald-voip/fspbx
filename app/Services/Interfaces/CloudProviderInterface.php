@@ -11,8 +11,8 @@ interface CloudProviderInterface {
     public function getProviderName(): string;
     public function getDevices(int $limit, string $cursor): array;
     public function getDevice(string $id): array;
-    public function createDevice(Devices $device): array;
-    public function deleteDevice(Devices $device): array;
+    public function createDevice(array $params): array;
+    public function deleteDevice(array $params): array;
     public function getOrganizations(): Collection;
     public function createOrganization(array $params): string;
     public function getOrganization(string $id): OrganizationDTOInterface;

@@ -54,6 +54,7 @@
                                     device_profile_uuid: options.item?.device_profile_uuid,
                                     domain_uuid: options.item?.domain_uuid,
                                     device_keys: options.lines,
+                                    device_description: options.item?.device_description ?? null,
                                 }">
 
                                 <template #empty>
@@ -67,7 +68,7 @@
                                                     'device_template',
                                                     'device_profile_uuid',
                                                     'domain_uuid',
-
+                                                    'device_description',
                                                     'container_3',
                                                     'submit',
 
@@ -85,7 +86,7 @@
                                                     'submit_keys',
 
                                                 ]" />
- 
+
                                             </FormTabs>
                                         </div>
 
@@ -110,7 +111,9 @@
                                                     value-prop="value" placeholder="Select Profile (Optional)"
                                                     :floating="false" />
 
-                                                
+                                                <TextElement name="device_description" label="Description"
+                                                    placeholder="Enter description" :floating="false" />
+
 
                                                 <GroupElement name="container_3" />
 
@@ -349,18 +352,11 @@
 </template>
 
 <script setup>
-import {reactive, ref} from "vue";
+import { ref } from "vue";
 import { usePage } from '@inertiajs/vue3';
 
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 
-import Spinner from "../general/Spinner.vue";
-import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
-import { Cog6ToothIcon, AdjustmentsHorizontalIcon, EllipsisVerticalIcon } from '@heroicons/vue/24/outline';
-import { PlusIcon } from "@heroicons/vue/24/solid";
-import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import {CloudIcon} from "@heroicons/vue/24/outline/index.js";
-import Toggle from "../general/Toggle.vue";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import { Cog8ToothIcon } from "@heroicons/vue/24/outline";
 import FormChildModal from "../FormChildModal.vue"
@@ -373,9 +369,6 @@ const props = defineProps({
     loading: Boolean,
 });
 
-const page = usePage();
-
-const isProvisioningAllowed = ref(false);
 const advModalIndex = ref(null)
 
 
@@ -398,7 +391,7 @@ const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
-    console.log(requestData);
+    // console.log(requestData);
 
     // Using form$.data will INCLUDE conditional elements and it
     // will submit the form as "Content-Type: application/json".
