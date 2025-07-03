@@ -73,7 +73,7 @@
                                 </div>
                             </div>
                             <div class="px-4 py-3 text-center sm:px-6">
-                                <button @click.prevent="handleSyncButtonClick()"
+                                <button @click.prevent="handleSyncButtonClick('polycom')"
                                         class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
                                         :disabled="syncDevicesSubmitting">
                                     <Spinner :show="syncDevicesSubmitting" />
@@ -392,9 +392,13 @@ const handleUpdateRequest = (form) => {
 
 };
 
-const handleSyncButtonClick = () => {
+const handleSyncButtonClick = (provider) => {
     syncDevicesSubmitting.value = true;
-    axios.post(props.routes.cloud_provisioning_sync_devices)
+    axios.post(props.routes.cloud_provisioning_sync_devices,
+        {
+            provider: provider
+        }
+    )
         .then((response) => {
             syncDevicesSubmitting.value = false;
             showNotification('success', response.data.messages);
@@ -478,7 +482,7 @@ const getItemOptions = (provider = null, itemUuid = null) => {
         ...(provider && {provider: provider}),
         ...(itemUuid && {item_uuid: itemUuid})
     };
-    console.log(provider)
+    // console.log(provider)
     axios.post(props.routes.cloud_provisioning_item_options, payload)
         .then((response) => {
             loadingModal.value = false;

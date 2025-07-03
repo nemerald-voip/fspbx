@@ -368,6 +368,7 @@ class ExtensionsController extends Controller
             $routes['reset_mobile_app'] = route('apps.user.reset');
             $routes['activate_mobile_app'] = route('apps.user.activate');
             $routes['deactivate_mobile_app'] = route('apps.user.deactivate');
+            $routes['device_item_options'] = route('devices.item.options');
 
             $voicemailDestinations = $extension->voicemail && $extension->voicemail->voicemail_destinations
                 ? $extension->voicemail->voicemail_destinations->pluck('voicemail_uuid_copy')->values()->all()
@@ -426,7 +427,6 @@ class ExtensionsController extends Controller
                     'delete_recorded_name_route' => route('voicemails.deleteRecordedName', $extension->voicemail),
                     'upload_recorded_name_route' => route('voicemails.uploadRecordedName', $extension->voicemail),
                     // 'update_route' => route('voicemails.update', $extension->voicemail),
-                    'device_item_options' => route('devices.item.options'),
                 ]);
             }
 

@@ -22,10 +22,7 @@ class PolycomCloudProvider implements CloudProviderInterface
      * Constructor for PolycomCloudProvider.
      * Initializes necessary service objects or parameters.
      */
-    public function __construct()
-    {
-
-    }
+    public function __construct() {}
 
     /**
      * Retrieve the Polycom API token from the database.
@@ -87,9 +84,9 @@ class PolycomCloudProvider implements CloudProviderInterface
 
         $response = Http::polycom()
             ->timeout($this->timeout)
-            ->get('/devices?limit='.$limit.'&cursor='.$cursor)
+            ->get('/devices?limit=' . $limit . '&cursor=' . $cursor)
             ->throw(function ($error) {
-                throw new \Exception("Unable to retrieve devices: ".json_encode($error));
+                throw new \Exception("Unable to retrieve devices: " . json_encode($error));
             });
 
         return $this->handleResponse($response);
@@ -110,9 +107,9 @@ class PolycomCloudProvider implements CloudProviderInterface
 
         $response = Http::polycom()
             ->timeout($this->timeout)
-            ->get('/devices/'.$id)
+            ->get('/devices/' . $id)
             ->throw(function ($error) {
-                throw new \Exception("Unable to retrieve devices: ".json_encode($error));
+                throw new \Exception("Unable to retrieve devices: " . json_encode($error));
             });
 
         return $this->handleResponse($response);
@@ -155,7 +152,7 @@ class PolycomCloudProvider implements CloudProviderInterface
 
         $response = Http::polycom()
             ->timeout($this->timeout)
-            ->delete('/devices/'.$params['device_address']);
+            ->delete('/devices/' . $params['device_address']);
 
         return $this->handleResponse($response);
     }
@@ -176,7 +173,7 @@ class PolycomCloudProvider implements CloudProviderInterface
 
         $response = $this->handleResponse($response);
 
-        return collect($response['data'])->map(function ($item) {
+        return collect($response['data']['results'])->map(function ($item) {
             return PolycomOrganizationDTO::fromArray($item);
         });
     }
@@ -222,12 +219,9 @@ class PolycomCloudProvider implements CloudProviderInterface
         $response = Http::polycom()
             ->timeout($this->timeout)
             ->withBody(json_encode($payload), 'application/json')
-            ->post('/profiles')
-            ->throw(function () {
-                throw new \Exception("Unable to activate organization");
-            });
+            ->post('/profiles');
 
-        return $this->handleResponse($response)['id'];
+        return $this->handleResponse($response)['data']['id'];
     }
 
     /**
@@ -271,7 +265,7 @@ class PolycomCloudProvider implements CloudProviderInterface
         $response = Http::polycom()
             ->timeout($this->timeout)
             ->withBody(json_encode($payload), 'application/json')
-            ->put('/profiles/'.$id)
+            ->put('/profiles/' . $id)
             ->throw(function () {
                 throw new \Exception("Unable to update organization");
             });
@@ -290,9 +284,9 @@ class PolycomCloudProvider implements CloudProviderInterface
     {
         $response = Http::polycom()
             ->timeout($this->timeout)
-            ->get('/profiles/'.$id)
+            ->get('/profiles/' . $id)
             ->throw(function ($error) {
-                throw new \Exception("Unable to retrieve organizations: ".json_encode($error));
+                throw new \Exception("Unable to retrieve organizations: " . json_encode($error));
             });
         return PolycomOrganizationDTO::fromArray($this->handleResponse($response));
     }
@@ -310,12 +304,12 @@ class PolycomCloudProvider implements CloudProviderInterface
 
         $response = Http::polycom()
             ->timeout($this->timeout)
-            ->delete('/profiles/'.$id)
-            ->throw(function ($error) {
-                throw new \Exception("Unable to delete organization: ".json_encode($error));
-            });
+            ->delete('/profiles/' . $id);
 
-        return $this->handleResponse($response)['message'];
+
+        $response = $this->handleResponse($response);
+
+        return $response['data']['message'];
     }
 
     /**
@@ -351,26 +345,26 @@ class PolycomCloudProvider implements CloudProviderInterface
             'status' => $response->status(),
             'body' => $response->body(),
             'headers' => $response->headers(),
-            'url' => $response->effectiveUri() ?? null, 
+            'url' => $response->effectiveUri() ?? null,
         ]);
-    
+
         // If it wasn't a 2xx
         $error = $response->json();
         $errorMessage = null;
-    
+
         // Many OpenAPI APIs send 'error', 'message', or similar
         if (is_array($error)) {
             $errorMessage = $error['error'] ?? $error['message'] ?? json_encode($error);
         }
-    
+
         // Fallback to status text if nothing in body
         if (!$errorMessage) {
             $errorMessage = $response->body() ?: $response->status();
         }
-    
+
         // Optionally, you can throw or return an error array
         // throw new \Exception("API Error ({$response->status()}): " . $errorMessage);
-    
+
         // Or, if you want to return an error array instead of throwing:
         return [
             'success' => false,
@@ -378,7 +372,7 @@ class PolycomCloudProvider implements CloudProviderInterface
             'status' => $response->status(),
         ];
     }
-    
+
 
     public function getOrgIdByDomainUuid(string $domainUuid): mixed
     {

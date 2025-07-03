@@ -11,6 +11,8 @@ use Illuminate\Support\Collection;
 use Spatie\QueryBuilder\QueryBuilder;
 use App\Services\PolycomCloudProvider;
 use App\Models\CloudProvisioningStatus;
+use App\Models\DeviceCloudProvisioning;
+use App\Services\CloudProviderSelector;
 use Illuminate\Support\Facades\Session;
 use App\Services\DeviceCloudProvisioningService;
 use App\Http\Requests\PairZtpOrganizationRequest;
@@ -496,19 +498,27 @@ class DeviceCloudProvisioningController extends Controller
             // Delete the organization
             $deleteResponse = $this->PolycomCloudProvider->deleteOrganization($org_id);
             if ($deleteResponse) {
-                $items = CloudProvisioningStatus::where(['ztp_profile_id' => $org_id])->get();
-                foreach ($items as $item) {
-                    /** @var CloudProvisioningStatus $item */
-                    /** @var Devices $device */
-                    $device = $item->device()->first();
-                    if ($device->hasSupportedCloudProvider()) {
-                        try {
-                            $cloudProvider = $device->getCloudProvider();
-                            $cloudProvider->deleteDevice($device->device_address);
-                            $device->delete();
-                        } catch (\Exception $e) {
-                            logger($e);
-                        }
+                $devices = Devices::where('domain_uuid', $domain_uuid)
+                    ->select(
+                        'device_uuid',
+                        'domain_uuid',
+                        'device_address',
+                        'device_vendor',
+                    )
+                    ->get();
+
+                foreach ($devices as $device) {
+
+                    $params = [
+                        'device_uuid' => $device->device_uuid,
+                        'domain_uuid' => $device->domain_uuid,
+                        'device_vendor' => $device->device_vendor,
+                        'device_address' => $device->device_address,
+                    ];
+
+                    $job = (new DeviceCloudProvisioningService)->deregister($params);
+                    if ($job) {
+                        dispatch($job);
                     }
                 }
 
@@ -630,40 +640,49 @@ class DeviceCloudProvisioningController extends Controller
     {
         // Hardcode the provider for now
         try {
-            $deviceModel = new Devices();
-            $providerInstance = new PolycomCloudProvider();
+            $domain_uuid = session('domain_uuid');
+
+            $cloudProviderSelector = app()->make(CloudProviderSelector::class);
+            $cloudProvider = $cloudProviderSelector->getCloudProvider(request('provider'));
+
+            // 1. Get local devices (mac => uuid)
+            $localDevices = Devices::where('domain_uuid', $domain_uuid)
+                ->pluck('device_uuid', 'device_address') // device_address is MAC
+                ->toArray();
+
+            // 2. Remove all provisioning records for this domain
+            DeviceCloudProvisioning::where('domain_uuid', $domain_uuid)->delete();
+
             $next = null; // Start with no next token
             $limit = 50;  // Define the batch size
+
+            $insertRows = [];
             do {
-                // Fetch the current batch of devices
-                $response = $providerInstance->getDevices($limit, $next);
-                // Check if results exist and iterate through each device
-                if (isset($response['results']) && is_array($response['results'])) {
-                    foreach ($response['results'] as $device) {
-                        /** @var Devices $existingDevice */
-                        $existingDevice = $deviceModel
-                            ->where('device_address', strtolower($device['id']))
-                            ->where('device_vendor', 'polycom')
-                            ->where('domain_uuid', Session::get('domain_uuid'))
-                            ->first();
-                        if ($existingDevice) {
-                            // Check provisioning status
-                            $isProvisioned = (!empty($device['profileid']) && $device['profileid'] == $existingDevice->getCloudProviderOrganizationId());
-                            $existingDevice->cloudProvisioningStatus()->updateOrInsert(
-                                ['device_uuid' => $existingDevice->device_uuid],
-                                [
-                                    'provider' => 'polycom',
-                                    'device_address' => $existingDevice->device_address,
-                                    'status' => ($isProvisioned) ? 'provisioned' : 'not_provisioned',
-                                    'ztp_profile_id' => ($isProvisioned) ? $device['profileid'] : null,
-                                    'error' => '',
-                                ]
-                            );
+                $response = $cloudProvider->getDevices($limit, $next);
+                if (isset($response['data']['results']) && is_array($response['data']['results'])) {
+                    foreach ($response['data']['results'] as $providerDevice) {
+                        // Normalize MAC from provider (lowercase, remove any non-alphanum just in case)
+                        $mac = strtolower(preg_replace('/[^a-z0-9]/i', '', $providerDevice['mac'] ?? $providerDevice['id']));
+                        if (isset($localDevices[$mac])) {
+                            $insertRows[] = [
+                                'domain_uuid' => $domain_uuid,
+                                'device_uuid' => $localDevices[$mac],
+                                'provider' => request('provider'),
+                                'last_action' => 'register',
+                                'status' => 'success',
+                                'error' => null,
+                            ];
                         }
                     }
                 }
-                $next = $response['next'] ?? null;
+                $next = $response['data']['next'] ?? null;
             } while ($next);
+
+
+            if (!empty($insertRows)) {
+                DeviceCloudProvisioning::insert($insertRows);
+            }
+
 
             return response()->json([
                 'messages' => ['success' => ['Devices are successfully synced']]

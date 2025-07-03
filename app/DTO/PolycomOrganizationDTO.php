@@ -6,7 +6,7 @@ class PolycomOrganizationDTO implements OrganizationDTOInterface
     public ?string $id;
     public ?string $name;
     public bool $enabled;
-    public object|array $template;
+    public object $template;
 
     private const DEFAULT_PROVISIONING = [
         'server' => [
@@ -42,54 +42,40 @@ class PolycomOrganizationDTO implements OrganizationDTOInterface
     private function buildTemplate(array $templateData): object
     {
         return (object) [
-            'software' => $this->buildSoftware($templateData['software'] ?? []),
-            'provisioning' => $this->buildProvisioning($templateData['provisioning'] ?? []),
-            'dhcp' => $this->buildDhcp($templateData['dhcp'] ?? []),
-            'localization' => $this->buildLocalization($templateData['localization'] ?? []),
+            'software'      => $this->buildSoftware($templateData['software'] ?? []),
+            'provisioning'  => $this->buildProvisioning($templateData['provisioning'] ?? []),
+            'dhcp'          => $this->buildDhcp($templateData['dhcp'] ?? []),
+            'localization'  => $this->buildLocalization($templateData['localization'] ?? []),
         ];
     }
 
     private function buildSoftware(array $softwareData): object
     {
-        $software = array_merge(self::DEFAULT_SOFTWARE, $softwareData);
-
-        return (object) [
-            'version' => $software['version'],
-        ];
+        return (object) array_merge(self::DEFAULT_SOFTWARE, $softwareData);
     }
 
     private function buildProvisioning(array $provisioningData): object
     {
-        $provisioning = array_merge(self::DEFAULT_PROVISIONING, $provisioningData);
+        // Ensure server is always an array and defaults are applied per key
+        $server = array_merge(self::DEFAULT_PROVISIONING['server'], $provisioningData['server'] ?? []);
+        $polling = $provisioningData['polling'] ?? self::DEFAULT_PROVISIONING['polling'];
+        $quickSetup = $provisioningData['quickSetup'] ?? self::DEFAULT_PROVISIONING['quickSetup'];
 
         return (object) [
-            'server' => (object) [
-                'address' => $provisioning['server']['address'],
-                'username' => $provisioning['server']['username'],
-                'password' => $provisioning['server']['password'],
-            ],
-            'polling' => $provisioning['polling'],
-            'quickSetup' => $provisioning['quickSetup'],
+            'server'      => (object) $server,
+            'polling'     => $polling,
+            'quickSetup'  => $quickSetup,
         ];
     }
 
     private function buildDhcp(array $dhcpData): object
     {
-        $dhcp = array_merge(self::DEFAULT_DHCP, $dhcpData);
-
-        return (object) [
-            'bootServerOption' => $dhcp['bootServerOption'],
-            'option60Type' => $dhcp['option60Type'],
-        ];
+        return (object) array_merge(self::DEFAULT_DHCP, $dhcpData);
     }
 
     private function buildLocalization(array $localizationData): object
     {
-        $localization = array_merge(self::DEFAULT_LOCALIZATION, $localizationData);
-
-        return (object) [
-            'language' => $localization['language'],
-        ];
+        return (object) array_merge(self::DEFAULT_LOCALIZATION, $localizationData);
     }
 
     public static function fromArray(array $data): OrganizationDTOInterface
