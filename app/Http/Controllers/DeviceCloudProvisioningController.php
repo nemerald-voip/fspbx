@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Domain;
 use App\Models\Devices;
+use App\Data\DomainData;
 use App\Models\DomainSettings;
 use App\Models\DefaultSettings;
 use Illuminate\Http\JsonResponse;
@@ -84,129 +85,71 @@ class DeviceCloudProvisioningController extends Controller
         return $data;
     }
 
-    public function getItemOptions(PolycomCloudProvider $PolycomCloudProvider)
+    public function getItemOptions()
     {
-        $this->PolycomCloudProvider = $PolycomCloudProvider;
+
         try {
-            $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
+            $domain_uuid = session('domain_uuid');
 
-            $navigation = [
-                [
-                    'name' => 'Organization',
-                    'icon' => 'BuildingOfficeIcon',
-                    'slug' => 'organization',
-                ],
-                [
-                    'name' => 'Provisioning',
-                    'icon' => 'SyncAltIcon',
-                    'slug' => 'provisioning',
-                ],
-            ];
+            $cloudProviderSelector = app()->make(CloudProviderSelector::class);
+            $cloudProvider = $cloudProviderSelector->getCloudProvider(request('provider'));
 
-            $dhcpOption60TypeList = [
-                ['value' => 'ASCII', 'name' => 'ASCII'],
-                ['value' => 'BINARY', 'name' => 'BINARY'],
-            ];
-
-            $dhcpBootServerOptionList = [
-                ['value' => 'OPTION66', 'name' => 'OPTION66'],
-                ['value' => 'CUSTOM', 'name' => 'CUSTOM'],
-                ['value' => 'STATIC', 'name' => 'STATIC'],
-                ['value' => 'CUSTOM_OPTION66', 'name' => 'CUSTOM_OPTION66'],
-            ];
-
-            $locales = [
-                ['value' => 'Chinese_China', 'name' => 'Chinese_China'],
-                ['value' => 'Chinese_Taiwan', 'name' => 'Chinese_Taiwan'],
-                ['value' => 'Danish_Denmark', 'name' => 'Danish_Denmark'],
-                ['value' => 'Dutch_Netherlands', 'name' => 'Dutch_Netherlands'],
-                ['value' => 'English_Canada', 'name' => 'English_Canada'],
-                ['value' => 'English_United_Kingdom', 'name' => 'English_United_Kingdom'],
-                ['value' => 'English_United_States', 'name' => 'English_United_States'],
-                ['value' => 'French_France', 'name' => 'French_France'],
-                ['value' => 'German_Germany', 'name' => 'German_Germany'],
-                ['value' => 'Italian_Italy', 'name' => 'Italian_Italy'],
-                ['value' => 'Japanese_Japan', 'name' => 'Japanese_Japan'],
-                ['value' => 'Korean_Korea', 'name' => 'Korean_Korea'],
-                ['value' => 'Norwegian_Norway', 'name' => 'Norwegian_Norway'],
-                ['value' => 'Polish_Poland', 'name' => 'Polish_Poland'],
-                ['value' => 'Portuguese_Portugal', 'name' => 'Portuguese_Portugal'],
-                ['value' => 'Russian_Russia', 'name' => 'Russian_Russia'],
-                ['value' => 'Slovenian_Slovenia', 'name' => 'Slovenian_Slovenia'],
-                ['value' => 'Spanish_Spain', 'name' => 'Spanish_Spain'],
-                ['value' => 'Swedish_Sweden', 'name' => 'Swedish_Sweden'],
-            ];
-
-            // Check if item_uuid exists to find an existing model
-            if ($item_uuid) {
-                // Find existing model by item_uuid
-                $model = $this->model
-                    ->select(
-                        'domain_uuid',
-                        'domain_name',
-                        'domain_description',
-                    )
-                    ->with([
-                        'settings' => function ($query) {
-                            $query->select(
-                                'domain_uuid',
-                                'domain_setting_uuid',
-                                'domain_setting_category',
-                                'domain_setting_subcategory',
-                                'domain_setting_value'
-                            )
-                                ->where('domain_setting_category', 'cloud provision')
-                                ->where('domain_setting_subcategory', 'polycom_ztp_profile_id')
-                                ->where('domain_setting_enabled', true);
-                        }
-                    ])->where($this->model->getKeyName(), $item_uuid)->first();
-
-                if ($model) {
-                    // Transform settings into org_id
-                    $model->org_id = $model->settings->first()->domain_setting_value ?? null;
-                    unset($model->settings); // Remove settings relationship if not needed
-                }
-
-                $model->ztp_status = $model->settings()
-                    ->where('domain_setting_category', 'cloud provision')
-                    ->where('domain_setting_subcategory', 'polycom_ztp_profile_id')
-                    ->where('domain_setting_enabled', true)
-                    ->exists() ? 'true' : 'false';
-
-                // If model doesn't exist throw an error
-                if (!$model) {
-                    throw new \Exception("Failed to fetch item details. Item not found");
-                }
-            } else {
-                $model = null;
+            if (!$cloudProvider) {
+                throw new \Exception('There was an issue retrieving requested data.');
             }
 
-            $settings = $this->getProvisioningSettings($model->domain_uuid ?? null);
+            $providerSettings = $cloudProvider::getSettings();
 
-            $permissions = $this->getUserPermissions();
-
-            if ($model && $model->org_id) {
-                $organization = $this->PolycomCloudProvider->getOrganization($model->org_id);
+            if ($domain_uuid) {
+                $organization_id = $cloudProvider::getOrgIdByDomainUuid($domain_uuid);
             }
 
-            // We have to remove the credentials from the response if the user isn't permitted to see it
-            if (!$permissions['manage_cloud_provisioning_show_credentials']) {
-                $settings['http_auth_password'] = null;
-                $settings['http_auth_username'] = null;
+            if ($organization_id) {
+                $organization = $cloudProvider->getOrganization($organization_id);
             }
+
+            $routes = [
+                'cloud_provisioning_create_organization' => route('cloud-provisioning.organization.create'),
+                'cloud_provisioning_update_organization' => route('cloud-provisioning.organization.update'),
+                'cloud_provisioning_destroy_organization' => route('cloud-provisioning.organization.destroy'),
+                'cloud_provisioning_pair_organization' => route('cloud-provisioning.organization.pair'),
+                'cloud_provisioning_get_all_orgs' => route('cloud-provisioning.organization.all'),
+                'cloud_provisioning_get_api_token' => route('cloud-provisioning.token.get'),
+                'cloud_provisioning_update_api_token' => route('cloud-provisioning.token.update'),
+                'cloud_provisioning_sync_devices' => route('cloud-provisioning.devices.sync'),
+            ];
+
+
+
+
+            // if ($model) {
+            //     // Transform settings into org_id
+            //     $model->org_id = $model->settings->first()->domain_setting_value ?? null;
+            //     unset($model->settings); // Remove settings relationship if not needed
+            // }
+
+            // $model->ztp_status = $model->settings()
+            //     ->where('domain_setting_category', 'cloud provision')
+            //     ->where('domain_setting_subcategory', 'polycom_ztp_profile_id')
+            //     ->where('domain_setting_enabled', true)
+            //     ->exists() ? 'true' : 'false';
+
+
+            // $settings = $this->getProvisioningSettings($model->domain_uuid ?? null);
+
+            // $permissions = $this->getUserPermissions();
+
+            // if ($model && $model->org_id) {
+            //     $organization = $this->PolycomCloudProvider->getOrganization($model->org_id);
+            // }
 
             // Construct the itemOptions object
             return [
-                'navigation' => $navigation,
-                'model' => $model ?? null,
                 'organization' => $organization ?? null,
-                'orgId' => $organization->id ?? null,
-                'dhcp_option_60_type_list' => $dhcpOption60TypeList,
-                'dhcp_boot_server_option_list' => $dhcpBootServerOptionList,
-                'settings' => $settings,
-                'locales' => $locales,
-                'permissions' => $permissions,
-                'tenant' => $this->getData()
+                'organization_id' => $organization_id ?? null,
+                'provider_settings' => $providerSettings ?? null,
+                // 'permissions' => $permissions,
+                'routes' => $routes,
             ];
         } catch (\Exception $e) {
             // Log the error message
@@ -216,7 +159,7 @@ class DeviceCloudProvisioningController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details'], 'server2' => [$e->getMessage()]]
+                'errors' => ['server' => [$e->getMessage()]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -541,15 +484,17 @@ class DeviceCloudProvisioningController extends Controller
     }
 
     /**
-     * @param  PolycomCloudProvider  $PolycomCloudProvider
+     * 
      * @return JsonResponse|Collection
      */
-    public function getOrganizations(PolycomCloudProvider $PolycomCloudProvider): JsonResponse|Collection
+    public function getOrganizations()
     {
-        $this->PolycomCloudProvider = $PolycomCloudProvider;
+        $cloudProviderSelector = app()->make(CloudProviderSelector::class);
+        $cloudProvider = $cloudProviderSelector->getCloudProvider(request('provider'));
+
 
         try {
-            $organizations = $this->PolycomCloudProvider->getOrganizations();
+            $organizations = $cloudProvider->getOrganizations();
 
             return collect($organizations)->map(function ($org) {
                 return [

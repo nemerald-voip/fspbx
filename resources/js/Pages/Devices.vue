@@ -73,7 +73,7 @@
                 <TableColumnHeader header="Template"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Profile" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader v-if="!showGlobal"  header="Assigned extension"
+                <TableColumnHeader v-if="!showGlobal" header="Assigned extension"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Description"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
@@ -147,7 +147,8 @@
                             </div>
                         </template>
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_description" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        :text="row.device_description" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <div class="flex items-center whitespace-nowrap">
                             <ejs-tooltip :content="!row.cloud_provisioning ? 'Not provisioned'
@@ -253,21 +254,6 @@
         @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
         @refresh-data="handleSearchButtonClick" />
 
-    <!-- <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showUpdateModal" :header="'Edit Device'" :loading="isModalLoading"
-        @close="handleModalClose">
-        <template #modal-body>
-            <UpdateDeviceForm
-                :item="itemData"
-                :options="itemOptions"
-                :errors="formErrors"
-                :is-submitting="updateFormSubmitting"
-                @submit="handleUpdateRequest"
-                @cancel="handleModalClose"
-                @domain-selected="getItemOptions"
-            />
-        </template>
-    </AddEditItemModal> -->
-
     <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="bulkUpdateModalTrigger" :header="'Bulk Edit'"
         :loading="isModalLoading" @close="handleModalClose">
         <template #modal-body>
@@ -277,14 +263,11 @@
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="cloudProvisioningModalTrigger" :header="'Cloud Provisioning'"
-        :loading="isModalLoading" @close="handleModalClose">
-        <template #modal-body>
-            <CloudProvisioningListing :options="itemOptions" :routes="routes"
-                :canEditPolycomToken="page.props.auth.can.polycom_api_token_edit"
-                @notification:show="showNotification" />
-        </template>
-    </AddEditItemModal>
+    <CloudProvisioningSettings :show="showCloudProvisioningSettings"  @close="showCloudProvisioningSettings = false"  
+        :header="'Cloud Provisioning Settings'"
+        :loading="isModalLoading" :routes="routes"
+        @error="handleErrorResponse" @success="showNotification" />
+
 
     <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="confirmDeleteAction" />
@@ -322,7 +305,7 @@ import RestartIcon from "./components/icons/RestartIcon.vue";
 import CreateDeviceForm from "./components/forms/CreateDeviceForm.vue";
 import UpdateDeviceForm from "./components/forms/UpdateDeviceForm.vue";
 import Notification from "./components/notifications/Notification.vue";
-import CloudProvisioningListing from "./components/listings/CloudProvisioningListing.vue";
+import CloudProvisioningSettings from "./components/forms/CloudProvisioningSettings.vue";
 
 const page = usePage()
 const itemOptions = ref({})
@@ -344,7 +327,7 @@ const updateFormSubmitting = ref(null);
 const confirmDeleteAction = ref(null);
 const confirmRestartAction = ref(null);
 const bulkUpdateFormSubmitting = ref(null);
-const cloudProvisioningModalTrigger = ref(false);
+const showCloudProvisioningSettings = ref(false);
 const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
@@ -540,24 +523,9 @@ const handleSelectAll = () => {
 };
 
 const handleCloudProvisioningButtonClick = () => {
-    cloudProvisioningModalTrigger.value = true
-    isModalLoading.value = true
-    formErrors.value = null;
-    getItemOptions();
-    /*axios.post(props.routes.cloud_provisioning_item_options, {}).then(response => {
-
-        availableDomains.value = response.data.tenants || [];
-        console.log(availableDomains.value)
-        isModalLoading.value = false
-        //
-        //formErrors.value = null;
-        //
-        //getItemOptions();
-    }).catch((error) => {
-        handleClearSelection();
-        handleErrorResponse(error);
-    });*/
-    //getAvailableDomains();
+    showCloudProvisioningSettings.value = true
+    isModalLoading.value = false
+    // getCloudProvisioningItemOptions()
 }
 
 
@@ -740,7 +708,7 @@ const handleModalClose = () => {
     confirmationModalTrigger.value = false;
     confirmationRestartTrigger.value = false;
     bulkUpdateModalTrigger.value = false;
-    cloudProvisioningModalTrigger.value = false;
+    showCloudProvisioningSettings.value = false;
 }
 
 const hideNotification = () => {

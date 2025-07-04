@@ -779,42 +779,5 @@ const handleError = (error, details, form$) => {
     }
 }
 
-// onMounted(() => {
-//     isProvisioningAllowed.value = form.device_template.toLowerCase().includes('poly') || form.device_template.toLowerCase().includes('polycom')
-//     fetchProvisioningStatus();
-// });
 
-// const fetchProvisioningStatus = () => {
-//     isCloudProvisioned.value.isLoading = true;
-//     axios.post(page.props.routes.cloud_provisioning_status, {
-//         'items': [props.item.device_uuid]
-//     })
-//         .then(response => {
-//             const device = response.data.devicesData.find(d => d.device_uuid === props.item.device_uuid);
-//             if (device) {
-//                 if (device.status === 'provisioned') {
-//                     isCloudProvisioned.value.status = true;
-//                     isCloudProvisioned.value.error = null;
-//                     form.device_provisioning = true;
-//                 } else {
-//                     isCloudProvisioned.value.status = false;
-//                     isCloudProvisioned.value.error = device.error;
-//                     form.device_provisioning = false;
-//                 }
-//             } else {
-//                 isCloudProvisioned.value.status = false;
-//                 isCloudProvisioned.value.error = 'Not found';
-//                 form.device_provisioning = false;
-//             }
-//         })
-//         .catch(error => {
-//             console.error(error);
-//             isCloudProvisioned.value.status = false;
-//             form.device_provisioning = false;
-//             isCloudProvisioned.value.error = error.response?.data?.error;
-//         })
-//         .finally(() => {
-//             isCloudProvisioned.value.isLoading = false;
-//         });
-// };
 </script>

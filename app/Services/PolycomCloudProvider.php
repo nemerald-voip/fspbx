@@ -284,11 +284,14 @@ class PolycomCloudProvider implements CloudProviderInterface
     {
         $response = Http::polycom()
             ->timeout($this->timeout)
-            ->get('/profiles/' . $id)
-            ->throw(function ($error) {
-                throw new \Exception("Unable to retrieve organizations: " . json_encode($error));
-            });
-        return PolycomOrganizationDTO::fromArray($this->handleResponse($response));
+            ->get('/profiles/' . $id);
+
+        // logger($response);
+
+        $response = $this->handleResponse($response);
+        logger($response);
+
+        return PolycomOrganizationDTO::fromArray($response['data']);
     }
 
     /**
@@ -374,7 +377,7 @@ class PolycomCloudProvider implements CloudProviderInterface
     }
 
 
-    public function getOrgIdByDomainUuid(string $domainUuid): mixed
+    public static function getOrgIdByDomainUuid(string $domainUuid): mixed
     {
         return DomainSettings::where([
             ['domain_uuid', '=', $domainUuid],
@@ -382,5 +385,43 @@ class PolycomCloudProvider implements CloudProviderInterface
             ['domain_setting_subcategory', '=', 'polycom_ztp_profile_id'],
             ['domain_setting_enabled', '=', true],
         ])->value('domain_setting_value');
+    }
+
+    public static function getSettings(): array
+    {
+        return [
+            'dhcp_option_60_type_list' => [
+                ['value' => 'ASCII', 'label' => 'ASCII'],
+                ['value' => 'BINARY', 'label' => 'BINARY'],
+            ],
+            'dhcp_boot_server_option_list' => [
+                ['value' => 'OPTION66', 'label' => 'OPTION66'],
+                ['value' => 'CUSTOM', 'label' => 'CUSTOM'],
+                ['value' => 'STATIC', 'label' => 'STATIC'],
+                ['value' => 'CUSTOM_OPTION66', 'label' => 'CUSTOM_OPTION66'],
+            ],
+            'locales' => [
+                ['value' => 'Chinese_China', 'name' => 'Chinese_China'],
+                ['value' => 'Chinese_Taiwan', 'name' => 'Chinese_Taiwan'],
+                ['value' => 'Danish_Denmark', 'name' => 'Danish_Denmark'],
+                ['value' => 'Dutch_Netherlands', 'name' => 'Dutch_Netherlands'],
+                ['value' => 'English_Canada', 'name' => 'English_Canada'],
+                ['value' => 'English_United_Kingdom', 'name' => 'English_United_Kingdom'],
+                ['value' => 'English_United_States', 'name' => 'English_United_States'],
+                ['value' => 'French_France', 'name' => 'French_France'],
+                ['value' => 'German_Germany', 'name' => 'German_Germany'],
+                ['value' => 'Italian_Italy', 'name' => 'Italian_Italy'],
+                ['value' => 'Japanese_Japan', 'name' => 'Japanese_Japan'],
+                ['value' => 'Korean_Korea', 'name' => 'Korean_Korea'],
+                ['value' => 'Norwegian_Norway', 'name' => 'Norwegian_Norway'],
+                ['value' => 'Polish_Poland', 'name' => 'Polish_Poland'],
+                ['value' => 'Portuguese_Portugal', 'name' => 'Portuguese_Portugal'],
+                ['value' => 'Russian_Russia', 'name' => 'Russian_Russia'],
+                ['value' => 'Slovenian_Slovenia', 'name' => 'Slovenian_Slovenia'],
+                ['value' => 'Spanish_Spain', 'name' => 'Spanish_Spain'],
+                ['value' => 'Swedish_Sweden', 'name' => 'Swedish_Sweden'],
+            ],
+            'polycom_api_token' => get_domain_setting('polycom_api_token') ?? null,
+        ];
     }
 }

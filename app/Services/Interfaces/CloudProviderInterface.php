@@ -18,5 +18,10 @@ interface CloudProviderInterface {
     public function getOrganization(string $id): OrganizationDTOInterface;
     public function updateOrganization(string $id, array $params): string;
     public function deleteOrganization(string $id): string;
-    public function getOrgIdByDomainUuid(string $domainUuid): mixed;
+    public static function getOrgIdByDomainUuid(string $domainUuid): mixed;
+    /**
+     * Return UI options/settings for this provider as a multidimensional array.
+     * @return array
+     */
+    public static function getSettings(): array;
 }
