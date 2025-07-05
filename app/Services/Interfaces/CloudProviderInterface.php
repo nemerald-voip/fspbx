@@ -8,6 +8,7 @@ use App\DTO\OrganizationDTOInterface;
 
 interface CloudProviderInterface {
     public function getApiToken();
+    public function setApiToken(string $token): void; 
     public function getProviderName(): string;
     public function getDevices(int $limit, string $cursor): array;
     public function getDevice(string $id): array;

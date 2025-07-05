@@ -36,8 +36,6 @@
 
 <script setup>
 import { reactive } from "vue";
-import { usePage } from '@inertiajs/vue3';
-
 
 import ComboBox from "../general/ComboBox.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";
@@ -45,17 +43,15 @@ import Spinner from "../general/Spinner.vue";
 
 const props = defineProps({
     orgs: [Object, null],
-    selectedAccount: [String, null],
+    selectedProvider: [String, null],
     isSubmitting: Boolean,
     errors: Object,
 });
 
-const page = usePage();
 
 const form = reactive({
     org_id: null,
-    domain_uuid: props.selectedAccount,
-    _token: page.props.csrf_token,
+    provider: props.selectedProvider,
 })
 
 const emits = defineEmits(['submit', 'cancel']);

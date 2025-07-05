@@ -45,6 +45,26 @@ class PolycomCloudProvider implements CloudProviderInterface
     }
 
     /**
+     * Create or update the Polycom API token in the database.
+     *
+     * @param string $token
+     * @return void
+     */
+    public function setApiToken(string $token): void
+    {
+        DefaultSettings::updateOrCreate(
+            [
+                'default_setting_category'    => 'cloud_provision',
+                'default_setting_subcategory' => 'polycom_api_token',
+            ],
+            [
+                'default_setting_value'   => $token,
+                'default_setting_enabled' => 'true',
+            ]
+        );
+    }
+
+    /**
      * Ensure an API token exists before making API requests.
      *
      * @return string The validated API token.
@@ -55,7 +75,7 @@ class PolycomCloudProvider implements CloudProviderInterface
         $token = $this->getApiToken();
 
         if (empty($token)) {
-            throw new \Exception("Polycom API token is missing. Please configure it in the Default Settings");
+            throw new \Exception("Polycom ZTP API token is missing.");
         }
 
         return $token;
@@ -282,6 +302,8 @@ class PolycomCloudProvider implements CloudProviderInterface
      */
     public function getOrganization(string $id): OrganizationDTOInterface
     {
+        $this->ensureApiTokenExists();
+
         $response = Http::polycom()
             ->timeout($this->timeout)
             ->get('/profiles/' . $id);
@@ -289,9 +311,12 @@ class PolycomCloudProvider implements CloudProviderInterface
         // logger($response);
 
         $response = $this->handleResponse($response);
-        logger($response);
 
-        return PolycomOrganizationDTO::fromArray($response['data']);
+        if (empty($response['data']) || !is_array($response['data'])) {
+            throw new \Exception('Polycom organization not found or invalid response: ' . json_encode($response));
+        }
+
+        return PolycomOrganizationDTO::fromArray($response['data'] ?? null);
     }
 
     /**
@@ -401,25 +426,25 @@ class PolycomCloudProvider implements CloudProviderInterface
                 ['value' => 'CUSTOM_OPTION66', 'label' => 'CUSTOM_OPTION66'],
             ],
             'locales' => [
-                ['value' => 'Chinese_China', 'name' => 'Chinese_China'],
-                ['value' => 'Chinese_Taiwan', 'name' => 'Chinese_Taiwan'],
-                ['value' => 'Danish_Denmark', 'name' => 'Danish_Denmark'],
-                ['value' => 'Dutch_Netherlands', 'name' => 'Dutch_Netherlands'],
-                ['value' => 'English_Canada', 'name' => 'English_Canada'],
-                ['value' => 'English_United_Kingdom', 'name' => 'English_United_Kingdom'],
-                ['value' => 'English_United_States', 'name' => 'English_United_States'],
-                ['value' => 'French_France', 'name' => 'French_France'],
-                ['value' => 'German_Germany', 'name' => 'German_Germany'],
-                ['value' => 'Italian_Italy', 'name' => 'Italian_Italy'],
-                ['value' => 'Japanese_Japan', 'name' => 'Japanese_Japan'],
-                ['value' => 'Korean_Korea', 'name' => 'Korean_Korea'],
-                ['value' => 'Norwegian_Norway', 'name' => 'Norwegian_Norway'],
-                ['value' => 'Polish_Poland', 'name' => 'Polish_Poland'],
-                ['value' => 'Portuguese_Portugal', 'name' => 'Portuguese_Portugal'],
-                ['value' => 'Russian_Russia', 'name' => 'Russian_Russia'],
-                ['value' => 'Slovenian_Slovenia', 'name' => 'Slovenian_Slovenia'],
-                ['value' => 'Spanish_Spain', 'name' => 'Spanish_Spain'],
-                ['value' => 'Swedish_Sweden', 'name' => 'Swedish_Sweden'],
+                ['value' => 'Chinese_China', 'label' => 'Chinese_China'],
+                ['value' => 'Chinese_Taiwan', 'label' => 'Chinese_Taiwan'],
+                ['value' => 'Danish_Denmark', 'label' => 'Danish_Denmark'],
+                ['value' => 'Dutch_Netherlands', 'label' => 'Dutch_Netherlands'],
+                ['value' => 'English_Canada', 'label' => 'English_Canada'],
+                ['value' => 'English_United_Kingdom', 'label' => 'English_United_Kingdom'],
+                ['value' => 'English_United_States', 'label' => 'English_United_States'],
+                ['value' => 'French_France', 'label' => 'French_France'],
+                ['value' => 'German_Germany', 'label' => 'German_Germany'],
+                ['value' => 'Italian_Italy', 'label' => 'Italian_Italy'],
+                ['value' => 'Japanese_Japan', 'label' => 'Japanese_Japan'],
+                ['value' => 'Korean_Korea', 'label' => 'Korean_Korea'],
+                ['value' => 'Norwegian_Norway', 'label' => 'Norwegian_Norway'],
+                ['value' => 'Polish_Poland', 'label' => 'Polish_Poland'],
+                ['value' => 'Portuguese_Portugal', 'label' => 'Portuguese_Portugal'],
+                ['value' => 'Russian_Russia', 'label' => 'Russian_Russia'],
+                ['value' => 'Slovenian_Slovenia', 'label' => 'Slovenian_Slovenia'],
+                ['value' => 'Spanish_Spain', 'label' => 'Spanish_Spain'],
+                ['value' => 'Swedish_Sweden', 'label' => 'Swedish_Sweden'],
             ],
             'polycom_api_token' => get_domain_setting('polycom_api_token') ?? null,
         ];

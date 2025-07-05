@@ -1,6 +1,6 @@
 <template>
     <TransitionRoot as="div" :show="show">
-        <Dialog as="div" class="relative z-10" :inert="showPairModal">
+        <Dialog as="div" class="relative z-10" :inert="showPairModal || showUpdateModal || showApiTokenModal">
             <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
                 <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
@@ -64,15 +64,15 @@
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical" @select="handleTabSelected">
-                                                
+
 
                                                 <FormTab name="polycom" label="Polycom" :elements="[
                                                     'polycom_title',
                                                     'polycom_loading',
                                                     'polycom_status',
                                                     'polycom_create_org',
-                                                    'name',
-                                                    'divider',
+                                                    'polycom_update_org',
+                                                    'polycom_create_api_token',
                                                     'provisioning_title',
                                                     'address',
                                                     'username',
@@ -105,7 +105,7 @@
                                                 <StaticElement name="polycom_title" tag="h4" content="Polycom ZTP" />
 
                                                 <StaticElement name="polycom_loading"
-                                                    :conditions="[() => isFormLoading.loading]">
+                                                    :conditions="[() => isFormLoading]">
                                                     <div class="text-center my-5 text-sm text-gray-500">
                                                         <div class="animate-pulse flex space-x-4">
                                                             <div class="flex-1 space-y-6 py-1">
@@ -119,8 +119,8 @@
                                                 </StaticElement>
 
                                                 <StaticElement name="polycom_status"
-                                                    :conditions="[() => !isFormLoading.loading]">
-                                                    <div v-if="options && options.organization_id"
+                                                    :conditions="[() => !isFormLoading]">
+                                                    <div v-if="options && options?.organization_id"
                                                         class="flex items-center gap-x-3">
                                                         <div
                                                             class="flex-none rounded-full bg-green-400/10 p-1 text-green-400">
@@ -150,24 +150,24 @@
                                                     </div> -->
 
 
-                                                    
 
-                                                    <!-- <div v-if="provisioning && provisioning.status == 'pending'"
-                                                        class="flex items-center gap-x-3">
+
+                                                    <div v-if="!options" class="flex items-center gap-x-3">
                                                         <div
                                                             class="flex-none rounded-full bg-amber-400/10 p-1 text-amber-400">
                                                             <div class="size-3 rounded-full bg-current" />
                                                         </div>
                                                         <h1 class="flex gap-x-3 text-lg">
                                                             <span class="font-semibold ">Status:</span>
-                                                            <Badge backgroundColor="bg-amber-100"
-                                                                textColor="text-amber-700" :text="'Pending'"
+                                                            <Badge v-if="!isFormLoading" backgroundColor="bg-amber-100"
+                                                                textColor="text-amber-700"
+                                                                :text="'Polycom ZTP API Token Missing or Invalid'"
                                                                 ringColor="ring-amber-400/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
-                                                    </div> -->
+                                                    </div>
 
-                                                    <div v-if="!options || !options.organization_id"
+                                                    <div v-if="!options?.organization_id && options?.provider_settings"
                                                         class="flex items-center gap-x-3">
                                                         <div
                                                             class="flex-none rounded-full bg-gray-400/10 p-1 text-gray-400">
@@ -181,15 +181,33 @@
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
                                                     </div>
+
+
                                                 </StaticElement>
 
-                                                <ButtonElement name="polycom_create_org" button-label="Create Organization"
-                                                    :loading="isLoading.create"
+
+
+
+
+                                                <ButtonElement name="polycom_create_org"
+                                                    button-label="Create Organization" :loading="isLoading.create"
                                                     @click="handleCreateButtonClick('polycom')"
                                                     description="Create organization or connect to the existing organization in Polycom ZTP."
-                                                    :conditions="[() => true]" />
+                                                    :conditions="[() => options && !options.organization_id]" />
 
-                                                
+                                                <ButtonElement name="polycom_update_org"
+                                                    button-label="Organization Settings" :loading="isLoading.create"
+                                                    @click="handleUpdateButtonClick('polycom')"
+                                                    description="Create organization or connect to the existing organization in Polycom ZTP."
+                                                    :conditions="[() => options && options.organization_id]" />
+
+
+                                                <ButtonElement name="polycom_create_api_token" button-label="API Token"
+                                                    :loading="isLoading.create"
+                                                    @click="handleApiTokenButtonClick('polycom')"
+                                                    description="Click to add or update your Polycom ZTP API Token."
+                                                    :secondary="true"
+                                                    :conditions="[() => !isFormLoading]" />
 
                                             </FormElements>
                                         </div>
@@ -320,8 +338,8 @@
     <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showPairModal"
         :header="'Connect to existing ZTP Organization'" :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <PairPolycomOrganizationForm :orgs="ztpOrganizations" :selected-account="selectedAccount"
-                :errors="formErrors" :is-submitting="pairZtpOrgSubmitting" @submit="handlePairZtpOrgRequest"
+            <PairPolycomOrganizationForm :orgs="ztpOrganizations" :selected-provider="selectedProvider"
+                :errors="formErrors" :is-submitting="pairZtpOrgSubmitting" @submit="handlePairOrgRequest"
                 @cancel="handleModalClose" @error="emitErrorToParentFromChild"
                 @success="emitSuccessToParentFromChild" />
         </template>
@@ -330,10 +348,10 @@
     <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showApiTokenModal" :header="'Polycom Api Token'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdatePolycomApiTokenForm :token="apiToken" :errors="formErrors"
+            <UpdatePolycomApiTokenForm :token="apiToken" :errors="formErrors" :selected-provider="selectedProvider"
                 :is-submitting="updateApiTokenFormSubmitting" @submit="handleUpdateApiTokenRequest"
-                @cancel="handleModalClose" @error="handleFormErrorResponse" @refresh-data="getItemOptions"
-                @success="showNotification('success', $event)" @clear-errors="handleClearErrors" />
+                @cancel="handleModalClose" @error="emitErrorToParentFromChild" @refresh-data="getItemOptions"
+                @success="emitSuccessToParentFromChild" @clear-errors="handleClearErrors" />
         </template>
     </AddEditItemModal>
 
@@ -361,7 +379,6 @@ import UpdatePolycomApiTokenForm from "../forms/UpdatePolycomApiTokenForm.vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import Badge from "@generalComponents/Badge.vue";
-import { XCircleIcon } from '@heroicons/vue/20/solid'
 
 const props = defineProps({
     show: Boolean,
@@ -394,12 +411,11 @@ const confirmPolycomAction = ref(null);
 const cancelPolycomAction = ref(null);
 const formErrors = ref(null);
 const ztpOrganizations = ref({})
-const selectedAccount = ref(null)
+const selectedProvider = ref(null)
 const itemOptions = ref({})
-const currentTenant = ref(null);
 const apiToken = ref(null)
 const syncDevicesSubmitting = ref(null);
-const options = ref({})
+const options = ref(null)
 const isFormLoading = ref(false)
 const isLoading = ref({
     create: false,
@@ -410,12 +426,12 @@ const emit = defineEmits(['close', 'cancel', 'error', 'success']);
 
 
 // onMounted(() => {
-//     handleRefreshTenantsClick();
+//     getCloudProvisioningItemOptions();
 // })
 
 
 
-// const handleRefreshTenantsClick = () => {
+// const getCloudProvisioningItemOptions = () => {
 //     //loading.value = true;
 //     axios.post(props.routes.cloud_provisioning_item_options, {})
 //         .then((response) => {
@@ -429,7 +445,7 @@ const emit = defineEmits(['close', 'cancel', 'error', 'success']);
 // }
 
 const getCloudProvisioningItemOptions = (provider) => {
-    options.value = {}
+    options.value = null
     isFormLoading.value = true
     axios.post(props.routes.cloud_provisioning_item_options,
         {
@@ -442,7 +458,7 @@ const getCloudProvisioningItemOptions = (provider) => {
 
         }).catch((error) => {
             handleModalClose();
-            handleErrorResponse(error);
+            emit('error', error);
         }).finally(() => {
             isFormLoading.value = false
         })
@@ -450,29 +466,48 @@ const getCloudProvisioningItemOptions = (provider) => {
 
 const handleCreateButtonClick = (provider) => {
     showPolycomConfirmationModal.value = true;
-    confirmPolycomAction.value = () => executeNewZtpOrgAction(provider);
-    cancelPolycomAction.value = () => executeExistingZtpOrgAction(provider);
+    confirmPolycomAction.value = () => executeNewOrgAction(provider);
+    cancelPolycomAction.value = () => executeExistingOrgAction(provider);
 };
 
-const executeNewZtpOrgAction = (provider) => {
+const executeNewOrgAction = (provider) => {
     showPolycomConfirmationModal.value = false;
+    selectedProvider.value = provider;
     showActivateModal.value = true
     loadingModal.value = true
     getItemOptions(provider);
 }
 
-const executeExistingZtpOrgAction = (provider) => {
+const executeExistingOrgAction = (provider) => {
     showPolycomConfirmationModal.value = false;
+    selectedProvider.value = provider;
     showPairModal.value = true
     loadingModal.value = true
     getZtpOrganizations(provider);
 }
 
-const handleEditButtonClick = (provider, itemUuid) => {
-    showUpdateModal.value = true
+const handlePairOrgRequest = (form) => {
+    pairZtpOrgSubmitting.value = true;
     formErrors.value = null;
+
+    axios.post(options.value.routes.cloud_provisioning_pair_organization, form)
+        .then((response) => {
+            emit('success', 'success', response.data.messages);
+            handleModalClose();
+
+        }).catch((error) => {
+            emit('error', error);
+        }).finally(() => {
+            pairZtpOrgSubmitting.value = false;
+            getCloudProvisioningItemOptions(form.provider)
+        })
+
+};
+
+const handleUpdateButtonClick = (provider) => {
+    showUpdateModal.value = true
     loadingModal.value = true
-    getItemOptions(provider, itemUuid);
+    getItemOptions(provider);
 }
 
 const handleCreateRequest = (form) => {
@@ -482,14 +517,14 @@ const handleCreateRequest = (form) => {
     axios.post(props.routes.cloud_provisioning_create_organization, form)
         .then((response) => {
             activateFormSubmitting.value = false;
-            showNotification('success', response.data.messages);
+            emit('success', 'success', response.data.messages);
             handleModalClose();
-            handleRefreshTenantsClick();
+            getCloudProvisioningItemOptions();
         }).catch((error) => {
             activateFormSubmitting.value = false;
-            handleRefreshTenantsClick();
+            getCloudProvisioningItemOptions();
             handleModalClose();
-            handleFormErrorResponse(error);
+            emit('error', error);
         });
 
 };
@@ -501,13 +536,13 @@ const handleUpdateRequest = (form) => {
     axios.put(props.routes.cloud_provisioning_update_organization, form)
         .then((response) => {
             updateFormSubmitting.value = false;
-            showNotification('success', response.data.messages);
+            emit('success', 'success', response.data.messages);
             handleModalClose();
-            handleRefreshTenantsClick();
+            getCloudProvisioningItemOptions();
         }).catch((error) => {
             updateFormSubmitting.value = false;
-            handleRefreshTenantsClick();
-            handleFormErrorResponse(error);
+            getCloudProvisioningItemOptions();
+            emit('error', error);
         });
 
 };
@@ -521,49 +556,14 @@ const handleSyncButtonClick = (provider) => {
     )
         .then((response) => {
             syncDevicesSubmitting.value = false;
-            showNotification('success', response.data.messages);
+            emit('success', 'success', response.data.messages);
         }).catch((error) => {
             syncDevicesSubmitting.value = false;
-            handleFormErrorResponse(error); // Emit the event with error
+            emit('error', error); // Emit the event with error
         });
 };
 
-const handleUpdateApiTokenRequest = (form) => {
-    updateApiTokenFormSubmitting.value = true;
-    formErrors.value = null;
 
-    axios.post(props.routes.cloud_provisioning_update_api_token, form)
-        .then((response) => {
-            updateApiTokenFormSubmitting.value = false;
-            showNotification('success', response.data.messages);
-            handleModalClose();
-            handleRefreshTenantsClick();
-        }).catch((error) => {
-            updateApiTokenFormSubmitting.value = false;
-            handleRefreshTenantsClick();
-            handleFormErrorResponse(error);
-        });
-
-};
-
-const handlePairZtpOrgRequest = (form) => {
-    pairZtpOrgSubmitting.value = true;
-    formErrors.value = null;
-
-    axios.post(props.routes.cloud_provisioning_pair_organization, form)
-        .then((response) => {
-            pairZtpOrgSubmitting.value = false;
-            showNotification('success', response.data.messages);
-            //   handleSearchButtonClick();
-            handleModalClose();
-            handleRefreshTenantsClick();
-        }).catch((error) => {
-            pairZtpOrgSubmitting.value = false;
-            handleRefreshTenantsClick();
-            handleFormErrorResponse(error);
-        });
-
-};
 
 const handleDeactivateButtonClick = (uuid) => {
     showConfirmationModal.value = true;
@@ -576,21 +576,15 @@ const executeSingleDelete = (uuid) => {
     axios.post(props.routes.cloud_provisioning_destroy_organization, { domain_uuid: uuid })
         .then((response) => {
             showDeactivateSpinner.value = false;
-            showNotification('success', response.data.messages);
+            emit('success', 'success', response.data.messages);
             handleModalClose();
-            handleRefreshTenantsClick();
+            getCloudProvisioningItemOptions();
         }).catch((error) => {
             showDeactivateSpinner.value = false;
-            handleRefreshTenantsClick();
+            getCloudProvisioningItemOptions();
             handleModalClose();
-            handleFormErrorResponse(error);
+            emit('error', error);
         });
-}
-
-const handlePolycomApiTokenButtonClick = () => {
-    showApiTokenModal.value = true
-    loadingModal.value = true
-    getApiToken();
 }
 
 const handleActivationFinish = () => {
@@ -615,7 +609,7 @@ const getItemOptions = (provider, itemUuid) => {
 
 const getZtpOrganizations = (provider) => {
     axios.post(options.value.routes.cloud_provisioning_get_all_orgs, {
-        provider:provider
+        provider: provider
     })
         .then((response) => {
             loadingModal.value = false;
@@ -630,16 +624,48 @@ const handleClearErrors = () => {
     formErrors.value = null;
 }
 
-const getApiToken = () => {
-    axios.post(props.routes.cloud_provisioning_get_api_token)
+const handleApiTokenButtonClick = (provider) => {
+    showApiTokenModal.value = true
+    loadingModal.value = true
+    selectedProvider.value = provider;
+    getApiToken(provider);
+}
+
+const getApiToken = (provider) => {
+    axios.post(props.routes.cloud_provisioning_get_token, {
+        provider: provider
+    })
         .then((response) => {
-            loadingModal.value = false;
             apiToken.value = response.data.token;
+            // console.log(apiToken.value)
+
         }).catch((error) => {
             handleModalClose();
             emit('error', error)
-        });
+        }).finally(() => {
+            loadingModal.value = false;
+        })
 }
+
+const handleUpdateApiTokenRequest = (form) => {
+    updateApiTokenFormSubmitting.value = true;
+    formErrors.value = null;
+
+    console.log(form);
+
+    axios.post(props.routes.cloud_provisioning_update_api_token, form)
+        .then((response) => {
+            emit('success', 'success', response.data.messages);
+            handleModalClose();
+        }).catch((error) => {
+            emit('error', error);
+        }).finally(() => {
+            getCloudProvisioningItemOptions(form.provider);
+            updateApiTokenFormSubmitting.value = false;
+            loadingModal.value = false;
+        })
+
+};
 
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 

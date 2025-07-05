@@ -34,7 +34,6 @@
 
 <script setup>
 import { reactive } from "vue";
-import { usePage } from '@inertiajs/vue3';
 
 
 import InputField from "../general/InputField.vue";
@@ -43,15 +42,15 @@ import Spinner from "../general/Spinner.vue";
 
 const props = defineProps({
     token: [String, null],
+    selectedProvider: [String, null],
     isSubmitting: Boolean,
     errors: Object,
 });
 
-const page = usePage();
 
 const form = reactive({
     token: props.token,
-    _token: page.props.csrf_token,
+    provider: props.selectedProvider,
 })
 
 const emits = defineEmits(['submit', 'cancel']);

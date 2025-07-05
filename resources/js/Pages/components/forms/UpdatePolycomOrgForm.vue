@@ -55,8 +55,10 @@
                                     quickSetup: options.organization?.template?.provisioning?.quickSetup,
                                     address: options.organization?.template?.provisioning?.server?.address,
                                     username: options.organization?.template?.provisioning?.server?.username,
-                                    boot_server_option: options.organization?.template?.provisioning?.dhcp?.boot_server_option,
-
+                                    bootServerOption: options.organization?.template?.dhcp?.bootServerOption,
+                                    option60Type: options.organization?.template?.dhcp?.option60Type,
+                                    software: options.organization?.template?.software?.version,
+                                    localization: options.organization?.template?.localization?.language,
                                 }">
 
                                 <template #empty>
@@ -78,7 +80,7 @@
                                                     'divider_1',
                                                     'dhcp_title',
                                                     'bootServerOption',
-                                                    'option_60_type',
+                                                    'option60Type',
                                                     'divider_2',
                                                     'software_title',
                                                     'software',
@@ -129,12 +131,7 @@
 
                                                 <SelectElement name="bootServerOption" :items="options.provider_settings?.dhcp_boot_server_option_list" :search="true" :native="false" label="Boot Server Option" input-type="search" autocomplete="off" />
 
-                                                <SelectElement name="option_60_type" :items="[
-                                                    {
-                                                        value: 0,
-                                                        label: 'Label',
-                                                    },
-                                                ]" :search="true" :native="false" label="Option 60 Type" input-type="search" autocomplete="off" />
+                                                <SelectElement name="option60Type" :items="options.provider_settings?.dhcp_option_60_type_list" :search="true" :native="false" label="Option 60 Type" input-type="search" autocomplete="off" />
 
                                                 <StaticElement name="divider_2" tag="hr" />
 
@@ -148,12 +145,7 @@
                                                 <StaticElement name="localization_title" tag="h4" content="Localization"
                                                     description="Specify the operating locale for this profile." />
 
-                                                <SelectElement name="localization" :items="[
-                                                    {
-                                                        value: 0,
-                                                        label: 'Label',
-                                                    },
-                                                ]" :search="true" :native="false" label="Localization" input-type="search" autocomplete="off" />
+                                                <SelectElement name="localization" :items="options.provider_settings?.locales" :search="true" :native="false" label="Localization" input-type="search" autocomplete="off" />
 
                                             </FormElements>
                                         </div>

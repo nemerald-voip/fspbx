@@ -113,10 +113,9 @@ class DeviceCloudProvisioningController extends Controller
                 'cloud_provisioning_update_organization' => route('cloud-provisioning.organization.update'),
                 'cloud_provisioning_destroy_organization' => route('cloud-provisioning.organization.destroy'),
                 'cloud_provisioning_pair_organization' => route('cloud-provisioning.organization.pair'),
-                'cloud_provisioning_get_all_orgs' => route('cloud-provisioning.organization.all'),
                 'cloud_provisioning_get_api_token' => route('cloud-provisioning.token.get'),
-                'cloud_provisioning_update_api_token' => route('cloud-provisioning.token.update'),
                 'cloud_provisioning_sync_devices' => route('cloud-provisioning.devices.sync'),
+                'cloud_provisioning_get_all_orgs' => route('cloud-provisioning.organization.all'),
             ];
 
 
@@ -172,17 +171,10 @@ class DeviceCloudProvisioningController extends Controller
     public function getToken(): JsonResponse
     {
         try {
-            if (!userCheckPermission('polycom_api_token_edit')) {
-                return response()->json([
-                    'success' => false,
-                ], 403);
-            }
-            // Retrieve the API token from DefaultSettings
-            $token = DefaultSettings::where([
-                ['default_setting_category', '=', 'cloud provision'],
-                ['default_setting_subcategory', '=', 'polycom_api_token'],
-                ['default_setting_enabled', '=', 'true'],
-            ])->value('default_setting_value');
+            $cloudProviderSelector = app()->make(CloudProviderSelector::class);
+            $cloudProvider = $cloudProviderSelector->getCloudProvider(request('provider'));
+
+            $token = $cloudProvider->getApiToken();
 
             return response()->json([
                 'success' => true,
@@ -198,40 +190,21 @@ class DeviceCloudProvisioningController extends Controller
         }
     }
 
-    public function show(Domain $domain)
-    {
-        //
-    }
-
-
-    /**
+        /**
      * Update or create the Polycom API token in DefaultSettings.
      *
      * @param UpdatePolycomApiTokenRequest $request
      * @return JsonResponse
      */
-    public function updateToken(UpdatePolycomApiTokenRequest $request): JsonResponse
+    public function updateToken(UpdatePolycomApiTokenRequest $request)
     {
-        $inputs = $request->validated();
+        $data = $request->validated();
 
         try {
-            if (!userCheckPermission('polycom_api_token_edit')) {
-                return response()->json([
-                    'success' => false,
-                ], 403);
-            }
-            // Update or create the Polycom API token in DefaultSettings
-            DefaultSettings::updateOrCreate(
-                [
-                    'default_setting_category' => 'cloud provision',
-                    'default_setting_subcategory' => 'polycom_api_token',
-                ],
-                [
-                    'default_setting_name' => 'text',
-                    'default_setting_value' => $inputs['token'], // Use the validated token input
-                    'default_setting_enabled' => 'true', // Ensure the setting is enabled
-                ]
-            );
+            $cloudProviderSelector = app()->make(CloudProviderSelector::class);
+            $cloudProvider = $cloudProviderSelector->getCloudProvider($data['provider']);
+
+            $cloudProvider->setApiToken($data['token']);
 
             // Return a JSON response indicating success
             return response()->json([
@@ -246,6 +219,14 @@ class DeviceCloudProvisioningController extends Controller
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
+
+    public function show(Domain $domain)
+    {
+        //
+    }
+
+
+
 
     public function getUserPermissions(): array
     {
@@ -329,7 +310,7 @@ class DeviceCloudProvisioningController extends Controller
     {
         // Extract data from the request
         $orgId = $request->input('org_id');
-        $domainUuid = $request->input('domain_uuid');
+        $domainUuid = session('domain_uuid');
 
         try {
             // Store or update the domain setting record
@@ -352,7 +333,7 @@ class DeviceCloudProvisioningController extends Controller
             }
 
             return response()->json([
-                'messages' => ['success' => ['Connection updated successfully']]
+                'messages' => ['success' => ['Organizations has been succesfully registered']]
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());

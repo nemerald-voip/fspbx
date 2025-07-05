@@ -21,7 +21,7 @@ class PairZtpOrganizationRequest extends FormRequest
     {
         return [
             'org_id' => 'required|string',
-            'domain_uuid' => 'present',
+            'provider' => 'present',
         ];
     }
 

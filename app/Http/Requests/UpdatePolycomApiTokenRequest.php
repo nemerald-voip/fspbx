@@ -21,6 +21,7 @@ class UpdatePolycomApiTokenRequest extends FormRequest
     {
         return [
             'token' => 'present',
+            'provider' => 'present'
         ];
     }
 

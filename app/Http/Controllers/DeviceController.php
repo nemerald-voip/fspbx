@@ -144,7 +144,9 @@ class DeviceController extends Controller
                     'item_options' => route('devices.item.options'),
                     'restart' => route('devices.restart'),
                     'cloud_provisioning_item_options' => route('cloud-provisioning.item.options'),
-             
+                    'cloud_provisioning_get_token' => route('cloud-provisioning.token.get'),
+                    'cloud_provisioning_update_api_token' => route('cloud-provisioning.token.update'),
+                    
                 ]
             ]
         );
