@@ -44,49 +44,22 @@ class StoreZtpOrganizationRequest extends FormRequest
         ];
 
         return [
-            'organization_name' => 'required|string|max:100',
-            'software_version' => 'nullable|string|max:100',
-            'domain_uuid' => 'required|uuid',
-            'dhcp_boot_server_option' => 'nullable|string|in:' . implode(',', $dhcpBootServerOptionList),
-            'dhcp_option_60_type' => 'nullable|string|in:' . implode(',', $dhcpOption60TypeList),
-            'localization_language' => 'nullable|string|in:' . implode(',', $locales),
-            'provisioning_server_address' => 'nullable|string|max:255',
-            'provisioning_server_username' => 'nullable|string|max:64',
-            'provisioning_server_password' => 'nullable|string|max:64',
-            'provisioning_quick_setup' => 'nullable|boolean',
-            'provisioning_polling' => 'nullable|boolean',
+            'provider' => 'present',
+            'enabled' => 'required|boolean',
+            'name' => 'required|string|max:100',
+            'software' => 'nullable|string|max:100',
+            'bootServerOption' => 'nullable|string|in:' . implode(',', $dhcpBootServerOptionList),
+            'option60Type' => 'nullable|string|in:' . implode(',', $dhcpOption60TypeList),
+            'localization' => 'nullable|string|in:' . implode(',', $locales),
+            'address' => 'nullable|string|max:255',
+            'username' => 'nullable|string|max:64',
+            'password' => 'nullable|string|max:64',
+            'quickSetup' => 'nullable|boolean',
+            'polling' => 'nullable|boolean',
+            'ucs' => 'nullable|string',
         ];
     }
 
-    public function prepareForValidation(): void
-    {
-        if (!$this->has('boot_server_option') || $this->input('boot_server_option') === 'NULL') {
-            $this->merge(['boot_server_option' => null]);
-        }
-
-        if (!$this->has('option_60_type') || $this->input('option_60_type') === 'NULL') {
-            $this->merge(['option_60_type' => null]);
-        }
-
-        if (!$this->has('localization_language') || $this->input('localization_language') === 'NULL') {
-            $this->merge(['localization_language' => null]);
-        }
-
-        $this->mergeBooleanField('provisioning_polling');
-        $this->mergeBooleanField('provisioning_quick_setup');
-    }
-
-    /**
-     * Merge a boolean value into the request based on the presence of a given key.
-     *
-     * @param string $key
-     */
-    private function mergeBooleanField(string $key): void
-    {
-        $this->merge([
-            $key => $this->has($key) && (bool) $this->$key,
-        ]);
-    }
 
     /**
      * Sanitize the input field to prevent XSS and remove unwanted characters.

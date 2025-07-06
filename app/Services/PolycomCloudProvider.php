@@ -193,9 +193,13 @@ class PolycomCloudProvider implements CloudProviderInterface
 
         $response = $this->handleResponse($response);
 
-        return collect($response['data']['results'])->map(function ($item) {
-            return PolycomOrganizationDTO::fromArray($item);
-        });
+        if ($response['success']) {
+            return collect($response['data']['results'])->map(function ($item) {
+                return PolycomOrganizationDTO::fromArray($item);
+            });
+        } else {
+            throw new \Exception($response['error']);
+        }
     }
 
     /**
@@ -206,43 +210,86 @@ class PolycomCloudProvider implements CloudProviderInterface
      * @throws ZtpProviderException If the API request fails.
      * @throws \Exception
      */
-    public function createOrganization(array $params): string
+    public function createOrganization(array $params)
     {
         $this->ensureApiTokenExists();
-
-        $payload = [
-            "name" => $params['organization_name'],
-            "enabled" => $params['enabled'],
-            "template" => [
-                "software" => [
-                    "version" => $params['software_version'],
-                ],
-                "provisioning" => [
-                    "server" => [
-                        "address" => $params['provisioning_server_address'],
-                        "username" => $params['provisioning_server_username'],
-                        "password" => $params['provisioning_server_password']
-                    ],
-                    "polling" => $params['provisioning_polling'],
-                    "quickSetup" => $params['provisioning_quick_setup'],
-                ],
-                "dhcp" => [
-                    "bootServerOption" => $params['dhcp_boot_server_option'] ?? null,
-                    "option60Type" => $params['dhcp_option_60_type'] ?? null,
-                ],
-                "localization" => [
-                    "language" => $params['localization_language'] ?? null,
-                ],
-            ],
-        ];
-
+    
+        $payload = [];
+    
+        if (isset($params['name'])) {
+            $payload['name'] = $params['name'];
+        }
+        if (isset($params['enabled'])) {
+            $payload['enabled'] = $params['enabled'];
+        }
+    
+        $template = [];
+    
+        if (isset($params['software'])) {
+            $template['software']['version'] = $params['software'];
+        }
+    
+        // Provisioning subfields
+        if (
+            isset($params['address']) || isset($params['username']) || isset($params['password']) ||
+            isset($params['polling']) || isset($params['quickSetup'])
+        ) {
+            $template['provisioning']['server'] = [];
+            if (isset($params['address']))   $template['provisioning']['server']['address'] = $params['address'];
+            if (isset($params['username']))  $template['provisioning']['server']['username'] = $params['username'];
+            if (isset($params['password']))  $template['provisioning']['server']['password'] = $params['password'];
+            if (isset($params['polling']))   $template['provisioning']['polling'] = $params['polling'];
+            if (isset($params['quickSetup'])) $template['provisioning']['quickSetup'] = $params['quickSetup'];
+        }
+    
+        // DHCP subfields
+        if (isset($params['bootServerOption']) || isset($params['option60Type'])) {
+            $template['dhcp'] = [];
+            if (isset($params['bootServerOption'])) $template['dhcp']['bootServerOption'] = $params['bootServerOption'];
+            if (isset($params['option60Type']))    $template['dhcp']['option60Type'] = $params['option60Type'];
+        }
+    
+        // Localization
+        if (isset($params['localization'])) {
+            $template['localization'] = ['language' => $params['localization']];
+        }
+    
+        if (!empty($template)) {
+            $payload['template'] = $template;
+        }
+    
+        // Custom fields
+        $custom = [];
+        if (isset($params['ucs'])) $custom['ucs'] = $params['ucs'];
+        if (isset($params['obi'])) $custom['obi'] = $params['obi'];
+        if (!empty($custom)) $payload['custom'] = $custom;
+    
         $response = Http::polycom()
             ->timeout($this->timeout)
             ->withBody(json_encode($payload), 'application/json')
             ->post('/profiles');
-
-        return $this->handleResponse($response)['data']['id'];
+    
+        $response = $this->handleResponse($response);
+    
+        if ($response['success']) {
+            DomainSettings::updateOrCreate(
+                [
+                    'domain_uuid' => session('domain_uuid'),
+                    'domain_setting_category' => 'cloud provision',
+                    'domain_setting_subcategory' => 'polycom_ztp_profile_id',
+                ],
+                [
+                    'domain_setting_name' => 'text',
+                    'domain_setting_value' => $response['data']['id'] ?? null,
+                    'domain_setting_enabled' => true,
+                ]
+            );
+            return $response['data'];
+        } else {
+            throw new \Exception($response['error']);
+        }
     }
+    
 
     /**
      * Update an existing organization with the given ID and parameters.
@@ -252,46 +299,73 @@ class PolycomCloudProvider implements CloudProviderInterface
      * @return string The result of the operation.
      * @throws \Exception If the API request fails.
      */
-    public function updateOrganization(string $id, array $params): string
+    public function updateOrganization(array $params)
     {
         $this->ensureApiTokenExists();
 
-        $payload = [
-            "name" => $params['organization_name'],
-            "enabled" => $params['enabled'],
-            "template" => [
-                "software" => [
-                    "version" => $params['software_version'],
-                ],
-                "provisioning" => [
-                    "server" => [
-                        "address" => $params['provisioning_server_address'],
-                        "username" => $params['provisioning_server_username'],
-                        "password" => $params['provisioning_server_password']
-                    ],
-                    "polling" => $params['provisioning_polling'],
-                    "quickSetup" => $params['provisioning_quick_setup'],
-                ],
-                "dhcp" => [
-                    "bootServerOption" => $params['dhcp_boot_server_option'] ?? null,
-                    "option60Type" => $params['dhcp_option_60_type'] ?? null,
-                ],
-                "localization" => [
-                    "language" => $params['localization_language'] ?? null,
-                ],
-            ],
-        ];
+        $payload = [];
+
+        if (isset($params['name'])) {
+            $payload['name'] = $params['name'];
+        }
+        if (isset($params['enabled'])) {
+            $payload['enabled'] = $params['enabled'];
+        }
+
+        $template = [];
+
+        if (isset($params['software'])) {
+            $template['software']['version'] = $params['software'];
+        }
+
+        // Provisioning subfields
+        if (
+            isset($params['address']) || isset($params['username']) || isset($params['password']) ||
+            isset($params['polling']) || isset($params['quickSetup'])
+        ) {
+            $template['provisioning']['server'] = [];
+            if (isset($params['address']))   $template['provisioning']['server']['address'] = $params['address'];
+            if (isset($params['username']))  $template['provisioning']['server']['username'] = $params['username'];
+            if (isset($params['password']))  $template['provisioning']['server']['password'] = $params['password'];
+            if (isset($params['polling']))   $template['provisioning']['polling'] = $params['polling'];
+            if (isset($params['quickSetup'])) $template['provisioning']['quickSetup'] = $params['quickSetup'];
+        }
+
+        // DHCP subfields
+        if (isset($params['bootServerOption']) || isset($params['option60Type'])) {
+            $template['dhcp'] = [];
+            if (isset($params['bootServerOption'])) $template['dhcp']['bootServerOption'] = $params['bootServerOption'];
+            if (isset($params['option60Type']))    $template['dhcp']['option60Type'] = $params['option60Type'];
+        }
+
+        // Localization
+        if (isset($params['localization'])) {
+            $template['localization'] = ['language' => $params['localization']];
+        }
+
+        if (!empty($template)) {
+            $payload['template'] = $template;
+        }
+
+        $custom = [];
+        if (isset($params['ucs'])) $custom['ucs'] = $params['ucs'];
+        if (isset($params['obi'])) $custom['obi'] = $params['obi'];
+        if (!empty($custom)) $payload['custom'] = $custom;
 
         $response = Http::polycom()
             ->timeout($this->timeout)
             ->withBody(json_encode($payload), 'application/json')
-            ->put('/profiles/' . $id)
-            ->throw(function () {
-                throw new \Exception("Unable to update organization");
-            });
+            ->put('/profiles/' . $params['organization_id']);
 
-        return $this->handleResponse($response)['id'];
+        $response = $this->handleResponse($response);
+
+        if ($response['success']) {
+            return $response['data'];
+        } else {
+            throw new \Exception($response['error']);
+        }
     }
+
 
     /**
      * Retrieve details of a specific organization by ID.
@@ -326,9 +400,15 @@ class PolycomCloudProvider implements CloudProviderInterface
      * @return string The result of the operation.
      * @throws ZtpProviderException|\Exception If the API request fails.
      */
-    public function deleteOrganization(string $id): string
+    public function deleteOrganization(string $id)
     {
         $this->ensureApiTokenExists();
+
+        // Remove local references from the database
+        DomainSettings::where('domain_uuid', session('domain_uuid'))
+            ->where('domain_setting_category', 'cloud provision')
+            ->where('domain_setting_subcategory', 'polycom_ztp_profile_id')
+            ->delete();
 
         $response = Http::polycom()
             ->timeout($this->timeout)
@@ -337,7 +417,11 @@ class PolycomCloudProvider implements CloudProviderInterface
 
         $response = $this->handleResponse($response);
 
-        return $response['data']['message'];
+        if ($response['success']) {
+            return $response['data'];
+        } else {
+            throw new \Exception($response['error']);
+        }
     }
 
     /**
@@ -447,6 +531,11 @@ class PolycomCloudProvider implements CloudProviderInterface
                 ['value' => 'Swedish_Sweden', 'label' => 'Swedish_Sweden'],
             ],
             'polycom_api_token' => get_domain_setting('polycom_api_token') ?? null,
+            'polycom_provision_url' =>     get_domain_setting('polycom_provision_url') ?? null,
+            'http_auth_username' => get_domain_setting('http_auth_username') ?? null,
+            'http_auth_password' => get_domain_setting('http_auth_password') ?? null,
+            'polycom_custom_configuration' => get_domain_setting('polycom_custom_configuration') ?? null,
+            'provider' => 'polycom',
         ];
     }
 }

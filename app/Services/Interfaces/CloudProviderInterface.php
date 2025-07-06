@@ -2,7 +2,6 @@
 
 namespace App\Services\Interfaces;
 
-use App\Models\Devices;
 use \Illuminate\Support\Collection;
 use App\DTO\OrganizationDTOInterface;
 
@@ -15,10 +14,10 @@ interface CloudProviderInterface {
     public function createDevice(array $params): array;
     public function deleteDevice(array $params): array;
     public function getOrganizations(): Collection;
-    public function createOrganization(array $params): string;
+    public function createOrganization(array $params);
     public function getOrganization(string $id): OrganizationDTOInterface;
-    public function updateOrganization(string $id, array $params): string;
-    public function deleteOrganization(string $id): string;
+    public function updateOrganization(array $params);
+    public function deleteOrganization(string $id);
     public static function getOrgIdByDomainUuid(string $domainUuid): mixed;
     /**
      * Return UI options/settings for this provider as a multidimensional array.

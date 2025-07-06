@@ -7,6 +7,7 @@ class PolycomOrganizationDTO implements OrganizationDTOInterface
     public ?string $name;
     public bool $enabled;
     public object $template;
+    public ?object $custom = null;
 
     private const DEFAULT_PROVISIONING = [
         'server' => [
@@ -31,12 +32,19 @@ class PolycomOrganizationDTO implements OrganizationDTOInterface
         'language' => null,
     ];
 
+    private const DEFAULT_CUSTOM = [
+        'ucs' => null,
+        'obi' => null,
+    ];
+
     public function __construct(array $data)
     {
         $this->id = $data['id'] ?? null;
         $this->name = $data['name'] ?? null;
         $this->enabled = $data['enabled'] ?? false;
         $this->template = $this->buildTemplate($data['template'] ?? []);
+        $this->custom = (object) array_merge(self::DEFAULT_CUSTOM, $data['custom'] ?? []);
+
     }
 
     private function buildTemplate(array $templateData): object

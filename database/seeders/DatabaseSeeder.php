@@ -1492,6 +1492,14 @@ class DatabaseSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "",
             ],
+            [
+                'default_setting_category'      => 'cloud_provision',
+                'default_setting_subcategory'   => 'polycom_custom_configuration',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
 
         ];
 

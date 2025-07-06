@@ -240,57 +240,20 @@ class DeviceCloudProvisioningController extends Controller
      * Submit API request to ZTP to create a new organization
      *
      * @param  StoreZtpOrganizationRequest  $request
-     * @param  PolycomCloudProvider  $PolycomCloudProvider
-     * @return JsonResponse
      */
-    public function createOrganization(
-        StoreZtpOrganizationRequest $request,
-        PolycomCloudProvider $PolycomCloudProvider
-    ): JsonResponse {
-        $this->PolycomCloudProvider = $PolycomCloudProvider;
-
-        $inputs = $request->validated();
-
-        $inputs['enabled'] = true;
+    public function createOrganization( StoreZtpOrganizationRequest $request)
+    {
+        $data = $request->validated();
 
         try {
-            // Populate the credentials from default settings, if it's not provided within the request payload
-            $defaultSettings = $this->getProvisioningSettings($inputs['domain_uuid']);
-            if (!$inputs['provisioning_server_password']) {
-                $inputs['provisioning_server_password'] = $defaultSettings['http_auth_password'];
-            }
-
-            if (!$inputs['provisioning_server_username']) {
-                $inputs['provisioning_server_username'] = $defaultSettings['http_auth_username'];
-            }
+            $cloudProviderSelector = app()->make(CloudProviderSelector::class);
+            $cloudProvider = $cloudProviderSelector->getCloudProvider($data['provider']);
 
             // Send API request to create organization
-            $organizationId = $this->PolycomCloudProvider->createOrganization($inputs);
-
-            // Check for existing records
-            $existingSetting = DomainSettings::where('domain_uuid', $inputs['domain_uuid'])
-                ->where('domain_setting_category', 'cloud provision')
-                ->where('domain_setting_subcategory', 'polycom_ztp_profile_id')
-                ->first();
-
-            if ($existingSetting) {
-                // Delete the existing record
-                $existingSetting->delete();
-            }
-
-            // Save the new record
-            DomainSettings::create([
-                'domain_uuid' => $inputs['domain_uuid'],
-                'domain_setting_category' => 'cloud provision',
-                'domain_setting_subcategory' => 'polycom_ztp_profile_id',
-                'domain_setting_name' => 'text',
-                'domain_setting_value' => $organizationId,
-                'domain_setting_enabled' => true,
-            ]);
+            $cloudProvider->createOrganization($data);
 
             // Return a JSON response indicating success
             return response()->json([
-                'org_id' => $organizationId,
                 'messages' => ['success' => ['Organization successfully activated']]
             ], 201);
         } catch (\Exception $e) {
@@ -298,9 +261,7 @@ class DeviceCloudProvisioningController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => [
-                    'server' => ['Unable to activate organization. Check logs for more details'],
-                    'server2' => [$e->getMessage()]
+                'errors' => ['server' => [$e->getMessage()]
                 ]
             ], 500);  // 500 Internal Server Error for any other errors
         }
@@ -347,39 +308,26 @@ class DeviceCloudProvisioningController extends Controller
     }
 
     /**
-     * Submit API request to ZTP to create a new organization
+     * Submit API request to create a new organization
      *
      * @param  UpdateZtpOrganizationRequest  $request
-     * @param  PolycomCloudProvider  $PolycomCloudProvider
      * @return JsonResponse
      */
-    public function updateOrganization(
-        UpdateZtpOrganizationRequest $request,
-        PolycomCloudProvider $PolycomCloudProvider
-    ): JsonResponse {
-        $this->PolycomCloudProvider = $PolycomCloudProvider;
+    public function updateOrganization(UpdateZtpOrganizationRequest $request)
+    {
 
-        $inputs = $request->validated();
-
-        $inputs['enabled'] = true;
+        $data = $request->validated();
 
         try {
-            // Populate the credentials from default settings, if it's not provided within the request payload
-            $defaultSettings = $this->getProvisioningSettings($inputs['domain_uuid']);
-            if (!$inputs['provisioning_server_password']) {
-                $inputs['provisioning_server_password'] = $defaultSettings['http_auth_password'];
-            }
-
-            if (!$inputs['provisioning_server_username']) {
-                $inputs['provisioning_server_username'] = $defaultSettings['http_auth_username'];
-            }
+            $cloudProviderSelector = app()->make(CloudProviderSelector::class);
+            $cloudProvider = $cloudProviderSelector->getCloudProvider($data['provider']);
 
             // Send API request to update organization
-            $this->PolycomCloudProvider->updateOrganization($inputs['organization_id'], $inputs);
+            $cloudProvider->updateOrganization($data);
 
             // Return a JSON response indicating success
             return response()->json([
-                'org_id' => $inputs['organization_id'],
+                'org_id' => $data['organization_id'],
                 'messages' => ['success' => ['Organization successfully updated']]
             ], 201);
         } catch (\Exception $e) {
@@ -387,7 +335,7 @@ class DeviceCloudProvisioningController extends Controller
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Unable to update organization. Check logs for more details']]
+                'errors' => ['server' => [$e->getMessage()]]
             ], 500);  // 500 Internal Server Error for any other errors
         }
     }
@@ -397,20 +345,16 @@ class DeviceCloudProvisioningController extends Controller
      *
      * @return JsonResponse
      */
-    public function destroyOrganization(PolycomCloudProvider $PolycomCloudProvider)
+    public function destroyOrganization()
     {
-        $this->PolycomCloudProvider = $PolycomCloudProvider;
-
         try {
-            // Get Org ID from database
-            $domain_uuid = request('domain_uuid');
-            $org_id = $this->PolycomCloudProvider->getOrgIdByDomainUuid($domain_uuid);
 
-            // Remove local references from the database
-            DomainSettings::where('domain_uuid', $domain_uuid)
-                ->where('domain_setting_category', 'cloud provision')
-                ->where('domain_setting_subcategory', 'polycom_ztp_profile_id')
-                ->delete();
+            $cloudProviderSelector = app()->make(CloudProviderSelector::class);
+            $cloudProvider = $cloudProviderSelector->getCloudProvider(request('provider'));
+
+            // Get Org ID from database
+            $domain_uuid = session('domain_uuid');
+            $org_id = $cloudProvider->getOrgIdByDomainUuid($domain_uuid);
 
             if (!$org_id) {
                 return response()->json([
@@ -420,7 +364,7 @@ class DeviceCloudProvisioningController extends Controller
             }
 
             // Delete the organization
-            $deleteResponse = $this->PolycomCloudProvider->deleteOrganization($org_id);
+            $deleteResponse =  $cloudProvider->deleteOrganization($org_id);
             if ($deleteResponse) {
                 $devices = Devices::where('domain_uuid', $domain_uuid)
                     ->select(

@@ -1,6 +1,7 @@
 <template>
     <TransitionRoot as="div" :show="show">
-        <Dialog as="div" class="relative z-10" :inert="showPairModal || showUpdateModal || showApiTokenModal">
+        <Dialog as="div" class="relative z-10"
+            :inert="showPairModal || showUpdateModal || showApiTokenModal || showCreateModal">
             <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
                 <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
@@ -73,7 +74,8 @@
                                                     'polycom_create_org',
                                                     'polycom_update_org',
                                                     'polycom_create_api_token',
-                                                    'provisioning_title',
+                                                    'polycom_destroy_org',
+                                                    'polycom_sync_devices',
                                                     'address',
                                                     'username',
                                                     'password',
@@ -134,23 +136,7 @@
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
                                                     </div>
-                                                    <!-- <div v-if="provisioning && provisioning.status == 'error'"
-                                                        class="flex items-center gap-x-3">
-                                                        <div
-                                                            class="flex-none rounded-full bg-rose-400/10 p-1 text-rose-400">
-                                                            <div class="size-3 rounded-full bg-current" />
-                                                        </div>
-                                                        <h1 class="flex gap-x-3 text-lg">
-                                                            <span class="font-semibold ">Status:</span>
-                                                            <Badge backgroundColor="bg-rose-100"
-                                                                textColor="text-rose-700" :text="'Error'"
-                                                                ringColor="ring-rose-400/20"
-                                                                class="px-2 py-1 text-xs font-semibold" />
-                                                        </h1>
-                                                    </div> -->
-
-
-
+                                                    
 
                                                     <div v-if="!options" class="flex items-center gap-x-3">
                                                         <div
@@ -186,9 +172,6 @@
                                                 </StaticElement>
 
 
-
-
-
                                                 <ButtonElement name="polycom_create_org"
                                                     button-label="Create Organization" :loading="isLoading.create"
                                                     @click="handleCreateButtonClick('polycom')"
@@ -196,9 +179,22 @@
                                                     :conditions="[() => options && !options.organization_id]" />
 
                                                 <ButtonElement name="polycom_update_org"
-                                                    button-label="Organization Settings" :loading="isLoading.create"
+                                                    button-label="Organization Settings" :loading="isLoading.update"
                                                     @click="handleUpdateButtonClick('polycom')"
                                                     description="Create organization or connect to the existing organization in Polycom ZTP."
+                                                    :conditions="[() => options && options.organization_id]" />
+
+                                                <ButtonElement name="polycom_destroy_org"
+                                                    button-label="Delete Organization" :loading="isLoading.destroy"
+                                                    @click="handleDestroyButtonClick('polycom')"
+                                                    description="Delete organization from Polycom ZTP." :danger="true"
+                                                    :conditions="[() => options && options.organization_id]" />
+
+                                                <ButtonElement name="polycom_sync_devices"
+                                                    button-label="Sync Devices" :loading="isLoading.sync"
+                                                    @click="handleSyncButtonClick('polycom')"
+                                                    description="Syncs all devices from Polycom ZTP to your local storage. This will erase and replace any devices currently stored locally." 
+                                                    :secondary="true"
                                                     :conditions="[() => options && options.organization_id]" />
 
 
@@ -206,8 +202,10 @@
                                                     :loading="isLoading.create"
                                                     @click="handleApiTokenButtonClick('polycom')"
                                                     description="Click to add or update your Polycom ZTP API Token."
-                                                    :secondary="true"
-                                                    :conditions="[() => !isFormLoading]" />
+                                                    :secondary="true" :conditions="[() => !isFormLoading]" />
+
+
+
 
                                             </FormElements>
                                         </div>
@@ -224,111 +222,11 @@
     </TransitionRoot>
 
 
-    <!-- <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
-        <aside class="px-2 py-6 sm:px-6 lg:col-span-2 lg:px-0 lg:py-0">
-            <nav class="space-y-1">
-                <a v-for="item in options.cloud_providers" :key="item.name" href="#"
-                    :class="[activeTab === item.slug ? 'bg-gray-200 text-indigo-700 hover:bg-gray-100 hover:text-indigo-700' : 'text-gray-900 hover:bg-gray-200 hover:text-gray-900', 'group flex items-center rounded-md px-3 py-2 text-sm font-medium']"
-                    @click.prevent="setActiveTab(item.slug)" :aria-current="item.current ? 'page' : undefined">
-                    <component :is="iconComponents[item.icon]"
-                        :class="[item.current ? 'text-indigo-500 group-hover:text-indigo-500' : 'text-gray-400 group-hover:text-gray-500', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']"
-                        aria-hidden="true" />
-                    <span class="truncate">{{ item.name }}</span>
-                </a>
-            </nav>
+    <CreatePolycomOrgForm :options="itemOptions" :errors="formErrors" :show="showCreateModal"
+        :header="'Activate Polycom Organization'" :loading="loadingModal" @close="handleModalClose"
+        @error="emitErrorToParentFromChild" @success="emitSuccessToParentFromChild"
+        @refresh-data="getCloudProvisioningItemOptions('polycom')" />
 
-        </aside>
-        <div v-if="activeTab === 'polycom'" class="lg:col-span-10">
-            <div class="shadow sm:rounded-md">
-                <div v-if="currentTenant" class="bg-gray-50 pb-6">
-                    <div class="flex justify-between items-center p-8 pb-0">
-                        <h3 class="text-base font-semibold leading-6 text-gray-900">Provisioning Status</h3>
-                        <button v-if="canEditPolycomToken" type="button"
-                            @click.prevent="handlePolycomApiTokenButtonClick()"
-                            class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                            API Token
-                        </button>
-                    </div>
-
-                    <div class="space-y-6 p-8">
-                        <div>Status:
-                            <span class="text-rose-600" v-if="currentTenant.ztp_status !== 'true'">Organization is not
-                                provisioned</span>
-                            <span class="text-emerald-600" v-if="currentTenant.ztp_status === 'true'">Organization is
-                                provisioned</span>
-                        </div>
-                        <div v-if="currentTenant.ztp_status === 'true'" class="flex gap-4 pt-4">
-                            <button type="button" @click.prevent="handleEditButtonClick('polycom', currentTenant.domain_uuid)"
-                                class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                                Edit
-                            </button>
-                            <button type="button"
-                                @click.prevent="handleDeactivateButtonClick(currentTenant.domain_uuid)"
-                                class="rounded-md bg-red-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
-                                Deactivate
-                            </button>
-                        </div>
-                        <div v-else class="flex gap-4 pt-4">
-                            <button type="button" @click.prevent="handleActivateButtonClick(currentTenant.domain_uuid)"
-                                class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                                Activate
-                            </button>
-                        </div>
-                    </div>
-
-                    <div v-if="currentTenant.ztp_status === 'true'">
-                        <div class="flex justify-between items-center p-8 pb-0">
-                            <h3 class="text-base font-semibold leading-6 text-gray-900">Devices</h3>
-                        </div>
-
-                        <div class="space-y-6 p-8">
-                            <p class="text-sm text-gray-500">
-                                Sync devices from Polycom to ensure your local system stays up-to-date with the latest
-                                organizational data. Click the <strong>Sync Devices</strong> button to initiate the
-                                process.
-                            </p>
-                            <div class="rounded-md bg-yellow-100 p-4 mt-4">
-                                <div class="flex">
-                                    <div class="shrink-0">
-                                        <ExclamationTriangleIcon class="size-5 text-yellow-500" aria-hidden="true" />
-                                    </div>
-                                    <div class="ml-3">
-                                        <h3 class="text-sm font-medium text-yellow-800">Important Notice</h3>
-                                        <div class="mt-2 text-sm text-yellow-700">
-                                            <p>
-                                                Syncing will replace all current device data in your system with the
-                                                latest
-                                                device data from the cloud.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="px-4 py-3 text-center sm:px-6">
-                                <button @click.prevent="handleSyncButtonClick('polycom')"
-                                    class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                                    :disabled="syncDevicesSubmitting">
-                                    <Spinner :show="syncDevicesSubmitting" />
-                                    Sync Devices
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-    </div> -->
-
-    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showActivateModal" :header="'Activate Polycom Organization'"
-        :loading="loadingModal" @close="handleModalClose">
-        <template #modal-body>
-            <CreatePolycomOrgForm :options="itemOptions" :errors="formErrors" :is-submitting="activateFormSubmitting"
-                :activeTab="activationActiveTab" @submit="handleCreateRequest" @cancel="handleActivationFinish"
-                @error="emitErrorToParentFromChild" @success="emitSuccessToParentFromChild"
-                @clear-errors="handleClearErrors" />
-        </template>
-    </AddEditItemModal>
 
     <UpdatePolycomOrgForm :options="itemOptions" :show="showUpdateModal" :header="'Edit Polycom Organization'"
         :loading="loadingModal" @close="showUpdateModal = false" @error="emitErrorToParentFromChild"
@@ -357,8 +255,8 @@
 
     <ConfirmationModal :show="showConfirmationModal" @close="showConfirmationModal = false"
         @confirm="confirmDeleteAction" :header="'Confirm Action'"
-        :text="'Are you sure you want to deactivate apps for this account? This action may impact account functionality.'"
-        confirm-button-label="Deactivate" cancel-button-label="Cancel" :loading="showDeactivateSpinner" />
+        :text="'Are you sure you want to delete this organization? This action may impact account functionality.'"
+        confirm-button-label="Delete" cancel-button-label="Cancel" :loading="showDeactivateSpinner" />
 
     <ConfirmationModal :show="showPolycomConfirmationModal" @close="cancelPolycomAction" @confirm="confirmPolycomAction"
         :header="'Select a method to set up your Polycom organization.'"
@@ -391,16 +289,13 @@ const props = defineProps({
 
 
 const loadingModal = ref(false)
-const showActivateModal = ref(false);
+const showCreateModal = ref(false);
 const showUpdateModal = ref(false);
 const showApiTokenModal = ref(false);
 const showPairModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const showConfirmationModal = ref(false);
 const showPolycomConfirmationModal = ref(false);
-const activateFormSubmitting = ref(null);
-const activationActiveTab = ref('organization');
-const updateFormSubmitting = ref(null);
 const pairZtpOrgSubmitting = ref(null);
 const updateApiTokenFormSubmitting = ref(null);
 const confirmDeleteAction = ref(null);
@@ -419,30 +314,13 @@ const options = ref(null)
 const isFormLoading = ref(false)
 const isLoading = ref({
     create: false,
+    update: false,
+    destroy: false,
+    sync: false,
 })
 
 const emit = defineEmits(['close', 'cancel', 'error', 'success']);
 
-
-
-// onMounted(() => {
-//     getCloudProvisioningItemOptions();
-// })
-
-
-
-// const getCloudProvisioningItemOptions = () => {
-//     //loading.value = true;
-//     axios.post(props.routes.cloud_provisioning_item_options, {})
-//         .then((response) => {
-//             currentTenant.value = response.data.tenant;
-//             //loading.value = false;
-
-//         }).catch((error) => {
-//             handleModalClose();
-//             handleErrorResponse(error);
-//         });
-// }
 
 const getCloudProvisioningItemOptions = (provider) => {
     options.value = null
@@ -454,7 +332,7 @@ const getCloudProvisioningItemOptions = (provider) => {
     )
         .then((response) => {
             options.value = response.data;
-            console.log(options.value);
+            // console.log(options.value);
 
         }).catch((error) => {
             handleModalClose();
@@ -473,7 +351,7 @@ const handleCreateButtonClick = (provider) => {
 const executeNewOrgAction = (provider) => {
     showPolycomConfirmationModal.value = false;
     selectedProvider.value = provider;
-    showActivateModal.value = true
+    showCreateModal.value = true
     loadingModal.value = true
     getItemOptions(provider);
 }
@@ -510,95 +388,53 @@ const handleUpdateButtonClick = (provider) => {
     getItemOptions(provider);
 }
 
-const handleCreateRequest = (form) => {
-    activateFormSubmitting.value = true;
-    formErrors.value = null;
-
-    axios.post(props.routes.cloud_provisioning_create_organization, form)
-        .then((response) => {
-            activateFormSubmitting.value = false;
-            emit('success', 'success', response.data.messages);
-            handleModalClose();
-            getCloudProvisioningItemOptions();
-        }).catch((error) => {
-            activateFormSubmitting.value = false;
-            getCloudProvisioningItemOptions();
-            handleModalClose();
-            emit('error', error);
-        });
-
-};
-
-const handleUpdateRequest = (form) => {
-    updateFormSubmitting.value = true;
-    formErrors.value = null;
-
-    axios.put(props.routes.cloud_provisioning_update_organization, form)
-        .then((response) => {
-            updateFormSubmitting.value = false;
-            emit('success', 'success', response.data.messages);
-            handleModalClose();
-            getCloudProvisioningItemOptions();
-        }).catch((error) => {
-            updateFormSubmitting.value = false;
-            getCloudProvisioningItemOptions();
-            emit('error', error);
-        });
-
-};
-
 const handleSyncButtonClick = (provider) => {
-    syncDevicesSubmitting.value = true;
-    axios.post(props.routes.cloud_provisioning_sync_devices,
+    isLoading.value.sync = true;
+    axios.post(options.value.routes.cloud_provisioning_sync_devices,
         {
             provider: provider
         }
     )
         .then((response) => {
-            syncDevicesSubmitting.value = false;
             emit('success', 'success', response.data.messages);
         }).catch((error) => {
-            syncDevicesSubmitting.value = false;
             emit('error', error); // Emit the event with error
-        });
+        }).finally(() => {
+            isLoading.value.sync = false;
+        })
 };
 
 
 
-const handleDeactivateButtonClick = (uuid) => {
+const handleDestroyButtonClick = (provider) => {
     showConfirmationModal.value = true;
-    confirmDeleteAction.value = () => executeSingleDelete(uuid);
+    confirmDeleteAction.value = () => executeSingleDelete(provider);
 }
 
-const executeSingleDelete = (uuid) => {
+const executeSingleDelete = (provider) => {
     showDeactivateSpinner.value = true;
 
-    axios.post(props.routes.cloud_provisioning_destroy_organization, { domain_uuid: uuid })
+    axios.post(options.value.routes.cloud_provisioning_destroy_organization, { provider: provider })
         .then((response) => {
-            showDeactivateSpinner.value = false;
             emit('success', 'success', response.data.messages);
-            handleModalClose();
-            getCloudProvisioningItemOptions();
         }).catch((error) => {
-            showDeactivateSpinner.value = false;
-            getCloudProvisioningItemOptions();
-            handleModalClose();
             emit('error', error);
-        });
+        }).finally(() => {
+            showDeactivateSpinner.value = false;
+            handleModalClose();
+            getCloudProvisioningItemOptions(provider)
+        })
 }
 
-const handleActivationFinish = () => {
-    handleModalClose();
-}
 
-const getItemOptions = (provider, itemUuid) => {
+const getItemOptions = (provider) => {
     const payload = {
         provider: provider,
     };
     axios.post(props.routes.cloud_provisioning_item_options, payload)
         .then((response) => {
             itemOptions.value = response.data;
-            console.log(response.data);
+            // console.log(response.data);
         }).catch((error) => {
             emit('error', error)
             handleModalClose();
@@ -650,8 +486,6 @@ const getApiToken = (provider) => {
 const handleUpdateApiTokenRequest = (form) => {
     updateApiTokenFormSubmitting.value = true;
     formErrors.value = null;
-
-    console.log(form);
 
     axios.post(props.routes.cloud_provisioning_update_api_token, form)
         .then((response) => {
@@ -767,7 +601,7 @@ const handleTabSelected = (activeTab, previousTab) => {
 }
 
 const handleModalClose = () => {
-    showActivateModal.value = false;
+    showCreateModal.value = false;
     showUpdateModal.value = false;
     showApiTokenModal.value = false;
     showPolycomConfirmationModal.value = false;
