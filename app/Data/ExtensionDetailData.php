@@ -17,6 +17,8 @@ class ExtensionDetailData extends Data
         public ?string $outbound_caller_id_number_e164,
         public ?string $outbound_caller_id_number_formatted,
         public ?string $emergency_caller_id_number_e164,
+        public ?string $outbound_caller_id_name,
+        public ?string $emergency_caller_id_name,
         public ?string $directory_first_name,
         public ?string $directory_last_name,
         public ?string $name_formatted,
