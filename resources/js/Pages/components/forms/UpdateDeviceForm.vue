@@ -541,6 +541,7 @@ const props = defineProps({
     loading: Boolean,
 });
 
+const form$ = ref(null)
 const advModalIndex = ref(null)
 const isCloudProvisioningLoading = reactive({
     register: false,

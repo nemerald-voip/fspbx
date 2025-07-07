@@ -5,9 +5,6 @@ namespace App\Http\Requests;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Http\Exceptions\HttpResponseException;
 
 class BulkUpdateDeviceRequest extends FormRequest
 {
@@ -24,6 +21,9 @@ class BulkUpdateDeviceRequest extends FormRequest
     public function rules(): array
     {
         return [
+
+            'items' => 'required',
+            
             'device_profile_uuid' => [
                 'nullable',
                 Rule::when(
@@ -31,20 +31,39 @@ class BulkUpdateDeviceRequest extends FormRequest
                         // Check if the value is not the literal string "NULL"
                         return $input['device_profile_uuid'] !== 'NULL';
                     },
-                    Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid'),                
-                    )
+                    Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid'),
+                )
             ],
             'device_template' => [
                 'nullable',
                 'string',
             ],
-            'lines' => [
-                'nullable',
-                'array'
-            ],
+            // 'device_keys' => [
+            //     'nullable',
+            //     'array'
+            // ],
+            // // Required fields for each key:
+            // 'device_keys.*.line_type_id' => ['required', 'string'],
+            // 'device_keys.*.auth_id' => ['required', 'string'],
+            // 'device_keys.*.line_number' => ['required', 'numeric'],
+
+            // // These fields can be null/empty:
+            // 'device_keys.*.display_name' => ['nullable'],
+            // 'device_keys.*.server_address' => ['nullable'],
+            // 'device_keys.*.server_address_primary' => ['nullable'],
+            // 'device_keys.*.server_address_secondary' => ['nullable'],
+            // 'device_keys.*.sip_port' => ['nullable'],
+            // 'device_keys.*.sip_transport' => ['nullable'],
+            // 'device_keys.*.register_expires' => ['nullable'],
+            // 'device_keys.*.domain_uuid' => ['nullable'],
+            // 'device_keys.*.device_line_uuid' => ['nullable'],
+            // 'device_keys.*.user_id' => ['nullable'],
+            
             'domain_uuid' => [
                 'nullable',
-                Rule::notIn(['NULL']), // Ensures 'domain_uuid' is not 'NULL'
+            ],
+            'device_description' => [
+                'nullable',
             ],
         ];
     }
@@ -53,7 +72,7 @@ class BulkUpdateDeviceRequest extends FormRequest
     {
         return [
             'items.required' => 'No items selected to update',
-            'domain_uuid.not_in' => 'Company must be selected.'
+            'domain_uuid.required' => 'Acccount must be selected.',
         ];
     }
 

@@ -55,16 +55,17 @@
             <template #navigation>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    @pagination-change-page="renderRequestedPage" :bulk-actions="bulkActions"
+                    @bulk-action="handleBulkActionRequest" :has-selected-items="selectedItems.length > 0" />
             </template>
             <template #table-header>
 
                 <TableColumnHeader header="MAC Address"
-                    class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
-                        :has-selected-items="selectedItems.length > 0" />
+                    <!-- <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
+                        :has-selected-items="selectedItems.length > 0" /> -->
                     <span class="pl-4">MAC Address</span>
                 </TableColumnHeader>
                 <TableColumnHeader v-if="showGlobal" header="Domain"
@@ -82,7 +83,7 @@
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
-                <td colspan="6">
+                <td colspan="10">
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
                         <button v-if="!selectAll && selectedItems.length !== data.total"
@@ -106,7 +107,7 @@
                         <div class="flex items-center">
                             <input v-if="row.device_address" v-model="selectedItems" type="checkbox" name="action_box[]"
                                 :value="row.device_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="ml-9"
+                            <div class="ml-4"
                                 :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.device_update, }"
                                 @click="page.props.auth.can.device_update && handleEditButtonClick(row.device_uuid)">
                                 {{ row.device_address_formatted }}
@@ -231,20 +232,6 @@
     <NotificationSimple :show="restartRequestNotificationSuccessTrigger" :isSuccess="true" :header="'Success'"
         :text="'Restart request has been submitted'" @update:show="restartRequestNotificationSuccessTrigger = false" />
 
-
-    <!-- <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="createModalTrigger" :header="'Add New'" :loading="isModalLoading"
-        @close="handleModalClose">
-        <template #modal-body>
-            <CreateDeviceForm
-                :options="itemOptions"
-                :errors="formErrors"
-                :is-submitting="createFormSubmitting"
-                @submit="handleCreateRequest"
-                @cancel="handleModalClose"
-            />
-        </template>
-    </AddEditItemModal> -->
-
     <CreateDeviceForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading"
         :header="'Create New Device'" @close="showCreateModal = false" @error="handleErrorResponse"
         @success="showNotification" @refresh-data="handleSearchButtonClick" />
@@ -254,19 +241,14 @@
         @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
         @refresh-data="handleSearchButtonClick" />
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="bulkUpdateModalTrigger" :header="'Bulk Edit'"
-        :loading="isModalLoading" @close="handleModalClose">
-        <template #modal-body>
-            <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
-                :is-submitting="bulkUpdateFormSubmitting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose"
-                @domain-selected="getItemOptions" />
-        </template>
-    </AddEditItemModal>
+    <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :show="showBulkUpdateModal"
+        :header="'Bulk Update'" :loading="isModalLoading" @close="handleModalClose"
+        @refresh-data="handleSearchButtonClick"  />
 
-    <CloudProvisioningSettings :show="showCloudProvisioningSettings"  @close="showCloudProvisioningSettings = false"  
-        :header="'Cloud Provisioning Settings'"
-        :loading="isModalLoading" :routes="routes"
-        @error="handleErrorResponse" @success="showNotification" />
+
+    <CloudProvisioningSettings :show="showCloudProvisioningSettings" @close="showCloudProvisioningSettings = false"
+        :header="'Cloud Provisioning Settings'" :loading="isModalLoading" :routes="routes" @error="handleErrorResponse"
+        @success="showNotification" />
 
 
     <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
@@ -290,7 +272,6 @@ import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
 import NotificationSimple from "./components/notifications/Simple.vue";
-import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
@@ -299,7 +280,6 @@ import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon, CloudIcon } from "@he
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
-import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import RestartIcon from "./components/icons/RestartIcon.vue";
 import CreateDeviceForm from "./components/forms/CreateDeviceForm.vue";
@@ -319,7 +299,7 @@ const restartRequestNotificationErrorTrigger = ref(false);
 const createModalTrigger = ref(false);
 const showUpdateModal = ref(false);
 const showCreateModal = ref(false);
-const bulkUpdateModalTrigger = ref(false);
+const showBulkUpdateModal = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationRestartTrigger = ref(false);
 const createFormSubmitting = ref(null);
@@ -358,7 +338,7 @@ const bulkActions = computed(() => {
         },
         {
             id: 'bulk_update',
-            label: 'Edit',
+            label: 'Update',
             icon: 'PencilSquareIcon'
         }
     ];
@@ -387,7 +367,7 @@ const getItemOptions = (itemUuid = null) => {
     axios.post(props.routes.item_options, payload)
         .then((response) => {
             itemOptions.value = response.data;
-            // console.log(itemOptions.value);
+            console.log(itemOptions.value);
 
         }).catch((error) => {
             handleModalClose();
@@ -403,43 +383,6 @@ const handleCreateButtonClick = () => {
     getItemOptions();
 }
 
-const handleCreateRequest = (form) => {
-    createFormSubmitting.value = true;
-    formErrors.value = null;
-
-    axios.post(props.routes.store, form)
-        .then((response) => {
-            createFormSubmitting.value = false;
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-            handleModalClose();
-            handleClearSelection();
-        }).catch((error) => {
-            createFormSubmitting.value = false;
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        });
-
-};
-
-const handleUpdateRequest = (form) => {
-    updateFormSubmitting.value = true;
-    formErrors.value = null;
-
-    axios.put(props.itemData.update_url, form)
-        .then((response) => {
-            updateFormSubmitting.value = false;
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-            handleModalClose();
-            handleClearSelection();
-        }).catch((error) => {
-            updateFormSubmitting.value = false;
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        });
-
-};
 
 const handleSingleItemDeleteRequest = (uuid) => {
     confirmationModalTrigger.value = true;
@@ -453,10 +396,9 @@ const handleBulkActionRequest = (action) => {
         confirmDeleteAction.value = () => executeBulkDelete();
     }
     if (action === 'bulk_update') {
-        formErrors.value = [];
         getItemOptions();
         isModalLoading.value = true
-        bulkUpdateModalTrigger.value = true;
+        showBulkUpdateModal.value = true;
     }
     if (action === 'bulk_restart') {
         confirmationRestartTrigger.value = true;
@@ -490,21 +432,6 @@ const executeBulkDelete = (items = selectedItems.value) => {
             handleClearSelection();
             handleModalClose();
             handleErrorResponse(error);
-        });
-}
-
-const handleBulkUpdateRequest = (form) => {
-    bulkUpdateFormSubmitting.value = true
-    axios.post(`${props.routes.bulk_update}`, form)
-        .then((response) => {
-            bulkUpdateFormSubmitting.value = false;
-            handleModalClose();
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-        })
-        .catch((error) => {
-            bulkUpdateFormSubmitting.value = false;
-            handleFormErrorResponse(error);
         });
 }
 
@@ -707,7 +634,7 @@ const handleModalClose = () => {
     showUpdateModal.value = false;
     confirmationModalTrigger.value = false;
     confirmationRestartTrigger.value = false;
-    bulkUpdateModalTrigger.value = false;
+    showBulkUpdateModal.value = false;
     showCloudProvisioningSettings.value = false;
 }
 

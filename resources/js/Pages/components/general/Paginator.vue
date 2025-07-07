@@ -1,12 +1,18 @@
 <template>
     <div class="flex items-center justify-between border-b border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
-        <div class="flex flex-1 justify-between sm:hidden">
-            <button @click="$emit('pagination-change-page', previous)" 
-                class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+        <div class="mr-4">
+             <BulkActions v-if="hasSelectedItems" :actions="bulkActions" @bulk-action="$emit('bulk-action', $event)"
+                        :has-selected-items="hasSelectedItems" />
+        </div>
+       
+
+        <div class="flex flex-1 justify-end sm:hidden">
+            <button @click="$emit('pagination-change-page', previous)"
+                class="relative inline-flex items-center rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                 Previous
             </button>
-            <button @click="$emit('pagination-change-page', next)" 
-                class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
+            <button @click="$emit('pagination-change-page', next)"
+                class="relative ml-3 inline-flex items-center rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                 Next
             </button>
         </div>
@@ -42,11 +48,11 @@
         </div>
     </div>
 </template>
-  
+
 <script setup>
 import { computed } from "vue";
 import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/20/solid';
-import { Link } from '@inertiajs/vue3'
+import BulkActions from "./BulkActions.vue";
 
 const props = defineProps({
     previous: String,
@@ -58,8 +64,9 @@ const props = defineProps({
     lastPage: Number,
     links: Array,
     filterData: Object,
+    bulkActions: Array,
+    hasSelectedItems: Boolean,
 });
-
 
 
 const getVisibleLinks = (links) => {
