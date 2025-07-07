@@ -1240,15 +1240,22 @@ class ExtensionsController extends Controller
                 'followMe.followMeDestinations',
                 'extension_users',
                 'mobile_app',
-                'deviceLines',
                 'advSettings',
             ])
+                ->with([
+                    'deviceLines' => function ($q) use ($domain_uuid) {
+                        $q->where('domain_uuid', $domain_uuid)
+                            ->select('device_line_uuid', 'device_uuid', 'auth_id', 'domain_uuid', 'password');
+                    }
+                ])
                 ->with(['voicemail' => function ($query) use ($domain_uuid) {
                     $query->where('domain_uuid', $domain_uuid);
                 }])
                 ->where('domain_uuid', $domain_uuid)
                 ->whereIn('extension_uuid', $uuids)
                 ->get();
+
+
 
             foreach ($extensions as $extension) {
                 // 1. Delete voicemail
@@ -1267,10 +1274,10 @@ class ExtensionsController extends Controller
                     $extension->extension_users()->delete();
                 }
 
-                // 4. Unassign device lines (deviceLines)
-                if ($extension->deviceLines) {
-                    $extension->deviceLines()->delete();
-                }
+                // 4. Unassign device lines (deviceLines) only from this domain
+                $extension->deviceLines()
+                    ->where('domain_uuid', $domain_uuid)
+                    ->delete();
 
                 // 5. Mobile app users: dispatch job, then delete
                 if ($extension->mobile_app) {
@@ -1363,7 +1370,7 @@ class ExtensionsController extends Controller
             $user->insert_user   = session('user_uuid');
             $user->username      = trim($user->first_name . (!empty($user->last_name) ? '_' . $user->last_name : ''));
             $user->user_email    = $extension->email ?? '';
-            $user->user_enabled  = 'true'; 
+            $user->user_enabled  = 'true';
 
             $user->save();
 
