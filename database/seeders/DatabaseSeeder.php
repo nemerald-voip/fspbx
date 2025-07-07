@@ -99,6 +99,16 @@ class DatabaseSeeder extends Seeder
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
             [
+                'application_name'       => 'Cloud Provisioning',
+                'permission_name'        => 'manage_cloud_provision_providers',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'application_name'       => 'Cloud Provisioning',
+                'permission_name'        => 'manage_device_cloud_provisioning_settings',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
                 'application_name'       => 'Whitelisted Numbers',
                 'permission_name'        => 'whitelisted_numbers_list_view',
                 'insert_date'           => date("Y-m-d H:i:s"),
@@ -130,8 +140,18 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'application_name'  => 'Wakeup Calls',
-                'permission_name'   => 'wakeup_calls_view_settings', 
+                'permission_name'   => 'wakeup_calls_view_settings',
                 'insert_date'       => date("Y-m-d H:i:s"),
+            ],
+            [
+                'application_name'       => 'Cloud Provisioning',
+                'permission_name'        => 'cloud_provisioning_show_credentials',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'application_name'       => 'Cloud Provisioning',
+                'permission_name'        => 'polycom_api_token_update',
+                'insert_date'           => date("Y-m-d H:i:s"),
             ],
             [
                 'application_name'       => 'Account Settings',
@@ -343,6 +363,110 @@ class DatabaseSeeder extends Seeder
                 'group_name'            => "superadmin",
                 'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
                 'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'        => 'manage_cloud_provision_providers',
+                'permission_protected'   => 'true',
+                'permission_assigned'    => 'true',
+                'group_name'            => "superadmin",
+                'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'        => 'manage_device_cloud_provisioning_settings',
+                'permission_protected'   => 'true',
+                'permission_assigned'    => 'true',
+                'group_name'            => "superadmin",
+                'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'        => 'cloud_provisioning_show_credentials',
+                'permission_protected'   => 'true',
+                'permission_assigned'    => 'true',
+                'group_name'            => "superadmin",
+                'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'        => 'polycom_api_token_update',
+                'permission_protected'   => 'true',
+                'permission_assigned'    => 'true',
+                'group_name'            => "superadmin",
+                'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'wakeup_calls_list_view',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'wakeup_calls_create',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'wakeup_calls_edit',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'wakeup_calls_delete',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'wakeup_calls_all',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'wakeup_calls_list_view',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "admin",
+                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'wakeup_calls_create',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "admin",
+                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'wakeup_calls_edit',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "admin",
+                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'wakeup_calls_delete',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "admin",
+                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
             ],
             [
                 'permission_name'        => 'account_settings_list_view',
@@ -1360,6 +1484,22 @@ class DatabaseSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "alloy, echo, fable, onyx, nova, shimmer",
             ],
+            [
+                'default_setting_category'      => 'cloud_provision',
+                'default_setting_subcategory'   => 'polycom_api_token',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'cloud_provision',
+                'default_setting_subcategory'   => 'polycom_custom_configuration',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
 
         ];
 
@@ -1392,10 +1532,10 @@ class DatabaseSeeder extends Seeder
                     'slug' => 'fspbx',
                 ],
             ];
-    
+
             foreach ($features as $feature) {
                 $existingFeature = ProFeatures::where('name', $feature['name'])->first();
-    
+
                 if (is_null($existingFeature)) {
                     ProFeatures::create([
                         'name' => $feature['name'],

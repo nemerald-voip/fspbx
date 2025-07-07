@@ -429,13 +429,6 @@ class PhoneNumbersController extends Controller
                     ->update($inputs);
             }
 
-            /*if ($extension) {
-                // First, we are deleting all existing device lines
-                $this->deleteDeviceLines(request('items'));
-
-                // Create new lines
-                $this->createDeviceLines(request('items'), $extension);
-            }*/
 
             return response()->json([
                 'messages' => ['success' => ['Selected items updated']],

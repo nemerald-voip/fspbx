@@ -7,13 +7,14 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\UserLogsController;
+use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\BusinessHoursController;
 use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\EmergencyCallController;
-use App\Http\Controllers\VoicemailController;
+use App\Http\Controllers\DeviceCloudProvisioningController;
 
 /*
 |--------------------------------------------------------------------------
@@ -100,7 +101,25 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('user-logs/select-all', [UserLogsController::class, 'selectAll'])->name('user-logs.select.all');
 
     // Devices 
+    Route::post('devices', [DeviceController::class, 'store'])->name('devices.store');
+    Route::put('devices/{device}', [DeviceController::class, 'update'])->name('devices.update');
+    Route::post('/devices/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('devices.bulk.update');
+    Route::post('/devices/bulk-delete', [DeviceController::class, 'bulkDelete'])->name('devices.bulk.delete');
+    Route::post('/devices/restart', [DeviceController::class, 'restart'])->name('devices.restart');
+    Route::post('/devices/select-all', [DeviceController::class, 'selectAll'])->name('devices.select.all');
     Route::post('devices/item-options', [DeviceController::class, 'getItemOptions'])->name('devices.item.options');
     Route::post('devices/assign', [DeviceController::class, 'assign'])->name('devices.assign');
     Route::post('devices/bulk-unassign', [DeviceController::class, 'bulkUnassign'])->name('devices.bulk.unassign');
+
+    //Cloud Provisioning
+    Route::get('/cloud-provisioning/{device}/status', [DeviceCloudProvisioningController::class, 'status'])->name('cloud-provisioning.status');
+    Route::post('/cloud-provisioning/{device}/reset', [DeviceCloudProvisioningController::class, 'reset'])->name('cloud-provisioning.reset');
+    Route::post('/cloud-provisioning/item-options', [DeviceCloudProvisioningController::class, 'getItemOptions'])->name('cloud-provisioning.item.options');
+    Route::post('/cloud-provisioning/organization/create', [DeviceCloudProvisioningController::class, 'createOrganization'])->name('cloud-provisioning.organization.create');
+    Route::put('/cloud-provisioning/organization/update', [DeviceCloudProvisioningController::class, 'updateOrganization'])->name('cloud-provisioning.organization.update');
+    Route::post('/cloud-provisioning/organization/destroy', [DeviceCloudProvisioningController::class, 'destroyOrganization'])->name('cloud-provisioning.organization.destroy');
+    Route::post('/cloud-provisioning/organization/pair', [DeviceCloudProvisioningController::class, 'pairOrganization'])->name('cloud-provisioning.organization.pair');
+    Route::post('/cloud-provisioning/organization/all', [DeviceCloudProvisioningController::class, 'getOrganizations'])->name('cloud-provisioning.organization.all');
+    Route::post('/cloud-provisioning/token/get', [DeviceCloudProvisioningController::class, 'getToken'])->name('cloud-provisioning.token.get');
+    Route::post('/cloud-provisioning/token/update', [DeviceCloudProvisioningController::class, 'updateToken'])->name('cloud-provisioning.token.update');
 });

@@ -1,313 +1,490 @@
 <template>
-    <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
-        <aside class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
-            <nav class="space-y-1">
-                <a v-for="item in options.navigation" :key="item.name" href="#"
-                    :class="[activeTab === item.slug ? 'bg-gray-200 text-indigo-700 hover:bg-gray-100 hover:text-indigo-700' : 'text-gray-900 hover:bg-gray-200 hover:text-gray-900', 'group flex items-center rounded-md px-3 py-2 text-sm font-medium']"
-                    @click.prevent="setActiveTab(item.slug)" :aria-current="item.current ? 'page' : undefined">
-                    <component :is="iconComponents[item.icon]"
-                        :class="[item.current ? 'text-indigo-500 group-hover:text-indigo-500' : 'text-gray-400 group-hover:text-gray-500', '-ml-1 mr-3 h-6 w-6 flex-shrink-0']"
-                        aria-hidden="true" />
-                    <span class="truncate">{{ item.name }}</span>
-                    <ExclamationCircleIcon
-                        v-if="((errors?.device_address || errors?.device_template) && item.slug === 'settings')"
-                        class="ml-2 h-5 w-5 text-red-500" aria-hidden="true" />
+    <TransitionRoot as="div" :show="show">
+        <Dialog as="div" class="relative z-10">
+            <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
+                leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+            </TransitionChild>
+            <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+                <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                    <TransitionChild as="template" enter="ease-out duration-300"
+                        enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                        enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200"
+                        leave-from="opacity-100 translate-y-0 sm:scale-100"
+                        leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
 
-                </a>
-            </nav>
-        </aside>
+                        <DialogPanel
+                            class="relative transform  rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
 
-        <form @submit.prevent="submitForm" class="sm:px-6 lg:col-span-9 lg:px-0">
-            <div v-if="activeTab === 'settings'">
-                <div class="bg-gray-100 px-4 py-6 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-                    <div class="sm:col-span-12">
-                        <div class="rounded-md bg-blue-50 p-4">
-                            <div class="flex">
-                                <div class="flex-shrink-0">
-                                    <InformationCircleIcon class="h-5 w-5 text-blue-400" aria-hidden="true" />
-                                </div>
-                                <div class="ml-3">
-                                    <p class="text-sm text-blue-700">Select a new option to apply to all items, use the
-                                        clear
-                                        button to unset current settings, or leave unchanged to keep existing values </p>
+                            <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
+                                {{ header }}
+                            </DialogTitle>
 
+                            <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
+                                <button type="button"
+                                    class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                    @click="emit('close')">
+                                    <span class="sr-only">Close</span>
+                                    <XMarkIcon class="h-6 w-6" aria-hidden="true" />
+                                </button>
+                            </div>
+
+                            <div v-if="loading" class="w-full h-full">
+                                <div class="flex justify-center items-center space-x-3">
+                                    <div>
+                                        <svg class="animate-spin  h-10 w-10 text-blue-600"
+                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                                stroke-width="4">
+                                            </circle>
+                                            <path class="opacity-75" fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
 
-                    <div class="sm:col-span-12">
-                        <LabelInputRequired :target="'template'" :label="'Device Template'" />
-                        <div class="mt-2">
-                            <ComboBox :options="options.templates" :selectedItem="form.device_template" :search="true"
-                                :showUndo="form.device_template === 'NULL'"
-                                :placeholder="placeholderText('device_template')" @update:model-value="handleTemplateUpdate"
-                                :error="errors?.device_template && errors.device_template.length > 0" />
-                        </div>
-                        <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Select a new common template for all selected devices</p> -->
-                        <div v-if="errors?.device_template" class="mt-2 text-sm text-red-600">
-                            {{ errors.device_template[0] }}
-                        </div>
-                    </div>
+                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm"
+                                @success="handleSuccess" @error="handleError" @response="handleResponse"
+                                :display-errors="false" :default="{
+                                    items: items,
+                                    // device_address: options.item?.device_address ?? null,
+                                    // device_template: options.item?.device_template ?? null,
+                                    // device_profile_uuid: options.item?.device_profile_uuid,
+                                    // domain_uuid: options.item?.domain_uuid,
+                                    // device_keys: options.lines ?? null,
+                                    // device_description: options.item?.device_description ?? null,
+                                }">
 
-                    <div class="sm:col-span-12">
-                        <LabelInputOptional :target="'profile'" :label="'Device Profile'" />
-                        <div class="mt-2">
-                            <ComboBox :options="options.profiles" :selectedItem="form.device_profile_uuid" :search="true"
-                                :showClear="true" :showUndo="form.device_profile_uuid === 'NULL'"
-                                :placeholder="placeholderText('device_profile_uuid')"
-                                @update:model-value="handleProfileUpdate" />
-                        </div>
-                        <!-- <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
-                    forwarded.</p> -->
-                    </div>
+                                <template #empty>
 
-                    <div v-if="page.props.auth.can.domain_select && page.props.auth.can.device_edit_domain"
-                        class="sm:col-span-12">
-                        <LabelInputRequired :target="'domain'" :label="'Owned By (Company Name)'" />
-                        <div class="mt-2">
-                            <ComboBox :options="options.domains" :selectedItem="form.domain_uuid" :search="true"
-                                :showUndo="form.domain_uuid === 'NULL'" :placeholder="placeholderText('domain_uuid')"
-                                @update:model-value="handleDomainUpdate"
-                                :error="errors?.domain_uuid && errors.domain_uuid.length > 0" />
-                        </div>
-                        <div v-if="errors?.domain_uuid" class="mt-2 text-sm text-red-600">
-                            {{ errors.domain_uuid[0] }}
-                        </div>
-                    </div>
-                </div>
-            </div>
+                                    <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
+                                        <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
+                                            <FormTabs view="vertical" @select="handleTabSelected">
+                                                <FormTab name="page0" label="Device Settings" :elements="[
+                                                    'h4',
+                                                    'device_template_checkbox',
+                                                    'device_template',
+                                                    'device_profile_uuid_checkbox',
+                                                    'device_profile_uuid',
+                                                    'domain_uuid_checkbox',
+                                                    'domain_uuid',
+                                                    'device_description_checkbox',
+                                                    'device_description',
+                                                    'container_3',
+                                                    'submit',
 
-            <div v-if="activeTab === 'lines'">
-                <div class="shadow sm:rounded-md">
-                    <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
-                        <div>
-                            <h3 class="text-base font-semibold leading-6 text-gray-900">Line Keys</h3>
-                            <div class="rounded-md bg-yellow-50 p-4">
-                                <div class="flex">
-                                    <div class="flex-shrink-0">
-                                        <ExclamationTriangleIcon class="h-5 w-5 text-yellow-400" aria-hidden="true" />
-                                    </div>
-                                    <div class="ml-3">
-                                        <h3 class="text-sm font-medium text-yellow-800">Attention needed</h3>
-                                        <div class="mt-2 text-sm text-yellow-700">
-                                            <p>If you make any changes here, all existing line keys will be replaced with
-                                                your new selection.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                                                ]" />
+                                                <!-- <FormTab name="page1" label="Keys" :elements="[
+                                                    'password_reset',
+                                                    'security_title',
+                                                    'keys_container',
+                                                    'keys_title',
+                                                    'assign_existing',
+                                                    'add_key',
+                                                    'device_keys',
+                                                    'advanced',
+                                                    'keys_container2',
+                                                    'submit_keys',
 
-                        <div class="grid grid-cols-12 gap-6">
+                                                ]" /> -->
 
-                            <template v-for="(row, index) in form.lines" :key="row.device_line_uuid">
-                                <div class="pt-2 text-sm font-medium leading-6 text-gray-900">
-                                    {{ index + 1 }}
-                                </div>
-
-                                <div class="col-span-3 text-sm font-medium leading-6 text-gray-900">
-                                    <ComboBox :options="options.line_key_types" :selectedItem="row.line_type_id"
-                                        :search="true" :placeholder="'Choose key type'"
-                                        @update:model-value="(value) => handleKeyTypeUpdate(value, index)" />
-                                </div>
-
-                                <div class="col-span-4 text-sm font-medium leading-6 text-gray-900">
-                                    <ComboBox :options="options.extensions" :selectedItem="row.user_id" :search="true"
-                                        :placeholder="'Choose extension'"
-                                        @update:model-value="(value) => handleExtensionUpdate(value, index)" />
-                                </div>
-
-                                <div class="col-span-3 text-sm font-medium leading-6 text-gray-900">
-                                    <InputField v-model="row.display_name" type="text" name="ip_address"
-                                        placeholder="Enter display name"
-                                        :error="errors?.display_name && errors.display_name.length > 0" />
-                                </div>
-
-                                <div class="text-sm font-medium leading-6 text-gray-900">
-                                    <!-- <EllipsisVerticalIcon @click="handleEditRequest(row.device_uuid)"
-                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-900 active:bg-gray-300 active:duration-150 cursor-pointer" /> -->
-
-                                    <Menu as="div" class="relative inline-block text-left">
-                                        <div>
-                                            <MenuButton
-                                                class="flex items-center rounded-full bg-gray-100 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100">
-                                                <span class="sr-only">Open options</span>
-                                                <EllipsisVerticalIcon class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-900 active:bg-gray-300 active:duration-150 cursor-pointer" aria-hidden="true" />
-                                            </MenuButton>
+                                            </FormTabs>
                                         </div>
 
-                                        <transition enter-active-class="transition ease-out duration-100"
-                                            enter-from-class="transform opacity-0 scale-95"
-                                            enter-to-class="transform opacity-100 scale-100"
-                                            leave-active-class="transition ease-in duration-75"
-                                            leave-from-class="transform opacity-100 scale-100"
-                                            leave-to-class="transform opacity-0 scale-95">
-                                            <MenuItems
-                                                class="absolute right-0 z-10 mt-2 w-36 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                                                <div class="py-1">
-                                                    <MenuItem v-slot="{ active }">
-                                                    <a href="#" @click.prevent="deleteLineKey(index)"
-                                                        :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Delete</a>
-                                                    </MenuItem>
-                                                   
-                                                </div>
-                                            </MenuItems>
-                                        </transition>
-                                    </Menu>
+                                        <div
+                                            class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
+                                            <FormElements>
 
-                                </div>
-                            </template>
+                                                <HiddenElement name="items" :meta="true" />
 
-                        </div>
+                                                <StaticElement name="h4" tag="h4" content="Device Settings" />
 
-                        <div
-                            class="flex justify-center bg-gray-100 px-4 py-4 text-center text-sm font-medium text-indigo-500 hover:text-indigo-700 sm:rounded-b-lg">
-                            <button href="#" @click.prevent="addNewLineKey" class="flex items-center gap-2">
-                                <PlusIcon class="h-6 w-6 text-black-500 hover:text-black-900 active:h-8 active:w-8 " />
-                                <span>
-                                    Add new line key
-                                </span>
-                            </button>
-                        </div>
-                    </div>
+                                                <CheckboxElement name="device_template_checkbox" :submit="false"
+                                                    label="&nbsp;" :columns="{
+                                                        container: 1,
+                                                    }"
+                                                    :conditions="[() => options?.permissions?.device_template_update]" />
+
+                                                <SelectElement name="device_template" :items="options.templates"
+                                                    :search="true" :native="false" label="Device Template"
+                                                    input-type="search" autocomplete="off" label-prop="name"
+                                                    value-prop="value" :floating="false" placeholder="Select Template"
+                                                    :conditions="[() => options?.permissions?.device_template_update]"
+                                                    :disabled="[['device_template_checkbox', false]]" :columns="{
+                                                        container: 11,
+                                                    }" />
+
+                                                <CheckboxElement name="device_profile_uuid_checkbox" :submit="false"
+                                                    label="&nbsp;" :columns="{
+                                                        container: 1,
+                                                    }" />
+
+                                                <SelectElement name="device_profile_uuid" :items="options.profiles"
+                                                    :search="true" :native="false" label="Device Profile"
+                                                    input-type="search" autocomplete="off" label-prop="name"
+                                                    value-prop="value" placeholder="Select Profile" :floating="false"
+                                                    :disabled="[['device_profile_uuid_checkbox', false]]" :columns="{
+                                                        container: 11,
+                                                    }" />
+
+                                                <CheckboxElement name="device_description_checkbox" :submit="false"
+                                                    label="&nbsp;" :columns="{
+                                                        container: 1,
+                                                    }" />
+                                                <TextElement name="device_description" label="Description"
+                                                    placeholder="Enter description" :floating="false" :columns="{
+                                                        container: 11,
+                                                    }" :disabled="[['device_description_checkbox', false]]" />
+
+                                                <CheckboxElement name="domain_uuid_checkbox" :submit="false"
+                                                    label="&nbsp;" :columns="{
+                                                        container: 1,
+                                                    }"
+                                                    :conditions="[() => options?.permissions?.device_domain_update]" />
+
+                                                <SelectElement name="domain_uuid" :items="options.domains"
+                                                    :search="true" :native="false" label="Assigned To (Account)"
+                                                    input-type="search" autocomplete="off" label-prop="name"
+                                                    value-prop="value" placeholder="Select Account" :floating="false"
+                                                    :conditions="[() => options?.permissions?.device_domain_update]"
+                                                    :columns="{
+                                                        container: 11,
+                                                    }" :disabled="[['domain_uuid_checkbox', false]]" />
+
+                                                <GroupElement name="container_3" />
+
+                                                <ButtonElement name="submit" button-label="Save" :submits="true"
+                                                    align="right" />
 
 
+                                                <!-- Lines tab-->
+                                                <StaticElement name="keys_title" tag="h4" content="Device Keys"
+                                                    description="Assign functions to the device keys." />
+
+
+                                                <GroupElement name="keys_container" />
+
+                                                <ListElement name="device_keys" :sort="true" size="sm" :disabled="true"
+                                                    store-order="line_number"
+                                                    :controls="{ add: options.permissions.device_key_create, remove: options.permissions.destination_delete, sort: options.permissions.destination_update }"
+                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                                    <template #default="{ index }">
+                                                        <ObjectElement :name="index">
+                                                            <HiddenElement name="device_line_uuid" :meta="true" />
+                                                            <HiddenElement name="domain_uuid" :meta="true"
+                                                                :default="options.default_line_options?.domain_uuid" />
+                                                            <HiddenElement name="server_address" :meta="true"
+                                                                :default="options.default_line_options?.server_address" />
+                                                            <HiddenElement name="server_address_primary" :meta="true"
+                                                                :default="options.default_line_options?.server_address_primary" />
+                                                            <HiddenElement name="server_address_secondary" :meta="true"
+                                                                :default="options.default_line_options?.server_address_secondary" />
+                                                            <HiddenElement name="sip_port" :meta="true"
+                                                                :default="options.default_line_options?.sip_port" />
+                                                            <HiddenElement name="sip_transport" :meta="true"
+                                                                :default="options.default_line_options?.sip_transport" />
+                                                            <HiddenElement name="register_expires" :meta="true"
+                                                                :default="options.default_line_options?.register_expires" />
+                                                            <HiddenElement name="user_id" :meta="true"
+                                                                :default="null" />
+                                                            <HiddenElement name="shared_line" :meta="true"
+                                                                :default="null" />
+
+
+                                                            <TextElement name="line_number" label="Key" :rules="[
+                                                                'nullable',
+                                                                'numeric',
+                                                            ]" autocomplete="off" :columns="{
+
+                                                                sm: {
+                                                                    container: 1,
+                                                                },
+                                                            }" />
+
+                                                            <SelectElement name="line_type_id" label="Function"
+                                                                :items="options.line_key_types" :search="true"
+                                                                label-prop="name" :native="false" input-type="search"
+                                                                autocomplete="off" :columns="{
+
+                                                                    sm: {
+                                                                        container: 3,
+                                                                    },
+                                                                }" placeholder="Choose Function" :floating="false"
+                                                                @change="(newValue, oldValue, el$) => {
+
+                                                                    if (newValue == 'sharedline') {
+                                                                        el$.form$.el$('device_keys').children$[index].children$['shared_line'].update('1');
+                                                                    } else {
+                                                                        el$.form$.el$('device_keys').children$[index].children$['shared_line'].update(null);
+                                                                    }
+
+
+                                                                }" />
+
+                                                            <SelectElement name="auth_id" label="Ext/Number"
+                                                                :items="options.extensions" label-prop="name"
+                                                                :search="true" :native="false" input-type="search"
+                                                                autocomplete="off" :columns="{
+
+                                                                    sm: {
+                                                                        container: 4,
+                                                                    },
+                                                                }" placeholder="Choose Ext/Number" :floating="false"
+                                                                @change="(newValue, oldValue, el$) => {
+
+                                                                    el$.form$.el$('device_keys').children$[index].children$['display_name'].update(newValue);
+                                                                    el$.form$.el$('device_keys').children$[index].children$['user_id'].update(newValue);
+
+
+                                                                }" />
+
+                                                            <TextElement name="display_name" label="Display Name"
+                                                                :columns="{
+
+                                                                    default: {
+                                                                        container: 10,
+                                                                    },
+                                                                    sm: {
+                                                                        container: 3,
+                                                                    },
+                                                                }" placeholder="Display Name" :floating="false" />
+
+                                                            <StaticElement label="&nbsp;" name="key_advanced" :columns="{
+
+                                                                default: {
+                                                                    container: 1,
+                                                                },
+                                                                sm: {
+                                                                    container: 1,
+                                                                },
+                                                            }">
+                                                                
+                                                                <Cog8ToothIcon @click="showLineAdvSettings(index)"
+                                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+
+                                                            </StaticElement>
+
+                                                            <FormChildModal :show="advModalIndex === index"
+                                                                header="Advanced Line Settings" :loading="false"
+                                                                @close="closeAdvSettings">
+                                                                <div class="px-5 grid gap-y-4">
+                                                                    <TextElement name="server_address" label="Domain"
+                                                                        placeholder="Enter domain name"
+                                                                        :floating="false"
+                                                                        :default="options.default_line_options?.server_address" />
+
+                                                                    <TextElement name="server_address_primary"
+                                                                        label="Primary Server Address"
+                                                                        placeholder="Enter primary server address"
+                                                                        :floating="false"
+                                                                        :default="options.default_line_options?.server_address_primary" />
+
+                                                                    <TextElement name="server_address_secondary"
+                                                                        label="Secondary Server Address"
+                                                                        placeholder="Enter secondary server address"
+                                                                        :floating="false" />
+
+                                                                    <TextElement name="sip_port" label="SIP Port"
+                                                                        placeholder="Enter SIP port" :floating="false"
+                                                                        :default="options.default_line_options?.sip_port" />
+
+                                                                    <SelectElement name="sip_transport"
+                                                                        label="SIP Transport"
+                                                                        :items="options.sip_transport_types"
+                                                                        :search="true" label-prop="name" :native="false"
+                                                                        input-type="search" autocomplete="off"
+                                                                        placeholder="Select SIP Transport"
+                                                                        :floating="false"
+                                                                        :default="options.default_line_options?.sip_transport" />
+
+                                                                    <TextElement name="register_expires"
+                                                                        label="Register Expires (Seconds)"
+                                                                        placeholder="Enter expiry time (seconds)"
+                                                                        :floating="false"
+                                                                        :default="options.default_line_options?.register_expires" />
+
+                                                                    <ButtonElement name="close_advanced"
+                                                                        button-label="Close" align="center" :full="true"
+                                                                        @click="closeAdvSettings" />
+                                                                </div>
+                                                            </FormChildModal>
+
+
+                                                        </ObjectElement>
+                                                    </template>
+                                                </ListElement>
+
+
+                                                <GroupElement name="keys_container2" />
+
+                                                <ButtonElement name="submit_keys" button-label="Save" :submits="true"
+                                                    align="right" />
+
+                                            </FormElements>
+                                        </div>
+                                    </div>
+                                </template>
+                            </Vueform>
+                        </DialogPanel>
+
+
+                    </TransitionChild>
                 </div>
             </div>
+        </Dialog>
+    </TransitionRoot>
 
-            <div class="bg-gray-100 px-4 py-3 text-right sm:px-6">
-                <button type="submit"
-                    class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                    ref="saveButtonRef" :disabled="isSubmitting">
-                    <Spinner :show="isSubmitting" />
-                    Save
-                </button>
-            </div>
-        </form>
-    </div>
 </template>
 
 <script setup>
-import { reactive, ref } from "vue";
-import { usePage } from '@inertiajs/vue3';
+import { ref } from "vue";
 
-
-import ComboBox from "../general/ComboBox.vue";
-import InputField from "../general/InputField.vue";
-import LabelInputOptional from "../general/LabelInputOptional.vue";
-import LabelInputRequired from "../general/LabelInputRequired.vue";
-import Spinner from "../general/Spinner.vue";
-import { InformationCircleIcon } from '@heroicons/vue/20/solid'
-import { Cog6ToothIcon, AdjustmentsHorizontalIcon, EllipsisVerticalIcon } from '@heroicons/vue/24/outline';
-import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
-import { PlusIcon, ExclamationTriangleIcon } from "@heroicons/vue/24/solid";
-import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
+import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
+import { XMarkIcon } from "@heroicons/vue/24/solid";
+import FormChildModal from "../FormChildModal.vue"
+import { Cog8ToothIcon } from "@heroicons/vue/24/outline";
 
 
 const props = defineProps({
     items: Object,
+    show: Boolean,
     options: Object,
-    isSubmitting: Boolean,
-    errors: Object,
+    header: String,
+    loading: Boolean,
 });
 
-const page = usePage();
-
-const form = reactive({
-    items: props.items,
-    device_template: null,
-    device_profile_uuid: null,
-    extension: null,
-    domain_uuid: null,
-    lines: [],
-    _token: page.props.csrf_token,
-})
-
-const emits = defineEmits(['submit', 'cancel', 'domain-selected']);
+const form$ = ref(null)
 
 
-// Initialize activeTab with the currently active tab from props
-const activeTab = ref(props.options.navigation.find(item => item.slug)?.slug || props.options.navigation[0].slug);
+const advModalIndex = ref(null)
+
+const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
 
 
-const submitForm = () => {
-    // console.log(form);
-    emits('submit', form); // Emit the event with the form data
+function showLineAdvSettings(index) {
+    advModalIndex.value = index
 }
 
-const handleTemplateUpdate = (newSelectedItem) => {
-    form.device_template = newSelectedItem.value;
+function closeAdvSettings() {
+    advModalIndex.value = null
 }
 
-const handleProfileUpdate = (newSelectedItem) => {
-    form.device_profile_uuid = newSelectedItem.value
+const handleTabSelected = (activeTab, previousTab) => {
+
 }
 
-const handleExtensionUpdate = (newSelectedItem, index) => {
-    form.lines[index].user_id = newSelectedItem.value;
-    form.lines[index].display_name = newSelectedItem.value;
-}
 
-const handleDomainUpdate = (newSelectedItem) => {
-    form.domain_uuid = newSelectedItem.value;
-    form.device_profile_uuid = "NULL";
-    form.extension = "NULL";
-    if (newSelectedItem.value !== "NULL") {
-        emits('domain-selected', newSelectedItem.value); // Emit 'domain-selected' event when the domain is updated
+const submitForm = async (FormData, form$) => {
+    // Using FormData will EXCLUDE conditional elements and it
+    // will submit the form as "Content-Type: multipart/form-data".
+    // const formData = FormData
+    // console.log (formData.entries)
+
+    // Using form$.requestData will EXCLUDE conditional elements and it 
+    // will submit the form as Content-Type: application/json . 
+    const requestData = form$.requestData
+
+    const activeFieldNames = Object.values(form$.elements$)
+        .filter(el$ => !el$.isStatic && !el$.isDisabled)
+        .map(el$ => el$.name);
+
+    // console.log(activeFieldNames);
+
+    const filteredRequestData = Object.fromEntries(
+        Object.entries(requestData).filter(([key]) => activeFieldNames.includes(key))
+    );
+
+    // console.log(filteredRequestData);
+
+    // Using form$.data will INCLUDE conditional elements and it
+    // will submit the form as "Content-Type: application/json".
+    // const data = form$.data
+
+    return await form$.$vueform.services.axios.post(props.options.routes.bulk_update_route, filteredRequestData)
+};
+
+
+function clearErrorsRecursive(el$) {
+    // clear this element’s errors
+    el$.messageBag?.clear()
+
+    // if it has child elements, recurse into each
+    if (el$.children$) {
+        Object.values(el$.children$).forEach(childEl$ => {
+            clearErrorsRecursive(childEl$)
+        })
     }
 }
 
-// Function to determine placeholder based on the current value
-function placeholderText(fieldName) {
-    const fieldValue = form[fieldName];
-    if (fieldValue === null) {
-        return "Keep existing setting";
-    } else if (fieldValue === "NULL") {
-        return "Current settings will be cleared";
-    } else {
-        return fieldValue; // Use the actual value as the placeholder
+const handleResponse = (response, form$) => {
+    // Clear form including nested elements 
+    Object.values(form$.elements$).forEach(el$ => {
+        clearErrorsRecursive(el$)
+    })
+
+    // Display custom errors for elements
+    if (response.data.errors) {
+        Object.keys(response.data.errors).forEach((elName) => {
+            if (form$.el$(elName)) {
+                form$.el$(elName).messageBag.append(response.data.errors[elName][0])
+            }
+        })
     }
 }
 
-const handleKeyTypeUpdate = (newSelectedItem, index) => {
-    const newValue = newSelectedItem.value === 'sharedline' ? 'true' : null;
+const handleSuccess = (response, form$) => {
+    // console.log(response) // axios response
+    // console.log(response.status) // HTTP status code
+    // console.log(response.data) // response data
 
-    // Only update if the value is different
-    if (form.lines[index].shared_line !== newValue) {
-        form.lines[index].shared_line = newValue;
+    emit('success', 'success', response.data.messages);
+    emit('close');
+    emit('refresh-data');
+}
+
+const handleError = (error, details, form$) => {
+    form$.messageBag.clear() // clear message bag
+
+    switch (details.type) {
+        // Error occured while preparing elements (no submit happened)
+        case 'prepare':
+            console.log(error) // Error object
+
+            form$.messageBag.append('Could not prepare form')
+            break
+
+        // Error occured because response status is outside of 2xx
+        case 'submit':
+            emit('error', error);
+            console.log(error) // AxiosError object
+            // console.log(error.response) // axios response
+            // console.log(error.response.status) // HTTP status code
+            // console.log(error.response.data) // response data
+
+            // console.log(error.response.data.errors)
+
+
+            break
+
+        // Request cancelled (no response object)
+        case 'cancel':
+            console.log(error) // Error object
+
+            form$.messageBag.append('Request cancelled')
+            break
+
+        // Some other errors happened (no response object)
+        case 'other':
+            console.log(error) // Error object
+
+            form$.messageBag.append('Couldn\'t submit form')
+            break
     }
-};
-
-
-const addNewLineKey = () => {
-    // console.log(props.options);
-    // Define the new line key object with default values
-    const newLineKey = {
-        line_number: form.lines.length + 1, // Increment line number based on the array length
-        user_id: null,                      // Set initial user_id to null or any default value
-        display_name: '',                   // Set initial display_name to an empty string
-        shared_line: null,                  // Set initial shared_line to null or any default value
-        device_line_uuid: null
-    };
-
-    // Push the new line key to the form.lines array
-    form.lines.push(newLineKey);
-};
-
-const iconComponents = {
-    'Cog6ToothIcon': Cog6ToothIcon,
-    'AdjustmentsHorizontalIcon': AdjustmentsHorizontalIcon,
-};
-
-const setActiveTab = (tabSlug) => {
-    activeTab.value = tabSlug;
-};
-
-const deleteLineKey = (index) => {
-    form.lines.splice(index, 1);  // Remove the line key at the specified index
-};
+}
 
 
 </script>
