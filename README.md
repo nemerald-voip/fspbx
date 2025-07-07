@@ -53,6 +53,12 @@ Before you begin, ensure you have met the following requirements:
    ```bash
     wget -O- https://raw.githubusercontent.com/nemerald-voip/fspbx/main/install/install-fspbx.sh | bash
    ```
+
+2. **Configure a custom domain and Let's Encrypt certificate (OPTIONAL)**
+
+    Follow the steps in this article to configure your custom domain.
+   
+    [How to Secure FS PBX with a Let’s Encrypt SSL Certificate](https://github.com/nemerald-voip/fspbx/wiki/How-to-Secure-FS-PBX-with-a-Let%E2%80%99s-Encrypt-SSL-Certificate)
    
 ### Usage
 After completing the installation steps, you can access the application at your domain.

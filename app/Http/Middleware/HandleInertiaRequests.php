@@ -79,6 +79,9 @@ class HandleInertiaRequests extends Middleware
 
         $permissions['device_profile_index'] = userCheckPermission('device_profile_view');
 
+        $permissions['manage_cloud_provision_providers'] = userCheckPermission('manage_cloud_provision_providers');
+        $permissions['polycom_api_token_edit'] = userCheckPermission('polycom_api_token_edit');
+
         $permissions['destination_add'] = userCheckPermission('destination_add');
         $permissions['destination_update'] = userCheckPermission('destination_edit');
         $permissions['destination_destroy'] = userCheckPermission('destination_delete');

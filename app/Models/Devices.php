@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Models\DeviceLines;
+use App\Jobs\SendZtpRequest;
+use App\Models\DeviceCloudProvisioning;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -34,7 +36,6 @@ class Devices extends Model
         'device_firmware_version',
         'device_enabled',
         'device_enabled_date',
-        'device_template',
         'device_user_uuid',
         'device_username',
         'device_password',
@@ -46,19 +47,10 @@ class Devices extends Model
         'device_provisioned_agent',
         'device_template',
         'device_user_uuid',
-        'device_username',
+        'device_username'
     ];
 
     protected $appends = ['device_address_formatted'];
-
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct();
-        $this->attributes['domain_uuid'] = Session::get('domain_uuid');
-        $this->attributes['insert_date'] = date('Y-m-d H:i:s');
-        $this->attributes['insert_user'] = Session::get('user_uuid');
-        $this->fill($attributes);
-    }
 
     public function getDeviceAddressFormattedAttribute()
     {
@@ -83,6 +75,11 @@ class Devices extends Model
         return $this->hasOne(DeviceProfile::class, 'device_profile_uuid', 'device_profile_uuid');
     }
 
+    public function cloudProvisioning()
+    {
+        return $this->hasOne(DeviceCloudProvisioning::class, 'device_uuid', 'device_uuid');
+    }
+
     /**
      * Get the Extension that the device is assigned for.
      * @return mixed|null
@@ -93,10 +90,37 @@ class Devices extends Model
     }
 
     /**
-     * Get domain that this message settings belongs to 
+     * Get domain that this message settings belongs to
      */
     public function domain()
     {
         return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function getCloudProviderOrganizationId(): string
+    {
+        $domainSettings = DomainSettings::where('domain_uuid', $this->domain_uuid /*Session::get('domain_uuid')*/)
+            ->where('domain_setting_category', 'cloud provision');
+
+        $domainSettings = match ($this->device_vendor) {
+            'polycom' => $domainSettings->where('domain_setting_subcategory', 'polycom_ztp_profile_id'),
+            //'yealink' => $domainSettings->where('domain_setting_subcategory', 'yealink_ztp_profile_id'),
+            default => throw new \Exception("Unsupported provider"),
+        };
+
+        if ($domainSettings->count() == 0) {
+            throw new \Exception("Organization ID not found");
+        }
+
+        $orgId = $domainSettings->value('domain_setting_value');
+
+        if (empty($orgId)) {
+            throw new \Exception("Organization ID is empty");
+        }
+
+        return $orgId;
     }
 }

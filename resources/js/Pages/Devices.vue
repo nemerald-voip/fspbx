@@ -22,9 +22,16 @@
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.device_create" type="button" @click.prevent="handleCreateButtonClick()"
+                <button v-if="page.props.auth.can.device_create" type="button"
+                    @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
+                </button>
+
+                <button v-if="page.props.auth.can.manage_cloud_provision_providers" type="button"
+                    @click.prevent="handleCloudProvisioningButtonClick()"
+                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    Cloud
                 </button>
 
                 <a v-if="page.props.auth.can.device_profile_index" type="button" href="app/devices/device_profiles.php"
@@ -48,33 +55,38 @@
             <template #navigation>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    @pagination-change-page="renderRequestedPage" :bulk-actions="bulkActions"
+                    @bulk-action="handleBulkActionRequest" :has-selected-items="selectedItems.length > 0" />
             </template>
             <template #table-header>
 
                 <TableColumnHeader header="MAC Address"
-                    class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
-                        :has-selected-items="selectedItems.length > 0" />
+                    <!-- <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
+                        :has-selected-items="selectedItems.length > 0" /> -->
                     <span class="pl-4">MAC Address</span>
                 </TableColumnHeader>
                 <TableColumnHeader v-if="showGlobal" header="Domain"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
-                <TableColumnHeader header="Template" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Profile" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Assigned extension"
+                <TableColumnHeader header="Template"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Profile" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader v-if="!showGlobal" header="Assigned extension"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Description"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Cloud" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
-                <td colspan="6">
+                <td colspan="10">
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
-                        <button v-if="!selectAll && selectedItems.length != data.total"
+                        <button v-if="!selectAll && selectedItems.length !== data.total"
                             class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
                             @click="handleSelectAll">
                             Select all {{ data.total }} items
@@ -95,9 +107,9 @@
                         <div class="flex items-center">
                             <input v-if="row.device_address" v-model="selectedItems" type="checkbox" name="action_box[]"
                                 :value="row.device_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="ml-9"
+                            <div class="ml-4"
                                 :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.device_update, }"
-                                @click="page.props.auth.can.device_update && handleEditRequest(row.device_uuid)">
+                                @click="page.props.auth.can.device_update && handleEditButtonClick(row.device_uuid)">
                                 {{ row.device_address_formatted }}
                             </div>
                             <ejs-tooltip :content="tooltipCopyContent" position='TopLeft' class="ml-2"
@@ -112,7 +124,8 @@
 
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.domain?.domain_description">
-                        <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft' target="#domain_tooltip_target">
+                        <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft'
+                            target="#domain_tooltip_target">
                             <div id="domain_tooltip_target">
                                 {{ row.domain?.domain_description }}
                             </div>
@@ -121,9 +134,9 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_template" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.profile?.device_profile_name" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField v-if="!showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <template #default>
-                            <div v-if="row.lines.length === 0">—</div>
+                            <div v-if="row.lines?.length === 0">—</div>
                             <div v-else>
                                 <div v-for="line in [...row.lines].sort((a, b) => Number(a.line_number) - Number(b.line_number))"
                                     :key="line.device_line_uuid">
@@ -135,12 +148,34 @@
                             </div>
                         </template>
                     </TableField>
-
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        :text="row.device_description" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <div class="flex items-center whitespace-nowrap">
+                            <ejs-tooltip :content="!row.cloud_provisioning ? 'Not provisioned'
+                                : (row.cloud_provisioning.status === 'success' && row.cloud_provisioning.last_action === 'register') ? 'Provisioned'
+                                    : row.cloud_provisioning.status === 'pending' ? 'Pending'
+                                        : row.cloud_provisioning.status === 'error' ? 'Error'
+                                            : 'Not provisioned'" position='TopCenter'
+                                target="#cloud_status_tooltip_target">
+                                <div id="cloud_status_tooltip_target">
+                                    <CloudIcon :class="[
+                                        'h-9 w-9 py-2 rounded-full',
+                                        !row.cloud_provisioning ? 'text-gray-300'
+                                            : (row.cloud_provisioning.status === 'success' && row.cloud_provisioning.last_action === 'register') ? 'text-green-600'
+                                                : row.cloud_provisioning.status === 'error' ? 'text-red-600'
+                                                    : row.cloud_provisioning.status === 'pending' ? 'text-yellow-500'
+                                                        : 'text-gray-300'
+                                    ]" />
+                                </div>
+                            </ejs-tooltip>
+                        </div>
+                    </TableField>
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
-                            <div class="flex items-center whitespace-nowrap">
-                                <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'" position='TopCenter'
-                                    target="#destination_tooltip_target">
+                            <div class="flex items-center whitespace-nowrap justify-end">
+                                <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'"
+                                    position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditRequest(row.device_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
@@ -192,38 +227,29 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-
     <NotificationSimple :show="restartRequestNotificationErrorTrigger" :isSuccess="false" :header="'Warning'"
         :text="'Please select at least one device'" @update:show="restartRequestNotificationErrorTrigger = false" />
     <NotificationSimple :show="restartRequestNotificationSuccessTrigger" :isSuccess="true" :header="'Success'"
         :text="'Restart request has been submitted'" @update:show="restartRequestNotificationSuccessTrigger = false" />
 
+    <CreateDeviceForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading"
+        :header="'Create New Device'" @close="showCreateModal = false" @error="handleErrorResponse"
+        @success="showNotification" @refresh-data="handleSearchButtonClick" />
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="createModalTrigger" :header="'Add New'" :loading="loadingModal"
-        @close="handleModalClose">
-        <template #modal-body>
-            <CreateDeviceForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
-                @submit="handleCreateRequest" @cancel="handleModalClose" />
-        </template>
-    </AddEditItemModal>
+    <UpdateDeviceForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"
+        :header="'Update Device - ' + (itemOptions?.item?.device_address_formatted ?? 'loading')"
+        @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
+        @refresh-data="handleSearchButtonClick" />
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="editModalTrigger" :header="'Edit Device'" :loading="loadingModal"
-        @close="handleModalClose">
-        <template #modal-body>
-            <UpdateDeviceForm :item="itemData" :options="itemOptions" :errors="formErrors"
-                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"
-                @domain-selected="getItemOptions" />
-        </template>
-    </AddEditItemModal>
+    <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :show="showBulkUpdateModal"
+        :header="'Bulk Update'" :loading="isModalLoading" @close="handleModalClose"
+        @refresh-data="handleSearchButtonClick"  />
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="bulkUpdateModalTrigger" :header="'Bulk Edit'"
-        :loading="loadingModal" @close="handleModalClose">
-        <template #modal-body>
-            <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
-                :is-submitting="bulkUpdateFormSubmiting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose"
-                @domain-selected="getItemOptions" />
-        </template>
-    </AddEditItemModal>
+
+    <CloudProvisioningSettings :show="showCloudProvisioningSettings" @close="showCloudProvisioningSettings = false"
+        :header="'Cloud Provisioning Settings'" :loading="isModalLoading" :routes="routes" @error="handleErrorResponse"
+        @success="showNotification" />
+
 
     <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="confirmDeleteAction" />
@@ -237,7 +263,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, onBeforeUnmount, ref, watch } from "vue";
 import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
@@ -246,41 +272,42 @@ import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
 import NotificationSimple from "./components/notifications/Simple.vue";
-import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
+import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon, CloudIcon } from "@heroicons/vue/24/solid";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
-import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import RestartIcon from "./components/icons/RestartIcon.vue";
 import CreateDeviceForm from "./components/forms/CreateDeviceForm.vue";
 import UpdateDeviceForm from "./components/forms/UpdateDeviceForm.vue";
 import Notification from "./components/notifications/Notification.vue";
+import CloudProvisioningSettings from "./components/forms/CloudProvisioningSettings.vue";
 
 const page = usePage()
+const itemOptions = ref({})
 const loading = ref(false)
-const loadingModal = ref(false)
+const isModalLoading = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const restartRequestNotificationSuccessTrigger = ref(false);
 const restartRequestNotificationErrorTrigger = ref(false);
 const createModalTrigger = ref(false);
-const editModalTrigger = ref(false);
-const bulkUpdateModalTrigger = ref(false);
+const showUpdateModal = ref(false);
+const showCreateModal = ref(false);
+const showBulkUpdateModal = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationRestartTrigger = ref(false);
-const confirmationModalDestroyPath = ref(null);
-const createFormSubmiting = ref(null);
-const updateFormSubmiting = ref(null);
+const createFormSubmitting = ref(null);
+const updateFormSubmitting = ref(null);
 const confirmDeleteAction = ref(null);
 const confirmRestartAction = ref(null);
-const bulkUpdateFormSubmiting = ref(null);
+const bulkUpdateFormSubmitting = ref(null);
+const showCloudProvisioningSettings = ref(false);
 const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
@@ -289,16 +316,14 @@ let tooltipCopyContent = ref('Copy to Clipboard');
 
 const props = defineProps({
     data: Object,
-    showGlobal: Boolean,
     routes: Object,
-    itemData: Object,
-    itemOptions: Object,
 });
 
+// console.log(props.data);
 
 const filterData = ref({
     search: null,
-    showGlobal: props.showGlobal,
+    showGlobal: false,
 });
 
 const showGlobal = ref(props.showGlobal);
@@ -313,7 +338,7 @@ const bulkActions = computed(() => {
         },
         {
             id: 'bulk_update',
-            label: 'Edit',
+            label: 'Update',
             icon: 'PencilSquareIcon'
         }
     ];
@@ -330,104 +355,40 @@ const bulkActions = computed(() => {
     return actions;
 });
 
-onMounted(() => {
-});
-
-const handleEditRequest = (itemUuid) => {
-    editModalTrigger.value = true
-    formErrors.value = null;
-    loadingModal.value = true
-
-    router.get(props.routes.current_page,
-        {
-            itemUuid: itemUuid,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: [
-                'itemData',
-                'itemOptions',
-            ],
-            onSuccess: (page) => {
-                loadingModal.value = false;
-            },
-            onFinish: () => {
-                loadingModal.value = false;
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
-
-        });
+const handleEditButtonClick = (itemUuid) => {
+    showUpdateModal.value = true
+    getItemOptions(itemUuid);
 }
 
-const handleCreateRequest = (form) => {
-    createFormSubmiting.value = true;
-    formErrors.value = null;
-
-    axios.post(props.routes.store, form)
+const getItemOptions = (itemUuid = null) => {
+    itemOptions.value = {}
+    const payload = itemUuid ? { itemUuid: itemUuid } : {}; // Conditionally add itemUuid to payload
+    isModalLoading.value = true
+    axios.post(props.routes.item_options, payload)
         .then((response) => {
-            createFormSubmiting.value = false;
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-            handleModalClose();
-            handleClearSelection();
+            itemOptions.value = response.data;
+            console.log(itemOptions.value);
+
         }).catch((error) => {
-            createFormSubmiting.value = false;
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        });
-
-};
-
-const handleUpdateRequest = (form) => {
-    updateFormSubmiting.value = true;
-    formErrors.value = null;
-
-    axios.put(props.itemData.update_url, form)
-        .then((response) => {
-            updateFormSubmiting.value = false;
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
             handleModalClose();
-            handleClearSelection();
-        }).catch((error) => {
-            updateFormSubmiting.value = false;
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        });
+            handleErrorResponse(error);
+        }).finally(() => {
+            isModalLoading.value = false
+        })
+}
 
-};
+const handleCreateButtonClick = () => {
+    showCreateModal.value = true
+    isModalLoading.value = true
+    getItemOptions();
+}
+
 
 const handleSingleItemDeleteRequest = (uuid) => {
     confirmationModalTrigger.value = true;
     confirmDeleteAction.value = () => executeBulkDelete([uuid]);
 }
 
-// const executeSingleDelete = (url) => {
-//     router.delete(url, {
-//         preserveScroll: true,
-//         preserveState: true,
-//         onSuccess: (page) => {
-//             if (page.props.flash.error) {
-//                 showNotification('error', page.props.flash.error);
-//             }
-//             if (page.props.flash.message) {
-//                 showNotification('success', page.props.flash.message);
-//             }
-//             confirmationModalTrigger.value = false;
-//             confirmationModalDestroyPath.value = null;
-//         },
-//         onFinish: () => {
-//             confirmationModalTrigger.value = false;
-//             confirmationModalDestroyPath.value = null;
-//         },
-//         onError: (errors) => {
-//             console.log(errors);
-//         },
-//     });
-// }
 
 const handleBulkActionRequest = (action) => {
     if (action === 'bulk_delete') {
@@ -435,10 +396,9 @@ const handleBulkActionRequest = (action) => {
         confirmDeleteAction.value = () => executeBulkDelete();
     }
     if (action === 'bulk_update') {
-        formErrors.value = [];
         getItemOptions();
-        loadingModal.value = true
-        bulkUpdateModalTrigger.value = true;
+        isModalLoading.value = true
+        showBulkUpdateModal.value = true;
     }
     if (action === 'bulk_restart') {
         confirmationRestartTrigger.value = true;
@@ -475,28 +435,6 @@ const executeBulkDelete = (items = selectedItems.value) => {
         });
 }
 
-const handleBulkUpdateRequest = (form) => {
-    bulkUpdateFormSubmiting.value = true
-    axios.post(`${props.routes.bulk_update}`, form)
-        .then((response) => {
-            bulkUpdateFormSubmiting.value = false;
-            handleModalClose();
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-        })
-        .catch((error) => {
-            bulkUpdateFormSubmiting.value = false;
-            handleFormErrorResponse(error);
-        });
-}
-
-const handleCreateButtonClick = () => {
-    createModalTrigger.value = true
-    formErrors.value = null;
-    loadingModal.value = true
-    getItemOptions();
-}
-
 const handleSelectAll = () => {
     axios.post(props.routes.select_all, filterData._rawValue)
         .then((response) => {
@@ -510,6 +448,12 @@ const handleSelectAll = () => {
         });
 
 };
+
+const handleCloudProvisioningButtonClick = () => {
+    showCloudProvisioningSettings.value = true
+    isModalLoading.value = false
+    // getCloudProvisioningItemOptions()
+}
 
 
 const handleCopyToClipboard = (macAddress) => {
@@ -556,13 +500,15 @@ const handleSearchButtonClick = () => {
     loading.value = true;
     router.visit(props.routes.current_page, {
         data: {
-            filterData: filterData._rawValue,
+            filter: {
+                search: filterData.value.search,
+                showGlobal: filterData.value.showGlobal,
+            },
         },
         preserveScroll: true,
         preserveState: true,
         only: [
             "data",
-            'showGlobal',
         ],
         onSuccess: (page) => {
             loading.value = false;
@@ -594,32 +540,41 @@ const renderRequestedPage = (url) => {
 };
 
 
-const getItemOptions = (domain_uuid) => {
-    router.get(props.routes.current_page,
+
+const getAvailableDomains = () => {
+    router.get(props.routes.cloud_provisioning_domains,
         {
-            'domain_uuid': domain_uuid,
+
         },
         {
             preserveScroll: true,
             preserveState: true,
             only: [
-                'itemOptions',
+                'availableDomains',
             ],
             onSuccess: (page) => {
-                loadingModal.value = false;
+                isModalLoading.value = false;
             },
             onFinish: () => {
-                loadingModal.value = false;
+                isModalLoading.value = false;
             },
             onError: (errors) => {
                 console.log(errors);
             },
 
         });
-}
+
+    /* try {
+         const response = await axios.post(props.routes.cloud_provisioning_domains, {});
+         availableDomains.value = response.data.data || [];
+     } catch (error) {
+         console.error(error);
+     }*/
+};
+
 
 const handleFormErrorResponse = (error) => {
-    if (error.request?.status == 419) {
+    if (error.request?.status === 419) {
         showNotification('error', { request: ["Session expired. Reload the page"] });
     } else if (error.response) {
         // The request was made and the server responded with a status code
@@ -668,20 +623,19 @@ const handleSelectPageItems = () => {
     }
 };
 
-
-
 const handleClearSelection = () => {
-    selectedItems.value = [],
-        selectPageItems.value = false;
+    selectedItems.value = [];
+    selectPageItems.value = false;
     selectAll.value = false;
 }
 
 const handleModalClose = () => {
     createModalTrigger.value = false;
-    editModalTrigger.value = false;
+    showUpdateModal.value = false;
     confirmationModalTrigger.value = false;
     confirmationRestartTrigger.value = false;
-    bulkUpdateModalTrigger.value = false;
+    showBulkUpdateModal.value = false;
+    showCloudProvisioningSettings.value = false;
 }
 
 const hideNotification = () => {

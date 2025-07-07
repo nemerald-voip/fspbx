@@ -37,6 +37,7 @@ use App\Http\Controllers\RegistrationsController;
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\AppsCredentialsController;
 use App\Http\Controllers\MessageSettingsController;
+use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\SansayActiveCallsController;
 use App\Http\Controllers\VoicemailMessagesController;
 use App\Http\Controllers\CallRoutingOptionsController;
@@ -224,12 +225,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/domains/filter/', [DomainController::class, 'filterDomainsFusionPBX'])->name('filterDomainsFusionPBX');
 
     //Devices
-    Route::get('/devices/options', [DeviceController::class, 'options'])->name('devices.options');
-    Route::post('/devices/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('devices.bulk.update');
-    Route::post('/devices/bulk-delete', [DeviceController::class, 'bulkDelete'])->name('devices.bulk.delete');
-    Route::resource('devices', DeviceController::class);
-    Route::post('/devices/restart', [DeviceController::class, 'restart'])->name('devices.restart');
-    Route::post('/devices/select-all', [DeviceController::class, 'selectAll'])->name('devices.select.all');
+    Route::get('devices', [DeviceController::class, 'index'])->name('devices.index');
 
     //Phone Numbers
     Route::resource('phone-numbers', PhoneNumbersController::class);
@@ -410,6 +406,19 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('pro-features/activate', [ProFeaturesController::class, 'activate'])->name('pro-features.activate');
     Route::post('pro-features/install', [ProFeaturesController::class, 'install'])->name('pro-features.install');
     Route::post('pro-features/uninstall', [ProFeaturesController::class, 'uninstall'])->name('pro-features.uninstall');
+
+
+    // Cloud Provisioning
+    //Route::resource('cloud-provisioning', DeviceCloudProvisioningController::class);
+    Route::post('/cloud-provisioning/domains', [DeviceCloudProvisioningController::class, 'getAvailableDomains'])->name('cloud-provisioning.domains');
+    // Route::post('/cloud-provisioning/select-all', [ActiveCallsController::class, 'selectAll'])->name('active-calls.select.all');
+    // Route::post('/cloud-provisioning/action', [ActiveCallsController::class, 'handleAction'])->name('active-calls.action');
+    Route::post('/cloud-provisioning/sync-devices', [DeviceCloudProvisioningController::class, 'syncDevices'])->name('cloud-provisioning.devices.sync');
+    Route::post('/cloud-provisioning/register', [DeviceCloudProvisioningController::class, 'register'])->name('cloud-provisioning.register');
+    Route::post('/cloud-provisioning/deregister', [DeviceCloudProvisioningController::class, 'deregister'])->name('cloud-provisioning.deregister');
+    //Route::post('/cloud-provisioning/devices/organizations', [DeviceCloudProvisioningController::class, 'devicesOrganizations'])->name('cloudProvisioning.devices.organizations');
+    //Route::post('/cloud-provisioning/devices/organizations', [DeviceCloudProvisioningController::class, 'devicesOrganizations'])->name('cloudProvisioning.devices.organizations');
+    //Route::post('/cloud-provisioning/devices/organizations', [DeviceCloudProvisioningController::class, 'devicesOrganizations'])->name('cloudProvisioning.devices.organizations');
 
 
     // Whitelisted Numbers

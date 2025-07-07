@@ -7,7 +7,7 @@
             :placeholder="placeholder"
             :value="modelValue"
             @input="$emit('update:modelValue', $event.target.value)"
-            :class="inputClass" 
+            :class="inputClass"
             :disabled="disabled"
         />
         <div class="absolute inset-y-0 right-1 flex items-center">
@@ -39,7 +39,7 @@ const emit = defineEmits(['update:modelValue']);
 
 // Compute the classes based on the state
 const inputClass = computed(() => {
-    let baseClasses = 'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6';
+    let baseClasses = 'block w-full rounded-md border-0 py-1.5 pr-9 text-gray-900 shadow-sm ring-1 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-inset sm:text-sm sm:leading-6';
     if (props.error) {
         return `${baseClasses} text-red-900 ring-red-600`; // Apply red ring if there's an error
     }
