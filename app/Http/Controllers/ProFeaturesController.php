@@ -493,7 +493,7 @@ class ProFeaturesController extends Controller
             $itemOptions = [
                 'navigation' => $navigation,
                 'item' => $item,
-                'modules' => $allModules, 
+                'modules' => $allModules ?? null, 
                 // 'permissions' => $permissions,
                 'routes' => $routes,
 

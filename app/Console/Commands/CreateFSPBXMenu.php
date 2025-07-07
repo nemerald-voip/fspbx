@@ -167,6 +167,7 @@ class CreateFSPBXMenu extends Command
                     ['title' => 'Menu Manager', 'link' => '/core/menu/menu.php', 'groups' => ['superadmin']],
                     ['title' => 'Modules', 'link' => '/app/modules/modules.php', 'groups' => ['superadmin']],
                     ['title' => 'Pro Features', 'link' => '/pro-features', 'groups' => ['superadmin']],
+                    ['title' => 'Provision Templates', 'link' => '/app/edit/index.php?dir=provision', 'groups' => ['superadmin']],
                     ['title' => 'SIP Profiles', 'link' => '/app/sip_profiles/sip_profiles.php', 'groups' => ['superadmin']],
                     ['title' => 'Transactions', 'link' => '/app/database_transactions/database_transactions.php', 'groups' => ['superadmin']],
                     ['title' => 'Upgrade', 'link' => '/core/upgrade/index.php', 'groups' => ['superadmin']],
