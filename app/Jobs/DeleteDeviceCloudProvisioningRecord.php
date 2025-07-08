@@ -47,7 +47,7 @@ class DeleteDeviceCloudProvisioningRecord implements ShouldQueue
 
                 return true;
             } catch (\Throwable $e) {
-                logger("RegisterDeviceWithCloudProvider@handle Error: " . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+                logger("DeleteDeviceCloudProvisioningRecord@handle Error: " . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
                 return false;
             }
         }, function () {
