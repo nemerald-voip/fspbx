@@ -110,11 +110,12 @@ class ProcessBandwidthWebhookJob extends SpatieProcessWebhookJob
     private function handleIncomingMessageType()
     {
         foreach ($this->webhookCall->payload as $payload) {
-            // if (isset($payload['deliveryReceipt']) && $payload['deliveryReceipt']) {
-            //     $this->handleDeliveryStatusUpdate($payload);
-            // }
-            if (isset($payload['type']) && $payload['type'] == 'message-received') {
-                $this->processMessage($payload);
+            if (isset($payload['type'])) {
+                if ($payload['type'] == 'message-received') {
+                    $this->processMessage($payload);
+                } elseif ($payload['type'] == 'message-failed') {
+                    $this->processFailedMessage($payload);
+                }
             }
         }
     }
@@ -206,6 +207,28 @@ class ProcessBandwidthWebhookJob extends SpatieProcessWebhookJob
             }
         }
     }
+
+
+    private function processFailedMessage($payload)
+    {
+        $messageData = $payload['message'];
+        $referenceId = $messageData['id'] ?? null;
+        $from = $messageData['from'] ?? null;
+        $to = $messageData['to'][0] ?? null; // Usually only one, but handle as needed
+
+        // Try to update the existing message record if present
+        $messageModel = Messages::where('reference_id', $referenceId)->first();
+
+        if ($messageModel) {
+            $messageModel->status = $payload['description'] ?? null;
+            $messageModel->save();
+        }
+
+        // Notify Slack or log error
+        $error = "*Bandwidth SMS Failed*: From: {$from} To: {$to} [Ref: {$referenceId}] Error: {$payload['description']} (Code: {$payload['errorCode']})";
+        SendSmsNotificationToSlack::dispatch($error)->onQueue('messages');
+    }
+
 
 
     private function getPhoneNumberSmsConfig($destination)
