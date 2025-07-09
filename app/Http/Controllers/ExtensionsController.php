@@ -812,7 +812,7 @@ class ExtensionsController extends Controller
             }
 
             return response()->json([
-                'extension'    => $extension->extension_uuid,
+                'extension_uuid'    => $extension->extension_uuid,
                 'messages' => ['success' => ['Extension has been created']],
             ], 201);
         } catch (\Throwable $e) {

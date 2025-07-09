@@ -209,6 +209,7 @@ const handleSuccess = (response, form$) => {
     emit('success', 'success', response.data.messages);
     emit('close');
     emit('refresh-data');
+    emit('open-edit-form', response.data.extension_uuid);
 }
 
 const handleError = (error, details, form$) => {
