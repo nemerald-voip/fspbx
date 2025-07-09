@@ -251,7 +251,7 @@
 
     <CreateExtensionForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading"
         :header="'Create Extension'" @close="showCreateModal = false" @error="handleErrorResponse"
-        @success="showNotification" @open-edit-form="handleEditButtonClick" @refresh-data="handleSearchButtonClick" />
+        @success="showNotification" @open-edit-form="handleEditButtonClick" @refresh-data="handleSearchButtonClick"/>
 
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
