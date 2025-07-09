@@ -165,6 +165,7 @@ class CreateFSPBXMenu extends Command
                     ['title' => 'Email templates', 'link' => '/app/email_templates/email_templates.php', 'groups' => ['superadmin']],
                     ['title' => 'Group Manager', 'link' => '/groups', 'groups' => ['superadmin']],
                     ['title' => 'Menu Manager', 'link' => '/core/menu/menu.php', 'groups' => ['superadmin']],
+                    ['title' => 'Message Settings', 'link' => '/message-settings', 'groups' => ['superadmin']],
                     ['title' => 'Modules', 'link' => '/app/modules/modules.php', 'groups' => ['superadmin']],
                     ['title' => 'Pro Features', 'link' => '/pro-features', 'groups' => ['superadmin']],
                     ['title' => 'Provision Templates', 'link' => '/app/edit/index.php?dir=provision', 'groups' => ['superadmin']],

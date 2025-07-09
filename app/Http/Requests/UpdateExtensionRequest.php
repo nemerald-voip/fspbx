@@ -54,6 +54,8 @@ class UpdateExtensionRequest extends FormRequest
             'auth_acl' => ['nullable', 'string'],
             'outbound_caller_id_number' => ['nullable', 'string'],
             'emergency_caller_id_number' => ['nullable', 'string'],
+            'outbound_caller_id_name' => ['nullable', 'string'],
+            'emergency_caller_id_name' => ['nullable', 'string'],
 
             'forward_all_enabled' => [
                 'nullable',

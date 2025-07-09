@@ -22,75 +22,56 @@ class BandwidthOutboundSMS extends Model
     public function send()
     {
         $message = Messages::find($this->message_uuid);
-
+    
         if (!$message) {
-            logger("Could not find sms entity. SMS From " . $this->from_did . " to " . $this->to_did);
-            return;
+            logger("Could not find SMS entity. SMS From " . $this->from_did . " to " . $this->to_did);
+            return false;
         }
-
-        // Logic to send the SMS message using a third-party Sinch API,
-        // This method should return a boolean indicating whether the message was sent successfully.
-
-        $data = array(
-            'from' => preg_replace('/[^0-9]/', '', $message->source),
-            'to' => [
-                preg_replace('/[^0-9]/', '', $message->destination),
-            ],
-            "text" => $message->message,
-            "message_uuid" => $message->message_uuid
-        );
-
+    
+        // Build the endpoint URL
+        $url = rtrim(config('bandwidth.message_base_url'), '/')
+             . '/users/' . config('bandwidth.account_id') . '/messages';
+    
+        // Prepare payload (numbers already E.164)
+        $data = [
+            'from'          => $message->source,
+            'to'            => [$message->destination],
+            'applicationId' => config('bandwidth.application_id'),
+            'text'          => $message->message,
+        ];
+    
+        // Prepare HTTP Basic Auth header
+        $credentials = config('bandwidth.api_token') . ':' . config('bandwidth.api_secret');
+        $authHeader  = 'Basic ' . base64_encode($credentials);
+    
+        // Send the request
         $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . config('sinch.api_key'),
-            'Content-Type' => 'application/json'
-        ])
-            ->asJson()
-            ->post(config('sinch.message_broker_url') . "/publishMessages", $data);
-
-        // For debugging puporses only
-        // Log::info('Request URL:', [config('sinch.message_broker_url') . "/publishMessages"]);
-        // Log::info('Request Headers:', [
-        //     'Authorization' => 'Bearer ' . config('sinch.api_key'),
-        //     'Content-Type' => 'application/json'
-        // ]);
-        // Log::info('Request Data:', $data);
-
-        // Get result
-        if (isset($response)) {
-            $result = json_decode($response->body());
-            logger($response->body());
-
-            // Determine if the operation was successful
-            if ($response->successful() && isset($result->success) && $result->success) {
-                $message->status = 'success';
-                if (isset($result->result->referenceId)) {
-                    $message->reference_id = $result->result->referenceId;
-                }
-            } else {
-                if (isset($result->reason, $result->detail)) {
-                    $message->status = $result->detail;
-                } elseif (isset($result->response) && !$result->response->success) {
-                    $message->status = $result->response->detail;
-                } else {
-                    $message->status = 'unknown error';
-                }
+                'Authorization' => $authHeader,
+                'Content-Type'  => 'application/json',
+            ])
+            ->post($url, $data);
     
-                if (isset($result->errors)) {
-                    logger()->error("Error details:", $result->errors);
-                }
-                $this->handleError($message);
-            }
+        logger($response->body());
     
-            $message->save();
+        if ($response->successful() && $response->status() === 202) {
+            $result = $response->json();
+            $message->status = 'pending';
+            $message->reference_id = $result['id'];
         } else {
-            logger()->error('SMS error. No response received from Sinch API.');
+            $result = $response->json();
             $message->status = 'failed';
-            $message->save();
+            $message->reference_id = $result['id'];
+            if (isset($result['error'])) {
+                logger()->error("Bandwidth API error: " . json_encode($result['error']));
+            }
             $this->handleError($message);
         }
-
-        return true; // Change this to reflect the result of the API call.
+    
+        $message->save();
+    
+        return $message->status === 'success';
     }
+    
 
     /**
      * Determine if the outbound SMS message was sent successfully.
@@ -111,6 +92,5 @@ class BandwidthOutboundSMS extends Model
         $error = "*Outbound SMS Failed*: From: " . $message->source . " To: " . $message->destination . "\n" . $message->status;
 
         SendSmsNotificationToSlack::dispatch($error)->onQueue('messages');
-
     }
 }

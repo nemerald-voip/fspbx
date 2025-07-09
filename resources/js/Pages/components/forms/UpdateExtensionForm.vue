@@ -64,6 +64,8 @@
                                     directory_exten_visible: options.item.directory_exten_visible ?? '',
                                     outbound_caller_id_number: options.item.outbound_caller_id_number_e164 ?? '',
                                     emergency_caller_id_number: options.item.emergency_caller_id_number_e164 ?? '',
+                                    outbound_caller_id_name: options.item.outbound_caller_id_name ?? '',
+                                    emergency_caller_id_name: options.item.emergency_caller_id_name ?? '',
                                     call_timeout: options.item.call_timeout ?? null,
                                     call_screen_enabled: options.item.call_screen_enabled ?? 'false',
                                     max_registrations: options.item.max_registrations ?? '',
@@ -217,7 +219,9 @@
                                                     'external_caller_id_title',
                                                     'emergency_caller_id_title',
                                                     'outbound_caller_id_number',
+                                                    'outbound_caller_id_name',
                                                     'emergency_caller_id_number',
+                                                    'emergency_caller_id_name',
                                                     'container_caller_id',
                                                     'submit_caller_id',
 
@@ -335,7 +339,7 @@
                                                     'container_sip_credentials',
                                                     'submit_sip_credentials',
 
-                                                ]" :conditions="[() => options.permissions.extension_password]"/>
+                                                ]" :conditions="[() => options.permissions.extension_password]" />
 
                                                 <FormTab name="advanced" label="Advanced Settings" :elements="[
                                                     'advanced_title',
@@ -366,7 +370,7 @@
                                                     'container_advanced',
                                                     'submit_advanced',
 
-                                                ]" :conditions="[() => options.permissions.extension_advanced]"/>
+                                                ]" :conditions="[() => options.permissions.extension_advanced]" />
                                             </FormTabs>
                                         </div>
 
@@ -395,8 +399,8 @@
                                                         sm: {
                                                             container: 6,
                                                         }
-                                                    }" :disabled="!options.permissions.extension_extension"/>
-                                                    
+                                                    }" :disabled="!options.permissions.extension_extension" />
+
                                                 <TextElement name="voicemail_mail_to" label="Email"
                                                     placeholder="Enter Email" :floating="false" :columns="{
                                                         container: 6,
@@ -415,32 +419,35 @@
                                                             'form-color-on-primary': 'form-color-on-danger'
 
                                                         }
-                                                    }" :disabled="!options.permissions.extension_suspended"/>
+                                                    }" :disabled="!options.permissions.extension_suspended" />
 
                                                 <StaticElement name="divider" tag="hr" />
 
-                                                <ToggleElement name="do_not_disturb" text="Do Not Disturb" true-value="true"
-                                                    false-value="false" :replace-class="{
+                                                <ToggleElement name="do_not_disturb" text="Do Not Disturb"
+                                                    true-value="true" false-value="false" :replace-class="{
                                                         'toggle.toggleOn': {
                                                             'form-bg-primary': 'bg-red-500',
                                                             'form-border-color-primary': 'border-red-500',
                                                             'form-color-on-primary': 'form-color-on-danger'
 
                                                         }
-                                                    }" :conditions="[(form$) => options.permissions.extension_do_not_disturb && form$.el$('suspended')?.value != true]"/>
+                                                    }"
+                                                    :conditions="[(form$) => options.permissions.extension_do_not_disturb && form$.el$('suspended')?.value != true]" />
 
-                                                <StaticElement name="divider1" tag="hr" :conditions="[(form$) => options.permissions.extension_do_not_disturb && form$.el$('suspended')?.value != true]"/>
+                                                <StaticElement name="divider1" tag="hr"
+                                                    :conditions="[(form$) => options.permissions.extension_do_not_disturb && form$.el$('suspended')?.value != true]" />
 
                                                 <ToggleElement name="enabled" text="Status" true-value="true"
                                                     false-value="false"
-                                                    description="Activate or deactivate the extension. When deactivated, devices cannot connect and calls cannot be placed or received." 
-                                                    :conditions="[() => options.permissions.extension_enabled]"/>
+                                                    description="Activate or deactivate the extension. When deactivated, devices cannot connect and calls cannot be placed or received."
+                                                    :conditions="[() => options.permissions.extension_enabled]" />
 
-                                                <StaticElement name="divider2" tag="hr" :conditions="[() => options.permissions.extension_enabled]"/>
+                                                <StaticElement name="divider2" tag="hr"
+                                                    :conditions="[() => options.permissions.extension_enabled]" />
 
                                                 <ToggleElement name="recording" text="Record Calls" :submit="false"
-                                                    description="Activate or deactivate call recording for the extension." 
-                                                    :conditions="[() => options.permissions.extension_user_record]"/>
+                                                    description="Activate or deactivate call recording for the extension."
+                                                    :conditions="[() => options.permissions.extension_user_record]" />
 
                                                 <RadiogroupElement name="user_record" :items="[
                                                     {
@@ -461,7 +468,8 @@
                                                     },
                                                 ]" label="Record" :conditions="[['recording', '==', true,],]" />
 
-                                                <StaticElement name="divider17" tag="hr" :conditions="[() => options.permissions.extension_user_record]"/>
+                                                <StaticElement name="divider17" tag="hr"
+                                                    :conditions="[() => options.permissions.extension_user_record]" />
 
                                                 <SelectElement name="call_timeout" :items="delayOptions" :search="true"
                                                     :native="false" label="Send unanswered calls to voicemail after"
@@ -491,6 +499,10 @@
                                                     input-type="search" autocomplete="off"
                                                     :conditions="[() => options.permissions.manage_external_caller_id_number]" />
 
+                                                <TextElement name="outbound_caller_id_name" label="Name"
+                                                    placeholder="Enter External Caller ID Name" :floating="false"
+                                                    :conditions="[() => options.permissions.manage_external_caller_id_name]" />
+
                                                 <StaticElement name="emergency_caller_id_title" tag="h4"
                                                     content="Emergency Caller ID"
                                                     description="Define the Emergency Caller ID that will be displayed when dialing emergency services."
@@ -501,10 +513,14 @@
                                                     input-type="search" autocomplete="off"
                                                     :conditions="[() => options.permissions.manage_emergency_caller_id_number]" />
 
+                                                <TextElement name="emergency_caller_id_name" label="Name"
+                                                    placeholder="Enter Emergency Caller ID Name" :floating="false"
+                                                    :conditions="[() => options.permissions.manage_emergency_caller_id_name]" />
+
                                                 <GroupElement name="container_caller_id" />
 
-                                                <ButtonElement name="submit_caller_id" button-label="Save" :submits="true"
-                                                    align="right" />
+                                                <ButtonElement name="submit_caller_id" button-label="Save"
+                                                    :submits="true" align="right" />
 
                                                 <!-- Call Forward Tab -->
 
@@ -519,24 +535,24 @@
                                                 }" true-value="true" false-value="false"
                                                     :conditions="[() => options.permissions.extension_forward_all]" />
 
-                                                <SelectElement name="forward_all_action" :items="options.forwarding_types"
-                                                    :search="true" :native="false" label="Choose Action" input-type="search"
-                                                    autocomplete="off" placeholder="Choose Action" :floating="false"
-                                                    :strict="false" :conditions="[['forward_all_enabled', '==', 'true'],]"
-                                                    :columns="{
+                                                <SelectElement name="forward_all_action"
+                                                    :items="options.forwarding_types" :search="true" :native="false"
+                                                    label="Choose Action" input-type="search" autocomplete="off"
+                                                    placeholder="Choose Action" :floating="false" :strict="false"
+                                                    :conditions="[['forward_all_enabled', '==', 'true'],]" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
                                                     }" @change="(newValue, oldValue, el$) => {
-    let forward_all_target = el$.form$.el$('forward_all_target')
+                                                        let forward_all_target = el$.form$.el$('forward_all_target')
 
-    // only clear when this isn’t the very first time (i.e. oldValue was set)
-    if (oldValue !== null && oldValue !== undefined) {
-        forward_all_target.clear();
-    }
+                                                        // only clear when this isn’t the very first time (i.e. oldValue was set)
+                                                        if (oldValue !== null && oldValue !== undefined) {
+                                                            forward_all_target.clear();
+                                                        }
 
-    forward_all_target.updateItems()
-}" />
+                                                        forward_all_target.updateItems()
+                                                    }" />
                                                 <SelectElement name="forward_all_target" :items="async (query, input) => {
                                                     let forward_all_action = input.$parent.el$.form$.el$('forward_all_action');
 
@@ -554,15 +570,16 @@
                                                 }" :search="true" label-prop="name" :native="false" label="Target"
                                                     input-type="search" allow-absent :object="true"
                                                     :format-data="formatTarget" autocomplete="off"
-                                                    placeholder="Choose Target" :floating="false" :strict="false" :columns="{
+                                                    placeholder="Choose Target" :floating="false" :strict="false"
+                                                    :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
                                                     }" :conditions="[
-    ['forward_all_enabled', '==', 'true'],
-    ['forward_all_action', 'not_empty'],
-    ['forward_all_action', 'not_in', ['external']]
-]" />
+                                                        ['forward_all_enabled', '==', 'true'],
+                                                        ['forward_all_action', 'not_empty'],
+                                                        ['forward_all_action', 'not_in', ['external']]
+                                                    ]" />
 
                                                 <TextElement name="forward_all_external_target" label="Target"
                                                     placeholder="Enter External Number" :floating="false" :columns="{
@@ -570,10 +587,10 @@
                                                             container: 6,
                                                         },
                                                     }" :conditions="[
-    ['forward_all_enabled', '==', 'true'],
-    ['forward_all_action', 'not_empty'],
-    ['forward_all_action', 'in', ['external']]
-]" />
+                                                        ['forward_all_enabled', '==', 'true'],
+                                                        ['forward_all_action', 'not_empty'],
+                                                        ['forward_all_action', 'in', ['external']]
+                                                    ]" />
                                                 <StaticElement name="divider5" tag="hr"
                                                     :conditions="[() => options.permissions.extension_forward_all]" />
 
@@ -590,24 +607,24 @@
                                                 }" true-value="true" false-value="false"
                                                     :conditions="[() => options.permissions.extension_forward_busy]" />
 
-                                                <SelectElement name="forward_busy_action" :items="options.forwarding_types"
-                                                    :search="true" :native="false" label="Choose Action" input-type="search"
-                                                    autocomplete="off" placeholder="Choose Action" :floating="false"
-                                                    :strict="false" :conditions="[['forward_busy_enabled', '==', 'true']]"
-                                                    :columns="{
+                                                <SelectElement name="forward_busy_action"
+                                                    :items="options.forwarding_types" :search="true" :native="false"
+                                                    label="Choose Action" input-type="search" autocomplete="off"
+                                                    placeholder="Choose Action" :floating="false" :strict="false"
+                                                    :conditions="[['forward_busy_enabled', '==', 'true']]" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
                                                     }" @change="(newValue, oldValue, el$) => {
-    let forward_busy_target = el$.form$.el$('forward_busy_target');
+                                                        let forward_busy_target = el$.form$.el$('forward_busy_target');
 
-    // only clear when this isn’t the very first time (i.e. oldValue was set)
-    if (oldValue !== null && oldValue !== undefined) {
-        forward_busy_target.clear();
-    }
+                                                        // only clear when this isn’t the very first time (i.e. oldValue was set)
+                                                        if (oldValue !== null && oldValue !== undefined) {
+                                                            forward_busy_target.clear();
+                                                        }
 
-    forward_busy_target.updateItems();
-}" />
+                                                        forward_busy_target.updateItems();
+                                                    }" />
 
                                                 <SelectElement name="forward_busy_target" :items="async (query, input) => {
                                                     let forward_busy_action = input.$parent.el$.form$.el$('forward_busy_action');
@@ -626,15 +643,16 @@
                                                 }" :search="true" label-prop="name" :native="false" label="Target"
                                                     input-type="search" allow-absent :object="true"
                                                     :format-data="formatTarget" autocomplete="off"
-                                                    placeholder="Choose Target" :floating="false" :strict="false" :columns="{
+                                                    placeholder="Choose Target" :floating="false" :strict="false"
+                                                    :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
                                                     }" :conditions="[
-    ['forward_busy_enabled', '==', 'true'],
-    ['forward_busy_action', 'not_empty'],
-    ['forward_busy_action', 'not_in', ['external']]
-]" />
+                                                        ['forward_busy_enabled', '==', 'true'],
+                                                        ['forward_busy_action', 'not_empty'],
+                                                        ['forward_busy_action', 'not_in', ['external']]
+                                                    ]" />
 
                                                 <TextElement name="forward_busy_external_target" label="Target"
                                                     placeholder="Enter External Number" :floating="false" :columns="{
@@ -642,10 +660,10 @@
                                                             container: 6,
                                                         },
                                                     }" :conditions="[
-    ['forward_busy_enabled', '==', 'true'],
-    ['forward_busy_action', 'not_empty'],
-    ['forward_busy_action', 'in', ['external']]
-]" />
+                                                        ['forward_busy_enabled', '==', 'true'],
+                                                        ['forward_busy_action', 'not_empty'],
+                                                        ['forward_busy_action', 'in', ['external']]
+                                                    ]" />
                                                 <StaticElement name="divider6" tag="hr"
                                                     :conditions="[() => options.permissions.extension_forward_busy]" />
 
@@ -664,20 +682,21 @@
                                                     :items="options.forwarding_types" :search="true" :native="false"
                                                     label="Choose Action" input-type="search" autocomplete="off"
                                                     placeholder="Choose Action" :floating="false" :strict="false"
-                                                    :conditions="[['forward_no_answer_enabled', '==', 'true']]" :columns="{
+                                                    :conditions="[['forward_no_answer_enabled', '==', 'true']]"
+                                                    :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
                                                     }" @change="(newValue, oldValue, el$) => {
-    let forward_no_answer_target = el$.form$.el$('forward_no_answer_target');
+                                                        let forward_no_answer_target = el$.form$.el$('forward_no_answer_target');
 
-    // only clear when this isn’t the very first time (i.e. oldValue was set)
-    if (oldValue !== null && oldValue !== undefined) {
-        forward_no_answer_target.clear();
-    }
+                                                        // only clear when this isn’t the very first time (i.e. oldValue was set)
+                                                        if (oldValue !== null && oldValue !== undefined) {
+                                                            forward_no_answer_target.clear();
+                                                        }
 
-    forward_no_answer_target.updateItems();
-}" />
+                                                        forward_no_answer_target.updateItems();
+                                                    }" />
 
                                                 <SelectElement name="forward_no_answer_target" :items="async (query, input) => {
                                                     let forward_no_answer_action = input.$parent.el$.form$.el$('forward_no_answer_action');
@@ -696,15 +715,16 @@
                                                 }" :search="true" label-prop="name" :native="false" label="Target"
                                                     input-type="search" allow-absent :object="true"
                                                     :format-data="formatTarget" autocomplete="off"
-                                                    placeholder="Choose Target" :floating="false" :strict="false" :columns="{
+                                                    placeholder="Choose Target" :floating="false" :strict="false"
+                                                    :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
                                                     }" :conditions="[
-    ['forward_no_answer_enabled', '==', 'true'],
-    ['forward_no_answer_action', 'not_empty'],
-    ['forward_no_answer_action', 'not_in', ['external']]
-]" />
+                                                        ['forward_no_answer_enabled', '==', 'true'],
+                                                        ['forward_no_answer_action', 'not_empty'],
+                                                        ['forward_no_answer_action', 'not_in', ['external']]
+                                                    ]" />
 
                                                 <TextElement name="forward_no_answer_external_target" label="Target"
                                                     placeholder="Enter External Number" :floating="false" :columns="{
@@ -712,10 +732,10 @@
                                                             container: 6,
                                                         },
                                                     }" :conditions="[
-    ['forward_no_answer_enabled', '==', 'true'],
-    ['forward_no_answer_action', 'not_empty'],
-    ['forward_no_answer_action', 'in', ['external']]
-]" />
+                                                        ['forward_no_answer_enabled', '==', 'true'],
+                                                        ['forward_no_answer_action', 'not_empty'],
+                                                        ['forward_no_answer_action', 'in', ['external']]
+                                                    ]" />
 
                                                 <StaticElement name="divider7" tag="hr"
                                                     :conditions="[() => options.permissions.extension_forward_no_answer]" />
@@ -742,15 +762,15 @@
                                                             container: 6,
                                                         },
                                                     }" @change="(newValue, oldValue, el$) => {
-    let forward_user_not_registered_target = el$.form$.el$('forward_user_not_registered_target');
+                                                        let forward_user_not_registered_target = el$.form$.el$('forward_user_not_registered_target');
 
-    // only clear when this isn’t the very first time (i.e. oldValue was set)
-    if (oldValue !== null && oldValue !== undefined) {
-        forward_user_not_registered_target.clear();
-    }
+                                                        // only clear when this isn’t the very first time (i.e. oldValue was set)
+                                                        if (oldValue !== null && oldValue !== undefined) {
+                                                            forward_user_not_registered_target.clear();
+                                                        }
 
-    forward_user_not_registered_target.updateItems();
-}" />
+                                                        forward_user_not_registered_target.updateItems();
+                                                    }" />
 
                                                 <SelectElement name="forward_user_not_registered_target" :items="async (query, input) => {
                                                     let forward_user_not_registered_action = input.$parent.el$.form$.el$('forward_user_not_registered_action');
@@ -769,15 +789,16 @@
                                                 }" :search="true" label-prop="name" :native="false" label="Target"
                                                     input-type="search" allow-absent :object="true"
                                                     :format-data="formatTarget" autocomplete="off"
-                                                    placeholder="Choose Target" :floating="false" :strict="false" :columns="{
+                                                    placeholder="Choose Target" :floating="false" :strict="false"
+                                                    :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
                                                     }" :conditions="[
-    ['forward_user_not_registered_enabled', '==', 'true'],
-    ['forward_user_not_registered_action', 'not_empty'],
-    ['forward_user_not_registered_action', 'not_in', ['external']]
-]" />
+                                                        ['forward_user_not_registered_enabled', '==', 'true'],
+                                                        ['forward_user_not_registered_action', 'not_empty'],
+                                                        ['forward_user_not_registered_action', 'not_in', ['external']]
+                                                    ]" />
 
                                                 <TextElement name="forward_user_not_registered_external_target"
                                                     label="Target" placeholder="Enter External Number" :floating="false"
@@ -786,10 +807,10 @@
                                                             container: 6,
                                                         },
                                                     }" :conditions="[
-    ['forward_user_not_registered_enabled', '==', 'true'],
-    ['forward_user_not_registered_action', 'not_empty'],
-    ['forward_user_not_registered_action', 'in', ['external']]
-]" />
+                                                        ['forward_user_not_registered_enabled', '==', 'true'],
+                                                        ['forward_user_not_registered_action', 'not_empty'],
+                                                        ['forward_user_not_registered_action', 'in', ['external']]
+                                                    ]" />
 
                                                 <StaticElement name="divider8" tag="hr"
                                                     :conditions="[() => options.permissions.extension_forward_not_registered]" />
@@ -845,14 +866,14 @@
                                                             <StaticElement name="p_1" tag="p" :content="(el$) => {
                                                                 const num = el$.parent.value.destination;
                                                                 return getDestinationLabel(num);
-                                                            }"
-                                                                :columns="{ default: { container: 8, }, sm: { container: 4, }, }"
+                                                            }" :columns="{ default: { container: 8, }, sm: { container: 4, }, }"
                                                                 label="Destination"
                                                                 :attrs="{ class: 'text-base font-semibold' }" />
 
-                                                            <SelectElement name="delay" :items="delayOptions" :search="true"
-                                                                :native="false" label="Delay" input-type="search"
-                                                                allow-absent autocomplete="off" :columns="{
+                                                            <SelectElement name="delay" :items="delayOptions"
+                                                                :search="true" :native="false" label="Delay"
+                                                                input-type="search" allow-absent autocomplete="off"
+                                                                :columns="{
                                                                     default: {
                                                                         container: 6,
                                                                     },
@@ -960,7 +981,8 @@
                                                 <SelectElement name="greeting_id" :search="true" :native="false"
                                                     label="Select Greeting" :items="greetings" input-type="search"
                                                     autocomplete="off" placeholder="Select Greeting" :floating="false"
-                                                    :object="true" :format-data="formatGreeting" :strict="false" :columns="{
+                                                    :object="true" :format-data="formatGreeting" :strict="false"
+                                                    :columns="{
                                                         sm: {
                                                             container: 6,
                                                         }
@@ -972,12 +994,14 @@
                                                     </template>
                                                 </SelectElement>
 
-                                                <GroupElement name="voicemail_action_buttons" :columns="{ container: 6, }"
+                                                <GroupElement name="voicemail_action_buttons"
+                                                    :columns="{ container: 6, }"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]">
 
-                                                    <ButtonElement v-if="!isAudioPlaying" @click="playGreeting" :columns="{
-                                                        container: 2,
-                                                    }" name="play_button" label="&nbsp;" :secondary="true"
+                                                    <ButtonElement v-if="!isAudioPlaying" @click="playGreeting"
+                                                        :columns="{
+                                                            container: 2,
+                                                        }" name="play_button" label="&nbsp;" :secondary="true"
                                                         :conditions="[function (form$) { const val = form$.el$('greeting_id')?.value; return val?.value !== '0' && val?.value !== '-1' && val !== null; }]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PlayCircleIcon
@@ -996,7 +1020,8 @@
                                                     </ButtonElement>
 
                                                     <ButtonElement v-if="!isDownloading" @click="downloadGreeting"
-                                                        name="download_button" label="&nbsp;" :secondary="true" :columns="{
+                                                        name="download_button" label="&nbsp;" :secondary="true"
+                                                        :columns="{
                                                             container: 2,
                                                         }"
                                                         :conditions="[function (form$) { const val = form$.el$('greeting_id')?.value; return val?.value !== '0' && val?.value !== '-1' && val !== null; }]"
@@ -1038,8 +1063,8 @@
 
                                                     </ButtonElement>
 
-                                                    <ButtonElement @click="handleNewGreetingButtonClick" name="add_button"
-                                                        label="&nbsp;" :secondary="true" :columns="{
+                                                    <ButtonElement @click="handleNewGreetingButtonClick"
+                                                        name="add_button" label="&nbsp;" :secondary="true" :columns="{
                                                             container: 2,
                                                         }"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
@@ -1096,7 +1121,8 @@
 
 
                                                     <ButtonElement v-if="isNameAudioPlaying" @click="pauseRecordedName"
-                                                        name="pause_name_button" label="&nbsp;" :secondary="true" :columns="{
+                                                        name="pause_name_button" label="&nbsp;" :secondary="true"
+                                                        :columns="{
                                                             container: 2,
                                                         }"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
@@ -1105,9 +1131,9 @@
 
                                                     </ButtonElement>
 
-                                                    <ButtonElement v-if="!isNameDownloading" @click="downloadRecordedName"
-                                                        name="download_name_button" label="&nbsp;" :secondary="true"
-                                                        :columns="{
+                                                    <ButtonElement v-if="!isNameDownloading"
+                                                        @click="downloadRecordedName" name="download_name_button"
+                                                        label="&nbsp;" :secondary="true" :columns="{
                                                             container: 2,
                                                         }"
                                                         :conditions="[function () { return recorded_name == 'Custom recording' }]"
@@ -1118,8 +1144,8 @@
                                                     </ButtonElement>
 
                                                     <ButtonElement v-if="isNameDownloading"
-                                                        name="download_name_spinner_button" label="&nbsp;" :secondary="true"
-                                                        :columns="{
+                                                        name="download_name_spinner_button" label="&nbsp;"
+                                                        :secondary="true" :columns="{
                                                             container: 2,
                                                         }"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
@@ -1151,7 +1177,8 @@
                                                     </ButtonElement>
 
                                                     <ButtonElement @click="handleNewNameGreetingButtonClick"
-                                                        name="add_name_button" label="&nbsp;" :secondary="true" :columns="{
+                                                        name="add_name_button" label="&nbsp;" :secondary="true"
+                                                        :columns="{
                                                             container: 2,
                                                         }"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
@@ -1168,7 +1195,8 @@
 
 
                                                 <!-- Voicemail Advanced -->
-                                                <StaticElement name="voicemail_advanced_title" tag="h4" content="Advanced"
+                                                <StaticElement name="voicemail_advanced_title" tag="h4"
+                                                    content="Advanced"
                                                     description="Set advanced settings for this voicemail."
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
@@ -1182,14 +1210,15 @@
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <ToggleElement name="voicemail_recording_instructions"
-                                                    text="Play Recording Instructions" true-value="true" false-value="false"
+                                                    text="Play Recording Instructions" true-value="true"
+                                                    false-value="false"
                                                     description='Play a prompt instructing callers to "Record your message after the tone. Stop speaking to end the recording.'
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <GroupElement name="container_voicemail" />
 
-                                                <ButtonElement name="submit_voicemail" button-label="Save" :submits="true"
-                                                    align="right" />
+                                                <ButtonElement name="submit_voicemail" button-label="Save"
+                                                    :submits="true" align="right" />
 
                                                 <!-- Devices tab-->
                                                 <StaticElement name="devices_title" tag="h4" content="Assigned Devices"
@@ -1241,8 +1270,9 @@
                                                         </div>
                                                         <h1 class="flex gap-x-3 text-md">
                                                             <span class="font-semibold ">Mobile App Status:</span>
-                                                            <Badge backgroundColor="bg-green-100" textColor="text-green-700"
-                                                                :text="'Active'" ringColor="ring-green-400/20"
+                                                            <Badge backgroundColor="bg-green-100"
+                                                                textColor="text-green-700" :text="'Active'"
+                                                                ringColor="ring-green-400/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
                                                     </div>
@@ -1254,8 +1284,9 @@
                                                         </div>
                                                         <h1 class="flex gap-x-3 text-md">
                                                             <span class="font-semibold ">Mobile App Status:</span>
-                                                            <Badge backgroundColor="bg-blue-100" textColor="text-blue-700"
-                                                                :text="'Contact Only'" ringColor="ring-blue-400/20"
+                                                            <Badge backgroundColor="bg-blue-100"
+                                                                textColor="text-blue-700" :text="'Contact Only'"
+                                                                ringColor="ring-blue-400/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
                                                     </div>
@@ -1267,8 +1298,9 @@
                                                         </div>
                                                         <h1 class="flex gap-x-3 text-md">
                                                             <span class="font-semibold ">Mobile App Status:</span>
-                                                            <Badge backgroundColor="bg-gray-100" textColor="text-gray-700"
-                                                                :text="'Not Enabled'" ringColor="ring-gray-400/20"
+                                                            <Badge backgroundColor="bg-gray-100"
+                                                                textColor="text-gray-700" :text="'Not Enabled'"
+                                                                ringColor="ring-gray-400/20"
                                                                 class="px-2 py-1 text-xs font-semibold" />
                                                         </h1>
                                                     </div>
@@ -1283,7 +1315,8 @@
                                                 <GroupElement name="container2"
                                                     :conditions="[() => !mobileAppOptions?.mobile_app && mobileAppOptions]" />
 
-                                                <ButtonElement name="enable_mobile_app_contact" button-label="Add Contact"
+                                                <ButtonElement name="enable_mobile_app_contact"
+                                                    button-label="Add Contact"
                                                     label="OR Step 1: Add to Address Book (BLF)" :secondary="true"
                                                     @click="handleMobileAppContactButtonClick"
                                                     description="Create a new contact entry for this extension in the company address book."
@@ -1291,9 +1324,10 @@
 
 
                                                 <SelectElement name="mobile_app_connection"
-                                                    :items="mobileAppOptions?.connections" :search="true" :native="false"
-                                                    label="Step 2: Select connection" label-prop="name" value-prop="id"
-                                                    input-type="search" autocomplete="off" :strict="false" :columns="{
+                                                    :items="mobileAppOptions?.connections" :search="true"
+                                                    :native="false" label="Step 2: Select connection" label-prop="name"
+                                                    value-prop="id" input-type="search" autocomplete="off"
+                                                    :strict="false" :columns="{
                                                         sm: {
                                                             wrapper: 6,
                                                         },
@@ -1306,11 +1340,13 @@
                                                         class="flex bg-white p-6 rounded-lg shadow-md ">
 
                                                         <div class="grow">
-                                                            <h3 class="text-lg font-semibold mb-4">Mobile App Details</h3>
+                                                            <h3 class="text-lg font-semibold mb-4">Mobile App Details
+                                                            </h3>
                                                             <ul class="mb-4 space-y-1 text-sm">
                                                                 <li
                                                                     class="flex flex-col sm:flex-row sm:items-center mt-1 gap-1 text-sm ">
-                                                                    <strong>Username:</strong> {{ mobileApp.user.username }}
+                                                                    <strong>Username:</strong> {{
+                                                                        mobileApp.user.username }}
                                                                     <button type="button"
                                                                         @click="handleCopyToClipboard(mobileApp.user.username)">
                                                                         <ClipboardDocumentIcon
@@ -1328,18 +1364,24 @@
                                                                     </button>
                                                                 </li>
 
-                                                                <li 
+                                                                <li
                                                                     class="flex flex-col sm:flex-row sm:items-center mt-1 gap-1 text-sm ">
                                                                     <strong>Password:</strong>
-                                                                    <span v-if="mobileApp.user.password" class="font-mono">{{
-                                                                        mobileApp.user.password }}</span>
+                                                                    <span v-if="mobileApp.user.password"
+                                                                        class="font-mono">{{
+                                                                            mobileApp.user.password }}</span>
                                                                     <button v-if="mobileApp.user.password" type="button"
                                                                         @click="handleCopyToClipboard(mobileApp.user.password)">
                                                                         <ClipboardDocumentIcon
                                                                             class="h-5 w-5 text-blue-500 hover:text-blue-900 cursor-pointer" />
                                                                     </button>
-                                                                    <a v-if="mobileApp.user.password_url" :href="mobileApp.user.password_url" target="_blank">Click here to get password</a>
-                                                                    <span v-if="!mobileApp.user.password && !mobileApp.user.password_url" class="font-mono">**********</span>
+                                                                    <a v-if="mobileApp.user.password_url"
+                                                                        :href="mobileApp.user.password_url"
+                                                                        target="_blank">Click here
+                                                                        to get password</a>
+                                                                    <span
+                                                                        v-if="!mobileApp.user.password && !mobileApp.user.password_url"
+                                                                        class="font-mono">**********</span>
                                                                 </li>
 
                                                             </ul>
@@ -1393,7 +1435,8 @@
                                                     label="Remove Mobile App" @click="handleMobileAppRemoveButtonClick"
                                                     :loading="isMobileAppLoading.remove"
                                                     description="Permanently delete the mobile app association for this extension."
-                                                    :danger="true" :conditions="[() => !!mobileAppOptions?.mobile_app]" />
+                                                    :danger="true"
+                                                    :conditions="[() => !!mobileAppOptions?.mobile_app]" />
 
                                                 <GroupElement name="container5"
                                                     :conditions="[() => !!mobileAppOptions?.mobile_app]" />
@@ -1433,8 +1476,8 @@
 
                                                 <GroupElement name="container_mobile_app" />
 
-                                                <ButtonElement name="submit_mobile_app" button-label="Save" :submits="true"
-                                                    align="right" />
+                                                <ButtonElement name="submit_mobile_app" button-label="Save"
+                                                    :submits="true" align="right" />
 
 
                                                 <!-- SIP Credentials -->
@@ -1447,7 +1490,8 @@
                                                     @click="handleSipCredentialsButtonClick" label="SIP Credentials"
                                                     :loading="isSipCredentialsLoading" />
 
-                                                <ButtonElement name="regenerate_sip_credentials" button-label="Regenerate"
+                                                <ButtonElement name="regenerate_sip_credentials"
+                                                    button-label="Regenerate"
                                                     :conditions="[() => { return !!sip_credentials }]"
                                                     @click="handleSipCredentialsRegenerateClick" :secondary="true"
                                                     label="Regenerate SIP Credentials"
@@ -1514,31 +1558,35 @@
 
                                                 <!-- Advaced settings -->
 
-                                                <StaticElement name="advanced_title" tag="h4" content="Advanced Settings"
-                                                    description="" :conditions="[['voicemail_enabled', '==', 'true']]" />
+                                                <StaticElement name="advanced_title" tag="h4"
+                                                    content="Advanced Settings" description=""
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <ToggleElement name="directory_visible"
                                                     text="Show in company dial-by-name directory"
                                                     description="Controls whether this extension appears in the company’s dial-by-name directory. Hide extensions for devices (door phones, intercoms) or private users (e.g., executives)."
-                                                    true-value="true" false-value="false" 
-                                                    :conditions="[() => options.permissions.extension_directory]"/>
+                                                    true-value="true" false-value="false"
+                                                    :conditions="[() => options.permissions.extension_directory]" />
 
-                                                <StaticElement name="divider3" tag="hr" :conditions="[() => options.permissions.extension_directory]"/>
+                                                <StaticElement name="divider3" tag="hr"
+                                                    :conditions="[() => options.permissions.extension_directory]" />
 
                                                 <ToggleElement name="directory_exten_visible"
                                                     text="Announce extension after name in directory"
                                                     description="Controls whether the extension number is played after the user’s name in the directory. Useful for making it easier for callers to reach the extension directly. Disable for privacy or security reasons."
-                                                    true-value="true" false-value="false" 
-                                                    :conditions="[() => options.permissions.extension_directory]"/>
+                                                    true-value="true" false-value="false"
+                                                    :conditions="[() => options.permissions.extension_directory]" />
 
-                                                <StaticElement name="divider4" tag="hr" :conditions="[() => options.permissions.extension_directory]"/>
+                                                <StaticElement name="divider4" tag="hr"
+                                                    :conditions="[() => options.permissions.extension_directory]" />
 
                                                 <ToggleElement name="call_screen_enabled" text="Enable call screening"
                                                     description="You can use Call Screen to find out who’s calling and why before you pick up a call."
-                                                    true-value="true" false-value="false" 
-                                                    :conditions="[() => options.permissions.extension_call_screen]"/>
+                                                    true-value="true" false-value="false"
+                                                    :conditions="[() => options.permissions.extension_call_screen]" />
 
-                                                <StaticElement name="divider16" tag="hr" :conditions="[() => options.permissions.extension_call_screen]"/>
+                                                <StaticElement name="divider16" tag="hr"
+                                                    :conditions="[() => options.permissions.extension_call_screen]" />
 
                                                 <TextElement name="max_registrations" input-type="number" :rules="[
                                                     'nullable',
@@ -1553,7 +1601,8 @@
                                                             container: 6,
                                                             wrapper: 4,
                                                         },
-                                                    }" :conditions="[() => options.permissions.extension_max_registrations]"/>
+                                                    }"
+                                                    :conditions="[() => options.permissions.extension_max_registrations]" />
 
                                                 <TextElement name="limit_max" input-type="number" :rules="[
                                                     'nullable',
@@ -1568,7 +1617,7 @@
                                                             container: 6,
                                                             wrapper: 4,
                                                         },
-                                                    }" :conditions="[() => options.permissions.extension_limit]"/>
+                                                    }" :conditions="[() => options.permissions.extension_limit]" />
 
                                                 <TextElement name="limit_destination"
                                                     label="Hangup Cause when limit is reached" :columns="{
@@ -1576,15 +1625,15 @@
                                                             container: 6,
                                                         }
                                                     }"
-                                                    description="Enter the destination to send the calls when the max number of outgoing calls has been reached." 
-                                                    :conditions="[() => options.permissions.extension_limit]"/>
+                                                    description="Enter the destination to send the calls when the max number of outgoing calls has been reached."
+                                                    :conditions="[() => options.permissions.extension_limit]" />
 
                                                 <TextElement name="toll_allow" label="Toll Allow" :columns="{
                                                     sm: {
                                                         container: 6,
                                                     }
-                                                }" description="Examples: domestic,international,local" 
-                                                :conditions="[() => options.permissions.extension_toll]"/>
+                                                }" description="Examples: domestic,international,local"
+                                                    :conditions="[() => options.permissions.extension_toll]" />
 
                                                 <TextElement name="call_group" label="Call Group"
                                                     description="A user in a call group can perform a call pickup (or an intercept) of a ringing phone belonging to another user who is also in the call group."
@@ -1592,7 +1641,8 @@
                                                         sm: {
                                                             wrapper: 6,
                                                         },
-                                                    }" :conditions="[() => options.permissions.extension_call_group]"/>
+                                                    }"
+                                                    :conditions="[() => options.permissions.extension_call_group]" />
 
 
                                                 <SelectElement name="hold_music" :items="options.music_on_hold_options"
@@ -1602,7 +1652,8 @@
                                                         sm: {
                                                             wrapper: 6,
                                                         },
-                                                    }" :conditions="[() => options.permissions.extension_hold_music]"/>
+                                                    }"
+                                                    :conditions="[() => options.permissions.extension_hold_music]" />
 
                                                 <TextElement name="auth_acl" label="Auth ACL" :columns="{
                                                     sm: {
@@ -1614,7 +1665,7 @@
                                                     sm: {
                                                         container: 6,
                                                     }
-                                                }" :conditions="[() => options.permissions.extension_cidr]"/>
+                                                }" :conditions="[() => options.permissions.extension_cidr]" />
 
 
                                                 <SelectElement name="sip_force_contact" :items="[
@@ -1634,11 +1685,12 @@
                                                     input-type="search" autocomplete="off"
                                                     :columns="{ sm: { container: 6 }, }" />
 
-                                                <TextElement name="sip_force_expires" label="SIP Force Expires" :columns="{
-                                                    sm: {
-                                                        container: 6,
-                                                    },
-                                                }" />
+                                                <TextElement name="sip_force_expires" label="SIP Force Expires"
+                                                    :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" />
                                                 <SelectElement name="sip_bypass_media" :items="[
                                                     {
                                                         value: 'bypass-media',
@@ -1663,13 +1715,13 @@
                                                     description="Absolute Codec String for the extension"
                                                     :conditions="[() => options.permissions.extension_absolute_codec_string]" />
 
-                                                <TextElement name="dial_string" label="Dial String" 
-                                                :conditions="[() => options.permissions.extension_dial_string]"/>
+                                                <TextElement name="dial_string" label="Dial String"
+                                                    :conditions="[() => options.permissions.extension_dial_string]" />
 
                                                 <ToggleElement name="force_ping" text="Force ping"
                                                     description="Use OPTIONS to detect if extension is reachable"
-                                                    true-value="true" false-value="false" 
-                                                    :conditions="[() => options.permissions.extension_force_ping]"/>
+                                                    true-value="true" false-value="false"
+                                                    :conditions="[() => options.permissions.extension_force_ping]" />
 
                                                 <TextElement name="user_context" label="Context" :columns="{
                                                     sm: {
@@ -1690,8 +1742,8 @@
 
                                                 <GroupElement name="container_advanced" />
 
-                                                <ButtonElement name="submit_advanced" button-label="Save" :submits="true"
-                                                    align="right" />
+                                                <ButtonElement name="submit_advanced" button-label="Save"
+                                                    :submits="true" align="right" />
 
 
 
@@ -1712,16 +1764,18 @@
     <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showNewGreetingModal" :header="''" :loading="isModalLoading"
         @close="handleModalClose">
         <template #modal-body>
-            <NewGreetingForm :title="'New Voicemail Greeting'" :voices="options.voices" :speeds="options.speeds" :default_voice="options.default_voice"
-                :phone_call_instructions="options.phone_call_instructions" :sample_message="options.sample_message"
-                :routes="getRoutesForGreetingForm" @greeting-saved="handleGreetingSaved" />
+            <NewGreetingForm :title="'New Voicemail Greeting'" :voices="options.voices" :speeds="options.speeds"
+                :default_voice="options.default_voice" :phone_call_instructions="options.phone_call_instructions"
+                :sample_message="options.sample_message" :routes="getRoutesForGreetingForm"
+                @greeting-saved="handleGreetingSaved" />
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showNewNameGreetingModal" :header="''" :loading="isModalLoading"
-        @close="handleModalClose">
+    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showNewNameGreetingModal" :header="''"
+        :loading="isModalLoading" @close="handleModalClose">
         <template #modal-body>
-            <NewGreetingForm :title="'New Recorded Name'" :voices="options.voices" :speeds="options.speeds" :default_voice="options.default_voice"
+            <NewGreetingForm :title="'New Recorded Name'" :voices="options.voices" :speeds="options.speeds"
+                :default_voice="options.default_voice"
                 :phone_call_instructions="options.phone_call_instructions_for_name" :sample_message="'John Dow'"
                 :routes="getRoutesForNameForm" @greeting-saved="handleNameSaved" />
         </template>
@@ -1737,8 +1791,8 @@
 
     <AssignExtensionDeviceForm :show="showDeviceAssignModal" :extension="options.item" :devices="options.all_devices"
         :options="deviceItemOptions" :loading="isModalLoading" :header="'Assign Existing Device'"
-        @close="showDeviceAssignModal = false" @error="emitErrorToParentFromChild" @success="emitSuccessToParentFromChild"
-        @refresh-data="getDevices" />
+        @close="showDeviceAssignModal = false" @error="emitErrorToParentFromChild"
+        @success="emitSuccessToParentFromChild" @refresh-data="getDevices" />
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
         @confirm="confirmGreetingDeleteAction" :header="'Confirm Deletion'"
@@ -1841,14 +1895,14 @@ watch(
 )
 
 watch(
-  () => props.show,
-  (newVal) => {
-    if (newVal) {
-      // Modal just opened
-      sip_credentials.value = null;
-      // Reset any other refs as needed
+    () => props.show,
+    (newVal) => {
+        if (newVal) {
+            // Modal just opened
+            sip_credentials.value = null;
+            // Reset any other refs as needed
+        }
     }
-  }
 );
 
 const submitForm = async (FormData, form$) => {
@@ -1857,7 +1911,7 @@ const submitForm = async (FormData, form$) => {
     const requestData = form$.requestData
     // console.log(requestData);
 
-    if(!form$.el$('recording').value) {
+    if (!form$.el$('recording').value) {
         requestData['user_record'] = null;
     }
 
@@ -2623,4 +2677,5 @@ div[data-lastpass-icon-root] {
 
 div[data-lastpass-root] {
     display: none !important
-}</style>
+}
+</style>

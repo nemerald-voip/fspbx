@@ -177,7 +177,7 @@
                                 <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'"
                                     position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
-                                        <PencilSquareIcon @click="handleEditRequest(row.device_uuid)"
+                                        <PencilSquareIcon @click="handleEditButtonClick(row.device_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
 
                                     </div>
@@ -367,7 +367,7 @@ const getItemOptions = (itemUuid = null) => {
     axios.post(props.routes.item_options, payload)
         .then((response) => {
             itemOptions.value = response.data;
-            console.log(itemOptions.value);
+            // console.log(itemOptions.value);
 
         }).catch((error) => {
             handleModalClose();

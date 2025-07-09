@@ -715,7 +715,7 @@ class DeviceController extends Controller
                 ],
             ];
             $defaultLineOptions = [
-                'server_address' => 'admin.localhost',
+                'server_address' => session('domain_name'),
                 'server_address_primary' => get_domain_setting('server_address_primary'),
                 'server_address_secondary' => get_domain_setting('server_address_secondary'),
                 'sip_port' => get_domain_setting('line_sip_port'),

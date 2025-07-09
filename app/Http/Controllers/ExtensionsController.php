@@ -224,6 +224,8 @@ class ExtensionsController extends Controller
                     'effective_caller_id_number',
                     'outbound_caller_id_number',
                     'emergency_caller_id_number',
+                    'outbound_caller_id_name',
+                    'emergency_caller_id_name',
                     'directory_first_name',
                     'directory_last_name',
                     'directory_visible',
@@ -1658,7 +1660,9 @@ class ExtensionsController extends Controller
         $permissions['extension_toll'] = userCheckPermission('extension_toll');
 
         $permissions['manage_external_caller_id_number'] = userCheckPermission('outbound_caller_id_number');
+        $permissions['manage_external_caller_id_name'] = userCheckPermission('outbound_caller_id_name');
         $permissions['manage_emergency_caller_id_number'] = userCheckPermission('emergency_caller_id_number');
+        $permissions['manage_emergency_caller_id_name'] = userCheckPermission('emergency_caller_id_name');
         $permissions['extension_forward_all'] = userCheckPermission('extension_forward_all');
         $permissions['extension_forward_busy'] = userCheckPermission('extension_forward_busy');
         $permissions['extension_forward_no_answer']  = userCheckPermission('extension_forward_no_answer');
