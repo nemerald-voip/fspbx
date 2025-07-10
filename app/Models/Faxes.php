@@ -340,9 +340,7 @@ class Faxes extends Model
         $route_array = outbound_route_to_bridge($this->domain->domain_uuid, $this->fax_extension->fax_prefix . $this->fax_destination, $channel_variables);
 
         if (count($route_array) == 0) {
-            //send the internal call to the registered extension
-            $fax_uri = "user/".$this->fax_destination."@".$this->domain->domain_uuid;
-            $fax_variables = "";
+            return null;
         }
         else {
             //send the external call

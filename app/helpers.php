@@ -218,7 +218,6 @@ if (!function_exists('outbound_route_to_bridge')) {
                 'dialplan_name'
             ]);
 
-
         // if (is_array($result) && @sizeof($result) != 0) {
         //     foreach ($result as &$row) {
         //         $dialplan_uuid = $row["dialplan_uuid"];
@@ -306,7 +305,7 @@ if (!function_exists('outbound_route_to_bridge')) {
             }
         }
 
-        return $bridge_array;
+        return $bridge_array ?? [];
     }
 }
 
