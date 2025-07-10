@@ -228,11 +228,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('devices', [DeviceController::class, 'index'])->name('devices.index');
 
     //Phone Numbers
-    Route::resource('phone-numbers', PhoneNumbersController::class);
-    Route::post('/phone-numbers/select-all', [PhoneNumbersController::class, 'selectAll'])->name('phone-numbers.select.all');
-    Route::post('/phone-numbers/bulk-update', [PhoneNumbersController::class, 'bulkUpdate'])->name('phone-numbers.bulk.update');
-    Route::post('/phone-numbers/bulk-delete', [PhoneNumbersController::class, 'bulkDelete'])->name('phone-numbers.bulk.delete');
-    Route::post('phone-numbers/item-options', [PhoneNumbersController::class, 'getItemOptions'])->name('phone-numbers.item.options');
+    Route::get('phone-numbers', [PhoneNumbersController::class, 'index'])->name('phone-numbers.index');
 
     //Wakeup Calls
     Route::resource('wakeup-calls', WakeupCallsController::class);

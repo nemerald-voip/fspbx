@@ -86,7 +86,6 @@ class UpdatePhoneNumberRequest extends FormRequest
             ],
             'domain_uuid' => [
                 'required',
-                Rule::notIn(['NULL']),
                 Rule::exists('v_domains', 'domain_uuid')
             ],
             'destination_context' => [
@@ -135,7 +134,7 @@ class UpdatePhoneNumberRequest extends FormRequest
         return [
             'destination_conditions.*.condition_expression' => 'Please use valid US phone number on condition',
             'destination_conditions.*.condition_target.targetValue' => 'Please select action on condition',
-            'domain_uuid.not_in' => 'Company must be selected.'
+            'domain_uuid.required' => 'Acccount must be selected.'
         ];
     }
 
@@ -155,21 +154,9 @@ class UpdatePhoneNumberRequest extends FormRequest
             $this->merge(['destination_conditions' => $destinationConditions]);
         }
 
-        if ($this->has('destination_enabled')) {
-            $this->merge([
-                'destination_enabled' => $this->destination_enabled ? 'true' : 'false',
-            ]);
-        }
-
-        if ($this->has('destination_record')) {
-            $this->merge([
-                'destination_record' => $this->destination_record ? 'true' : 'false',
-            ]);
-        }
-
         if ($this->has('destination_type_fax')) {
             $this->merge([
-                'destination_type_fax' => $this->destination_type_fax ? 1 : null,
+                'destination_type_fax' => $this->destination_type_fax =='1' ? 1 : null,
             ]);
         }
 

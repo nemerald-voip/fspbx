@@ -11,6 +11,7 @@ use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\DomainGroupsController;
+use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\BusinessHoursController;
 use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\EmergencyCallController;
@@ -110,6 +111,14 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('devices/item-options', [DeviceController::class, 'getItemOptions'])->name('devices.item.options');
     Route::post('devices/assign', [DeviceController::class, 'assign'])->name('devices.assign');
     Route::post('devices/bulk-unassign', [DeviceController::class, 'bulkUnassign'])->name('devices.bulk.unassign');
+
+    // Phone Numbers
+    Route::post('phone-numbers', [PhoneNumbersController::class, 'store'])->name('phone-numbers.store');
+    Route::put('phone-numbers/{phone_number}', [PhoneNumbersController::class, 'update'])->name('phone-numbers.update');
+    Route::post('/phone-numbers/select-all', [PhoneNumbersController::class, 'selectAll'])->name('phone-numbers.select.all');
+    Route::post('/phone-numbers/bulk-update', [PhoneNumbersController::class, 'bulkUpdate'])->name('phone-numbers.bulk.update');
+    Route::post('/phone-numbers/bulk-delete', [PhoneNumbersController::class, 'bulkDelete'])->name('phone-numbers.bulk.delete');
+    Route::post('phone-numbers/item-options', [PhoneNumbersController::class, 'getItemOptions'])->name('phone-numbers.item.options');
 
     //Cloud Provisioning
     Route::get('/cloud-provisioning/{device}/status', [DeviceCloudProvisioningController::class, 'status'])->name('cloud-provisioning.status');

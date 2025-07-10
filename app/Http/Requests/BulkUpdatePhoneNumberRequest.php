@@ -27,6 +27,13 @@ class BulkUpdatePhoneNumberRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'items' => 'required',
+
+            'routing_options' => [
+                'nullable',
+                'array',
+            ],
+            
             'destination_accountcode' => [
                 'nullable',
                 'string',
@@ -35,26 +42,7 @@ class BulkUpdatePhoneNumberRequest extends FormRequest
                 'nullable',
                 'array',
             ],
-            'destination_actions.*.value.value' => [
-                'nullable',
-                'string'
-            ],
-            'destination_conditions' => [
-                'nullable',
-                'array',
-            ],
-            'destination_conditions.*.condition_field' => [
-                'nullable',
-                Rule::in('caller_id_number')
-            ],
-            'destination_conditions.*.condition_expression' => [
-                'required_if:destination_conditions.*.condition_field,!=,""',
-                'phone:US'
-            ],
-            'destination_conditions.*.value.value' => [
-                'required_if:destination_conditions.*.condition_field,!=,""',
-                'string',
-            ],
+            
             'destination_cid_name_prefix' => [
                 'nullable',
                 'string',
@@ -86,14 +74,16 @@ class BulkUpdatePhoneNumberRequest extends FormRequest
                 )
             ],
             'destination_enabled' => [
-                Rule::in([null, true, false]),
+                'nullable',
+                'string',
             ],
             'destination_record' => [
-                Rule::in([null, true, false]),
+                'nullable',
+                'string',
             ],
             'domain_uuid' => [
-                'nullable',
-                Rule::notIn(['NULL']),
+                'sometimes',
+                'required',
                 Rule::exists(Domain::class, 'domain_uuid')
             ],
         ];
@@ -133,24 +123,9 @@ class BulkUpdatePhoneNumberRequest extends FormRequest
         return [
             'destination_conditions.*.condition_expression' => 'Please use valid US phone number on condition',
             'destination_conditions.*.value.value' => 'Please select action on condition',
-            'domain_uuid.not_in' => 'Company must be selected.'
+            'domain_uuid.required' => 'Acccount must be selected.'
+
         ];
     }
 
-    public function prepareForValidation(): void
-    {
-        if ($this->has('destination_conditions')) {
-            $destinationConditions = [];
-            foreach ($this->get('destination_conditions') as $condition) {
-                try {
-                    $condition['condition_expression'] = (new PhoneNumber($condition['condition_expression'], "US"))->formatE164();
-                } catch (NumberParseException $e) {
-                    //
-                }
-                $condition['condition_expression'] = str_replace('+1', '', $condition['condition_expression']);
-                $destinationConditions[] = $condition;
-            }
-            $this->merge(['destination_conditions' => $destinationConditions]);
-        }
-    }
 }
