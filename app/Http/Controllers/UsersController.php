@@ -122,15 +122,51 @@ class UsersController extends Controller
                     'user_enabled',
                     'domain_uuid',
                 ])
-                ->allowedIncludes(['user_groups'])
+                // ->allowedIncludes(['user_groups'])
+                // ->with([
+                //     'user_adv_fields:user_uuid,first_name,last_name',
+                //     'user_groups:user_uuid,user_group_uuid,group_uuid,group_name',
+                //     'domain_permissions:user_uuid,domain_uuid',
+                //     'domain_group_permissions:user_uuid,domain_group_uuid',
+                // ])
+
                 ->with([
-                    'user_adv_fields:user_uuid,first_name,last_name',
-                    'user_groups:user_uuid,user_group_uuid,group_uuid,group_name',
+                    'user_groups' => function ($q) {
+                        $q->select([
+                            'user_group_uuid',
+                            'domain_uuid',
+                            'user_uuid',
+                            'group_name',
+                            'group_uuid',
+                        ]);
+                    },
+                ])
+                ->with([
+                    'domain_permissions' => function ($q) {
+                        $q->select([
+                            'id',
+                            'domain_uuid',
+                            'user_uuid',
+                        ]);
+                    },
+                    
+                ])
+                ->with([
+                    'domain_group_permissions' => function ($q) {
+                        $q->select([
+                            'id',
+                            'user_uuid',
+                            'domain_group_uuid',
+                            'user_uuid',
+                        ]);
+                    },
+                    
                 ])
                 ->whereKey($itemUuid)
                 ->firstOrFail();
 
             $userDto = UserData::from($user);
+            // logger($userDto);
             $updateRoute = route('users.update', ['user' => $itemUuid]);
         } else {
             // “New user” defaults
@@ -148,7 +184,7 @@ class UsersController extends Controller
             $updateRoute = null;
         }
 
-        // 2) Permissions array (you’ll have to implement this)
+        // 2) Permissions array
         $permissions = $this->getUserPermissions();
 
         $groups = Groups::where('group_level', '<=', session('user.group_level'))
@@ -293,7 +329,7 @@ class UsersController extends Controller
 
         $validated   = $request->validated();
         $domain_uuid = session('domain_uuid');
-        // logger($validated);
+        logger($validated);
 
         try {
             DB::beginTransaction();
@@ -338,6 +374,34 @@ class UsersController extends Controller
                         'group_uuid'  => $groupUuid,
                         'domain_uuid' => $domain_uuid,
                         'group_name'  => $groupNames[$groupUuid] ?? null,
+                    ]);
+                }
+            }
+
+            // 5) Domain Permissions (Accounts)
+            if (isset($validated['accounts']) && is_array($validated['accounts'])) {
+                // Remove existing permissions for this user
+                $user->domain_permissions()->delete();
+
+                // Add new permissions
+                foreach ($validated['accounts'] as $domainUuid) {
+                    $user->domain_permissions()->create([
+                        'user_uuid'   => $user->user_uuid,
+                        'domain_uuid' => $domainUuid,
+                    ]);
+                }
+            }
+
+            // 6) Domain Group Permissions (Account Groups)
+            if (isset($validated['account_groups']) && is_array($validated['account_groups'])) {
+                // Remove existing group permissions for this user
+                $user->domain_group_permissions()->delete();
+
+                // Add new group permissions
+                foreach ($validated['account_groups'] as $domainGroupUuid) {
+                    $user->domain_group_permissions()->create([
+                        'user_uuid'         => $user->user_uuid,
+                        'domain_group_uuid' => $domainGroupUuid,
                     ]);
                 }
             }

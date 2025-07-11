@@ -18,8 +18,14 @@ class UserData extends Data
         public ?string $domain_uuid,
         public ?string $language,
         public ?string $time_zone,
-        
+
         #[DataCollectionOf(UserGroupData::class)]
         public ?DataCollection $user_groups = null,
+
+        #[DataCollectionOf(DomainPermissionData::class)]
+        public ?DataCollection $domain_permissions = null,
+
+        #[DataCollectionOf(DomainGroupPermissionData::class)]
+        public ?DataCollection $domain_group_permissions = null,
     ) {}
 }

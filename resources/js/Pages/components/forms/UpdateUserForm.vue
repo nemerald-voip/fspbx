@@ -57,7 +57,15 @@
                                     language: options.item.language,
                                     groups: options.item.user_groups
                                         ? options.item.user_groups.map(ug => ug.group_uuid)
-                                        : []
+                                        : [],
+
+                                    accounts: options.item.domain_permissions
+                                        ? options.item.domain_permissions.map(item => item.domain_uuid)
+                                        : [],
+
+                                    account_groups: options.item.domain_group_permissions
+                                        ? options.item.domain_group_permissions.map(item => item.domain_group_uuid)
+                                        : [],
 
                                 }">
 
@@ -121,10 +129,11 @@
                                                         },
                                                     }" />
 
-                                                <SelectElement name="time_zone" :groups="true" :items="options.timezones"
-                                                    :search="true" :native="false" label="Time Zone" input-type="search"
-                                                    autocomplete="off" :floating="false" :strict="false"
-                                                    placeholder="Select Time Zone" :columns="{
+                                                <SelectElement name="time_zone" :groups="true"
+                                                    :items="options.timezones" :search="true" :native="false"
+                                                    label="Time Zone" input-type="search" autocomplete="off"
+                                                    :floating="false" :strict="false" placeholder="Select Time Zone"
+                                                    :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
@@ -136,8 +145,8 @@
                                                     :conditions="[() => options.permissions.user_group_view]"
                                                     :disabled="[(el$, form$) => { return !options.permissions.user_group_edit }]" />
 
-                                                <TagsElement name="account_groups" :close-on-select="false" :search="true"
-                                                    :items="options.domain_groups"
+                                                <TagsElement name="account_groups" :close-on-select="false"
+                                                    :search="true" :items="options.domain_groups"
                                                     label="Select account groups the user is allowed to manage"
                                                     input-type="search" autocomplete="off"
                                                     placeholder="Select Account Groups" :floating="false"
@@ -206,8 +215,9 @@
 
                                                 <StaticElement name="token_title" tag="h4" content="API Keys" />
 
-                                                <ButtonElement name="add_token" button-label="Create API Key" align="right"
-                                                    @click="handleAddTokenButtonClick" :loading="addTokenButtonLoading"
+                                                <ButtonElement name="add_token" button-label="Create API Key"
+                                                    align="right" @click="handleAddTokenButtonClick"
+                                                    :loading="addTokenButtonLoading"
                                                     :conditions="[() => options.permissions.api_key_create]" />
 
                                                 <StaticElement name="html">
