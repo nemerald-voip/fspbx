@@ -57,7 +57,11 @@ class Faxes extends Model
 
 
     public function EmailToFax ($payload){
-        $this->message = "*EmailToFax* From: " . $payload['FromFull']['Email'] ?? $payload['recipient'] . ", To:" . $payload['fax_destination'] ."\n";
+        $payload['slack_message'] = "*EmailToFax Notification*\n";
+        $payload['slack_message'] .= "*From:* {$payload['FromFull']['Email']}\n";
+        $payload['slack_message'] .= "*To:* {$payload['fax_destination']}\n";
+        $payload['from'] = $payload['FromFull']['Email'];
+
         $this->payload = $payload;
 
         // Get email subject and make sure it's valid
@@ -77,15 +81,15 @@ class Faxes extends Model
                         $this->fax_extension = Faxes::where('fax_caller_id_number', $this->fax_caller_id_number)->first();
                     }
                 } else {
-                    $this->message .= "Invalid Caller ID is submitted in the subject line: " . $matches[0] ;
-                    Log::alert($this->message);
-                    SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
+                    $payload['slack_message'] .= ":warning: *Failed to process fax:* Invalid Caller ID is submitted in the subject line: " . $matches[0] . " _Fax aborted._";
+                    logger($payload['slack_message']);
+                    SendFaxNotificationToSlack::dispatch($payload['slack_message'])->onQueue('faxes');
                 }
             } catch (NumberParseException $e) {
                 // Process invalid Fax Caller ID
-                $this->message .= "Invalid Caller ID is submitted in the subject line: " . $matches[0] ;
-                Log::alert($this->message);
-                SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
+                $payload['slack_message'] .= ":warning: *Failed to process fax:* Invalid Caller ID is submitted in the subject line: " . $matches[0] . " _Fax aborted._";
+                logger($payload['slack_message']);
+                SendFaxNotificationToSlack::dispatch($payload['slack_message'])->onQueue('faxes');
             }
 
         } 
@@ -100,9 +104,9 @@ class Faxes extends Model
 
         // if we stil don't have a fax extension then email doesn't have any associated faxes
         if (!isset($this->fax_extension)) {
-            $this->message .= "No fax servers found associated for " . $payload['FromFull']['Email'] ?? $payload['recipient'] ;
-            Log::alert($this->message);
-            SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
+            $payload['slack_message'] .= ":warning: *Failed to process fax:* No fax servers found associated for " . $payload['FromFull']['Email'] . " _Fax aborted._";
+            logger($payload['slack_message']);
+            SendFaxNotificationToSlack::dispatch($payload['slack_message'])->onQueue('faxes');
             return "abort(404). No fax servers found";
         }
 
@@ -260,21 +264,20 @@ class Faxes extends Model
             }
         } else {
             // Abort
-            $this->message .= "Email has no attachments. Aborting";
-            Log::alert($this->message);
-            $this->payload = array_merge($this->payload, ['slack_message' => $this->message]);
+            $payload['slack_message'] .= "Email has no attachments. Aborting";
+            Log::alert($payload['slack_message']);
             $this->message = "We regret to inform you that the recent fax you attempted to send through our 
             Email-to-Fax service was not successfully processed due to missing attachments. 
             Our system requires the presence of attachments to accurately convert and deliver faxes to your recipients. 
             Unfortunately, it appears that the attachments were not included in the fax transmission.";
-            $this->payload = array_merge($this->payload, ['email_message' => $this->message]);
-            SendFaxFailedNotification::dispatch($this->payload)->onQueue('emails');
+            $payload['email_message'] = $this->message;
+            SendFaxFailedNotification::dispatch($payload)->onQueue('emails');
             // SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
             return "No attachments";
         }
 
         // Send notification to user that fax is in transit
-        SendFaxInTransitNotification::dispatch(new Request($payload))->onQueue('emails');
+        SendFaxInTransitNotification::dispatch($payload)->onQueue('emails');
 
         // Set fax subject
         $this->fax_subject = $payload['Subject'];
@@ -531,7 +534,7 @@ class Faxes extends Model
         // Check if email had allowed attachments
         if (sizeof($tif_files) == 0) {
             $this->message .= "Couldn't proccess any of the attached files. The following file types are supported for sending over our fax-to-email services: " . implode(", ",$this->fax_allowed_extensions);
-            $this->payload = array_merge($this->payload, ['slack_message' => $this->message]);
+            $this->payload = array_merge($this->payload, ['slack_message' => $this->payload['slack_message'] .  ' ' . $this->message]);
             $this->payload = array_merge($this->payload, ['email_message' => "Couldn't proccess any of the attached files. The following file types are supported for sending over our fax-to-email services: " . implode(", ",$this->fax_allowed_extensions)]);
             Log::alert($this->message);
             SendFaxFailedNotification::dispatch($this->payload)->onQueue('emails');
