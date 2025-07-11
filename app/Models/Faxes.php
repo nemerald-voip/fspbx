@@ -57,7 +57,7 @@ class Faxes extends Model
 
 
     public function EmailToFax ($payload){
-        $this->message = "*EmailToFax* From: " . $payload['FromFull']['Email'] . ", To:" . $payload['fax_destination'] ."\n";
+        $this->message = "*EmailToFax* From: " . $payload['FromFull']['Email'] ?? $payload['recipient'] . ", To:" . $payload['fax_destination'] ."\n";
         $this->payload = $payload;
 
         // Get email subject and make sure it's valid
@@ -100,7 +100,7 @@ class Faxes extends Model
 
         // if we stil don't have a fax extension then email doesn't have any associated faxes
         if (!isset($this->fax_extension)) {
-            $this->message .= "No fax servers found associated for " . $payload['FromFull']['Email']  ;
+            $this->message .= "No fax servers found associated for " . $payload['FromFull']['Email'] ?? $payload['recipient'] ;
             Log::alert($this->message);
             SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
             return "abort(404). No fax servers found";
@@ -268,7 +268,7 @@ class Faxes extends Model
             Our system requires the presence of attachments to accurately convert and deliver faxes to your recipients. 
             Unfortunately, it appears that the attachments were not included in the fax transmission.";
             $this->payload = array_merge($this->payload, ['email_message' => $this->message]);
-            SendFaxFailedNotification::dispatch(new Request($this->payload))->onQueue('emails');
+            SendFaxFailedNotification::dispatch($this->payload)->onQueue('emails');
             // SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
             return "No attachments";
         }
@@ -350,18 +350,6 @@ class Faxes extends Model
                 $fax_variables .= $variable.",";
             }
         }
-
-        // Check if Fax Queue is enabled
-        // $fax_queue_enabled = DefaultSettings::where('default_setting_category','fax_queue')
-        //     ->where('default_setting_subcategory','enabled')
-        //     ->where('default_setting_enabled','true')
-        //     ->pluck('default_setting_value')
-        //     ->toArray();
-        // if (sizeof($fax_queue_enabled) > 0 && $fax_queue_enabled[0] == 'true') {
-        //     $this->fax_queue_enabled = true;
-        // } else {
-        //     $this->fax_queue_enabled = false;
-        // }
 
         //build the fax dial string
         $dial_string .= $fax_variables;
@@ -546,7 +534,7 @@ class Faxes extends Model
             $this->payload = array_merge($this->payload, ['slack_message' => $this->message]);
             $this->payload = array_merge($this->payload, ['email_message' => "Couldn't proccess any of the attached files. The following file types are supported for sending over our fax-to-email services: " . implode(", ",$this->fax_allowed_extensions)]);
             Log::alert($this->message);
-            SendFaxFailedNotification::dispatch(new Request($this->payload))->onQueue('emails');
+            SendFaxFailedNotification::dispatch($this->payload)->onQueue('emails');
             // SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
             return false;
         }

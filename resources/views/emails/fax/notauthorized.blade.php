@@ -12,7 +12,7 @@
     <td class="attributes_content">
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <td class="attributes_item"><strong>{{ $attributes['From'] }}</strong> 
+          <td class="attributes_item"><strong>{{ $attributes['from'] }}</strong> 
         </tr>
       </table>
     </td>

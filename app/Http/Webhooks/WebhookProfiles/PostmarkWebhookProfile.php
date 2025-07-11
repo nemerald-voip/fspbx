@@ -76,20 +76,27 @@ class PostmarkWebhookProfile implements WebhookProfile
     
             } catch (Throwable $e) {
                     Log::alert($e->getMessage());
-                    // Send notification that email was not authorized
-                    SendFaxInvalidEmailNotification::dispatch($request)->onQueue('faxes');
-    
+                    $data = [
+                        'from' => $from_email,
+                        'fax_destination' =>$request['fax_destination'],
+                    ];
+                    SendFaxInvalidEmailNotification::dispatch($data)->onQueue('faxes');
                     // Since the email was not found the request is not authorized to proceed 
                     return false;
             }
     
-            
         }
 
         // Check if the fax destination number is valid
         if (!$destination_number_valid){
 
             $request['invalid_number'] = $phone_number;
+
+            $data = [
+                'from' => $from_email,
+                'fax_destination' =>$request['fax_destination'],
+                'invalid_number' => $phone_number,
+            ];
             SendFaxInvalidDestinationNotification::dispatch($request)->onQueue('faxes');
 
             // Since the phone number is not valid the request is not authorized to proceed 

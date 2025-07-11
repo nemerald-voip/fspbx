@@ -113,6 +113,8 @@ class ProcessBandwidthWebhookJob extends SpatieProcessWebhookJob
             if (isset($payload['type'])) {
                 if ($payload['type'] == 'message-received') {
                     $this->processMessage($payload);
+                } elseif ($payload['type'] == 'message-delivered') {
+                    $this->handleDeliveryStatusUpdate($payload);
                 } elseif ($payload['type'] == 'message-failed') {
                     $this->processFailedMessage($payload);
                 }
@@ -191,20 +193,14 @@ class ProcessBandwidthWebhookJob extends SpatieProcessWebhookJob
         return true;
     }
 
-    public function handleDeliveryStatusUpdate()
+    public function handleDeliveryStatusUpdate($payload)
     {
-        $message = Messages::where('reference_id', $this->webhookCall->payload['referenceId'])
+        $message = Messages::where('reference_id', $payload['message']['id'])
             ->first();
 
         if ($message) {
-            $text = $this->webhookCall->payload['text'];
-            preg_match('/stat:(\w+)/', $text, $matches);
-            $status = $matches[1] ?? 'UNKNOWN'; // Default to 'UNKNOWN' if not found
-
-            if ($status === "DELIVRD") {
                 $message->status = 'delivered';
                 $message->save();
-            }
         }
     }
 

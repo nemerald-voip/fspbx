@@ -51,11 +51,9 @@ class BandwidthOutboundSMS extends Model
             ])
             ->post($url, $data);
     
-        logger($response->body());
-    
         if ($response->successful() && $response->status() === 202) {
             $result = $response->json();
-            $message->status = 'pending';
+            $message->status = 'success';
             $message->reference_id = $result['id'];
         } else {
             $result = $response->json();

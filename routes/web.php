@@ -68,6 +68,7 @@ Route::get('/polycom/log/{name}', [PolycomLogController::class, 'show'])->withou
 
 // Webhooks
 Route::webhooks('webhook/postmark', 'postmark');
+Route::webhooks('webhook/mailgun', 'mailgun');
 Route::webhooks('webhook/commio/sms', 'commio_messaging');
 Route::webhooks('webhook/sinch/sms', 'sinch_messaging');
 Route::webhooks('webhook/bandwidth/sms', 'bandwidth_messaging');

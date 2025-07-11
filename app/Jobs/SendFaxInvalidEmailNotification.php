@@ -63,15 +63,15 @@ class SendFaxInvalidEmailNotification implements ShouldQueue
      */
     public $deleteWhenMissingModels = true;
 
-    private $request;
+    private $data;
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct(Request $request)
+    public function __construct($data)
     {
-        $this->request = $request->all();
+        $this->data = $data;
     }
 
     /**
@@ -94,16 +94,14 @@ class SendFaxInvalidEmailNotification implements ShouldQueue
         // Allow only 2 tasks every 1 second
         Redis::throttle('fax')->allow(2)->every(1)->then(function () {
 
-            $this->request['slack_message'] = 'Someone with the email ' . $this->request['FromFull']['Email'] . ' tried sending a fax and was not authorized.';
-
-            Log::alert($this->request['slack_message']);
+            $this->data['slack_message'] = 'Someone with the email ' . $this->data['from']. ' tried sending a fax and was not authorized.';
 
             if (config('slack.fax')) {
                 Notification::route('slack', config('slack.fax'))
-                    ->notify(new SendSlackNotification($this->request));
+                    ->notify(new SendSlackNotification($this->data));
             }
 
-            Mail::to($this->request['FromFull']['Email'])->send(new FaxNotAuthorized($this->request));
+            Mail::to($this->data['from'])->send(new FaxNotAuthorized($this->data));
         }, function () {
             // Could not obtain lock; this job will be re-queued
             return $this->release(5);
