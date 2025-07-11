@@ -15,6 +15,7 @@ use App\Jobs\SendFaxFailedNotification;
 use Illuminate\Support\Facades\Storage;
 use App\Jobs\SendFaxNotificationToSlack;
 use libphonenumber\NumberParseException;
+use App\Jobs\SendFaxInTransitNotification;
 use Illuminate\Process\Exceptions\ProcessFailedException;
 
 class FaxSendService
@@ -215,6 +216,9 @@ class FaxSendService
         $fax_queue->fax_command        = 'originate ' . $dial_string;
 
         $fax_queue->save();
+
+        // Send notification to user that fax is in transit
+        SendFaxInTransitNotification::dispatch($payload)->onQueue('emails');
 
         return $fax_queue->fax_queue_uuid;
     }
