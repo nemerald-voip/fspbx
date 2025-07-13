@@ -698,7 +698,10 @@ class CdrsController extends Controller
     public function getRecordingUrl($callUuid)
     {
         try {
-            $recording = CDR::where('xml_cdr_uuid', $callUuid)->select('xml_cdr_uuid', 'record_path', 'record_name')->firstOrFail();
+            $recording = CDR::where('xml_cdr_uuid', $callUuid)
+                ->select('xml_cdr_uuid', 'record_path', 'record_name', 'domain_uuid')
+                ->with('archive_recording')
+                ->firstOrFail();
             // You can use $call here
         } catch (ModelNotFoundException $e) {
             // Handle the case when the model is not found
@@ -733,39 +736,69 @@ class CdrsController extends Controller
 
         // -----For S3 files-----
         if ($recording->record_path == 'S3') {
-            $setting = getS3Setting(Session::get('domain_uuid'));
+            // Efficient AWS settings retrieval (domain first, fallback to default)
+            $requiredKeys = ['access_key', 'bucket_name', 'region', 'secret_key'];
+            $domainUuid = $recording->domain_uuid;
 
+            // Try domain settings first
+            $domainSettings = \App\Models\DomainSettings::where('domain_uuid', $domainUuid)
+                ->where('domain_setting_category', 'aws')
+                ->whereIn('domain_setting_subcategory', $requiredKeys)
+                ->where('domain_setting_enabled', true)
+                ->get()
+                ->pluck('domain_setting_value', 'domain_setting_subcategory')
+                ->toArray();
 
-            $disk = Storage::build([
-                'driver' => 's3',
-                'key' => $setting['key'],
-                'secret' => $setting['secret'],
-                'region' => $setting['region'],
-                'bucket' => $setting['bucket'],
-            ]);
-
-            //Special case when recording name is empty. 
-            if (empty($recording->record_name)) {
-                // Check if archive recording is set
-                if ($recording->archive_recording) {
-                    $options = [
-                        'ResponseContentDisposition' => 'attachment; filename="' . basename($recording->archive_recording->object_key) . '"'
-                    ];
-                    $url = $disk->temporaryUrl($recording->archive_recording->object_key, now()->addMinutes(10), $options);
-                }
-                if (isset($url)) return $url;
-            }
-
-            if (!empty($recording->record_name)) {
-                $options = [
-                    'ResponseContentDisposition' => 'attachment; filename="' . basename($recording->record_name) . '"'
+            if (count(array_intersect(array_keys($domainSettings), $requiredKeys)) === count($requiredKeys)) {
+                $s3Config = [
+                    'driver' => 's3',
+                    'key'    => $domainSettings['access_key'],
+                    'secret' => $domainSettings['secret_key'],
+                    'region' => $domainSettings['region'],
+                    'bucket' => $domainSettings['bucket_name'],
                 ];
-                $url = $disk->temporaryUrl($recording->record_name, now()->addMinutes(10), $options);
-                if (isset($url)) return $url;
+            } else {
+                // Fallback to default settings
+                $defaultSettings = \App\Models\DefaultSettings::where('default_setting_category', 'aws')
+                    ->whereIn('default_setting_subcategory', $requiredKeys)
+                    ->where('default_setting_enabled', true)
+                    ->get()
+                    ->pluck('default_setting_value', 'default_setting_subcategory')
+                    ->toArray();
+
+                if (count(array_intersect(array_keys($defaultSettings), $requiredKeys)) === count($requiredKeys)) {
+                    $s3Config = [
+                        'driver' => 's3',
+                        'key'    => $defaultSettings['access_key'],
+                        'secret' => $defaultSettings['secret_key'],
+                        'region' => $defaultSettings['region'],
+                        'bucket' => $defaultSettings['bucket_name'],
+                    ];
+                } else {
+                    // No valid S3 config found
+                    return null;
+                }
             }
 
-            // logger($url);
-            if (isset($url)) return $url;
+            $disk = Storage::build($s3Config);
+
+            // Try archive_recording object_key first if record_name is empty
+            if (empty($recording->record_name) && $recording->archive_recording) {
+                $objectKey = $recording->archive_recording->object_key;
+                $fileName = basename($objectKey);
+            } else {
+                $objectKey = $recording->record_name;
+                $fileName = basename($objectKey);
+            }
+
+            if (!empty($objectKey)) {
+                $options = [
+                    'ResponseContentDisposition' => 'attachment; filename="' . $fileName . '"'
+                ];
+                $url = $disk->temporaryUrl($objectKey, now()->addMinutes(10), $options);
+
+                return $url;
+            }
         }
 
         return null;

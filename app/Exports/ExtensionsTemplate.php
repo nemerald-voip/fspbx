@@ -40,7 +40,7 @@ class ExtensionsTemplate implements FromCollection, WithHeadings
                 '+13105552020',           // outbound_caller_id_number (optional, US phone)
                 'Sample user',          // description (optional)
                 'alice@example.com',    // email (optional)
-                '00:25:9c:cf:1c:ac',    // device_address (optional, MAC address)
+                '00259ccf1cac',    // device_address (optional, MAC address)
                 'Yealink',              // device_vendor (optional)
                 'yealink/t53',                 // device_template (optional)
             ]

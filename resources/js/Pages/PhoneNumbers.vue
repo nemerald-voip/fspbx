@@ -13,24 +13,27 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick"/>
+                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick"/>
+                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
             <template #action>
-                <button type="button" v-if="page.props.auth.can.phone_numbers_create" @click.prevent="handleCreateButtonClick()"
+                <button type="button" v-if="page.props.auth.can.phone_numbers_create"
+                    @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
-                <button v-if="page.props.auth.can.phone_numbers_view_global && !showGlobal" type="button" @click.prevent="handleShowGlobal()"
+                <button v-if="page.props.auth.can.phone_numbers_view_global && !showGlobal" type="button"
+                    @click.prevent="handleShowGlobal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show global
                 </button>
-                <button v-if="page.props.auth.can.phone_numbers_view_global && showGlobal" type="button" @click.prevent="handleShowLocal()"
+                <button v-if="page.props.auth.can.phone_numbers_view_global && showGlobal" type="button"
+                    @click.prevent="handleShowLocal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show local
                 </button>
@@ -39,22 +42,23 @@
             <template #navigation>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    @pagination-change-page="renderRequestedPage" :bulk-actions="bulkActions"
+                    @bulk-action="handleBulkActionRequest" :has-selected-items="selectedItems.length > 0" />
             </template>
             <template #table-header>
                 <TableColumnHeader header=""
-                    class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
-                        :has-selected-items="selectedItems.length > 0" />
+
                     <span class="pl-4">Phone Number</span>
                 </TableColumnHeader>
                 <TableColumnHeader v-if="showGlobal" header="Domain"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Call Routing"
+                <TableColumnHeader v-if="!showGlobal" header="Call Routing"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Description"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
@@ -82,9 +86,10 @@
                     <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 flex"
                         :text="row.destination_number_formatted">
                         <div class="flex items-center">
-                            <input v-if="row.destination_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
-                                :value="row.destination_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="ml-9"
+                            <input v-if="row.destination_uuid" v-model="selectedItems" type="checkbox"
+                                name="action_box[]" :value="row.destination_uuid"
+                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <div class="ml-4"
                                 :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.phone_numbers_update, }"
                                 @click="page.props.auth.can.phone_numbers_update && handleEditRequest(row.destination_uuid)">
                                 {{ row.destination_number_formatted }}
@@ -102,14 +107,15 @@
 
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.domain?.domain_description || row.domain?.domain_name">
-                        <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft' target="#domain_tooltip_target">
+                        <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft'
+                            target="#domain_tooltip_target">
                             <div id="domain_tooltip_target">
                                 {{ row.domain?.domain_description || row.domain?.domain_name }}
                             </div>
                         </ejs-tooltip>
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField v-if="!showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <ul v-if="row.routing_options">
                             <li v-for="(action, index) in row.routing_options" :key="index">
                                 <span v-if="action && action.type && action.extension">
@@ -129,22 +135,29 @@
                         :text="row.destination_description" />
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <StatusBadge :enabled="row.destination_enabled == 'true'" />
+
+                        <Badge v-if="row.destination_enabled == 'true'" :text="'Enabled'" backgroundColor="bg-green-100"
+                            textColor="text-green-700" ringColor="ring-green-400/20" class="px-2 py-1 text-xs" />
+
+                        <Badge v-if="row.destination_enabled == 'false'" :text="'Disabled'"
+                            backgroundColor="bg-rose-100" textColor="text-rose-700" ringColor="ring-rose-400/20"
+                            class="px-2 py-1 text-xs" />
+
                     </TableField>
                     <TableField class="w-4 whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center space-x-2 whitespace-nowrap">
-                                <ejs-tooltip v-if="page.props.auth.can.destination_update" :content="'Edit phone number'"
-                                    position='TopLeft' target="#edit_tooltip_target">
+                                <ejs-tooltip v-if="page.props.auth.can.destination_update"
+                                    :content="'Edit phone number'" position='TopLeft' target="#edit_tooltip_target">
                                     <div id="edit_tooltip_target">
                                         <PencilSquareIcon @click="handleEditRequest(row.destination_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
-                                <ejs-tooltip v-if="page.props.auth.can.destination_destroy" :content="'Remove phone number'"
-                                    position='TopLeft' target="#delete_tooltip_target">
+                                <ejs-tooltip v-if="page.props.auth.can.destination_destroy"
+                                    :content="'Remove phone number'" position='TopLeft' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
-                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
+                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destination_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
@@ -177,31 +190,20 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <AddEditItemModal :show="createModalTrigger" :header="'Add New'" :loading="loadingModal" :customClass="'sm:max-w-6xl'"
-        @close="handleModalClose">
-        <template #modal-body>
-            <CreatePhoneNumberForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmitting"
-                @submit="handleCreateRequest" @cancel="handleModalClose" />
-        </template>
-    </AddEditItemModal>
 
-    <AddEditItemModal :show="editModalTrigger"
-        :header="'Update Phone Number Settings - ' + itemOptions?.phone_number?.destination_number_formatted"
-        :loading="loadingModal" :customClass="'sm:max-w-6xl'" @close="handleModalClose">
-        <template #modal-body>
-            <UpdatePhoneNumberForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmitting"
-                @submit="handleUpdateRequest" @cancel="handleModalClose" />
-        </template>
-    </AddEditItemModal>
+    <CreatePhoneNumberForm :show="showCreateModal" :header="'Add New Phone Number'" :loading="loadingModal"
+        :options="itemOptions" @close="showCreateModal = false" @success="showNotification" @error="handleErrorResponse"
+        @refresh-data="handleSearchButtonClick"/>
 
-    <AddEditItemModal :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="loadingModal"
-        @close="handleModalClose">
-        <template #modal-body>
-            <BulkUpdatePhoneNumberForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
-                :is-submitting="bulkUpdateFormSubmitting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose"
-                @domain-selected="getItemOptions" />
-        </template>
-    </AddEditItemModal>
+    <UpdatePhoneNumberForm :show="showUpdateModal"
+        :header="'Update Phone Number Settings - ' + itemOptions?.item?.destination_number_formatted ?? 'loading'"
+        :loading="loadingModal" @close="showUpdateModal = false" :options="itemOptions"  @success="showNotification" @error="handleErrorResponse"
+        @refresh-data="handleSearchButtonClick" />
+
+    <BulkUpdatePhoneNumberForm :show="showBulkUpdateModal" :header="'Bulk Update'" :loading="loadingModal"
+        @close="showBulkUpdateModal = false" :items="selectedItems" :options="itemOptions" @success="showNotification" @error="handleErrorResponse"
+        @refresh-data="handleSearchButtonClick"/>
+
     <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="confirmDeleteAction" />
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
@@ -227,11 +229,9 @@ import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import MainLayout from "../Layouts/MainLayout.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import Notification from "./components/notifications/Notification.vue";
-import BulkActionButton from "./components/general/BulkActionButton.vue";
-import StatusBadge from "./components/general/StatusBadge.vue";
 import { PencilSquareIcon } from "@heroicons/vue/24/solid/index.js";
-import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import BulkUpdatePhoneNumberForm from "./components/forms/BulkUpdatePhoneNumberForm.vue";
+import Badge from "@generalComponents/Badge.vue";
 
 const page = usePage()
 const loading = ref(false)
@@ -239,14 +239,13 @@ const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
-const createModalTrigger = ref(false);
-const editModalTrigger = ref(false);
-const bulkUpdateModalTrigger = ref(false);
+const showCreateModal = ref(false);
+const showUpdateModal = ref(false);
+const showBulkUpdateModal = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
 const confirmDeleteAction = ref(null);
 const createFormSubmitting = ref(null);
-const updateFormSubmitting = ref(null);
 const bulkUpdateFormSubmitting = ref(null);
 const formErrors = ref(null);
 const notificationType = ref(null);
@@ -258,9 +257,9 @@ const props = defineProps({
     data: Object,
     showGlobal: Boolean,
     routes: Object,
-    itemData: Object,
-    conditions: Object
 });
+
+// console.log(props.data)
 
 const filterData = ref({
     search: null,
@@ -273,16 +272,15 @@ const showGlobal = ref(props.showGlobal);
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
-    const actions = [
-        {
+    const actions = [];
+    if (page.props.auth.can.destination_update) {
+        actions.push({
             id: 'bulk_update',
             label: 'Edit',
             icon: 'PencilSquareIcon'
-        }
-    ];
-
-    // Conditionally add the delete action if permission is granted
-    if (page.props.auth.can.destination_delete) {
+        });
+    }
+    if (page.props.auth.can.destination_destroy) {
         actions.push({
             id: 'bulk_delete',
             label: 'Delete',
@@ -297,7 +295,7 @@ onMounted(() => {
 });
 
 const handleEditRequest = (itemUuid) => {
-    editModalTrigger.value = true
+    showUpdateModal.value = true
     formErrors.value = null;
     loadingModal.value = true;
     getItemOptions(itemUuid);
@@ -322,60 +320,17 @@ const handleCreateRequest = (form) => {
 
 };
 
-const handleUpdateRequest = (form) => {
-    updateFormSubmitting.value = true;
-    formErrors.value = null;
 
-    axios.put(form.update_route, form)
-        .then((response) => {
-            updateFormSubmitting.value = false;
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-            handleModalClose();
-            handleClearSelection();
-        }).catch((error) => {
-            updateFormSubmitting.value = false;
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        });
-
-};
-
-const handleSingleItemDeleteRequest = (url) => {
+const handleSingleItemDeleteRequest = (uuid) => {
     confirmationModalTrigger.value = true;
-    confirmDeleteAction.value = () => executeSingleDelete(url);
-}
-
-const executeSingleDelete = (url) => {
-    router.delete(url, {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: (page) => {
-            if (page.props.flash.error) {
-                showNotification('error', page.props.flash.error);
-            }
-            if (page.props.flash.message) {
-                showNotification('success', page.props.flash.message);
-            }
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onFinish: () => {
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onError: (errors) => {
-            console.log(errors);
-        },
-    });
+    confirmDeleteAction.value = () => executeBulkDelete([uuid]);
 }
 
 const handleBulkActionRequest = (action) => {
     if (action === 'bulk_update') {
-        formErrors.value = [];
         getItemOptions();
         loadingModal.value = true
-        bulkUpdateModalTrigger.value = true;
+        showBulkUpdateModal.value = true;
     }
     if (action === 'bulk_delete') {
         confirmationModalTrigger.value = true;
@@ -383,8 +338,8 @@ const handleBulkActionRequest = (action) => {
     }
 }
 
-const executeBulkDelete = () => {
-    axios.post(`${props.routes.bulk_delete}`, { items: selectedItems.value })
+const executeBulkDelete = (items = selectedItems.value) => {
+    axios.post(props.routes.bulk_delete, { items })
         .then((response) => {
             handleModalClose();
             showNotification('success', response.data.messages);
@@ -397,23 +352,8 @@ const executeBulkDelete = () => {
         });
 }
 
-const handleBulkUpdateRequest = (form) => {
-    bulkUpdateFormSubmitting.value = true
-    axios.post(`${props.routes.bulk_update}`, form)
-        .then((response) => {
-            bulkUpdateFormSubmitting.value = false;
-            handleModalClose();
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-        })
-        .catch((error) => {
-            bulkUpdateFormSubmitting.value = false;
-            handleFormErrorResponse(error);
-        });
-}
-
 const handleCreateButtonClick = () => {
-    createModalTrigger.value = true
+    showCreateModal.value = true
     formErrors.value = null;
     loadingModal.value = true
     getItemOptions();
@@ -572,10 +512,10 @@ const handleClearSelection = () => {
 }
 
 const handleModalClose = () => {
-    createModalTrigger.value = false;
-    editModalTrigger.value = false;
+    showCreateModal.value = false;
+    showUpdateModal.value = false;
     confirmationModalTrigger.value = false;
-    bulkUpdateModalTrigger.value = false;
+    showBulkUpdateModal.value = false;
 }
 
 const hideNotification = () => {

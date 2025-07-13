@@ -2,12 +2,8 @@
 
 namespace App\Models;
 
-use libphonenumber\PhoneNumberUtil;
 use libphonenumber\PhoneNumberFormat;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
-use libphonenumber\NumberParseException;
-use App\Services\CallRoutingOptionsService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Destinations extends Model
@@ -64,15 +60,24 @@ class Destinations extends Model
         'group_uuid',
     ];
 
-    protected $appends = ['destination_number_formatted'];
+    protected $appends = ['destination_number_formatted', 'routing_options'];
 
-    public function __construct(array $attributes = [])
+    public static function boot()
     {
-        parent::__construct();
-        $this->attributes['domain_uuid'] = Session::get('domain_uuid');
-        $this->attributes['insert_date'] = date('Y-m-d H:i:s');
-        $this->attributes['insert_user'] = Session::get('user_uuid');
-        $this->fill($attributes);
+        parent::boot();
+        static::saving(function ($model) {
+            // Always update these fields before save
+            $destination_numbers = array_filter([
+                'destination_prefix' => $model->destination_prefix,
+                'destination_trunk_prefix' => $model->destination_trunk_prefix,
+                'destination_area_code' => $model->destination_area_code,
+                'destination_number' => $model->destination_number,
+            ]);
+            $model->attributes['destination_number_regex'] = $model->to_regex($destination_numbers);
+
+            $model->attributes['update_date'] = date('Y-m-d H:i:s');
+            $model->attributes['update_user'] = session('user_uuid');
+        });
     }
 
     public function getDestinationNumberFormattedAttribute()
@@ -85,6 +90,15 @@ class Destinations extends Model
         return formatPhoneNumber($this->destination_number, 'US', PhoneNumberFormat::E164);
     }
 
+    public function getRoutingOptionsAttribute()
+    {
+        if (empty($this->destination_actions)) {
+            return null;
+        }
+        $service = new \App\Services\CallRoutingOptionsService();
+        return $service->reverseEngineerDestinationActions($this->destination_actions);
+    }
+
     public function getLabelAttribute()
     {
         $phoneNumberFormatted = $this->destination_number_formatted;
@@ -94,67 +108,6 @@ class Destinations extends Model
         return $phoneNumberFormatted;
     }
 
-    /**
-     * The booted method of the model
-     *
-     * Define all attributes here like normal code
-
-     */
-    protected static function booted()
-    {
-        static::saving(function ($model) {
-            // Remove attributes before saving to database
-            unset($model->destroy_route);
-            unset($model->destination_actions_formatted);
-            unset($model->routing_options);
-            $model->update_date = date('Y-m-d H:i:s');
-            $model->update_user = Session::get('user_uuid');
-
-            // Prepare destination numbers for regex conversion
-            $destination_numbers = array_filter([
-                'destination_prefix' => $model->destination_prefix,
-                'destination_trunk_prefix' => $model->destination_trunk_prefix,
-                'destination_area_code' => $model->destination_area_code,
-                'destination_number' => $model->destination_number,
-            ]);
-
-            // Convert to regex
-            $model->destination_number_regex = $model->to_regex($destination_numbers);
-        });
-
-        static::retrieved(function ($model) {
-
-            if (!empty($model->destination_actions)) {
-
-                $callRoutingOptionsService = new CallRoutingOptionsService();
-
-                $model->routing_options = $callRoutingOptionsService->reverseEngineerDestinationActions($model->destination_actions);
-            }
-
-            if (!empty($model->destination_conditions)) {
-                $model->destination_conditions = json_decode($model->destination_conditions, true);
-                if (is_array($model->destination_conditions)) {
-                    $conditions = null;
-                    foreach ($model->destination_conditions as $condition) {
-                        if (!empty($condition['condition_data'])) {
-                            $conditions[] = [
-                                'condition_field' => $condition['condition_field'],
-                                'condition_expression' => $condition['condition_expression'],
-                                'condition_target' => [
-                                    'targetValue' => $condition['condition_data']
-                                ],
-                            ];
-                        }
-                    }
-                    $model->destination_conditions = $conditions;
-                }
-            }
-
-            $model->destroy_route = route('phone-numbers.destroy', ['phone_number' => $model->destination_uuid]);
-
-            return $model;
-        });
-    }
 
     /**
      * Get domain that this model belongs to
@@ -231,51 +184,4 @@ class Destinations extends Model
 
         return ''; // Return empty string if no valid regex is generated
     }
-
-
-
-
-    // /**
-    //  * Force to use it, cause laravel's casting method doesn't determine string 'false' as a valid boolean value.
-    //  *
-    //  * @param  string|null  $value
-    //  * @return bool
-    //  */
-    // public function getDestinationEnabledAttribute(?string $value): bool
-    // {
-    //     return $value === 'true';
-    // }
-
-    // /**
-    //  * Force to use it, cause laravel's casting method doesn't determine string 'false' as a valid boolean value.
-    //  *
-    //  * @param  string|null  $value
-    //  * @return bool
-    //  */
-    // public function getDestinationRecordAttribute(?string $value): bool
-    // {
-    //     return $value === 'true';
-    // }
-
-    // /**
-    //  * Set the destination_enabled attribute.
-    //  *
-    //  * @param  bool $value
-    //  * @return void
-    //  */
-    // public function setDestinationEnabledAttribute($value): void
-    // {
-    //     $this->attributes['destination_enabled'] = $value ? 'true' : 'false';
-    // }
-
-    // /**
-    //  * Set the destination_record attribute.
-    //  *
-    //  * @param  bool $value
-    //  * @return void
-    //  */
-    // public function setDestinationRecordAttribute($value): void
-    // {
-    //     $this->attributes['destination_record'] = $value ? 'true' : 'false';
-    // }
 }

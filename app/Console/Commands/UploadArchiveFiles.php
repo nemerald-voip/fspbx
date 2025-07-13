@@ -51,26 +51,88 @@ class UploadArchiveFiles extends Command
     }
     public function uploadRecordings()
     {
-        //$start_date = date("Y-m-d", strtotime("-1 days"));
-        //$recordings=$this->getCallRecordings($start_date);
         $recordings = $this->getCallRecordings();
-
         $failed = [];
         $success = [];
-        foreach ($recordings as $key => $call_recording) {
-            $setting = getS3Setting($call_recording->domain_uuid);
-
-            $s3 = new \Aws\S3\S3Client([
-                'region'  => $setting['region'],
-                'version' => 'latest',
-                'credentials' => [
-                    'key'    => $setting['key'],
-                    'secret' => $setting['secret']
-                ]
-            ]);
-
-            // Attempt to convert original file to MP3 for compression
-            $recordingFile = $call_recording->record_path . '/' . $call_recording->record_name;
+    
+        $domainUuids = $recordings->pluck('domain_uuid')->unique()->values();
+        $requiredKeys = ['access_key', 'bucket_name', 'region', 'secret_key'];
+    
+        $domainSettingsRows = \App\Models\DomainSettings::whereIn('domain_uuid', $domainUuids)
+            ->where('domain_setting_category', 'aws')
+            ->whereIn('domain_setting_subcategory', $requiredKeys)
+            ->where('domain_setting_enabled', true)
+            ->get();
+    
+        $domainSettingsMap = [];
+        foreach ($domainSettingsRows->groupBy('domain_uuid') as $domainUuid => $settings) {
+            $flat = [];
+            foreach ($settings as $row) {
+                $flat[$row->domain_setting_subcategory] = $row->domain_setting_value;
+            }
+            if (count(array_intersect(array_keys($flat), $requiredKeys)) === count($requiredKeys)) {
+                $domainSettingsMap[$domainUuid] = [
+                    'key'    => $flat['access_key'],
+                    'bucket' => $flat['bucket_name'],
+                    'region' => $flat['region'],
+                    'secret' => $flat['secret_key'],
+                    'type'   => 'custom',
+                ];
+            }
+        }
+    
+        $defaultRows = \App\Models\DefaultSettings::where('default_setting_category', 'aws')
+            ->whereIn('default_setting_subcategory', $requiredKeys)
+            ->where('default_setting_enabled', true)
+            ->get();
+    
+        $defaultFlat = [];
+        foreach ($defaultRows as $row) {
+            $defaultFlat[$row->default_setting_subcategory] = $row->default_setting_value;
+        }
+        $defaultSettings = (count(array_intersect(array_keys($defaultFlat), $requiredKeys)) === count($requiredKeys))
+            ? [
+                'key'    => $defaultFlat['access_key'],
+                'bucket' => $defaultFlat['bucket_name'],
+                'region' => $defaultFlat['region'],
+                'secret' => $defaultFlat['secret_key'],
+                'type'   => 'default',
+            ]
+            : null;
+    
+        $finalSettingsByDomain = [];
+        foreach ($domainUuids as $domainUuid) {
+            if (!empty($domainSettingsMap[$domainUuid])) {
+                $finalSettingsByDomain[$domainUuid] = $domainSettingsMap[$domainUuid];
+            } elseif ($defaultSettings) {
+                $finalSettingsByDomain[$domainUuid] = $defaultSettings;
+            }
+        }
+    
+        date_default_timezone_set('America/Los_Angeles');
+        $s3Clients = [];
+    
+        foreach ($recordings as $rec) {
+            $settings = $finalSettingsByDomain[$rec->domain_uuid] ?? null;
+            if (!$settings) continue;
+    
+            // Cache S3 client per settings hash
+            $clientKey = md5(json_encode($settings));
+            if (!isset($s3Clients[$clientKey])) {
+                $s3Clients[$clientKey] = new \Aws\S3\S3Client([
+                    'region'      => $settings['region'],
+                    'version'     => 'latest',
+                    'credentials' => [
+                        'key'    => $settings['key'],
+                        'secret' => $settings['secret'],
+                    ],
+                ]);
+            }
+            $s3 = $s3Clients[$clientKey];
+    
+            $recordingFile = $rec->record_path . '/' . $rec->record_name;
+            $mp3File = null;
+    
             if (file_exists($recordingFile) && pathinfo($recordingFile, PATHINFO_EXTENSION) === 'wav') {
                 $mp3File = str_replace('.wav', '.mp3', $recordingFile);
                 $process = new Process([
@@ -81,117 +143,60 @@ class UploadArchiveFiles extends Command
                     '-q:a', '5',
                     $mp3File,
                 ]);
-
                 try {
-                    // Run the FFmpeg command
                     $process->mustRun();
                 } catch (ProcessFailedException $e) {
                     logger($e->getMessage());
+                    $mp3File = null;
                 }
             }
-
-
+    
             try {
-
-                // Upload Original File
-                // This needs to be removed after confirmation that mp3 files are workign ok
-                if (file_exists($recordingFile)) {
-                    Log::info("Uploading File : " . $recordingFile);
-
-                    // Set default time zone for this script
-                    date_default_timezone_set('America/Los_Angeles');
-
-                    //S3 file location
-                    if ($setting['type'] == "default") {
-                        $location = $call_recording->domain_name . '/' . date('Y', strtotime($call_recording->start_stamp)) . '/' . date('m', strtotime($call_recording->start_stamp)) . '/' . date('d', strtotime($call_recording->start_stamp)) . '/';
-                    } elseif ($setting['type'] == "custom") {
-                        $location = 'recordings' . '/' . date('Y', strtotime($call_recording->start_stamp)) . '/' . date('m', strtotime($call_recording->start_stamp)) . '/' . date('d', strtotime($call_recording->start_stamp)) . '/';
-                    }
-
-                    //S3 Object name
-                    $file_ext = pathinfo($recordingFile, PATHINFO_EXTENSION);
-
-                    $object_key = $location . date('His', strtotime($call_recording->start_stamp)) . '_' . $call_recording->direction . '_' . $call_recording->caller_id_number . '_' . $call_recording->caller_destination . '.' . $file_ext;
-                    $path = $s3->putObject(array(
-                        'Bucket'     => $setting['bucket'],
-                        'SourceFile' => $recordingFile,
-                        'Key'        => $object_key
-                    ));
-
-                    //Add uploaded recording to the database    
-                    $archive = new ArchiveRecording();
-                    $archive->domain_uuid = $call_recording->domain_uuid;
-                    $archive->s3_path = $path['ObjectURL'];
-                    $archive->object_key = $object_key;
-                    $call_recording->archive_recording()->save($archive);
-
-                    unlink($recordingFile);
-
-                    array_push($success, $call_recording->record_name);
-                } else {
-                    // If file doesn't exist empty the database record file name
-                    Log::info("File doesn't exist: " . $call_recording->record_name);
-                    $cdr = CDR::find($call_recording->xml_cdr_uuid);
-                    $call_recording->record_name = '';
-                    $cdr->update([
-                        'record_name' => $call_recording->record_name
-                    ]);
-                }
-
-                // Uploading mp3 file 
-                if (file_exists($mp3File)) {
+                if ($mp3File && file_exists($mp3File)) {
                     Log::info("Uploading File : " . $mp3File);
-
-                    // Set default time zone for this script
-                    date_default_timezone_set('America/Los_Angeles');
-
-                    //S3 file location
-                    if ($setting['type'] == "default") {
-                        $location = $call_recording->domain_name . '/' . date('Y', strtotime($call_recording->start_stamp)) . '/' . date('m', strtotime($call_recording->start_stamp)) . '/' . date('d', strtotime($call_recording->start_stamp)) . '/';
-                    } elseif ($setting['type'] == "custom") {
-                        $location = 'recordings' . '/' . date('Y', strtotime($call_recording->start_stamp)) . '/' . date('m', strtotime($call_recording->start_stamp)) . '/' . date('d', strtotime($call_recording->start_stamp)) . '/';
+    
+                    if ($settings['type'] == "default") {
+                        $location = $rec->domain_name . '/' . date('Y', strtotime($rec->start_stamp)) . '/' . date('m', strtotime($rec->start_stamp)) . '/' . date('d', strtotime($rec->start_stamp)) . '/';
+                    } else {
+                        $location = 'recordings/' . date('Y', strtotime($rec->start_stamp)) . '/' . date('m', strtotime($rec->start_stamp)) . '/' . date('d', strtotime($rec->start_stamp)) . '/';
                     }
-
-                    //S3 Object name
                     $file_ext = pathinfo($mp3File, PATHINFO_EXTENSION);
-
-                    $object_key = $location . date('His', strtotime($call_recording->start_stamp)) . '_' . $call_recording->direction . '_' . $call_recording->caller_id_number . '_' . $call_recording->caller_destination . '.' . $file_ext;
-                    $path = $s3->putObject(array(
-                        'Bucket'     => $setting['bucket'],
+    
+                    $object_key = $location . date('His', strtotime($rec->start_stamp)) . '_' . $rec->direction . '_' . $rec->caller_id_number . '_' . $rec->caller_destination . '.' . $file_ext;
+                    $path = $s3->putObject([
+                        'Bucket'     => $settings['bucket'],
                         'SourceFile' => $mp3File,
                         'Key'        => $object_key
-                    ));
-
-                    $call_recording->record_path = "S3";
-                    $call_recording->record_name = $object_key;
-                    $call_recording->save();
-
+                    ]);
+    
+                    $rec->record_path = "S3";
+                    $rec->record_name = $object_key;
+                    $rec->save();
+    
                     unlink($mp3File);
-
+    
+                    $success[] = $rec->record_name;
                 }
             } catch (\Exception $ex) {
-
-                if (!empty($call_recording->record_name)) {
+                if (!empty($rec->record_name)) {
                     logger($ex->getMessage());
-                    array_push($failed, ['msg' => $ex->getMessage(), 'name' => $call_recording->record_name]);
+                    $failed[] = ['msg' => $ex->getMessage(), 'name' => $rec->record_name];
                 }
             }
         }
-        //    if(!empty($failed)){
+    
         // Send email report with upload status
         $upload_notification_email = DefaultSettings::where('default_setting_category', 'aws')
             ->where('default_setting_subcategory', 'upload_notification_email')
             ->value('default_setting_value');
-        // Log::info($upload_notification_email);
-        $attributes['email'] = $upload_notification_email;
-        $attributes['failed'] = $failed;
-        $attributes['success'] = $success;
+        $attributes = [
+            'email'   => $upload_notification_email,
+            'failed'  => $failed,
+            'success' => $success,
+        ];
         SendS3UploadReport::dispatch($attributes)->onQueue('emails');
-
-        // $this->sendFailEmail($failed,$success);
-        // }
-
     }
+    
 
 
     public function getDomainName($domain_id)
@@ -200,10 +205,8 @@ class UploadArchiveFiles extends Command
     }
 
     public function getCallRecordings()
-    {
-
-        // Get all calls that have call recordings
-        $calls = CDR::select([
+{
+    return CDR::select([
             'xml_cdr_uuid',
             'domain_uuid',
             'domain_name',
@@ -214,16 +217,15 @@ class UploadArchiveFiles extends Command
             'record_path',
             'record_name'
         ])
+        ->whereNotNull('record_name')
+        ->where('record_name', '<>', '')
+        ->where('record_path', 'not like', '%S3%')
+        ->where('hangup_cause', '<>', 'LOSE_RACE')
+        ->whereDate('start_stamp', '<=', Carbon::today()->toDateTimeString())
+        ->orderBy('start_stamp', 'desc') // Or whatever order makes sense
+        ->take(2000)
+        ->get();
+}
 
-            ->where('record_name', '<>', '')
-            ->where('record_path', 'not like', '%S3%') // New where clause
-            ->whereDate('start_stamp', '<=', Carbon::today()->toDateTimeString())
-            ->where('hangup_cause', '<>', 'LOSE_RACE')
-            ->take(2000)
-            // ->toSql();
-            ->get();
-        // Log::info($calls);
-        // exit();
-        return $calls;
-    }
+
 }

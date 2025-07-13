@@ -9,7 +9,6 @@ class BandwidthWebhookProfile implements WebhookProfile
 {
     public function shouldProcess(Request $request): bool
     {
-        logger($request->all());
         return true;
 
     }

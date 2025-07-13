@@ -218,7 +218,6 @@ if (!function_exists('outbound_route_to_bridge')) {
                 'dialplan_name'
             ]);
 
-
         // if (is_array($result) && @sizeof($result) != 0) {
         //     foreach ($result as &$row) {
         //         $dialplan_uuid = $row["dialplan_uuid"];
@@ -306,7 +305,7 @@ if (!function_exists('outbound_route_to_bridge')) {
             }
         }
 
-        return $bridge_array;
+        return $bridge_array ?? [];
     }
 }
 
@@ -675,49 +674,6 @@ if (!function_exists('getCredentialKey')) {
     }
 }
 
-
-if (!function_exists('getS3Setting')) {
-    function getS3Setting($domain_id)
-    {
-        $config = [];
-        $settings = DomainSettings::where('domain_uuid', $domain_id)
-            ->where('domain_setting_category', 'aws')
-            ->get();
-        $config['driver'] = 's3';
-        $config['url'] = '';
-        $config['endpoint'] = '';
-        $config['region'] = 'us-west-2';
-        $config['use_path_style_endpoint'] = false;
-
-        if (!blank($settings)) {
-            foreach ($settings as $conf) {
-                $config[getCredentialKey($conf->domain_setting_subcategory)] = trim($conf->domain_setting_value);
-            }
-            $config['type'] = 'custom';
-        } else {
-            $config = getDefaultS3Configuration();
-            $config['type'] = 'default';
-        }
-
-
-        $setting['default'] = 's3';
-        $setting['disks']['s3'] = $config;
-
-        return $config;
-    }
-}
-
-if (!function_exists('getDefaultS3Configuration')) {
-    function getDefaultS3Configuration()
-    {
-        $default_credentials = DefaultSettings::where('default_setting_category', 'aws')->get();
-        $config = [];
-        foreach ($default_credentials as $d_conf) {
-            $config[getCredentialKey($d_conf->default_setting_subcategory)] = $d_conf->default_setting_value;
-        }
-        return $config;
-    }
-}
 
 if (!function_exists('getSignedURL')) {
     function getSignedURL($s3Client, $bucket, $key)

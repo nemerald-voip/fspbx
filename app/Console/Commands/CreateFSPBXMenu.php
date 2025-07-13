@@ -123,6 +123,7 @@ class CreateFSPBXMenu extends Command
                     ['title' => 'Conferences', 'link' => '/app/conferences/conferences.php', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Faxes', 'link' => '/faxes', 'groups' => ['superadmin', 'admin', 'fax', 'user']],
                     ['title' => 'Virtual Receptionists', 'link' => '/virtual-receptionists', 'groups' => ['superadmin', 'admin']],
+                    ['title' => 'Messages', 'link' => '/messages', 'groups' => ['superadmin']],
                     ['title' => 'Music on Hold', 'link' => '/app/music_on_hold/music_on_hold.php','groups' => ['superadmin']],
                     ['title' => 'Operator Panel', 'link' => '/app/basic_operator_panel/index.php', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Recordings', 'link' => '/app/recordings/recordings.php', 'groups' => ['superadmin', 'admin']],
