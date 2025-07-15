@@ -97,7 +97,7 @@ class PostmarkWebhookProfile implements WebhookProfile
                 'fax_destination' =>$request['fax_destination'],
                 'invalid_number' => $phone_number,
             ];
-            SendFaxInvalidDestinationNotification::dispatch($request)->onQueue('faxes');
+            SendFaxInvalidDestinationNotification::dispatch($data)->onQueue('faxes');
 
             // Since the phone number is not valid the request is not authorized to proceed 
             return false;
