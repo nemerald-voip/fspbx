@@ -174,6 +174,8 @@ class UploadArchiveFiles extends Command
                     $rec->save();
     
                     unlink($mp3File);
+                    // delete the original WAV as well:
+                    unlink($recordingFile);
     
                     $success[] = $rec->record_name;
                 }
