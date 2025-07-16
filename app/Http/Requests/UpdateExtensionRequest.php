@@ -49,7 +49,7 @@ class UpdateExtensionRequest extends FormRequest
             'dial_string' => ['nullable', 'string'],
             'force_ping' => ['nullable', 'string'],
             'user_context' => ['sometimes', 'required', 'string'],
-            'accountcode' => ['sometimes', 'required', 'string'],
+            'accountcode' => ['sometimes', 'nullable', 'string'],
             'exclude_from_ringotel_stale_users' => ['nullable', 'boolean'],
             'auth_acl' => ['nullable', 'string'],
             'outbound_caller_id_number' => ['nullable', 'string'],

@@ -52,7 +52,7 @@
                                     destination_enabled: 'true',
                                     destination_prefix: options.item?.destination_prefix ?? null,
                                     destination_number: options.item?.destination_number ?? null,
-                                    routing_options: options.item.routing_options,
+                                    routing_options: options.item.routing_options ?? [],
                                     destination_description: options.item?.destination_description ?? null,
                                     destination_record: options.item?.destination_record ?? 'false',
                                     destination_type_fax: options.item?.destination_type_fax ?? 'false',
