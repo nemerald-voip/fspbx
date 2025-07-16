@@ -2,6 +2,7 @@
 
 use App\Models\DomainGroups;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\FaxesController;
 use App\Http\Controllers\TokenController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\DeviceController;
@@ -131,4 +132,22 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/cloud-provisioning/organization/all', [DeviceCloudProvisioningController::class, 'getOrganizations'])->name('cloud-provisioning.organization.all');
     Route::post('/cloud-provisioning/token/get', [DeviceCloudProvisioningController::class, 'getToken'])->name('cloud-provisioning.token.get');
     Route::post('/cloud-provisioning/token/update', [DeviceCloudProvisioningController::class, 'updateToken'])->name('cloud-provisioning.token.update');
+
+    // Faxes
+    Route::post('faxes', [FaxesController::class, 'store'])->name('faxes.store');
+    Route::put('faxes/{fax}', [FaxesController::class, 'update'])->name('faxes.update');
+    Route::post('faxes/item-options', [FaxesController::class, 'getItemOptions'])->name('faxes.item.options');
+    Route::post('faxes/new-fax-options', [FaxesController::class, 'getNewFaxOptions'])->name('faxes.new.fax.options');
+    Route::post('/faxes/bulk-delete', [FaxesController::class, 'bulkDelete'])->name('faxes.bulk.delete');
+    Route::post('/faxes/bulk-update', [FaxesController::class, 'bulkUpdate'])->name('faxes.bulk.update');
+    Route::get('faxes/recent-outbound', [FaxesController::class, 'getRecentOutbound'])->name('faxes.recent-outbound');
+    Route::get('faxes/recent-inbound', [FaxesController::class, 'getRecentInbound'])->name('faxes.recent-inbound');
+    Route::get('/faxes/newfax/create', [FaxesController::class, 'new'])->name('faxes.newfax');
+    Route::delete('/faxes/deleteSentFax/{id}', [FaxesController::class, 'deleteSentFax'])->name('faxes.file.deleteSentFax');
+    Route::delete('/faxes/deleteReceivedFax/{id}', [FaxesController::class, 'deleteReceivedFax'])->name('faxes.file.deleteReceivedFax');
+    Route::delete('/faxes/deleteFaxLog/{id}', [FaxesController::class, 'deleteFaxLog'])->name('faxes.file.deleteFaxLog');
+    Route::get('/fax/inbox/{file}/download', [FaxesController::class, 'downloadInboxFaxFile'])->name('downloadInboxFaxFile');
+    Route::get('/fax/sent/{file}/download', [FaxesController::class, 'downloadSentFaxFile'])->name('downloadSentFaxFile');
+    Route::get('/fax/sent/{faxQueue}/{status?}', [FaxesController::class, 'updateStatus'])->name('faxes.file.updateStatus');
+    Route::post('/faxes/send', [FaxesController::class, 'sendFax'])->name('faxes.new.fax.send');
 });

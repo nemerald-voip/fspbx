@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Support\Carbon;
 use App\Models\Traits\TraitUuid;
+use libphonenumber\PhoneNumberFormat;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -21,38 +22,49 @@ class FaxQueues extends Model
 
     protected $guarded = ['fax_queue_uuid'];
 
+    protected $appends = [
+        'fax_date_formatted',
+        'fax_retry_date_formatted',
+        'fax_notify_date_formatted',
+        'fax_caller_id_number_formatted',
+        'fax_number_formatted',
+    ];
 
-    /**
-     * The booted method of the model
-     *
-     * Define all attributes here like normal code
-
-     */
-    protected static function booted()
+    public function getFaxDateFormattedAttribute()
     {
-        static::saving(function ($model) {
-            // Remove attributes before saving to database
-            unset($model->fax_date_formatted);
-            unset($model->fax_retry_date_formatted);
-            unset($model->fax_notify_date_formatted);
-        });
+        if (!$this->fax_date || !$this->domain_uuid) {
+            return null;
+        }
+        $timeZone = get_local_time_zone($this->domain_uuid);
+        return Carbon::parse($this->fax_date)->setTimezone($timeZone)->format('g:i:s A M d, Y');
+    }
 
-        static::retrieved(function ($model) {
-            $time_zone = get_local_time_zone($model->domain_uuid);
-            if ($model->fax_date && $model->domain_uuid) {
-                $model->fax_date_formatted = Carbon::parse($model->fax_date)->setTimezone($time_zone)->format('g:i:s A M d, Y');
-            }
+    public function getFaxRetryDateFormattedAttribute()
+    {
+        if (!$this->fax_retry_date || !$this->domain_uuid) {
+            return null;
+        }
+        $timeZone = get_local_time_zone($this->domain_uuid);
+        return Carbon::parse($this->fax_retry_date)->setTimezone($timeZone)->format('g:i:s A M d, Y');
+    }
 
-            if ($model->fax_retry_date && $model->domain_uuid) {
-                $model->fax_retry_date_formatted = Carbon::parse($model->fax_retry_date)->setTimezone($time_zone)->format('g:i:s A M d, Y');
-            }
+    public function getFaxNotifyDateFormattedAttribute()
+    {
+        if (!$this->fax_notify_date || !$this->domain_uuid) {
+            return null;
+        }
+        $timeZone = get_local_time_zone($this->domain_uuid);
+        return Carbon::parse($this->fax_notify_date)->setTimezone($timeZone)->format('g:i:s A M d, Y');
+    }
 
-            if ($model->fax_notify_date && $model->domain_uuid) {
-                $model->fax_notify_date_formatted = Carbon::parse($model->fax_notify_date)->setTimezone($time_zone)->format('g:i:s A M d, Y');
-            }
+    public function getFaxCallerIdNumberFormattedAttribute()
+    {
+        return formatPhoneNumber($this->fax_caller_id_number, 'US', PhoneNumberFormat::NATIONAL);
+    }
 
-            return $model;
-        });
+    public function getFaxNumberFormattedAttribute()
+    {
+        return formatPhoneNumber($this->fax_number, 'US', PhoneNumberFormat::NATIONAL);
     }
 
     /**
@@ -63,7 +75,7 @@ class FaxQueues extends Model
         return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
     }
 
-    public function faxFile()
+    public function faxAttachment()
     {
         return $this->hasOne(FaxFiles::class,  'fax_file_path', 'fax_file');
     }

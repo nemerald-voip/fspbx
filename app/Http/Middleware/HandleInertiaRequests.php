@@ -148,6 +148,14 @@ class HandleInertiaRequests extends Middleware
         $permissions['extension_update'] = userCheckPermission('extension_edit');
         $permissions['extension_destroy'] = userCheckPermission('extension_delete');
 
+        $permissions['fax_server_create'] = userCheckPermission('fax_add');
+        $permissions['fax_server_update'] = userCheckPermission('fax_edit');
+        $permissions['fax_server_destroy'] = userCheckPermission('fax_delete');
+        $permissions['fax_send'] = userCheckPermission('fax_send');
+        $permissions['fax_inbox_view'] = userCheckPermission('fax_inbox_view');
+        $permissions['fax_sent_view'] = userCheckPermission('fax_sent_view');
+        $permissions['fax_log_view'] = userCheckPermission('fax_log_view');
+
         // logger($permissions);
         return $permissions;
     }
