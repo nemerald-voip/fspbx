@@ -449,7 +449,7 @@ class FaxesController extends Controller
             // ->each->append('label', 'destination_number_e164')
             ->map(function ($fax) {
                 return [
-                    'value' => $fax->fax_caller_id_number_formatted,
+                    'value' => $fax->fax_caller_id_number,
                     'label' =>$fax->fax_caller_id_number_formatted . ' - ' . $fax->fax_name,
                 ];
             })
