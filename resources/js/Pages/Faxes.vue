@@ -299,12 +299,12 @@
                     <!--  Tools -->
                     <TableField class="px-2 py-2 text-sm flex-col sm:flex-row gap-2">
                         <template v-if="page.props.auth.can.fax_send">
-                            <a :href="`/faxes/newfax/${row.fax_uuid}`"
+                            <button @click.prevent="handleNewFaxButtonClick()"
                                 class="inline-flex items-center px-2 py-1 rounded text-gray-700 hover:bg-gray-100 transition text-xs font-medium"
                                 title="New Fax">
                                 <DocumentPlusIcon class="w-4 h-4 mr-1" />
                                 <span class="text-nowrap">New Fax</span>
-                            </a>
+                            </button>
                         </template>
 
                         <template v-if="page.props.auth.can.fax_inbox_view">
@@ -662,7 +662,7 @@ const getNewFaxOptions = (itemUuid = null) => {
     axios.post(props.routes.new_fax_options, payload)
         .then((response) => {
             newFaxOptions.value = response.data;
-            console.log(newFaxOptions.value);
+            // console.log(newFaxOptions.value);
 
         }).catch((error) => {
             handleModalClose();
