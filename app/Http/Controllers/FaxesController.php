@@ -438,21 +438,19 @@ class FaxesController extends Controller
 
         $currentDomain = session('domain_uuid');
 
-        $phone_numbers = QueryBuilder::for(Destinations::class)
-            ->allowedFilters(['destination_number', 'destination_description'])
-            ->allowedSorts('destination_number')
-            ->where('destination_enabled', 'true')
+        $phone_numbers = QueryBuilder::for(Faxes::class)
+            ->allowedSorts('fax_caller_id_number')
             ->where('domain_uuid', $currentDomain)
             ->get([
-                'destination_uuid',
-                'destination_number',
-                'destination_description',
+                'fax_uuid',
+                'fax_caller_id_number',
+                'fax_name'
             ])
-            ->each->append('label', 'destination_number_e164')
-            ->map(function ($destination) {
+            // ->each->append('label', 'destination_number_e164')
+            ->map(function ($fax) {
                 return [
-                    'value' => $destination->destination_number_e164,
-                    'label' => $destination->label,
+                    'value' => $fax->fax_caller_id_number_formatted,
+                    'label' =>$fax->fax_caller_id_number_formatted . ' - ' . $fax->fax_name,
                 ];
             })
             ->values()
