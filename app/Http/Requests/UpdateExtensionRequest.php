@@ -25,6 +25,7 @@ class UpdateExtensionRequest extends FormRequest
                 new UniqueExtension($this->input('extension_uuid') ?? null),
             ],
             'voicemail_mail_to'               => ['nullable', 'email', 'max:255'],
+            'voicemail_sms_to'               => ['nullable', 'string'],
             'description'              => ['nullable', 'string'],
             'suspended'                => ['boolean'],
             'do_not_disturb'          => ['sometimes', 'required', 'in:true,false,1,0'],

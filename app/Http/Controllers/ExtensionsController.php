@@ -275,6 +275,7 @@ class ExtensionsController extends Controller
                                 'greeting_id',
                                 'voicemail_password',
                                 'voicemail_mail_to',
+                                'voicemail_sms_to',
                                 'voicemail_transcription_enabled',
                                 'voicemail_file',
                                 'voicemail_local_after_email',
@@ -1079,7 +1080,7 @@ class ExtensionsController extends Controller
                 UpdateAppSettings::dispatch($mobileAppPayload)->onQueue('default');
 
                 if ($data['suspended'] && $extension->mobile_app->status != -1) {
-                    logger('suspended');
+                    // logger('suspended');
                     SuspendAppUser::dispatch($mobileAppPayload)->onQueue('default');
                 }
             }
@@ -1674,6 +1675,7 @@ class ExtensionsController extends Controller
         $permissions['manage_voicemail_transcription'] = userCheckPermission('voicemail_transcription_enabled');
         $permissions['manage_voicemail_auto_delete'] = userCheckPermission('voicemail_local_after_email');
         $permissions['manage_voicemail_recording_instructions'] = userCheckPermission('voicemail_recording_instructions');
+        $permissions['manage_voicemail_mobile_notifications'] = userCheckPermission('voicemail_sms_edit');
 
         $permissions['extension_device_create'] = userCheckPermission('extension_device_create');
         $permissions['extension_device_update'] = userCheckPermission('extension_device_update');

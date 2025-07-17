@@ -17,6 +17,7 @@ class VerifyCsrfToken extends Middleware
         'webhook/commio/sms',
         'webhook/sinch/sms',
         'webhook/bandwidth/sms',
-        'sms/ringotelwebhook'
+        'sms/ringotelwebhook',
+        'webhook/freeswitch'
     ];
 }

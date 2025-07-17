@@ -689,6 +689,7 @@ class VoicemailController extends Controller
         $permissions['manage_voicemail_transcription'] = userCheckPermission('voicemail_transcription_enabled');
         $permissions['manage_voicemail_auto_delete'] = userCheckPermission('voicemail_local_after_email');
         $permissions['manage_voicemail_recording_instructions'] = userCheckPermission('voicemail_recording_instructions');
+        $permissions['manage_voicemail_mobile_notifications'] = userCheckPermission('voicemail_sms_edit');
 
         return $permissions;
     }

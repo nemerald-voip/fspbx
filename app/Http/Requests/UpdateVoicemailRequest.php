@@ -32,6 +32,7 @@ class UpdateVoicemailRequest extends FormRequest
             ],
             'voicemail_password' => ['nullable', 'numeric', new ValidVoicemailPassword],
             'voicemail_mail_to' => 'nullable|email:rfc',
+            'voicemail_sms_to' => 'nullable|string',
             'greeting_id' => 'required|string',
             'voicemail_enabled' => 'present',
             'voicemail_tutorial' => 'present',

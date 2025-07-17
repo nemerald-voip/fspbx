@@ -31,9 +31,10 @@
 
                         <div class="grid grid-cols-6 gap-6">
                             <div class="col-span-3 sm:col-span-2">
-                                <LabelInputRequired target="voicemail_id" label="Voicemail Extension" class="truncate" />
-                                <InputField v-model="form.voicemail_id" type="text" name="voicemail_id" id="voicemail_id"
-                                    class="mt-2" :error="!!errors?.voicemail_id" />
+                                <LabelInputRequired target="voicemail_id" label="Voicemail Extension"
+                                    class="truncate" />
+                                <InputField v-model="form.voicemail_id" type="text" name="voicemail_id"
+                                    id="voicemail_id" class="mt-2" :error="!!errors?.voicemail_id" />
                                 <div v-if="errors?.voicemail_id" class="mt-2 text-xs text-red-600">
                                     {{ errors.voicemail_id[0] }}
                                 </div>
@@ -65,10 +66,12 @@
                             </div>
 
                             <div class="col-span-6">
-                                <LabelInputOptional target="voicemail_description" label="Description" class="truncate" />
+                                <LabelInputOptional target="voicemail_description" label="Description"
+                                    class="truncate" />
                                 <div class="mt-2">
                                     <Textarea v-model="form.voicemail_description" id="voicemail_description"
-                                        name="voicemail_description" rows="2" :error="!!errors?.voicemail_description" />
+                                        name="voicemail_description" rows="2"
+                                        :error="!!errors?.voicemail_description" />
                                 </div>
                                 <div v-if="errors?.voicemail_description" class="mt-2 text-xs text-red-600">
                                     {{ errors.voicemail_description[0] }}
@@ -99,7 +102,8 @@
                                     Other Extensions" class="truncate mb-1" />
 
                                 <ComboBox :options="localOptions.all_voicemails" :search="true" multiple
-                                    :placeholder="'Enter name or extension'" :selectedItem="localOptions.voicemail_copies"
+                                    :placeholder="'Enter name or extension'"
+                                    :selectedItem="localOptions.voicemail_copies"
                                     @update:model-value="handleUpdateCopyToField" />
                                 <div class="mt-1 text-sm text-gray-500">
                                     Automatically send a copy of the voicemail to selected additional extensions.
@@ -129,7 +133,8 @@
                     <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
                         <div>
                             <h3 class="text-base font-semibold leading-6 text-gray-900">Greetings</h3>
-                            <p class="mt-1 text-sm text-gray-500">Customize the message that callers hear when they reach
+                            <p class="mt-1 text-sm text-gray-500">Customize the message that callers hear when they
+                                reach
                                 your voicemail.</p>
                         </div>
 
@@ -139,8 +144,9 @@
                                 <LabelInputOptional label="Select greeting" class="truncate mb-1" />
 
 
-                                <ComboBox :options="localOptions.greetings" :search="false" :placeholder="'Select greeting'"
-                                    :selectedItem="form.greeting_id" @update:model-value="handleUpdateGreetingField" />
+                                <ComboBox :options="localOptions.greetings" :search="false"
+                                    :placeholder="'Select greeting'" :selectedItem="form.greeting_id"
+                                    @update:model-value="handleUpdateGreetingField" />
 
 
 
@@ -158,7 +164,8 @@
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
 
                                     <!-- Pause Button -->
-                                    <PauseCircleIcon v-if="form.greeting_id > 0 && isAudioPlaying" @click="pauseGreeting"
+                                    <PauseCircleIcon v-if="form.greeting_id > 0 && isAudioPlaying"
+                                        @click="pauseGreeting"
                                         class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
 
                                     <CloudArrowDownIcon v-if="form.greeting_id > 0 && !isDownloading"
@@ -184,7 +191,7 @@
                                     v-html="`&quot;${decodedGreetingDescription}&quot;`"></p>
 
                             </div>
-                            
+
 
                             <!-- Recorded Name -->
                             <div class="mt-1 col-span-6 text-sm font-medium leading-6 text-gray-900">
@@ -244,15 +251,17 @@
                 </div>
 
                 <!-- New Greeting Form -->
-                <NewGreetingForm v-if="showGreetingForm" :title="'New Voicemail Greeting'" :voices="localOptions.voices" :default_voice="localOptions.default_voice"
-                    :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions"
+                <NewGreetingForm v-if="showGreetingForm" :title="'New Voicemail Greeting'" :voices="localOptions.voices"
+                    :default_voice="localOptions.default_voice" :speeds="localOptions.speeds"
+                    :phone_call_instructions="localOptions.phone_call_instructions"
                     :sample_message="localOptions.sample_message" :routes="getRoutesForGreetingForm"
                     @greeting-saved="handleGreetingSaved" />
 
                 <!-- Recorded Name Form -->
-                <NewGreetingForm v-if="showNameForm" :title="'New Recorded Name'" :voices="localOptions.voices" :default_voice="localOptions.default_voice"
-                    :speeds="localOptions.speeds" :phone_call_instructions="localOptions.phone_call_instructions_for_name"
-                    sample_message="John Dow" :routes="getRoutesForNameForm" @greeting-saved="handleNameSaved" />
+                <NewGreetingForm v-if="showNameForm" :title="'New Recorded Name'" :voices="localOptions.voices"
+                    :default_voice="localOptions.default_voice" :speeds="localOptions.speeds"
+                    :phone_call_instructions="localOptions.phone_call_instructions_for_name" sample_message="John Dow"
+                    :routes="getRoutesForNameForm" @greeting-saved="handleNameSaved" />
             </div>
 
             <div v-if="activeTab === 'advanced'" action="#" method="POST">
@@ -275,6 +284,15 @@
                                         speaking to end the recording."'
                                 v-model="form.voicemail_play_recording_instructions" customClass="py-4" />
 
+                        </div>
+
+                        <div class="col-span-6 sm:col-span-3"  v-if="localOptions.permissions.manage_voicemail_mobile_notifications" >
+                            <LabelInputOptional target="voicemail_sms_to" label="Mobile Number to Receive Voicemail Notifications" class="truncate" />
+                            <InputField v-model="form.voicemail_sms_to" type="text" name="voicemail_sms_to"
+                                id="voicemail_sms_to" class="mt-2" :error="!!errors?.voicemail_sms_to" />
+                            <div v-if="errors?.voicemail_sms_to" class="mt-2 text-xs text-red-600">
+                                {{ errors.voicemail_sms_to[0] }}
+                            </div>
                         </div>
 
                         <div class="grid grid-cols-6 gap-6">
@@ -417,6 +435,7 @@ const form = reactive({
     voicemail_id: props.options.voicemail.voicemail_id,
     voicemail_password: props.options.voicemail.voicemail_password,
     voicemail_mail_to: props.options.voicemail.voicemail_mail_to,
+    voicemail_sms_to: props.options.voicemail.voicemail_sms_to,
     voicemail_description: props.options.voicemail.voicemail_description,
     voicemail_transcription_enabled: props.options.voicemail.voicemail_transcription_enabled === "true",
     voicemail_email_attachment: props.options.voicemail.voicemail_file === "attach",

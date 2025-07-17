@@ -1,5 +1,5 @@
 -- Enable/Disable debug mode globally
-DEBUG_MODE = true  -- Set to false to disable debug logs
+DEBUG_MODE = false  -- Set to false to disable debug logs
 
 -- Debug logging function
 function debug_log(level, message)
