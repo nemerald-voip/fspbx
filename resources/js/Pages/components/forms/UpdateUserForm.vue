@@ -475,3 +475,12 @@ const handleError = (error, details, form$) => {
 
 
 </script>
+<style>
+div[data-lastpass-icon-root] {
+    display: none !important
+}
+
+div[data-lastpass-root] {
+    display: none !important
+}
+</style>

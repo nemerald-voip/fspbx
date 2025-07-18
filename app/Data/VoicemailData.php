@@ -13,6 +13,7 @@ class VoicemailData extends Data
         public ?string $greeting_id,
         public ?int $voicemail_alternate_greet_id,
         public ?string $voicemail_mail_to,
+        public ?string $voicemail_sms_to,
         public ?string $voicemail_transcription_enabled,
         public ?string $voicemail_file,
         public ?string $voicemail_local_after_email,

@@ -180,6 +180,7 @@
                                     greeting_id: options.voicemail?.greetings?.find(g => g.value === (options.voicemail.greeting_id ?? '')) ?? options.voicemail.greeting_id,
                                     voicemail_tutorial: options.voicemail?.voicemail_tutorial ?? 'false',
                                     voicemail_recording_instructions: options.voicemail?.voicemail_recording_instructions ?? 'true',
+                                    voicemail_sms_to: options.voicemail?.voicemail_sms_to ?? '',
 
 
                                     //     ? options.item.user_groups.map(ug => ug.group_uuid)
@@ -291,6 +292,8 @@
                                                     'voicemail_tutorial',
                                                     'divider15',
                                                     'voicemail_recording_instructions',
+                                                    'divider18',
+                                                    'voicemail_sms_to',
                                                     'submit',
                                                     'container_voicemail',
                                                     'submit_voicemail',
@@ -1214,6 +1217,23 @@
                                                     false-value="false"
                                                     description='Play a prompt instructing callers to "Record your message after the tone. Stop speaking to end the recording.'
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
+
+                                                <StaticElement name="divider18" tag="hr" :conditions="[
+                                                    function (form$) {
+                                                        return form$.el$('voicemail_enabled')?.value == 'true' && options.permissions.manage_voicemail_mobile_notifications
+                                                    }
+                                                ]" />
+
+                                                <TextElement name="voicemail_sms_to"
+                                                    label="Mobile Number to Receive Voicemail Notifications" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" :conditions="[
+                                                    function (form$) {
+                                                        return form$.el$('voicemail_enabled')?.value == 'true' && options.permissions.manage_voicemail_mobile_notifications
+                                                    }
+                                                ]" />
 
                                                 <GroupElement name="container_voicemail" />
 

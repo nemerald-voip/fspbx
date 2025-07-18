@@ -1540,6 +1540,30 @@ class DatabaseSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "",
             ],
+            [
+                'default_setting_category'      => 'voicemail',
+                'default_setting_subcategory'   => 'sms_notifications_enabled',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "false",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'voicemail',
+                'default_setting_subcategory'   => 'sms_notification_from_number',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "enter number in e164 format",
+            ],
+            [
+                'default_setting_category'      => 'voicemail',
+                'default_setting_subcategory'   => 'sms_notification_text',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => 'New voicemail: ${caller_id_name} - ${caller_id_number} left a message for mailbox ${voicemail_id} at ${message_date}. Duration: ${message_length} sec.',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "SMS notification text",
+            ],
 
         ];
 

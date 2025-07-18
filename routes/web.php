@@ -73,6 +73,7 @@ Route::webhooks('webhook/commio/sms', 'commio_messaging');
 Route::webhooks('webhook/sinch/sms', 'sinch_messaging');
 Route::webhooks('webhook/bandwidth/sms', 'bandwidth_messaging');
 Route::webhooks('/sms/ringotelwebhook', 'ringotel_messaging');
+Route::webhooks('/webhook/freeswitch', 'freeswitch');
 
 // Routes for 2FA email challenge. Used as a backup when 2FA is not enabled.
 Route::get('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeController::class, 'create'])->name('email-challenge.login');
@@ -132,19 +133,11 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('groups', [GroupsController::class, 'index'])->name('groups.index');
 
     //Fax
-    Route::resource('faxes', FaxesController::class);
-    Route::get('/faxes/newfax/create', [FaxesController::class, 'new'])->name('faxes.newfax');
+    Route::get('faxes', [FaxesController::class, 'index'])->name('faxes.index');
     Route::get('/faxes/inbox/{id}', [FaxesController::class, 'inbox'])->name('faxes.inbox.list');
     Route::get('/faxes/sent/{id}', [FaxesController::class, 'sent'])->name('faxes.sent.list');
     Route::get('/faxes/active/{id}', [FaxesController::class, 'active'])->name('faxes.active.list');
     Route::get('/faxes/log/{id}', [FaxesController::class, 'log'])->name('faxes.log.list');
-    Route::delete('/faxes/deleteSentFax/{id}', [FaxesController::class, 'deleteSentFax'])->name('faxes.file.deleteSentFax');
-    Route::delete('/faxes/deleteReceivedFax/{id}', [FaxesController::class, 'deleteReceivedFax'])->name('faxes.file.deleteReceivedFax');
-    Route::delete('/faxes/deleteFaxLog/{id}', [FaxesController::class, 'deleteFaxLog'])->name('faxes.file.deleteFaxLog');
-    Route::get('/fax/inbox/{file}/download', [FaxesController::class, 'downloadInboxFaxFile'])->name('downloadInboxFaxFile');
-    Route::get('/fax/sent/{file}/download', [FaxesController::class, 'downloadSentFaxFile'])->name('downloadSentFaxFile');
-    Route::get('/fax/sent/{faxQueue}/{status?}', [FaxesController::class, 'updateStatus'])->name('faxes.file.updateStatus');
-    Route::post('/faxes/send', [FaxesController::class, 'sendFax'])->name('faxes.sendFax');
 
     // Domain Groups
     Route::get('domain-groups', [DomainGroupsController::class, 'index'])->name('domain-groups.index');

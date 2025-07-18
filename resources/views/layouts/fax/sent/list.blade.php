@@ -126,11 +126,11 @@
                                 <i class="mdi mdi-restart" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Retry"></i>
                             </a>
                         @endif
-                        @if($file->getFaxFile())
+                        {{-- @if($file->getFaxFile())
                             <a href="{{ route('downloadSentFaxFile', $file->getFaxFile()->fax_file_uuid ) }}" class="action-icon">
                                 <i class="mdi mdi-download" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Download"></i>
                             </a>
-                        @endif
+                        @endif --}}
                         @if ($permissions['delete'])
                             <a href="javascript:confirmDeleteAction('{{ route('faxes.file.deleteSentFax', ':id') }}','{{ $file->fax_queue_uuid }}');" class="action-icon">
                                 <i class="mdi mdi-delete" data-bs-container="#tooltip-container-actions" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Delete"></i>
