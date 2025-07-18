@@ -145,6 +145,10 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
             ])
             ->firstOrFail();
 
+        if (empty($voicemail->voicemail_sms_to)) {
+            return response();
+        }
+
         $payload['source'] = get_domain_setting('sms_notification_from_number');
         $payload['destination'] = $voicemail->voicemail_sms_to;
         $payload['domain_uuid'] = $data['domain_uuid'];
@@ -170,7 +174,7 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
 
         $payload['status'] = "queued";
 
-        logger($payload);
+        // logger($payload);
         //Store message in the log database
         $message = $this->storeMessage($payload);
 
