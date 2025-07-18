@@ -598,6 +598,20 @@ class ExtensionsController extends Controller
                 }
             }
         } else {
+
+            // Check limits
+            $limit = get_limit_setting('extensions', $currentDomain);
+            if ($limit !== null) {
+                $currentCount = \App\Models\Extensions::where('domain_uuid', $currentDomain)->count();
+                if ($currentCount >= $limit) {
+                    return response()->json([
+                        'errors' => [
+                            'extension' => ["You have reached the maximum number of extensions allowed ($limit)."]
+                        ]
+                    ], 403);
+                }
+            }
+
             // New extension defaults
             $extensionDto = ExtensionDetailData::from([
                 'extension_uuid' => '',
@@ -1184,10 +1198,33 @@ class ExtensionsController extends Controller
     {
         try {
 
+            $file = request()->file('file');
+            $domain_uuid = session('domain_uuid');
+    
+            // 1. Count how many rows will be imported
+            $rows = Excel::toCollection(new ExtensionsImport, $file)->first(); // Get first sheet
+            $importCount = $rows->count();
+    
+            // 2. Check current count and limit
+            $currentCount = \App\Models\Extensions::where('domain_uuid', $domain_uuid)->count();
+            $maxLimit = get_limit_setting('extensions', $domain_uuid);
+    
+            if ($maxLimit !== null && ($currentCount + $importCount) > $maxLimit) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => [
+                        'extension' => [
+                            "Importing this file would exceed your extension limit of $maxLimit. " .
+                            "You currently have $currentCount extensions and are trying to import $importCount."
+                        ]
+                    ]
+                ], 422);
+            }
+
             $headings = (new HeadingRowImport)->toArray(request()->file('file'));
 
             $import = new ExtensionsImport;
-            $import->import(request()->file('file'));
+            $import->import($file);
 
             if ($import->failures()->isNotEmpty()) {
 

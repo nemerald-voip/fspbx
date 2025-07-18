@@ -49,14 +49,14 @@
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
-                                    extension_uuid: options.item.extension_uuid ?? '',
-                                    directory_first_name: options.item.directory_first_name ?? '',
-                                    directory_last_name: options.item.directory_last_name ?? '',
-                                    extension: options.item.extension ?? '',
-                                    last_name: options.item.last_name ?? '',
-                                    voicemail_mail_to: options.item.email ?? '',
-                                    description: options.item.description ?? '',
-                                    suspended: options.item.suspended ?? false,
+                                    extension_uuid: options.item?.extension_uuid ?? '',
+                                    directory_first_name: options.item?.directory_first_name ?? '',
+                                    directory_last_name: options.item?.directory_last_name ?? '',
+                                    extension: options.item?.extension ?? '',
+                                    last_name: options.item?.last_name ?? '',
+                                    voicemail_mail_to: options.item?.email ?? '',
+                                    description: options.item?.description ?? '',
+                                    suspended: options.item?.suspended ?? false,
                                     
 
                                 }">
@@ -107,7 +107,7 @@
                                                         sm: {
                                                             container: 6,
                                                         }
-                                                    }" :disabled="!options.permissions.extension_extension"/>
+                                                    }" :disabled="!options.permissions?.extension_extension"/>
                                                     
                                                 <TextElement name="voicemail_mail_to" label="Email"
                                                     placeholder="Enter Email" :floating="false" :columns="{
@@ -148,7 +148,7 @@ import { XMarkIcon } from "@heroicons/vue/24/solid";
 
 
 
-const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
+const emit = defineEmits(['close', 'error', 'success', 'refresh-data', 'open-edit-form'])
 
 const props = defineProps({
     show: Boolean,

@@ -86,4 +86,23 @@ class StoreExtensionRequest extends FormRequest
             'voicemail_password' => $voicemailPassword,
         ]);
     }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $domain_uuid = $this->input('domain_uuid', session('domain_uuid'));
+            $maxExtensions = get_limit_setting('extensions', $domain_uuid);
+
+            if ($maxExtensions !== null) {
+                $currentCount = \App\Models\Extensions::where('domain_uuid', $domain_uuid)->count();
+
+                if ($currentCount >= $maxExtensions) {
+                    $validator->errors()->add(
+                        'extension',
+                        "You have reached the maximum number of extensions allowed ($maxExtensions)."
+                    );
+                }
+            }
+        });
+    }
 }
