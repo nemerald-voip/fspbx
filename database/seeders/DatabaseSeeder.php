@@ -1564,6 +1564,15 @@ class DatabaseSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "SMS notification text",
             ],
+            [
+                'default_setting_category'      => 'limit',
+                'default_setting_subcategory'   => 'mobile_app_users',
+                'default_setting_name'          => 'numeric',
+                'default_setting_value'         => '3',
+                'default_setting_enabled'       => false,
+                'default_setting_description'   => "",
+            ],
+
 
         ];
 
