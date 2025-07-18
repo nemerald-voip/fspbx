@@ -1343,4 +1343,45 @@ if (!function_exists('buildDestinationAction')) {
                 return [];
         }
     }
+
+    if (!function_exists('get_limit_setting')) {
+        /**
+         * Get a numeric limit for a given category/subcategory, checking domain_settings first, then default_settings.
+         *
+         * @param string $subcategory     E.g., 'extensions', 'devices', 'gateways', etc.
+         * @param string|null $domain_uuid  If null, will not check domain_settings.
+         * @return int|null   Limit value, or null if unlimited.
+         */
+        function get_limit_setting($subcategory, $domain_uuid = null)
+        {
+            // 1. Check domain_settings first if domain_uuid is provided
+            if ($domain_uuid) {
+                $domainLimit = \App\Models\DomainSettings::where([
+                    ['domain_setting_category', '=', 'limit'],
+                    ['domain_setting_subcategory', '=', $subcategory],
+                    ['domain_setting_enabled', '=', 'true'],
+                    ['domain_uuid', '=', $domain_uuid]
+                ])->value('domain_setting_value');
+    
+                if ($domainLimit !== null && $domainLimit !== '' && is_numeric($domainLimit)) {
+                    return (int)$domainLimit;
+                }
+            }
+    
+            // 2. Fallback to default_settings
+            $defaultLimit = \App\Models\DefaultSettings::where([
+                ['default_setting_category', '=', 'limit'],
+                ['default_setting_subcategory', '=', $subcategory],
+                ['default_setting_enabled', '=', 'true'],
+            ])->value('default_setting_value');
+    
+            if ($defaultLimit !== null && $defaultLimit !== '' && is_numeric($defaultLimit)) {
+                return (int)$defaultLimit;
+            }
+    
+            // 3. Unlimited if not found
+            return null;
+        }
+    }
+    
 }
