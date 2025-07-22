@@ -5,8 +5,8 @@ import type * as Preset from '@docusaurus/preset-classic';
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 
 const config: Config = {
-  title: 'FS PBX',
-  tagline: 'World\'s best open source PBX based on FreeSWITCH',
+  title: 'FS PBX – Open Source PBX Dashboard for VoIP Providers',
+  tagline: 'FS PBX is an open-source FreeSWITCH PBX with a sleek white‑label VoIP dashboard – a FusionPBX alternative for telecom providers, resellers, and enthusiasts.',
   favicon: 'img/favicon.ico',
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
@@ -19,6 +19,7 @@ const config: Config = {
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
+  trailingSlash: true,
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
@@ -70,6 +71,10 @@ const config: Config = {
   ],
 
   themeConfig: {
+    metadata: [
+        { name: 'description', content: 'FS PBX is an open-source FreeSWITCH PBX with a sleek white‑label VoIP dashboard – a FusionPBX alternative for telecom providers, resellers, and enthusiasts.' },
+        { name: 'keywords', content: 'open source PBX, FS PBX, FusionPBX, FusionPBX alternative, FreeSWITCH, VoIP, VoIP dashboard, white label VoIP, telecom, telecom provider' },
+      ],
     // Replace with your project's social card
     image: 'img/docusaurus-social-card.jpg',
     navbar: {
