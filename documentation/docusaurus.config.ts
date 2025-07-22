@@ -18,7 +18,7 @@ const config: Config = {
   url: 'https://nemerald-voip.github.io/',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: '',
+  baseUrl: '/fspbx/',
   trailingSlash: true,
 
   // GitHub pages deployment config.
