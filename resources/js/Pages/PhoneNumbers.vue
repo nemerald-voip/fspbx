@@ -401,7 +401,7 @@ const handleSearchButtonClick = () => {
     loading.value = true;
     router.visit(props.routes.current_page, {
         data: {
-            filterData: filterData._rawValue,
+            filter: filterData._rawValue,
         },
         preserveScroll: true,
         preserveState: true,
@@ -427,7 +427,7 @@ const renderRequestedPage = (url) => {
     loading.value = true;
     router.visit(url, {
         data: {
-            filterData: filterData._rawValue,
+            filter: filterData._rawValue,
         },
         preserveScroll: true,
         preserveState: true,
