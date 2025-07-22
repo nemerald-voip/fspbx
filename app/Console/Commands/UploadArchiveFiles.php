@@ -222,6 +222,7 @@ class UploadArchiveFiles extends Command
         ->whereNotNull('record_name')
         ->where('record_name', '<>', '')
         ->where('record_path', 'not like', '%S3%')
+        ->where('record_path', 'not like', '%NFS%')
         ->where('hangup_cause', '<>', 'LOSE_RACE')
         ->whereDate('start_stamp', '<=', Carbon::today()->toDateTimeString())
         ->orderBy('start_stamp', 'desc') // Or whatever order makes sense
