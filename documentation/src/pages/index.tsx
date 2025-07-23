@@ -151,7 +151,7 @@ export default function Home(): ReactNode {
 
     return (
         <Layout
-            title={`Hello from ${siteConfig.title}`}
+            title={`${siteConfig.title}`}
             description="FS PBX: World’s Best Open-Source PBX">
             {/* <HomepageHeader /> */}
 
