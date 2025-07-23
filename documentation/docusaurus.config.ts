@@ -76,7 +76,7 @@ const config: Config = {
         { name: 'keywords', content: 'open source PBX, FS PBX, FusionPBX, FusionPBX alternative, FreeSWITCH, VoIP, VoIP dashboard, white label VoIP, telecom, telecom provider' },
       ],
     // Replace with your project's social card
-    image: 'img/docusaurus-social-card.jpg',
+    image: 'img/fspbx-social-card.png',
     navbar: {
       title: '',
       logo: {
