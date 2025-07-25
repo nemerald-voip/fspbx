@@ -47,6 +47,7 @@ use Maatwebsite\Excel\Excel as ExcelWriter;
 use Propaganistas\LaravelPhone\PhoneNumber;
 use App\Http\Requests\StoreExtensionRequest;
 use App\Http\Requests\UpdateExtensionRequest;
+use extension;
 use Spatie\Activitylog\Facades\CauserResolver;
 use Propaganistas\LaravelPhone\Exceptions\NumberParseException;
 
@@ -1022,7 +1023,7 @@ class ExtensionsController extends Controller
                 $destinationKey = "{$type}_destination";
 
                 if (
-                    !empty($data[$enabledKey])
+                    ($data[$enabledKey]=='true')
                     && !empty($data[$actionKey])
                     && (
                         !empty($data[$targetKey]) || !empty($data[$externalKey])
@@ -1128,13 +1129,13 @@ class ExtensionsController extends Controller
     function saveOrUpdateFollowMe($extension, $data)
     {
         // If follow_me is disabled, wipe everything
-        if (isset($data['follow_me_enabled']) && $data['follow_me_enabled'] === 'false') {
-            if ($extension->followMe) {
-                $extension->followMe->followMeDestinations()->delete();
-                $extension->followMe->delete();
-            }
-            return null;
-        }
+        // if (isset($data['follow_me_enabled']) && $data['follow_me_enabled'] === 'false') {
+        //     if ($extension->followMe) {
+        //         $extension->followMe->followMeDestinations()->delete();
+        //         $extension->followMe->delete();
+        //     }
+        //     return null;
+        // }
 
         $currentDomain = $extension->domain_uuid; // or session('domain_uuid')
         $followMe = $extension->followMe;
@@ -1148,6 +1149,11 @@ class ExtensionsController extends Controller
             ]);
         } else {
             $followMeUuid = $followMe->follow_me_uuid;
+        }
+
+        //Return early if follow me is disabled
+        if (isset($data['follow_me_enabled']) && $data['follow_me_enabled'] === 'false') {
+            return $followMeUuid;
         }
 
         $followMe->fill([
