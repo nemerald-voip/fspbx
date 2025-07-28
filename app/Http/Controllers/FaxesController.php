@@ -139,83 +139,6 @@ class FaxesController extends Controller
             ]
         );
 
-        $timeZone = get_local_time_zone($domain_uuid);
-        /** @var FaxQueues $file */
-        foreach ($outboundFaxes as $file) {
-            $file->fax_date = \Illuminate\Support\Carbon::parse($file->fax_date)->setTimezone($timeZone);
-            if (!empty($file->fax_notify_date)) {
-                $file->fax_notify_date = Carbon::parse($file->fax_notify_date)->setTimezone($timeZone);
-            }
-            if (!empty($file->fax_retry_date)) {
-                $file->fax_retry_date = Carbon::parse($file->fax_retry_date)->setTimezone($timeZone);
-            }
-        }
-
-        $inboundFaxes = FaxFiles::where('fax_mode', 'rx')
-            ->where('domain_uuid', $domain_uuid)
-            ->whereBetween('fax_date', $period)
-            ->orderBy('fax_date', 'desc')
-            ->limit(5)
-            ->get();
-
-        //Get libphonenumber object
-        $phoneNumberUtil = PhoneNumberUtil::getInstance();
-
-        foreach ($inboundFaxes as $file) {
-            $file->fax_date = \Illuminate\Support\Carbon::parse($file->fax_date);
-            // Try to convert caller ID number to National format
-            try {
-                $phoneNumberObject = $phoneNumberUtil->parse($file->fax_caller_id_number ?? '', 'US');
-                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $file->fax_caller_id_number = $phoneNumberUtil
-                        ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
-                }
-            } catch (NumberParseException $e) {
-                // Do nothing and leave the numner as is
-            }
-
-            // Try to convert destination number to National format
-            try {
-                $phoneNumberObject = $phoneNumberUtil->parse($file->fax->fax_caller_id_number ?? '', 'US');
-                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $file->fax->fax_caller_id_number = $phoneNumberUtil
-                        ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
-                }
-            } catch (NumberParseException $e) {
-                // Do nothing and leave the numner as is
-            }
-        }
-
-
-        $data['faxes'] = $faxes;
-        $data['searchString'] = $searchString;
-        $data['totalReceived'] = $totalReceived;
-        $data['totalSent'] = $totalSent;
-        $data['files'] = $outboundFaxes;
-        $data['inboundFaxes'] = $inboundFaxes;
-        $data['national_phone_number_format'] = PhoneNumberFormat::NATIONAL;
-        $permissions['add_new'] = userCheckPermission('fax_add');
-        $permissions['edit'] = userCheckPermission('fax_edit');
-        $permissions['delete'] = userCheckPermission('fax_delete');
-        $permissions['view'] = userCheckPermission('fax_view');
-        $permissions['send'] = userCheckPermission('fax_send');
-        $permissions['fax_inbox_view'] = userCheckPermission('fax_inbox_view');
-        $permissions['fax_sent_view'] = userCheckPermission('fax_sent_view');
-        $permissions['fax_active_view'] = userCheckPermission('fax_active_view');
-        $permissions['fax_log_view'] = userCheckPermission('fax_log_view');
-        $permissions['fax_send'] = userCheckPermission('fax_send');
-
-        foreach ($data['faxes'] as $fax) {
-            if (!empty($fax->fax_email)) {
-                $fax->fax_email = explode(',', $fax->fax_email);
-            } else {
-                $fax->fax_email = [];
-            }
-        }
-
-        return view('layouts.fax.list')
-            ->with($data)
-            ->with('permissions', $permissions);
     }
 
     public function getRecentOutbound()
@@ -1285,7 +1208,7 @@ class FaxesController extends Controller
                     'Email' => ($data['send_confirmation']) ? Session::get('user.user_email') : '',
                 ),
                 'To' => $data['recipient'] . '@fax.domain.com',
-                'Subject' => isset($data['fax_message']) ? '' : "body",
+                'Subject' => isset($data['fax_message']) ? 'body' : null,
                 'TextBody' => isset($data['fax_message']) ? strip_tags($data['fax_message']): null,
                 'HtmlBody' => isset($data['fax_message']) ? strip_tags($data['fax_message']): null,
                 'fax_destination' => $data['recipient'],
@@ -1357,17 +1280,7 @@ class FaxesController extends Controller
     public function getUserPermissions()
     {
         $permissions = [];
-        $permissions['user_group_view'] = userCheckPermission('user_group_view');
-        $permissions['user_group_edit'] = userCheckPermission('user_group_edit');
-        $permissions['user_status'] = userCheckPermission('user_status');
-        $permissions['user_view_managed_accounts'] = userCheckPermission('user_view_managed_accounts');
-        $permissions['user_update_managed_accounts'] = userCheckPermission('user_update_managed_accounts');
-        $permissions['user_view_managed_account_groups'] = userCheckPermission('user_view_managed_account_groups');
-        $permissions['user_update_managed_account_groups'] = userCheckPermission('user_update_managed_account_groups');
-        $permissions['api_key'] = userCheckPermission('api_key');
-        $permissions['api_key_create'] = userCheckPermission('api_key_create');
-        $permissions['api_key_update'] = userCheckPermission('api_key_update');
-        $permissions['api_key_delete'] = userCheckPermission('api_key_delete');
+        // $permissions['user_group_view'] = userCheckPermission('user_group_view');
 
         return $permissions;
     }
