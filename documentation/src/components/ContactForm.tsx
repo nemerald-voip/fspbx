@@ -2,14 +2,13 @@ import React, { useRef, useState, useEffect, FormEvent } from "react";
 import Head from "@docusaurus/Head";
 
 type ContactFormProps = {
-  workerEndpoint: string;         // e.g. https://your-worker.workers.dev
-  turnstileSiteKey: string;       // Your Turnstile site key
+  workerEndpoint: string;
+  turnstileSiteKey: string;
 };
 
 declare global {
   interface Window {
     turnstile?: {
-      render: (el: HTMLElement, opts: { sitekey: string }) => void;
       reset: () => void;
     };
   }
@@ -23,21 +22,12 @@ const ContactForm: React.FC<ContactFormProps> = ({
   const [message, setMessage] = useState<string>("");
   const formRef = useRef<HTMLFormElement>(null);
 
-  // Render/reload Turnstile on hydration
-  useEffect(() => {
-    if (typeof window !== "undefined" && window.turnstile && document.querySelector(".cf-turnstile")) {
-      window.turnstile.render(document.querySelector(".cf-turnstile") as HTMLElement, {
-        sitekey: turnstileSiteKey,
-      });
-    }
-  }, [turnstileSiteKey]);
+  // No need to call window.turnstile.render! Turnstile auto-renders based on the cf-turnstile class.
 
-  // Optionally reset Turnstile after submit
+  // Only reset the challenge after submit/error/success
   const resetTurnstile = () => {
-    if (typeof window !== "undefined" && window.turnstile && document.querySelector(".cf-turnstile")) {
-      window.turnstile.render(document.querySelector(".cf-turnstile") as HTMLElement, {
-        sitekey: turnstileSiteKey,
-      });
+    if (typeof window !== "undefined" && window.turnstile) {
+      window.turnstile.reset();
     }
   };
 
@@ -124,6 +114,7 @@ const ContactForm: React.FC<ContactFormProps> = ({
             rows={4}
             className="w-full rounded-md border border-gray-300 p-2"
           ></textarea>
+          {/* Let Turnstile auto-render */}
           <div className="cf-turnstile" data-sitekey={turnstileSiteKey}></div>
           <button
             type="submit"
