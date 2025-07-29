@@ -581,7 +581,7 @@ export default function Home(): ReactNode {
 
                 <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
                     <ContactForm
-                        workerEndpoint="fspbx-contact-form.dexter-2ef.workers.dev"
+                        workerEndpoint="https://fspbx-contact-form.dexter-2ef.workers.dev"
                         turnstileSiteKey="0x4AAAAAABnG91y8BuU-YHNz"
                     />
                 </Modal>
