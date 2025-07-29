@@ -9,6 +9,7 @@ type ContactFormProps = {
 declare global {
   interface Window {
     turnstile?: {
+      render: (el: HTMLElement, opts: { sitekey: string }) => string;
       reset: () => void;
     };
   }
@@ -21,10 +22,33 @@ const ContactForm: React.FC<ContactFormProps> = ({
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
   const [message, setMessage] = useState<string>("");
   const formRef = useRef<HTMLFormElement>(null);
+  const turnstileRef = useRef<HTMLDivElement>(null);
+  const widgetId = useRef<string | null>(null);
 
-  // No need to call window.turnstile.render! Turnstile auto-renders based on the cf-turnstile class.
+  // Render Turnstile on mount
+  useEffect(() => {
+    // On mount or when modal is opened
+    if (
+      typeof window !== "undefined" &&
+      window.turnstile &&
+      turnstileRef.current &&
+      !turnstileRef.current.hasChildNodes()
+    ) {
+      // Only render if not already rendered
+      widgetId.current = window.turnstile.render(turnstileRef.current, {
+        sitekey: turnstileSiteKey,
+      });
+    }
+    // Optionally: reset on unmount (helps with stale widgets in some cases)
+    return () => {
+      if (typeof window !== "undefined" && window.turnstile && widgetId.current !== null) {
+        window.turnstile.reset();
+        // Optionally clear widget node, but reset is usually enough
+      }
+    };
+  }, [turnstileSiteKey]);
 
-  // Only reset the challenge after submit/error/success
+  // Reset Turnstile after submit/error/success
   const resetTurnstile = () => {
     if (typeof window !== "undefined" && window.turnstile) {
       window.turnstile.reset();
@@ -115,8 +139,8 @@ const ContactForm: React.FC<ContactFormProps> = ({
             rows={4}
             className="w-full rounded-md border border-gray-300 p-2"
           ></textarea>
-          {/* Let Turnstile auto-render */}
-          <div className="cf-turnstile" data-sitekey={turnstileSiteKey}></div>
+          {/* Use a ref for Turnstile */}
+          <div ref={turnstileRef} className="cf-turnstile" data-sitekey={turnstileSiteKey}></div>
           <button
             type="submit"
             disabled={status === "sending"}
