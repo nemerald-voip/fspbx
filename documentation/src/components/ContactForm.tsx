@@ -90,11 +90,11 @@ const ContactForm: React.FC<ContactFormProps> = ({
   return (
     <>
       <Head>
-        {/* <script
+        <script
           src="https://challenges.cloudflare.com/turnstile/v0/api.js"
           async
           defer
-        ></script> */}
+        ></script>
       </Head>
       <div className="mx-auto max-w-2xl p-8 dark:bg-gray-800">
         <h2 className="text-2xl font-semibold mb-6 text-gray-900 dark:text-white">
