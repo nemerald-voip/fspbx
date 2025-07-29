@@ -55,19 +55,20 @@ const ContactForm: React.FC<ContactFormProps> = ({
         body: JSON.stringify(data),
       });
 
+      const txt = await res.text();
       if (res.ok) {
         setStatus("success");
         setMessage("Your message has been sent!");
         formRef.current.reset();
         resetTurnstile();
       } else {
-        const txt = await res.text();
         setStatus("error");
         setMessage(
           txt?.toLowerCase().includes("captcha")
             ? "Please verify you are human."
             : "Failed to send. Please try again."
         );
+        console.error("Contact form error:", txt);
         resetTurnstile();
       }
     } catch {
