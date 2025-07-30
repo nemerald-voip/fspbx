@@ -603,12 +603,13 @@ class ExtensionsController extends Controller
             // Check limits
             $limit = get_limit_setting('extensions', $currentDomain);
             if ($limit !== null) {
+                $limit_error = get_domain_setting('extension_limit_error', $currentDomain) ?? 'You have reached the maximum number of extensions allowed (%d).';
                 $currentCount = \App\Models\Extensions::where('domain_uuid', $currentDomain)->count();
                 if ($currentCount >= $limit) {
                     return response()->json([
                         'errors' => [
-                            'extension' => ["You have reached the maximum number of extensions allowed ($limit)."]
-                        ]
+                            'extension' => [sprintf($limit_error, $limit)]
+                            ]
                     ], 403);
                 }
             }

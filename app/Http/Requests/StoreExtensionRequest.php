@@ -94,12 +94,13 @@ class StoreExtensionRequest extends FormRequest
             $maxExtensions = get_limit_setting('extensions', $domain_uuid);
 
             if ($maxExtensions !== null) {
+                $limit_error = get_domain_setting('extension_limit_error', $domain_uuid) ?? 'You have reached the maximum number of extensions allowed (%d).';
                 $currentCount = \App\Models\Extensions::where('domain_uuid', $domain_uuid)->count();
 
                 if ($currentCount >= $maxExtensions) {
                     $validator->errors()->add(
                         'extension',
-                        "You have reached the maximum number of extensions allowed ($maxExtensions)."
+                        [sprintf($limit_error, $maxExtensions)]
                     );
                 }
             }
