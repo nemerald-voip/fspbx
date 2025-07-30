@@ -875,6 +875,7 @@ class CdrsController extends Controller
     {
         $permissions = [];
         $permissions['all_cdr_view'] = userCheckPermission('xml_cdr_domain');
+        $permissions['cdr_mos_view'] = userCheckPermission('xml_cdr_mos');
 
         return $permissions;
     }

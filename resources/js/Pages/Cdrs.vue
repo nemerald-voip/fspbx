@@ -106,7 +106,7 @@
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     </TableColumnHeader>
 
-                    <TableColumnHeader header="MOS" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader v-if="permissions.cdr_mos_view" header="MOS" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                     <TableColumnHeader header="Rec" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
@@ -178,7 +178,7 @@
                                 :ringColor="statusBadgeConfig[row.status]?.ringColor || 'ring-blue-600/20'" />
                         </TableField>
 
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        <TableField v-if="permissions.cdr_mos_view" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                             :text="row.rtp_audio_in_mos" />
 
                         <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
@@ -359,14 +359,15 @@ const handleSelectedStatusUpdate = (updatedStatuses) => {
     filterData.value.statuses = updatedStatuses;
 };
 
-const getData = () => {
+const getData = (page = 1) => {
     loading.value = true;
 
     // console.log(filterData.value);
 
     axios.get(props.routes.data_route, {
         params: {
-            filter: filterData.value
+            filter: filterData.value,
+            page,
         }
     })
         .then((response) => {
@@ -500,18 +501,12 @@ const handleFiltersReset = () => {
 
 const renderRequestedPage = (url) => {
     loading.value = true;
-    router.visit(url, {
-        data: {
-            filter: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
+    // Extract the page number from the url, e.g. "?page=3"
+    const urlObj = new URL(url, window.location.origin);
+    const pageParam = urlObj.searchParams.get("page") ?? 1;
 
-    });
+    // Now call getData with the page number
+    getData(pageParam);
 };
 
 const currentAudio = ref(null);
