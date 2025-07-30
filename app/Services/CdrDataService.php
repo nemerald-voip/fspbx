@@ -20,6 +20,10 @@ class CdrDataService
             $params['filter']['entity']['type'] = 'extension';
         }
 
+        if (empty($params['filter']['showGlobal'])) {
+            $params['filter']['showGlobal'] = 'false';
+        }
+
         // Main query:
         $cdrs = QueryBuilder::for(CDR::class, request()->merge($params))
             ->select([

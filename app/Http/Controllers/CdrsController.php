@@ -795,10 +795,6 @@ class CdrsController extends Controller
             $endPeriod = Carbon::parse(request('filter.dateRange')[1])->setTimeZone('UTC');
         }
 
-        if (empty(request('filter.showGlobal'))) {
-            $params['filter']['showGlobal'] = 'false';
-        }
-
         $params['filter']['startPeriod'] = $startPeriod->getTimestamp();
         $params['filter']['endPeriod'] = $endPeriod->getTimestamp();
 
@@ -832,10 +828,6 @@ class CdrsController extends Controller
             if (!empty(request('filter.dateRange'))) {
                 $startPeriod = Carbon::parse(request('filter.dateRange')[0])->setTimeZone('UTC');
                 $endPeriod = Carbon::parse(request('filter.dateRange')[1])->setTimeZone('UTC');
-            }
-
-            if (empty(request('filter.showGlobal'))) {
-                $params['filter']['showGlobal'] = 'false';
             }
 
             $params['filter']['startPeriod'] = $startPeriod->getTimestamp();
