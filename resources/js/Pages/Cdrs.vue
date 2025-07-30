@@ -359,14 +359,15 @@ const handleSelectedStatusUpdate = (updatedStatuses) => {
     filterData.value.statuses = updatedStatuses;
 };
 
-const getData = () => {
+const getData = (page = 1) => {
     loading.value = true;
 
     // console.log(filterData.value);
 
     axios.get(props.routes.data_route, {
         params: {
-            filter: filterData.value
+            filter: filterData.value,
+            page,
         }
     })
         .then((response) => {
@@ -500,18 +501,12 @@ const handleFiltersReset = () => {
 
 const renderRequestedPage = (url) => {
     loading.value = true;
-    router.visit(url, {
-        data: {
-            filter: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
+    // Extract the page number from the url, e.g. "?page=3"
+    const urlObj = new URL(url, window.location.origin);
+    const pageParam = urlObj.searchParams.get("page") ?? 1;
 
-    });
+    // Now call getData with the page number
+    getData(pageParam);
 };
 
 const currentAudio = ref(null);
