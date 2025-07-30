@@ -6,16 +6,18 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Inertia\Inertia;
 use App\Data\UserData;
+use App\Models\Domain;
 use App\Models\Groups;
+use App\Models\Extensions;
 use Illuminate\Support\Str;
+use App\Models\DomainGroups;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\QueryBuilder;
+use Illuminate\Support\Facades\Schema;
 use Spatie\QueryBuilder\AllowedFilter;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
-use App\Models\Domain;
-use App\Models\DomainGroups;
 
 class UsersController extends Controller
 {
@@ -47,16 +49,22 @@ class UsersController extends Controller
         $perPage = 50;
         $currentDomain = session('domain_uuid');
 
+        $select = [
+            'user_uuid',
+            'username',
+            'user_email',
+            'user_enabled',
+            'domain_uuid',
+        ];
+
+        if (Schema::hasColumn('v_users', 'extension_uuid')) {
+            $select[] = 'extension_uuid';
+        }
+
         $users = QueryBuilder::for(User::class)
             // only users in the current domain
             ->where('domain_uuid', $currentDomain)
-            ->select([
-                'user_uuid',
-                'username',
-                'user_email',
-                'user_enabled',
-                'domain_uuid',
-            ])
+            ->select($select)
             // allow ?filter[username]=foo or ?filter[user_email]=bar
             ->allowedFilters([
                 // Only email and name_formatted
@@ -83,9 +91,11 @@ class UsersController extends Controller
             ->with([
                 'user_groups:user_uuid,user_group_uuid,group_uuid,group_name',
             ])
+            ->with([
+                'extension:extension_uuid,extension,effective_caller_id_name',
+            ])
             ->defaultSort('username')
-            ->paginate($perPage)
-            ->appends($request->query());
+            ->paginate($perPage);
 
         // wrap in your DTO
         $usersDto = UserData::collect($users);
@@ -112,24 +122,24 @@ class UsersController extends Controller
     {
         $itemUuid = $request->input('item_uuid');
 
+        $domain_uuid = session('domain_uuid');
+
+        $select = [
+            'user_uuid',
+            'username',
+            'user_email',
+            'user_enabled',
+            'domain_uuid',
+        ];
+
+        if (Schema::hasColumn('v_users', 'extension_uuid')) {
+            $select[] = 'extension_uuid';
+        }
+
         // 1) Base payload: either an existing user DTO or a “new user” stub
         if ($itemUuid) {
             $user = QueryBuilder::for(User::class)
-                ->select([
-                    'user_uuid',
-                    'username',
-                    'user_email',
-                    'user_enabled',
-                    'domain_uuid',
-                ])
-                // ->allowedIncludes(['user_groups'])
-                // ->with([
-                //     'user_adv_fields:user_uuid,first_name,last_name',
-                //     'user_groups:user_uuid,user_group_uuid,group_uuid,group_name',
-                //     'domain_permissions:user_uuid,domain_uuid',
-                //     'domain_group_permissions:user_uuid,domain_group_uuid',
-                // ])
-
+                ->select($select)
                 ->with([
                     'user_groups' => function ($q) {
                         $q->select([
@@ -149,7 +159,7 @@ class UsersController extends Controller
                             'user_uuid',
                         ]);
                     },
-                    
+
                 ])
                 ->with([
                     'domain_group_permissions' => function ($q) {
@@ -160,7 +170,17 @@ class UsersController extends Controller
                             'user_uuid',
                         ]);
                     },
-                    
+
+                ])
+                ->with([
+                    'extension' => function ($q) {
+                        $q->select([
+                            'extension_uuid',
+                            'extension',
+                            'effective_caller_id_name',
+                        ]);
+                    },
+
                 ])
                 ->whereKey($itemUuid)
                 ->firstOrFail();
@@ -179,7 +199,8 @@ class UsersController extends Controller
                 language: 'en-us',
                 time_zone: get_local_time_zone(),
                 user_enabled: 'true',
-                domain_uuid: session('domain_uuid'),
+                domain_uuid: $domain_uuid,
+                extension_uuid: null,
             );
             $updateRoute = null;
         }
@@ -188,9 +209,9 @@ class UsersController extends Controller
         $permissions = $this->getUserPermissions();
 
         $groups = Groups::where('group_level', '<=', session('user.group_level'))
-            ->where(function ($query) {
+            ->where(function ($query) use ($domain_uuid) {
                 $query->where('domain_uuid', null)
-                    ->orWhere('domain_uuid', session('domain_uuid'));
+                    ->orWhere('domain_uuid', $domain_uuid);
             })
             ->orderBy('group_name')
             ->get()
@@ -220,6 +241,22 @@ class UsersController extends Controller
                 ];
             })->toArray();
 
+        // Transform greetings into the desired array format
+        $extensions = Extensions::where('domain_uuid', $domain_uuid)
+            ->select([
+                'extension_uuid',
+                'extension',
+                'effective_caller_id_name',
+            ])
+            ->orderBy('extension')
+            ->get()
+            ->map(function ($ext) {
+                return [
+                    'value' => $ext->extension_uuid,
+                    'label' => $ext->name_formatted,
+                ];
+            })->toArray();
+
 
         // 3) Any routes your front end needs
         $routes = [
@@ -239,6 +276,7 @@ class UsersController extends Controller
             'groups' => $groups,
             'domains' => $domains,
             'domain_groups' => $domain_groups,
+            'extensions' => $extensions,
         ]);
     }
 
@@ -297,6 +335,28 @@ class UsersController extends Controller
                     'domain_uuid' => $domain_uuid,
                     'group_name'  => $groupNames[$groupUuid] ?? null,
                 ]);
+            }
+
+            // 5) Domain Permissions (Accounts)
+            if (isset($data['accounts']) && is_array($data['accounts'])) {
+                // Add new permissions
+                foreach ($data['accounts'] as $domainUuid) {
+                    $user->domain_permissions()->create([
+                        'user_uuid'   => $user->user_uuid,
+                        'domain_uuid' => $domainUuid,
+                    ]);
+                }
+            }
+
+            // 6) Domain Group Permissions (Account Groups)
+            if (isset($data['account_groups']) && is_array($data['account_groups'])) {
+                // Add new group permissions
+                foreach ($data['account_groups'] as $domainGroupUuid) {
+                    $user->domain_group_permissions()->create([
+                        'user_uuid'         => $user->user_uuid,
+                        'domain_group_uuid' => $domainGroupUuid,
+                    ]);
+                }
             }
 
             DB::commit();
@@ -379,10 +439,9 @@ class UsersController extends Controller
             }
 
             // 5) Domain Permissions (Accounts)
+            // Remove existing permissions for this user
+            $user->domain_permissions()->delete();
             if (isset($validated['accounts']) && is_array($validated['accounts'])) {
-                // Remove existing permissions for this user
-                $user->domain_permissions()->delete();
-
                 // Add new permissions
                 foreach ($validated['accounts'] as $domainUuid) {
                     $user->domain_permissions()->create([
@@ -393,10 +452,9 @@ class UsersController extends Controller
             }
 
             // 6) Domain Group Permissions (Account Groups)
+            // Remove existing group permissions for this user
+            $user->domain_group_permissions()->delete();
             if (isset($validated['account_groups']) && is_array($validated['account_groups'])) {
-                // Remove existing group permissions for this user
-                $user->domain_group_permissions()->delete();
-
                 // Add new group permissions
                 foreach ($validated['account_groups'] as $domainGroupUuid) {
                     $user->domain_group_permissions()->create([

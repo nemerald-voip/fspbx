@@ -30,155 +30,150 @@ class CDR extends Model
         'record_name',
     ];
 
-    /**
-     * The booted method of the model
-     *
-     * Define all attributes here like normal code
+    protected $appends = [
+        'created_at_formatted',
+        'caller_id_number_formatted',
+        'caller_destination_formatted',
+        'destination_number_formatted',
+        'start_date',
+        'start_time',
+        'duration_formatted',
+        'billsec_formatted',
+        'waitsec_formatted',
+        'call_disposition',
+        'cc_result',
+        // Add more as needed...
+    ];
 
-     */
-    protected static function booted()
+    public function getCreatedAtFormattedAttribute()
     {
-        static::saving(function ($model) {
-            // Remove attributes before saving to database
-            unset($model->created_at_formatted);
-            unset($model->caller_id_number_formatted);
-            unset($model->caller_destination_formatted);
-            unset($model->destination_number_formatted);
-            unset($model->start_date);
-            unset($model->start_time);
-            unset($model->duration_formatted);
-            unset($model->billsec_formatted);
-            unset($model->waitsec_formatted);
-            unset($model->call_disposition);
-        });
+        if (!$this->created_at || !$this->domain_uuid) return null;
+        $timeZone = get_local_time_zone($this->domain_uuid);
+        return Carbon::parse($this->created_at)->setTimezone($timeZone)->format('g:i:s A M d, Y');
+    }
 
-        static::retrieved(function ($model) {
-            // if ($model->created_at && $model->domain_uuid) {
-            $time_zone = get_local_time_zone($model->domain_uuid);
+    public function getCallerIdNumberFormattedAttribute()
+    {
+        return $this->caller_id_number ? formatPhoneNumber($this->caller_id_number) : null;
+    }
 
-            $model->created_at_formatted = Carbon::parse($model->created_at)->setTimezone($time_zone)->format('g:i:s A M d, Y');
+    public function getCallerDestinationFormattedAttribute()
+    {
+        return $this->caller_destination ? formatPhoneNumber($this->caller_destination) : null;
+    }
+
+    public function getDestinationNumberFormattedAttribute()
+    {
+        return $this->destination_number ? formatPhoneNumber($this->destination_number) : null;
+    }
+
+    public function getStartDateAttribute()
+    {
+        if (!$this->start_epoch || !$this->domain_uuid) return null;
+        $timeZone = get_local_time_zone($this->domain_uuid);
+        return Carbon::createFromTimestamp($this->start_epoch, 'UTC')->setTimezone($timeZone)->format('M d, Y');
+    }
+
+    public function getStartTimeAttribute()
+    {
+        if (!$this->start_epoch || !$this->domain_uuid) return null;
+        $timeZone = get_local_time_zone($this->domain_uuid);
+        return Carbon::createFromTimestamp($this->start_epoch, 'UTC')->setTimezone($timeZone)->format('g:i:s A');
+    }
+
+    public function getDurationFormattedAttribute()
+    {
+        return $this->duration ? $this->getFormattedDuration($this->duration) : null;
+    }
+
+    public function getBillsecFormattedAttribute()
+    {
+        return $this->billsec ? $this->getFormattedDuration($this->billsec) : null;
+    }
+
+    public function getWaitsecFormattedAttribute()
+    {
+        if ($this->start_epoch && $this->answer_epoch) {
+            return $this->getFormattedDuration($this->answer_epoch - $this->start_epoch);
+        }
+        return null;
+    }
+
+    public function getCallDispositionAttribute()
+    {
+        $dispositions = [
+            'send_bye'    => 'The recipient hung up.',
+            'recv_bye'    => 'The caller hung up.',
+            'send_refuse' => 'The call was refused by the recipient (e.g., busy or unavailable).',
+            'recv_refuse' => 'The call was refused by the recipient (e.g., busy or unavailable).',
+            'send_cancel' => 'The call was canceled before it was answered.',
+            'recv_cancel' => 'The call was canceled before it was answered.',
+        ];
+
+        if ($this->sip_hangup_disposition && $this->direction) {
+            return $dispositions[$this->sip_hangup_disposition] ?? 'Unknown disposition.';
+        }
+
+        // When `sip_hangup_disposition` is null and `hangup_cause` is "ORIGINATOR_CANCEL",
+        // but only if `call_disposition` hasn't been set yet
+        if (is_null($this->sip_hangup_disposition) && $this->hangup_cause == "ORIGINATOR_CANCEL") {
+            return 'The call was canceled before it was answered.';
+        }
+
+        // When `sip_hangup_disposition` is null and `hangup_cause` is "LOSE_RACE",
+        // but only if `call_disposition` hasn't been set yet
+        if (is_null($this->sip_hangup_disposition) && $this->hangup_cause == "LOSE_RACE") {
+            return 'The call was answered somewhere else.';
+        }
+
+        return null;
+    }
 
 
-            if ($model->caller_id_number) {
-                $model->caller_id_number_formatted = $model->formatPhoneNumber($model->caller_id_number);
+    public function getCcResultAttribute()
+    {
+        if ($this->cc_cause == 'answered') {
+            return 'Answered';
+        }
+
+        if ($this->cc_cause == 'cancel') {
+            switch ($this->cc_cancel_reason) {
+                case 'NONE':
+                    return "No specific reason";
+                case 'NO_AGENT_TIMEOUT':
+                    return "No agents in queue";
+                case 'BREAK_OUT':
+                    return "Abandoned";
+                case 'EXIT_WITH_KEY':
+                    return "The caller pressed the exit key";
+                case 'TIMEOUT':
+                    return "Queue timeout reached";
             }
+        }
+        return null;
+    }
 
-            if ($model->caller_destination) {
-                $model->caller_destination_formatted = $model->formatPhoneNumber($model->caller_destination);
-            }
+    public function getStatusAttribute($value)
+    {
+        // 1. Missed call condition
+        $status = $value;
 
-            if ($model->destination_number) {
-                $model->destination_number_formatted = $model->formatPhoneNumber($model->destination_number);
-            }
+        if ($this->voicemail_message == false && $this->missed_call == true && $this->hangup_cause == "NORMAL_CLEARING") {
+            $status = "missed call";
+        }
 
-            if ($model->start_epoch) {
-                $model->start_date = Carbon::createFromTimestamp($model->start_epoch, 'UTC')->setTimezone($time_zone)->format('M d, Y');
-                $model->start_time = Carbon::createFromTimestamp($model->start_epoch, 'UTC')->setTimezone($time_zone)->format('g:i:s A');
-            }
+        // 2. Abandoned call upgrades missed call
+        if (
+            isset($this->cc_cancel_reason) &&
+            isset($this->cc_cause) &&
+            $status === "missed call" &&
+            $this->cc_cancel_reason == "BREAK_OUT" &&
+            $this->cc_cause == "cancel"
+        ) {
+            $status = "abandoned";
+        }
 
-            if ($model->duration) {
-                $model->duration_formatted = $model->getFormattedDuration($model->duration);
-            }
-
-            if ($model->billsec) {
-                $model->billsec_formatted = $model->getFormattedDuration($model->billsec);
-            }
-
-            if ($model->start_epoch && $model->answer_epoch) {
-                $model->waitsec_formatted = $model->getFormattedDuration($model->answer_epoch - $model->start_epoch);
-            }
-
-            if ($model->sip_hangup_disposition && $model->direction) {
-                $dispositions = [
-                    'send_bye' => 'The recipient hung up.',
-                    'recv_bye' => 'The caller hung up.',
-                    'send_refuse' => 'The call was refused by the recipient (e.g., busy or unavailable).',
-                    'recv_refuse' => 'The call was refused by the recipient (e.g., busy or unavailable).',
-                    'send_cancel' => 'The call was canceled before it was answered.',
-                    'recv_cancel' => 'The call was canceled before it was answered.',
-                ];
-
-                if (isset($dispositions[$model->sip_hangup_disposition])) {
-                    $model->call_disposition = $dispositions[$model->sip_hangup_disposition];
-                } else {
-                    $model->call_disposition = 'Unknown disposition.';
-                }
-            }
-
-            // When `sip_hangup_disposition` is null and `hangup_cause` is "ORIGINATOR_CANCEL",
-            // but only if `call_disposition` hasn't been set yet
-            if (empty($model->call_disposition) && is_null($model->sip_hangup_disposition) && $model->hangup_cause == "ORIGINATOR_CANCEL") {
-                $model->call_disposition = 'The call was canceled before it was answered.';
-            }
-
-            // When `sip_hangup_disposition` is null and `hangup_cause` is "LOSE_RACE",
-            // but only if `call_disposition` hasn't been set yet
-            if (empty($model->call_disposition) && is_null($model->sip_hangup_disposition) && $model->hangup_cause == "LOSE_RACE") {
-                $model->call_disposition = 'The call was answered somewhere else.';
-            }
-
-            // logger('here');
-            // logger($model->waitsec);
-            // logger($model->waitsec_formatted);
-
-            if (
-                isset($model->status) &&
-                isset($model->hangup_cause) &&
-                isset($model->hangup_cause_q850) &&
-                isset($model->sip_hangup_disposition) &&
-                isset($model->voicemail_message) &&
-                isset($model->missed_call)
-            ) {
-                // Missed call
-                if ($model->voicemail_message == false && $model->missed_call == true && $model->hangup_cause == "NORMAL_CLEARING") {
-                    $model->status = "missed call";
-                }
-
-                // Abandon call
-                if (
-                    isset($model->cc_cancel_reason) &&
-                    isset($model->cc_cause) &&
-                    $model->status == "missed call" &&
-                    $model->cc_cancel_reason == "BREAK_OUT" &&
-                    $model->cc_cause == "cancel"
-                ) {
-                    $model->status = "abandoned";
-                }
-            }
-
-
-            // Call center answered call
-            if ($model->cc_cause == 'answered') {
-                $model->cc_result = 'Answered';
-            }
-
-            if ($model->cc_cause == 'cancel') {
-                switch ($model->cc_cancel_reason) {
-                    case 'NONE':
-                        $model->cc_result = "No specific reason";
-                        break;
-                    case 'NO_AGENT_TIMEOUT':
-                        $model->cc_result = "No agents in queue";
-                        break;
-                    case 'BREAK_OUT':
-                        $model->cc_result = "Abandoned";
-                        break;
-                    case 'EXIT_WITH_KEY':
-                        $model->cc_result = "The caller pressed the exit key";
-                        break;
-                    case 'TIMEOUT':
-                        $model->cc_result = "Queue timeout reached";
-                        break;
-                }
-            }
-
-
-
-            // }
-            // $model->destroy_route = route('devices.destroy', $model);
-
-            return $model;
-        });
+        return $status;
     }
 
     public function getFormattedDuration($value)

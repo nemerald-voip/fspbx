@@ -15,7 +15,7 @@
 
                         <DialogPanel
                             class="relative transform  rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
-                           
+
                             <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
                                 {{ header }}
                             </DialogTitle>
@@ -48,8 +48,7 @@
 
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
-                                 @error="handleError" @response="handleResponse"
-                                :display-errors="false" :default="{
+                                @error="handleError" @response="handleResponse" :display-errors="false" :default="{
                                     time_zone: options.item.time_zone,
                                     user_email: options.item.user_email,
                                     first_name: options.item.first_name,
@@ -79,12 +78,13 @@
                                                     'language',
                                                     'account_groups',
                                                     'accounts',
+                                                    'extension_uuid',
                                                     'container_3',
                                                     'reset',
                                                     'submit',
 
                                                 ]" />
-                                                
+
                                             </FormTabs>
                                         </div>
 
@@ -113,12 +113,22 @@
                                                         },
                                                     }" />
 
-                                                <SelectElement name="time_zone" :groups="true" :items="options.timezones"
-                                                    :search="true" :native="false" label="Time Zone" input-type="search"
-                                                    autocomplete="off" :floating="false" :strict="false"
-                                                    placeholder="Select Time Zone" :columns="{
+                                                <SelectElement name="time_zone" :groups="true"
+                                                    :items="options.timezones" :search="true" :native="false"
+                                                    label="Time Zone" input-type="search" autocomplete="off"
+                                                    :floating="false" :strict="false" placeholder="Select Time Zone"
+                                                    :columns="{
                                                         sm: {
                                                             container: 6,
+                                                        },
+                                                    }" />
+
+                                                <SelectElement name="extension_uuid" :items="options.extensions"
+                                                    :search="true" :native="false" label="Assigned extension"
+                                                    input-type="search" autocomplete="off" :floating="false"
+                                                    placeholder="Select extension" :columns="{
+                                                        sm: {
+                                                            wrapper: 6,
                                                         },
                                                     }" />
 
@@ -128,8 +138,8 @@
                                                     :conditions="[() => options.permissions.user_group_view]"
                                                     :disabled="[(el$, form$) => { return !options.permissions.user_group_edit }]" />
 
-                                                <TagsElement name="account_groups" :close-on-select="false" :search="true"
-                                                    :items="options.domain_groups"
+                                                <TagsElement name="account_groups" :close-on-select="false"
+                                                    :search="true" :items="options.domain_groups"
                                                     label="Select account groups the user is allowed to manage"
                                                     input-type="search" autocomplete="off"
                                                     placeholder="Select Account Groups" :floating="false"
@@ -145,13 +155,13 @@
 
                                                             // // Find the UUIDs for the roles you care about (case-insensitive)
                                                             const multiSiteAdminUuid = groups.find(g => g.label.toLowerCase() === 'multi-site admin')?.value;
-                                                            const superAdminUuid = groups.find(g => g.label.toLowerCase() === 'superadmin')?.value;
+                                                            // const superAdminUuid = groups.find(g => g.label.toLowerCase() === 'superadmin')?.value;
 
                                                             // // Show the element if either admin role is selected
-                                                            return selectedGroupUuids.includes(multiSiteAdminUuid) ||
-                                                                selectedGroupUuids.includes(superAdminUuid);
+                                                            return selectedGroupUuids.includes(multiSiteAdminUuid)
                                                         }
-                                                    ]" :disabled="[(el$, form$) => { return !options.permissions.user_update_managed_account_groups }]"/>
+                                                    ]"
+                                                    :disabled="[(el$, form$) => { return !options.permissions.user_update_managed_account_groups }]" />
                                                 <TagsElement name="accounts" :close-on-select="false" :search="true"
                                                     :items="options.domains"
                                                     label="Select accounts the user is allowed to manage"
@@ -169,13 +179,13 @@
 
                                                             // // Find the UUIDs for the roles you care about (case-insensitive)
                                                             const multiSiteAdminUuid = groups.find(g => g.label.toLowerCase() === 'multi-site admin')?.value;
-                                                            const superAdminUuid = groups.find(g => g.label.toLowerCase() === 'superadmin')?.value;
+                                                            // const superAdminUuid = groups.find(g => g.label.toLowerCase() === 'superadmin')?.value;
 
                                                             // // Show the element if either admin role is selected
-                                                            return selectedGroupUuids.includes(multiSiteAdminUuid) ||
-                                                                selectedGroupUuids.includes(superAdminUuid);
+                                                            return selectedGroupUuids.includes(multiSiteAdminUuid);
                                                         }
-                                                    ]" :disabled="[(el$, form$) => { return !options.permissions.user_update_managed_accounts }]"/>
+                                                    ]"
+                                                    :disabled="[(el$, form$) => { return !options.permissions.user_update_managed_accounts }]" />
 
                                                 <HiddenElement name="language" :meta="true" />
                                                 <HiddenElement name="domain_uuid" :meta="true" />

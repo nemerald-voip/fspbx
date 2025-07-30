@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Models\UserGroup;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Activitylog\Traits\CausesActivity;
@@ -39,7 +38,8 @@ class User extends Authenticatable
         'domain_uuid',
         'user_enabled',
         'add_user',
-        'api_key'
+        'api_key',
+        'extension_uuid',
     ];
 
     /**
@@ -161,23 +161,12 @@ class User extends Authenticatable
 
 
     /**
-     * Get the extensions associated with the user.
+     * Get the extension assigned to the user
      *  returns Eloqeunt Collection
      */
-    public function extensions()
+    public function extension()
     {
-        $extensions = DB::table('v_extensions')
-            ->join('v_extension_users', 'v_extension_users.extension_uuid', '=', 'v_extensions.extension_uuid')
-            ->where('v_extension_users.user_uuid', '=', $this->user_uuid)
-            ->get([
-                'v_extensions.extension_uuid',
-                'v_extensions.extension',
-                'v_extensions.outbound_caller_id_number',
-                'v_extensions.user_context',
-                'v_extensions.description',
-            ]);
-
-        return $extensions;
+        return $this->belongsTo(Extensions::class, 'extension_uuid', 'extension_uuid');
     }
 
     public function getEmailAttribute()

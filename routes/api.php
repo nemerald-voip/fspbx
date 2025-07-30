@@ -2,6 +2,7 @@
 
 use App\Models\DomainGroups;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CdrsController;
 use App\Http\Controllers\FaxesController;
 use App\Http\Controllers\TokenController;
 use App\Http\Controllers\UsersController;
@@ -98,7 +99,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/extensions/template/download', [ExtensionsController::class, 'downloadTemplate'])->name('extensions.template.download');
     Route::post('/extensions/import', [ExtensionsController::class, 'import'])->name('extensions.import');
     Route::post('/extensions/make-user', [ExtensionsController::class, 'makeUser'])->name('extensions.make.user');
-    
+
     // User logs
     Route::post('user-logs/select-all', [UserLogsController::class, 'selectAll'])->name('user-logs.select.all');
 
@@ -150,4 +151,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/fax/sent/{file}/download', [FaxesController::class, 'downloadSentFaxFile'])->name('downloadSentFaxFile');
     Route::get('/fax/sent/{faxQueue}/{status?}', [FaxesController::class, 'updateStatus'])->name('faxes.file.updateStatus');
     Route::post('/faxes/send', [FaxesController::class, 'sendFax'])->name('faxes.new.fax.send');
+
+    // Call Detail Records
+    Route::get('/call-detail-records/data', [CdrsController::class, 'getData'])->name('cdrs.data');
+    Route::get('/call-detail-records/entities', [CdrsController::class, 'getEntities'])->name('cdrs.entities');
 });
