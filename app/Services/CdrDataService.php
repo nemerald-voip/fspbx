@@ -14,8 +14,8 @@ class CdrDataService
         $currentDomain = $params['domain_uuid'];
 
         // Check if user is allowed to see all CDRs for tenant
-        if (!userCheckPermission("xml_cdr_domain")) {
-            $user = auth()->user();
+        $user = auth()->user();
+        if ($user && !userCheckPermission("xml_cdr_domain")) {
             $params['filter']['entity']['value'] = $user->extension_uuid;
             $params['filter']['entity']['type'] = 'extension';
         }

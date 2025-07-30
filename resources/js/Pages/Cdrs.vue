@@ -599,7 +599,7 @@ const exportCsv = () => {
     isExporting.value = true;
 
     axios.post(props.routes.export, {
-        filterData: filterData._rawValue,
+        filter: filterData._rawValue,
     })
         .then(response => {
             showNotification('success', response.data.messages);

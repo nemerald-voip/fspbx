@@ -788,14 +788,13 @@ class CdrsController extends Controller
         $params = request()->all();
         $params['paginate'] = 50;
         $domain_uuid = session('domain_uuid');
-        // $params['filterData'] = request()->filterData;
         $params['domain_uuid'] = $domain_uuid;
 
         if (!empty(request('filter.dateRange'))) {
             $startPeriod = Carbon::parse(request('filter.dateRange')[0])->setTimeZone('UTC');
             $endPeriod = Carbon::parse(request('filter.dateRange')[1])->setTimeZone('UTC');
-        } 
-        
+        }
+
         if (empty(request('filter.showGlobal'))) {
             $params['filter']['showGlobal'] = 'false';
         }
@@ -817,12 +816,6 @@ class CdrsController extends Controller
         return $this->cdrDataService->getData($params);
     }
 
-    // This function has been moved to CdrDataService service container
-    // public function builder($filters = [])
-    // {
-    // }
-
-
     /**
      * Get all items
      *
@@ -831,31 +824,29 @@ class CdrsController extends Controller
     public function export()
     {
         try {
-            $params['paginate'] = false;
-            $params['filterData'] = request()->filterData;
-            $params['domain_uuid'] = session('domain_uuid');
-            if (session('domains')) {
-                $params['domains'] = session('domains')->pluck('domain_uuid');
-            }
-            $params['searchable'] = $this->searchable;
+            $params = request()->all();
+            $params['paginate'] = 50;
+            $domain_uuid = session('domain_uuid');
+            $params['domain_uuid'] = $domain_uuid;
 
-            if (!empty(request('filterData.dateRange'))) {
-                $startPeriod = Carbon::parse(request('filterData.dateRange')[0])->setTimeZone('UTC');
-                $endPeriod = Carbon::parse(request('filterData.dateRange')[1])->setTimeZone('UTC');
-            } else {
-                $domain_uuid = session('domain_uuid');
-                $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->startOfDay()->setTimeZone('UTC');
-                $endPeriod = Carbon::now(get_local_time_zone($domain_uuid))->endOfDay()->setTimeZone('UTC');
+            if (!empty(request('filter.dateRange'))) {
+                $startPeriod = Carbon::parse(request('filter.dateRange')[0])->setTimeZone('UTC');
+                $endPeriod = Carbon::parse(request('filter.dateRange')[1])->setTimeZone('UTC');
             }
 
-            $params['filterData']['startPeriod'] = $startPeriod;
-            $params['filterData']['endPeriod'] = $endPeriod;
-            $params['filterData']['sortField'] = request()->get('sortField', 'start_epoch');
-            $params['filterData']['sortOrder'] = request()->get('sortField', 'desc');
+            if (empty(request('filter.showGlobal'))) {
+                $params['filter']['showGlobal'] = 'false';
+            }
 
-            $params['permissions']['xml_cdr_lose_race'] = userCheckPermission('xml_cdr_lose_race');
+            $params['filter']['startPeriod'] = $startPeriod->getTimestamp();
+            $params['filter']['endPeriod'] = $endPeriod->getTimestamp();
 
-            $params['user_email'] = auth()->user()->user_email;
+            unset(
+                $params['filter']['entityType'],
+                $params['filter']['dateRange'],
+            );
+            // $params['user_email'] = auth()->user()->user_email;
+            $params['user_email'] = 'dexter@stellarvoip.com';
 
             // $cdrs = $this->getData(false); // returns lazy collection
 
