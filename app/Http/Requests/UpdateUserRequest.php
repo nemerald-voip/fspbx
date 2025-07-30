@@ -31,6 +31,7 @@ class UpdateUserRequest extends FormRequest
             'accounts.*'     => 'uuid|exists:v_domains,domain_uuid',
             'account_groups'       => 'sometimes|array',
             'account_groups.*'     => 'uuid|exists:domain_groups,domain_group_uuid',
+            'extension_uuid' => 'nullable|uuid',
             'language'     => 'nullable|string|max:10',
             'time_zone'    => 'nullable|string|max:50',
             'user_enabled' => 'sometimes|required|string',

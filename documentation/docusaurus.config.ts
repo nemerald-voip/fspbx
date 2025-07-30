@@ -11,11 +11,11 @@ const config: Config = {
 
   // Future flags, see https://docusaurus.io/docs/api/docusaurus-config#future
   future: {
-    v4: true, // Improve compatibility with the upcoming Docusaurus v4
+    v4: false, // Improve compatibility with the upcoming Docusaurus v4
   },
 
   // Set the production url of your site here
-  url: 'https://nemerald-voip.github.io/',
+  url: 'https://www.fspbx.com/',
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
   baseUrl: '/',
@@ -27,7 +27,7 @@ const config: Config = {
   projectName: 'fspbx', // Usually your repo name.
 
   onBrokenLinks: 'throw',
-  onBrokenMarkdownLinks: 'warn',
+  onBrokenMarkdownLinks: 'throw',
 
   // Even if you don't use internationalization, you can use this field to set
   // useful metadata like html lang. For example, if your site is Chinese, you
@@ -76,7 +76,7 @@ const config: Config = {
         { name: 'keywords', content: 'open source PBX, FS PBX, FusionPBX, FusionPBX alternative, FreeSWITCH, VoIP, VoIP dashboard, white label VoIP, telecom, telecom provider' },
       ],
     // Replace with your project's social card
-    image: 'img/docusaurus-social-card.jpg',
+    image: 'img/fspbx-social-card.png',
     navbar: {
       title: '',
       logo: {

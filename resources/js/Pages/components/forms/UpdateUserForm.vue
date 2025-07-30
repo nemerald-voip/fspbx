@@ -49,12 +49,13 @@
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
-                                    time_zone: options.item.time_zone,
-                                    user_email: options.item.user_email,
-                                    first_name: options.item.first_name,
-                                    last_name: options.item.last_name,
-                                    user_enabled: options.item.user_enabled,
-                                    language: options.item.language,
+                                    time_zone: options?.item?.time_zone ?? null,
+                                    user_email: options?.item?.user_email ?? null,
+                                    first_name: options?.item?.first_name ?? null,
+                                    last_name: options?.item?.last_name ?? null,
+                                    user_enabled: options?.item?.user_enabled ?? true,
+                                    language: options?.item?.language ?? null,
+                                    extension_uuid: options?.item?.extension_uuid ?? null,
                                     groups: options.item.user_groups
                                         ? options.item.user_groups.map(ug => ug.group_uuid)
                                         : [],
@@ -81,10 +82,12 @@
                                                     'user_email',
                                                     'groups',
                                                     'time_zone',
+                                                    'container_2',
                                                     'user_enabled',
                                                     'language',
                                                     'account_groups',
                                                     'accounts',
+                                                    'extension_uuid',
                                                     'container_3',
                                                     'reset',
                                                     'submit',
@@ -139,6 +142,14 @@
                                                         },
                                                     }" />
 
+
+                                                <SelectElement name="extension_uuid" :items="options.extensions" :search="true" :native="false" label="Assigned extension" input-type="search" autocomplete="off"
+                                                    :floating="false" placeholder="Select extension" :columns="{
+                                                        sm: {
+                                                            wrapper: 6,
+                                                        },
+                                                    }" />
+
                                                 <TagsElement name="groups" :search="true" :items="options.groups"
                                                     label="Roles" input-type="search" autocomplete="off"
                                                     placeholder="Select Roles" :floating="false" :strict="false"
@@ -162,11 +173,11 @@
 
                                                             // // Find the UUIDs for the roles you care about (case-insensitive)
                                                             const multiSiteAdminUuid = groups.find(g => g.label.toLowerCase() === 'multi-site admin')?.value;
-                                                            const superAdminUuid = groups.find(g => g.label.toLowerCase() === 'superadmin')?.value;
+                                                            // const superAdminUuid = groups.find(g => g.label.toLowerCase() === 'superadmin')?.value;
 
                                                             // // Show the element if either admin role is selected
-                                                            return selectedGroupUuids.includes(multiSiteAdminUuid) ||
-                                                                selectedGroupUuids.includes(superAdminUuid);
+                                                            return selectedGroupUuids.includes(multiSiteAdminUuid)
+                                                            // || selectedGroupUuids.includes(superAdminUuid);
                                                         }
                                                     ]"
                                                     :disabled="[(el$, form$) => { return !options.permissions.user_update_managed_account_groups }]" />
@@ -187,14 +198,16 @@
 
                                                             // // Find the UUIDs for the roles you care about (case-insensitive)
                                                             const multiSiteAdminUuid = groups.find(g => g.label.toLowerCase() === 'multi-site admin')?.value;
-                                                            const superAdminUuid = groups.find(g => g.label.toLowerCase() === 'superadmin')?.value;
+                                                            // const superAdminUuid = groups.find(g => g.label.toLowerCase() === 'superadmin')?.value;
 
                                                             // // Show the element if either admin role is selected
-                                                            return selectedGroupUuids.includes(multiSiteAdminUuid) ||
-                                                                selectedGroupUuids.includes(superAdminUuid);
+                                                            return selectedGroupUuids.includes(multiSiteAdminUuid)
+                                                            // || selectedGroupUuids.includes(superAdminUuid);
                                                         }
                                                     ]"
                                                     :disabled="[(el$, form$) => { return !options.permissions.user_update_managed_accounts }]" />
+
+                                                <GroupElement name="container_2" />
 
                                                 <ToggleElement name="user_enabled" text="Status" true-value="true"
                                                     false-value="false"

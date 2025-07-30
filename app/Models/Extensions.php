@@ -297,9 +297,9 @@ class Extensions extends Model
 
 
         $destinationField = "{$type}_destination";
-        $enabledField = "{$type}_enabled";
+        // $enabledField = "{$type}_enabled";
 
-        if ($this->$enabledField != 'true' || !isEmpty($this->$destinationField)) {
+        if (!isEmpty($this->$destinationField)) {
             return $this->forwardOptionDetailsCache[$type] = [
                 'type'      => null,
                 'extension' => null,

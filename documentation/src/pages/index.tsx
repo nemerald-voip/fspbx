@@ -1,42 +1,23 @@
 import type { ReactNode } from 'react';
+import { useState } from "react";
 import clsx from 'clsx';
 import Link from '@docusaurus/Link';
 import useDocusaurusContext from '@docusaurus/useDocusaurusContext';
 import Layout from '@theme/Layout';
-import HomepageFeatures from '@site/src/components/HomepageFeatures';
-import Heading from '@theme/Heading';
 import { Carousel } from 'react-responsive-carousel';
 import 'react-responsive-carousel/lib/styles/carousel.min.css';
-import { Dialog, DialogPanel, Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react'
+import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react'
 import { LockClosedIcon, CheckIcon } from '@heroicons/react/20/solid'
 import { ComputerDesktopIcon, BoltIcon, CpuChipIcon, PuzzlePieceIcon, ServerStackIcon, PlusIcon, MinusIcon } from "@heroicons/react/24/outline";
-
+import ContactForm from '@site/src/components/ContactForm';
+import Modal from "@site/src/components/Modal";
 
 import styles from './index.module.css';
 
-function HomepageHeader() {
-    const { siteConfig } = useDocusaurusContext();
-    return (
-        <header className={clsx('hero hero--primary', styles.heroBanner)}>
-            <div className="container">
-                <Heading as="h1" className="hero__title">
-                    {siteConfig.title}
-                </Heading>
-                <p className="hero__subtitle">{siteConfig.tagline}</p>
-                <div className={styles.buttons}>
-                    <Link
-                        className="button button--secondary button--lg"
-                        to="/docs/intro">
-                        Docusaurus Tutorial - 5min ⏱️
-                    </Link>
-                </div>
-            </div>
-        </header>
-    );
-}
 
 export default function Home(): ReactNode {
     const { siteConfig } = useDocusaurusContext();
+    const [modalOpen, setModalOpen] = useState(false);
 
     const features = [
         {
@@ -151,7 +132,7 @@ export default function Home(): ReactNode {
 
     return (
         <Layout
-            title={`Hello from ${siteConfig.title}`}
+            title={`${siteConfig.title}`}
             description="FS PBX: World’s Best Open-Source PBX">
             {/* <HomepageHeader /> */}
 
@@ -471,18 +452,38 @@ export default function Home(): ReactNode {
                                             ))}
                                         </ul>
                                     </div>
-                                    <a
-                                        href={tier.href}
-                                        aria-describedby={tier.id}
-                                        className={classNames(
-                                            tier.mostPopular
-                                                ? 'bg-indigo-600 !text-white shadow-sm hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400'
-                                                : 'text-indigo-600 dark:text-indigo-400 ring-1 ring-inset ring-indigo-200 dark:ring-indigo-400 hover:ring-indigo-300 dark:hover:ring-indigo-200',
-                                            'mt-8 block rounded-md px-3 py-2 text-center text-sm/6 font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
-                                        )}
-                                    >
-                                        {tier.id === 'tier-open-source' ? 'Download' : 'Get Started'}
-                                    </a>
+                                    {tier.id === 'tier-open-source' ? (
+                                        <a
+                                            href={tier.href}
+                                            aria-describedby={tier.id}
+                                            className={classNames(
+                                                tier.mostPopular
+                                                    ? 'bg-indigo-600 !text-white shadow-sm hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400'
+                                                    : 'text-indigo-600 dark:text-indigo-400 ring-1 ring-inset ring-indigo-200 dark:ring-indigo-400 hover:ring-indigo-300 dark:hover:ring-indigo-200',
+                                                'mt-8 block rounded-md px-3 py-2 text-center text-sm/6 font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
+                                            )}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                        >
+                                            Download
+                                        </a>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            aria-describedby={tier.id}
+                                            onClick={() => setModalOpen(true)}
+                                            className={classNames(
+                                                tier.mostPopular
+                                                    ? 'bg-indigo-600 !text-white shadow-sm hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400'
+                                                    : 'text-indigo-600 dark:text-indigo-400 ring-1 ring-inset ring-indigo-200 dark:ring-indigo-400 hover:ring-indigo-300 dark:hover:ring-indigo-200',
+                                                'mt-8 block rounded-md px-3 py-2 text-center text-sm/6 font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600',
+                                                'cursor-pointer hover:underline'
+                                            )}
+                                        >
+                                            Get Started
+                                        </button>
+                                    )}
+
                                 </div>
                             ))}
                         </div>
@@ -499,12 +500,14 @@ export default function Home(): ReactNode {
                                     Supercharge your FS PBX deployment with our premium Contact Center module—available for just $99/month.
                                 </p>
                             </div>
-                            <a
-                                href="#"
-                                className="rounded-md px-3.5 py-2 text-sm/6 font-semibold text-indigo-600 dark:text-indigo-400 ring-1 ring-inset ring-indigo-200 dark:ring-indigo-400 hover:ring-indigo-300 dark:hover:ring-indigo-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+
+                            <button
+                                type="button"
+                                onClick={() => setModalOpen(true)}
+                                className="rounded-md px-3.5 py-2 text-sm/6 font-semibold text-indigo-600 dark:text-indigo-400 ring-1 ring-inset ring-indigo-200 dark:ring-indigo-400 hover:ring-indigo-300 dark:hover:ring-indigo-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 hover:underline cursor-pointer"
                             >
                                 Request trial <span aria-hidden="true">&rarr;</span>
-                            </a>
+                            </button>
                         </div>
 
                         <div className="mt-16 flex flex-col items-start gap-x-8 gap-y-6 rounded-3xl p-8 ring-1 ring-gray-900/10 dark:ring-gray-700 bg-white dark:bg-gray-900/80 sm:gap-y-10 sm:p-10 lg:col-span-2 lg:flex-row lg:items-center transition-colors">
@@ -517,12 +520,13 @@ export default function Home(): ReactNode {
                                     The STIR/SHAKEN module enables full caller ID authentication and call signing, helping you comply with industry regulations and combat caller ID spoofing. Calls are signed with Attestation A, giving recipients confidence that calls from your network are legitimate and trustworthy.
                                 </p>
                             </div>
-                            <a
-                                href="#"
-                                className="rounded-md px-3.5 py-2 text-sm/6 font-semibold text-indigo-600 dark:text-indigo-400 ring-1 ring-inset ring-indigo-200 dark:ring-indigo-400 hover:ring-indigo-300 dark:hover:ring-indigo-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                            <button
+                                type="button"
+                                onClick={() => setModalOpen(true)}
+                                className="rounded-md px-3.5 py-2 text-sm/6 font-semibold text-indigo-600 dark:text-indigo-400 ring-1 ring-inset ring-indigo-200 dark:ring-indigo-400 hover:ring-indigo-300 dark:hover:ring-indigo-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 hover:underline cursor-pointer"
                             >
                                 Request trial <span aria-hidden="true">&rarr;</span>
-                            </a>
+                            </button>
                         </div>
 
                     </div>
@@ -575,7 +579,12 @@ export default function Home(): ReactNode {
                     </div>
                 </div>
 
-
+                <Modal open={modalOpen} onClose={() => setModalOpen(false)}>
+                    <ContactForm
+                        workerEndpoint="https://fspbx-contact-form.dexter-2ef.workers.dev"
+                        turnstileSiteKey="0x4AAAAAABnG91y8BuU-YHNz"
+                    />
+                </Modal>
             </main >
         </Layout >
     );

@@ -65,114 +65,118 @@ class DashboardController extends Controller
 
     public function getCounts()
     {
-        $domain_id = Session::get('domain_uuid');
+        $domain_uuid = session('domain_uuid');
 
         $counts = [];
         if (userCheckPermission("extension_view")) {
             //Extension count
-            $counts['extensions'] = Extensions::where('domain_uuid', $domain_id)
+            $counts['extensions'] = Extensions::where('domain_uuid', $domain_uuid)
                 ->where('enabled', 'true')
                 ->count();
         }
 
         if (userCheckPermission("user_view")) {
             //User count
-            $counts['users'] = User::where('domain_uuid', $domain_id)
+            $counts['users'] = User::where('domain_uuid', $domain_uuid)
                 ->count();
         }
 
         //Phone Number count
-        $counts['phone_numbers'] = Destinations::where('domain_uuid', $domain_id)
+        $counts['phone_numbers'] = Destinations::where('domain_uuid', $domain_uuid)
             ->where('destination_enabled', 'true')
             ->count();
 
         // Faxes count
-        $counts['faxes'] = Faxes::where('domain_uuid', $domain_id)
+        $counts['faxes'] = Faxes::where('domain_uuid', $domain_uuid)
             ->count();
 
         //CDR Count
-        // $counts['cdrs'] = CDR::where('domain_uuid', $domain_id)
+        // $counts['cdrs'] = CDR::where('domain_uuid', $domain_uuid)
         //     ->whereRaw("start_stamp >= '" . date('Y-m-d') . " 00:00:00.00 " . get_domain_setting('time_zone') . "'")
         //     ->count();
 
         $cdrDataService = new CdrDataService();
-        $timezone = get_local_time_zone(Session::get('domain_uuid'));
-        $startPeriod = Carbon::now($timezone)->startOfDay()->setTimeZone('UTC');
-        $endPeriod = Carbon::now($timezone)->endOfDay()->setTimeZone('UTC');
+        $timezone = get_local_time_zone($domain_uuid);
+        $startPeriod = Carbon::now($timezone)->startOfDay()->setTimeZone('UTC')->getTimestamp();
+        $endPeriod = Carbon::now($timezone)->endOfDay()->setTimeZone('UTC')->getTimestamp();
         $params['paginate'] = false;
-        $params['domain_uuid'] = session('domain_uuid');
-        $params['filterData']['startPeriod'] = $startPeriod;
-        $params['filterData']['endPeriod'] = $endPeriod;
-
-        $params['permissions']['xml_cdr_lose_race'] = userCheckPermission('xml_cdr_lose_race');
+        $params['domain_uuid'] = $domain_uuid;
+        $params['filter']['startPeriod'] = $startPeriod;
+        $params['filter']['endPeriod'] = $endPeriod;
+        // Check if user is allowed to see all CDRs for tenant
+        if (!userCheckPermission("xml_cdr_domain")) {
+            $user = auth()->user();
+            $params['filter']['entity']['value'] = $user->extension_uuid;
+            $params['filter']['entity']['type'] = 'extension';
+        }
         $cdrs = $cdrDataService->getData($params);
 
         $counts['cdrs'] = $cdrs->count();
 
         if (userCheckPermission("ring_group_view")) {
             //Ring group count
-            $counts['ring_groups'] = RingGroups::where('domain_uuid', $domain_id)
+            $counts['ring_groups'] = RingGroups::where('domain_uuid', $domain_uuid)
                 ->where('ring_group_enabled', 'true')
                 ->count();;
         }
 
         if (userCheckPermission("ivr_menu_view")) {
             //IVR Count
-            $counts['ivrs'] = IvrMenus::where('domain_uuid', $domain_id)
+            $counts['ivrs'] = IvrMenus::where('domain_uuid', $domain_uuid)
                 ->where('ivr_menu_enabled', 'true')
                 ->count();
         }
 
         if (userCheckPermission("time_condition_view")) {
             //Time Condition Count
-            $counts['schedules'] = Dialplans::where('domain_uuid', $domain_id)
+            $counts['schedules'] = Dialplans::where('domain_uuid', $domain_uuid)
                 ->where('app_uuid', '4b821450-926b-175a-af93-a03c441818b1')
                 ->count();
         }
 
         if (userCheckPermission("device_view")) {
             //Devices Count
-            $counts['devices'] = Devices::where('domain_uuid', $domain_id)
+            $counts['devices'] = Devices::where('domain_uuid', $domain_uuid)
                 ->where('device_enabled', 'true')
                 ->count();;
         }
 
         if (userCheckPermission("voicemail_view")) {
             //Voicemail Count
-            $counts['voicemails'] = Voicemails::where('domain_uuid', $domain_id)
+            $counts['voicemails'] = Voicemails::where('domain_uuid', $domain_uuid)
                 ->where('voicemail_enabled', 'true')
                 ->count();
         }
 
         if (userCheckPermission("call_flow_view")) {
             //Call Flow Count
-            $counts['call_flows'] = CallFlows::where('domain_uuid', $domain_id)
+            $counts['call_flows'] = CallFlows::where('domain_uuid', $domain_uuid)
                 ->where('call_flow_enabled', 'true')
                 ->count();
         }
 
         if (userCheckPermission("business_hours_list_view")) {
             //Business Hours Count
-            $counts['business_hours'] = BusinessHour::where('domain_uuid', $domain_id)
+            $counts['business_hours'] = BusinessHour::where('domain_uuid', $domain_uuid)
                 ->where('enabled', 'true')
                 ->count();
         }
 
         //Messages Count
         if (userCheckPermission("message_settings_list_view")) {
-            $counts['messages'] = Messages::where('domain_uuid', $domain_id)
+            $counts['messages'] = Messages::where('domain_uuid', $domain_uuid)
                 ->whereRaw("created_at >= '" . date('Y-m-d') . " 00:00:00.00 " . get_domain_setting('time_zone') . "'")
                 ->count();
         }
 
         //Whitelisted Numbers Count
         if (userCheckPermission("whitelisted_numbers_list_view")) {
-            $counts['whitelisted_numbers'] = WhitelistedNumbers::where('domain_uuid', $domain_id)
+            $counts['whitelisted_numbers'] = WhitelistedNumbers::where('domain_uuid', $domain_uuid)
                 ->count();
         }
 
         if (Module::has('ContactCenter') && Module::collections()->has('ContactCenter') && (userCheckPermission("contact_center_settings_edit") || userCheckPermission("contact_center_dashboard_view"))) {
-            $counts['queues'] = CallCenterQueues::where('domain_uuid', $domain_id)->count();
+            $counts['queues'] = CallCenterQueues::where('domain_uuid', $domain_uuid)->count();
         }
 
         $eslService = new FreeswitchEslService();

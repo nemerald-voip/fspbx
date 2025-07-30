@@ -52,6 +52,8 @@
                 <!-- Email column -->
                 <TableColumnHeader header="Email" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
+                <TableColumnHeader header="Assigned Extension" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+
                 <!-- Roles -->
                 <TableColumnHeader header="Roles" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
@@ -101,6 +103,8 @@
 
                     <!-- Email -->
                     <TableField class="px-2 py-2 text-sm text-gray-500" :text="row.user_email" />
+
+                    <TableField class="px-2 py-2 text-sm text-gray-500" :text="row.extension?.name_formatted" />
 
                     <!-- Groups badges -->
                     <TableField class="px-2 py-2 text-sm">
@@ -372,7 +376,7 @@ const getItemOptions = (itemUuid = null) => {
     axios.post(props.routes.item_options, payload)
         .then((response) => {
             itemOptions.value = response.data;
-            console.log(itemOptions.value);
+            // console.log(itemOptions.value);
 
         }).catch((error) => {
             handleModalClose();
