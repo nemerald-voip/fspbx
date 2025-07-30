@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\CDR;
-use App\Models\Extensions;
 use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
 
@@ -20,8 +19,6 @@ class CdrDataService
             $params['filter']['entity']['value'] = $user->extension_uuid;
             $params['filter']['entity']['type'] = 'extension';
         }
-
-        // logger(request()->merge($params));
 
         // Main query:
         $cdrs = QueryBuilder::for(CDR::class, request()->merge($params))
@@ -86,15 +83,19 @@ class CdrDataService
                             $query->where('call_center_queue_uuid', $value['value']);
                             break;
                         case 'extension':
-                            $extention = \App\Models\Extensions::find($value['value']);
-                            if (!$extention) break;
-                            $query->where(function ($q) use ($extention) {
-                                $q->where('extension_uuid', $extention->extension_uuid)
-                                    ->orWhere('caller_id_number', $extention->extension)
-                                    ->orWhere('caller_destination', $extention->extension)
-                                    ->orWhere('source_number', $extention->extension)
-                                    ->orWhere('destination_number', $extention->extension)
-                                    ->orWhere('destination_number', '*99' . $extention->extension);
+                            if (!$value['value']) {
+                                $query->where('xml_cdr_uuid', null);
+                                break;
+                            }
+                            $extension = \App\Models\Extensions::find($value['value']);
+                            if (!$extension) break;
+                            $query->where(function ($q) use ($extension) {
+                                $q->where('extension_uuid', $extension->extension_uuid)
+                                    ->orWhere('caller_id_number', $extension->extension)
+                                    ->orWhere('caller_destination', $extension->extension)
+                                    ->orWhere('source_number', $extension->extension)
+                                    ->orWhere('destination_number', $extension->extension)
+                                    ->orWhere('destination_number', '*99' . $extension->extension);
                             });
                             break;
                     }
