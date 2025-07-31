@@ -103,7 +103,7 @@ class RingGroups extends Model
 
     public function getTimeoutActionDisplayAttribute(): ?string
     {
-        if (! $this->timeout_option_details['type']) {
+        if (empty($this->timeout_option_details['type'])) {
             return null;
         }
 

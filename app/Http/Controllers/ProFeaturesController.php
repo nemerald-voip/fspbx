@@ -8,6 +8,7 @@ use App\Services\KeygenAPIService;
 use Nwidart\Modules\Facades\Module;
 use Illuminate\Support\Facades\Artisan;
 use App\Http\Requests\UpdateProFeatureRequest;
+use Illuminate\Support\Facades\Cache;
 
 class ProFeaturesController extends Controller
 {
@@ -198,8 +199,12 @@ class ProFeaturesController extends Controller
                 }
             }
 
-
             $pro_feature->update($inputs);
+
+            // Remove cached license validation 
+            $license = $inputs['license'] ?? $pro_feature->license;
+            Cache::forget("stir_shaken_license_validation_{$license}");
+            Cache::forget("license_validation_{$license}");
 
             // Return a JSON response indicating success
             return response()->json([
@@ -233,52 +238,129 @@ class ProFeaturesController extends Controller
                 return $value === 'NULL' ? null : $value;
             }, $request->validated());
 
-
-
-            // License validation
+            // 1. License validation
             $licenseKey = $inputs['license'] ?? $pro_feature->license;
+            if (!$licenseKey) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['license' => ['License key is required']]
+                ], 422);
+            }
+
             $licenseResponse = $keygenApiService->validateLicenseKey($licenseKey);
 
-            if ($licenseResponse && $licenseResponse['meta']['valid'] === true) {
+            if (!$licenseResponse || !($licenseResponse['meta']['valid'] ?? false)) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['license' => ['License is invalid or expired']]
+                ], 422);
+            }
 
-                $releases = $keygenApiService->getReleases($licenseKey);
+            // 2. Get entitlements
+            $entitlements = $keygenApiService->getEntitlementsByLicense($licenseResponse);
+            if (empty($entitlements)) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['entitlements' => ['No entitlements found for this license']]
+                ], 422);
+            }
 
-                if (!empty($releases)) {
-                    $firstRelease = $releases[0];
-                    $releaseVersion = $firstRelease['attributes']['version'];
+            // 3. Get all releases
+            $releases = $keygenApiService->getReleases($licenseKey);
+            if (empty($releases)) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['releases' => ['No releases found for this license']]
+                ], 422);
+            }
 
-                    // Format the artifact name
-                    $artifactName = "fspbx-contact-module-{$releaseVersion}.tar.gz";
+            // 4. Map latest release for each entitlement by name
+            $latestReleses = [];
 
-                    // Download the artifact using the version
-                    $artifactContent = $keygenApiService->downloadArtifact($licenseKey, $releaseVersion, $artifactName);
-
-                    if ($artifactContent) {
-                        $this->saveAndExtract($artifactName, $artifactContent);
-
-                        // Run the Artisan command to enable the ContactCenter module
-                        Artisan::call('module:enable', ['module' => 'ContactCenter']);
-
-                        // Run the module:seed command after extraction
-                        Artisan::call('module:seed', ['module' => 'ContactCenter']);
-
-                        // Run the 'app:update' command using Symfony Process
-                        // $process = new Process(['php', 'artisan', 'app:update']);
-                        // $process->setWorkingDirectory(base_path());  // Set the Laravel root directory
-                        // $process->run();
-
-                        // // Log the output of the command
-                        // if ($process->isSuccessful()) {
-                        //     logger('App update completed: ' . $process->getOutput());
-                        // } else {
-                        //     logger('App update failed. Error: ' . $process->getErrorOutput());
-                        //     logger('App update failed. Full output: ' . $process->getOutput());
-                        // }
-                    } else {
-                        throw new \Exception("Unable to download the file");
-                    }
+            foreach ($entitlements as $entitlement) {
+                $code = $entitlement['attributes']['code'] ?? null;
+                if (!$code) continue;
+    
+                $matched = array_filter($releases, function($release) use ($code) {
+                    return strtoupper($release['attributes']['name'] ?? '') === strtoupper($code);
+                });
+    
+                if ($matched) {
+                    // Sort by semantic version, descending
+                    usort($matched, function($a, $b) {
+                        $a_ver = $a['attributes']['semver'] ?? [];
+                        $b_ver = $b['attributes']['semver'] ?? [];
+                        return version_compare(
+                            "{$b_ver['major']}.{$b_ver['minor']}.{$b_ver['patch']}",
+                            "{$a_ver['major']}.{$a_ver['minor']}.{$a_ver['patch']}"
+                        );
+                    });
+    
+                    $latest = $matched[0];
+                    $releaseVersion = $latest['attributes']['version'];
+                    $artifactName = match ($code) {
+                        'CONTACT_CENTER_MODULE' => "fspbx-contact-module-{$releaseVersion}.tar.gz",
+                        'STIR_SHAKEN_MODULE' => "fspbx-stir-shaken-module-{$releaseVersion}.tar.gz",
+                        default => null
+                    };
+    
+                    $latestReleses[] = [
+                        'code' => $code,
+                        'version' => $releaseVersion,
+                        'artifact_name' => $artifactName,
+                    ];
                 }
             }
+
+            if (empty($latestReleses)) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['releases' => ['No releases found for this license']]
+                ], 422);
+            }
+
+            // For each module, download, extract, enable, seed
+            foreach ($latestReleses as $module) {
+                $code = $module['code'];
+                $releaseVersion = $module['version'];
+                $artifactName = $module['artifact_name'];
+                $moduleName = match ($code) {
+                    'CONTACT_CENTER_MODULE' => 'ContactCenter',
+                    'STIR_SHAKEN_MODULE'    => 'StirShaken',
+                    default                 => null
+                };
+
+                $artifactContent = $keygenApiService->downloadArtifact($licenseKey, $releaseVersion, $artifactName);
+
+                if ($artifactContent) {
+                    $this->saveAndExtract($artifactName, $artifactContent, $moduleName);
+
+                    $moduleName = match ($code) {
+                        'CONTACT_CENTER_MODULE' => 'ContactCenter',
+                        'STIR_SHAKEN_MODULE'    => 'StirShaken',
+                        default                 => null
+                    };
+                    if ($moduleName) {
+                        Artisan::call('module:enable', ['module' => $moduleName]);
+                        Artisan::call('module:seed', ['module' => $moduleName, '--force' => true]);
+                        Artisan::call('route:cache');
+
+                        // Run the module's post-install Artisan command if it exists
+                        $installCommand = "module:install-{$moduleName}";
+                        try {
+                            Artisan::call($installCommand);
+                        } catch (\Symfony\Component\Console\Exception\CommandNotFoundException $e) {
+                            logger("No post-install command found for module {$moduleName}: " . $e->getMessage());
+                        } catch (\Exception $e) {
+                            logger("Error running post-install command for module {$moduleName}: " . $e->getMessage());
+                        }
+
+                    }
+                } else {
+                    throw new \Exception("Unable to download the artifact for module: $code");
+                }
+            }
+                
 
 
             // Return a JSON response indicating success
@@ -307,16 +389,28 @@ class ProFeaturesController extends Controller
         }
 
         try {
-            $inputs = array_map(function ($value) {
-                return $value === 'NULL' ? null : $value;
-            }, $request->validated());
+            $modules = \Module::all(); // or use ::getByStatus(1) for enabled only
 
-            Module::disable('ContactCenter');
-            Module::delete('ContactCenter');
+            foreach ($modules as $module) {
+                $moduleName = $module->getName();
+            
+                // Run module-specific uninstall command if it exists
+                $uninstallCommand = "module:uninstall-{$moduleName}";
+                try {
+                    \Artisan::call($uninstallCommand);
+                } catch (\Exception $e) {
+                    logger("No uninstall command found for module {$moduleName}: " . $e->getMessage());
+                }
+            
+                // Disable and delete
+                \Module::disable($moduleName);
+                \Module::delete($moduleName);
+            }
+            
 
             // Return a JSON response indicating success
             return response()->json([
-                'messages' => ['success' => ['Request has been succesfully processed']]
+                'messages' => ['success' => ['All modules have been deleted']]
             ], 201);
         } catch (\Exception $e) {
             logger($e);
@@ -343,9 +437,9 @@ class ProFeaturesController extends Controller
                     'slug' => 'license',
                 ],
                 [
-                    'name' => 'Downloads',
+                    'name' => 'Modules',
                     'icon' => 'CloudArrowDownIcon',
-                    'slug' => 'downloads',
+                    'slug' => 'modules',
                 ],
             ];
 
@@ -375,12 +469,15 @@ class ProFeaturesController extends Controller
                     $item->license_valid = false;
                 }
 
-                // Check if the module is installed and enabled 
-                if (Module::has('ContactCenter') && Module::collections()->has('ContactCenter')) {
-                    $item->is_installed = true;
-                } else {
-                    $item->is_installed = false;
-                }
+                $allModules = collect(Module::all())->map(function($module) {
+                    return [
+                        'name'    => $module->getName(),
+                        'slug'    => $module->getLowerName(),
+                        'enabled' => $module->isEnabled(),
+                        'status'  => $module->isEnabled() ? 'enabled' : 'disabled',
+                        'version' => method_exists($module, 'getVersion') ? $module->getVersion() : null,
+                    ];
+                })->values();
             }
 
             $routes = [];
@@ -396,7 +493,7 @@ class ProFeaturesController extends Controller
             $itemOptions = [
                 'navigation' => $navigation,
                 'item' => $item,
-                // 'releases' => $releases, 
+                'modules' => $allModules ?? null, 
                 // 'permissions' => $permissions,
                 'routes' => $routes,
 
@@ -494,57 +591,58 @@ class ProFeaturesController extends Controller
         }
     }
 
-    public function saveAndExtract($artifactName, $artifactContent)
+    public function saveAndExtract($artifactName, $artifactContent, $moduleName)
     {
-        // Save the artifact to Modules directory
         $filePath = base_path("Modules/{$artifactName}");
-        $extractPath = base_path("Modules/ContactCenter");
-
+        $extractPath = base_path("Modules/{$moduleName}");
+    
         // If the extract path exists, remove it and recreate it
         if (file_exists($extractPath)) {
-            $this->deleteDirectory($extractPath);  // Delete existing directory
+            $this->deleteDirectory($extractPath);
         }
-        mkdir($extractPath, 0755, true);  // Recreate directory
-
+        mkdir($extractPath, 0755, true);
+    
         // Save the downloaded file
         file_put_contents($filePath, $artifactContent);
-
+    
         // Remove existing .tar file if it exists
         $tarFile = str_replace('.gz', '', $filePath);
         if (file_exists($tarFile)) {
             unlink($tarFile);
         }
+    
         // Extract the .tar.gz file
         $phar = new \PharData($filePath);
         $phar->decompress();  // Decompress the .gz file (removes .gz and creates .tar)
-
+    
         // Now extract the .tar contents
         $phar = new \PharData($tarFile);
-        $phar->extractTo($extractPath, null, true);  // Extract all files
-
+        $phar->extractTo($extractPath, null, true);
+    
         // Clean up by deleting the .tar and original .gz files
         unlink($filePath); // delete .tar.gz
         unlink($tarFile);  // delete .tar
-
+    
         // Find the extracted directory dynamically
         $subDirs = glob($extractPath . '/*', GLOB_ONLYDIR);
-
+    
         if (count($subDirs) > 0) {
-            $extractedDir = $subDirs[0];  // The first (and likely only) subdirectory
-
-            // Move each file from the extracted folder to the main ContactCenter directory
+            $extractedDir = $subDirs[0];
+    
+            // Move each file from the extracted folder to the main module directory
             $files = scandir($extractedDir);
-
+    
             foreach ($files as $file) {
                 if ($file !== '.' && $file !== '..') {
                     rename("{$extractedDir}/{$file}", "{$extractPath}/{$file}");
                 }
             }
-
+    
             // Delete the extracted directory
             rmdir($extractedDir);
         }
     }
+    
 
     // Helper function to delete a directory and its contents
     private function deleteDirectory($dirPath)

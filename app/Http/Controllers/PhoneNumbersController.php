@@ -15,6 +15,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\RedirectResponse;
+use Spatie\QueryBuilder\QueryBuilder;
+use Spatie\QueryBuilder\AllowedFilter;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Builder;
 use App\Services\CallRoutingOptionsService;
@@ -44,19 +46,68 @@ class PhoneNumbersController extends Controller
      * @param  Request  $request
      * @return Redirector|Response|RedirectResponse|Application
      */
-    public function index(
-        Request $request
-    ): Redirector|Response|RedirectResponse|Application {
+    public function index(Request $request)
+    {
         if (!userCheckPermission("destination_view")) {
             return redirect('/');
         }
 
+        $perPage = 50;
+        $currentDomain = session('domain_uuid');
+
+        // If the filter is not present, assign default value before QueryBuilder
+        if (!$request->has('filter.showGlobal')) {
+            $request->merge([
+                'filter' => array_merge(
+                    $request->input('filter', []),
+                    ['showGlobal' => false]
+                ),
+            ]);
+        }
+
+        $phone_numbers = QueryBuilder::for(Destinations::class)
+            ->select([
+                'destination_uuid',
+                'destination_number',
+                'destination_prefix',
+                'destination_actions',
+                'destination_enabled',
+                'destination_description',
+                'domain_uuid',
+            ])
+            // allow ?filter[username]=foo or ?filter[user_email]=bar
+            ->allowedFilters([
+                // Only email and name_formatted
+                AllowedFilter::callback('search', function ($query, $value) {
+                    $query->where(function ($q) use ($value) {
+                        $q->where('destination_number', 'ilike', "%{$value}%")
+                            ->orWhere('destination_description', 'ilike', "%{$value}%")
+                            ->orWhere('destination_actions', 'ilike', "%{$value}%");
+                    });
+                }),
+                AllowedFilter::callback('showGlobal', function ($query, $value) use ($currentDomain) {
+                    // If showGlobal is falsey (0, '0', false, null), restrict to the current domain
+                    if (!$value || $value === '0' || $value === 0 || $value === false) {
+                        $query->where('domain_uuid', $currentDomain);
+                    }
+                    // else, do nothing and show all domains
+                }),
+            ])
+
+            ->with(['domain' => function ($query) {
+                $query->select('domain_uuid', 'domain_name', 'domain_description');
+            }])
+
+            ->allowedSorts(['destination_number'])
+            ->defaultSort('destination_number')
+            ->paginate($perPage);
+
+
         return Inertia::render(
             $this->viewName,
             [
-                'data' => function () {
-                    return $this->getData();
-                },
+                'data' => $phone_numbers,
+
                 'showGlobal' => function () {
                     return request('filterData.showGlobal') === 'true';
                 },
@@ -71,13 +122,7 @@ class PhoneNumbersController extends Controller
                     //'bulk_delete' => route('messages.settings.bulk.delete'),
                     //'bulk_update' => route('devices.bulk.update'),
                 ],
-                'conditions' => [
-                    [
-                        'name' => 'Caller ID Number',
-                        'value' => 'caller_id_number'
-                    ]
-                ],
-                'domain' => Session::get('domain_uuid')
+
             ]
         );
     }
@@ -87,22 +132,7 @@ class PhoneNumbersController extends Controller
     {
         try {
 
-            $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
             $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
-
-            // Base navigation array without Greetings
-            $navigation = [
-                [
-                    'name' => 'Settings',
-                    'icon' => 'Cog6ToothIcon',
-                    'slug' => 'settings',
-                ],
-                [
-                    'name' => 'Advanced',
-                    'icon' => 'AdjustmentsHorizontalIcon',
-                    'slug' => 'advanced',
-                ],
-            ];
 
             $routingOptionsService = new CallRoutingOptionsService;
             $routingTypes = $routingOptionsService->routingTypes;
@@ -117,7 +147,7 @@ class PhoneNumbersController extends Controller
             ]);
             foreach ($faxesCollection as $fax) {
                 $faxes[] = [
-                    'name' => $fax->fax_extension . ' ' . $fax->fax_name,
+                    'label' => $fax->fax_extension . ' ' . $fax->fax_name,
                     'value' => $fax->fax_uuid
                 ];
             }
@@ -128,7 +158,7 @@ class PhoneNumbersController extends Controller
                 foreach ($domainsCollection as $domain) {
                     $domains[] = [
                         'value' => $domain->domain_uuid,
-                        'name' => $domain->domain_description
+                        'label' => $domain->domain_description
                     ];
                 }
             }
@@ -136,7 +166,26 @@ class PhoneNumbersController extends Controller
             // Check if item_uuid exists to find an existing voicemail
             if ($item_uuid) {
                 // Find existing item by item_uuid
-                $phoneNumber = $this->model::where($this->model->getKeyName(), $item_uuid)->first();
+                // $phoneNumber = $this->model::where($this->model->getKeyName(), $item_uuid)->first();
+
+                $phoneNumber = QueryBuilder::for($this->model)
+                    ->select([
+                        'domain_uuid',
+                        'destination_uuid',
+                        'fax_uuid',
+                        'destination_number',
+                        'destination_prefix',
+                        'destination_record',
+                        'destination_distinctive_ring',
+                        'destination_cid_name_prefix',
+                        'destination_accountcode',
+                        'destination_actions',
+                        'destination_enabled',
+                        'destination_description',
+                        'destination_type_fax',
+                    ])
+                    ->whereKey($item_uuid)
+                    ->firstOrFail();
 
                 // logger($phoneNumber);
 
@@ -155,16 +204,16 @@ class PhoneNumbersController extends Controller
             $permissions = $this->getUserPermissions();
 
             $routes = [
+                'store_route' => route('phone-numbers.store'),
                 'update_route' => $updateRoute ?? null,
                 'get_routing_options' => route('routing.options'),
-
+                'bulk_update_route' => route('phone-numbers.bulk.update'),
             ];
 
 
             // Construct the itemOptions object
             $itemOptions = [
-                'navigation' => $navigation,
-                'phone_number' => $phoneNumber,
+                'item' => $phoneNumber,
                 'permissions' => $permissions,
                 'routes' => $routes,
                 'routing_types' => $routingTypes,
@@ -312,7 +361,7 @@ class PhoneNumbersController extends Controller
             $destination_actions = [];
             if (!empty($inputs['routing_options'])) {
                 foreach ($inputs['routing_options'] as $option) {
-                    $destination_actions[] = $this->buildDestinationAction($option);
+                    $destination_actions[] = buildDestinationAction($option);
                 }
             }
 
@@ -321,6 +370,7 @@ class PhoneNumbersController extends Controller
 
             $instance = $this->model;
             $instance->fill([
+                'destination_uuid' => Str::uuid(),
                 'domain_uuid' => $inputs['domain_uuid'],
                 'dialplan_uuid' => Str::uuid(),
                 'fax_uuid' => $inputs['fax_uuid'] ?? null,
@@ -344,7 +394,7 @@ class PhoneNumbersController extends Controller
             $this->generateDialPlanXML($instance);
 
             return response()->json([
-                'messages' => ['success' => ['New item created']]
+                'messages' => ['success' => ['New phone number succesfully created']]
             ], 201);
         } catch (\Exception $e) {
             // Log the error message
@@ -386,69 +436,66 @@ class PhoneNumbersController extends Controller
      * @param  BulkUpdatePhoneNumberRequest  $request
      * @return JsonResponse
      */
-    public function bulkUpdate(BulkUpdatePhoneNumberRequest  $request): JsonResponse
+    public function bulkUpdate(BulkUpdatePhoneNumberRequest $request)
     {
-        // $request->items has items IDs that need to be updated
-        // $request->validated has the update data
+        $data = $request->validated();
 
-        try {
-            // Prepare the data for updating
-            $inputs = collect($request->validated())
-                ->filter(function ($value) {
-                    return $value !== null;
-                })->toArray();
-
-            $inputs = $this->processActionConditionInputs($inputs);
-
-            if ($inputs['destination_actions'] == null) {
-                unset($inputs['destination_actions']);
-            }
-
-            if ($inputs['destination_conditions'] == null) {
-                unset($inputs['destination_conditions']);
-            }
-
-            //var_dump($inputs);
-
-            /*if (isset($inputs['device_template'])) {
-                $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0];
-                if ($inputs['device_vendor'] === 'poly') {
-                    $inputs['device_vendor'] = 'polycom';
-                }
-            }
-
-            if (isset($inputs['extension'])) {
-                $extension = $inputs['extension'];
-                unset($inputs['extension']);
-            } else {
-                $extension = null;
-            }*/
-
-            if (sizeof($inputs) > 0) {
-                $updated = $this->model::whereIn($this->model->getKeyName(), request()->items)
-                    ->update($inputs);
-            }
-
-            /*if ($extension) {
-                // First, we are deleting all existing device lines
-                $this->deleteDeviceLines(request('items'));
-
-                // Create new lines
-                $this->createDeviceLines(request('items'), $extension);
-            }*/
-
+        // logger($data);
+    
+        $ids = $data['items'] ?? [];
+        unset($data['items']);
+    
+        if (empty($ids) || empty($data)) {
             return response()->json([
-                'messages' => ['success' => ['Selected items updated']],
+                'success' => false,
+                'errors' => ['input' => ['No phone numbers or fields provided for update.']]
+            ], 422);
+        }
+    
+        try {
+            DB::beginTransaction();
+    
+            // Update each phone number in chunks
+            Destinations::whereIn('destination_uuid', $ids)
+                ->chunk(10, function ($phoneNumbers) use ($data) {
+                    foreach ($phoneNumbers as $phoneNumber) {
+                        $updateData = $data;
+    
+                        // Handle routing_options if present (per number)
+                        if (isset($updateData['routing_options'])) {
+                            $destination_actions = [];
+                            foreach ($updateData['routing_options'] as $option) {
+                                $destination_actions[] = buildDestinationAction($option);
+                            }
+                            $updateData['destination_actions'] = json_encode($destination_actions);
+                            unset($updateData['routing_options']);
+                        }
+    
+                        $phoneNumber->fill($updateData);
+                        if ($phoneNumber->isDirty()) {
+                            $phoneNumber->save();
+    
+                            //regenerate XML
+                            $this->generateDialPlanXML($phoneNumber);
+                        }
+                    }
+                });
+    
+            DB::commit();
+    
+            return response()->json([
+                'messages' => ['success' => ['Selected phone numbers updated']],
             ], 200);
         } catch (\Exception $e) {
-            logger($e);
-            // Handle any other exception that may occur
+            DB::rollBack();
+            logger('PhoneNumbersController@bulkUpdate error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => ['Failed to update selected items']]
-            ], 500); // 500 Internal Server Error for any other errors
+            ], 500);
         }
     }
+    
 
     /**
      * Update the specified resource in storage.
@@ -468,120 +515,34 @@ class PhoneNumbersController extends Controller
         }
 
         try {
-            $inputs = array_map(function ($value) {
-                return $value === 'NULL' ? null : $value;
-            }, $request->validated());
-
-            // logger($inputs);
+            $data = $request->validated();
 
             // Process routing_options to form destination_actions
             $destination_actions = [];
-            if (!empty($inputs['routing_options'])) {
-                foreach ($inputs['routing_options'] as $option) {
-                    $destination_actions[] = $this->buildDestinationAction($option);
+            if (!empty($data['routing_options'])) {
+                foreach ($data['routing_options'] as $option) {
+                    $destination_actions[] = buildDestinationAction($option);
                 }
             }
 
             // Assign the formatted actions to the destination_actions field
-            $inputs['destination_actions'] = json_encode($destination_actions);
+            $data['destination_actions'] = json_encode($destination_actions);
 
-            $phone_number->update($inputs);
+            $phone_number->update($data);
 
             $this->generateDialPlanXML($phone_number);
+
+            return response()->json([
+                'messages' => ['success' => ['Phone number updated successfully']],
+                'phone_number' => $phone_number,
+            ], 200);
         } catch (\Exception $e) {
-            logger($e);
+            logger('PhoneNumbersController@update error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => ['Failed to update this item']]
             ], 500); // 500 Internal Server Error for any other errors
-        }
-    }
-
-    /**
-     * Helper function to build destination action based on routing option type.
-     */
-    protected function buildDestinationAction($option)
-    {
-        switch ($option['type']) {
-            case 'extensions':
-            case 'ring_groups':
-            case 'ivrs':
-            case 'time_conditions':
-            case 'contact_centers':
-            case 'faxes':
-            case 'call_flows':
-                return [
-                    'destination_app' => 'transfer',
-                    'destination_data' => $option['extension'] . ' XML ' . session('domain_name'),
-                ];
-
-            case 'voicemails':
-                return [
-                    'destination_app' => 'transfer',
-                    'destination_data' => '*99' . $option['extension'] . ' XML ' . session('domain_name'),
-                ];
-
-            case 'check_voicemail':
-                return [
-                    'destination_app' => 'transfer',
-                    'destination_data' => '*98 XML ' . session('domain_name'),
-                ];
-
-            case 'company_directory':
-                return [
-                    'destination_app' => 'transfer',
-                    'destination_data' => '*411 XML ' . session('domain_name'),
-                ];
-
-            case 'recordings':
-                // Handle recordings with 'lua' destination app
-                return [
-                    'destination_app' => 'lua',
-                    'destination_data' => 'streamfile.lua ' . $option['extension'],
-                ];
-
-            case 'hangup':
-                return [
-                    'destination_app' => 'hangup',
-                    'destination_data' => '',
-                ];
-
-                // Add other cases as necessary for different types
-            default:
-                return [];
-        }
-    }
-
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  Destinations  $phone_number
-     * @return RedirectResponse
-     */
-    public function destroy(Destinations $phoneNumber)
-    {
-        try {
-            //Get dialplan details
-            $dialPlan = Dialplans::where('dialplan_uuid', $phoneNumber->dialplan_uuid)->first();
-
-            // Delete dialplan
-            if ($dialPlan) {
-                $dialPlan->delete();
-            }
-
-            // Delete Phone Number
-            $phoneNumber->delete();
-
-            //clear fusionpbx cache
-            $this->clearCache($phoneNumber);
-
-            return redirect()->back()->with('message', ['server' => ['Item deleted']]);
-        } catch (\Exception $e) {
-            // Log the error message
-            logger($e);
-            return redirect()->back()->with('error', ['server' => ['Server returned an error while deleting this item']]);
         }
     }
 
@@ -597,11 +558,21 @@ class PhoneNumbersController extends Controller
 
             // Retrieve all items at once
             $items = $this->model::whereIn('destination_uuid', request('items'))
-                ->get(['destination_uuid']);
+                ->get(['destination_uuid', 'dialplan_uuid']);
 
             foreach ($items as $item) {
+                //Get dialplan details
+                $dialPlan = Dialplans::where('dialplan_uuid', $item->dialplan_uuid)->first();
+                // Delete dialplan
+                if ($dialPlan) {
+                    $dialPlan->delete();
+                }
+
                 // Delete the item itself
                 $item->delete();
+
+                //clear fusionpbx cache
+                $this->clearCache($item);
             }
 
             // Commit Transaction
@@ -615,7 +586,7 @@ class PhoneNumbersController extends Controller
             DB::rollBack();
 
             // Log the error message
-            logger($e);
+            logger('PhoneNumbersController@bulkDelete error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => ['Server returned an error while deleting the selected items.']]
@@ -862,6 +833,20 @@ class PhoneNumbersController extends Controller
             $dialPlanDetails->dialplan_detail_type = "set";
             $dialPlanDetails->dialplan_detail_data = "effective_caller_id_name=" . $phoneNumber->destination_cid_name_prefix . "#\${caller_id_name}";
             $dialPlanDetails->dialplan_detail_inline = "false";
+            $dialPlanDetails->dialplan_detail_group = $detailGroup;
+            $dialPlanDetails->dialplan_detail_order = $detailOrder;
+            $dialPlanDetails->save();
+
+            $detailOrder += 10;
+        }
+
+        if (!empty($phoneNumber->destination_cid_name_prefix)) {
+            $dialPlanDetails = new DialplanDetails();
+            $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
+            $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
+            $dialPlanDetails->dialplan_detail_tag = "action";
+            $dialPlanDetails->dialplan_detail_type = "set";
+            $dialPlanDetails->dialplan_detail_data = "cnam_prefix=" . $phoneNumber->destination_cid_name_prefix;
             $dialPlanDetails->dialplan_detail_group = $detailGroup;
             $dialPlanDetails->dialplan_detail_order = $detailOrder;
             $dialPlanDetails->save();
@@ -1133,15 +1118,9 @@ class PhoneNumbersController extends Controller
     public function getUserPermissions()
     {
         $permissions = [];
-        $permissions['manage_voicemail_copies'] = userCheckPermission('voicemail_forward');
-        $permissions['manage_voicemail_transcription'] = userCheckPermission('voicemail_transcription_enabled');
-        $permissions['manage_voicemail_auto_delete'] = userCheckPermission('voicemail_local_after_email');
-        $permissions['manage_voicemail_recording_instructions'] = userCheckPermission('voicemail_recording_instructions');
-
-        // $permissions['manage_voicemail_copies'] = false;
-        // $permissions['manage_voicemail_transcription'] = false;
-        // $permissions['manage_voicemail_auto_delete'] = false;
-        // $permissions['manage_voicemail_recording_instructions'] = false;
+        $permissions['manage_recording_setting'] = userCheckPermission('destination_record');
+        $permissions['manage_destination_prefix'] = userCheckPermission('destination_prefix');
+        $permissions['manage_destination_domain'] = userCheckPermission('destination_domain');
 
         return $permissions;
     }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Inertia\Inertia;
 use App\Models\EmailQueue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -11,6 +12,10 @@ class EmailQueueController extends Controller
 {
     public function index(Request $request)
     {
+        if ($request->hasHeader('X-Inertia')) {
+            return Inertia::location(route($request->route()->getName()));
+        }
+        
         // Check permissions
         if (! userCheckPermission("email_queue_view")) {
             return redirect('/');

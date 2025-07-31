@@ -60,18 +60,18 @@ class UpdateRingGroupRequest extends FormRequest
             'members.*.enabled'     => ['required_with:members', 'boolean'],
 
             // Fail‑back logic: action + optional target
-            'failback_action' => [
+            'fallback_action' => [
                 'sometimes',
                 'required',
             ],
 
-            'failback_target' => [
+            'fallback_target' => [
                 'sometimes',
                 function ($attribute, $value, $fail) {
-                    $action = $this->input('failback_action');
+                    $action = $this->input('fallback_action');
 
                     // if an action *needs* a target (i.e. it is NOT one of these),
-                    // then failback_target cannot be empty
+                    // then fallback_target cannot be empty
                     if (
                         $action
                         && ! in_array($action, [
@@ -167,8 +167,8 @@ class UpdateRingGroupRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'failback_action.required' => 'The no answer action is required.',
-            'members.*.delay.required_with' =>  'The member setting field is required',
+            'fallback_action.required' => 'The no answer action is required.',
+            'members.*.delay.required_with' =>  'The member setting is required',
             'members.*.timeout.required_with' =>  'The member setting is required',
             'forward_action.required_if' =>  'The action is required when call forwarding is enabled.',
             'notification_email.required_if' => 'The notification email is required when missed call notifications are enabled.',

@@ -135,10 +135,9 @@ class StorePhoneNumberRequest extends FormRequest
     {
         return [
             'destination_number.required' => 'Phone number is required',
-            'destination_number.unique' => 'This phone number is already used',
+            'destination_number.unique' => 'This phone number already exists',
             'destination_conditions.*.condition_expression' => 'Please use valid US phone number on condition',
             'destination_conditions.*.condition_target.targetValue' => 'Please select action on condition',
-            'domain_uuid.not_in' => 'Company must be selected.'
         ];
     }
 
@@ -174,21 +173,9 @@ class StorePhoneNumberRequest extends FormRequest
             $this->merge(['destination_conditions' => $destinationConditions]);
         }
 
-        if ($this->has('destination_enabled')) {
-            $this->merge([
-                'destination_enabled' => $this->destination_enabled ? 'true' : 'false',
-            ]);
-        }
-
-        if ($this->has('destination_record')) {
-            $this->merge([
-                'destination_record' => $this->destination_record ? 'true' : 'false',
-            ]);
-        }
-
         if ($this->has('destination_type_fax')) {
             $this->merge([
-                'destination_type_fax' => $this->destination_type_fax ? 1 : null,
+                'destination_type_fax' => $this->destination_type_fax == '1' ? 1 : null,
             ]);
         }
 

@@ -225,6 +225,15 @@
 
                         </div>
 
+                        <div class="col-span-6 sm:col-span-3"  v-if="options.permissions.manage_voicemail_mobile_notifications" >
+                            <LabelInputOptional target="voicemail_sms_to" label="Mobile Number to Receive Voicemail Notifications" class="truncate" />
+                            <InputField v-model="form.voicemail_sms_to" type="text" name="voicemail_sms_to"
+                                id="voicemail_sms_to" class="mt-2" :error="!!errors?.voicemail_sms_to" />
+                            <div v-if="errors?.voicemail_sms_to" class="mt-2 text-xs text-red-600">
+                                {{ errors.voicemail_sms_to[0] }}
+                            </div>
+                        </div>
+
                         <div class="grid grid-cols-6 gap-6">
                             <div class="col-span-3 sm:col-span-2">
                                 <div class="flex items-center gap-1">
@@ -337,6 +346,7 @@ const form = reactive({
     voicemail_id: props.options.voicemail.voicemail_id,
     voicemail_password: props.options.voicemail.voicemail_password,
     voicemail_mail_to: null,
+    voicemail_sms_to: null,
     voicemail_description: null,
     voicemail_transcription_enabled: props.options.voicemail.voicemail_transcription_enabled === "true",
     voicemail_email_attachment: props.options.voicemail.voicemail_file === "attach",

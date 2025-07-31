@@ -90,11 +90,11 @@
                 <tr v-for="row in data.data" :key="row.message_uuid">
                     <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 " :text="row.created_at_formatted">
                         <div class="flex items-center">
-                            <input v-if="row.created_at_formatted" v-model="selectedItems" type="checkbox"
+                            <input v-if="row.message_uuid" v-model="selectedItems" type="checkbox"
                                 name="action_box[]" :value="row.message_uuid"
                                 class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9">
-                                {{ row.created_at_formatted }}
+                                {{ row.created_at_formatted ??  row.created_at}}
                             </div>
 
                         </div>
@@ -111,10 +111,10 @@
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.direction" />
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.source_formatted" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.source_formatted ?? row.source" />
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.destination_formatted" />
+                        :text="row.destination_formatted ?? row.destination" />
 
                     <TableField class=" px-2 py-2 text-sm text-gray-500" :text="row.message" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.type" />
@@ -277,8 +277,6 @@ const props = defineProps({
     data: Object,
     showGlobal: Boolean,
     routes: Object,
-    // itemData: Object,
-    // itemOptions: Object,
 });
 
 

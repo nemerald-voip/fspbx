@@ -84,11 +84,11 @@
                                             <span class="text-body fw-bold">{{ $file->fax_caller_id_name ?? ''}}</span><br />
                                         @endif
                                         @if($file->fax_caller_id_number!='')
-                                            <span class="text-body fw-bold ">{{ phone($file->fax_caller_id_number, "US", $national_phone_number_format) }}</span>
+                                            <span class="text-body fw-bold ">{{ $file->fax_caller_id_number }}</span>
                                         @endif
                                     </td>
                                     <td>
-                                        {{ phone($file->fax_number, "US", $national_phone_number_format) }}
+                                        {{ $file->fax_number }}
                                     </td>
                                     {{-- <td>
                                         {{ $file->fax_file_type }}

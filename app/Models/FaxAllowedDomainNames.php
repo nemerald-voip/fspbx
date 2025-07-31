@@ -16,6 +16,11 @@ class FaxAllowedDomainNames extends Model
     protected $keyType = 'string';
 
 
+    protected $fillable = [
+        'fax_uuid',
+        'domain',
+    ];
+
     /**
      * Get the fax for this domain name
      */

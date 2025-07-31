@@ -32,6 +32,7 @@ class UpdateVoicemailRequest extends FormRequest
             ],
             'voicemail_password' => ['nullable', 'numeric', new ValidVoicemailPassword],
             'voicemail_mail_to' => 'nullable|email:rfc',
+            'voicemail_sms_to' => 'nullable|string',
             'greeting_id' => 'required|string',
             'voicemail_enabled' => 'present',
             'voicemail_tutorial' => 'present',
@@ -87,6 +88,10 @@ class UpdateVoicemailRequest extends FormRequest
                 'voicemail_transcription_enabled' => get_domain_setting('transcription_enabled_default'),
             ]);
         }
+
+        $this->merge([
+            'voicemail_mail_to' => $this->voicemail_mail_to ? strtolower($this->voicemail_mail_to) : null,
+        ]);
 
         if ($this->has('voicemail_tutorial')) {
             $this->merge([

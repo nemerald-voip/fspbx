@@ -4,13 +4,8 @@ namespace App\Http\Controllers;
 
 use Inertia\Inertia;
 use App\Models\FaxQueues;
-use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use libphonenumber\PhoneNumberUtil;
-use Illuminate\Support\Facades\Cache;
-use libphonenumber\PhoneNumberFormat;
 use Illuminate\Support\Facades\Session;
-use libphonenumber\NumberParseException;
 
 class FaxQueueController extends Controller
 {
@@ -62,9 +57,6 @@ class FaxQueueController extends Controller
 
             ]
         );
-
-        $statuses = ['all' => 'Show All', 'sent' => 'Sent', 'waiting' => 'Waiting', 'failed' => 'Failed', 'sending' => 'Sending'];
-
 
     }
 

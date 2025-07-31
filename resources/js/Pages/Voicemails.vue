@@ -181,7 +181,7 @@
         <template #modal-body>
             <UpdateVoicemailForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
                 @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleErrorResponse"
-                @success="showNotification('success', { request: [$event] })" />
+                @success="showNotification" />
         </template>
     </AddEditItemModal>
 

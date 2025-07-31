@@ -4,7 +4,6 @@ namespace App\Http\Requests;
 
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Validation\ValidationException;
@@ -32,21 +31,51 @@ class StoreDeviceRequest extends FormRequest
             'device_address_modified' => [
                 'nullable',
                 Rule::unique('App\Models\Devices', 'device_address')
+                    ->ignore($this->device_address_modified, 'device_address'),
             ],
             'device_profile_uuid' => [
                 'nullable',
-                Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid')
-                    ->where('domain_uuid', Session::get('domain_uuid'))
+                Rule::when(
+                    function ($input) {
+                        // Check if the value is not the literal string "NULL"
+                        return $input['device_profile_uuid'] !== 'NULL';
+                    },
+                    Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid'),
+                )
             ],
             'device_template' => [
-                'required',
+                'nullable',
                 'string',
             ],
-            'lines' => [
+            'device_keys' => [
                 'nullable',
                 'array'
             ],
+            // Required fields for each key:
+            'device_keys.*.line_type_id' => ['required', 'string'],
+            'device_keys.*.auth_id' => ['required', 'string'],
+            'device_keys.*.line_number' => ['required', 'numeric'],
+
+            // These fields can be null/empty:
+            'device_keys.*.display_name' => ['nullable'],
+            'device_keys.*.server_address' => ['nullable'],
+            'device_keys.*.server_address_primary' => ['nullable'],
+            'device_keys.*.server_address_secondary' => ['nullable'],
+            'device_keys.*.sip_port' => ['nullable'],
+            'device_keys.*.sip_transport' => ['nullable'],
+            'device_keys.*.register_expires' => ['nullable'],
+            'device_keys.*.device_line_uuid' => ['nullable'],
+            
+            'device_provisioning' => [
+                'boolean'
+            ],
             'domain_uuid' => [
+                'required',
+            ],
+            'device_description' => [
+                'nullable',
+            ],
+            'device_enabled' => [
                 'nullable',
             ],
         ];
@@ -75,7 +104,7 @@ class StoreDeviceRequest extends FormRequest
 
         $responseData = array('errors' => $errors);
 
-        throw new HttpResponseException(response()->json($responseData, 422)); 
+        throw new HttpResponseException(response()->json($responseData, 422));
     }
 
     public function messages(): array
@@ -99,6 +128,10 @@ class StoreDeviceRequest extends FormRequest
 
         if (!$this->has('domain_uuid')) {
             $this->merge(['domain_uuid' => session('domain_uuid')]);
+        }
+
+        if (!$this->has('device_enabled')) {
+            $this->merge(['device_enabled' => 'true']);
         }
     }
 }

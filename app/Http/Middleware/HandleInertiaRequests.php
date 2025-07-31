@@ -79,13 +79,20 @@ class HandleInertiaRequests extends Middleware
 
         $permissions['device_profile_index'] = userCheckPermission('device_profile_view');
 
+        $permissions['manage_cloud_provision_providers'] = userCheckPermission('manage_cloud_provision_providers');
+        $permissions['polycom_api_token_edit'] = userCheckPermission('polycom_api_token_edit');
+
         $permissions['destination_add'] = userCheckPermission('destination_add');
-        $permissions['destination_edit'] = userCheckPermission('destination_edit');
-        $permissions['destination_delete'] = userCheckPermission('destination_delete');
+        $permissions['destination_update'] = userCheckPermission('destination_edit');
+        $permissions['destination_destroy'] = userCheckPermission('destination_delete');
         $permissions['destination_edit_domain'] = userCheckPermission('destination_domain');
 
         $permissions['cdrs_view_global'] = userCheckPermission('xml_cdr_all');
         $permissions['cdrs_export'] = userCheckPermission('xml_cdr_export');
+        $permissions['cdr_view_details'] = userCheckPermission('xml_cdr_details');
+
+        $permissions['call_recording_play'] = userCheckPermission('call_recording_play');
+        $permissions['call_recording_download'] = userCheckPermission('call_recording_download');
 
         $permissions['voicemail_create'] = userCheckPermission('voicemail_add');
         $permissions['voicemail_update'] = userCheckPermission('voicemail_edit');
@@ -98,7 +105,7 @@ class HandleInertiaRequests extends Middleware
 
         $permissions['registrations_view_global'] = userCheckPermission('registration_all');
 
-        $permissions['active_calls_view_global'] = userCheckPermission('active_call_all');
+        $permissions['active_calls_view_global'] = userCheckPermission('call_active_all');
 
         $permissions['phone_numbers_view_global'] = userCheckPermission('destination_all');
         $permissions['phone_numbers_create'] = userCheckPermission('destination_add');
@@ -122,6 +129,32 @@ class HandleInertiaRequests extends Middleware
         $permissions['contact_upload'] = userCheckPermission('contact_upload');
 
         $permissions['account_settings_index'] = userCheckPermission('account_settings_list_view');
+
+        $permissions['business_hours_create'] = userCheckPermission('business_hours_create');
+        $permissions['business_hours_update'] = userCheckPermission('business_hours_update');
+        $permissions['business_hours_destroy'] = userCheckPermission('business_hours_delete');
+
+
+        $permissions['group_create'] = userCheckPermission('group_add');
+        $permissions['group_update'] = userCheckPermission('group_edit');
+        $permissions['group_destroy'] = userCheckPermission('group_delete');
+        $permissions['domain_groups_view'] = userCheckPermission('domain_groups_list_view');
+
+        $permissions['user_create'] = userCheckPermission('user_add');
+        $permissions['user_update'] = userCheckPermission('user_edit');
+        $permissions['user_destroy'] = userCheckPermission('user_delete');
+
+        $permissions['extension_create'] = userCheckPermission('extension_add');
+        $permissions['extension_update'] = userCheckPermission('extension_edit');
+        $permissions['extension_destroy'] = userCheckPermission('extension_delete');
+
+        $permissions['fax_server_create'] = userCheckPermission('fax_add');
+        $permissions['fax_server_update'] = userCheckPermission('fax_edit');
+        $permissions['fax_server_destroy'] = userCheckPermission('fax_delete');
+        $permissions['fax_send'] = userCheckPermission('fax_send');
+        $permissions['fax_inbox_view'] = userCheckPermission('fax_inbox_view');
+        $permissions['fax_sent_view'] = userCheckPermission('fax_sent_view');
+        $permissions['fax_log_view'] = userCheckPermission('fax_log_view');
 
         // logger($permissions);
         return $permissions;

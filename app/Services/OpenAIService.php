@@ -13,12 +13,12 @@ class OpenAIService
         $this->apiKey = config('services.openai.api_key');
     }
 
-    public function textToSpeech($model='tts-1-hd', $input, $voice = 'alloy', $response_format = 'wav', $speed = '1.0')
+    public function textToSpeech($model = 'tts-1-hd', $input, $voice = 'alloy', $response_format = 'wav', $speed = '1.0')
     {
         if (empty($this->apiKey)) {
             throw new \Exception('OpenAI API key is not configured. Please set the API key in your environment file.');
         }
-        
+
         $url = 'https://api.openai.com/v1/audio/speech';
 
         $response = Http::withHeaders([
@@ -33,7 +33,6 @@ class OpenAIService
         ]);
 
         return $this->handleResponse($response);
-
     }
 
     private function handleResponse($response)
@@ -56,5 +55,67 @@ class OpenAIService
 
         // Handle unexpected errors
         throw new \Exception('An unexpected error occurred. Please try again.');
+    }
+
+    public function getVoices()
+    {
+        return [
+            ['value' => 'alloy', 'name' => 'Alloy'],
+            ['value' => 'echo', 'name' => 'Echo'],
+            ['value' => 'fable', 'name' => 'Fable'],
+            ['value' => 'onyx', 'name' => 'Onyx'],
+            ['value' => 'nova', 'name' => 'Nova'],
+            ['value' => 'shimmer', 'name' => 'Shimmer'],
+        ];
+    }
+
+    public function getDefaultVoice()
+    {
+        return get_domain_setting('openai_default_voice'); 
+    }
+
+    public function getSpeeds()
+    {
+        $openAiSpeeds = [];
+
+        for ($i = 0.85; $i <= 1.3; $i += 0.05) {
+            // Format all with two decimals, or stick with your logic if needed
+            $formattedValue = number_format($i, 2, '.', '');
+            $openAiSpeeds[] = [
+                'value' => $formattedValue,
+                'name' => $formattedValue
+            ];
+        }
+
+        return $openAiSpeeds;
+    }
+
+    public function transcribeAudio($filePath, $model = 'whisper-1', $language = null)
+    {
+        if (empty($this->apiKey)) {
+            throw new \Exception('OpenAI API key is not configured. Please set the API key in your environment file.');
+        }
+
+        $url = 'https://api.openai.com/v1/audio/transcriptions';
+
+        $params = [
+            'model' => $model,
+        ];
+        if ($language) {
+            $params['language'] = $language;
+        }
+
+        $response = Http::withToken($this->apiKey)
+            ->attach('file', fopen($filePath, 'r'), basename($filePath))
+            ->post($url, $params);
+
+        if ($response->successful()) {
+            return [
+                'message' => $response->json('text')
+            ];
+        } else {
+            logger()->error('OpenAI transcription failed: ' . $response->body());
+            return null;
+        }
     }
 }

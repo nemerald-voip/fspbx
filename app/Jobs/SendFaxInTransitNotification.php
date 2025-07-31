@@ -69,9 +69,9 @@ class SendFaxInTransitNotification implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(Request $request)
+    public function __construct($request)
     {
-        $this->request = $request->all();
+        $this->request = $request;
     }
 
     /**
@@ -96,7 +96,7 @@ class SendFaxInTransitNotification implements ShouldQueue
 
             // Send Slack notification to user that fax is in transit
             if (get_domain_setting('fax_slack_notification') == "all") {
-                $this->request['slack_message'] = "*EmailToFax* From: " . $this->request['FromFull']['Email'] . ", To:" . $this->request['fax_destination'] . " is in progress\n";
+                $this->request['slack_message'] = "*EmailToFax* From: " . $this->request['from']. ", To:" . $this->request['fax_destination'] . " is in progress\n";
 
                 if (config('slack.system_status')) {
                     Notification::route('slack', config('slack.fax'))
@@ -105,8 +105,8 @@ class SendFaxInTransitNotification implements ShouldQueue
             }
 
             // Send email notification to user that fax is in transit
-            if ($this->request['FromFull']['Email'] != '') {
-                Mail::to($this->request['FromFull']['Email'])->send(new FaxInTransit($this->request));
+            if ($this->request['from'] != '') {
+                Mail::to($this->request['from'])->send(new FaxInTransit($this->request));
             }
         }, function () {
             // Could not obtain lock; this job will be re-queued

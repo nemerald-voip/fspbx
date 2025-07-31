@@ -2,9 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\UserGroup;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Spatie\Activitylog\Traits\CausesActivity;
@@ -39,7 +38,8 @@ class User extends Authenticatable
         'domain_uuid',
         'user_enabled',
         'add_user',
-        'api_key'
+        'api_key',
+        'extension_uuid',
     ];
 
     /**
@@ -61,39 +61,17 @@ class User extends Authenticatable
         'contact_uuid',
         'user_totp_secret',
         'user_type',
-        'user_status',
+        'user_adv_fields',
+        'settings'
     ];
 
-    /**
-     * The booted method of the model
-     *
-     * Define all attributes here like normal code
+    // always eager-load the relation
+    protected $with = ['user_adv_fields', 'settings'];
 
-     */
-    protected static function booted()
-    {
-        static::saving(function ($model) {
-            // Remove attributes before saving to database
-            unset($model->name_formatted);
-            if (!$model->domain_uuid) {
-                $model->domain_uuid = session('domain_uuid');
-            }
-        });
+    /* Automatically include this computed attribute on every model
+    */
+    protected $appends = ['name_formatted', 'language', 'time_zone'];
 
-        static::retrieved(function ($model) {
-            if (Schema::hasTable('users_adv_fields')) {
-                if ($model->user_adv_fields && ($model->user_adv_fields->first_name || $model->user_adv_fields->last_name)) {
-                    $model->name_formatted = trim(($model->user_adv_fields->first_name ?? '') . ' ' . ($model->user_adv_fields->last_name ?? ''));
-                } else {
-                    $model->name_formatted = $model->username;
-                }
-                // $model->destroy_route = route('devices.destroy', $model);
-            } else {
-                $model->name_formatted = $model->username;
-            }
-            return $model;
-        });
-    }
 
     /**
      * The attributes that should be cast.
@@ -103,25 +81,92 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
+    /**
+     * Mutator: if no domain_uuid is explicitly set, pull it from session
+     */
+    public function setDomainUuidAttribute($value)
+    {
+        $this->attributes['domain_uuid'] = $value ?: session('domain_uuid');
+    }
 
     /**
-     * Get the extensions associated with the user.
+     * Accessor: build name_formatted from advanced fields if available,
+     * otherwise fall back to username
+     */
+    public function getNameFormattedAttribute(): string
+    {
+        // if relationship not yet loaded, lazy‐load it
+        $adv = $this->user_adv_fields;
+        if ($adv && ($adv->first_name || $adv->last_name)) {
+            return trim(($adv->first_name ?? '') . ' ' . ($adv->last_name ?? ''));
+        }
+
+        return $this->username;
+    }
+
+    /**
+     * Accessor: build first_name from advanced fields if available,
+     * otherwise return emptry string
+     */
+    public function getFirstNameAttribute(): string
+    {
+        // if relationship not yet loaded, lazy‐load it
+        $adv = $this->user_adv_fields;
+        if ($adv && $adv->first_name) {
+            return trim($adv->first_name ?? '');
+        }
+
+        return '';
+    }
+
+    /**
+     * Accessor: build last_name from advanced fields if available,
+     * otherwise return empty string
+     */
+    public function getLastNameAttribute(): string
+    {
+        // if relationship not yet loaded, lazy‐load it
+        $adv = $this->user_adv_fields;
+        if ($adv && $adv->last_name) {
+            return trim($adv->last_name ?? '');
+        }
+
+        return '';
+    }
+
+    /**
+     * Accessor: get the 'language' setting under category 'domain'
+     */
+    public function getLanguageAttribute(): ?string
+    {
+        $setting = $this->settings
+            ->where('user_setting_category', 'domain')
+            ->firstWhere('user_setting_subcategory', 'language');
+
+        return $setting->user_setting_value ?? null;
+    }
+
+    /**
+     * Accessor: get the 'time_zone' setting under category 'domain'
+     */
+    public function getTimeZoneAttribute(): ?string
+    {
+        $setting = $this->settings
+            ->where('user_setting_category', 'domain')
+            ->firstWhere('user_setting_subcategory', 'time_zone');
+
+        return $setting->user_setting_value ?? null;
+    }
+
+
+
+    /**
+     * Get the extension assigned to the user
      *  returns Eloqeunt Collection
      */
-    public function extensions()
+    public function extension()
     {
-        $extensions = DB::table('v_extensions')
-            ->join('v_extension_users', 'v_extension_users.extension_uuid', '=', 'v_extensions.extension_uuid')
-            ->where('v_extension_users.user_uuid', '=', $this->user_uuid)
-            ->get([
-                'v_extensions.extension_uuid',
-                'v_extensions.extension',
-                'v_extensions.outbound_caller_id_number',
-                'v_extensions.user_context',
-                'v_extensions.description',
-            ]);
-
-        return $extensions;
+        return $this->belongsTo(Extensions::class, 'extension_uuid', 'extension_uuid');
     }
 
     public function getEmailAttribute()
@@ -195,7 +240,7 @@ class User extends Authenticatable
         return $this->user_adv_fields->two_factor_cookies ?? null;
     }
 
-    public function setting()
+    public function settings()
     {
         return $this->hasMany(UserSetting::class, 'user_uuid', 'user_uuid');
     }

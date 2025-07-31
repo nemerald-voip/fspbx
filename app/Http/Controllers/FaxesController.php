@@ -5,30 +5,39 @@ namespace App\Http\Controllers;
 
 use Throwable;
 use Carbon\Carbon;
+use Inertia\Inertia;
+use App\Data\FaxData;
 use App\Models\Faxes;
 use App\Models\FaxLogs;
 use App\Models\FaxFiles;
+use App\Data\FaxFileData;
 use App\Models\Dialplans;
 use App\Models\FaxQueues;
+use App\Data\FaxQueueData;
+use App\Data\FaxDetailData;
+use App\Models\FusionCache;
+use Illuminate\Support\Str;
 use App\Models\Destinations;
 use Illuminate\Http\Request;
 use App\Models\DefaultSettings;
-use App\Models\FaxAllowedEmails;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use libphonenumber\PhoneNumberUtil;
-use App\Models\FaxAllowedDomainNames;
 use libphonenumber\PhoneNumberFormat;
+use Spatie\QueryBuilder\QueryBuilder;
+use Spatie\QueryBuilder\AllowedFilter;
+use App\Http\Requests\CreateFaxRequest;
+use App\Http\Requests\UpdateFaxRequest;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
-use App\Jobs\SendFaxNotificationToSlack;
 use Illuminate\Support\Facades\Response;
 use libphonenumber\NumberParseException;
 use Illuminate\Support\Facades\Validator;
-use App\Models\FusionCache;
+use App\Http\Requests\CreateNewFaxRequest;
+use Exception;
 
 class FaxesController extends Controller
 {
+    protected $viewName = 'Faxes';
     /**
      * Display a listing of the resource.
      *
@@ -40,30 +49,47 @@ class FaxesController extends Controller
         if (!userCheckPermission("fax_view")) {
             return redirect('/');
         }
-        // $list = Session::get('permissions', false);
-        // pr($list);exit;
 
-        $searchString = $request->get('search');
+        $perPage = 50;
+        $currentDomain = session('domain_uuid');
 
-        $domain_uuid = Session::get('domain_uuid');
+        $faxes = QueryBuilder::for(Faxes::class)
+            // only users in the current domain
+            ->where('domain_uuid', $currentDomain)
+            ->select([
+                'fax_uuid',
+                'domain_uuid',
+                'fax_email',
+                'fax_name',
+                'fax_extension',
+                'fax_destination_number',
+                'fax_caller_id_number',
+                'fax_description',
+            ])
+            // allow ?filter[username]=foo or ?filter[user_email]=bar
+            ->allowedFilters([
+                // Only email and name_formatted
+                AllowedFilter::callback('search', function ($query, $value) {
+                    $query->where(function ($q) use ($value) {
+                        $q->where('fax_name', 'ilike', "%{$value}%")
+                            ->orWhere('fax_email', 'ilike', "%{$value}%")
+                            ->orWhere('fax_caller_id_number', 'ilike', "%{$value}%")
+                            ->orWhere('fax_extension', 'ilike', "%{$value}%");
+                    });
+                }),
+            ])
+            // allow ?sort=-username or ?sort=add_date
+            ->allowedSorts(['fax_name', 'fax_caller_id_number'])
+            // let your front-end optionally eager-load relations
+            ->defaultSort('fax_caller_id_number')
+            ->paginate($perPage);
 
-        $faxes =  Faxes::where('domain_uuid', $domain_uuid);
-        if ($searchString) {
-            $faxes->where(function ($query) use ($searchString) {
-                $query->where('fax_name', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
-                    ->orWhere('fax_extension', 'ilike', '%' . str_replace('-', '', $searchString) . '%')
-                    ->orWhere('fax_email', 'ilike', '%' . str_replace('-', '', $searchString) . '%');
-            });
-        }
 
-        $faxes = $faxes
-            ->paginate(10)
-            ->onEachSide(1);
+        // wrap in your DTO
+        $faxesDto = FaxData::collect($faxes);
 
-        // Set the start and end dates for the period
-        $endDate = Carbon::now();  // Current date
-        // dd($endDate);
-        $startDate = Carbon::now()->subDays(30);  // 30 days ago
+        // logger($faxesDto);
+
         $period = [
             Carbon::now()->startOfDay()->subDays(30),
             Carbon::now()->endOfDay()
@@ -74,119 +100,290 @@ class FaxesController extends Controller
 
         // Calculate total of sent faxes in the last month
         $totalReceived = FaxFiles::where('fax_mode', 'rx')
-            ->where('domain_uuid', $domain_uuid)
+            ->where('domain_uuid', $currentDomain)
             ->whereBetween('fax_date', $period)
             ->count();
         // ->toSql();
 
         // Calculate total of sent faxes in the last month
         $totalSent = FaxFiles::where('fax_mode', 'tx')
-            ->where('domain_uuid', $domain_uuid)
+            ->where('domain_uuid', $currentDomain)
             ->whereBetween('fax_date', $period)
             ->count();
         // ->toSql();
 
+        $totalFaxes = $faxes->total();
 
-        // Get recent outbound faxes
-        $outboundFaxes = FaxQueues::select(
-            'v_fax_queue.fax_queue_uuid',
-            'v_fax_queue.fax_caller_id_name',
-            'v_fax_queue.fax_caller_id_number',
-            'v_fax_queue.fax_number',
-            'v_fax_queue.fax_date',
-            'v_fax_queue.fax_status',
-            'v_fax_queue.fax_uuid',
-            'v_fax_queue.fax_date',
-            'v_fax_queue.fax_status',
-            'v_fax_queue.fax_retry_date',
-            'v_fax_queue.fax_retry_count',
-            'v_fax_queue.fax_notify_date',
-            'v_fax_files.fax_destination'
-        )
-            ->where('v_fax_queue.domain_uuid', $domain_uuid)
-            ->whereBetween('v_fax_queue.fax_date', $period)
-            ->leftJoin('v_fax_files', 'fax_file_path', 'fax_file')
-            ->orderBy('v_fax_queue.fax_date', 'desc')
-            ->limit(5)
-            ->get();
+        return Inertia::render(
+            $this->viewName,
+            [
+                'data' => $faxesDto,
 
-        $timeZone = get_local_time_zone($domain_uuid);
-        /** @var FaxQueues $file */
-        foreach ($outboundFaxes as $file) {
-            $file->fax_date = \Illuminate\Support\Carbon::parse($file->fax_date)->setTimezone($timeZone);
-            if (!empty($file->fax_notify_date)) {
-                $file->fax_notify_date = Carbon::parse($file->fax_notify_date)->setTimezone($timeZone);
-            }
-            if (!empty($file->fax_retry_date)) {
-                $file->fax_retry_date = Carbon::parse($file->fax_retry_date)->setTimezone($timeZone);
-            }
-        }
+                'stats' => [
+                    ['name' => 'Faxes Sent (Last 30 Days)', 'stat' => $totalSent],
+                    ['name' => 'Faxes Received (Last 30 Days)', 'stat' => $totalReceived],
+                    ['name' => 'Active Fax Numbers', 'stat' => $totalFaxes],
+                ],
 
-        $inboundFaxes = FaxFiles::where('fax_mode', 'rx')
-            ->where('domain_uuid', $domain_uuid)
+
+                'routes' => [
+                    'current_page' => route('faxes.index'),
+                    'recent_outbound_route' => route('faxes.recent-outbound'),
+                    'recent_inbound_route' => route('faxes.recent-inbound'),
+                    'item_options' => route('faxes.item.options'),
+                    'bulk_delete' => route('faxes.bulk.delete'),
+                    'new_fax_options' => route('faxes.new.fax.options'),
+                    // 'select_all' => route('users.select.all'),
+
+                ]
+            ]
+        );
+
+    }
+
+    public function getRecentOutbound()
+    {
+        $period = [
+            Carbon::now()->startOfDay()->subDays(30),
+            Carbon::now()->endOfDay()
+        ];
+
+        $currentDomain = session('domain_uuid');
+
+        $outboundFaxes = QueryBuilder::for(FaxQueues::class)
+            ->select([
+                'fax_queue_uuid',
+                'domain_uuid',
+                'fax_caller_id_number',
+                'fax_number',
+                'fax_date',
+                'fax_status',
+            ])
+            ->where('domain_uuid', $currentDomain)
             ->whereBetween('fax_date', $period)
-            ->orderBy('fax_date', 'desc')
+            ->orderByDesc('fax_date')
             ->limit(5)
             ->get();
 
-        //Get libphonenumber object
-        $phoneNumberUtil = PhoneNumberUtil::getInstance();
+        // logger($outboundFaxes);
 
-        foreach ($inboundFaxes as $file) {
-            $file->fax_date = \Illuminate\Support\Carbon::parse($file->fax_date);
-            // Try to convert caller ID number to National format
-            try {
-                $phoneNumberObject = $phoneNumberUtil->parse($file->fax_caller_id_number, 'US');
-                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $file->fax_caller_id_number = $phoneNumberUtil
-                        ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
-                }
-            } catch (NumberParseException $e) {
-                // Do nothing and leave the numner as is
-            }
+        $outboundFaxesDto = FaxQueueData::collect($outboundFaxes);
 
-            // Try to convert destination number to National format
-            try {
-                $phoneNumberObject = $phoneNumberUtil->parse($file->fax->fax_caller_id_number, 'US');
-                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $file->fax->fax_caller_id_number = $phoneNumberUtil
-                        ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
-                }
-            } catch (NumberParseException $e) {
-                // Do nothing and leave the numner as is
-            }
+        // logger($outboundFaxesDto);
+        return response()->json([
+            'data'        => $outboundFaxes,
+
+        ]);
+    }
+
+    public function getRecentInbound()
+    {
+        $period = [
+            Carbon::now()->startOfDay()->subDays(30),
+            Carbon::now()->endOfDay()
+        ];
+
+        $currentDomain = session('domain_uuid');
+
+
+        $inboundFaxes = QueryBuilder::for(\App\Models\FaxFiles::class)
+            ->select([
+                'fax_file_uuid',
+                'fax_uuid',
+                'domain_uuid',
+                'fax_caller_id_number',
+                'fax_date',
+            ])
+            ->where('domain_uuid', $currentDomain)
+            ->whereBetween('fax_date', $period)
+            ->where('fax_mode', 'rx')
+
+            ->with([
+                'fax' => function ($q) {
+                    $q->select([
+                        'fax_uuid',
+                        'fax_extension',
+                        'fax_caller_id_number',
+                        'domain_uuid',
+                    ]);
+                },
+            ])
+
+            ->orderByDesc('fax_date')
+            ->limit(5)
+            ->get();
+
+        // logger($inboundFaxes);
+
+        $inboundFaxesDto = FaxFileData::collect($inboundFaxes);
+
+        // logger($inboundFaxesDto);
+        return response()->json([
+            'data'        => $inboundFaxesDto,
+
+        ]);
+    }
+
+    public function getItemOptions(Request $request)
+    {
+        $itemUuid = $request->input('item_uuid');
+
+        $routes = [];
+        // 1) Base payload: either an existing user DTO or a “new user” stub
+        if ($itemUuid) {
+            $fax = QueryBuilder::for(Faxes::class)
+                ->select([
+                    'fax_uuid',
+                    'domain_uuid',
+                    'fax_email',
+                    'fax_name',
+                    'fax_extension',
+                    'fax_prefix',
+                    'fax_destination_number',
+                    'fax_caller_id_name',
+                    'fax_caller_id_number',
+                    'fax_description',
+                    'fax_toll_allow',
+                    'fax_forward_number',
+                    'fax_send_channels',
+                    'fax_description'
+                ])
+                ->with([
+                    'allowed_emails' => function ($q) {
+                        $q->select([
+                            'uuid',
+                            'fax_uuid',
+                            'email',
+                        ]);
+                    },
+                ])
+                ->with([
+                    'allowed_domain_names' => function ($q) {
+                        $q->select([
+                            'uuid',
+                            'fax_uuid',
+                            'domain',
+                        ]);
+                    },
+                ])
+                ->whereKey($itemUuid)
+                ->firstOrFail();
+
+            // wrap in your DTO
+            $faxDto = FaxDetailData::from($fax);
+
+            // logger($faxDto);
+
+            $routes = array_merge($routes, [
+                'update_route' => route('faxes.update', ['fax' => $itemUuid]),
+            ]);
+        } else {
+            // “New fax defaults
+
+            // Create an instance of your model
+            $faxModel = new Faxes();
+
+            // Generate the unique extension
+            $fax_extension = $faxModel->generateUniqueSequenceNumber();
+
+            $faxDto = FaxDetailData::from([
+                'fax_uuid' => '',
+                'domain_uuid' => session('domain_uuid'),
+                'fax_email' => null,
+                'fax_name' => null,
+                'fax_extension' => $fax_extension,
+                'fax_prefix' => '9999',
+                'fax_destination_number' => $fax_extension,
+                'fax_caller_id_name' => null,
+                'fax_caller_id_number' => null,
+                'fax_description' => null,
+                'fax_toll_allow' => null,
+                'fax_forward_number' => null,
+                'fax_send_channels' => '10',
+                'allowed_emails' => null,
+                'allowed_domain_names' => null,
+            ]);
         }
 
+        // 2) Permissions array
+        $permissions = $this->getUserPermissions();
 
-        $data['faxes'] = $faxes;
-        $data['searchString'] = $searchString;
-        $data['totalReceived'] = $totalReceived;
-        $data['totalSent'] = $totalSent;
-        $data['files'] = $outboundFaxes;
-        $data['inboundFaxes'] = $inboundFaxes;
-        $data['national_phone_number_format'] = PhoneNumberFormat::NATIONAL;
-        $permissions['add_new'] = userCheckPermission('fax_add');
-        $permissions['edit'] = userCheckPermission('fax_edit');
-        $permissions['delete'] = userCheckPermission('fax_delete');
-        $permissions['view'] = userCheckPermission('fax_view');
-        $permissions['send'] = userCheckPermission('fax_send');
-        $permissions['fax_inbox_view'] = userCheckPermission('fax_inbox_view');
-        $permissions['fax_sent_view'] = userCheckPermission('fax_sent_view');
-        $permissions['fax_active_view'] = userCheckPermission('fax_active_view');
-        $permissions['fax_log_view'] = userCheckPermission('fax_log_view');
-        $permissions['fax_send'] = userCheckPermission('fax_send');
 
-        foreach ($data['faxes'] as $fax) {
-            if (!empty($fax->fax_email)) {
-                $fax->fax_email = explode(',', $fax->fax_email);
-            } else {
-                $fax->fax_email = [];
-            }
-        }
+        // 3) Any routes your front end needs
+        $routes = array_merge($routes, [
+            'store_route'  => route('faxes.store'),
+        ]);
 
-        return view('layouts.fax.list')
-            ->with($data)
-            ->with('permissions', $permissions);
+        $currentDomain = session('domain_uuid');
+
+        $phone_numbers = QueryBuilder::for(Destinations::class)
+            ->allowedFilters(['destination_number', 'destination_description'])
+            ->allowedSorts('destination_number')
+            ->where('destination_enabled', 'true')
+            ->where('domain_uuid', $currentDomain)
+            ->get([
+                'destination_uuid',
+                'destination_number',
+                'destination_description',
+            ])
+            ->each->append('label', 'destination_number_e164')
+            ->map(function ($destination) {
+                return [
+                    'value' => $destination->destination_number_e164,
+                    'label' => $destination->label,
+                ];
+            })
+            ->values()
+            ->toArray();
+
+        return response()->json([
+            'item'        => $faxDto,
+            'permissions' => $permissions,
+            'routes'      => $routes,
+            'phone_numbers' => $phone_numbers,
+        ]);
+    }
+
+    public function getNewFaxOptions(Request $request)
+    {
+        $itemUuid = $request->input('item_uuid');
+
+        $routes = [];
+
+        // 2) Permissions array
+        $permissions = $this->getUserPermissions();
+
+
+        // 3) Any routes your front end needs
+        $routes = array_merge($routes, [
+            'send_fax_route'  => route('faxes.new.fax.send'),
+        ]);
+
+        $currentDomain = session('domain_uuid');
+
+        $phone_numbers = QueryBuilder::for(Faxes::class)
+            ->allowedSorts('fax_caller_id_number')
+            ->where('domain_uuid', $currentDomain)
+            ->get([
+                'fax_uuid',
+                'fax_caller_id_number',
+                'fax_name'
+            ])
+            // ->each->append('label', 'destination_number_e164')
+            ->map(function ($fax) {
+                return [
+                    'value' => $fax->fax_caller_id_number,
+                    'label' =>$fax->fax_caller_id_number_formatted . ' - ' . $fax->fax_name,
+                ];
+            })
+            ->values()
+            ->toArray();
+
+        return response()->json([
+            'permissions' => $permissions,
+            'routes'      => $routes,
+            'phone_numbers' => $phone_numbers,
+        ]);
     }
 
     public function inbox(Request $request)
@@ -511,72 +708,6 @@ class FaxesController extends Controller
             ->with('permissions', $permissions);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        // Check permissions
-        if (!userCheckPermission("fax_add")) {
-            return redirect('/');
-        }
-
-
-        // Get all phone numbers
-        $destinations = Destinations::where('destination_enabled', 'true')
-            ->where('domain_uuid', Session::get('domain_uuid'))
-            ->get([
-                'destination_uuid',
-                'destination_number',
-                'destination_enabled',
-                'destination_description',
-                DB::Raw("coalesce(destination_description , '') as destination_description"),
-            ])
-            ->sortBy('destination_number');
-
-        //Get libphonenumber object
-        $phoneNumberUtil = PhoneNumberUtil::getInstance();
-
-        foreach ($destinations as $destination) {
-            try {
-                $phoneNumberObject = $phoneNumberUtil->parse($destination->destination_number, 'US');
-                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $destination->destination_number = $phoneNumberUtil
-                        ->format($phoneNumberObject, PhoneNumberFormat::E164);
-                }
-
-                // Set the label
-                $phoneNumber = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
-                $destination->label = isset($destination->destination_description) && !empty($destination->destination_description)
-                    ? $phoneNumber . " - " . $destination->destination_description
-                    : $phoneNumber;
-            } catch (NumberParseException $e) {
-                // Do nothing and leave the numbner as is
-
-                //Set the label
-                $destination->label = isset($destination->destination_description) && !empty($destination->destination_description)
-                    ? $destination->destination_number . " - " . $destination->destination_description
-                    : $destination->destination_number;
-            }
-
-            $destination->isCallerID = false;
-        }
-
-
-        $data = [];
-        $fax = new Faxes;
-        $data['fax'] = $fax;
-        $data['domain'] = Session::get('domain_name');
-        $data['destinations'] = $destinations;
-        $data['national_phone_number_format'] = PhoneNumberFormat::NATIONAL;
-        $data['allowed_emails'] = $fax->allowed_emails;
-        $data['allowed_domain_names'] = $fax->allowed_domain_names;
-
-
-        return view('layouts.fax.createOrUpdate')->with($data);;
-    }
 
     /**
      * Store a newly created resource in storage.
@@ -584,275 +715,71 @@ class FaxesController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request, Faxes $fax)
+    public function store(CreateFaxRequest $request, Faxes $fax)
     {
 
-        if (!userCheckPermission('fax_add') || !userCheckPermission('fax_edit')) {
-            return redirect('/');
-        }
-
-        //Setting variables to use
-        $domain_id = Session::get('domain_uuid');
-        $domain_name = Session::get('domain_name');
-
-
-        //Validation check
-        $attributes = [
-            'fax_name' => 'Fax Name',
-            'fax_extension' => 'Fax Extension',
-            // 'accountcode' =>'Account Code',
-            // 'fax_destination_number' => 'Destination Number',
-            // 'fax_prefix' => 'Prefix',
-            'fax_email' => 'Email',
-            'fax_caller_id_name' => 'Caller ID name',
-            'fax_caller_id_number' => 'Caller ID number',
-            'fax_forward_number' => 'Fax Forward Number',
-            'fax_toll_allow' => 'Fax Toll Allow',
-            'fax_send_channels' => 'Fax Send Channels',
-            'fax_description' => 'Description',
-        ];
-
-        $validator = Validator::make($request->all(), [
-
-            'fax_name' => 'required',
-            'fax_extension' => 'required',
-            // 'accountcode' => 'nullable',
-            // 'fax_destination_number' => 'nullable',
-            // 'fax_prefix' => 'nullable',
-            'fax_email' => 'nullable|array',
-            'fax_caller_id_name' => 'nullable',
-            'fax_caller_id_number' => 'required',
-            'fax_forward_number' => 'nullable',
-            'fax_toll_allow' => 'nullable',
-            'fax_send_channels' => 'nullable',
-            'fax_description' => 'nullable|string|max:100',
-            'email_list' => 'nullable|array',
-
-        ], [], $attributes);
-
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()]);
-        }
-
-        // Retrieve the validated input assign all attributes
-        $attributes = $validator->validated();
-        $attributes['domain_uuid'] = $domain_id;
-        $attributes['accountcode'] = $domain_name;
-        $attributes['fax_prefix'] = 9999;
-        $attributes['fax_destination_number'] = $attributes['fax_extension'];
-        $fax_email = '';
-        if (isset($attributes['fax_email'])) {
-            $fax_email = implode(',', $attributes['fax_email']);
-        }
-        $attributes['fax_email'] = $fax_email;
-        $fax->fill($attributes);
-        $fax->save();
-
-        $dialplan = new Dialplans;
-        $dialplan->domain_uuid = $domain_id;
-        $dialplan->app_uuid = "24108154-4ac3-1db6-1551-4731703a4440";
-        $dialplan->dialplan_name = $attributes['fax_name'];
-        $dialplan->dialplan_number = $attributes['fax_extension'];
-        $dialplan->dialplan_context = $domain_name;
-        $dialplan->dialplan_continue = 'false';
-        $dialplan->dialplan_order = '310';
-        $dialplan->dialplan_enabled = 'true';
-        $dialplan->dialplan_description = $attributes['fax_description'];
-        $dialplan->save();
-        $dialplan->dialplan_xml = get_fax_dial_plan($fax, $dialplan);
-        $dialplan->save();
-        $fax->dialplan_uuid = $dialplan->dialplan_uuid;
-        $fax->save();
-
-        // Create all fax directories
         try {
+            DB::beginTransaction();
 
-            $settings = DefaultSettings::where('default_setting_category', 'switch')
-                ->get([
-                    'default_setting_subcategory',
-                    'default_setting_name',
-                    'default_setting_value',
-                ]);
+            $data = $request->validated();
+            logger($data);
 
-            foreach ($settings as $setting) {
-                if ($setting->default_setting_subcategory == 'storage') {
-                    $fax_dir = $setting->default_setting_value . '/fax/' . $domain_name;
-                    $stor_dir = $setting->default_setting_value;
+            // Create the fax server
+            $fax = Faxes::create($data);
+
+            // Add allowed emails
+            if (!empty($data['authorized_emails']) && is_array($data['authorized_emails'])) {
+                $emails = array_filter(array_map(function ($item) {
+                    return $item['email'] ?? null;
+                }, $data['authorized_emails']));
+
+                $allowedEmails = [];
+                foreach ($emails as $email) {
+                    if (!empty($email)) {
+                        $allowedEmails[] = ['email' => $email];
+                    }
+                }
+                if (!empty($allowedEmails)) {
+                    $fax->allowed_emails()->createMany($allowedEmails);
                 }
             }
 
-            // Set variables for all directories
-            $dir_fax_inbox = $fax_dir . '/' . $fax->fax_extension . '/inbox';
-            $dir_fax_sent = $fax_dir . '/' . $fax->fax_extension . '/sent';
-            $dir_fax_temp = $fax_dir . '/' . $fax->fax_extension . '/temp';
+            // Add allowed domains
+            if (!empty($data['authorized_domains']) && is_array($data['authorized_domains'])) {
+                $domains = array_filter(array_map(function ($item) {
+                    return $item['email'] ?? null;
+                }, $data['authorized_domains']));
 
-            //make sure the directories exist
-            if (!is_dir($stor_dir)) {
-                mkdir($stor_dir, 0770);
-            }
-            if (!is_dir($stor_dir . '/fax')) {
-                mkdir($stor_dir . '/fax', 0770);
-            }
-            if (!is_dir($stor_dir . '/fax/' . $domain_name)) {
-                mkdir($stor_dir . '/fax/' . $domain_name, 0770);
-            }
-            if (!is_dir($fax_dir . '/' . $fax->fax_extension)) {
-                mkdir($fax_dir . '/' . $fax->fax_extension, 0770);
-            }
-            if (!is_dir($dir_fax_inbox)) {
-                mkdir($dir_fax_inbox, 0770);
-            }
-            if (!is_dir($dir_fax_sent)) {
-                mkdir($dir_fax_sent, 0770);
-            }
-            if (!is_dir($dir_fax_temp)) {
-                mkdir($dir_fax_temp, 0770);
-            }
-        } catch (Throwable $e) {
-            $message = $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine() . '\n';
-            Log::alert($message);
-            SendFaxNotificationToSlack::dispatch($message)->onQueue('faxes');
-            //Process errors
-        }
-
-
-        // If allowed email list is submitted save it to database
-        if (isset($attributes['email_list'])) {
-            foreach ($attributes['email_list'] as $email) {
-                $allowed_email = new FaxAllowedEmails();
-                $allowed_email->fax_uuid = $fax->fax_uuid;
-                $allowed_email->email = $email;
-                $allowed_email->save();
-            }
-        }
-
-        // If allowed domain list is submitted save it to database
-        if (isset($attributes['domain_list'])) {
-            foreach ($attributes['domain_list'] as $domain) {
-                $allowed_domain = new FaxAllowedDomainNames();
-                $allowed_domain->fax_uuid = $fax->fax_uuid;
-                $allowed_domain->domain = $domain;
-                $allowed_domain->save();
-            }
-        }
-
-        $fp = event_socket_create(
-            config('eventsocket.ip'),
-            config('eventsocket.port'),
-            config('eventsocket.password')
-        );
-
-        //clear fusionpbx cache
-        FusionCache::clear("dialplan:" . $domain_name);
-
-        //clear the destinations session array
-        if (isset($_SESSION['destinations']['array'])) {
-            unset($_SESSION['destinations']['array']);
-        }
-
-        return response()->json([
-            'fax' => $fax->fax_uuid,
-            'redirect_url' => route('faxes.edit', ['fax' => $fax->fax_uuid]),
-            'status' => 'success',
-            'message' => 'Fax has been created'
-        ]);
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param int $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Faxes $fax)
-    {
-        //check permissions
-        if (!userCheckPermission('fax_edit')) {
-            return redirect('/');
-        }
-
-        // Get all phone numbers
-        $destinations = Destinations::where('destination_enabled', 'true')
-            ->where('domain_uuid', Session::get('domain_uuid'))
-            ->get([
-                'destination_uuid',
-                'destination_number',
-                'destination_enabled',
-                'destination_description',
-                DB::Raw("coalesce(destination_description , '') as destination_description"),
-            ])
-            ->sortBy('destination_number');
-
-        //Get libphonenumber object
-        $phoneNumberUtil = PhoneNumberUtil::getInstance();
-
-        //try to convert caller ID to e164 format
-        if ($fax->fax_caller_id_number) {
-            try {
-                $phoneNumberObject = $phoneNumberUtil->parse($fax->fax_caller_id_number, 'US');
-                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $fax->fax_caller_id_number = $phoneNumberUtil
-                        ->format($phoneNumberObject, PhoneNumberFormat::E164);
+                $allowedDomains = [];
+                foreach ($domains as $domain) {
+                    if (!empty($domain)) {
+                        $allowedDomains[] = ['domain' => $domain];
+                    }
                 }
-            } catch (NumberParseException $e) {
-                // Do nothing and leave the numbner as is
-            }
-        }
-
-        foreach ($destinations as $destination) {
-            try {
-                $phoneNumberObject = $phoneNumberUtil->parse($destination->destination_number, 'US');
-                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $destination->destination_number = $phoneNumberUtil
-                        ->format($phoneNumberObject, PhoneNumberFormat::E164);
+                if (!empty($allowedDomains)) {
+                    $fax->allowed_domain_names()->createMany($allowedDomains);
                 }
-
-                // Set the label
-                $phoneNumber = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
-                $destination->label = isset($destination->destination_description) && !empty($destination->destination_description)
-                    ? $phoneNumber . " - " . $destination->destination_description
-                    : $phoneNumber;
-            } catch (NumberParseException $e) {
-                // Do nothing and leave the numbner as is
-
-                //Set the label
-                $destination->label = isset($destination->destination_description) && !empty($destination->destination_description)
-                    ? $destination->destination_number . " - " . $destination->destination_description
-                    : $destination->destination_number;
             }
 
-            $destination->isCallerID = ($destination->destination_number === $fax->fax_caller_id_number);
+            // Generate dialplan for the new fax server
+            $this->generateDialPlanXML($fax);
+
+            DB::commit();
+
+
+            return response()->json([
+                'messages' => ['success' => ['Fax server created successfully']],
+                'fax' => $fax->fresh(['allowed_emails', 'allowed_domain_names']),
+            ], 200);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger('FaxesController@update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return response()->json([
+                'messages' => ['error' => ['An error occurred while updating the fax.', $e->getMessage()]],
+            ], 500);
         }
-
-
-        if (isset($fax->fax_email)) {
-            if (!empty($fax->fax_email)) {
-                $fax->fax_email = explode(',', $fax->fax_email);
-            }
-        }
-
-
-        $data = array();
-        $data['fax'] = $fax;
-        $data['domain'] = Session::get('domain_name');
-        $data['destinations'] = $destinations;
-        $data['national_phone_number_format'] = PhoneNumberFormat::NATIONAL;
-        $data['allowed_emails'] = $fax->allowed_emails;
-        $data['allowed_domain_names'] = $fax->allowed_domain_names;
-
-        return view('layouts.fax.createOrUpdate')->with($data);
     }
+
 
     /**
      * Update the specified resource in storage.
@@ -862,175 +789,220 @@ class FaxesController extends Controller
      * @return \Illuminate\Http\Response
      */
 
-    function update(Request $request, Faxes $fax)
+    function update(UpdateFaxRequest $request, $id)
     {
-        if (!userCheckPermission('fax_add') || !userCheckPermission('fax_edit')) {
-            return redirect('/');
-        }
+        try {
+            DB::beginTransaction();
 
-        $attributes = [
-            'fax_name' => 'Fax Name',
-            'fax_extension' => 'Fax Extension',
-            // 'accountcode' =>'Account Code',
-            // 'fax_destination_number' => 'Destination Number',
-            // 'fax_prefix' => 'Prefix',
-            'fax_email' => 'Email',
-            'fax_caller_id_name' => 'Caller ID name',
-            'fax_caller_id_number' => 'Caller ID number',
-            'fax_forward_number' => 'Fax Forward Number',
-            'fax_toll_allow' => 'Fax Toll Allow',
-            'fax_send_channels' => 'Fax Send Channels',
-            'fax_description' => 'Description',
-        ];
+            $data = $request->validated();
+            //  logger($data);
 
-        $validator = Validator::make($request->all(), [
+            // Find the fax by UUID including relations
+            $fax = Faxes::with(['allowed_emails', 'allowed_domain_names'])
+                ->where('fax_uuid', $id)
+                ->firstOrFail();
 
-            'fax_name' => 'required',
-            'fax_extension' => 'required',
-            // 'accountcode' => 'nullable',
-            // 'fax_destination_number' => 'nullable',
-            // 'fax_prefix' => 'nullable',
-            'fax_email' => 'nullable|array',
-            'fax_caller_id_name' => 'nullable',
-            'fax_caller_id_number' => 'nullable',
-            'fax_forward_number' => 'nullable',
-            'fax_toll_allow' => 'nullable',
-            'fax_send_channels' => 'nullable',
-            'fax_description' => 'nullable|string|max:100',
-            'email_list' => 'nullable|array',
-            'domain_list' => 'nullable|array',
+            // Update fax main fields
+            $fax->update($data);
 
-        ], [], $attributes);
+            // Update allowed emails
+            if (!empty($data['authorized_emails']) && is_array($data['authorized_emails'])) {
+                $emails = array_filter(array_map(function ($item) {
+                    return $item['email'] ?? null;
+                }, $data['authorized_emails']));
 
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()]);
-        }
+                // Delete old allowed emails
+                $fax->allowed_emails()->delete();
 
-        // Retrieve the validated input assign all attributes
-        $attributes = $validator->validated();
-        $attributes['fax_destination_number'] = $attributes['fax_extension'];
-        $fax_email = '';
-        if (isset($attributes['fax_email'])) {
-            $fax_email = implode(',', $attributes['fax_email']);
-        }
-        $attributes['fax_email'] = $fax_email;
-        $fax->fill($attributes);
-        $fax->update($attributes);
-
-
-        //Setting variables to use
-        $domain_id = Session::get('domain_uuid');
-        $domain_name = Session::get('domain_name');
-
-        $old_dialplan = Dialplans::where('dialplan_uuid', $fax->dialplan_uuid)->first();
-        if (!empty($old_dialplan)) {
-            $old_dialplan->delete();
-        }
-
-        $dialplan = new Dialplans;
-        $dialplan->domain_uuid = $domain_id;
-        $dialplan->app_uuid = "24108154-4ac3-1db6-1551-4731703a4440";
-        $dialplan->dialplan_name = $attributes['fax_name'];
-        $dialplan->dialplan_number = $attributes['fax_extension'];
-        $dialplan->dialplan_context = $domain_name;
-        $dialplan->dialplan_continue = 'false';
-        $dialplan->dialplan_order = '310';
-        $dialplan->dialplan_enabled = 'true';
-        $dialplan->dialplan_description = $attributes['fax_description'];
-        $dialplan->save();
-        $dialplan->dialplan_xml = get_fax_dial_plan($fax, $dialplan);
-        $dialplan->save();
-        $fax->dialplan_uuid = $dialplan->dialplan_uuid;
-        $fax->save();
-
-
-        // Remove current allowed emails from the database
-        if (isset($fax->allowed_emails)) {
-            foreach ($fax->allowed_emails as $email) {
-                $email->delete();
+                // Insert new allowed emails
+                $allowedEmails = [];
+                foreach ($emails as $email) {
+                    if (!empty($email)) {
+                        $allowedEmails[] = ['email' => $email];
+                    }
+                }
+                if (!empty($allowedEmails)) {
+                    $fax->allowed_emails()->createMany($allowedEmails);
+                }
+            } else {
+                // Clear allowed emails if none provided
+                $fax->allowed_emails()->delete();
             }
-        }
 
-        // Remove current allowed domains from the database
-        if (isset($fax->allowed_domain_names)) {
-            foreach ($fax->allowed_domain_names as $domain_name) {
-                $domain_name->delete();
+            // Update allowed domain names
+            if (!empty($data['authorized_domains']) && is_array($data['authorized_domains'])) {
+                $domains = array_filter(array_map(function ($item) {
+                    return $item['email'] ?? null;
+                }, $data['authorized_domains']));
+
+                // Delete old allowed domains
+                $fax->allowed_domain_names()->delete();
+
+                // Insert new allowed domains, note column name 'domain'
+                $allowedDomains = [];
+                foreach ($domains as $domain) {
+                    if (!empty($domain)) {
+                        $allowedDomains[] = ['domain' => $domain];
+                    }
+                }
+                if (!empty($allowedDomains)) {
+                    $fax->allowed_domain_names()->createMany($allowedDomains);
+                }
+            } else {
+                // Clear allowed domains if none provided
+                $fax->allowed_domain_names()->delete();
             }
-        }
 
-        // If allowed email list is submitted save it to database
-        if (isset($attributes['email_list'])) {
-            foreach ($attributes['email_list'] as $email) {
-                $allowed_email = new FaxAllowedEmails();
-                $allowed_email->fax_uuid = $fax->fax_uuid;
-                $allowed_email->email = $email;
-                $allowed_email->save();
-            }
-        }
+            $this->generateDialPlanXML($fax);
 
-        // If allowed domain list is submitted save it to database
-        if (isset($attributes['domain_list'])) {
-            foreach ($attributes['domain_list'] as $domain) {
-                $allowed_domain = new FaxAllowedDomainNames();
-                $allowed_domain->fax_uuid = $fax->fax_uuid;
-                $allowed_domain->domain = $domain;
-                $allowed_domain->save();
-            }
-        }
+            DB::commit();
 
-        $fp = event_socket_create(
-            config('eventsocket.ip'),
-            config('eventsocket.port'),
-            config('eventsocket.password')
+            return response()->json([
+                'messages' => ['success' => ['Fax updated successfully']],
+                'fax' => $fax->fresh(['allowed_emails', 'allowed_domain_names']),
+            ], 200);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger('FaxesController@update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return response()->json([
+                'messages' => ['error' => ['An error occurred while updating the fax.', $e->getMessage()]],
+            ], 500);
+        }
+    }
+
+
+    private function generateDialPlanXML($fax): void
+    {
+
+        // logger($phoneNumber);
+
+        $settings = DefaultSettings::where('default_setting_category', 'fax')
+            ->where('default_setting_subcategory', 'variable')
+            ->where('default_setting_enabled', 'true')
+            ->get();
+
+        $last_fax = 'last_fax=${caller_id_number}-${strftime(%Y-%m-%d-%H-%M-%S)}';
+        $rxfax_data = Storage::disk('fax')->path(
+            $fax->accountcode . '/' . $fax->fax_extension . '/inbox/' . $fax->forward_prefix . '${last_fax}.tif'
         );
 
-        //clear fusionpbx cache
-        FusionCache::clear("dialplan:" . $domain_name);
+        // Data to pass to the Blade template
+        $data = [
+            'fax' => $fax,
+            'settings' => $settings,
+            'last_fax' => $last_fax,
+            'rxfax_data' => $rxfax_data,
+        ];
 
-        //clear the destinations session array
-        if (isset($_SESSION['destinations']['array'])) {
-            unset($_SESSION['destinations']['array']);
+        // Render the Blade template and get the XML content as a string
+        $xml = trim(view('layouts.xml.fax-dial-plan-template', $data)->render());
+
+        $dom = new \DOMDocument();
+        $dom->preserveWhiteSpace = false;  // Removes extra spaces
+        $dom->loadXML($xml);
+        $dom->formatOutput = true;         // Formats XML properly
+        $xml = $dom->saveXML($dom->documentElement);
+
+        $dialPlan = Dialplans::where('dialplan_uuid', $fax->dialplan_uuid)->first();
+
+        if (!$dialPlan) {
+            logger('no dialplan');
+            $newDialplanUuid = Str::uuid();
+
+            $dialPlan = new Dialplans();
+            $dialPlan->dialplan_uuid = $newDialplanUuid;
+            $dialPlan->app_uuid = '24108154-4ac3-1db6-1551-4731703a4440';
+            $dialPlan->domain_uuid = $fax->domain_uuid;
+            $dialPlan->dialplan_name = $fax->fax_name;
+            $dialPlan->dialplan_xml = $xml;
+            $dialPlan->dialplan_number = $fax->fax_destination_number;
+            $dialPlan->dialplan_context = $fax->accountcode;
+            $dialPlan->dialplan_continue = 'false';
+            $dialPlan->dialplan_order = 310;
+            $dialPlan->dialplan_enabled = 'true';
+            $dialPlan->dialplan_description = $fax->fax_description;
+            $dialPlan->insert_date = date('Y-m-d H:i:s');
+            $dialPlan->insert_user = session('user_uuid');
+
+            logger($fax);
+            // Update IVR with the new dialplan_uuid
+            $fax->dialplan_uuid = $newDialplanUuid;
+            $fax->save();
+
+            logger($fax);
+        } else {
+            // Update existing dialplan info
+            $dialPlan->dialplan_name = $fax->fax_name;
+            $dialPlan->dialplan_xml = $xml;
+            $dialPlan->dialplan_number = $fax->fax_destination_number;
+            $dialPlan->dialplan_context = $fax->accountcode;
+            $dialPlan->dialplan_enabled = 'true';
+            $dialPlan->dialplan_description = $fax->fax_description;
+            $dialPlan->update_date = date('Y-m-d H:i:s');
+            $dialPlan->update_user = session('user_uuid');
         }
-        return response()->json([
-            'fax' => $fax->fax_uuid,
-            //'request' => $attributes,
-            'status' => 'success',
-            'message' => 'Fax has been updated'
-        ]);
+
+        $dialPlan->save();
+
+        // clear fusionpbx cache
+        FusionCache::clear("dialplan:" . $fax->domain_uuid);
     }
 
 
     /**
-     * Remove the specified resource from storage.
+     * Remove the specified users from storage.
      *
-     * @param int $id
-     * @return \Illuminate\Http\Response
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
      */
-    public function destroy(Faxes $fax)
+    public function bulkDelete(Request $request)
     {
+        if (! userCheckPermission('user_delete')) {
+            return response()->json([
+                'messages' => ['error' => ['Access denied.']]
+            ], 403);
+        }
+
         try {
-            // Delete related records first
-            $fax->allowed_emails()->delete();
-            $fax->allowed_domain_names()->delete();
+            DB::beginTransaction();
 
-            // Delete the fax itself
-            $fax->delete();
+            $uuids = $request->input('items', []);
+
+            $faxes = Faxes::with(['allowed_emails', 'allowed_domain_names', 'dialplan'])
+                ->whereIn('fax_uuid', $uuids)
+                ->get();
+
+            foreach ($faxes as $fax) {
+                // Delete child records
+                $fax->allowed_emails()->delete();
+                $fax->allowed_domain_names()->delete();
+
+                // Delete the associated dialplan (if it exists)
+                if ($fax->dialplan) {
+                    $fax->dialplan->delete();
+                }
+
+                // Delete the fax record itself
+                $fax->delete();
+            }
+
+            // clear fusionpbx cache
+            FusionCache::clear("dialplan:" . $fax->domain_uuid);
+
+            DB::commit();
 
             return response()->json([
-                'status' => 200,
-                'success' => [
-                    'message' => 'The fax and all related records have been successfully deleted.'
-                ]
+                'messages' => ['success' => ['Selected user(s) were deleted successfully.']]
             ]);
-        } catch (\Exception $e) {
-            logger('Fax deletion error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger('User bulkDelete error: '
+                . $e->getMessage()
+                . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'status' => 500,
-                'error' => [
-                    'message' => 'An error occurred while deleting the fax.'
-                ]
-            ]);
+                'messages' => ['error' => ['An error occurred while deleting the selected user(s).']]
+            ], 500);
         }
     }
 
@@ -1184,109 +1156,114 @@ class FaxesController extends Controller
      * @return \Illuminate\Http\Response
      */
 
-    public function sendFax(Request $request)
+    public function sendFax(CreateNewFaxRequest $request)
     {
-        $data = $request->all();
+        try {
+            $data = $request->validated();
 
-        // If files attached
-        if (isset($data['file'])) {
-            $files = $data['file'];
-        }
+            // If files attached
+            if (isset($data['files'])) {
+                $files = $data['files'];
+            }
 
-        // Convert form fields to associative array
-        // parse_str($data['data'], $data);
+            // Convert form fields to associative array
+            // parse_str($data['data'], $data);
 
-        // Validate the input
-        $attributes = [
-            'recipient' => 'fax recipient',
-        ];
+            // Validate the input
+            $attributes = [
+                'recipient' => 'fax recipient',
+            ];
 
-        $validator = Validator::make($data, [
-            'recipient' => 'numeric|required|phone:US',
-            'fax_message' => 'string|nullable',
-            'send_confirmation' => 'present',
+            $validator = Validator::make($data, [
+                'recipient' => 'numeric|required',
+                'fax_message' => 'string|nullable',
+                'send_confirmation' => 'present',
 
-        ], [], $attributes);
+            ], [], $attributes);
 
-        if ($validator->fails()) {
-            // return response()->json(['error' => $validator->errors()]);
-            return response()->json([
-                'error' => $validator->errors()->first() // Sending the first error message for simplicity
-            ], 400); // Bad Request status code
-        }
+            if ($validator->fails()) {
+                // return response()->json(['error' => $validator->errors()]);
+                return response()->json([
+                    'error' => $validator->errors()->first() // Sending the first error message for simplicity
+                ], 400); // Bad Request status code
+            }
 
-        $data['send_confirmation'] = $request->has('send_confirmation') && $data['send_confirmation'] == 'true';
-        // logger($data['send_confirmation']);
+            $data['send_confirmation'] = $request->has('send_confirmation') && $data['send_confirmation'] == 'true';
+            // logger($data['send_confirmation']);
 
-        if (!isset($data['fax_uuid'])) {
-            $fax = Faxes::where('domain_uuid', Session::get('domain_uuid'))
-                ->where('fax_caller_id_number', $data['sender_fax_number'])
-                ->first();
-            $data['fax_uuid'] = $fax->fax_uuid;
-        }
+            if (!isset($data['fax_uuid'])) {
+                $fax = Faxes::where('domain_uuid', session('domain_uuid'))
+                    ->where('fax_caller_id_number', $data['sender_fax_number'])
+                    ->first();
+                if (!$fax) {
+                    throw new \Exception("There was a problem scheduling your fax. Fax server not found.");
+                }
+                $data['fax_uuid'] = $fax->fax_uuid;
+            }
 
-
-        if (!isset($files) || sizeof($files) == 0) {
-            return response()->json(['error' => 'At least one file must be uploaded'], 400);
-        }
-
-        // Start creating the payload variable that will be passed to next step
-        $payload = array(
-            'From' => Session::get('user.user_email'),
-            'FromFull' => array(
-                'Email' => ($data['send_confirmation']) ? Session::get('user.user_email') : '',
-            ),
-            'To' => $data['recipient'] . '@fax.domain.com',
-            'Subject' => ($data['fax_message'] == "") ? $data['fax_subject'] : $data['fax_subject'] . " body",
-            'TextBody' => strip_tags($data['fax_message']),
-            'HtmlBody' => strip_tags($data['fax_message']),
-            'fax_destination' => $data['recipient'],
-            'fax_uuid' => $data['fax_uuid'],
-        );
-
-        $redirect_url = route('faxes.sent.list', $data['fax_uuid']);
-        $payload['Attachments'] = array();
-
-        // Parse files
-        foreach ($files as $file) {
-            // $splited = explode(',', substr($file['data'], 5), 2);
-            // $mime = $splited[0];
-            // $data = $splited[1];
-            // $mime_split_without_base64 = explode(';', $mime, 2);
-            // $mime = $mime_split_without_base64[0];
-            // // $mime_split=explode('/', $mime_split_without_base64[0],2);
-
-            $mime = $file->getClientMimeType();
-
-            // Get original file name
-            $fileName = $file->getClientOriginalName();
-
-            // Read the file content
-            $content = file_get_contents($file->getRealPath());
-
-            // Encode the content to base64 if needed
-            $base64Content = base64_encode($content);
-
-            array_push(
-                $payload['Attachments'],
-                array(
-                    'Content' => $base64Content,
-                    'ContentType' => $mime,
-                    'Name' => $fileName,
-                )
+            // Start creating the payload variable that will be passed to next step
+            $payload = array(
+                'From' => Session::get('user.user_email'),
+                'FromFull' => array(
+                    'Email' => ($data['send_confirmation']) ? Session::get('user.user_email') : '',
+                ),
+                'To' => $data['recipient'] . '@fax.domain.com',
+                'Subject' => isset($data['fax_message']) ? 'body' : null,
+                'TextBody' => isset($data['fax_message']) ? strip_tags($data['fax_message']): null,
+                'HtmlBody' => isset($data['fax_message']) ? strip_tags($data['fax_message']): null,
+                'fax_destination' => $data['recipient'],
+                'fax_uuid' => $data['fax_uuid'],
             );
+
+            $redirect_url = route('faxes.sent.list', $data['fax_uuid']);
+            $payload['Attachments'] = array();
+
+            // Parse files
+            foreach ($files as $file) {
+                // $splited = explode(',', substr($file['data'], 5), 2);
+                // $mime = $splited[0];
+                // $data = $splited[1];
+                // $mime_split_without_base64 = explode(';', $mime, 2);
+                // $mime = $mime_split_without_base64[0];
+                // // $mime_split=explode('/', $mime_split_without_base64[0],2);
+
+                $mime = $file->getClientMimeType();
+
+                // Get original file name
+                $fileName = $file->getClientOriginalName();
+
+                // Read the file content
+                $content = file_get_contents($file->getRealPath());
+
+                // Encode the content to base64 if needed
+                $base64Content = base64_encode($content);
+
+                array_push(
+                    $payload['Attachments'],
+                    array(
+                        'Content' => $base64Content,
+                        'ContentType' => $mime,
+                        'Name' => $fileName,
+                    )
+                );
+            }
+
+            $fax = new Faxes();
+            $result = $fax->EmailToFax($payload);
+
+            return response()->json([
+                'messages' => ['success' => ['Fax is scheduled for delivery']],
+            ], 200);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger('FaxController@sendFax error: '
+                . $e->getMessage()
+                . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'messages' => ['error' => [$e->getMessage()]]
+            ], 500);
         }
-
-        $fax = new Faxes();
-        $result = $fax->EmailToFax($payload);
-
-        return response()->json([
-            'redirect_url' => $redirect_url,
-            'status' => 200,
-            'success' => [
-                'message' => 'Fax is scheduled for delivery'
-            ]
-        ]);
     }
 
     public function updateStatus(FaxQueues $faxQueue, $status = null)
@@ -1298,5 +1275,13 @@ class FaxesController extends Controller
         ]);
 
         return redirect()->back();
+    }
+
+    public function getUserPermissions()
+    {
+        $permissions = [];
+        // $permissions['user_group_view'] = userCheckPermission('user_group_view');
+
+        return $permissions;
     }
 }

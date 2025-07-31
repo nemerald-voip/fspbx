@@ -1,4 +1,3 @@
-
 <template>
     <MainLayout>
 
@@ -52,19 +51,24 @@
                     </div>
 
                     <div class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
-                        <SelectBox :options="callDirections" :selectedItem="filterData.direction"
-                            :placeholder="'Call Direction'" @update:model-value="handleUpdateCallDirectionFilter" />
+                        <multiselect v-model="filterData.direction" :options="callDirections" :searchable="false"
+                            :close-on-select="true" track-by="value" label="name" :show-labels="false"
+                            placeholder="Direction" aria-label="pick a value"></multiselect>
                     </div>
 
-                    <div class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
-                        <ComboBox :options="entities" :selectedItem="filterData.entity" :search="true"
-                            :placeholder="'Users or Groups'" @update:model-value="handleUpdateUserOrGroupFilter" />
+                    <div v-if="permissions.all_cdr_view" class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
+                        <multiselect v-model="filterData.entity" :options="entities" deselectLabel=""
+                            selectGroupLabel="" deselectGroupLabel="" selectLabel="" group-values="groupOptions"
+                            group-label="groupLabel" :group-select="false" placeholder="Select extension or group"
+                            track-by="value" label="label"><template v-slot:noResult>No items found.</template>
+                        </multiselect>
                     </div>
 
-                    <div class="relative min-w-64 mb-2 shrink-0 sm:mr-4">
-                        <ComboBox :options="statusOptions" :selectedItem="selectedStatuses" :multiple="true"
-                            :placeholder="'Status'" @apply-selection="handleSelectedStatusUpdate"
-                            @update:model-value="handleSelectedStatusUpdate" :error="null" />
+                    <div class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
+                        <multiselect v-model="filterData.status" :options="statusOptions" :searchable="false"
+                            :close-on-select="true" track-by="value" label="name" :show-labels="false"
+                            placeholder="Status" aria-label="pick a value">
+                        </multiselect>
                     </div>
 
 
@@ -72,12 +76,13 @@
 
                 <template #navigation>
                     <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
-                        :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                        @pagination-change-page="renderRequestedPage" />
+                        :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page"
+                        :links="data.links" @pagination-change-page="renderRequestedPage" />
                 </template>
                 <template #table-header>
                     <TableColumnHeader header=" "
-                        class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"></TableColumnHeader>
+                        class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6">
+                    </TableColumnHeader>
                     <TableColumnHeader v-if="showGlobal" header="Domain"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                     <TableColumnHeader header="Caller ID Name"
@@ -87,16 +92,22 @@
                     <TableColumnHeader header="Dialed Number"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     </TableColumnHeader>
-                    <TableColumnHeader header="Recipient" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <TableColumnHeader header="Recipient"
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     </TableColumnHeader>
                     <TableColumnHeader header="Date" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     </TableColumnHeader>
                     <TableColumnHeader header="Time" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     </TableColumnHeader>
-                    <TableColumnHeader header="Duration" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <TableColumnHeader header="Duration"
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     </TableColumnHeader>
-                    <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <TableColumnHeader header="Status"
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     </TableColumnHeader>
+
+                    <TableColumnHeader v-if="permissions.cdr_mos_view" header="MOS" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+
                     <TableColumnHeader header="Rec" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                     <TableColumnHeader header="Actions"
@@ -113,8 +124,10 @@
                             <ejs-tooltip :content="row.direction + ' call'" position='TopLeft'
                                 target="#destination_tooltip_target">
                                 <div id="destination_tooltip_target">
-                                    <PhoneOutgoingIcon class="w-5 h-5 text-blue-600" v-if="row.direction === 'outbound'" />
-                                    <PhoneIncomingIcon class="w-5 h-5 text-green-600" v-if="row.direction === 'inbound'" />
+                                    <PhoneOutgoingIcon class="w-5 h-5 text-blue-600"
+                                        v-if="row.direction === 'outbound'" />
+                                    <PhoneIncomingIcon class="w-5 h-5 text-green-600"
+                                        v-if="row.direction === 'inbound'" />
                                     <PhoneLocalIcon class="w-5 h-5 text-fuchsia-600" v-if="row.direction === 'local'" />
                                 </div>
                             </ejs-tooltip>
@@ -131,9 +144,23 @@
                             </ejs-tooltip>
                         </TableField>
 
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.caller_id_name" />
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                            :text="row.caller_id_number_formatted" />
+                        <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                            :text="row.caller_id_name" /> -->
+
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                            <div v-if="row.extension && row.direction == 'outbound'">{{ row.extension?.name_formatted }}
+                            </div>
+                            <div v-else>{{ row.caller_id_name }}</div>
+                        </TableField>
+
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+
+                            <div v-if="row.extension && row.direction == 'outbound' && false">{{
+                                row.extension?.extension
+                            }}</div>
+                            <div v-else>{{ row.caller_id_number_formatted }}</div>
+                        </TableField>
+
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                             :text="row.caller_destination_formatted" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
@@ -150,18 +177,23 @@
                                 :textColor="statusBadgeConfig[row.status]?.textColor || 'text-blue-700'"
                                 :ringColor="statusBadgeConfig[row.status]?.ringColor || 'ring-blue-600/20'" />
                         </TableField>
+
+                        <TableField v-if="permissions.cdr_mos_view" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                            :text="row.rtp_audio_in_mos" />
+
                         <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                             <template v-if="(row.record_name && row.record_path) || row.record_path === 'S3'
                                 " #action-buttons>
                                 <div class="flex items-center space-x-2 whitespace-nowrap">
-                                    <PlayCircleIcon v-if="currentAudioUuid !== row.xml_cdr_uuid || !isAudioPlaying
-                                        " @click="fetchAndPlayAudio(row.xml_cdr_uuid)"
+                                    <PlayCircleIcon v-if="page.props.auth.can.call_recording_play && (currentAudioUuid !== row.xml_cdr_uuid || !isAudioPlaying)
+                                    " @click="fetchAndPlayAudio(row.xml_cdr_uuid)"
                                         class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" />
                                     <PauseCircleIcon v-if="currentAudioUuid === row.xml_cdr_uuid && isAudioPlaying"
                                         @click="pauseAudio"
                                         class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" />
 
-                                    <CloudArrowDownIcon @click="downloadAudio(row.xml_cdr_uuid)"
+                                    <CloudArrowDownIcon v-if="page.props.auth.can.call_recording_download"
+                                        @click="downloadAudio(row.xml_cdr_uuid)"
                                         class="h-6 w-6 text-gray-500 hover:text-gray-700 active:h-5 active:w-5 cursor-pointer" />
                                 </div>
                             </template>
@@ -170,7 +202,7 @@
                         <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap justify-center">
-                                    <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'View details'"
+                                    <ejs-tooltip v-if="page.props.auth.can.cdr_view_details" :content="'View details'"
                                         position='TopCenter' target="#view_tooltip_target">
                                         <div id="view_tooltip_target">
                                             <MagnifyingGlassIcon @click="handleViewRequest(row.xml_cdr_uuid)"
@@ -201,8 +233,8 @@
 
                 <template #footer>
                     <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
-                        :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                        @pagination-change-page="renderRequestedPage" />
+                        :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page"
+                        :links="data.links" @pagination-change-page="renderRequestedPage" />
                 </template>
 
 
@@ -231,8 +263,6 @@ import Paginator from "./components/general/Paginator.vue";
 import PhoneOutgoingIcon from "./components/icons/PhoneOutgoingIcon.vue"
 import PhoneIncomingIcon from "./components/icons/PhoneIncomingIcon.vue"
 import PhoneLocalIcon from "./components/icons/PhoneLocalIcon.vue"
-import SelectBox from "./components/general/SelectBox.vue"
-import ComboBox from "./components/general/ComboBox.vue"
 import Badge from "@generalComponents/Badge.vue";
 import moment from 'moment-timezone';
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
@@ -247,6 +277,8 @@ import {
     MagnifyingGlassIcon,
 } from "@heroicons/vue/24/solid";
 import { DocumentArrowDownIcon } from "@heroicons/vue/24/outline";
+import Multiselect from 'vue-multiselect'
+import 'vue-multiselect/dist/vue-multiselect.css'
 
 import {
     startOfDay, endOfDay,
@@ -265,40 +297,45 @@ const notificationShow = ref(null);
 const isExporting = ref(null);
 const selectedStatuses = ref([]);
 
+const data = ref({
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: 0,
+    to: 0,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
+});
+const entities = ref([])
+
 
 const props = defineProps({
-    data: Object,
     showGlobal: Boolean,
     startPeriod: String,
     endPeriod: String,
-    search: String,
     timezone: String,
-    direction: String,
     recordingUrl: String,
-    entities: Array,
-    selectedEntity: String,
-    selectedEntityType: String,
     csvUrl: Object,
     routes: Object,
-    // itemData: Object,
-    statusOptions: Object,
+    permissions: Object,
 });
 
 onMounted(() => {
-    //request list of entities
+    getData();
     getEntities();
 })
 
 const filterData = ref({
-    search: props.search,
+    search: null,
     showGlobal: props.showGlobal,
     dateRange: [moment.tz(props.startPeriod, props.timezone).startOf('day').format(), moment.tz(props.endPeriod, props.timezone).endOf('day').format()],
-    // dateRange: ['2024-07-01T00:00:00', '2024-07-01T23:59:59'],
-    timezone: props.timezone,
-    direction: props.direction,
-    entity: props.selectedEntity,
-    entityType: props.selectedEntityType,
+    direction: null,
+    entity: null,
+    status: null,
 });
+
 
 const showGlobal = ref(props.showGlobal);
 const itemOptions = ref({});
@@ -309,24 +346,58 @@ const callDirections = [
     { value: 'local', name: 'Local' },
 ]
 
+const statusOptions = [
+    { name: 'Answered', value: 'answered' },
+    { name: 'No Answer', value: 'no_answer' },
+    { name: 'Cancelled', value: 'cancelled' },
+    { name: 'Voicemail', value: 'voicemail' },
+    { name: 'Missed Call', value: 'missed call' },
+    { name: 'Abandoned', value: 'abandoned' },
+];
+
 const handleSelectedStatusUpdate = (updatedStatuses) => {
     filterData.value.statuses = updatedStatuses;
 };
 
-const getEntities = () => {
-    filterData.value.entity = null;
-    router.visit("/call-detail-records", {
-        preserveScroll: true,
-        preserveState: true,
-        data: {
-            filterData: filterData._rawValue,
-        },
-        only: ["entities"],
-        onSuccess: (page) => {
-            filterData.value.entity = props.selectedEntity;
-        }
+const getData = (page = 1) => {
+    loading.value = true;
 
-    });
+    // console.log(filterData.value);
+
+    axios.get(props.routes.data_route, {
+        params: {
+            filter: filterData.value,
+            page,
+        }
+    })
+        .then((response) => {
+            data.value = response.data;
+            // console.log(data.value);
+
+        }).catch((error) => {
+
+            handleErrorResponse(error);
+        }).finally(() => {
+            loading.value = false
+        })
+}
+
+const getEntities = () => {
+    axios.get(props.routes.entities_route, {
+        params: {
+            filter: filterData.value
+        }
+    })
+        .then((response) => {
+            entities.value = response.data;
+            // console.log(entities.value);
+
+        }).catch((error) => {
+
+            handleErrorResponse(error);
+        }).finally(() => {
+            loading.value = false
+        })
 
 }
 
@@ -395,23 +466,24 @@ const handleUpdateUserOrGroupFilter = (newSelectedItem) => {
 }
 
 const handleSearchButtonClick = () => {
-    loading.value = true;
+    getData();
+    // loading.value = true;
 
-    router.visit("/call-detail-records", {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-            'showGlobal',
-        ],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
+    // router.visit("/call-detail-records", {
+    //     data: {
+    //         filter: filterData._rawValue,
+    //     },
+    //     preserveScroll: true,
+    //     preserveState: true,
+    //     only: [
+    //         "data",
+    //         'showGlobal',
+    //     ],
+    //     onSuccess: (page) => {
+    //         loading.value = false;
+    //     }
 
-    });
+    // });
 };
 
 const handleFiltersReset = () => {
@@ -421,7 +493,7 @@ const handleFiltersReset = () => {
     filterData.value.direction = null;
     filterData.value.entity = null;
     filterData.value.entityType = null;
-    filterData.value.statuses = [];
+    filterData.value.status = null;
 
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();
@@ -429,18 +501,12 @@ const handleFiltersReset = () => {
 
 const renderRequestedPage = (url) => {
     loading.value = true;
-    router.visit(url, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
+    // Extract the page number from the url, e.g. "?page=3"
+    const urlObj = new URL(url, window.location.origin);
+    const pageParam = urlObj.searchParams.get("page") ?? 1;
 
-    });
+    // Now call getData with the page number
+    getData(pageParam);
 };
 
 const currentAudio = ref(null);
@@ -528,7 +594,7 @@ const exportCsv = () => {
     isExporting.value = true;
 
     axios.post(props.routes.export, {
-        filterData: filterData._rawValue,
+        filter: filterData._rawValue,
     })
         .then(response => {
             showNotification('success', response.data.messages);

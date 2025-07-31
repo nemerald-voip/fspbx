@@ -69,9 +69,9 @@ class SendFaxFailedNotification implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(Request $request)
+    public function __construct($request)
     {
-        $this->request = $request->all();
+        $this->request = $request;
     }
 
     /**
@@ -94,12 +94,12 @@ class SendFaxFailedNotification implements ShouldQueue
         // Allow only 2 tasks every 1 second
         Redis::throttle('fax')->allow(2)->every(1)->then(function () {
 
-            if (config('slack.system_status')) {
+            if (config('slack.fax')) {
                 Notification::route('slack', config('slack.fax'))
                     ->notify(new SendSlackNotification($this->request));
             }
 
-            Mail::to($this->request['FromFull']['Email'])->send(new FaxFailed($this->request));
+            Mail::to($this->request['from'])->send(new FaxFailed($this->request));
         }, function () {
             // Could not obtain lock; this job will be re-queued
             return $this->release(5);

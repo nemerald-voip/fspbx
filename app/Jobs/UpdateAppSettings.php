@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use Illuminate\Bus\Queueable;
+use App\Services\RingotelApiService;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -13,7 +14,7 @@ use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 class UpdateAppSettings implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-    public $mobile_app;
+    public $attributes;
 
     /**
      * The number of times the job may be attempted.
@@ -62,9 +63,9 @@ class UpdateAppSettings implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($mobile_app)
+    public function __construct($attributes)
     {
-        $this->mobile_app = $mobile_app;
+        $this->attributes = $attributes;
     }
 
     /**
@@ -82,31 +83,14 @@ class UpdateAppSettings implements ShouldQueue
      *
      * @return void
      */
-    public function handle()
+    public function handle(RingotelApiService $ringotelApiService)
     {
         // Allow only 2 tasks every 1 second
-        Redis::throttle('ringotel')->allow(2)->every(1)->then(function () {
-
-            //If there is no app then just return
-            if(!isset($this->mobile_app)) {
-                // If there is no app for this user, delete the job from the queue
-                $this->delete();
-                return;
-            }
-
-            // Send request to delеte user
-            $response = appsUpdateUser($this->mobile_app);
-
-            //If there is an error return failed status and requeue the job
-            if (isset($response['error'])) {
-                return $this->release(5);
-            } elseif (!isset($response['result'])) {
-                return $this->release(5);
-            }
+        Redis::throttle('ringotel')->allow(2)->every(1)->then(function () use ($ringotelApiService) {
+            $result = $ringotelApiService->updateUser($this->attributes);
 
         }, function () {
-            // Could not obtain lock; this job will be re-queued
-            return $this->release(5);
+            throw new \Exception('Could not obtain Redis lock for Ringotel throttling.');
         });
 
     }

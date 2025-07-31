@@ -42,10 +42,12 @@
             <!-- Text-to-Speech Fields -->
             <div v-if="selectedGreetingMethod === 'text-to-speech'" class="grid grid-cols-6 gap-6">
                 <div class="col-span-6">
-                    <LabelInputOptional target="custom_greeting_message" label="Custom greeting message" class="truncate" />
+                    <LabelInputOptional target="custom_greeting_message" label="Custom greeting message"
+                        class="truncate" />
                     <div class="mt-2">
-                        <Textarea v-model="greetingForm.input" id="custom_greeting_message" :placeholder="sample_message"
-                            name="custom_greeting_message" rows="3" :error="!!errors?.input" />
+                        <Textarea v-model="greetingForm.input" id="custom_greeting_message"
+                            :placeholder="sample_message" name="custom_greeting_message" rows="3"
+                            :error="!!errors?.input" />
                     </div>
                     <div v-if="errors?.input" class="mt-2 text-xs text-red-600">
                         {{ errors.input[0] }}
@@ -55,7 +57,8 @@
                 <div class="col-span-3 sm:col-span-2 text-sm font-medium leading-6 text-gray-900">
                     <LabelInputOptional label="Voice" class="truncate mb-1" />
                     <ComboBox :options="voices" :search="true" :placeholder="'Choose voice'"
-                        :selectedItem="voices[0]?.value" @update:model-value="handleUpdateVoice" :error="!!errors?.voice" />
+                        :selectedItem="default_voice ?? voices[0]?.value" @update:model-value="handleUpdateVoice"
+                        :error="!!errors?.voice" />
                     <div v-if="errors?.voice" class="mt-2 text-xs text-red-600">
                         {{ errors.voice[0] }}
                     </div>
@@ -63,7 +66,7 @@
 
                 <div class="col-span-3 sm:col-span-2 text-sm font-medium leading-6 text-gray-900">
                     <LabelInputOptional label="Speed" class="truncate mb-1" />
-                    <ComboBox :options="speeds" :search="true" :placeholder="'Choose Speed'" :selectedItem="'1.0'"
+                    <ComboBox :options="speeds" :search="true" :placeholder="'Choose Speed'" :selectedItem="'1.00'"
                         @update:model-value="handleUpdateSpeed" :error="!!errors?.speed" />
                     <div v-if="errors?.speed" class="mt-2 text-xs text-red-600">
                         {{ errors.speed[0] }}
@@ -104,13 +107,14 @@
                                 Browse
                             </button>
                             <div class="relative flex flex-grow items-stretch focus-within:z-10">
-                                <input type="text" name="upload_file" id="upload_file" :value="selectedFileName" disabled
+                                <input type="text" name="upload_file" id="upload_file" :value="selectedFileName"
+                                    disabled
                                     class="block w-full rounded-none rounded-r-md border-0 py-1.5 pl-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                                     placeholder="No file selected" />
                             </div>
                         </div>
-                        <input ref="fileInput" type="file" name="file" id="file" class="hidden" @change="handleFileUpload"
-                            accept=".wav, .mp3, .m4a" />
+                        <input ref="fileInput" type="file" name="file" id="file" class="hidden"
+                            @change="handleFileUpload" accept=".wav, .mp3, .m4a" />
                         <p class="mt-2 text-sm text-gray-500 " id="file_input_help">Supported formats: WAV,
                             MP3, or M4A</p>
                     </div>
@@ -170,7 +174,7 @@
         </div>
     </div>
 </template>
-  
+
 <script setup>
 import { ref, reactive } from 'vue';
 import { usePage } from '@inertiajs/vue3';
@@ -185,6 +189,10 @@ import { XCircleIcon, CheckCircleIcon } from '@heroicons/vue/20/solid'
 const props = defineProps({
     title: String,
     voices: Object,
+    default_voice: {
+        type: String,
+        default: null
+    },
     speeds: Object,
     routes: Object,
     sample_message: String,
@@ -209,7 +217,7 @@ const voicemail_uuid = ref(null);
 
 const greetingForm = reactive({
     input: null,
-    voice: props.voices[0].value,
+    voice: props.default_voice ?? props.voices[0].value,
     speed: '1.0',
     _token: page.props.csrf_token,
 });
@@ -258,7 +266,7 @@ const uploadFile = () => {
                 });
                 selectedFileName.value = '';
                 fileToUpload.value = null;
-                successMessage.value = response.data.messages.success[0];
+                successMessage.value = response.data.messages.success;
 
                 // Dismiss success message after 5 seconds
                 setTimeout(() => {
@@ -365,4 +373,3 @@ const handleFormErrorResponse = (error) => {
 
 
 </script>
-  

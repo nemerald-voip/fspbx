@@ -9,9 +9,9 @@ class CallRoutingOptionsController extends Controller
 {
     public function getRoutingOptions(CallRoutingOptionsService $service): JsonResponse
     {
-
         try {
             $options = $service->getOptions();
+
             // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['Successfully fetched routing options']],

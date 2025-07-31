@@ -125,8 +125,11 @@ class MessagesController extends Controller
             }]);
             // Access domains through the session and filter devices by those domains
             $domainUuids = Session::get('domains')->pluck('domain_uuid');
-            $data->whereHas('domain', function ($query) use ($domainUuids) {
-                $query->whereIn($this->model->getTable() . '.domain_uuid', $domainUuids);
+            $data->where(function ($q) use ($domainUuids) {
+                $q->whereIn($this->model->getTable() . '.domain_uuid', $domainUuids);
+                if (isSuperAdmin()) {
+                    $q->orWhereNull($this->model->getTable() . '.domain_uuid');
+                }
             });
         } else {
             // Directly filter devices by the session's domain_uuid

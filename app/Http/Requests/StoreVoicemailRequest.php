@@ -32,6 +32,7 @@ class StoreVoicemailRequest extends FormRequest
             ],
             'voicemail_password' => ['nullable', 'numeric', new ValidVoicemailPassword],
             'voicemail_mail_to' => 'nullable|email:rfc',
+            'voicemail_sms_to' => 'nullable|string',
             'voicemail_enabled' => 'present',
             'voicemail_tutorial' => 'present',
             'voicemail_alternate_greet_id' => 'nullable|numeric',
@@ -42,6 +43,7 @@ class StoreVoicemailRequest extends FormRequest
             'voicemail_recording_instructions' => 'present',
             'voicemail_copies' => 'nullable|array',
             'extension' => "uuid",
+            'domain_uuid' => "present",
         ];
     }
 
@@ -102,6 +104,10 @@ class StoreVoicemailRequest extends FormRequest
         if ($this->has('voicemail_play_recording_instructions')) {
             $this->merge([
                 'voicemail_recording_instructions' => $this->voicemail_play_recording_instructions ? 'true' : 'false',
+            ]);
+        } else {
+            $this->merge([
+                'voicemail_recording_instructions' => 'true' 
             ]);
         }
 

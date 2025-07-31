@@ -3,8 +3,10 @@
 namespace App\Services;
 
 use App\Models\{
+    BusinessHour,
     CallCenterQueues,
     CallFlows,
+    Conferences,
     Dialplans,
     Extensions,
     Faxes,
@@ -13,8 +15,6 @@ use App\Models\{
     RingGroups,
     Voicemails
 };
-
-use function PHPUnit\Framework\isEmpty;
 
 class CallRoutingOptionsService
 {
@@ -26,11 +26,13 @@ class CallRoutingOptionsService
         ['value' => 'voicemails', 'name' => 'Voicemail'],
         ['value' => 'ring_groups', 'name' => 'Ring Group'],
         ['value' => 'ivrs', 'name' => 'Virtual Receptionist'],
+        ['value' => 'business_hours', 'name' => 'Business Hours'],
         ['value' => 'time_conditions', 'name' => 'Schedule'],
         ['value' => 'contact_centers', 'name' => 'Contact Center'],
         ['value' => 'faxes', 'name' => 'Fax'],
         ['value' => 'call_flows', 'name' => 'Call Flow'],
         ['value' => 'recordings', 'name' => 'Play Greeting'],
+        ['value' => 'conferences', 'name' => 'Conferences'],
         ['value' => 'check_voicemail', 'name' => 'Check Voicemail'],
         ['value' => 'company_directory', 'name' => 'Company Directory'],
         ['value' => 'hangup', 'name' => 'Hang up'],
@@ -42,12 +44,30 @@ class CallRoutingOptionsService
         ['value' => 'voicemails', 'label' => 'Voicemail'],
         ['value' => 'ring_groups', 'label' => 'Ring Group'],
         ['value' => 'ivrs', 'label' => 'Virtual Receptionist'],
+        ['value' => 'business_hours', 'label' => 'Business Hours'],
         ['value' => 'time_conditions', 'label' => 'Schedule'],
         ['value' => 'contact_centers', 'label' => 'Contact Center'],
         ['value' => 'faxes', 'label' => 'Fax'],
         ['value' => 'call_flows', 'label' => 'Call Flow'],
         // ['value' => 'recordings', 'label' => 'Play Greeting'],
         ['value' => 'external', 'label' => 'External Number'],
+    ];
+
+    /**
+     * Map of slot-action keys to their Eloquent model classes.
+     */
+    private const MODEL_MAP = [
+        'extensions'       => \App\Models\Extensions::class,
+        'ivrs'             => \App\Models\IvrMenus::class,
+        'voicemails'       => \App\Models\Voicemails::class,
+        'ring_groups'      => \App\Models\RingGroups::class,
+        'business_hours'   => \App\Models\BusinessHour::class,
+        'time_conditions'  => \App\Models\Dialplans::class,
+        'contact_centers'  => \App\Models\CallCenterQueues::class,
+        'conferences'      => \App\Models\Conferences::class,
+        'faxes'            => \App\Models\Faxes::class,
+        'call_flows'       => \App\Models\CallFlows::class,
+        'recordings'       => \App\Models\Recordings::class,
     ];
 
     private const TRANSFER_FORMAT = '%s:%s XML %s';
@@ -78,8 +98,12 @@ class CallRoutingOptionsService
                 return $this->buildOptions(Recordings::class, 'recording_filename', 'recording_name');
             case 'ring_groups':
                 return $this->buildOptions(RingGroups::class, 'ring_group_extension', 'ring_group_name');
+            case 'business_hours':
+                return $this->buildOptions(BusinessHour::class, 'extension', 'name');
             case 'time_conditions':
                 return $this->buildOptions(Dialplans::class, 'dialplan_number', 'dialplan_name');
+            case 'conferences':
+                return $this->buildOptions(Conferences::class, 'conference_extension', 'conference_name');
             case 'voicemails':
                 return $this->buildOptions(Voicemails::class, 'voicemail_id', 'voicemail_description');
             case 'other':
@@ -370,7 +394,7 @@ class CallRoutingOptionsService
                         'type' => 'voicemails',
                         'extension' => $voicemail->voicemail_id,
                         'option' => $voicemail->voicemail_uuid,
-                        'name' => $voicemail->extension->name_formatted ?? $voicemail->voicemail_id,
+                        'name' => $voicemail->extension ? $voicemail->extension->name_formatted : $voicemail->voicemail_id . ' - Team Voicemail',
                     ];
                 }
             }
@@ -396,7 +420,6 @@ class CallRoutingOptionsService
                 'option' => '',
                 'name' => '',
             ];
-
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return null;
@@ -479,15 +502,26 @@ class CallRoutingOptionsService
             'ring_groups' => '/ring_group_uuid=([0-9a-fA-F-]+)/',
             'ivrs' => '/ivr_menu_uuid=([0-9a-fA-F-]+)/',
             'contact_centers' => '/call_center_queue_uuid=([0-9a-fA-F-]+)/',
+            'business_hours' => '/business_hours=([0-9a-fA-F-]+)/',
             'call_flows' => '/call_flow_uuid=([0-9a-fA-F-]+)/',
             'time_conditions' => '/\b(year|yday|mon|mday|week|mweek|wday|hour|minute|minute-of-day|time-of-day|date-time)=("[^"]+"|\'[^\']+\'|\S+)/',
             'faxes' => '/fax_uuid=([0-9a-fA-F-]+)/',
+            'conferences' => '/conference_uuid=([0-9a-fA-F-]+)/',
             'check_voicemail' => '/app.lua voicemail/',
             'company_directory' => '/directory.lua/',
         ];
 
         foreach ($patterns as $type => $pattern) {
             if (preg_match($pattern, $dialplan->dialplan_xml, $matches)) {
+                if ($type === 'business_hours') {
+                    // For business hours, return the dialplan UUID as the option
+                    return [
+                        'type' => $type,
+                        'extension' => $extension,
+                        'option' => $matches[1],
+                        'name' => $dialplan->dialplan_name,
+                    ];
+                }
                 if ($type === 'time_conditions') {
                     // For time conditions, return the dialplan UUID as the option
                     return [
@@ -581,6 +615,7 @@ class CallRoutingOptionsService
             'ivrs' => 'Virtual Receptionist',
             'contact_centers' => 'Contact Center',
             'faxes' => "Fax",
+            'business_hours' => 'Business Hours',
             'time_conditions' => 'Schedules',
             'call_flows' => 'Call Flow',
             'recordings' => 'Play recording',
@@ -591,5 +626,21 @@ class CallRoutingOptionsService
         ];
 
         return $typeMapping[$type] ?? 'Unknown';
+    }
+
+    /**
+     * Given an action key, return the corresponding Eloquent model class.
+     *
+     * @param  string  $action
+     * @return class-string<Model>
+
+     */
+    public function mapActionToModel(string $action)
+    {
+        if (! array_key_exists($action, self::MODEL_MAP)) {
+            return null;
+        }
+
+        return self::MODEL_MAP[$action];
     }
 }

@@ -58,7 +58,7 @@ class SinchOutboundSMS extends Model
         // Get result
         if (isset($response)) {
             $result = json_decode($response->body());
-            logger($response->body());
+            // logger($response->body());
 
             // Determine if the operation was successful
             if ($response->successful() && isset($result->success) && $result->success) {

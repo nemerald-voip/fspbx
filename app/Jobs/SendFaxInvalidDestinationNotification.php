@@ -69,9 +69,9 @@ class SendFaxInvalidDestinationNotification implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(Request $request)
+    public function __construct($request)
     {
-        $this->request = $request->all();
+        $this->request = $request;
     }
 
     /**
@@ -94,7 +94,7 @@ class SendFaxInvalidDestinationNotification implements ShouldQueue
         // Allow only 2 tasks every 1 second
         Redis::throttle('fax')->allow(2)->every(1)->then(function () {
 
-            $this->request['slack_message'] = 'Someone with the email ' . $this->request['FromFull']['Email'] . ' tried faxing to ' .  $this->request['invalid_number'] .  ', which is not a valid US number.';
+            $this->request['slack_message'] = 'Someone with the email ' . $this->request['from'] . ' tried faxing to ' .  $this->request['invalid_number'] .  ', which is not a valid US number.';
 
             Log::alert($this->request['slack_message']);
 
@@ -103,7 +103,7 @@ class SendFaxInvalidDestinationNotification implements ShouldQueue
                     ->notify(new SendSlackNotification($this->request));
             }
 
-            Mail::to($this->request['FromFull']['Email'])->send(new FaxInvalidDestination($this->request));
+            Mail::to($this->request['from'])->send(new FaxInvalidDestination($this->request));
         }, function () {
             // Could not obtain lock; this job will be re-queued
             return $this->release(5);

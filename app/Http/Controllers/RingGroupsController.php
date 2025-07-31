@@ -299,29 +299,6 @@ class RingGroupsController extends Controller
 
             ]);
 
-            $openAiVoices = [
-                ['value' => 'alloy', 'name' => 'Alloy'],
-                ['value' => 'echo', 'name' => 'Echo'],
-                ['value' => 'fable', 'name' => 'Fable'],
-                ['value' => 'onyx', 'name' => 'Onyx'],
-                ['value' => 'nova', 'name' => 'Nova'],
-                ['value' => 'shimmer', 'name' => 'Shimmer'],
-            ];
-
-            $openAiSpeeds = [];
-
-            for ($i = 0.85; $i <= 1.3; $i += 0.05) {
-                if (floor($i) == $i) {
-                    // Whole number, format with one decimal place
-                    $formattedValue = sprintf('%.1f', $i);
-                } else {
-                    // Fractional number, format with two decimal places
-                    $formattedValue = sprintf('%.2f', $i);
-                }
-                $openAiSpeeds[] = ['value' => $formattedValue, 'name' => $formattedValue];
-            }
-
-
 
             // Define the instructions for recording a voicemail greeting using a phone call
             $phoneCallInstructions = [
@@ -334,6 +311,8 @@ class RingGroupsController extends Controller
 
             $ring_back_tones = getRingBackTonesCollectionGrouped(session('domain_uuid'));
 
+            $openAiService = app(\App\Services\OpenAIService::class);
+            
             // Construct the itemOptions object
             $itemOptions = [
                 'ring_group' => $item,
@@ -343,8 +322,9 @@ class RingGroupsController extends Controller
                 'routes' => $routes,
                 'routing_types' => $routingTypes,
                 'forwarding_types' => $forwardingTypes,
-                'voices' => $openAiVoices,
-                'speeds' => $openAiSpeeds,
+                'voices' => $openAiService->getVoices(),
+                'default_voice' => isset($openAiService) && $openAiService ? $openAiService->getDefaultVoice() : null,
+                'speeds' => $openAiService->getSpeeds(),
                 'phone_call_instructions' => $phoneCallInstructions,
                 'sample_message' => $sampleMessage,
                 'greetings' => $greetingsArray,
@@ -409,8 +389,8 @@ class RingGroupsController extends Controller
                 'ring_group_enabled' => 'true',
                 'ring_group_strategy' => 'enterprise',
                 'ring_group_ringback' => '${us-ring}',
-                'ring_group_call_forward_enabled' => 'true',
-                'ring_group_follow_me_enabled' => 'true',
+                'ring_group_call_forward_enabled' => get_domain_setting('honor_member_cfwd'),
+                'ring_group_follow_me_enabled' => get_domain_setting('honor_member_followme'),
                 'dialplan_uuid' => Str::uuid(),
             ]));
 
@@ -502,6 +482,8 @@ class RingGroupsController extends Controller
         $validated = $request->validated();
         $domain_uuid = session('domain_uuid');
 
+        // logger($validated);
+
         try {
             DB::beginTransaction();
 
@@ -518,7 +500,7 @@ class RingGroupsController extends Controller
 
 
             // Add timeout app/data only if failback info exists
-            if ($request->has('failback_action') && $request->has('failback_target')) {
+            if ($request->has('fallback_action')) {
                 $timeoutData = $this->buildExitDestinationAction($validated);
                 $updateData['ring_group_timeout_app'] = $timeoutData['action'];
                 $updateData['ring_group_timeout_data'] = $timeoutData['data'];
@@ -558,7 +540,7 @@ class RingGroupsController extends Controller
                         'destination_number'  => $member['destination'] ?? null,
                         'destination_delay'   => $member['delay'] ?? null,
                         'destination_timeout' => $member['timeout'] ?? null,
-                        'destination_prompt'  => $member['prompt'] ? 1: null,
+                        'destination_prompt'  => $member['prompt'] ? 1 : null,
                         'destination_enabled' => !empty($member['enabled']) ? 'true' : 'false',
                     ]);
                 }
@@ -652,21 +634,22 @@ class RingGroupsController extends Controller
      */
     protected function buildExitDestinationAction($inputs)
     {
-        switch ($inputs['failback_action']) {
+        switch ($inputs['fallback_action']) {
             case 'extensions':
             case 'ring_groups':
             case 'ivrs':
+            case 'business_hours':
             case 'time_conditions':
             case 'contact_centers':
             case 'faxes':
             case 'call_flows':
-                return  ['action' => 'transfer', 'data' => $inputs['failback_target'] . ' XML ' . session('domain_name')];
+                return  ['action' => 'transfer', 'data' => $inputs['fallback_target'] . ' XML ' . session('domain_name')];
             case 'voicemails':
-                return ['action' => 'transfer', 'data' => '*99' . $inputs['failback_target'] . ' XML ' . session('domain_name')];
+                return ['action' => 'transfer', 'data' => '*99' . $inputs['fallback_target'] . ' XML ' . session('domain_name')];
 
             case 'recordings':
                 // Handle recordings with 'lua' destination app
-                return ['action' => 'lua', 'data' => 'streamfile.lua ' . $inputs['failback_target']];
+                return ['action' => 'lua', 'data' => 'streamfile.lua ' . $inputs['fallback_target']];
 
             case 'check_voicemail':
                 return ['action' => 'transfer', 'data' => '*98 XML ' . session('domain_name')];
@@ -692,6 +675,7 @@ class RingGroupsController extends Controller
             case 'extensions':
             case 'ring_groups':
             case 'ivrs':
+            case 'business_hours':
             case 'time_conditions':
             case 'contact_centers':
             case 'faxes':
@@ -719,5 +703,30 @@ class RingGroupsController extends Controller
         return collect($enabledMembers)
             ->map(fn($m) => (int) $m['delay'] + (int) $m['timeout'])
             ->max() ?? 0;
+    }
+
+    public function selectAll()
+    {
+        try {
+            if (request()->get('showGlobal')) {
+                $uuids = $this->model::get($this->model->getKeyName())->pluck($this->model->getKeyName());
+            } else {
+                $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
+                    ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
+            }
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['All items selected']],
+                'items' => $uuids,
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e);
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to select all items']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
     }
 }

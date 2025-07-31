@@ -1,7 +1,7 @@
 {
     "private": true,
     "scripts": {
-        "dev": "vite --https",
+        "dev": "vite",
         "build": "vite build"
     },
     "devDependencies": {
@@ -21,7 +21,9 @@
     },
     "type": "module",
     "dependencies": {
+        "@headlessui/react": "^2.2.4",
         "@headlessui/vue": "^1.7.16",
+        "@heroicons/react": "^2.2.0",
         "@heroicons/vue": "^2.1.1",
         "@inertiajs/inertia": "^0.11.1",
         "@inertiajs/vue3": "^1.0.14",

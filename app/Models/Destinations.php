@@ -2,12 +2,8 @@
 
 namespace App\Models;
 
-use libphonenumber\PhoneNumberUtil;
 use libphonenumber\PhoneNumberFormat;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
-use libphonenumber\NumberParseException;
-use App\Services\CallRoutingOptionsService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Destinations extends Model
@@ -64,91 +60,54 @@ class Destinations extends Model
         'group_uuid',
     ];
 
-    public function __construct(array $attributes = [])
-    {
-        parent::__construct();
-        $this->attributes['domain_uuid'] = Session::get('domain_uuid');
-        $this->attributes['insert_date'] = date('Y-m-d H:i:s');
-        $this->attributes['insert_user'] = Session::get('user_uuid');
-        $this->fill($attributes);
-    }
+    protected $appends = ['destination_number_formatted', 'routing_options'];
 
-    /**
-     * The booted method of the model
-     *
-     * Define all attributes here like normal code
-
-     */
-    protected static function booted()
+    public static function boot()
     {
+        parent::boot();
         static::saving(function ($model) {
-            // Remove attributes before saving to database
-            unset($model->destination_number_formatted);
-            unset($model->destroy_route);
-            unset($model->destination_actions_formatted);
-            unset($model->routing_options);
-            $model->update_date = date('Y-m-d H:i:s');
-            $model->update_user = Session::get('user_uuid');
-
-            // Prepare destination numbers for regex conversion
+            // Always update these fields before save
             $destination_numbers = array_filter([
                 'destination_prefix' => $model->destination_prefix,
                 'destination_trunk_prefix' => $model->destination_trunk_prefix,
                 'destination_area_code' => $model->destination_area_code,
                 'destination_number' => $model->destination_number,
             ]);
+            $model->attributes['destination_number_regex'] = $model->to_regex($destination_numbers);
 
-            // Convert to regex
-            $model->destination_number_regex = $model->to_regex($destination_numbers);
-        });
-
-        static::retrieved(function ($model) {
-            if ($model->destination_number) {
-                $phoneNumberUtil = PhoneNumberUtil::getInstance();
-                try {
-                    $phoneNumberObject = $phoneNumberUtil->parse($model->destination_number, 'US');
-                    if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                        $model->destination_number_formatted = $phoneNumberUtil
-                            ->format($phoneNumberObject, PhoneNumberFormat::NATIONAL);
-                    } else {
-                        $model->destination_number_formatted = $model->destination_number;
-                    }
-                } catch (NumberParseException $e) {
-                    $model->destination_number_formatted = $model->destination_number;
-                }
-            }
-
-            if (!empty($model->destination_actions)) {
-
-                $callRoutingOptionsService = new CallRoutingOptionsService();
-
-                $model->routing_options = $callRoutingOptionsService->reverseEngineerDestinationActions($model->destination_actions);
-            }
-
-            if (!empty($model->destination_conditions)) {
-                $model->destination_conditions = json_decode($model->destination_conditions, true);
-                if (is_array($model->destination_conditions)) {
-                    $conditions = null;
-                    foreach ($model->destination_conditions as $condition) {
-                        if (!empty($condition['condition_data'])) {
-                            $conditions[] = [
-                                'condition_field' => $condition['condition_field'],
-                                'condition_expression' => $condition['condition_expression'],
-                                'condition_target' => [
-                                    'targetValue' => $condition['condition_data']
-                                ],
-                            ];
-                        }
-                    }
-                    $model->destination_conditions = $conditions;
-                }
-            }
-
-            $model->destroy_route = route('phone-numbers.destroy', ['phone_number' => $model->destination_uuid]);
-
-            return $model;
+            $model->attributes['update_date'] = date('Y-m-d H:i:s');
+            $model->attributes['update_user'] = session('user_uuid');
         });
     }
+
+    public function getDestinationNumberFormattedAttribute()
+    {
+        return formatPhoneNumber($this->destination_number, 'US', PhoneNumberFormat::NATIONAL);
+    }
+
+    public function getDestinationNumberE164Attribute()
+    {
+        return formatPhoneNumber($this->destination_number, 'US', PhoneNumberFormat::E164);
+    }
+
+    public function getRoutingOptionsAttribute()
+    {
+        if (empty($this->destination_actions)) {
+            return null;
+        }
+        $service = new \App\Services\CallRoutingOptionsService();
+        return $service->reverseEngineerDestinationActions($this->destination_actions);
+    }
+
+    public function getLabelAttribute()
+    {
+        $phoneNumberFormatted = $this->destination_number_formatted;
+        if (!empty($this->destination_description)) {
+            return $phoneNumberFormatted . ' - ' . $this->destination_description;
+        }
+        return $phoneNumberFormatted;
+    }
+
 
     /**
      * Get domain that this model belongs to
@@ -173,7 +132,7 @@ class Destinations extends Model
     public function to_regex($array)
     {
         $regex_parts = [];
-    
+
         // If all elements are present
         if (!empty($array['destination_prefix']) && !empty($array['destination_trunk_prefix']) && !empty($array['destination_area_code']) && !empty($array['destination_number'])) {
             $regex_parts[] = "\+?{$array['destination_prefix']}?({$array['destination_area_code']}{$array['destination_number']})";
@@ -184,22 +143,20 @@ class Destinations extends Model
         elseif (!empty($array['destination_prefix']) && !empty($array['destination_trunk_prefix']) && !empty($array['destination_number'])) {
             $regex_parts[] = "\+?{$array['destination_prefix']}?({$array['destination_number']})";
             $regex_parts[] = "{$array['destination_trunk_prefix']}?({$array['destination_number']})";
-        }
-        elseif (!empty($array['destination_prefix']) && !empty($array['destination_area_code']) && !empty($array['destination_number'])) {
+        } elseif (!empty($array['destination_prefix']) && !empty($array['destination_area_code']) && !empty($array['destination_number'])) {
             $regex_parts[] = "\+?{$array['destination_prefix']}?({$array['destination_area_code']}{$array['destination_number']})";
-        }
-        elseif (!empty($array['destination_number'])) {
+        } elseif (!empty($array['destination_number'])) {
             $destination_prefix = $array['destination_prefix'] ?? '';
             $destination_number = $array['destination_number'];
-    
+
             // Add capturing group for the destination number
             $destination_regex = "($destination_number)";
-    
+
             // Escape "+" in the number if present
             if (strpos($destination_number, '+') === 0) {
                 $destination_regex = "\\+?" . substr($destination_number, 1);
             }
-    
+
             // Add prefix handling
             if (!empty($destination_prefix)) {
                 $destination_prefix = str_replace("+", "", $destination_prefix);
@@ -210,68 +167,21 @@ class Destinations extends Model
                     $destination_prefix = $plus . '(?:' . $destination_prefix . ')?';
                 }
             }
-    
+
             // Convert N, X, Z patterns to regex
             $destination_regex = str_ireplace(["N", "X", "Z"], ["[2-9]", "[0-9]", "[1-9]"], $destination_regex);
-    
+
             // Ensure regex starts with "^" and ends with "$"
             $destination_regex = "^" . $destination_prefix . $destination_regex . "$";
-            
+
             return $destination_regex;
         }
-    
+
         // Combine regex parts into one pattern with capturing group
         if (!empty($regex_parts)) {
             return "^(" . implode('|', $regex_parts) . ")$";
         }
-    
+
         return ''; // Return empty string if no valid regex is generated
     }
-    
-    
-
-
-    // /**
-    //  * Force to use it, cause laravel's casting method doesn't determine string 'false' as a valid boolean value.
-    //  *
-    //  * @param  string|null  $value
-    //  * @return bool
-    //  */
-    // public function getDestinationEnabledAttribute(?string $value): bool
-    // {
-    //     return $value === 'true';
-    // }
-
-    // /**
-    //  * Force to use it, cause laravel's casting method doesn't determine string 'false' as a valid boolean value.
-    //  *
-    //  * @param  string|null  $value
-    //  * @return bool
-    //  */
-    // public function getDestinationRecordAttribute(?string $value): bool
-    // {
-    //     return $value === 'true';
-    // }
-
-    // /**
-    //  * Set the destination_enabled attribute.
-    //  *
-    //  * @param  bool $value
-    //  * @return void
-    //  */
-    // public function setDestinationEnabledAttribute($value): void
-    // {
-    //     $this->attributes['destination_enabled'] = $value ? 'true' : 'false';
-    // }
-
-    // /**
-    //  * Set the destination_record attribute.
-    //  *
-    //  * @param  bool $value
-    //  * @return void
-    //  */
-    // public function setDestinationRecordAttribute($value): void
-    // {
-    //     $this->attributes['destination_record'] = $value ? 'true' : 'false';
-    // }
 }

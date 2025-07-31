@@ -13,8 +13,11 @@ class VerifyCsrfToken extends Middleware
      */
     protected $except = [
         'webhook/postmark',
+        'webhook/mailgun',
         'webhook/commio/sms',
         'webhook/sinch/sms',
-        'sms/ringotelwebhook'
+        'webhook/bandwidth/sms',
+        'sms/ringotelwebhook',
+        'webhook/freeswitch'
     ];
 }

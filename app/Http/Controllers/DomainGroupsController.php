@@ -2,16 +2,30 @@
 
 namespace App\Http\Controllers;
 
+use Inertia\Inertia;
 use App\Models\Domain;
-use App\Models\DomainGroupRelations;
 use App\Models\DomainGroups;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
+use App\Models\DomainGroupRelations;
 use Illuminate\Support\Facades\Validator;
+use App\Http\Requests\CreateDomainGroupRequest;
+use App\Http\Requests\UpdateDomainGroupRequest;
 
 class DomainGroupsController extends Controller
 {
+
+    public $model;
+    public $filters = [];
+    public $sortField;
+    public $sortOrder;
+    protected $viewName = 'DomainGroups';
+    protected $searchable = ['group_name'];
+
+    public function __construct()
+    {
+        $this->model = new DomainGroups();
+    }
     /**
      * Display a listing of the resource.
      *
@@ -20,231 +34,367 @@ class DomainGroupsController extends Controller
     public function index()
     {
         // Check permissions
-        if (!isSuperAdmin()){
+        if (!userCheckPermission("domain_groups_list_view")) {
             return redirect('/');
         }
 
+        return Inertia::render(
+            $this->viewName,
+            [
+                'data' => function () {
+                    return $this->getData();
+                },
 
-        $groups = DomainGroups::get()->sortBy('group_name');
-
-        //assign permissions
-        $permissions['add_new'] = isSuperAdmin();
-        $permissions['edit'] = isSuperAdmin();
-        $permissions['delete'] = isSuperAdmin();
-
-        return view('layouts.domains.groups.list')
-        ->with("groups",$groups)
-        ->with('permissions',$permissions);
+                'routes' => [
+                    'current_page' => route('domain-groups.index'),
+                    'item_options' => route('domain-groups.item.options'),
+                    'bulk_delete' => route('domain-groups.bulk.delete'),
+                    'select_all' => route('domain-groups.select.all'),
+                ]
+            ]
+        );
     }
 
     /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
+     *  Get data
      */
-    public function create()
+    public function getData($paginate = 50)
     {
 
-        // Check permissions
-        if (!isSuperAdmin()){
-            return redirect('/');
+        // Check if search parameter is present and not empty
+        if (!empty(request('filterData.search'))) {
+            $this->filters['search'] = request('filterData.search');
         }
 
-        //get all active domains
-        $all_domains = Domain::where('domain_enabled','true')
-        ->get();
+        // Add sorting criteria
+        $this->sortField = request()->get('sortField', 'group_name');
+        $this->sortOrder = request()->get('sortOrder', 'asc');
 
-        $domain_group = new DomainGroups();
+        $data = $this->builder($this->filters);
 
-        $data=array();
-        $data['all_domains'] = $all_domains;
-        $data['domain_group'] = $domain_group;
+        // Apply pagination if requested
+        if ($paginate) {
+            $data = $data->paginate($paginate);
+        } else {
+            $data = $data->get(); // This will return a collection
+        }
 
-        return view('layouts.domains.groups.createOrUpdate')->with($data);
+        // logger($data);
+
+        return $data;
     }
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param  array  $filters
+     * @return Builder
      */
-    public function store(Request $request, DomainGroups $domain_group)
+    public function builder(array $filters = [])
     {
-        $attributes = [
-            // 'user_email' => 'email',
-        ];
+        $data =  $this->model::query();
+        // $data->with(['domain_group_relations' => function ($query) {
+        //     $query->select('uuid', 'domain_group_uuid', 'domain_uuid');
+        // }]);
 
-        $validator = Validator::make($request->all(), [
-            'group_name' =>'required|string|max:100',
-            'domains' => 'nullable', 
-        ], [], $attributes);
+        // $data->with(['domain_group_relations.domain' => function ($query) {
+        //     $query->select('domain_uuid', 'domain_name', 'domain_description');
+        // }]);
 
-        if ($validator->fails()) {
-            return response()->json(['error'=>$validator->errors()]);
-        }
+        $data->select(
+            'domain_group_uuid',
+            'group_name',
+        );
 
-        // Retrieve the validated input assign all attributes
-        $attributes = $validator->validated();
-
-        $domain_group->fill($attributes);
-        $saved = $domain_group->save();  
-
-        if (isset($attributes['domains'])) {
-            foreach($attributes['domains'] as $domain){
-                $domain_group_relation = new DomainGroupRelations();
-                $domain_group_relation->domain_uuid=$domain;
-                $domain_group->domain_group_relations()->save($domain_group_relation);
+        if (is_array($filters)) {
+            foreach ($filters as $field => $value) {
+                if (method_exists($this, $method = "filter" . ucfirst($field))) {
+                    $this->$method($data, $value);
+                }
             }
         }
 
-        if (!$saved){
-            return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => 'There was an error saving some records',
-                ],
-            ]);
-        }
+        // Apply sorting
+        $data->orderBy($this->sortField, $this->sortOrder);
 
-        return response()->json([
-            'domain_group' => $domain_group->domain_group_uuid,
-            'redirect_url' => route('domaingroups.edit', $domain_group),
-            'status' => 200,
-            'success' => [
-                'message' => 'Domain Group has been saved'
-            ]
-        ]);
-
+        return $data;
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  \App\Models\DomainGroups  $domainGroups
-     * @return \Illuminate\Http\Response
-     */
-    public function show(DomainGroups $domainGroups)
-    {
-        //
-    }
 
     /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\DomainGroups  $domainGroups
-     * @return \Illuminate\Http\Response
+     * @param $query
+     * @param $value
+     * @return void
      */
-    public function edit(DomainGroups $domaingroup)
+    protected function filterSearch($query, $value)
     {
+        $searchable = $this->searchable;
 
-        // Check permissions
-        if (!isSuperAdmin()){
-            return redirect('/');
-        }
+        // Case-insensitive partial string search in the specified fields
+        $query->where(function ($query) use ($value, $searchable) {
+            foreach ($searchable as $field) {
+                if (strpos($field, '.') !== false) {
+                    // Nested field (e.g., 'extension.name_formatted')
+                    [$relation, $nestedField] = explode('.', $field, 2);
 
-        //get all active domains
-        $all_domains = Domain::where('domain_enabled','true')
-        ->get();
-
-        $data=array();
-        $data['all_domains'] = $all_domains;
-
-        $data['assigned_domains'] = collect();
-        foreach ($domaingroup->domain_group_relations as $domain_relation) {
-            $data['assigned_domains'] ->push($domain_relation->domain);
-        }
-
-        $data['domain_group'] = $domaingroup;
-
-        return view('layouts.domains.groups.createOrUpdate')->with($data);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\DomainGroups  $domainGroups
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, DomainGroups $domaingroup)
-    {
-        $attributes = [
-            // 'user_email' => 'email',
-        ];
-
-        $validator = Validator::make($request->all(), [
-            'group_name' =>'required|string|max:100',
-            'domains' => 'nullable', 
-        ], [], $attributes);
-
-        if ($validator->fails()) {
-            return response()->json(['error'=>$validator->errors()]);
-        }
-
-        // Retrieve the validated input assign all attributes
-        $attributes = $validator->validated();
-
-        $saved = $domaingroup->update($attributes); 
-
-        // Update domain group relation table
-        foreach($domaingroup->domain_group_relations as $relation) {
-            $relation->delete();
-        }
-
-        if (isset($attributes['domains'])) {
-            foreach($attributes['domains'] as $domain){
-                $domain_group_relation = new DomainGroupRelations();
-                $domain_group_relation->domain_uuid=$domain;
-                $domaingroup->domain_group_relations()->save($domain_group_relation);
+                    $query->orWhereHas($relation, function ($query) use ($nestedField, $value) {
+                        $query->where($nestedField, 'ilike', '%' . $value . '%');
+                    });
+                } else {
+                    // Direct field
+                    $query->orWhere($field, 'ilike', '%' . $value . '%');
+                }
             }
-        }
-
-        if (!$saved){
-            return response()->json([
-                'status' => 401,
-                'error' => [
-                    'message' => 'There was an error saving some records',
-                ],
-            ]);
-        }
-
-        return response()->json([
-            'domain_group' => $domaingroup->domain_group_uuid,
-            'redirect_url' => route('domaingroups.index', $domaingroup),
-            'status' => 200,
-            'success' => [
-                'message' => 'Domain Group has been saved'
-            ]
-        ]);
-
+        });
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\DomainGroups  $domainGroups
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
+
+    public function getItemOptions()
     {
-        $domain_group = DomainGroups::findOrFail($id);
+        try {
 
-        if(isset($domain_group)){
-            $deleted = $domain_group->delete();
+            $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
 
-            if ($deleted){
-                return response()->json([
-                    'status' => 'success',
-                    'id' => $id,
-                    'message' => 'Selected domain groups have been deleted'
-                ]);
+            // Check if item_uuid exists to find an existing model
+            if ($item_uuid) {
+                // Find existing item by item_uuid
+                $item = $this->model::where($this->model->getKeyName(), $item_uuid)
+                    ->with(['domain_group_relations' => function ($query) {
+                        $query->select('uuid', 'domain_group_uuid', 'domain_uuid');
+                    }])
+                    ->first();
+
+
+
+                // If a model exists, use it; otherwise, create a new one
+                if (!$item) {
+                    throw new \Exception("Failed to fetch item details. Item not found");
+                }
+
+
+                // Define the update route
+                $updateRoute = route('domain-groups.update', ['domain_group' => $item_uuid]);
             } else {
-                return response()->json([
-                    'error' => 401,
-                    'message' => 'There was an error deleting this domain group'
+                // Create a new model if item_uuid is not provided
+                $item = $this->model;
+
+                $storeRoute  = route('domain-groups.store');
+            }
+
+            // $permissions = $this->getUserPermissions();
+
+            $domains = Domain::where('domain_enabled', 'true')
+                ->select('domain_uuid', 'domain_name', 'domain_description')
+                ->orderBy('domain_description')
+                ->get()
+                ->map(function ($domain) {
+                    return [
+                        'value' => $domain->domain_uuid,
+                        'label' => $domain->domain_description,
+                    ];
+                })
+                ->toArray();
+
+
+
+            $routes = [
+                'store_route' => $storeRoute ?? null,
+                'update_route' => $updateRoute ?? null,
+            ];
+
+            // Construct the itemOptions object
+            $itemOptions = [
+                'item' => $item,
+                'routes' => $routes,
+                'domains' => $domains,
+                // Define options for other fields as needed
+            ];
+            // logger($itemOptions);
+
+            return $itemOptions;
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // report($e);
+
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to fetch item details']]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+    /**
+     * Store a newly created Domain Group in storage.
+     *
+     * @param  \App\Http\Requests\StoreDomainGroupRequest  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function store(CreateDomainGroupRequest $request)
+    {
+        $data = $request->validated();
+
+        try {
+            DB::beginTransaction();
+
+            // 1) create the domain group
+            $domainGroup = DomainGroups::create([
+                'group_name' => $data['group_name'],
+            ]);
+
+            // 2) attach initial members
+            $members = $data['members'] ?? [];
+            foreach ($members as $domainUuid) {
+                DomainGroupRelations::create([
+                    'domain_group_uuid' => $domainGroup->domain_group_uuid,
+                    'domain_uuid'       => $domainUuid,
                 ]);
             }
+
+            DB::commit();
+
+            return response()->json([
+                'messages'           => ['success' => ['Domain group created successfully.']],
+                'domain_group_uuid'  => $domainGroup->domain_group_uuid,
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger(
+                'DomainGroups store error: '
+                    . $e->getMessage()
+                    . ' at ' . $e->getFile()
+                    . ':' . $e->getLine()
+            );
+
+            return response()->json([
+                'messages' => ['error' => ['Something went wrong while creating the domain group.']]
+            ], 500);
+        }
+    }
+
+
+
+    /**
+     * Update the specified Domain Group in storage.
+     *
+     * @param  \App\Http\Requests\UpdateDomainGroupRequest  $request
+     * @param  \App\Models\DomainGroups                     $domain_group
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function update(UpdateDomainGroupRequest $request, DomainGroups $domain_group)
+    {
+        $data = $request->validated();
+
+        try {
+            DB::beginTransaction();
+
+            // 1) update the group name
+            $domain_group->update([
+                'group_name' => $data['group_name'],
+            ]);
+
+            // 2) sync the members
+            $members = $data['members'] ?? [];
+
+            // delete any existing relations
+            $domain_group->domain_group_relations()->delete();
+
+            // re-create relations for each selected domain
+            foreach ($members as $domainUuid) {
+                DomainGroupRelations::create([
+                    'domain_group_uuid' => $domain_group->domain_group_uuid,
+                    'domain_uuid'       => $domainUuid,
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'messages'           => ['success' => ['Domain group updated successfully.']],
+                'domain_group_uuid'  => $domain_group->domain_group_uuid,
+            ]);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger(
+                'DomainGroups update error: '
+                    . $e->getMessage()
+                    . ' at ' . $e->getFile()
+                    . ':' . $e->getLine()
+            );
+
+            return response()->json([
+                'messages' => ['error' => ['Something went wrong while updating the domain group.']]
+            ], 500);
+        }
+    }
+
+
+/**
+ * Remove the specified Domain Groups from storage.
+ *
+ * @param  \Illuminate\Http\Request  $request
+ * @return \Illuminate\Http\JsonResponse
+ */
+public function bulkDelete(Request $request)
+{
+    // if (! userCheckPermission('domain_group_delete')) {
+    //     return response()->json([
+    //         'messages' => ['error' => ['Access denied.']]
+    //     ], 403);
+    // }
+
+
+    $uuids = $request->input('items');
+
+    try {
+        DB::beginTransaction();
+
+        // 1) remove any related relations
+        DomainGroupRelations::whereIn('domain_group_uuid', $uuids)->delete();
+
+        // 2) delete the domain groups themselves
+        DomainGroups::whereIn('domain_group_uuid', $uuids)->delete();
+
+        DB::commit();
+
+        return response()->json([
+            'messages' => ['success' => ['Selected domain group(s) were deleted successfully.']]
+        ]);
+    } catch (\Throwable $e) {
+        DB::rollBack();
+        logger('DomainGroups bulkDelete error: '
+            . $e->getMessage()
+            . ' at ' . $e->getFile() . ':' . $e->getLine()
+        );
+
+        return response()->json([
+            'messages' => ['error' => ['An error occurred while deleting the selected domain group(s).']]
+        ], 500);
+    }
+}
+
+
+    public function selectAll()
+    {
+        try {
+            $domainUuid = session('domain_uuid');
+            $uuids = $this->model::where($this->model->getTable() . '.domain_uuid', $domainUuid)
+                ->orWhereNull($this->model->getTable() . '.domain_uuid')
+                ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
+
+
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['All items selected']],
+                'items' => $uuids,
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e);
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to select all items']]
+            ], 500); // 500 Internal Server Error for any other errors
         }
     }
 }

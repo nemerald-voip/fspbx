@@ -14,7 +14,9 @@ use App\Console\Commands\Updates\Update0926;
 use App\Console\Commands\Updates\Update0940;
 use App\Console\Commands\Updates\Update0941;
 use App\Console\Commands\Updates\Update0942;
-use App\Console\Commands\Updates\Update0949;
+use App\Console\Commands\Updates\Update0951;
+use App\Console\Commands\Updates\Update0955;
+use App\Console\Commands\Updates\Update0961;
 
 
 class UpdateApp extends Command
@@ -49,9 +51,12 @@ class UpdateApp extends Command
     {
         $this->info('Starting update...');
 
-        $this->runArtisanCommand('config:cache');
         $currentVersion = config('app.version');
-        $downloadedVersion = config('version.release');
+
+        // Always get latest version directly from the file (not the config cache)
+        $versionConfigFile = base_path('config/version.php');
+        $downloadedVersionArray = include($versionConfigFile);
+        $downloadedVersion = $downloadedVersionArray['release'] ?? null;
 
         // Define version-specific steps using an array
         $updateSteps = [
@@ -65,7 +70,9 @@ class UpdateApp extends Command
             '0.9.40' => Update0940::class,
             '0.9.41' => Update0941::class,
             '0.9.42' => Update0942::class,
-            '0.9.49' => Update0949::class,
+            '0.9.51' => Update0951::class,
+            '0.9.55' => Update0955::class,
+            '0.9.61' => Update0961::class,
             // Add more versions as needed
         ];
 
@@ -97,8 +104,10 @@ class UpdateApp extends Command
         $this->executeCommand('composer dump-autoload --no-interaction --ignore-platform-reqs');
 
         // Cache config and routes
-        $this->runArtisanCommand('config:cache');
-        $this->runArtisanCommand('route:cache');
+        // $this->runArtisanCommand('config:cache');
+        $this->executeCommand('php artisan config:cache');
+        // $this->runArtisanCommand('route:cache');
+        $this->executeCommand('php artisan route:cache');
         $this->runArtisanCommand('queue:restart');
 
         //Seed the db

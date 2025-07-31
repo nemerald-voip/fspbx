@@ -18,15 +18,21 @@ class CreateFSPBXMenu extends Command
      *
      * @var string
      */
-    protected $signature = 'menu:create-fspbx';
+    protected $signature = 'menu:create-fspbx {--update : Update existing menu and items if they exist}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Create the FS PBX Recommended Menu with predefined items.';
+    protected $description = 'Create or update the FS PBX Recommended Menu with predefined items.';
 
+    /**
+     * Whether to update existing records.
+     *
+     * @var bool
+     */
+    private bool $shouldUpdate = false;
     /**
      * Execute the console command.
      *
@@ -34,6 +40,7 @@ class CreateFSPBXMenu extends Command
      */
     public function handle()
     {
+        $this->shouldUpdate = $this->option('update');
         $menuName = 'fspbx';
         $menuDescription = 'FS PBX Recommended Menu';
 
@@ -53,11 +60,19 @@ class CreateFSPBXMenu extends Command
 
             $this->info("Menu created with UUID: {$menu->menu_uuid}");
         } else {
-            $this->info("Menu '$menuName' already exists with UUID: {$menu->menu_uuid}");
+            if ($this->shouldUpdate) {
+                $menu->menu_description = $menuDescription;
+                $menu->save();
+                $this->info("Updated menu description for '$menuName'.");
+            } else {
+                $this->info("Menu '$menuName' already exists with UUID: {$menu->menu_uuid}");
+            }
         }
 
         // Update the default menu setting
-        $this->updateDefaultMenuSetting($menu->menu_uuid);
+        if (! $this->shouldUpdate) {
+            $this->updateDefaultMenuSetting($menu->menu_uuid);
+        }
 
         // Define hierarchical menu items
         $categories = [
@@ -108,11 +123,13 @@ class CreateFSPBXMenu extends Command
                     ['title' => 'Conferences', 'link' => '/app/conferences/conferences.php', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Faxes', 'link' => '/faxes', 'groups' => ['superadmin', 'admin', 'fax', 'user']],
                     ['title' => 'Virtual Receptionists', 'link' => '/virtual-receptionists', 'groups' => ['superadmin', 'admin']],
+                    ['title' => 'Messages', 'link' => '/messages', 'groups' => ['superadmin']],
                     ['title' => 'Music on Hold', 'link' => '/app/music_on_hold/music_on_hold.php','groups' => ['superadmin']],
                     ['title' => 'Operator Panel', 'link' => '/app/basic_operator_panel/index.php', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Recordings', 'link' => '/app/recordings/recordings.php', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Ring Groups', 'link' => '/ring-groups', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Streams', 'link' => '/app/streams/streams.php', 'groups' => ['superadmin']],
+                    ['title' => 'Business Hours', 'link' => '/business-hours', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Time Conditions', 'link' => '/app/time_conditions/time_conditions.php', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Voicemails', 'link' => '/voicemails', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Wakeup Calls', 'link' => '/wakeup-calls', 'groups' => ['superadmin', 'admin']],
@@ -134,7 +151,7 @@ class CreateFSPBXMenu extends Command
                     ['title' => 'Registrations', 'link' => '/registrations', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'SIP Status', 'link' => '/app/sip_status/sip_status.php', 'groups' => ['superadmin']],
                     ['title' => 'System Status', 'link' => '/app/system/system.php', 'groups' => ['superadmin']],
-                    ['title' => 'User Logs', 'link' => '/core/user_logs/user_logs.php', 'groups' => ['superadmin']],
+                    ['title' => 'User Logs', 'link' => '/user-logs', 'groups' => ['superadmin']],
                 ],
             ],
             [
@@ -149,7 +166,10 @@ class CreateFSPBXMenu extends Command
                     ['title' => 'Email templates', 'link' => '/app/email_templates/email_templates.php', 'groups' => ['superadmin']],
                     ['title' => 'Group Manager', 'link' => '/groups', 'groups' => ['superadmin']],
                     ['title' => 'Menu Manager', 'link' => '/core/menu/menu.php', 'groups' => ['superadmin']],
+                    ['title' => 'Message Settings', 'link' => '/message-settings', 'groups' => ['superadmin']],
                     ['title' => 'Modules', 'link' => '/app/modules/modules.php', 'groups' => ['superadmin']],
+                    ['title' => 'Pro Features', 'link' => '/pro-features', 'groups' => ['superadmin']],
+                    ['title' => 'Provision Templates', 'link' => '/app/edit/index.php?dir=provision', 'groups' => ['superadmin']],
                     ['title' => 'SIP Profiles', 'link' => '/app/sip_profiles/sip_profiles.php', 'groups' => ['superadmin']],
                     ['title' => 'Transactions', 'link' => '/app/database_transactions/database_transactions.php', 'groups' => ['superadmin']],
                     ['title' => 'Upgrade', 'link' => '/core/upgrade/index.php', 'groups' => ['superadmin']],
@@ -163,19 +183,16 @@ class CreateFSPBXMenu extends Command
 
         foreach ($categories as $category) {
             $parentUuid = $this->addMenuItem($menu, $category, $categoryOrder);
-            // Increment category order by 5
             $categoryOrder += 5;
 
-            // Add subcategories
-            $subcategoryOrder = 1; // Start subcategory order at 1
-
-            foreach ($category['subcategories'] as $index => $subcategory) {
+            $subcategoryOrder = 1;
+            foreach ($category['subcategories'] as $subcategory) {
                 $this->addMenuItem($menu, $subcategory, $subcategoryOrder, $parentUuid);
                 $subcategoryOrder++;
             }
         }
 
-        $this->info("Menu '$menuName' and items created successfully.");
+        $this->info("Menu '$menuName' and items processed successfully.");
         return Command::SUCCESS;
     }
 
@@ -196,28 +213,36 @@ class CreateFSPBXMenu extends Command
             ->first();
 
         if ($existingItem) {
-            $this->warn(" - Skipped: {$itemData['title']} already exists with UUID: {$existingItem->menu_item_uuid}");
+            if ($this->shouldUpdate) {
+                $existingItem->update([
+                    'menu_item_link'   => $itemData['link'],
+                    'menu_item_order'  => $order,
+                    'menu_item_category' => $itemData['category'] ?? $existingItem->menu_item_category,
+                    'menu_item_protected' => $itemData['protected'] ?? $existingItem->menu_item_protected,
+                ]);
+                $this->info(" - Updated menu item: {$existingItem->menu_item_title} (UUID: {$existingItem->menu_item_uuid})");
+            } else {
+                $this->warn(" - Skipped: {$itemData['title']} already exists (UUID: {$existingItem->menu_item_uuid})");
+            }
             $menuItemUuid = $existingItem->menu_item_uuid;
         } else {
             $menuItem = MenuItem::create([
-                'menu_item_uuid' => Str::uuid(),
-                'menu_uuid' => $menu->menu_uuid,
-                'menu_item_title' => $itemData['title'],
-                'menu_item_link' => $itemData['link'],
-                'menu_item_order' => $order,
-                'menu_item_parent_uuid' => $parentUuid,
-                'menu_item_category' => $itemData['category'] ?? 'internal',
-                'menu_item_protected' => $itemData['protected'] ?? 'false',
+                'menu_item_uuid'       => Str::uuid(),
+                'menu_uuid'            => $menu->menu_uuid,
+                'menu_item_title'      => $itemData['title'],
+                'menu_item_link'       => $itemData['link'],
+                'menu_item_order'      => $order,
+                'menu_item_parent_uuid'=> $parentUuid,
+                'menu_item_category'   => $itemData['category'] ?? 'internal',
+                'menu_item_protected'  => $itemData['protected'] ?? 'false',
             ]);
 
             $this->info(" - Added menu item: {$menuItem->menu_item_title} with UUID: {$menuItem->menu_item_uuid}");
             $menuItemUuid = $menuItem->menu_item_uuid;
-
-            // Add to v_menu_languages
             $this->addMenuLanguage($menu, $menuItem);
         }
 
-        // Add permission groups
+        // Assign permission groups
         $this->assignGroupsToMenuItem($menu, $menuItemUuid, $itemData['groups'] ?? []);
 
         return $menuItemUuid;
@@ -321,6 +346,4 @@ class CreateFSPBXMenu extends Command
 
         $this->info("   - Added language entry for '{$menuItem->menu_item_title}'.");
     }
-
-
 }
