@@ -1024,7 +1024,7 @@ class ExtensionsController extends Controller
                 $destinationKey = "{$type}_destination";
 
                 if (
-                    ($data[$enabledKey]=='true')
+                    (!empty($data[$enabledKey]) && $data[$enabledKey]=='true')
                     && !empty($data[$actionKey])
                     && (
                         !empty($data[$targetKey]) || !empty($data[$externalKey])
