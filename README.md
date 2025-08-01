@@ -45,6 +45,8 @@ This project started as a fork of the FusionPBX system but has been extensively 
 Before you begin, ensure you have met the following requirements:
 
 - Debian 11 or 12
+- 4GB of RAM (for production, more RAM is recommended)
+- 30 GB Hard drive ( for production, an NVME hard drive with more space is recommended)
 
 ## Installation
 

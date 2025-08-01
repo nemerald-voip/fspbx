@@ -1572,6 +1572,14 @@ class DatabaseSeeder extends Seeder
                 'default_setting_enabled'       => false,
                 'default_setting_description'   => "",
             ],
+            [
+                'default_setting_category'      => 'limit',
+                'default_setting_subcategory'   => 'extension_limit_error',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => 'You have reached the maximum number of extensions allowed (%d)',
+                'default_setting_enabled'       => false,
+                'default_setting_description'   => "",
+            ],
 
 
         ];

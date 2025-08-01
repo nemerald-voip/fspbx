@@ -20,6 +20,10 @@ class CdrDataService
             $params['filter']['entity']['type'] = 'extension';
         }
 
+        if (empty($params['filter']['showGlobal'])) {
+            $params['filter']['showGlobal'] = 'false';
+        }
+
         // Main query:
         $cdrs = QueryBuilder::for(CDR::class, request()->merge($params))
             ->select([
@@ -168,5 +172,95 @@ class CdrDataService
         $formattedDuration = $formattedHours . ':' . $formattedMinutes . ':' . $formattedSeconds;
 
         return $formattedDuration;
+    }
+
+    public function getExtensionStatistics($params = [])
+    {
+        // logger($params);
+
+        // Initialize an empty array for statistics
+        $extensionStats = [];
+
+        $cdrs = $this->getData($params);
+        foreach ($cdrs as $cdr) {
+            // Skip records without extension_uuid
+            if (empty($cdr->extension_uuid)) {
+                continue;
+            }
+
+            // Use extension_uuid as the key
+            $extensionUuid = $cdr->extension_uuid;
+
+            // Initialize stats for this extension if not already set
+            if (!isset($extensionStats[$extensionUuid])) {
+                $extensionStats[$extensionUuid] = [
+                    'extension_uuid' => $extensionUuid,
+                    'extension_label' => null,
+                    'extension' => null,
+                    'inbound' => 0,
+                    'outbound' => 0,
+                    'missed' => 0,
+                    'total_duration' => 0,
+                    'call_count' => 0,
+                    'total_talk_time' => 0,
+                ];
+            }
+
+            // if (isset($cdr->extension)) {
+            //     logger('Extension loaded:', [$cdr->extension]);
+            // } else {
+            //     logger('No extension for CDR:', [$cdr->xml_cdr_uuid]);
+            // }
+
+            // Extract and format the extension name if available
+            if ($cdr->extension) {
+                $extensionStats[$extensionUuid]['extension_label'] = $cdr->extension->name_formatted ?? null;
+            }
+
+            // Update call count and talk time
+            $extensionStats[$extensionUuid]['call_count'] += 1;
+            $extensionStats[$extensionUuid]['total_duration'] += $cdr->duration;
+            $extensionStats[$extensionUuid]['total_talk_time'] += $cdr->duration;
+
+            // Check direction (inbound/outbound)
+            if ($cdr->direction === 'inbound') {
+                $extensionStats[$extensionUuid]['inbound'] += 1;
+            } elseif ($cdr->direction === 'outbound') {
+                $extensionStats[$extensionUuid]['outbound'] += 1;
+            }
+
+            // Check missed calls
+            if ($cdr->missed_call === true) {
+                $extensionStats[$extensionUuid]['missed'] += 1;
+            }
+        }
+
+        // Calculate average call duration for each extension
+        foreach ($extensionStats as &$stats) {
+            $stats['average_duration'] = $stats['call_count'] > 0 ? $stats['total_duration'] / $stats['call_count'] : 0;
+
+            // Format durations using getFormattedDuration method
+            $stats['total_duration_formatted'] = $this->getFormattedDuration($stats['total_duration']);
+            $stats['total_talk_time_formatted'] = $this->getFormattedDuration($stats['total_talk_time']);
+            $stats['average_duration_formatted'] = $this->getFormattedDuration($stats['average_duration']);
+        }
+
+        // Paginate the result manually
+        $perPage = 50;  // Default items per page
+        $currentPage = $params['page'] ?? 1;   // Current page number
+        $total = count($extensionStats);
+
+        // logger($extensionStats);
+
+        // Manually paginate the array of statistics
+        $paginatedStats = collect($extensionStats)->forPage($currentPage, $perPage)->values();
+
+        return new \Illuminate\Pagination\LengthAwarePaginator(
+            $paginatedStats,
+            $total,
+            $perPage,
+            $currentPage,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
     }
 }

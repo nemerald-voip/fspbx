@@ -17,6 +17,7 @@ use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\BusinessHoursController;
 use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\EmergencyCallController;
+use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
 
 /*
@@ -99,6 +100,9 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/extensions/template/download', [ExtensionsController::class, 'downloadTemplate'])->name('extensions.template.download');
     Route::post('/extensions/import', [ExtensionsController::class, 'import'])->name('extensions.import');
     Route::post('/extensions/make-user', [ExtensionsController::class, 'makeUser'])->name('extensions.make.user');
+
+    // Extension statistics
+    Route::get('/extension-statistics/data', [ExtensionStatisticsController::class, 'getData'])->name('extension-statistics.data');
 
     // User logs
     Route::post('user-logs/select-all', [UserLogsController::class, 'selectAll'])->name('user-logs.select.all');
