@@ -609,7 +609,7 @@ class ExtensionsController extends Controller
                     return response()->json([
                         'errors' => [
                             'extension' => [sprintf($limit_error, $limit)]
-                            ]
+                        ]
                     ], 403);
                 }
             }
@@ -635,6 +635,7 @@ class ExtensionsController extends Controller
             'devices' => $deviceRoute ?? null,
             'get_routing_options' => route('routing.options'),
             'device_bulk_unassign' => route('devices.bulk.unassign'),
+            'update_password_route' => route('extensions.password.update'),
         ]);
 
 
@@ -1024,7 +1025,7 @@ class ExtensionsController extends Controller
                 $destinationKey = "{$type}_destination";
 
                 if (
-                    (!empty($data[$enabledKey]) && $data[$enabledKey]=='true')
+                    (!empty($data[$enabledKey]) && $data[$enabledKey] == 'true')
                     && !empty($data[$actionKey])
                     && (
                         !empty($data[$targetKey]) || !empty($data[$externalKey])
@@ -1207,22 +1208,22 @@ class ExtensionsController extends Controller
 
             $file = request()->file('file');
             $domain_uuid = session('domain_uuid');
-    
+
             // 1. Count how many rows will be imported
             $rows = Excel::toCollection(new ExtensionsImport, $file)->first(); // Get first sheet
             $importCount = $rows->count();
-    
+
             // 2. Check current count and limit
             $currentCount = \App\Models\Extensions::where('domain_uuid', $domain_uuid)->count();
             $maxLimit = get_limit_setting('extensions', $domain_uuid);
-    
+
             if ($maxLimit !== null && ($currentCount + $importCount) > $maxLimit) {
                 return response()->json([
                     'success' => false,
                     'errors' => [
                         'extension' => [
                             "Importing this file would exceed your extension limit of $maxLimit. " .
-                            "You currently have $currentCount extensions and are trying to import $importCount."
+                                "You currently have $currentCount extensions and are trying to import $importCount."
                         ]
                     ]
                 ], 422);
@@ -1676,6 +1677,37 @@ class ExtensionsController extends Controller
     {
         // Download as CSV (third parameter sets the writer type)
         return Excel::download(new ExtensionsTemplate, 'template.csv', ExcelWriter::CSV);
+    }
+
+    public function updatePassword()
+    {
+        if (! userCheckPermission('extension_password')) {
+            return response()->json([
+                'messages' => ['error' => ['Access denied.']]
+            ], 403);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $extension = Extensions::find(request('extension_uuid'));
+            $extension->update(request()->all());
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'messages' => ['success' => ['Password updated successfully.']],
+                'extension_uuid' => $extension->extension_uuid,
+            ], 200);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger('UserController@updatePassword error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            return response()->json([
+                'success' => false,
+                'errors' => ['error' => [$e->getMessage()]],
+            ], 500);
+        }
     }
 
 

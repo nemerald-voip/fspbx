@@ -1,7 +1,7 @@
 <template>
     <TransitionRoot as="div" :show="show">
         <Dialog as="div" class="relative z-10"
-            :inert="showNewGreetingModal || showNewNameGreetingModal || showDeviceCreateModal || showDeviceAssignModal">
+            :inert="showNewGreetingModal || showNewNameGreetingModal || showDeviceCreateModal || showDeviceAssignModal || showUpdatePasswordModal">
             <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
                 <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
@@ -339,7 +339,7 @@
                                                     'show_sip_credentials',
                                                     'sip_credentials',
                                                     'regenerate_sip_credentials',
-                                                    'container_sip_credentials',
+                                                    'edit_sip_password',
                                                     'submit_sip_credentials',
 
                                                 ]" :conditions="[() => options.permissions.extension_password]" />
@@ -1230,10 +1230,10 @@
                                                             container: 6,
                                                         },
                                                     }" :conditions="[
-                                                    function (form$) {
-                                                        return form$.el$('voicemail_enabled')?.value == 'true' && options.permissions.manage_voicemail_mobile_notifications
-                                                    }
-                                                ]" />
+                                                        function (form$) {
+                                                            return form$.el$('voicemail_enabled')?.value == 'true' && options.permissions.manage_voicemail_mobile_notifications
+                                                        }
+                                                    ]" />
 
                                                 <GroupElement name="container_voicemail" />
 
@@ -1510,16 +1510,25 @@
                                                     @click="handleSipCredentialsButtonClick" label="SIP Credentials"
                                                     :loading="isSipCredentialsLoading" />
 
-                                                <ButtonElement name="regenerate_sip_credentials"
-                                                    button-label="Regenerate"
-                                                    :conditions="[() => { return !!sip_credentials }]"
-                                                    @click="handleSipCredentialsRegenerateClick" :secondary="true"
-                                                    label="Regenerate SIP Credentials"
-                                                    :loading="isSipCredentialsRegenerateLoading" />
-
                                                 <StaticElement name="sip_credentials"
                                                     :conditions="[() => { return !!sip_credentials }]">
                                                     <div class="space-y-8 sm:space-y-6">
+                                                        <div>
+                                                            <dt
+                                                                class="text-sm font-medium text-gray-500 sm:w-40 sm:shrink-0">
+                                                                Domain</dt>
+                                                            <dd
+                                                                class="flex flex-row items-center mt-1 gap-2 text-sm text-gray-900 sm:col-span-2">
+                                                                {{ sip_credentials?.context }}
+
+                                                                <div
+                                                                    @click="handleCopyToClipboard(sip_credentials?.context)">
+                                                                    <ClipboardDocumentIcon
+                                                                        class="h-5 w-5 text-gray-500 hover:text-gray-900 cursor-pointer" />
+                                                                </div>
+
+                                                            </dd>
+                                                        </div>
                                                         <div>
                                                             <dt
                                                                 class="text-sm font-medium text-gray-500 sm:w-40 sm:shrink-0">
@@ -1552,24 +1561,20 @@
 
                                                             </dd>
                                                         </div>
-                                                        <div>
-                                                            <dt
-                                                                class="text-sm font-medium text-gray-500 sm:w-40 sm:shrink-0">
-                                                                Domain</dt>
-                                                            <dd
-                                                                class="flex flex-row items-center mt-1 gap-2 text-sm text-gray-900 sm:col-span-2">
-                                                                {{ sip_credentials?.context }}
 
-                                                                <div
-                                                                    @click="handleCopyToClipboard(sip_credentials?.context)">
-                                                                    <ClipboardDocumentIcon
-                                                                        class="h-5 w-5 text-gray-500 hover:text-gray-900 cursor-pointer" />
-                                                                </div>
-
-                                                            </dd>
-                                                        </div>
                                                     </div>
                                                 </StaticElement>
+
+                                                <ButtonElement name="regenerate_sip_credentials"
+                                                    button-label="Regenerate"
+                                                    :conditions="[() => { return !!sip_credentials }]"
+                                                    @click="handleSipCredentialsRegenerateClick" :secondary="true"
+                                                    :loading="isSipCredentialsRegenerateLoading" />
+
+                                                <ButtonElement name="edit_sip_password" button-label="Edit"
+                                                    :conditions="[() => { return !!sip_credentials }]"
+                                                    @click="handleSipCredentialsEditClick" :secondary="true"
+                                                     />
 
                                                 <GroupElement name="container_sip_credentials" />
 
@@ -1828,6 +1833,11 @@
         @confirm="confirmDeleteNameAction" :header="'Confirm Deletion'"
         :text="'This action will permanently delete this greeting. Are you sure you want to proceed?'"
         :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+
+    <UpdateSipPasswordModal :show="showUpdatePasswordModal" :sip_credentials="sip_credentials" :extension_uuid="options?.item?.extension_uuid" 
+        :route="options?.routes?.update_password_route" @close="showUpdatePasswordModal = false"
+        @error="emitErrorToParentFromChild" @success="emitSuccessToParentFromChild" @refresh-data="handleSipCredentialsButtonClick" />
+
 </template>
 
 <script setup>
@@ -1843,6 +1853,7 @@ import ConfirmationModal from "../modal/ConfirmationModal.vue";
 import UpdateExtensionDeviceForm from "../forms/UpdateExtensionDeviceForm.vue";
 import CreateExtensionDeviceForm from "../forms/CreateExtensionDeviceForm.vue";
 import AssignExtensionDeviceForm from "../forms/AssignExtensionDeviceForm.vue";
+import UpdateSipPasswordModal from "../modal/UpdateSipPasswordModal.vue";
 import Badge from "@generalComponents/Badge.vue";
 import AssignedDevices from "../AssignedDevices.vue";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
@@ -1872,6 +1883,7 @@ const showDeleteNameConfirmationModal = ref(false)
 const showDeviceUpdateModal = ref(false)
 const showDeviceCreateModal = ref(false)
 const showDeviceAssignModal = ref(false)
+const showUpdatePasswordModal = ref(false)
 const devices = ref([])
 const sip_credentials = ref(null)
 const mobileApp = ref(null)
@@ -2274,6 +2286,10 @@ const handleSipCredentialsRegenerateClick = async () => {
         }).finally(() => {
             isSipCredentialsRegenerateLoading.value = false
         });
+}
+
+const handleSipCredentialsEditClick = () => {
+    showUpdatePasswordModal.value = true
 }
 
 const handleCopyToClipboard = (text) => {
