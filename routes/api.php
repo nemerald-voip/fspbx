@@ -100,6 +100,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/extensions/template/download', [ExtensionsController::class, 'downloadTemplate'])->name('extensions.template.download');
     Route::post('/extensions/import', [ExtensionsController::class, 'import'])->name('extensions.import');
     Route::post('/extensions/make-user', [ExtensionsController::class, 'makeUser'])->name('extensions.make.user');
+    Route::post('/extensions/password', [ExtensionsController::class, 'updatePassword'])->name('extensions.password.update');
+
 
     // Extension statistics
     Route::get('/extension-statistics/data', [ExtensionStatisticsController::class, 'getData'])->name('extension-statistics.data');

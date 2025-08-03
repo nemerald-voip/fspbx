@@ -40,8 +40,8 @@ async function getConfig() {
         // "resources/js/ui/component.fileupload.js",
         // "resources/js/ui/component.dragula.js",
         // "resources/js/ui/component.chat.js",
-        // "resources/js/ui/component.toastr.js",
-        // "node_modules/daterangepicker/daterangepicker.js",
+        "resources/js/ui/component.toastr.js",
+        "node_modules/daterangepicker/daterangepicker.js",
         // "resources/js/ui/component.range-slider.js",
         // "resources/js/ui/component.rating.js",
     ];
