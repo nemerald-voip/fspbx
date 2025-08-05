@@ -20,6 +20,7 @@ use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\Api\EmergencyCallController;
+use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
 
 /*
@@ -102,6 +103,11 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/extensions/template/download', [ExtensionsController::class, 'downloadTemplate'])->name('extensions.template.download');
     Route::post('/extensions/import', [ExtensionsController::class, 'import'])->name('extensions.import');
     Route::post('/extensions/make-user', [ExtensionsController::class, 'makeUser'])->name('extensions.make.user');
+    Route::post('/extensions/password', [ExtensionsController::class, 'updatePassword'])->name('extensions.password.update');
+
+
+    // Extension statistics
+    Route::get('/extension-statistics/data', [ExtensionStatisticsController::class, 'getData'])->name('extension-statistics.data');
 
     // User logs
     Route::post('user-logs/select-all', [UserLogsController::class, 'selectAll'])->name('user-logs.select.all');

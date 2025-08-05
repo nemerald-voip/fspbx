@@ -73,8 +73,11 @@
                     <TableColumnHeader header="Inbound"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
                     <TableColumnHeader header="Outbound"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    </TableColumnHeader>
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+
+                    <TableColumnHeader header="Missed"
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+
                     <TableColumnHeader header="Total Talk" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     </TableColumnHeader>
                     <TableColumnHeader header="Avg Call Duration" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
@@ -95,6 +98,8 @@
                             :text="row.inbound" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                             :text="row.outbound" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                            :text="row.missed" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.total_talk_time_formatted" />
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.average_duration_formatted" />
                     </tr>
@@ -124,11 +129,6 @@
             </DataTable>
         </div>
     </MainLayout>
-
-
-    <CallDetailsModal :show="viewModalTrigger" :item="itemData" :loading="loadingModal" :customClass="'sm:max-w-4xl'"
-        @close="handleModalClose">
-    </CallDetailsModal>
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -167,27 +167,28 @@ const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
 const isExporting = ref(null);
+const data = ref({
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: 0,
+    to: 0,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
+});
 
 
 const props = defineProps({
-    data: Object,
-    showGlobal: Boolean,
     startPeriod: String,
     endPeriod: String,
-    search: String,
     timezone: String,
-    csvUrl: Object,
     routes: Object,
-    itemData: Object,
-    statusOptions: Object,
 });
 
 onMounted(() => {
-    //request list of entities
-    // getEntities();
-    if (props.data.data.length === 0) {
-        handleSearchButtonClick();
-    }
+    handleSearchButtonClick();
 })
 
 
@@ -196,31 +197,34 @@ const filterData = ref({
     showGlobal: props.showGlobal,
     dateRange: [moment.tz(props.startPeriod, props.timezone).startOf('day').format(), moment.tz(props.endPeriod, props.timezone).endOf('day').format()],
     // dateRange: ['2024-07-01T00:00:00', '2024-07-01T23:59:59'],
-    timezone: props.timezone,
 
 });
 
-const handleSearchButtonClick = () => {
+const getData = (page = 1) => {
     loading.value = true;
 
-    router.visit(props.routes.current_page, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-        ],
-        onSuccess: (page) => {
-            loading.value = false;
-        },
-        onError: (error) => {
-            loading.value = false;
-            handleErrorResponse(error);
-        }
+    // console.log(filterData.value);
 
-    });
+    axios.get(props.routes.data_route, {
+        params: {
+            filter: filterData.value,
+            page,
+        }
+    })
+        .then((response) => {
+            data.value = response.data;
+            console.log(data.value);
+
+        }).catch((error) => {
+
+            handleErrorResponse(error);
+        }).finally(() => {
+            loading.value = false
+        })
+}
+
+const handleSearchButtonClick = () => {
+    getData()
 };
 
 const handleFiltersReset = () => {
@@ -238,18 +242,12 @@ const handleFiltersReset = () => {
 
 const renderRequestedPage = (url) => {
     loading.value = true;
-    router.visit(url, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
+    // Extract the page number from the url, e.g. "?page=3"
+    const urlObj = new URL(url, window.location.origin);
+    const pageParam = urlObj.searchParams.get("page") ?? 1;
 
-    });
+    // Now call getData with the page number
+    getData(pageParam);
 };
 
 

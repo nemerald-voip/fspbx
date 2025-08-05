@@ -42,28 +42,25 @@ class ExtensionStatisticsController extends Controller
             return redirect('/');
         }
 
-
-        if ($request->callUuid) {
-            $callUuid = $request->callUuid;
-        }
+        $domain_uuid = session('domain_uuid');
+        $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->startOfDay()->setTimeZone('UTC');
+        $endPeriod = Carbon::now(get_local_time_zone($domain_uuid))->endOfDay()->setTimeZone('UTC');
 
         return Inertia::render(
             $this->viewName,
             [
-                'data' => function () {
-                    return $this->getData();
+                'startPeriod' => function () use ($startPeriod) {
+                    return $startPeriod;
                 },
-                'startPeriod' => function () {
-                    return $this->filters['startPeriod'];
+                'endPeriod' => function ()  use ($endPeriod) {
+                    return $endPeriod;
                 },
-                'endPeriod' => function () {
-                    return $this->filters['endPeriod'];
-                },
-                'timezone' => function () {
-                    return get_local_time_zone(session('domain_uuid'));
+                'timezone' => function () use ($domain_uuid) {
+                    return get_local_time_zone($domain_uuid);
                 },
                 'routes' => [
                     'current_page' => route('extension-statistics.index'),
+                    'data_route' => route('extension-statistics.data'),
                     // 'export' => route('cdrs.export'),
                 ]
 
@@ -74,37 +71,29 @@ class ExtensionStatisticsController extends Controller
     //Most of this function has been moved to CdrDataService service container
     public function getData()
     {
-        $params['paginate'] = 50;
-        $params['filterData'] = request()->filterData;
-        $params['domain_uuid'] = session('domain_uuid');
-        if (session('domains')) {
-            $params['domains'] = session('domains')->pluck('domain_uuid');
-        }
-        $params['searchable'] = $this->searchable;
-        $params['page'] = request()->get('page', 1); // Get the current page, default to 1
+        $params = request()->all();
+        $params['paginate'] = false;
+        $domain_uuid = session('domain_uuid');
+        $params['domain_uuid'] = $domain_uuid;
 
-        if (!empty(request('filterData.dateRange'))) {
-            $startPeriod = Carbon::parse(request('filterData.dateRange')[0])->setTimeZone('UTC');
-            $endPeriod = Carbon::parse(request('filterData.dateRange')[1])->setTimeZone('UTC');
-        } else {
-            $domain_uuid = session('domain_uuid');
-            $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->startOfDay()->setTimeZone('UTC');
-            $endPeriod = Carbon::now(get_local_time_zone($domain_uuid))->endOfDay()->setTimeZone('UTC');
+        if (!empty(request('filter.dateRange'))) {
+            $startPeriod = Carbon::parse(request('filter.dateRange')[0])->setTimeZone('UTC');
+            $endPeriod = Carbon::parse(request('filter.dateRange')[1])->setTimeZone('UTC');
         }
 
-        $params['filterData']['startPeriod'] = $startPeriod;
-        $params['filterData']['endPeriod'] = $endPeriod;
-        $params['filterData']['sortField'] = request()->get('sortField', 'start_epoch');
-        $params['filterData']['sortOrder'] = request()->get('sortField', 'desc');
+        $params['filter']['startPeriod'] = $startPeriod->getTimestamp();
+        $params['filter']['endPeriod'] = $endPeriod->getTimestamp();
 
-        $params['permissions']['xml_cdr_lose_race'] = userCheckPermission('xml_cdr_lose_race');
+        unset(
+            $params['filter']['dateRange'],
+        );
 
         $this->filters = [
             'startPeriod' => $startPeriod,
             'endPeriod' => $endPeriod,
-            'direction' => request('filterData.direction') ?? null,
-            'search' => request('filterData.search') ?? null,
         ];
+
+        // logger($params);
 
         // Fetch CDR data
         $cdrData = $this->cdrDataService->getExtensionStatistics($params);
