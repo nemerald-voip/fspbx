@@ -40,14 +40,14 @@
                                         <!-- Edit (if needed) -->
                                         <!-- <ejs-tooltip v-if="permissions.api_key_update" :content="'Edit'"
                                             position='TopCenter'>
-                                            <PencilSquareIcon @click="handleEditButtonClick(token.id)"
+                                            <PencilSquareIcon @click="handleEditButtonClick(location.id)"
                                                 class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                         </ejs-tooltip> -->
 
                                         <!-- Revoke/Delete -->
                                         <ejs-tooltip v-if="permissions.api_key_delete" :content="'Revoke'"
                                             position='TopCenter'>
-                                            <TrashIcon @click="handleSingleItemDeleteRequest(token.id)"
+                                            <TrashIcon @click="handleSingleItemDeleteRequest(location.id)"
                                                 class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
                                         </ejs-tooltip>
                                     </div>

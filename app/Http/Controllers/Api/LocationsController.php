@@ -4,10 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Models\Location;
 use App\Models\Extensions;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Str;
+use App\Http\Requests\StoreLocationRequest;
 
 class LocationsController extends Controller
 {
@@ -22,29 +23,14 @@ class LocationsController extends Controller
         return response()->json($locations);
     }
 
-    public function store(Request $request)
+    public function store(StoreLocationRequest $request)
     {
-        $domain_uuid = session('domain_uuid');
-        $validated = $request->validate([
-            'name'    => 'required|string|max:255',
-            'address' => 'nullable|string|max:255',
-            'city'    => 'nullable|string|max:255',
-            'state'   => 'nullable|string|max:255',
-            'country' => 'nullable|string|max:255',
-        ]);
+        $data = request()->all();
 
         try {
             DB::beginTransaction();
 
-            $location = Location::create([
-                'location_uuid' => Str::uuid(),
-                'domain_uuid'   => $domain_uuid,
-                'name'          => $validated['name'],
-                'address'       => $validated['address'] ?? null,
-                'city'          => $validated['city'] ?? null,
-                'state'         => $validated['state'] ?? null,
-                'country'       => $validated['country'] ?? null,
-            ]);
+            $location = Location::create($data);
 
             DB::commit();
 

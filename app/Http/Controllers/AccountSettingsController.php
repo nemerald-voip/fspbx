@@ -56,6 +56,7 @@ class AccountSettingsController extends Controller
                     'emergency_calls_bulk_delete' => route('emergency-calls.bulk.delete'),
                     'emergency_calls_service_status' => route('emergency-calls.check.service.status'),
                     'locations' => route('locations.index'),
+                    'locations_store' => route('locations.store'),
 
                     //'bulk_update' => route('devices.bulk.update'),
                 ],

@@ -35,6 +35,8 @@
                                 ]" :conditions="[() => true]" />
 
                                 <FormTab name="locations" label="Locations" :elements="[
+                                    'locations_title',
+                                    'add_location',
                                     'locations_table',
 
                                 ]" :conditions="[() => true]" />
@@ -87,6 +89,12 @@
 
                                 <!-- Locations -->
 
+                                <StaticElement name="locations_title" tag="h4" content="Locations" />
+
+                                <ButtonElement name="add_location" button-label="Add Location" align="right"
+                                    @click="handleAddLocationButtonClick" :loading="addLocationButtonLoading"
+                                    :conditions="[() => true]" />
+
                                 <StaticElement name="locations_table">
                                     <Locations :locations="locations" :loading="isLocationsLoading"
                                         :permissions="data?.permissions"
@@ -122,6 +130,9 @@
         <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
             @update:show="hideNotification" />
 
+        <CreateLocationModal :show="showLocationModal" :route="routes.locations_store" @close="showLocationModal = false"
+            @success="val => showNotification('success', val)" @error="handleErrorResponse" @refresh-data="getLocations" />
+
     </MainLayout>
 </template>
 
@@ -141,9 +152,7 @@ import { CheckCircleIcon, QuestionMarkCircleIcon, ExclamationCircleIcon } from '
 import { CreditCardIcon } from '@heroicons/vue/24/outline'
 import { ChevronDownIcon } from '@heroicons/vue/16/solid'
 import Locations from "./components/Locations.vue";
-
-
-
+import CreateLocationModal from "./components/modal/CreateLocationModal.vue"
 
 
 const props = defineProps({
@@ -162,6 +171,7 @@ const isLocationsLoading = ref(false)
 const isDeleteLocationLoading = ref(false)
 const locations = ref([])
 const addLocationButtonLoading = ref(false)
+const showLocationModal = ref(false)
 
 // const localData = ref(JSON.parse(JSON.stringify(props.data || {})));
 
@@ -196,7 +206,7 @@ const getLocations = async () => {
     isLocationsLoading.value = true
     axios.get(props.routes.locations, {
         params: {
-            uuid: props.data.domain_uuid
+            domain_uuid: props.data.domain_uuid
         }
     })
         .then((response) => {
@@ -208,6 +218,10 @@ const getLocations = async () => {
         }).finally(() => {
             isLocationsLoading.value = false
         });
+}
+
+const handleAddLocationButtonClick = () => {
+    showLocationModal.value = true
 }
 
 const handleDeleteLocationButtonClick = (uuid) => {
