@@ -55,6 +55,8 @@ class AccountSettingsController extends Controller
                     'emergency_calls_item_options' => route('emergency-calls.item.options'),
                     'emergency_calls_bulk_delete' => route('emergency-calls.bulk.delete'),
                     'emergency_calls_service_status' => route('emergency-calls.check.service.status'),
+                    'locations' => route('locations.index'),
+
                     //'bulk_update' => route('devices.bulk.update'),
                 ],
 
@@ -208,6 +210,4 @@ class AccountSettingsController extends Controller
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
-
-
 }

@@ -14,11 +14,12 @@ use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\PhoneNumbersController;
+use App\Http\Controllers\Api\LocationsController;
 use App\Http\Controllers\BusinessHoursController;
-use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\AccountSettingsController;
+use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\EmergencyCallController;
 use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
@@ -39,6 +40,9 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     // Tokens
     Route::resource('/tokens', TokenController::class);
     Route::post('tokens/bulk-delete', [TokenController::class, 'bulkDelete'])->name('tokens.bulk.delete');
+
+    // Locatiosn
+    Route::resource('/locations', LocationsController::class);
 
     // Emergency calls
     Route::resource('/emergency-calls', EmergencyCallController::class);

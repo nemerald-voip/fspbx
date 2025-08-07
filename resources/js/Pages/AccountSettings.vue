@@ -23,7 +23,7 @@
 
                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                         <div class="px-2 py-6 sm:px-6 lg:col-span-2 lg:px-0 lg:py-0">
-                            <FormTabs view="vertical">
+                            <FormTabs view="vertical" @select="handleTabSelected">
                                 <FormTab name="page0" label="General" :elements="[
                                     'general_tab_label',
                                     'domain_enabled',
@@ -33,9 +33,15 @@
                                     'general_submit',
 
                                 ]" :conditions="[() => true]" />
-                                <FormTab name="page1" label="Billing" :elements="[
+
+                                <FormTab name="locations" label="Locations" :elements="[
+                                    'locations_table',
 
                                 ]" :conditions="[() => true]" />
+
+                                <!-- <FormTab name="page1" label="Billing" :elements="[
+
+                                ]" :conditions="[() => true]" /> -->
 
                                 <FormTab name="page2" label="Emergency Calls" :elements="[
                                     'emergency_calls',
@@ -57,8 +63,8 @@
                                 <StaticElement name="general_tab_label" tag="h4" content="General" />
                                 <HiddenElement name="domain_uuid" :meta="true" />
                                 <ToggleElement name="domain_enabled" text="Account Status" />
-                                <TextElement name="domain_description" label="Account Name" placeholder="Enter Account Name"
-                                    :floating="false" :columns="{
+                                <TextElement name="domain_description" label="Account Name"
+                                    placeholder="Enter Account Name" :floating="false" :columns="{
                                         sm: {
                                             container: 6,
                                         },
@@ -76,8 +82,16 @@
                                         },
                                     }" />
 
-                                <ButtonElement name="general_submit" button-label="Save" :submits="true" align="right" />
+                                <ButtonElement name="general_submit" button-label="Save" :submits="true"
+                                    align="right" />
 
+                                <!-- Locations -->
+
+                                <StaticElement name="locations_table">
+                                    <Locations :locations="locations" :loading="isLocationsLoading"
+                                        :permissions="data?.permissions"
+                                        @delete-item="handleDeleteLocationButtonClick" />
+                                </StaticElement>
 
                                 <!-- Emergency Calls -->
 
@@ -126,6 +140,8 @@ import EmergencyServiceStatus from "./components/EmergencyServiceStatus.vue";
 import { CheckCircleIcon, QuestionMarkCircleIcon, ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { CreditCardIcon } from '@heroicons/vue/24/outline'
 import { ChevronDownIcon } from '@heroicons/vue/16/solid'
+import Locations from "./components/Locations.vue";
+
 
 
 
@@ -142,6 +158,10 @@ const props = defineProps({
 })
 
 const form$ = ref(null)
+const isLocationsLoading = ref(false)
+const isDeleteLocationLoading = ref(false)
+const locations = ref([])
+const addLocationButtonLoading = ref(false)
 
 // const localData = ref(JSON.parse(JSON.stringify(props.data || {})));
 
@@ -159,14 +179,41 @@ onMounted(() => {
     // console.log(form$.value.data);
 })
 
-console.log(props.data)
+// console.log(props.data)
 
 
 const notificationType = ref(null);
 const notificationShow = ref(null);
 const notificationMessages = ref(null);
 
+const handleTabSelected = (activeTab, previousTab) => {
+    if (activeTab.name == 'locations') {
+        getLocations()
+    }
+}
 
+const getLocations = async () => {
+    isLocationsLoading.value = true
+    axios.get(props.routes.locations, {
+        params: {
+            uuid: props.data.domain_uuid
+        }
+    })
+        .then((response) => {
+            locations.value = response.data;
+            console.log(locations.value);
+
+        }).catch((error) => {
+            handleErrorResponse(error)
+        }).finally(() => {
+            isLocationsLoading.value = false
+        });
+}
+
+const handleDeleteLocationButtonClick = (uuid) => {
+    showDeleteConfirmationModal.value = true;
+    confirmDeleteAction.value = () => executeBulkDelete([uuid]);
+};
 
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
