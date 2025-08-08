@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreLocationRequest;
+use App\Http\Requests\UpdateLocationRequest;
 
 class LocationsController extends Controller
 {
@@ -25,7 +26,7 @@ class LocationsController extends Controller
 
     public function store(StoreLocationRequest $request)
     {
-        $data = request()->all();
+        $data = $request->validated();
 
         try {
             DB::beginTransaction();
@@ -37,7 +38,6 @@ class LocationsController extends Controller
             return response()->json([
                 'messages' => ['success' => ['New location created']]
             ], 201);
-
         } catch (\Throwable $e) {
             DB::rollBack();
 
@@ -49,31 +49,21 @@ class LocationsController extends Controller
         }
     }
 
-    public function update(Request $request, $location_uuid)
+    public function update(UpdateLocationRequest $request, $location_uuid)
     {
-        $domain_uuid = session('domain_uuid');
-        $validated = $request->validate([
-            'name'    => 'required|string|max:255',
-            'address' => 'nullable|string|max:255',
-            'city'    => 'nullable|string|max:255',
-            'state'   => 'nullable|string|max:255',
-            'country' => 'nullable|string|max:255',
-        ]);
+        $data = $request->validated();
 
         try {
             DB::beginTransaction();
 
-            $location = Location::where('domain_uuid', $domain_uuid)
-                ->where('location_uuid', $location_uuid)
-                ->firstOrFail();
+            $location = Location::find($location_uuid);
+            if (!$location) {
+                return response()->json([
+                    'messages' => ['error' => ['Location not found.']]
+                ], 404);
+            }
 
-            $location->update([
-                'name'    => $validated['name'],
-                'address' => $validated['address'] ?? null,
-                'city'    => $validated['city'] ?? null,
-                'state'   => $validated['state'] ?? null,
-                'country' => $validated['country'] ?? null,
-            ]);
+            $location->update($data);
 
             DB::commit();
 
@@ -90,67 +80,64 @@ class LocationsController extends Controller
         }
     }
 
-    public function getItemOptions()
-    {
-        try {
-            $domain_uuid = session('domain_uuid');
+    // public function getItemOptions()
+    // {
+    //     try {
+    //         $domain_uuid = session('domain_uuid');
 
-            $item = null;
-            $updateRoute = null;
+    //         $item = null;
+    //         $updateRoute = null;
 
-            if (request()->has('item_uuid')) {
-                $item = Location::where('domain_uuid', $domain_uuid)
-                    ->where('location_uuid', request('item_uuid'))
-                    ->first();
+    //         if (request()->has('item_uuid')) {
+    //             $item = Location::where('domain_uuid', $domain_uuid)
+    //                 ->where('location_uuid', request('item_uuid'))
+    //                 ->first();
 
-                $updateRoute = $item
-                    ? route('locations.update', $item->location_uuid)
-                    : null;
-            }
+    //             $updateRoute = $item
+    //                 ? route('locations.update', $item->location_uuid)
+    //                 : null;
+    //         }
 
-            // Optionally: add a list of assignable extensions/devices/etc.
-            $extensions = Extensions::where('domain_uuid', $domain_uuid)
-                ->select('extension_uuid', 'extension', 'effective_caller_id_name')
-                ->orderBy('extension')
-                ->get()
-                ->map(function ($ext) {
-                    return [
-                        'value' => $ext->extension_uuid,
-                        'name' => $ext->extension . ' - ' . $ext->effective_caller_id_name,
-                    ];
-                });
+    //         // Optionally: add a list of assignable extensions/devices/etc.
+    //         $extensions = Extensions::where('domain_uuid', $domain_uuid)
+    //             ->select('extension_uuid', 'extension', 'effective_caller_id_name')
+    //             ->orderBy('extension')
+    //             ->get()
+    //             ->map(function ($ext) {
+    //                 return [
+    //                     'value' => $ext->extension_uuid,
+    //                     'name' => $ext->extension . ' - ' . $ext->effective_caller_id_name,
+    //                 ];
+    //             });
 
-            return response()->json([
-                'item' => $item,
-                'extensions' => $extensions,
-                'routes' => [
-                    'update_route' => $updateRoute,
-                ],
-            ]);
-        } catch (\Throwable $e) {
-            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+    //         return response()->json([
+    //             'item' => $item,
+    //             'extensions' => $extensions,
+    //             'routes' => [
+    //                 'update_route' => $updateRoute,
+    //             ],
+    //         ]);
+    //     } catch (\Throwable $e) {
+    //         logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
-            return response()->json([
-                'success' => false,
-                'errors' => ['server' => ['Failed to fetch item details']]
-            ], 500);
-        }
-    }
+    //         return response()->json([
+    //             'success' => false,
+    //             'errors' => ['server' => ['Failed to fetch item details']]
+    //         ], 500);
+    //     }
+    // }
 
     public function bulkDelete()
     {
         try {
             DB::beginTransaction();
 
-            $domain_uuid = auth()->user()->domain_uuid ?? session('domain_uuid');
             $uuids = request('items');
 
-            $items = Location::where('domain_uuid', $domain_uuid)
-                ->whereIn('location_uuid', $uuids)
+            $items = Location::whereIn('location_uuid', $uuids)
                 ->get();
 
             foreach ($items as $item) {
-                // Optionally: cleanup references in other tables here
                 $item->delete();
             }
 

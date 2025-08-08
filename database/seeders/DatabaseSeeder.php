@@ -309,6 +309,27 @@ class DatabaseSeeder extends Seeder
                 'permission_name'        => 'extension_do_not_disturb',
                 'insert_date'           => date("Y-m-d H:i:s"),
             ],
+            [
+                'application_name'       => 'Locations',
+                'permission_name'        => 'location_view',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'application_name'       => 'Locations',
+                'permission_name'        => 'location_create',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'application_name'       => 'Locations',
+                'permission_name'        => 'location_update',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+            [
+                'application_name'       => 'Locations',
+                'permission_name'        => 'location_delete',
+                'insert_date'           => date("Y-m-d H:i:s"),
+            ],
+
             // Add more permissions as needed
         ];
 
@@ -956,9 +977,39 @@ class DatabaseSeeder extends Seeder
                 'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
                 'insert_date'          => date("Y-m-d H:i:s"),
             ],
+            [
+                'permission_name'      => 'location_view',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'location_create',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'location_update',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
+            [
+                'permission_name'      => 'location_delete',
+                'permission_protected' => 'true',
+                'permission_assigned'  => 'true',
+                'group_name'           => "superadmin",
+                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
+                'insert_date'          => date("Y-m-d H:i:s"),
+            ],
 
-
-            
         ];
 
         foreach ($group_permissions as $permission) {
@@ -1450,7 +1501,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_description'   => "Enable or disable email challenge authentication. When enabled, users will be required to verify their email before completing the login process.",
             ],
 
-          [
+            [
                 'default_setting_category'      => 'ring_group',
                 'default_setting_subcategory'   => 'honor_member_cfwd',
                 'default_setting_name'          => 'boolean',

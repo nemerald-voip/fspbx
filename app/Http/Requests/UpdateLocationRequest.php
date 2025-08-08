@@ -4,12 +4,12 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreLocationRequest extends FormRequest
+class UpdateLocationRequest extends FormRequest
 {
     public function authorize(): bool
     {
         // Only allow if user is admin or has permission (customize as needed)
-        return userCheckPermission('location_create');
+        return userCheckPermission('location_update');
     }
 
     public function rules(): array
@@ -17,14 +17,10 @@ class StoreLocationRequest extends FormRequest
         return [
             'name'    => 'required|string|max:255',
             'description'    => 'nullable|string|max:255',
-            'domain_uuid' => 'present',
         ];
     }
 
     public function prepareForValidation(): void
     {
-        if (!$this->has('domain_uuid')) {
-            $this->merge(['domain_uuid' => session('domain_uuid')]);
-        }
     }
 }

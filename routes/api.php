@@ -43,6 +43,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // Locatiosn
     Route::resource('/locations', LocationsController::class);
+    Route::post('locations/bulk-delete', [LocationsController::class, 'bulkDelete'])->name('locations.bulk.delete');
+
 
     // Emergency calls
     Route::resource('/emergency-calls', EmergencyCallController::class);

@@ -57,9 +57,14 @@ class AccountSettingsController extends Controller
                     'emergency_calls_service_status' => route('emergency-calls.check.service.status'),
                     'locations' => route('locations.index'),
                     'locations_store' => route('locations.store'),
+                    'locations_bulk_delete' => route('locations.bulk.delete'),
+
 
                     //'bulk_update' => route('devices.bulk.update'),
                 ],
+                'permissions' => function () {
+                    return $this->getUserPermissions();
+                },
 
             ]
         );
@@ -210,5 +215,16 @@ class AccountSettingsController extends Controller
                 'errors' => ['server' => ['Server returned an error while processing your request.']]
             ], 500); // 500 Internal Server Error for any other errors
         }
+    }
+
+    public function getUserPermissions()
+    {
+        $permissions = [];
+        $permissions['location_view'] = userCheckPermission('location_view');
+        $permissions['location_create'] = userCheckPermission('location_create');
+        $permissions['location_update'] = userCheckPermission('location_update');
+        $permissions['location_delete'] = userCheckPermission('location_delete');
+
+        return $permissions;
     }
 }

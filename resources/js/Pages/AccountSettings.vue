@@ -39,7 +39,7 @@
                                     'add_location',
                                     'locations_table',
 
-                                ]" :conditions="[() => true]" />
+                                ]" :conditions="[() => permissions?.location_view]" />
 
                                 <!-- <FormTab name="page1" label="Billing" :elements="[
 
@@ -89,15 +89,16 @@
 
                                 <!-- Locations -->
 
-                                <StaticElement name="locations_title" tag="h4" content="Locations" />
+                                <StaticElement name="locations_title" tag="h4" content="Locations"
+                                    description="Locations help you group your users and resources within your organization. When you assign users to specific locations, they will only be able to see the resources that belong to those locations." />
 
                                 <ButtonElement name="add_location" button-label="Add Location" align="right"
                                     @click="handleAddLocationButtonClick" :loading="addLocationButtonLoading"
-                                    :conditions="[() => true]" />
+                                    :conditions="[() => permissions?.location_create]" />
 
                                 <StaticElement name="locations_table">
                                     <Locations :locations="locations" :loading="isLocationsLoading"
-                                        :permissions="data?.permissions"
+                                        :permissions="permissions" @edit-item="handleUpdateLocationButtonClick"
                                         @delete-item="handleDeleteLocationButtonClick" />
                                 </StaticElement>
 
@@ -130,9 +131,18 @@
         <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
             @update:show="hideNotification" />
 
-        <CreateLocationModal :show="showLocationModal" :route="routes.locations_store" @close="showLocationModal = false"
-            @success="val => showNotification('success', val)" @error="handleErrorResponse" @refresh-data="getLocations" />
+        <CreateLocationModal :show="showCreateLocationModal" :route="routes.locations_store"
+            @close="showCreateLocationModal = false" @success="val => showNotification('success', val)"
+            @error="handleErrorResponse" @refresh-data="getLocations" />
 
+        <UpdateLocationModal :show="showUpdateLocationModal" :route="locationUpdateRoute" :location="selectedLocation"
+            @close="showUpdateLocationModal = false" @success="val => showNotification('success', val)"
+            @error="handleErrorResponse" @refresh-data="getLocations" />
+
+        <ConfirmationModal :show="showDeleteLocationConfirmationModal" @close="showDeleteLocationConfirmationModal = false"
+            @confirm="confirmDeleteLocationAction" :header="'Confirm Deletion'" :loading="isDeleteLocationLoading"
+            :text="'This action will permanently delete the selected location. Are you sure you want to proceed?'"
+            confirm-button-label="Delete" cancel-button-label="Cancel" />
     </MainLayout>
 </template>
 
@@ -153,6 +163,8 @@ import { CreditCardIcon } from '@heroicons/vue/24/outline'
 import { ChevronDownIcon } from '@heroicons/vue/16/solid'
 import Locations from "./components/Locations.vue";
 import CreateLocationModal from "./components/modal/CreateLocationModal.vue"
+import UpdateLocationModal from "./components/modal/UpdateLocationModal.vue"
+import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 
 
 const props = defineProps({
@@ -162,7 +174,7 @@ const props = defineProps({
     },
     timezones: Object,
     routes: Object,
-    errors: Object,
+    permissions: Object,
 
 })
 
@@ -171,7 +183,14 @@ const isLocationsLoading = ref(false)
 const isDeleteLocationLoading = ref(false)
 const locations = ref([])
 const addLocationButtonLoading = ref(false)
-const showLocationModal = ref(false)
+const showCreateLocationModal = ref(false)
+const showUpdateLocationModal = ref(false)
+const selectedLocation = ref(null);
+const locationUpdateRoute = ref(null);
+const showDeleteLocationConfirmationModal = ref(false)
+const confirmDeleteLocationAction = ref(null);
+
+
 
 // const localData = ref(JSON.parse(JSON.stringify(props.data || {})));
 
@@ -211,7 +230,7 @@ const getLocations = async () => {
     })
         .then((response) => {
             locations.value = response.data;
-            console.log(locations.value);
+            // console.log(locations.value);
 
         }).catch((error) => {
             handleErrorResponse(error)
@@ -221,12 +240,37 @@ const getLocations = async () => {
 }
 
 const handleAddLocationButtonClick = () => {
-    showLocationModal.value = true
+    showCreateLocationModal.value = true
+}
+
+const handleUpdateLocationButtonClick = (location) => {
+    selectedLocation.value = location;
+    // Dynamically build the update route
+    locationUpdateRoute.value = `/api/locations/${location.location_uuid}`; // or use your route helper if available
+    showUpdateLocationModal.value = true;
 }
 
 const handleDeleteLocationButtonClick = (uuid) => {
-    showDeleteConfirmationModal.value = true;
-    confirmDeleteAction.value = () => executeBulkDelete([uuid]);
+    showDeleteLocationConfirmationModal.value = true;
+    confirmDeleteLocationAction.value = () => executeLocationBulkDelete([uuid]);
+};
+
+const executeLocationBulkDelete = async (items) => {
+    isDeleteLocationLoading.value = true;
+
+    try {
+        const response = await axios.post(
+            props.routes.locations_bulk_delete,
+            { items }
+        );
+        showNotification('success', response.data.messages);
+        getLocations();
+    } catch (error) {
+        handleErrorResponse(error);
+    } finally {
+        showDeleteLocationConfirmationModal.value = false;
+        isDeleteLocationLoading.value = false;
+    }
 };
 
 const submitForm = async (FormData, form$) => {

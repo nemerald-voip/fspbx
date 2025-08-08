@@ -20,17 +20,17 @@
                                 <td class="px-6 py-4 text-sm font-medium text-gray-900">
                                     {{ location.name }}
 
-                                    <!-- Created at: show in mobile view -->
+                                    <!-- Description show in mobile view -->
                                     <div class="px-6 py-2 text-sm text-gray-500 sm:hidden">
-                                        {{ location.created_at }}
+                                        {{ location.description }}
                                     </div>
 
                                    
                                 </td>
 
-                                <!-- Created at: show in desktop view -->
+                                <!-- Description: show in desktop view -->
                                 <td class="hidden px-6 py-2 text-sm text-gray-500 sm:table-cell">
-                                    {{ location.created_at }}
+                                    {{ location.description }}
                                 </td>
                                 
 
@@ -38,16 +38,16 @@
                                 <td class="whitespace-nowrap px-6 py-2 text-right text-sm font-medium">
                                     <div class="flex items-center justify-end space-x-2">
                                         <!-- Edit (if needed) -->
-                                        <!-- <ejs-tooltip v-if="permissions.api_key_update" :content="'Edit'"
+                                        <ejs-tooltip v-if="permissions.location_update" :content="'Edit'"
                                             position='TopCenter'>
-                                            <PencilSquareIcon @click="handleEditButtonClick(location.id)"
+                                            <PencilSquareIcon @click="handleEditButtonClick(location)"
                                                 class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-                                        </ejs-tooltip> -->
+                                        </ejs-tooltip>
 
-                                        <!-- Revoke/Delete -->
-                                        <ejs-tooltip v-if="permissions.api_key_delete" :content="'Revoke'"
+                                        <!-- Delete -->
+                                        <ejs-tooltip v-if="permissions.location_delete" :content="'Delete'"
                                             position='TopCenter'>
-                                            <TrashIcon @click="handleSingleItemDeleteRequest(location.id)"
+                                            <TrashIcon @click="handleSingleItemDeleteRequest(location.location_uuid)"
                                                 class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
                                         </ejs-tooltip>
                                     </div>
@@ -96,8 +96,8 @@ const props = defineProps({
 
 const emits = defineEmits(['edit-item', 'delete-item']);
 
-const handleEditButtonClick = (uuid) => {
-    emits('edit-item', uuid)
+const handleEditButtonClick = (location) => {
+    emits('edit-item', location)
 }
 
 const handleSingleItemDeleteRequest = (uuid) => {
