@@ -533,9 +533,19 @@ class UsersController extends Controller
                 // Delete group assignments
                 $user->user_groups()->delete();
 
+                $user->domain_permissions()->delete();       
+
+                $user->domain_group_permissions()->delete();  
+
                 // Finally delete the user record
                 $user->delete();
             }
+
+            // bulk-remove all location links for these users in one go
+            DB::table('locationables')
+            ->where('locationable_type', \App\Models\User::class)
+            ->whereIn('locationable_id', $uuids)
+            ->delete();
 
             DB::commit();
 
