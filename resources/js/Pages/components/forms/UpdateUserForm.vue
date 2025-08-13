@@ -68,6 +68,10 @@
                                         ? options.item.domain_group_permissions.map(item => item.domain_group_uuid)
                                         : [],
 
+                                    locations: options.item.locations
+                                        ? options.item.locations.map(l => l.location_uuid)
+                                        : [],
+
                                 }">
 
                                 <template #empty>
@@ -98,12 +102,22 @@
                                                     'security_title',
 
                                                 ]" />
+
+                                                <FormTab name="advanced" label="Advanced" :elements="[
+                                                    'locations',
+                                                    'advanced_title',
+                                                    'advanced_container',
+                                                    'advanced_submit',
+                                                ]" />
+
                                                 <FormTab name="api_tokens" label="API Keys" :elements="[
                                                     'html',
                                                     'add_token',
                                                     'token_title',
 
                                                 ]" :conditions="[() => options.permissions.api_key]" />
+
+
                                             </FormTabs>
                                         </div>
 
@@ -143,8 +157,10 @@
                                                     }" />
 
 
-                                                <SelectElement name="extension_uuid" :items="options.extensions" :search="true" :native="false" label="Assigned extension" input-type="search" autocomplete="off"
-                                                    :floating="false" placeholder="Select extension" :columns="{
+                                                <SelectElement name="extension_uuid" :items="options.extensions"
+                                                    :search="true" :native="false" label="Assigned extension"
+                                                    input-type="search" autocomplete="off" :floating="false"
+                                                    placeholder="Select extension" :columns="{
                                                         sm: {
                                                             wrapper: 6,
                                                         },
@@ -226,6 +242,21 @@
                                                     @click="requestResetPassword" button-label="Reset Password"
                                                     align="left" />
 
+                                                <StaticElement name="advanced_title" tag="h4" content="Advanced" />
+
+                                                <TagsElement name="locations" :close-on-select="false" :search="true"
+                                                    label-prop="name" value-prop="location_uuid" :items="locations"
+                                                    :track-by="['name', 'description']"
+                                                    label="Select one or more locations this user can access."
+                                                    input-type="search" autocomplete="off" placeholder="Select Accounts"
+                                                    :floating="false"
+                                                    description="Access is limited to selected locations, plus any resources with no specific location assigned." />
+
+                                                <GroupElement name="advanced_container" />
+
+                                                <ButtonElement name="advanced_submit" button-label="Save"
+                                                    :submits="true" align="right" />
+
                                                 <StaticElement name="token_title" tag="h4" content="API Keys" />
 
                                                 <ButtonElement name="add_token" button-label="Create API Key"
@@ -293,6 +324,8 @@ const tokens = ref([])
 const addTokenButtonLoading = ref(false)
 const showApiTokenModal = ref(false)
 const confirmDeleteAction = ref(null);
+const locations = ref([])
+const isLocationsLoading = ref(false)
 
 
 const submitForm = async (FormData, form$) => {
@@ -346,6 +379,9 @@ const handleTabSelected = (activeTab, previousTab) => {
     if (activeTab.name == 'api_tokens') {
         getTokens()
     }
+    if (activeTab.name == 'advanced') {
+        getLocations()
+    }
 }
 
 const getTokens = async () => {
@@ -366,24 +402,29 @@ const getTokens = async () => {
         });
 }
 
-// const handleUpdateTokenButtonClick = async uuid => {
-//     updateTokenButtonLoading.value = true;
-//     try {
-//         await getHolidayItemOptions(uuid);
-//         showUpdateTokenModal.value = true;
-//     } catch (err) {
-//         handleModalClose();
-//         emit('error', err);
-//     } finally {
-//         updateTokenButtonLoading.value = false;
-//     }
-// };
-
 
 const handleDeleteTokenButtonClick = (uuid) => {
     showDeleteConfirmationModal.value = true;
     confirmDeleteAction.value = () => executeBulkDelete([uuid]);
 };
+
+const getLocations = async () => {
+    isLocationsLoading.value = true
+    axios.get(props.options.routes.locations, {
+        params: {
+            domain_uuid: props.options.item.domain_uuid
+        }
+    })
+        .then((response) => {
+            locations.value = response.data;
+            // console.log(locations.value);
+
+        }).catch((error) => {
+            emit('error', error)
+        }).finally(() => {
+            isLocationsLoading.value = false
+        });
+}
 
 
 const emitErrorToParentFromChild = (error) => {

@@ -31,5 +31,8 @@ class UserData extends Data
 
         #[DataCollectionOf(DomainGroupPermissionData::class)]
         public ?DataCollection $domain_group_permissions = null,
+
+        #[DataCollectionOf(LocationData::class)]
+        public ?DataCollection $locations = null,
     ) {}
 }

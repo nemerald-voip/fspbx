@@ -3,9 +3,6 @@
 namespace App\Http\Controllers\Api;
 
 use App\Models\Location;
-use App\Models\Extensions;
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreLocationRequest;

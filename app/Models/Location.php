@@ -22,5 +22,20 @@ class Location extends Model
         'description',
     ];
 
-   
+    /**
+     * Get all of the users that are assigned to this location.
+     */
+    public function users()
+    {
+        return $this->morphedByMany(
+            \App\Models\User::class,
+            'locationable',
+            'locationables',
+            'location_uuid',               // this model's id column on pivot 
+            'locationable_id',             // related model's id column on pivot
+            'location_uuid',               // this model's local key
+            'user_uuid'                    // related model's local key
+        );
+    }
+
 }

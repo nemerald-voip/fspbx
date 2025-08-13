@@ -182,6 +182,15 @@ class UsersController extends Controller
                     },
 
                 ])
+                ->with([
+                    'locations' => function ($q) {
+                        // qualify with table name and only select columns from `locations`
+                        $q->select([
+                            'locations.location_uuid',   // required PK for the related model
+                            'locations.name',
+                        ]);
+                    },
+                ])
                 ->whereKey($itemUuid)
                 ->firstOrFail();
 
@@ -265,7 +274,8 @@ class UsersController extends Controller
             'password_reset' => route('users.password.email'),
             'tokens' => route('tokens.index'),
             'create_token' => route('tokens.store'),
-            'token_bulk_delete' => route('tokens.bulk.delete')
+            'token_bulk_delete' => route('tokens.bulk.delete'),
+            'locations' => route('locations.index'),
         ];
 
         return response()->json([
@@ -461,6 +471,14 @@ class UsersController extends Controller
                         'user_uuid'         => $user->user_uuid,
                         'domain_group_uuid' => $domainGroupUuid,
                     ]);
+                }
+            }
+
+            // 7) Locations (polymorphic pivot)
+            $user->locations()->detach(); // Remove existing links
+            if (!empty($validated['locations']) && is_array($validated['locations'])) {
+                foreach ($validated['locations'] as $locationUuid) {
+                    $user->locations()->attach($locationUuid);
                 }
             }
 
