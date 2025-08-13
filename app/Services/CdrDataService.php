@@ -176,87 +176,119 @@ class CdrDataService
 
     public function getExtensionStatistics($params = [])
     {
-        // logger($params);
+        $domain_uuid = $params['domain_uuid'] ?? session('domain_uuid');
 
-        // Initialize an empty array for statistics
-        $extensionStats = [];
+        // 1) Load all extensions in this domain (only what we need)
+        $extensions = \App\Models\Extensions::query()
+            ->where('domain_uuid', $domain_uuid)
+            ->get(['extension_uuid', 'extension', 'effective_caller_id_name']);
 
+        logger($extensions);
+
+        // Lookups and pre-initialized stats
+        $extToUuid  = [];
+        $metaByUuid = [];
+        $stats      = [];
+
+        foreach ($extensions as $ext) {
+            $extNum = (string) $ext->extension;
+            $extToUuid[$extNum] = $ext->extension_uuid;
+
+            $metaByUuid[$ext->extension_uuid] = [
+                'extension'       => $extNum,
+                'extension_label' => $ext->name_formatted,
+            ];
+
+            $stats[$ext->extension_uuid] = [
+                'extension_uuid'            => $ext->extension_uuid,
+                'extension_label'           => $ext->name_formatted,
+                'extension'                 => $extNum,
+                'inbound'                   => 0,
+                'outbound'                  => 0,
+                'missed'                    => 0,
+                'total_duration'            => 0,
+                'call_count'                => 0,
+                'total_talk_time'           => 0,
+                'average_duration'          => 0,           // filled later
+                'total_duration_formatted'  => '00:00:00',  // filled later
+                'total_talk_time_formatted' => '00:00:00',  // filled later
+                'average_duration_formatted' => '00:00:00',  // filled later
+            ];
+        }
+
+        // 2) Stream CDRs for the requested period (cursor from getData)
+        // Make sure caller doesn't paginate when calling stats; we rely on cursor streaming.
         $cdrs = $this->getData($params);
+
         foreach ($cdrs as $cdr) {
-            // Skip records without extension_uuid
-            if (empty($cdr->extension_uuid)) {
-                continue;
+            // Collect matched extension UUIDs for this CDR (uuid or number fields or *99ext)
+            $matched = [];
+
+            // a) Direct link via extension_uuid (only if it's an extension from this domain)
+            if ($cdr->extension_uuid && isset($metaByUuid[$cdr->extension_uuid])) {
+                $matched[$cdr->extension_uuid] = true;
             }
 
-            // Use extension_uuid as the key
-            $extensionUuid = $cdr->extension_uuid;
+            // b) Match by number fields
+            $n1 = (string) ($cdr->caller_id_number ?? '');
+            $n2 = (string) ($cdr->caller_destination ?? '');
+            $n3 = (string) ($cdr->source_number ?? '');
+            $n4 = (string) ($cdr->destination_number ?? '');
 
-            // Initialize stats for this extension if not already set
-            if (!isset($extensionStats[$extensionUuid])) {
-                $extensionStats[$extensionUuid] = [
-                    'extension_uuid' => $extensionUuid,
-                    'extension_label' => null,
-                    'extension' => null,
-                    'inbound' => 0,
-                    'outbound' => 0,
-                    'missed' => 0,
-                    'total_duration' => 0,
-                    'call_count' => 0,
-                    'total_talk_time' => 0,
-                ];
+            if ($n1 && isset($extToUuid[$n1])) $matched[$extToUuid[$n1]] = true;
+            if ($n2 && isset($extToUuid[$n2])) $matched[$extToUuid[$n2]] = true;
+            if ($n3 && isset($extToUuid[$n3])) $matched[$extToUuid[$n3]] = true;
+            if ($n4 && isset($extToUuid[$n4])) $matched[$extToUuid[$n4]] = true;
+
+            // c) Voicemail (*99{extension}) on destination_number
+            if ($n4 !== '' && str_starts_with($n4, '*99')) {
+                $maybeExt = substr($n4, 3);
+                if ($maybeExt !== '' && isset($extToUuid[$maybeExt])) {
+                    $matched[$extToUuid[$maybeExt]] = true;
+                }
             }
 
-            // if (isset($cdr->extension)) {
-            //     logger('Extension loaded:', [$cdr->extension]);
-            // } else {
-            //     logger('No extension for CDR:', [$cdr->xml_cdr_uuid]);
-            // }
+            if (!$matched) continue;
 
-            // Extract and format the extension name if available
-            if ($cdr->extension) {
-                $extensionStats[$extensionUuid]['extension_label'] = $cdr->extension->name_formatted ?? null;
-            }
+            // Fast locals
+            $duration  = (int) ($cdr->duration ?? 0);
+            $direction = $cdr->direction ?? null;
+            $missed    = !empty($cdr->missed_call);
 
-            // Update call count and talk time
-            $extensionStats[$extensionUuid]['call_count'] += 1;
-            $extensionStats[$extensionUuid]['total_duration'] += $cdr->duration;
-            $extensionStats[$extensionUuid]['total_talk_time'] += $cdr->duration;
+            foreach (array_keys($matched) as $extUuid) {
+                $s = &$stats[$extUuid];
+                $s['call_count']      += 1;
+                $s['total_duration']  += $duration;
+                $s['total_talk_time'] += $duration;
 
-            // Check direction (inbound/outbound)
-            if ($cdr->direction === 'inbound') {
-                $extensionStats[$extensionUuid]['inbound'] += 1;
-            } elseif ($cdr->direction === 'outbound') {
-                $extensionStats[$extensionUuid]['outbound'] += 1;
-            }
-
-            // Check missed calls
-            if ($cdr->missed_call === true) {
-                $extensionStats[$extensionUuid]['missed'] += 1;
+                if ($direction === 'inbound')  $s['inbound']  += 1;
+                if ($direction === 'outbound') $s['outbound'] += 1;
+                if ($missed)                   $s['missed']   += 1;
             }
         }
 
-        // Calculate average call duration for each extension
-        foreach ($extensionStats as &$stats) {
-            $stats['average_duration'] = $stats['call_count'] > 0 ? $stats['total_duration'] / $stats['call_count'] : 0;
-
-            // Format durations using getFormattedDuration method
-            $stats['total_duration_formatted'] = $this->getFormattedDuration($stats['total_duration']);
-            $stats['total_talk_time_formatted'] = $this->getFormattedDuration($stats['total_talk_time']);
-            $stats['average_duration_formatted'] = $this->getFormattedDuration($stats['average_duration']);
+        // 3) Compute averages + formatted durations
+        foreach ($stats as &$s) {
+            $s['average_duration']          = $s['call_count'] > 0 ? ($s['total_duration'] / $s['call_count']) : 0;
+            $s['total_duration_formatted']  = $this->getFormattedDuration($s['total_duration']);
+            $s['total_talk_time_formatted'] = $this->getFormattedDuration($s['total_talk_time']);
+            $s['average_duration_formatted'] = $this->getFormattedDuration($s['average_duration']);
         }
+        unset($s);
 
-        // Paginate the result manually
-        $perPage = 50;  // Default items per page
-        $currentPage = $params['page'] ?? 1;   // Current page number
-        $total = count($extensionStats);
-
-        // logger($extensionStats);
-
-        // Manually paginate the array of statistics
-        $paginatedStats = collect($extensionStats)->forPage($currentPage, $perPage)->values();
+        // 4) Paginate extensions (not CDRs)
+        $perPage     = (int) ($params['per_page'] ?? 50);
+        $currentPage = (int) ($params['page']     ?? 1);
+        // Sort by extension before pagination
+        $all = collect($stats)
+            ->sortBy('extension', SORT_NATURAL) // SORT_NATURAL keeps 1, 2, 10 in the right order
+            ->values()
+            ->all();
+        $total       = count($all);
+        $pageItems   = collect($all)->forPage($currentPage, $perPage)->values();
 
         return new \Illuminate\Pagination\LengthAwarePaginator(
-            $paginatedStats,
+            $pageItems,
             $total,
             $perPage,
             $currentPage,

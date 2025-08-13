@@ -213,7 +213,7 @@ const getData = (page = 1) => {
     })
         .then((response) => {
             data.value = response.data;
-            console.log(data.value);
+            //console.log(data.value);
 
         }).catch((error) => {
 
