@@ -103,6 +103,7 @@ return [
     'password' => 'The password is incorrect.',
     'password.mixed' => 'The password must contain both uppercase and lowercase characters.',
     'password.symbols' => 'The password must include at least one symbol.',
+    'password.uncompromised' => 'The given password has appeared in a data leak. Please choose a different password.',
     'present' => 'The :attribute field must be present.',
     'prohibited' => 'The :attribute field is prohibited.',
     'prohibited_if' => 'The :attribute field is prohibited when :other is :value.',
