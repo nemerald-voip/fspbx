@@ -2,6 +2,7 @@
 
 namespace App\Data;
 
+use App\Data\LocationData;
 use Spatie\LaravelData\Data;
 use Spatie\LaravelData\DataCollection;
 use Spatie\LaravelData\Attributes\DataCollectionOf;
@@ -28,5 +29,8 @@ class FaxDetailData extends Data
 
         #[DataCollectionOf(FaxAllowedDomainNameData::class)]
         public ?DataCollection $allowed_domain_names = null,
+
+        #[DataCollectionOf(LocationData::class)]
+        public ?DataCollection $locations = null,
     ) {}
 }

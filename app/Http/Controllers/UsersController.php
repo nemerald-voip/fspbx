@@ -182,6 +182,15 @@ class UsersController extends Controller
                     },
 
                 ])
+                ->with([
+                    'locations' => function ($q) {
+                        // qualify with table name and only select columns from `locations`
+                        $q->select([
+                            'locations.location_uuid',   // required PK for the related model
+                            'locations.name',
+                        ]);
+                    },
+                ])
                 ->whereKey($itemUuid)
                 ->firstOrFail();
 
@@ -265,7 +274,8 @@ class UsersController extends Controller
             'password_reset' => route('users.password.email'),
             'tokens' => route('tokens.index'),
             'create_token' => route('tokens.store'),
-            'token_bulk_delete' => route('tokens.bulk.delete')
+            'token_bulk_delete' => route('tokens.bulk.delete'),
+            'locations' => route('locations.index'),
         ];
 
         return response()->json([
@@ -464,6 +474,14 @@ class UsersController extends Controller
                 }
             }
 
+            // 7) Locations (polymorphic pivot)
+            $user->locations()->detach(); // Remove existing links
+            if (!empty($validated['locations']) && is_array($validated['locations'])) {
+                foreach ($validated['locations'] as $locationUuid) {
+                    $user->locations()->attach($locationUuid);
+                }
+            }
+
             DB::commit();
 
             return response()->json([
@@ -515,9 +533,19 @@ class UsersController extends Controller
                 // Delete group assignments
                 $user->user_groups()->delete();
 
+                $user->domain_permissions()->delete();       
+
+                $user->domain_group_permissions()->delete();  
+
                 // Finally delete the user record
                 $user->delete();
             }
+
+            // bulk-remove all location links for these users in one go
+            DB::table('locationables')
+            ->where('locationable_type', \App\Models\User::class)
+            ->whereIn('locationable_id', $uuids)
+            ->delete();
 
             DB::commit();
 

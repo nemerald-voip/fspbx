@@ -30,6 +30,19 @@ class Domain extends Model
         'domain_description'
     ];
 
+    public function getNamedSettingsAttribute(): array
+    {
+        return $this->settings
+            ->mapWithKeys(fn($s) => [
+                // use the subcategory as the key
+                $s->domain_setting_subcategory => [
+                    'value'   => $s->domain_setting_value,
+                    'enabled' => (bool) $s->domain_setting_enabled,
+                ],
+            ])
+            ->toArray();
+    }
+
 
     /**
      * Get the settings for the domain.

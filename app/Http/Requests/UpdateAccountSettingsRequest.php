@@ -2,13 +2,9 @@
 
 namespace App\Http\Requests;
 
-use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Validation\Rule;
-use libphonenumber\NumberParseException;
-use Propaganistas\LaravelPhone\PhoneNumber;
 
 class UpdateAccountSettingsRequest extends FormRequest
 {
@@ -41,7 +37,11 @@ class UpdateAccountSettingsRequest extends FormRequest
                 'present',
                 'boolean',
             ],
-            'settings' => [
+            'updatedSettings' => [
+                'present',
+                'array',
+            ],
+            'newSettings' => [
                 'present',
                 'array',
             ],
