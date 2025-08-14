@@ -276,7 +276,7 @@ class User extends Authenticatable
     public function locations()
     {
         return $this->morphToMany(
-            \App\Models\Location::class,   // related model
+            Location::class,   // related model
             'locationable',                // morph name -> uses locationable_type + locationable_id
             'locationables',               // pivot table
             'locationable_id',             // this model's id column on pivot

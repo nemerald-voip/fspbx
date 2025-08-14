@@ -1,6 +1,6 @@
 <template>
     <TransitionRoot as="div" :show="show">
-        <Dialog as="div" class="relative z-10" >
+        <Dialog as="div" class="relative z-10">
             <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
                 leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
                 <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
@@ -72,18 +72,9 @@
                                         ? options.item.allowed_domain_names.map(domain => ({ email: domain.domain }))
                                         : [],
 
-                                    // groups: options.item.user_groups
-                                    //     ? options.item.user_groups.map(ug => ug.group_uuid)
-                                    //     : [],
-
-                                    // accounts: options.item.domain_permissions
-                                    //     ? options.item.domain_permissions.map(item => item.domain_uuid)
-                                    //     : [],
-
-                                    // account_groups: options.item.domain_group_permissions
-                                    //     ? options.item.domain_group_permissions.map(item => item.domain_group_uuid)
-                                    //     : [],
-
+                                    locations: options.item.locations
+                                        ? options.item.locations.map(l => l.location_uuid)
+                                        : [],
                                 }">
 
                                 <template #empty>
@@ -113,12 +104,13 @@
                                                     'authorized_domains_container',
 
                                                 ]" />
-                                                <FormTab name="page1" label="Advanced" :elements="[
+                                                <FormTab name="advanced" label="Advanced" :elements="[
                                                     'fax_forward_number',
                                                     'fax_prefix',
                                                     'fax_toll_allow',
                                                     'fax_send_channels',
                                                     'advanced_title',
+                                                    'locations',
                                                     'advanced_container',
                                                     'advanced_submit'
 
@@ -208,14 +200,18 @@
                                                         },
                                                     }" description="Enter the maximum number of channels to use." />
 
-
+                                                <TagsElement name="locations" :close-on-select="false" :search="true"
+                                                    label-prop="name" value-prop="location_uuid" :items="locations"
+                                                    :track-by="['name', 'description']"
+                                                    label="Locations"
+                                                    input-type="search" autocomplete="off" placeholder="Select Locations"
+                                                    :floating="false" :loading="isLocationsLoading"
+                                                    description="Assign one or more locations. If none are selected, this resource is visible to all users." />
 
                                                 <GroupElement name="advanced_container" />
 
                                                 <ButtonElement name="advanced_submit" button-label="Save"
                                                     :submits="true" align="right" />
-
-
 
                                                 <StaticElement name="fax_recipients_title" tag="h4"
                                                     content="Forward incoming faxes to email" top="3"
@@ -225,8 +221,8 @@
                                                     @change="handleEmailListChange">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index">
-                                                            <TextElement name="email" 
-                                                                placeholder="Enter email address" :floating="false" />
+                                                            <TextElement name="email" placeholder="Enter email address"
+                                                                :floating="false" />
                                                         </ObjectElement>
                                                     </template>
                                                 </ListElement>
@@ -244,7 +240,8 @@
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index">
                                                             <TextElement name="email"
-                                                                placeholder="Enter domain name (example.com)" :floating="false" />
+                                                                placeholder="Enter domain name (example.com)"
+                                                                :floating="false" />
                                                         </ObjectElement>
                                                     </template>
                                                 </ListElement>
@@ -259,11 +256,12 @@
                                                     description="Enter any trusted email addresses not covered by authorized domains." />
 
 
-                                                <ListElement name="authorized_emails" :initial="0" :sort="true" :key="'email-' + Math.random().toString(20)">
+                                                <ListElement name="authorized_emails" :initial="0" :sort="true"
+                                                    :key="'email-' + Math.random().toString(20)">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index">
-                                                            <TextElement name="email"
-                                                                placeholder="Enter email address" :floating="false" />
+                                                            <TextElement name="email" placeholder="Enter email address"
+                                                                :floating="false" />
                                                         </ObjectElement>
                                                     </template>
                                                 </ListElement>
@@ -305,7 +303,8 @@ const props = defineProps({
 });
 
 const form$ = ref(null)
-const showResetConfirmationModal = ref(false);
+const locations = ref([])
+const isLocationsLoading = ref(false)
 
 const handleEmailListChange = (newValue, oldValue, el$) => {
     // Basic email regex pattern
@@ -341,12 +340,29 @@ function clearErrorsRecursive(el$) {
     }
 }
 
-
-
 const handleTabSelected = (activeTab, previousTab) => {
-
+    if (activeTab.name == 'advanced') {
+        getLocations()
+    }
 }
 
+const getLocations = async () => {
+    isLocationsLoading.value = true
+    axios.get(props.options.routes.locations, {
+        params: {
+            domain_uuid: props.options.item.domain_uuid
+        }
+    })
+        .then((response) => {
+            locations.value = response.data;
+            // console.log(locations.value);
+
+        }).catch((error) => {
+            emit('error', error)
+        }).finally(() => {
+            isLocationsLoading.value = false
+        });
+}
 
 const handleResponse = (response, form$) => {
     // Clear form including nested elements 

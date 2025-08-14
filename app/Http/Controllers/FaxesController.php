@@ -56,6 +56,7 @@ class FaxesController extends Controller
         $faxes = QueryBuilder::for(Faxes::class)
             // only users in the current domain
             ->where('domain_uuid', $currentDomain)
+            ->inUsersLocations()
             ->select([
                 'fax_uuid',
                 'domain_uuid',
@@ -101,6 +102,7 @@ class FaxesController extends Controller
         // Calculate total of sent faxes in the last month
         $totalReceived = FaxFiles::where('fax_mode', 'rx')
             ->where('domain_uuid', $currentDomain)
+            ->inUsersLocations()
             ->whereBetween('fax_date', $period)
             ->count();
         // ->toSql();
@@ -108,6 +110,7 @@ class FaxesController extends Controller
         // Calculate total of sent faxes in the last month
         $totalSent = FaxFiles::where('fax_mode', 'tx')
             ->where('domain_uuid', $currentDomain)
+            ->inUsersLocations()
             ->whereBetween('fax_date', $period)
             ->count();
         // ->toSql();
@@ -138,7 +141,6 @@ class FaxesController extends Controller
                 ]
             ]
         );
-
     }
 
     public function getRecentOutbound()
@@ -160,6 +162,7 @@ class FaxesController extends Controller
                 'fax_status',
             ])
             ->where('domain_uuid', $currentDomain)
+            ->inUsersLocations()
             ->whereBetween('fax_date', $period)
             ->orderByDesc('fax_date')
             ->limit(5)
@@ -195,6 +198,7 @@ class FaxesController extends Controller
                 'fax_date',
             ])
             ->where('domain_uuid', $currentDomain)
+            ->inUsersLocations()
             ->whereBetween('fax_date', $period)
             ->where('fax_mode', 'rx')
 
@@ -266,6 +270,15 @@ class FaxesController extends Controller
                         ]);
                     },
                 ])
+                ->with([
+                    'locations' => function ($q) {
+                        // qualify with table name and only select columns from `locations`
+                        $q->select([
+                            'locations.location_uuid',   // required PK for the related model
+                            'locations.name',
+                        ]);
+                    },
+                ])
                 ->whereKey($itemUuid)
                 ->firstOrFail();
 
@@ -312,6 +325,7 @@ class FaxesController extends Controller
         // 3) Any routes your front end needs
         $routes = array_merge($routes, [
             'store_route'  => route('faxes.store'),
+            'locations' => route('locations.index'),
         ]);
 
         $currentDomain = session('domain_uuid');
@@ -373,7 +387,7 @@ class FaxesController extends Controller
             ->map(function ($fax) {
                 return [
                     'value' => $fax->fax_caller_id_number,
-                    'label' =>$fax->fax_caller_id_number_formatted . ' - ' . $fax->fax_name,
+                    'label' => $fax->fax_caller_id_number_formatted . ' - ' . $fax->fax_name,
                 ];
             })
             ->values()
@@ -853,6 +867,11 @@ class FaxesController extends Controller
                 $fax->allowed_domain_names()->delete();
             }
 
+            // If key missing -> keep current; if present but [] -> unassign all
+            if (array_key_exists('locations', $data)) {
+                $fax->locations()->sync($data['locations'] ?? []);
+            }
+
             $this->generateDialPlanXML($fax);
 
             DB::commit();
@@ -1209,8 +1228,8 @@ class FaxesController extends Controller
                 ),
                 'To' => $data['recipient'] . '@fax.domain.com',
                 'Subject' => isset($data['fax_message']) ? 'body' : null,
-                'TextBody' => isset($data['fax_message']) ? strip_tags($data['fax_message']): null,
-                'HtmlBody' => isset($data['fax_message']) ? strip_tags($data['fax_message']): null,
+                'TextBody' => isset($data['fax_message']) ? strip_tags($data['fax_message']) : null,
+                'HtmlBody' => isset($data['fax_message']) ? strip_tags($data['fax_message']) : null,
                 'fax_destination' => $data['recipient'],
                 'fax_uuid' => $data['fax_uuid'],
             );

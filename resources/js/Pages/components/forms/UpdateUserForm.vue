@@ -248,8 +248,8 @@
                                                     label-prop="name" value-prop="location_uuid" :items="locations"
                                                     :track-by="['name', 'description']"
                                                     label="Select one or more locations this user can access."
-                                                    input-type="search" autocomplete="off" placeholder="Select Accounts"
-                                                    :floating="false"
+                                                    input-type="search" autocomplete="off" placeholder="Select Locations"
+                                                    :floating="false" :loading="isLocationsLoading"
                                                     description="Access is limited to selected locations, plus any resources with no specific location assigned." />
 
                                                 <GroupElement name="advanced_container" />

@@ -6,7 +6,6 @@ use fpdi;
 use Throwable;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
-use Illuminate\Http\Request;
 use App\Models\FaxAllowedEmails;
 use Illuminate\Support\Facades\Log;
 use App\Models\FaxAllowedDomainNames;
@@ -18,13 +17,14 @@ use Illuminate\Support\Facades\Storage;
 use App\Jobs\SendFaxNotificationToSlack;
 use libphonenumber\NumberParseException;
 use App\Jobs\SendFaxInTransitNotification;
+use App\Models\Traits\FilterableByLocation;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 
 
 class Faxes extends Model
 {
-    use HasFactory, \App\Models\Traits\TraitUuid;
+    use HasFactory, FilterableByLocation, \App\Models\Traits\TraitUuid;
 
     protected $table = "v_fax";
 
@@ -53,6 +53,23 @@ class Faxes extends Model
         'fax_caller_id_number_formatted',
     ];
 
+    /**
+     * Get all of the locations for this fax.
+     * The name 'locationable' is the key we defined in the pivot table.
+     */
+    public function locations()
+    {
+        return $this->morphToMany(
+            Location::class,       // 1. Related model
+            'locationable',        // 2. The morph name (e.g., locationable_type, locationable_id)
+            'locationables',       // 3. The pivot table name
+            'locationable_id',     // 4. The foreign key on the pivot table for this model (Faxes)
+            'location_uuid',       // 5. The foreign key on the pivot table for the related model (Location)
+            'fax_uuid',            // 6. The local key on this model (Faxes)
+            'location_uuid'        // 7. The local key on the related model (Location)
+        );
+    }
+
     public function getFaxCallerIdNumberFormattedAttribute()
     {
         return formatPhoneNumber($this->fax_caller_id_number, 'US', PhoneNumberFormat::NATIONAL);
@@ -61,11 +78,12 @@ class Faxes extends Model
     // private $domain
     public function dialplans()
     {
-        return $this->belongsTo(Dialplans::class,'dialplan_uuid','dialplan_uuid');
+        return $this->belongsTo(Dialplans::class, 'dialplan_uuid', 'dialplan_uuid');
     }
 
 
-    public function EmailToFax ($payload){
+    public function EmailToFax($payload)
+    {
         $payload['slack_message'] = "*EmailToFax Notification*\n";
         $payload['slack_message'] .= "*From:* {$payload['FromFull']['Email']}\n";
         $payload['slack_message'] .= "*To:* {$payload['fax_destination']}\n";
@@ -77,16 +95,16 @@ class Faxes extends Model
         // Test if there is a phone number in the subject line
         $subject = $payload['Subject'];
         $re = '/1?\d{10}/m';
-        if (preg_match($re, $subject, $matches)){
+        if (preg_match($re, $subject, $matches)) {
             // if string of digits that may represent a phone number is found then check if it's a valid phone number
             $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
             try {
                 $phoneNumberObject = $phoneNumberUtil->parse($matches[0], 'US');
-                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)){
+                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
                     $this->fax_caller_id_number = $phoneNumberUtil
-                                ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::E164);
+                        ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::E164);
                     // Try to find fax extension by requested caller ID
-                    if (isset($this->fax_caller_id_number)){
+                    if (isset($this->fax_caller_id_number)) {
                         $this->fax_extension = Faxes::where('fax_caller_id_number', $this->fax_caller_id_number)->first();
                     }
                 } else {
@@ -100,14 +118,12 @@ class Faxes extends Model
                 logger($payload['slack_message']);
                 SendFaxNotificationToSlack::dispatch($payload['slack_message'])->onQueue('faxes');
             }
-
-        } 
+        }
 
         // If the subject line didn't have a valid Fax number we are going to use the first match by email
         if (!isset($this->fax_extension)) {
-            if (isset($this->payload['fax_uuid'])){
+            if (isset($this->payload['fax_uuid'])) {
                 $this->fax_extension = Faxes::find($this->payload['fax_uuid']);
-
             }
         }
 
@@ -126,18 +142,18 @@ class Faxes extends Model
         $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
         try {
             $phoneNumberObject = $phoneNumberUtil->parse($this->fax_caller_id_number, 'US');
-            if ($phoneNumberUtil->isValidNumber($phoneNumberObject)){
+            if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
                 $this->fax_caller_id_number = $phoneNumberUtil
-                            ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::E164);
+                    ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::E164);
             } else {
-                $this->message .= "Invalid Caller ID is set up for fax server " . $this->fax_extension->fax_extension . ": " . $this->fax_caller_id_number ;
+                $this->message .= "Invalid Caller ID is set up for fax server " . $this->fax_extension->fax_extension . ": " . $this->fax_caller_id_number;
                 Log::alert($this->message);
                 SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
                 return "abort(404). Invalid caller ID";
             }
         } catch (NumberParseException $e) {
             // Process invalid Fax Caller ID
-            $this->message .= "Invalid Caller ID is set up for fax server " . $this->fax_extension->fax_extension . ": " . $this->fax_caller_id_number ;
+            $this->message .= "Invalid Caller ID is set up for fax server " . $this->fax_extension->fax_extension . ": " . $this->fax_caller_id_number;
             Log::alert($this->message);
             SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
             return "abort(404). Invalid caller ID";
@@ -179,15 +195,15 @@ class Faxes extends Model
         $this->fax_from = $payload['FromFull']['Email'];
 
         //get email body (if any) for cover page. 
-		$this->fax_message = $payload['TextBody'];
+        $this->fax_message = $payload['TextBody'];
         $this->fax_message = strip_tags($this->fax_message);
         $this->fax_message = html_entity_decode($this->fax_message);
         $this->fax_message = str_replace("\r\n\r\n", "\r\n", $this->fax_message);
 
         //Set default allowed extensions 
-        $this->fax_allowed_extensions = DefaultSettings::where('default_setting_category','fax')
-            ->where('default_setting_subcategory','allowed_extension')
-            ->where('default_setting_enabled','true')
+        $this->fax_allowed_extensions = DefaultSettings::where('default_setting_category', 'fax')
+            ->where('default_setting_subcategory', 'allowed_extension')
+            ->where('default_setting_enabled', 'true')
             ->pluck('default_setting_value')
             ->toArray();
 
@@ -195,13 +211,13 @@ class Faxes extends Model
             $this->fax_allowed_extensions = array('.pdf', '.tiff', '.tif');
         }
 
-        $settings= DefaultSettings::where('default_setting_category','fax')
-        ->where('default_setting_enabled','true')
-        ->get([
-            'default_setting_subcategory',
-            'default_setting_name',
-            'default_setting_value',
-        ]);
+        $settings = DefaultSettings::where('default_setting_category', 'fax')
+            ->where('default_setting_enabled', 'true')
+            ->get([
+                'default_setting_subcategory',
+                'default_setting_name',
+                'default_setting_value',
+            ]);
 
         $this->dialplan_variables = array();
         foreach ($settings as $setting) {
@@ -209,48 +225,48 @@ class Faxes extends Model
                 $this->fax_page_size = $setting->default_setting_value;
                 //determine page size
                 switch ($this->fax_page_size) {
-                    case 'a4' :
+                    case 'a4':
                         $this->page_width = 8.3; //in
                         $this->page_height = 11.7; //in
                         break;
-                    case 'legal' :
+                    case 'legal':
                         $this->page_width = 8.5; //in
                         $this->page_height = 14; //in
                         break;
-                    case 'letter' :
+                    case 'letter':
                         $this->page_width = 8.5; //in
                         $this->page_height = 11; //in
                         break;
-                    default	:
+                    default:
                         $this->page_width = 8.5; //in
                         $this->page_height = 11; //in
                         $this->fax_page_size = 'letter';
                 }
-            }            
+            }
             if ($setting->default_setting_subcategory == 'resolution') {
                 $this->fax_resolution = $setting->default_setting_value;
                 switch ($this->fax_resolution) {
                     case 'fine':
                         $this->gs_r = '204x196';
-                        $this->gs_g = ((int) ($this->page_width * 204)).'x'.((int) ($this->page_height * 196));
+                        $this->gs_g = ((int) ($this->page_width * 204)) . 'x' . ((int) ($this->page_height * 196));
                         break;
                     case 'superfine':
                         $this->gs_r = '204x392';
-                        $this->gs_g = ((int) ($this->page_width * 204)).'x'.((int) ($this->page_height * 392));
+                        $this->gs_g = ((int) ($this->page_width * 204)) . 'x' . ((int) ($this->page_height * 392));
                         break;
                     case 'normal':
                     default:
                         $this->gs_r = '204x98';
-                        $this->gs_g = ((int) ($this->page_width * 204)).'x'.((int) ($this->page_height * 98));
+                        $this->gs_g = ((int) ($this->page_width * 204)) . 'x' . ((int) ($this->page_height * 98));
                         break;
                 }
-            }  
+            }
             if ($setting->default_setting_subcategory == 'cover_header') {
                 $this->fax_header = $setting->default_setting_value;
-            }  
+            }
             if ($setting->default_setting_subcategory == 'cover_footer') {
                 $this->fax_footer = $setting->default_setting_value;
-            }  
+            }
             if ($setting->default_setting_subcategory == 'cover_font') {
                 $this->fax_cover_font = $setting->default_setting_value;
             }
@@ -262,7 +278,6 @@ class Faxes extends Model
             if ($setting->default_setting_subcategory == 'variable') {
                 $this->dialplan_variables = array_merge($this->dialplan_variables, [$setting->default_setting_value]);
             }
-        
         }
 
         // If email has attachents convert them to TIF files for faxing
@@ -295,26 +310,26 @@ class Faxes extends Model
 
         //add fax to the fax queue or send it directly
         // if ($this->fax_queue_enabled) {
-            $fax_queue = new FaxQueues();
-            $fax_queue->fax_queue_uuid = $this->fax_queue_uuid;
-            $fax_queue->domain_uuid = $this->domain->domain_uuid;
-            $fax_queue->fax_uuid = $this->fax_extension ->fax_uuid;
-            $fax_queue->fax_date = Carbon::now(get_local_time_zone($this->domain->domain_uuid))->utc()->toIso8601String();
-            $fax_queue->hostname = gethostname();
-            $fax_queue->fax_caller_id_name = $this->fax_caller_id_name;
-            $fax_queue->fax_caller_id_number = $this->fax_caller_id_number;
-            $fax_queue->fax_number = $this->fax_destination;
-            $fax_queue->fax_prefix = $this->fax_extension->fax_prefix;
-            $fax_queue->fax_email_address = $this->fax_from;
-            $fax_queue->fax_email_address = $this->fax_from;
-            $fax_queue->fax_file = $this->dir_fax_sent."/".$this->fax_instance_uuid.".tif";
-            $fax_queue->fax_status = 'waiting';
-            $fax_queue->fax_retry_count = 0;
-            $fax_queue->fax_accountcode = $this->fax_accountcode;
-            $fax_queue->fax_command = 'originate '.$this->dial_string;
-            $fax_queue->save();
+        $fax_queue = new FaxQueues();
+        $fax_queue->fax_queue_uuid = $this->fax_queue_uuid;
+        $fax_queue->domain_uuid = $this->domain->domain_uuid;
+        $fax_queue->fax_uuid = $this->fax_extension->fax_uuid;
+        $fax_queue->fax_date = Carbon::now(get_local_time_zone($this->domain->domain_uuid))->utc()->toIso8601String();
+        $fax_queue->hostname = gethostname();
+        $fax_queue->fax_caller_id_name = $this->fax_caller_id_name;
+        $fax_queue->fax_caller_id_number = $this->fax_caller_id_number;
+        $fax_queue->fax_number = $this->fax_destination;
+        $fax_queue->fax_prefix = $this->fax_extension->fax_prefix;
+        $fax_queue->fax_email_address = $this->fax_from;
+        $fax_queue->fax_email_address = $this->fax_from;
+        $fax_queue->fax_file = $this->dir_fax_sent . "/" . $this->fax_instance_uuid . ".tif";
+        $fax_queue->fax_status = 'waiting';
+        $fax_queue->fax_retry_count = 0;
+        $fax_queue->fax_accountcode = $this->fax_accountcode;
+        $fax_queue->fax_command = 'originate ' . $this->dial_string;
+        $fax_queue->save();
         // }
-        
+
 
         // Log::alert("----------Webhook Job ends-----------");
 
@@ -324,14 +339,14 @@ class Faxes extends Model
                 'message' => 'Fax is scheduled for delivery'
             ]
         ]);
-
     }
 
-    public function getDialstring() {
+    public function getDialstring()
+    {
         $dial_string = "";
         $this->fax_queue_uuid = Str::uuid()->toString();
         //send the fax
-        $fax_file = $this->dir_fax_sent."/".$this->fax_instance_uuid.".tif";
+        $fax_file = $this->dir_fax_sent . "/" . $this->fax_instance_uuid . ".tif";
         $dial_string .= "fax_queue_uuid="                . $this->fax_queue_uuid          . ",";
         $dial_string .= "accountcode='"                  . $this->fax_accountcode         . "',";
         $dial_string .= "sip_h_accountcode='"            . $this->fax_accountcode         . "',";
@@ -353,13 +368,12 @@ class Faxes extends Model
 
         if (count($route_array) == 0) {
             return null;
-        }
-        else {
+        } else {
             //send the external call
             $fax_uri = $route_array[0];
             $fax_variables = "";
-            foreach($this->dialplan_variables as $variable) {
-                $fax_variables .= $variable.",";
+            foreach ($this->dialplan_variables as $variable) {
+                $fax_variables .= $variable . ",";
             }
         }
 
@@ -374,50 +388,51 @@ class Faxes extends Model
         //$dial_string .= "fax_verbose=true"     . ",";
         $dial_string .= "fax_use_ecm=off"      . ",";
         // if ($this->fax_queue_enabled) {
-            $dial_string .= "api_hangup_hook='lua app/fax/resources/scripts/hangup_tx.lua'";
+        $dial_string .= "api_hangup_hook='lua app/fax/resources/scripts/hangup_tx.lua'";
         // }
         // else {
         //     $dial_string .= "api_hangup_hook='lua fax_retry.lua'";
         // }
-        $dial_string  = "{" . $dial_string . "}" . $fax_uri." &txfax('".$fax_file."')";
+        $dial_string  = "{" . $dial_string . "}" . $fax_uri . " &txfax('" . $fax_file . "')";
 
         return $dial_string;
     }
 
-    public function CreateFaxDirectories() {
+    public function CreateFaxDirectories()
+    {
         try {
 
-            $settings= DefaultSettings::where('default_setting_category','switch')
-            ->get([
-                'default_setting_subcategory',
-                'default_setting_name',
-                'default_setting_value',
-            ]);
-    
+            $settings = DefaultSettings::where('default_setting_category', 'switch')
+                ->get([
+                    'default_setting_subcategory',
+                    'default_setting_name',
+                    'default_setting_value',
+                ]);
+
             foreach ($settings as $setting) {
                 if ($setting->default_setting_subcategory == 'storage') {
                     $this->fax_dir = $setting->default_setting_value . '/fax/' . $this->domain->domain_name;
                     $this->stor_dir = $setting->default_setting_value;
-                }            
+                }
             }
 
             // Set variables for all directories
-            $this->dir_fax_inbox = $this->fax_dir.'/'.$this->fax_extension->fax_extension.'/inbox';
-            $this->dir_fax_sent = $this->fax_dir.'/'.$this->fax_extension->fax_extension.'/sent';
-            $this->dir_fax_temp = $this->fax_dir.'/'.$this->fax_extension->fax_extension.'/temp';
-    
+            $this->dir_fax_inbox = $this->fax_dir . '/' . $this->fax_extension->fax_extension . '/inbox';
+            $this->dir_fax_sent = $this->fax_dir . '/' . $this->fax_extension->fax_extension . '/sent';
+            $this->dir_fax_temp = $this->fax_dir . '/' . $this->fax_extension->fax_extension . '/temp';
+
             //make sure the directories exist
             if (!is_dir($this->stor_dir)) {
                 mkdir($this->stor_dir, 0770);
             }
-            if (!is_dir($this->stor_dir.'/fax')) {
-                mkdir($this->stor_dir.'/fax', 0770);
+            if (!is_dir($this->stor_dir . '/fax')) {
+                mkdir($this->stor_dir . '/fax', 0770);
             }
-            if (!is_dir($this->stor_dir.'/fax/'.$this->domain->domain_name)) {
-                mkdir($this->stor_dir.'/fax/'.$this->domain->domain_name, 0770);
+            if (!is_dir($this->stor_dir . '/fax/' . $this->domain->domain_name)) {
+                mkdir($this->stor_dir . '/fax/' . $this->domain->domain_name, 0770);
             }
-            if (!is_dir($this->fax_dir.'/'.$this->fax_extension->fax_extension)) {
-                mkdir($this->fax_dir.'/'.$this->fax_extension->fax_extension, 0770);
+            if (!is_dir($this->fax_dir . '/' . $this->fax_extension->fax_extension)) {
+                mkdir($this->fax_dir . '/' . $this->fax_extension->fax_extension, 0770);
             }
             if (!is_dir($this->dir_fax_inbox)) {
                 mkdir($this->dir_fax_inbox, 0770);
@@ -429,52 +444,58 @@ class Faxes extends Model
                 mkdir($this->dir_fax_temp, 0770);
             }
         } catch (Throwable $e) {
-            $this->message .= $e->getMessage() . " at ". $e->getFile() . ":". $e->getLine().'\n';
+            $this->message .= $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine() . '\n';
             Log::alert($this->message);
             SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
             //Process errors
         }
-       
     }
 
-    public function convertAttachmentsToTif(){
+    public function convertAttachmentsToTif()
+    {
         $tif_files = array();
-        foreach ($this->attachments as $attachment){
+        foreach ($this->attachments as $attachment) {
             $fax_file_extension = strtolower(pathinfo($attachment['Name'], PATHINFO_EXTENSION));
 
             //block unknown files
-            if ($fax_file_extension == '') {continue; }
+            if ($fax_file_extension == '') {
+                continue;
+            }
 
             //block unauthorized files
-            if (!in_array('.' . $fax_file_extension,$this->fax_allowed_extensions)) { continue; }
+            if (!in_array('.' . $fax_file_extension, $this->fax_allowed_extensions)) {
+                continue;
+            }
 
             $uuid_filename = Str::uuid()->toString();
 
             // Save attachment to the storage
             try {
-                $path = Storage::disk('fax')->put($this->domain->domain_name . '/'. $this->fax_extension->fax_extension . '/temp/' . $uuid_filename.'.'.$fax_file_extension, base64_decode($attachment['Content']));
-
+                $path = Storage::disk('fax')->put($this->domain->domain_name . '/' . $this->fax_extension->fax_extension . '/temp/' . $uuid_filename . '.' . $fax_file_extension, base64_decode($attachment['Content']));
             } catch (Throwable $e) {
-                    $slack_message = $e->getMessage() . " at ". $e->getFile() . ":". $e->getLine();
-                    SendFaxNotificationToSlack::dispatch($this->message . ' ' . $slack_message)->onQueue('faxes');
-                    continue;
-            }                
+                $slack_message = $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine();
+                SendFaxNotificationToSlack::dispatch($this->message . ' ' . $slack_message)->onQueue('faxes');
+                continue;
+            }
 
             //convert files to pdf, if necessary
             if ($fax_file_extension != "pdf") {
-                $process = new Process([
-                    "libreoffice",
-                    "--headless",
-                    "--convert-to",
-                    "pdf",
-                    "--outdir",
-                    "{$this->dir_fax_temp}",
-                    "{$this->dir_fax_temp}/{$uuid_filename}.{$fax_file_extension}"
+                $process = new Process(
+                    [
+                        "libreoffice",
+                        "--headless",
+                        "--convert-to",
+                        "pdf",
+                        "--outdir",
+                        "{$this->dir_fax_temp}",
+                        "{$this->dir_fax_temp}/{$uuid_filename}.{$fax_file_extension}"
 
-                ], 
-                null, [
-                    'HOME' => '/tmp'
-                ]);
+                    ],
+                    null,
+                    [
+                        'HOME' => '/tmp'
+                    ]
+                );
 
                 try {
                     $process->setWorkingDirectory($this->dir_fax_temp);
@@ -483,8 +504,7 @@ class Faxes extends Model
                     //log::alert($process->getOutput());
 
                     //remove the original file
-                    $deleted = Storage::disk('fax')->delete($this->domain->domain_name . '/'. $this->fax_extension->fax_extension . '/temp/' . $uuid_filename.'.'.$fax_file_extension);
-
+                    $deleted = Storage::disk('fax')->delete($this->domain->domain_name . '/' . $this->fax_extension->fax_extension . '/temp/' . $uuid_filename . '.' . $fax_file_extension);
                 } catch (ProcessFailedException $e) {
                     $this->message .= $e->getMessage();
                     Log::alert($e->getMessage());
@@ -494,30 +514,33 @@ class Faxes extends Model
 
 
             // Convert files to tif
-            if (file_exists($this->dir_fax_temp.'/'.$uuid_filename.'.pdf')) {
-                $process = new Process([
-                    "gs",
-                    "-q",
-                    "-r{$this->gs_r}",
-                    "-g{$this->gs_g}",
-                    "-dBATCH",
-                    "-dPDFFitPage",
-                    "-dNOSAFER",
-                    "-dNOPAUSE",
-                    "-sOutputFile={$uuid_filename}.tif",
-                    "-sDEVICE=tiffg4",
-                    "-Ilib",
-                    "stocht.ps",
-                    "-c",
-                    "{ .75 gt { 1 } { 0 } ifelse} settransfer",
-                    "--",
-                    "{$uuid_filename}.pdf",
-                    "-c",
-                    "quit"
-                ], 
-                null, [
-                    'HOME' => '/tmp'
-                ]);
+            if (file_exists($this->dir_fax_temp . '/' . $uuid_filename . '.pdf')) {
+                $process = new Process(
+                    [
+                        "gs",
+                        "-q",
+                        "-r{$this->gs_r}",
+                        "-g{$this->gs_g}",
+                        "-dBATCH",
+                        "-dPDFFitPage",
+                        "-dNOSAFER",
+                        "-dNOPAUSE",
+                        "-sOutputFile={$uuid_filename}.tif",
+                        "-sDEVICE=tiffg4",
+                        "-Ilib",
+                        "stocht.ps",
+                        "-c",
+                        "{ .75 gt { 1 } { 0 } ifelse} settransfer",
+                        "--",
+                        "{$uuid_filename}.pdf",
+                        "-c",
+                        "quit"
+                    ],
+                    null,
+                    [
+                        'HOME' => '/tmp'
+                    ]
+                );
 
                 try {
                     $process->setWorkingDirectory($this->dir_fax_temp);
@@ -526,8 +549,7 @@ class Faxes extends Model
                     // log::alert($process->getOutput());
 
                     //remove the original file
-                    $deleted = Storage::disk('fax')->delete($this->domain->domain_name . '/'. $this->fax_extension->fax_extension . '/temp/' . $uuid_filename.'.pdf');
-
+                    $deleted = Storage::disk('fax')->delete($this->domain->domain_name . '/' . $this->fax_extension->fax_extension . '/temp/' . $uuid_filename . '.pdf');
                 } catch (ProcessFailedException $e) {
                     $this->message .= $e->getMessage();
                     Log::alert($e->getMessage());
@@ -536,15 +558,14 @@ class Faxes extends Model
             }
 
             //add file to array
-            $tif_files[] = $uuid_filename.'.tif';
-
+            $tif_files[] = $uuid_filename . '.tif';
         }
 
         // Check if email had allowed attachments
         if (sizeof($tif_files) == 0) {
-            $this->message .= "Couldn't proccess any of the attached files. The following file types are supported for sending over our fax-to-email services: " . implode(", ",$this->fax_allowed_extensions);
+            $this->message .= "Couldn't proccess any of the attached files. The following file types are supported for sending over our fax-to-email services: " . implode(", ", $this->fax_allowed_extensions);
             $this->payload = array_merge($this->payload, ['slack_message' => $this->payload['slack_message'] .  ' ' . $this->message]);
-            $this->payload = array_merge($this->payload, ['email_message' => "Couldn't proccess any of the attached files. The following file types are supported for sending over our fax-to-email services: " . implode(", ",$this->fax_allowed_extensions)]);
+            $this->payload = array_merge($this->payload, ['email_message' => "Couldn't proccess any of the attached files. The following file types are supported for sending over our fax-to-email services: " . implode(", ", $this->fax_allowed_extensions)]);
             Log::alert($this->message);
             SendFaxFailedNotification::dispatch($this->payload)->onQueue('emails');
             // SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
@@ -554,85 +575,84 @@ class Faxes extends Model
         $this->fax_instance_uuid = Str::uuid()->toString();
 
         //Generate cover page
-        if ($this->fax_cover){
+        if ($this->fax_cover) {
             // Create cover here
 
-			// initialize pdf
-			$pdf = new FPDI('P', 'in');
-			$pdf->SetAutoPageBreak(false);
-			$pdf->setPrintHeader(false);
-			$pdf->setPrintFooter(false);
-			$pdf->SetMargins(0, 0, 0, true);
+            // initialize pdf
+            $pdf = new FPDI('P', 'in');
+            $pdf->SetAutoPageBreak(false);
+            $pdf->setPrintHeader(false);
+            $pdf->setPrintFooter(false);
+            $pdf->SetMargins(0, 0, 0, true);
 
-			if (strlen($this->fax_cover_font) > 0) {
-				if (substr($this->fax_cover_font, -4) == '.ttf') {
-					$this->pdf_font = TCPDF_FONTS::addTTFfont($this->fax_cover_font);
-				}
-				else {
-					$this->pdf_font = $this->fax_cover_font;
-				}
-			}
+            if (strlen($this->fax_cover_font) > 0) {
+                if (substr($this->fax_cover_font, -4) == '.ttf') {
+                    $this->pdf_font = TCPDF_FONTS::addTTFfont($this->fax_cover_font);
+                } else {
+                    $this->pdf_font = $this->fax_cover_font;
+                }
+            }
 
-			if (!$this->pdf_font) {
-				$this->pdf_font = 'times';
-			}
-            
+            if (!$this->pdf_font) {
+                $this->pdf_font = 'times';
+            }
+
             //add blank page
-			$pdf->AddPage('P', array($this->page_width, $this->page_height));
+            $pdf->AddPage('P', array($this->page_width, $this->page_height));
 
-			// content offset, if necessary
-			$x = 0;
-			$y = 0;
+            // content offset, if necessary
+            $x = 0;
+            $y = 0;
 
             //set position for header text, if enabled
-			$pdf->SetXY($x + 0.5, $y + 0.4);
+            $pdf->SetXY($x + 0.5, $y + 0.4);
 
             //header
-			if ($this->fax_header != '') {
-				$pdf->SetLeftMargin(0.5);
-				$pdf->SetFont($this->pdf_font, "", 10);
-				$pdf->Write(0.3, $this->fax_header);
-			}
-			
+            if ($this->fax_header != '') {
+                $pdf->SetLeftMargin(0.5);
+                $pdf->SetFont($this->pdf_font, "", 10);
+                $pdf->Write(0.3, $this->fax_header);
+            }
+
             //fax, cover sheet
-			$pdf->SetTextColor(0,0,0);
-			$pdf->SetFont($this->pdf_font, "B", 55);
-			$pdf->SetXY($x + 4.55, $y + 0.25);
-			$pdf->Cell($x + 3.50, $y + 0.4, "Fax", 0, 0, 'R', false, null, 0, false, 'T', 'T');
-			$pdf->SetFont($this->pdf_font, "", 12);
-			$pdf->SetFontSpacing(0.0425);
-			$pdf->SetXY($x + 4.55, $y + 1.0);
-			$pdf->Cell($x + 3.50, $y + 0.4, "Cover Page", 0, 0, 'R', false, null, 0, false, 'T', 'T');
-			$pdf->SetFontSpacing(0);
+            $pdf->SetTextColor(0, 0, 0);
+            $pdf->SetFont($this->pdf_font, "B", 55);
+            $pdf->SetXY($x + 4.55, $y + 0.25);
+            $pdf->Cell($x + 3.50, $y + 0.4, "Fax", 0, 0, 'R', false, null, 0, false, 'T', 'T');
+            $pdf->SetFont($this->pdf_font, "", 12);
+            $pdf->SetFontSpacing(0.0425);
+            $pdf->SetXY($x + 4.55, $y + 1.0);
+            $pdf->Cell($x + 3.50, $y + 0.4, "Cover Page", 0, 0, 'R', false, null, 0, false, 'T', 'T');
+            $pdf->SetFontSpacing(0);
 
             //field labels
-			$pdf->SetFont($this->pdf_font, "B", 12);
-			if ($this->fax_destination != '') {
-				$pdf->Text($x + 0.5, $y + 2.0, "To".":");
-			}
-			if ($this->fax_caller_id_number != '') {
-				$pdf->Text($x + 0.5, $y + 2.3, "From".":");
-			}
-			// if ($fax_page_count > 0) {
-			// 	$pdf->Text($x + 0.5, $y + 2.6, strtoupper($text['label-fax-attached']).":");
-			// }
+            $pdf->SetFont($this->pdf_font, "B", 12);
+            if ($this->fax_destination != '') {
+                $pdf->Text($x + 0.5, $y + 2.0, "To" . ":");
+            }
+            if ($this->fax_caller_id_number != '') {
+                $pdf->Text($x + 0.5, $y + 2.3, "From" . ":");
+            }
+            // if ($fax_page_count > 0) {
+            // 	$pdf->Text($x + 0.5, $y + 2.6, strtoupper($text['label-fax-attached']).":");
+            // }
 
 
             //field values
-			$pdf->SetFont($this->pdf_font, "", 12);
-			$pdf->SetXY($x + 2.0, $y + 1.95);
-			if ($this->fax_destination != '') {
-				$pdf->Write(0.3, $this->fax_destination);
-			}
+            $pdf->SetFont($this->pdf_font, "", 12);
+            $pdf->SetXY($x + 2.0, $y + 1.95);
+            if ($this->fax_destination != '') {
+                $pdf->Write(0.3, $this->fax_destination);
+            }
 
-			$pdf->SetXY($x + 2.0, $y + 2.25);
-			if ($this->fax_caller_id_number != '') {
-				$pdf->Write(0.3, $this->fax_caller_id_number);
-			}
+            $pdf->SetXY($x + 2.0, $y + 2.25);
+            if ($this->fax_caller_id_number != '') {
+                $pdf->Write(0.3, $this->fax_caller_id_number);
+            }
 
-			// if ($fax_page_count > 0) {
-			// 	$pdf->Text($x + 2.0, $y + 2.6, $fax_page_count.' '.$text['label-fax-page'.(($fax_page_count > 1) ? 's' : null)]);
-			// }
+            // if ($fax_page_count > 0) {
+            // 	$pdf->Text($x + 2.0, $y + 2.6, $fax_page_count.' '.$text['label-fax-page'.(($fax_page_count > 1) ? 's' : null)]);
+            // }
 
             //message
             $pdf->SetAutoPageBreak(true, 0.6);
@@ -644,29 +664,28 @@ class Faxes extends Model
             $pages = $pdf->getNumPages();
 
             if ($pages > 1) {
-				//save ynew for last page
-				$yn = $pdf->GetY();
+                //save ynew for last page
+                $yn = $pdf->GetY();
 
-				//first page
-				$pdf->setPage(1, 0);
-				$pdf->Rect($x + 0.5, $y + 3.4, 7.5, $this->page_height - 3.9, 'D');
+                //first page
+                $pdf->setPage(1, 0);
+                $pdf->Rect($x + 0.5, $y + 3.4, 7.5, $this->page_height - 3.9, 'D');
 
-				//2nd to n-th page
-				for ($n = 2; $n < $pages; $n++) {
-					$pdf->setPage($n, 0);
-					$pdf->Rect($x + 0.5, $y + 0.5, 7.5, $this->page_height - 1, 'D');
-				}
+                //2nd to n-th page
+                for ($n = 2; $n < $pages; $n++) {
+                    $pdf->setPage($n, 0);
+                    $pdf->Rect($x + 0.5, $y + 0.5, 7.5, $this->page_height - 1, 'D');
+                }
 
-				//last page
-				$pdf->setPage($pages, 0);
-				$pdf->Rect($x + 0.5, 0.5, 7.5, $yn, 'D');
-				$y = $yn;
-				unset($yn);
-			}
-			else {
-				$pdf->Rect($x + 0.5, $y + 3.4, 7.5, 6.25, 'D');
-				$y = $pdf->GetY();
-			}
+                //last page
+                $pdf->setPage($pages, 0);
+                $pdf->Rect($x + 0.5, 0.5, 7.5, $yn, 'D');
+                $y = $yn;
+                unset($yn);
+            } else {
+                $pdf->Rect($x + 0.5, $y + 3.4, 7.5, 6.25, 'D');
+                $y = $pdf->GetY();
+            }
 
             //footer
             if ($this->fax_footer != '') {
@@ -680,33 +699,36 @@ class Faxes extends Model
             $pdf->SetTopMargin(0);
 
             //save cover pdf
-			$pdf->Output($this->dir_fax_temp.'/'.$this->fax_instance_uuid.'_cover.pdf', "F");	// Display [I]nline, Save to [F]ile, [D]ownload
+            $pdf->Output($this->dir_fax_temp . '/' . $this->fax_instance_uuid . '_cover.pdf', "F");    // Display [I]nline, Save to [F]ile, [D]ownload
 
             //convert pdf to tif, add to array of pages, delete pdf
-            if (file_exists($this->dir_fax_temp.'/'.$this->fax_instance_uuid.'_cover.pdf')) {
-                $process = new Process([
-                    "gs",
-                    "-q",
-                    "-r{$this->gs_r}",
-                    "-g{$this->gs_g}",
-                    "-dBATCH",
-                    "-dPDFFitPage",
-                    "-dNOSAFER",
-                    "-dNOPAUSE",
-                    "-sOutputFile={$this->fax_instance_uuid}_cover.tif",
-                    "-sDEVICE=tiffg4",
-                    "-Ilib",
-                    "stocht.ps",
-                    "-c",
-                    "{ .75 gt { 1 } { 0 } ifelse} settransfer",
-                    "--",
-                    "{$this->fax_instance_uuid}_cover.pdf",
-                    "-c",
-                    "quit"
-                ], 
-                null, [
-                    'HOME' => '/tmp'
-                ]);
+            if (file_exists($this->dir_fax_temp . '/' . $this->fax_instance_uuid . '_cover.pdf')) {
+                $process = new Process(
+                    [
+                        "gs",
+                        "-q",
+                        "-r{$this->gs_r}",
+                        "-g{$this->gs_g}",
+                        "-dBATCH",
+                        "-dPDFFitPage",
+                        "-dNOSAFER",
+                        "-dNOPAUSE",
+                        "-sOutputFile={$this->fax_instance_uuid}_cover.tif",
+                        "-sDEVICE=tiffg4",
+                        "-Ilib",
+                        "stocht.ps",
+                        "-c",
+                        "{ .75 gt { 1 } { 0 } ifelse} settransfer",
+                        "--",
+                        "{$this->fax_instance_uuid}_cover.pdf",
+                        "-c",
+                        "quit"
+                    ],
+                    null,
+                    [
+                        'HOME' => '/tmp'
+                    ]
+                );
 
                 try {
                     $process->setWorkingDirectory($this->dir_fax_temp);
@@ -715,39 +737,39 @@ class Faxes extends Model
                     // log::alert($process->getOutput());
 
                     if (is_array($tif_files) && sizeof($tif_files) > 0) {
-                        array_unshift($tif_files, $this->fax_instance_uuid.'_cover.tif');
-                    }
-                    else {
-                        $tif_files[] = $this->fax_instance_uuid.'_cover.tif';
+                        array_unshift($tif_files, $this->fax_instance_uuid . '_cover.tif');
+                    } else {
+                        $tif_files[] = $this->fax_instance_uuid . '_cover.tif';
                     }
 
                     //remove the original file
-                    $deleted = Storage::disk('fax')->delete($this->domain->domain_name . '/'. $this->fax_extension->fax_extension . '/temp/' . $this->fax_instance_uuid.'_cover.pdf');
-
+                    $deleted = Storage::disk('fax')->delete($this->domain->domain_name . '/' . $this->fax_extension->fax_extension . '/temp/' . $this->fax_instance_uuid . '_cover.pdf');
                 } catch (ProcessFailedException $e) {
                     $this->message .= $e->getMessage();
                     Log::alert($e->getMessage());
                     SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
                 }
             }
-
         }
 
         //combine tif files into single multi-page tif
         if (is_array($tif_files) && sizeof($tif_files) > 0) {
 
             $file_names = '';
-            $parameters = array("tiffcp", "-c","none");
+            $parameters = array("tiffcp", "-c", "none");
 
             foreach ($tif_files as $tif_file) {
-                $parameters[] = $this->dir_fax_temp . "/" .$tif_file;
+                $parameters[] = $this->dir_fax_temp . "/" . $tif_file;
             }
             $parameters[] = $this->dir_fax_sent . "/" . $this->fax_instance_uuid . ".tif";
-            
-            $process = new Process($parameters, 
-            null, [
-                'HOME' => '/tmp'
-            ]);
+
+            $process = new Process(
+                $parameters,
+                null,
+                [
+                    'HOME' => '/tmp'
+                ]
+            );
 
             try {
                 $process->setWorkingDirectory($this->dir_fax_temp);
@@ -760,32 +782,34 @@ class Faxes extends Model
                 $slack_message = $e->getMessage();
                 SendFaxNotificationToSlack::dispatch($this->message . ' ' . $slack_message)->onQueue('faxes');
             }
-
         }
 
 
         //generate pdf from tif
-        if (file_exists($this->dir_fax_sent.'/'.$this->fax_instance_uuid.'.tif')) {
+        if (file_exists($this->dir_fax_sent . '/' . $this->fax_instance_uuid . '.tif')) {
 
-            $process = new Process([
-                "tiff2pdf",
-                "-u",
-                "i",
-                "-p",
-                "{$this->fax_page_size}",
-                "-w",
-                "{$this->page_width}",
-                "-l",
-                "{$this->page_height}",
-                "-f",
-                "-o",
-                "{$this->dir_fax_sent}/{$this->fax_instance_uuid}.pdf",
-                "{$this->dir_fax_sent}/{$this->fax_instance_uuid}.tif",
+            $process = new Process(
+                [
+                    "tiff2pdf",
+                    "-u",
+                    "i",
+                    "-p",
+                    "{$this->fax_page_size}",
+                    "-w",
+                    "{$this->page_width}",
+                    "-l",
+                    "{$this->page_height}",
+                    "-f",
+                    "-o",
+                    "{$this->dir_fax_sent}/{$this->fax_instance_uuid}.pdf",
+                    "{$this->dir_fax_sent}/{$this->fax_instance_uuid}.tif",
 
-            ], 
-            null, [
-                'HOME' => '/tmp'
-            ]);
+                ],
+                null,
+                [
+                    'HOME' => '/tmp'
+                ]
+            );
 
             try {
                 $process->setWorkingDirectory($this->dir_fax_temp);
@@ -802,11 +826,10 @@ class Faxes extends Model
 
         //remove the extra files
         foreach ($tif_files as $tif_file) {
-            $deleted = Storage::disk('fax')->delete($this->domain->domain_name . '/'. $this->fax_extension->fax_extension . '/temp/' . $tif_file);
+            $deleted = Storage::disk('fax')->delete($this->domain->domain_name . '/' . $this->fax_extension->fax_extension . '/temp/' . $tif_file);
         }
 
         return true;
-
     }
 
     /**
@@ -815,7 +838,7 @@ class Faxes extends Model
      */
     public function allowed_emails()
     {
-        return $this->hasMany(FaxAllowedEmails::class,'fax_uuid','fax_uuid');
+        return $this->hasMany(FaxAllowedEmails::class, 'fax_uuid', 'fax_uuid');
     }
 
     /**
@@ -824,7 +847,7 @@ class Faxes extends Model
      */
     public function allowed_domain_names()
     {
-        return $this->hasMany(FaxAllowedDomainNames::class,'fax_uuid','fax_uuid');
+        return $this->hasMany(FaxAllowedDomainNames::class, 'fax_uuid', 'fax_uuid');
     }
 
     /**
@@ -833,12 +856,12 @@ class Faxes extends Model
      */
     public function domain()
     {
-        return $this->belongsTo(Domain::class,'domain_uuid','domain_uuid');
+        return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
     }
 
     public function dialplan()
     {
-        return $this->belongsTo(Dialplans::class,'dialplan_uuid','dialplan_uuid');
+        return $this->belongsTo(Dialplans::class, 'dialplan_uuid', 'dialplan_uuid');
     }
 
     /**

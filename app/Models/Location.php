@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Traits\TraitUuid;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -22,6 +23,18 @@ class Location extends Model
         'description',
     ];
 
+    protected static function booted()
+    {
+        static::deleting(function ($location) {
+            // Delete all entries in the locationables table for this location's UUID.
+            // This is the most generic way to handle cascading deletes for a morphed
+            // relationship with multiple possible related models.
+            DB::table('locationables')
+                ->where('location_uuid', $location->location_uuid)
+                ->delete();
+        });
+    }
+
     /**
      * Get all of the users that are assigned to this location.
      */
@@ -37,5 +50,4 @@ class Location extends Model
             'user_uuid'                    // related model's local key
         );
     }
-
 }

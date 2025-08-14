@@ -2,6 +2,7 @@
 
 namespace App\Data;
 
+use App\Data\LocationData;
 use Spatie\LaravelData\Data;
 use App\Data\ExtensionListData;
 use Spatie\LaravelData\DataCollection;
