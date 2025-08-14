@@ -308,6 +308,8 @@ class DeviceController extends Controller
     {
         $inputs = $request->validated();
 
+        logger($inputs);
+
         if (!$device) {
             return response()->json([
                 'success' => false,
@@ -365,6 +367,34 @@ class DeviceController extends Controller
                         $deviceLines = new DeviceLines();
                         $deviceLines->fill($deviceLineData);
                         $deviceLines->save();
+                    }
+                }
+            }
+
+            // Create/update device settings (mirror the device_keys pattern)
+            if (array_key_exists('device_settings', $inputs)) {
+                if (empty($inputs['device_settings'])) {
+                    // Field present but empty → remove all settings for this device
+                    $device->settings()->delete();
+                } else {
+                    // Field present with items → clear and recreate
+                    $device->settings()->delete();
+
+                    foreach ($inputs['device_settings'] as $item) {
+                        $payload = [
+                            'device_uuid'                => $device->device_uuid,
+                            'domain_uuid'                => $device->domain_uuid,
+
+                            // Defaults match common FusionPBX conventions; override if sent in payload
+                            'device_setting_category'    => $item['device_setting_category'] ?? null,
+                            'device_setting_subcategory' => $item['device_setting_subcategory'] ?? null,
+                            'device_setting_name'        => $item['device_setting_name']        ?? null,
+                            'device_setting_value'       => $item['device_setting_value']       ?? null,
+                            'device_setting_enabled'     => $item['device_setting_enabled'] ?? 'false',
+                            'device_setting_description' => $item['device_setting_description'] ?? null,
+                        ];
+
+                        $device->settings()->create($payload);
                     }
                 }
             }
@@ -580,9 +610,9 @@ class DeviceController extends Controller
                     ->with(['profile' => function ($query) {
                         $query->select('device_profile_uuid', 'device_profile_name', 'device_profile_description');
                     }])
-                    // ->with(['cloudProvisioning' => function ($query) {
-                    //     $query->select('uuid', 'device_uuid', 'last_action', 'status', 'error');
-                    // }])
+                    ->with(['settings' => function ($query) {
+                        $query->select('device_setting_uuid', 'device_uuid','device_setting_subcategory', 'device_setting_value', 'device_setting_enabled', 'device_setting_description');
+                    }])
                     ->whereKey($itemUuid)
                     ->firstOrFail();
 
@@ -981,6 +1011,10 @@ class DeviceController extends Controller
         $permissions['device_template_update'] = userCheckPermission('device_template');
         $permissions['device_domain_update'] = userCheckPermission('device_domain');
         $permissions['manage_device_cloud_provisioning_settings'] = userCheckPermission('manage_device_cloud_provisioning_settings');
+        $permissions['device_setting_view'] = userCheckPermission('device_setting_view');
+        $permissions['device_setting_add'] = userCheckPermission('device_setting_add');
+        $permissions['device_setting_update'] = userCheckPermission('device_setting_edit');
+        $permissions['device_setting_destroy'] = userCheckPermission('device_setting_delete');
 
         return $permissions;
     }

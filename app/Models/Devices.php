@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Models\DeviceLines;
-use App\Jobs\SendZtpRequest;
 use App\Models\DeviceCloudProvisioning;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
@@ -122,5 +121,10 @@ class Devices extends Model
         }
 
         return $orgId;
+    }
+
+    public function settings()
+    {
+        return $this->hasMany(DeviceSettings::class, 'device_uuid', 'device_uuid');
     }
 }
