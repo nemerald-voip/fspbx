@@ -1758,6 +1758,8 @@ class ExtensionsController extends Controller
         $permissions['extension_device_assign'] = userCheckPermission('extension_device_assign');
         $permissions['extension_device_unassign'] = userCheckPermission('extension_device_unassign');
 
+        $permissions['manage_mobile_app'] = userCheckPermission('extension_mobile_app_settings');
+
         return $permissions;
     }
 }

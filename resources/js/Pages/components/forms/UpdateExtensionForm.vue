@@ -332,7 +332,7 @@
                                                     'container_mobile_app',
                                                     'submit_mobile_app',
 
-                                                ]" />
+                                                ]" :conditions="[() => options.permissions.manage_mobile_app]" />
 
                                                 <FormTab name="sip_credentials" label="SIP Credentials" :elements="[
                                                     'sip_credentials_title',
