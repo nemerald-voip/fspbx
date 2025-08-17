@@ -201,7 +201,7 @@ class UpdateExtensionRequest extends FormRequest
             'follow_me_destinations.*.destination' => ['required_with:follow_me_destinations', 'numeric'],
             'follow_me_destinations.*.delay'       => ['required_with:follow_me_destinations', 'numeric', 'min:0'],
             'follow_me_destinations.*.timeout'     => ['required_with:follow_me_destinations', 'numeric', 'min:0'],
-            'follow_me_destinations.*.prompt'      => ['required_with:follow_me_destinations', 'boolean'],
+            'follow_me_destinations.*.prompt'      => ['required_with:follow_me_destinations', 'string'],
 
 
             'voicemail_enabled' => ['required', 'in:true,false,1,0'],

@@ -18,6 +18,8 @@ class DeviceData extends Data
         /** @var DeviceLineData[]|null */
         public ?array $lines = null,
         public ?DeviceProfileData $profile = null,
+        /** @var DeviceSettingData[]|null */
+        public ?array $settings = null,
         /** @var CloudProvisioningData|null */
         public ?CloudProvisioningData $cloud_provisioning = null,
         /** @var DomainData|null */

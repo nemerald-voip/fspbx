@@ -2,6 +2,7 @@
 
 namespace App\Data;
 
+use App\Data\LocationData;
 use Spatie\LaravelData\Data;
 use App\Data\ExtensionListData;
 use Spatie\LaravelData\DataCollection;
@@ -31,5 +32,8 @@ class UserData extends Data
 
         #[DataCollectionOf(DomainGroupPermissionData::class)]
         public ?DataCollection $domain_group_permissions = null,
+
+        #[DataCollectionOf(LocationData::class)]
+        public ?DataCollection $locations = null,
     ) {}
 }

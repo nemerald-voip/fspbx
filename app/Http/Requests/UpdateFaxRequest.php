@@ -31,6 +31,7 @@ class UpdateFaxRequest extends FormRequest
             'fax_email' => ['nullable', 'string'],
             'authorized_domains' => ['nullable', 'array'],
             'authorized_emails' => ['nullable', 'array'],
+            'locations' => 'nullable|array',
         ];
     }
 

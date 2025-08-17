@@ -8,6 +8,8 @@ use App\Models\Domain;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use App\Models\DomainSettings;
+use App\Models\PaymentGateway;
+use App\Models\DefaultSettings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\DB;
@@ -17,14 +19,14 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\Foundation\Application;
 use App\Http\Requests\UpdateAccountSettingsRequest;
 
-class AccountSettingsController extends Controller
+class SystemSettingsController extends Controller
 {
     public $model;
-    protected $viewName = 'AccountSettings';
+    protected $viewName = 'SystemSettings';
 
     public function __construct()
     {
-        $this->model = new Domain();
+        $this->model = new DefaultSettings();
     }
 
     /**
@@ -42,29 +44,15 @@ class AccountSettingsController extends Controller
         return Inertia::render(
             $this->viewName,
             [
-                'data' => function () {
-                    return $this->getData();
-                },
-                'timezones' => function () {
-                    return getGroupedTimezones();
-                },
+                // 'data' => function () {
+                //     return $this->getData();
+                // },
+
                 'routes' => [
-                    'settings_update' => route('account-settings.update'),
-                    'emergency_calls' => route('emergency-calls.index'),
-                    'emergency_calls_store' => route('emergency-calls.store'),
-                    'emergency_calls_item_options' => route('emergency-calls.item.options'),
-                    'emergency_calls_bulk_delete' => route('emergency-calls.bulk.delete'),
-                    'emergency_calls_service_status' => route('emergency-calls.check.service.status'),
-                    'locations' => route('locations.index'),
-                    'locations_store' => route('locations.store'),
-                    'locations_bulk_delete' => route('locations.bulk.delete'),
-
-
-                    //'bulk_update' => route('devices.bulk.update'),
+                    'settings_update' => route('system-settings.update'),
+                    'payment_gateways' => route('system-settings.payment_gateways'),
+                    'payment_gateway_update' => route('gateway.update')
                 ],
-                'permissions' => function () {
-                    return $this->getUserPermissions();
-                },
 
             ]
         );
@@ -217,14 +205,44 @@ class AccountSettingsController extends Controller
         }
     }
 
-    public function getUserPermissions()
-    {
-        $permissions = [];
-        $permissions['location_view'] = userCheckPermission('location_view');
-        $permissions['location_create'] = userCheckPermission('location_create');
-        $permissions['location_update'] = userCheckPermission('location_update');
-        $permissions['location_delete'] = userCheckPermission('location_delete');
 
-        return $permissions;
+    public function getPaymentGatewayData(Request $request)
+{
+    // 1) Permission check (adjust the permission slug as needed)
+    // if (! userCheckPermission('system_settings_view')) {
+    //     return response()->json([
+    //         'messages' => ['error' => ['Access denied.']],
+    //     ], 403);
+    // }
+
+    try {
+        // 2) Fetch + transform
+        $gateways = PaymentGateway::with('settings')->get()
+            ->map(function($gw) {
+                return [
+                    'uuid'       => $gw->uuid,
+                    'slug'       => $gw->slug,
+                    'name'       => $gw->name,
+                    'is_enabled' => (bool) $gw->is_enabled,
+                    'settings'   => $gw->settings->pluck('setting_value','setting_key')->toArray(),
+                ];
+            });
+
+        // 3) Success response
+        return response()->json($gateways);
+
+    } catch (\Throwable $e) {
+        // 4) Log & error response
+        logger('PaymentGateway fetch error: ' 
+            . $e->getMessage() 
+            . ' in ' . $e->getFile() 
+            . ':' . $e->getLine()
+        );
+
+        return response()->json([
+            'messages' => ['error' => ['Something went wrong while loading payment gateways.']],
+        ], 500);
     }
+}
+
 }

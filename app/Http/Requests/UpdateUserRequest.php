@@ -35,6 +35,7 @@ class UpdateUserRequest extends FormRequest
             'language'     => 'nullable|string|max:10',
             'time_zone'    => 'nullable|string|max:50',
             'user_enabled' => 'sometimes|required|string',
+            'locations' => 'nullable|array'
         ];
     }
 

@@ -77,6 +77,10 @@ class UpdateDeviceRequest extends FormRequest
             'device_description' => [
                 'nullable',
             ],
+            'device_settings' => [
+                'nullable',
+                'array'
+            ],
         ];
     }
 

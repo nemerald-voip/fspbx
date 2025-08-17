@@ -1188,7 +1188,7 @@ class ExtensionsController extends Controller
                 'follow_me_destination' => $dest['destination'],
                 'follow_me_delay' => $dest['delay'] ?? 0,
                 'follow_me_timeout' => $dest['timeout'] ?? 30,
-                'follow_me_prompt' => isset($dest['prompt']) && $dest['prompt'] ? 'true' : 'false',
+                'follow_me_prompt' => $dest['prompt'],
                 'follow_me_order' => $idx + 1,
             ]);
         }
@@ -1757,6 +1757,8 @@ class ExtensionsController extends Controller
         $permissions['extension_device_update'] = userCheckPermission('extension_device_update');
         $permissions['extension_device_assign'] = userCheckPermission('extension_device_assign');
         $permissions['extension_device_unassign'] = userCheckPermission('extension_device_unassign');
+
+        $permissions['manage_mobile_app'] = userCheckPermission('extension_mobile_app_settings');
 
         return $permissions;
     }

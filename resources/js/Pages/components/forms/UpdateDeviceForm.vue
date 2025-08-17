@@ -54,6 +54,7 @@
                                     device_profile_uuid: options.item?.device_profile_uuid,
                                     domain_uuid: options.item?.domain_uuid,
                                     device_keys: options.lines,
+                                    device_settings: options.item?.settings,
                                     device_description: options.item?.device_description ?? null,
                                 }">
 
@@ -99,8 +100,17 @@
                                                     'cloud_container',
                                                     'submit_cloud',
 
-                                                ]" :conditions="[() => options?.permissions?.manage_device_cloud_provisioning_settings && options.cloud_provider_available]"/>
-                                                
+                                                ]"
+                                                    :conditions="[() => options?.permissions?.manage_device_cloud_provisioning_settings && options.cloud_provider_available]" />
+                                                <FormTab name="advanced" label="Advanced" :elements="[
+                                                    'device_settings_title',
+                                                    'device_settings',
+                                                    'advanced_container',
+                                                    'device_settings_container1',
+                                                    'submit_advanced',
+
+                                                ]" />
+
                                             </FormTabs>
                                         </div>
 
@@ -111,15 +121,14 @@
                                                 <StaticElement name="h4" tag="h4" content="Device Settings" />
 
                                                 <TextElement name="device_address" label="MAC Address"
-                                                    placeholder="Enter MAC address" :floating="false" 
-                                                    :disabled="[() => !options?.permissions?.device_address_update]"/>
+                                                    placeholder="Enter MAC address" :floating="false"
+                                                    :disabled="[() => !options?.permissions?.device_address_update]" />
 
                                                 <SelectElement name="device_template" :items="options.templates"
                                                     :search="true" :native="false" label="Device Template"
                                                     input-type="search" autocomplete="off" label-prop="name"
-                                                    value-prop="value" :floating="false"
-                                                    placeholder="Select Template" 
-                                                    :conditions="[() => options?.permissions?.device_template_update]"/>
+                                                    value-prop="value" :floating="false" placeholder="Select Template"
+                                                    :conditions="[() => options?.permissions?.device_template_update]" />
 
                                                 <SelectElement name="device_profile_uuid" :items="options.profiles"
                                                     :search="true" :native="false" label="Device Profile"
@@ -133,8 +142,8 @@
                                                 <SelectElement name="domain_uuid" :items="options.domains"
                                                     :search="true" :native="false" label="Assigned To (Account)"
                                                     input-type="search" autocomplete="off" label-prop="name"
-                                                    value-prop="value" placeholder="Select Account" :floating="false" 
-                                                    :conditions="[() => options?.permissions?.device_domain_update]"/>
+                                                    value-prop="value" placeholder="Select Account" :floating="false"
+                                                    :conditions="[() => options?.permissions?.device_domain_update]" />
 
                                                 <GroupElement name="container_3" />
 
@@ -243,49 +252,7 @@
                                                                     container: 1,
                                                                 },
                                                             }">
-                                                                <!-- <div
-                                                                    class="text-sm font-medium leading-6 text-gray-900 text-end">
-
-                                                                    <Menu as="div"
-                                                                        class="relative inline-block text-left">
-                                                                        <div>
-                                                                            <MenuButton
-                                                                                class="flex items-center rounded-full bg-gray-100 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100">
-                                                                                <span class="sr-only">Open
-                                                                                    options</span>
-                                                                                <EllipsisVerticalIcon
-                                                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-900 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                                                                    aria-hidden="true" />
-                                                                            </MenuButton>
-                                                                        </div>
-
-                                                                        <transition
-                                                                            enter-active-class="transition ease-out duration-100"
-                                                                            enter-from-class="transform opacity-0 scale-95"
-                                                                            enter-to-class="transform opacity-100 scale-100"
-                                                                            leave-active-class="transition ease-in duration-75"
-                                                                            leave-from-class="transform opacity-100 scale-100"
-                                                                            leave-to-class="transform opacity-0 scale-95">
-                                                                            <MenuItems
-                                                                                class="absolute right-0 z-10 mt-2 w-36 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                                                                                <div class="py-1">
-                                                                                    <MenuItem v-slot="{ active }">
-                                                                                    <a href="#"
-                                                                                        @click.prevent="showLineAdvSettings(index)"
-                                                                                        :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Advanced</a>
-                                                                                    </MenuItem>
-                                                                                    <MenuItem v-slot="{ active }">
-                                                                                    <a href="#"
-                                                                                        @click.prevent="deleteLineKey(index)"
-                                                                                        :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Delete</a>
-                                                                                    </MenuItem>
-
-                                                                                </div>
-                                                                            </MenuItems>
-                                                                        </transition>
-                                                                    </Menu>
-
-                                                                </div> -->
+                                                                
 
                                                                 <Cog8ToothIcon @click="showLineAdvSettings(index)"
                                                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
@@ -342,17 +309,6 @@
                                                     </template>
                                                 </ListElement>
 
-                                                <!-- <ButtonElement name="add_key" button-label="Add Key" align="right"
-                                                    @click="handleAddKeyButtonClick" :loading="isModalLoading"
-                                                    :conditions="[() => options.permissions.device_key_create]"/>
-
-
-                                                <StaticElement name="key_table">
-                                                    <DeviceKeys :keys="options.lines" :loading="isKeysLoading"
-                                                        :permissions="options.permissions"
-                                                        @edit-item="handleKeyEditButtonClick"
-                                                        @delete-item="handleDeleteKeyButtonClick" />
-                                                </StaticElement> -->
 
                                                 <GroupElement name="keys_container2" />
 
@@ -424,7 +380,7 @@
                                                                     2 errors with your submission</h3> -->
                                                                 <div class="text-sm text-red-700">
                                                                     <span>Last Action: {{ provisioning.last_action
-                                                                        }}</span>
+                                                                    }}</span>
                                                                 </div>
                                                                 <div class="text-sm text-red-700">
                                                                     <span>Error: {{ provisioning.error }}</span>
@@ -506,6 +462,65 @@
 
                                                 <ButtonElement name="submit_cloud" button-label="Save" :submits="true"
                                                     align="right" />
+
+                                                <StaticElement name="device_settings_title" tag="h4"
+                                                    content="Device Settings"
+                                                    description="Assign custom device settings."
+                                                    :conditions="[() => options?.permissions?.device_setting_view]" />
+
+
+                                                <GroupElement name="device_settings_container1"
+                                                    :conditions="[() => options?.permissions?.device_setting_view]" />
+
+                                                <ListElement name="device_settings" :sort="true" size="sm" :initial="0"
+                                                    :conditions="[() => options?.permissions?.device_setting_view]"
+                                                    :controls="{ add: options.permissions.device_setting_add, remove: options.permissions.device_setting_destroy, sort: options.permissions.device_setting_update }"
+                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                                    <template #default="{ index }">
+                                                        <ObjectElement :name="index">
+
+                                                            <TextElement name="device_setting_subcategory" label="Name"
+                                                                 autocomplete="off" :columns="{
+
+                                                                    sm: {
+                                                                        container: 4,
+                                                                    },
+                                                                }" placeholder="Enter Name" :floating="false" />
+
+                                                            <TextElement name="device_setting_value" label="Value"
+                                                                :columns="{
+                                                                    sm: {
+                                                                        container: 3,
+                                                                    },
+                                                                }" placeholder="Enter Value" :floating="false" />
+
+                                                            <TextElement name="device_setting_description"
+                                                                label="Description" :columns="{
+                                                                    sm: {
+                                                                        container: 4,
+                                                                    },
+                                                                }" placeholder="Description" :floating="false" />
+
+
+                                                            <ToggleElement name="device_setting_enabled" label="&nbsp;"
+                                                                true-value="true" false-value="false" :default="true"
+                                                                :labels="{ on: 'On', off: 'Off' }" size="md" :columns="{
+                                                                    sm: {
+                                                                        container: 1,
+                                                                    },
+                                                                }" />
+
+
+                                                        </ObjectElement>
+                                                    </template>
+                                                </ListElement>
+
+
+                                                <GroupElement name="advanced_container" />
+
+                                                <ButtonElement name="submit_advanced" button-label="Save"
+                                                    :submits="true" align="right"
+                                                    :conditions="[() => options?.permissions?.device_setting_view]" />
 
                                             </FormElements>
                                         </div>

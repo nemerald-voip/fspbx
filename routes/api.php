@@ -14,7 +14,11 @@ use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\PhoneNumbersController;
+use App\Http\Controllers\Api\LocationsController;
 use App\Http\Controllers\BusinessHoursController;
+use App\Http\Controllers\PaymentGatewayController;
+use App\Http\Controllers\SystemSettingsController;
+use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\EmergencyCallController;
 use App\Http\Controllers\ExtensionStatisticsController;
@@ -36,6 +40,11 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     // Tokens
     Route::resource('/tokens', TokenController::class);
     Route::post('tokens/bulk-delete', [TokenController::class, 'bulkDelete'])->name('tokens.bulk.delete');
+
+    // Locatiosn
+    Route::resource('/locations', LocationsController::class);
+    Route::post('locations/bulk-delete', [LocationsController::class, 'bulkDelete'])->name('locations.bulk.delete');
+
 
     // Emergency calls
     Route::resource('/emergency-calls', EmergencyCallController::class);
@@ -161,4 +170,14 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     // Call Detail Records
     Route::get('/call-detail-records/data', [CdrsController::class, 'getData'])->name('cdrs.data');
     Route::get('/call-detail-records/entities', [CdrsController::class, 'getEntities'])->name('cdrs.entities');
+
+    // Account Settings
+    Route::put('account-settings/update', [AccountSettingsController::class, 'update'])->name('account-settings.update');
+
+    // System Settings
+    Route::put('system-settings/update', [SystemSettingsController::class, 'update'])->name('system-settings.update');
+    Route::get('system-settings/payment_gateways', [SystemSettingsController::class, 'getPaymentGatewayData'])->name('system-settings.payment_gateways');
+
+    // Payment Gateways
+    Route::put('/gateways', [PaymentGatewayController::class, 'update'])->name('gateway.update');
 });

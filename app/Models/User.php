@@ -268,4 +268,21 @@ class User extends Authenticatable
     {
         return $this->hasMany(UserDomainGroupPermissions::class, 'user_uuid', 'user_uuid');
     }
+
+    /**
+     * Get all of the locations for this user.
+     * The name 'locationable' is the key we defined in the pivot table.
+     */
+    public function locations()
+    {
+        return $this->morphToMany(
+            Location::class,   // related model
+            'locationable',                // morph name -> uses locationable_type + locationable_id
+            'locationables',               // pivot table
+            'locationable_id',             // this model's id column on pivot
+            'location_uuid',               // related model's id column on pivot 
+            'user_uuid',                   // this model's local key
+            'location_uuid'                // related model's local key
+        );
+    }
 }

@@ -332,7 +332,7 @@
                                                     'container_mobile_app',
                                                     'submit_mobile_app',
 
-                                                ]" />
+                                                ]" :conditions="[() => options.permissions.manage_mobile_app]" />
 
                                                 <FormTab name="sip_credentials" label="SIP Credentials" :elements="[
                                                     'sip_credentials_title',
@@ -903,7 +903,7 @@
                                                                 placeholder="Select option" :floating="false" />
 
 
-                                                            <ToggleElement name="prompt" align="left" size="sm"
+                                                            <ToggleElement name="prompt" align="left" size="sm" true-value="1" false-value="false"
                                                                 text="Enable answer confirmation"
                                                                 description="This prevents voicemails and automated systems from answering a call."
                                                                 info="Enable answer confirmation to prevent voicemails and automated systems from answering a call." />

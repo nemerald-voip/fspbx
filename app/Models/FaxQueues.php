@@ -6,11 +6,12 @@ use Illuminate\Support\Carbon;
 use App\Models\Traits\TraitUuid;
 use libphonenumber\PhoneNumberFormat;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Traits\FilterableByLocation;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class FaxQueues extends Model
 {
-    use HasFactory, TraitUuid;
+    use HasFactory, FilterableByLocation, TraitUuid;
 
     protected $table = "v_fax_queue";
 
@@ -29,6 +30,18 @@ class FaxQueues extends Model
         'fax_caller_id_number_formatted',
         'fax_number_formatted',
     ];
+
+    public function locations()
+    {
+        return $this->belongsToMany(
+            Location::class,   // related
+            'locationables',               // pivot
+            'locationable_id',             // pivot FK -> this model’s local key below
+            'location_uuid',               // pivot FK -> Location
+            'fax_uuid',                    // local key on FaxQueues (not PK)
+            'location_uuid'                // local key on Location
+        )->wherePivot('locationable_type', Faxes::class);
+    }
 
     public function getFaxDateFormattedAttribute()
     {

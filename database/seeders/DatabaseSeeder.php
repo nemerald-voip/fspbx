@@ -10,6 +10,10 @@ use Illuminate\Database\Seeder;
 use App\Models\GroupPermissions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Str;
+use App\Models\PaymentGateway;
+use App\Models\GatewaySetting;
 
 class DatabaseSeeder extends Seeder
 {
@@ -33,6 +37,8 @@ class DatabaseSeeder extends Seeder
         $this->createDefaultSettings();
 
         $this->createProFeatures();
+
+        $this->createPaymentGateways();
 
         Model::reguard();
     }
@@ -78,899 +84,221 @@ class DatabaseSeeder extends Seeder
     private function createPermissions()
     {
         $permissions = [
-            [
-                'application_name'       => 'Message Settings',
-                'permission_name'        => 'message_settings_list_view',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Extensions',
-                'permission_name'        => 'extension_suspended',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Mobile Apps',
-                'permission_name'        => 'mobile_apps_password_url_show',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Firewall',
-                'permission_name'        => 'firewall_list_view',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Cloud Provisioning',
-                'permission_name'        => 'manage_cloud_provision_providers',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Cloud Provisioning',
-                'permission_name'        => 'manage_device_cloud_provisioning_settings',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Whitelisted Numbers',
-                'permission_name'        => 'whitelisted_numbers_list_view',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Wakeup Calls',
-                'permission_name'        => 'wakeup_calls_list_view', // View list of wake-up calls
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'  => 'Wakeup Calls',
-                'permission_name'   => 'wakeup_calls_create', // Create new wake-up calls
-                'insert_date'       => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'  => 'Wakeup Calls',
-                'permission_name'   => 'wakeup_calls_edit', // Edit/update wake-up calls
-                'insert_date'       => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'  => 'Wakeup Calls',
-                'permission_name'   => 'wakeup_calls_delete', // Delete wake-up calls
-                'insert_date'       => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'  => 'Wakeup Calls',
-                'permission_name'   => 'wakeup_calls_all', // Delete wake-up calls
-                'insert_date'       => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'  => 'Wakeup Calls',
-                'permission_name'   => 'wakeup_calls_view_settings',
-                'insert_date'       => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Cloud Provisioning',
-                'permission_name'        => 'cloud_provisioning_show_credentials',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Cloud Provisioning',
-                'permission_name'        => 'polycom_api_token_update',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Account Settings',
-                'permission_name'        => 'account_settings_list_view',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Ring Groups',
-                'permission_name'        => 'ring_group_view_settings',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Ring Groups',
-                'permission_name'        => 'ring_group_view_advanced',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Business Hours',
-                'permission_name'        => 'business_hours_list_view',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Business Hours',
-                'permission_name'        => 'business_hours_create',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Business Hours',
-                'permission_name'        => 'business_hours_update',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Business Hours',
-                'permission_name'        => 'business_hours_delete',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Business Hours',
-                'permission_name'        => 'business_hours_holidays_list_view',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Business Hours',
-                'permission_name'        => 'business_hours_holidays_create',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Business Hours',
-                'permission_name'        => 'business_hours_holidays_update',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Business Hours',
-                'permission_name'        => 'business_hours_holidays_delete',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Group Manager',
-                'permission_name'        => 'domain_groups_list_view',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'User Manager',
-                'permission_name'        => 'user_view_managed_account_groups',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'User Manager',
-                'permission_name'        => 'user_update_managed_account_groups',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'User Manager',
-                'permission_name'        => 'user_view_managed_accounts',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'User Manager',
-                'permission_name'        => 'user_update_managed_accounts',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'User Manager',
-                'permission_name'        => 'user_status',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'User Manager',
-                'permission_name'        => 'api_key_create',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'User Manager',
-                'permission_name'        => 'api_key_update',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'User Manager',
-                'permission_name'        => 'api_key_delete',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Extensions',
-                'permission_name'        => 'extension_device_create',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Extensions',
-                'permission_name'        => 'extension_device_assign',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Extensions',
-                'permission_name'        => 'extension_device_unassign',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Extensions',
-                'permission_name'        => 'extension_device_update',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Extensions',
-                'permission_name'        => 'extension_forward_all',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Extensions',
-                'permission_name'        => 'extension_forward_busy',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Extensions',
-                'permission_name'        => 'extension_forward_no_answer',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Extensions',
-                'permission_name'        => 'extension_forward_not_registered',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Extensions',
-                'permission_name'        => 'extension_call_sequence',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'application_name'       => 'Extensions',
-                'permission_name'        => 'extension_do_not_disturb',
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            // Add more permissions as needed
+            ['application_name' => 'Message Settings', 'permission_name' => 'message_settings_list_view'],
+            ['application_name' => 'Extensions', 'permission_name' => 'extension_suspended'],
+            ['application_name' => 'Mobile Apps', 'permission_name' => 'mobile_apps_password_url_show'],
+            ['application_name' => 'Firewall', 'permission_name' => 'firewall_list_view'],
+            ['application_name' => 'Cloud Provisioning', 'permission_name' => 'manage_cloud_provision_providers'],
+            ['application_name' => 'Cloud Provisioning', 'permission_name' => 'manage_device_cloud_provisioning_settings'],
+            ['application_name' => 'Whitelisted Numbers', 'permission_name' => 'whitelisted_numbers_list_view'],
+            ['application_name' => 'Wakeup Calls', 'permission_name' => 'wakeup_calls_list_view'],
+            ['application_name' => 'Wakeup Calls', 'permission_name' => 'wakeup_calls_create'],
+            ['application_name' => 'Wakeup Calls', 'permission_name' => 'wakeup_calls_edit'],
+            ['application_name' => 'Wakeup Calls', 'permission_name' => 'wakeup_calls_delete'],
+            ['application_name' => 'Wakeup Calls', 'permission_name' => 'wakeup_calls_all'],
+            ['application_name' => 'Wakeup Calls', 'permission_name' => 'wakeup_calls_view_settings'],
+            ['application_name' => 'Cloud Provisioning', 'permission_name' => 'cloud_provisioning_show_credentials'],
+            ['application_name' => 'Cloud Provisioning', 'permission_name' => 'polycom_api_token_update'],
+            ['application_name' => 'Account Settings', 'permission_name' => 'account_settings_list_view'],
+            ['application_name' => 'Ring Groups', 'permission_name' => 'ring_group_view_settings'],
+            ['application_name' => 'Ring Groups', 'permission_name' => 'ring_group_view_advanced'],
+            ['application_name' => 'Business Hours', 'permission_name' => 'business_hours_list_view'],
+            ['application_name' => 'Business Hours', 'permission_name' => 'business_hours_create'],
+            ['application_name' => 'Business Hours', 'permission_name' => 'business_hours_update'],
+            ['application_name' => 'Business Hours', 'permission_name' => 'business_hours_delete'],
+            ['application_name' => 'Business Hours', 'permission_name' => 'business_hours_holidays_list_view'],
+            ['application_name' => 'Business Hours', 'permission_name' => 'business_hours_holidays_create'],
+            ['application_name' => 'Business Hours', 'permission_name' => 'business_hours_holidays_update'],
+            ['application_name' => 'Business Hours', 'permission_name' => 'business_hours_holidays_delete'],
+            ['application_name' => 'Group Manager', 'permission_name' => 'domain_groups_list_view'],
+            ['application_name' => 'User Manager', 'permission_name' => 'user_view_managed_account_groups'],
+            ['application_name' => 'User Manager', 'permission_name' => 'user_update_managed_account_groups'],
+            ['application_name' => 'User Manager', 'permission_name' => 'user_view_managed_accounts'],
+            ['application_name' => 'User Manager', 'permission_name' => 'user_update_managed_accounts'],
+            ['application_name' => 'User Manager', 'permission_name' => 'user_status'],
+            ['application_name' => 'User Manager', 'permission_name' => 'api_key_create'],
+            ['application_name' => 'User Manager', 'permission_name' => 'api_key_update'],
+            ['application_name' => 'User Manager', 'permission_name' => 'api_key_delete'],
+            ['application_name' => 'Extensions', 'permission_name' => 'extension_device_create'],
+            ['application_name' => 'Extensions', 'permission_name' => 'extension_device_assign'],
+            ['application_name' => 'Extensions', 'permission_name' => 'extension_device_unassign'],
+            ['application_name' => 'Extensions', 'permission_name' => 'extension_device_update'],
+            ['application_name' => 'Extensions', 'permission_name' => 'extension_forward_all'],
+            ['application_name' => 'Extensions', 'permission_name' => 'extension_forward_busy'],
+            ['application_name' => 'Extensions', 'permission_name' => 'extension_forward_no_answer'],
+            ['application_name' => 'Extensions', 'permission_name' => 'extension_forward_not_registered'],
+            ['application_name' => 'Extensions', 'permission_name' => 'extension_call_sequence'],
+            ['application_name' => 'Extensions', 'permission_name' => 'extension_do_not_disturb'],
+            ['application_name' => 'Extensions', 'permission_name' => 'extension_mobile_app_settings'],
+            ['application_name' => 'Locations', 'permission_name' => 'location_view'],
+            ['application_name' => 'Locations', 'permission_name' => 'location_create'],
+            ['application_name' => 'Locations', 'permission_name' => 'location_update'],
+            ['application_name' => 'Locations', 'permission_name' => 'location_delete'],
         ];
+        $timestamp = date("Y-m-d H:i:s");
 
-        foreach ($permissions as $permission) {
-            $existingPermission = Permissions::where('application_name', $permission['application_name'])
-                ->where('permission_name', $permission['permission_name'])
-                ->first();
+        // 1) Find which permission_names already exist (so we don't touch them)
+        $names = array_column($permissions, 'permission_name');
+        $existing = Permissions::whereIn('permission_name', $names)
+            ->pluck('permission_name')
+            ->all();
 
-            if (is_null($existingPermission)) {
-                Permissions::create([
-                    'application_name'        => $permission['application_name'],
-                    'permission_name'        => $permission['permission_name'],
-                    'insert_date'       => $permission['insert_date'],
-                ]);
+        // 2) Build ONLY the missing rows, adding the required UUID + insert_date
+        $toInsert = [];
+        foreach ($permissions as $p) {
+            if (!in_array($p['permission_name'], $existing, true)) {
+                $toInsert[] = [
+                    'permission_uuid'  => (string) Str::uuid(),
+                    'application_name' => $p['application_name'],
+                    'permission_name'  => $p['permission_name'],
+                    'insert_date'      => $timestamp,
+                ];
             }
+        }
+
+        // 3) Insert missing ones (no updates, no overrides)
+        if (!empty($toInsert)) {
+            Permissions::insert($toInsert);
         }
     }
 
     private function createGroupPermissions()
     {
-        $group_permissions = [
-            [
-                'permission_name'        => 'message_settings_list_view',
-                'permission_protected'   => 'true',
-                'permission_assigned'    => 'true',
-                'group_name'            => "superadmin",
-                'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'           => date("Y-m-d H:i:s"),
+        $permissionsByGroup = [
+            'superadmin' => [
+                'message_settings_list_view',
+                'extension_suspended',
+                'mobile_apps_password_url_show',
+                'firewall_list_view',
+                'manage_cloud_provision_providers',
+                'manage_device_cloud_provisioning_settings',
+                'cloud_provisioning_show_credentials',
+                'polycom_api_token_update',
+                'wakeup_calls_list_view',
+                'wakeup_calls_create',
+                'wakeup_calls_edit',
+                'wakeup_calls_delete',
+                'wakeup_calls_all',
+                'account_settings_list_view',
+                'wakeup_calls_view_settings',
+                'ring_group_view_settings',
+                'ring_group_view_advanced',
+                'business_hours_list_view',
+                'business_hours_create',
+                'business_hours_update',
+                'business_hours_delete',
+                'business_hours_holidays_list_view',
+                'business_hours_holidays_create',
+                'business_hours_holidays_update',
+                'business_hours_holidays_delete',
+                'domain_groups_list_view',
+                'user_view_managed_account_groups',
+                'user_update_managed_account_groups',
+                'user_view_managed_accounts',
+                'user_update_managed_accounts',
+                'user_status',
+                'api_key_create',
+                'api_key_update',
+                'api_key_delete',
+                'extension_device_create',
+                'extension_device_assign',
+                'extension_device_unassign',
+                'extension_device_update',
+                'extension_forward_all',
+                'extension_forward_busy',
+                'extension_forward_no_answer',
+                'extension_forward_not_registered',
+                'extension_call_sequence',
+                'extension_do_not_disturb',
+                'extension_mobile_app_settings',
+                'location_view',
+                'location_create',
+                'location_update',
+                'location_delete',
+            ],
+            'admin' => [
+                'wakeup_calls_list_view',
+                'wakeup_calls_create',
+                'wakeup_calls_edit',
+                'wakeup_calls_delete',
+                'ring_group_view_settings',
+                'business_hours_list_view',
+                'business_hours_create',
+                'business_hours_update',
+                'business_hours_delete',
+                'business_hours_holidays_list_view',
+                'business_hours_holidays_create',
+                'business_hours_holidays_update',
+                'business_hours_holidays_delete',
+                'extension_device_create',
+                'extension_device_assign',
+                'extension_device_unassign',
+                'extension_device_update',
+                'extension_forward_all',
+                'extension_forward_busy',
+                'extension_forward_no_answer',
+                'extension_forward_not_registered',
+                'extension_call_sequence',
+                'extension_do_not_disturb',
+                'extension_mobile_app_settings',
+            ],
+            'Message Admin' => [
+                'message_settings_list_view',
+            ],
+            'multi-site admin' => [
+                'domain_select',
             ],
-            [
-                'permission_name'        => 'message_settings_list_view',
-                'permission_protected'   => 'true',
-                'permission_assigned'    => 'true',
-                'group_name'            => "Message Admin",
-                'group_uuid'            => Groups::where('group_name', "Message Admin")->value('group_uuid'),
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'        => 'extension_suspended',
-                'permission_protected'   => 'true',
-                'permission_assigned'    => 'true',
-                'group_name'            => "superadmin",
-                'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'        => 'mobile_apps_password_url_show',
-                'permission_protected'   => 'true',
-                'permission_assigned'    => 'true',
-                'group_name'            => "superadmin",
-                'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'        => 'firewall_list_view',
-                'permission_protected'   => 'true',
-                'permission_assigned'    => 'true',
-                'group_name'            => "superadmin",
-                'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'        => 'manage_cloud_provision_providers',
-                'permission_protected'   => 'true',
-                'permission_assigned'    => 'true',
-                'group_name'            => "superadmin",
-                'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'        => 'manage_device_cloud_provisioning_settings',
-                'permission_protected'   => 'true',
-                'permission_assigned'    => 'true',
-                'group_name'            => "superadmin",
-                'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'        => 'cloud_provisioning_show_credentials',
-                'permission_protected'   => 'true',
-                'permission_assigned'    => 'true',
-                'group_name'            => "superadmin",
-                'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'        => 'polycom_api_token_update',
-                'permission_protected'   => 'true',
-                'permission_assigned'    => 'true',
-                'group_name'            => "superadmin",
-                'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'wakeup_calls_list_view',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'wakeup_calls_create',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'wakeup_calls_edit',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'wakeup_calls_delete',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'wakeup_calls_all',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'wakeup_calls_list_view',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'wakeup_calls_create',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'wakeup_calls_edit',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'wakeup_calls_delete',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'        => 'account_settings_list_view',
-                'permission_protected'   => 'true',
-                'permission_assigned'    => 'true',
-                'group_name'            => "superadmin",
-                'group_uuid'            => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-
-            [
-                'permission_name'        => 'domain_select',
-                'permission_protected'   => 'true',
-                'permission_assigned'    => 'true',
-                'group_name'            => "multi-site admin",
-                'group_uuid'            => Groups::where('group_name', "multi-site admin")->value('group_uuid'),
-                'insert_date'           => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'wakeup_calls_list_view',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'wakeup_calls_create',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'wakeup_calls_edit',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'wakeup_calls_delete',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'wakeup_calls_all',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'wakeup_calls_list_view',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'wakeup_calls_create',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'wakeup_calls_edit',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'wakeup_calls_delete',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'wakeup_calls_view_settings',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'ring_group_view_settings',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'ring_group_view_settings',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'ring_group_view_advanced',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'business_hours_list_view',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'business_hours_list_view',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'business_hours_create',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'business_hours_create',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'business_hours_update',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'business_hours_update',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'business_hours_delete',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'business_hours_delete',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'business_hours_holidays_list_view',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'business_hours_holidays_list_view',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'business_hours_holidays_create',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'business_hours_holidays_create',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'business_hours_holidays_update',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'business_hours_holidays_update',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'business_hours_holidays_delete',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'business_hours_holidays_delete',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'domain_groups_list_view',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'user_view_managed_account_groups',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'user_update_managed_account_groups',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-
-            [
-                'permission_name'      => 'user_view_managed_accounts',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'user_update_managed_accounts',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'user_status',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'api_key_create',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'api_key_update',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'api_key_delete',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'extension_device_create',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'extension_device_create',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'extension_device_assign',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'extension_device_assign',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'extension_device_unassign',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'extension_device_unassign',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'extension_device_update',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'extension_device_update',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'extension_forward_all',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'extension_forward_all',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'extension_forward_busy',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'extension_forward_busy',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'extension_forward_no_answer',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'extension_forward_no_answer',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'extension_forward_not_registered',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'extension_forward_not_registrered',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'extension_call_sequence',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'extension_call_sequence',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'extension_do_not_disturb',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "superadmin",
-                'group_uuid'           => Groups::where('group_name', "superadmin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-            [
-                'permission_name'      => 'extension_do_not_disturb',
-                'permission_protected' => 'true',
-                'permission_assigned'  => 'true',
-                'group_name'           => "admin",
-                'group_uuid'           => Groups::where('group_name', "admin")->value('group_uuid'),
-                'insert_date'          => date("Y-m-d H:i:s"),
-            ],
-
-
-            
         ];
 
-        foreach ($group_permissions as $permission) {
-            $existing_item = GroupPermissions::where('permission_name', $permission['permission_name'])
-                ->where('group_uuid', $permission['group_uuid'])
-                ->first();
 
-            if (empty($existing_item)) {
-                // Add new permission
-                GroupPermissions::create([
-                    'permission_name'        => $permission['permission_name'],
-                    'permission_protected'  => $permission['permission_protected'],
-                    'permission_assigned'  => $permission['permission_assigned'],
-                    'group_name'            => $permission['group_name'],
-                    'group_uuid'            => $permission['group_uuid'],
-                    'insert_date'       => $permission['insert_date'],
-                ]);
+        // Groups by name -> uuid
+        $groupNames = array_keys($permissionsByGroup);
+        $groups = Groups::whereIn('group_name', $groupNames)->pluck('group_uuid', 'group_name');
+
+        // Flatten all permission names we'll touch
+        $allPerms = [];
+        foreach ($permissionsByGroup as $perms) {
+            foreach ($perms as $p) $allPerms[$p] = true;
+        }
+        $allPerms = array_keys($allPerms);
+
+        // Existing pairs so we don't override or duplicate anything
+        $existingPairs = GroupPermissions::whereIn('group_uuid', $groups->values())
+            ->whereIn('permission_name', $allPerms)
+            ->get(['group_uuid', 'permission_name'])
+            ->map(fn($row) => $row->group_uuid . '|' . $row->permission_name)
+            ->all();
+        $existingSet = array_flip($existingPairs);
+
+        // Build only missing rows, include required UUID
+        $now = date("Y-m-d H:i:s");
+        $toInsert = [];
+
+        foreach ($permissionsByGroup as $groupName => $permissions) {
+            if (!isset($groups[$groupName])) {
+                continue; // group not present in DB
             }
+            $gid = $groups[$groupName];
+
+            foreach ($permissions as $permissionName) {
+                $key = $gid . '|' . $permissionName;
+                if (isset($existingSet[$key])) {
+                    continue; // already assigned, leave as-is
+                }
+                $toInsert[] = [
+                    'group_permission_uuid' => (string) Str::uuid(),
+                    'group_uuid'            => $gid,
+                    'group_name'            => $groupName,
+                    'permission_name'       => $permissionName,
+                    'permission_protected'  => 'true',
+                    'permission_assigned'   => 'true',
+                    'insert_date'           => $now,
+                ];
+            }
+        }
+
+        if (!empty($toInsert)) {
+            GroupPermissions::insert($toInsert); // insert-only, no updates
         }
     }
 
@@ -1444,7 +772,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_description'   => "Enable or disable email challenge authentication. When enabled, users will be required to verify their email before completing the login process.",
             ],
 
-          [
+            [
                 'default_setting_category'      => 'ring_group',
                 'default_setting_subcategory'   => 'honor_member_cfwd',
                 'default_setting_name'          => 'boolean',
@@ -1627,6 +955,48 @@ class DatabaseSeeder extends Seeder
             }
         } catch (\Exception $e) {
             logger("Error seeding ProFeatures");
+        }
+    }
+
+
+    private function createPaymentGateways()
+    {
+        // Bail out if migrations haven't run yet
+        if (
+            ! Schema::hasTable('payment_gateways') ||
+            ! Schema::hasTable('gateway_settings')
+        ) {
+            return;
+        }
+
+        // 1) Ensure a Stripe gateway record
+        $stripe = PaymentGateway::firstOrCreate(
+            ['slug' => 'stripe'],
+            [
+                'name'       => 'Stripe',
+                'is_enabled' => false,
+            ]
+        );
+
+        $stripe = PaymentGateway::where('slug', 'stripe')->first();
+        $gatewayUuid = $stripe->getKey();
+
+        // 2) Seed its settings if missing
+        $stripe_settings = [
+            'sandbox'      => 'false',
+        ];
+
+        foreach ($stripe_settings as $key => $value) {
+            GatewaySetting::firstOrCreate(
+                [
+                    'gateway_uuid' => $gatewayUuid,
+                    'setting_key'  => $key,
+                ],
+                [
+                    'uuid'          => Str::uuid(),
+                    'setting_value' => $value,
+                ]
+            );
         }
     }
 
