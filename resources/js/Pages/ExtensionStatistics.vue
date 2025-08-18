@@ -47,7 +47,7 @@
 
 
                     <div class="relative z-10 min-w-64 -mt-0.5 mb-2 scale-y-95 shrink-0 sm:mr-4">
-                        <DatePicker :dateRange="filterData.dateRange" :timezone="filterData.timezone"
+                        <DatePicker :dateRange="filterData.dateRange" :timezone="timezone"
                             @update:date-range="handleUpdateDateRange" />
                     </div>
 
@@ -191,11 +191,20 @@ onMounted(() => {
     handleSearchButtonClick();
 })
 
+const startLocal = moment.utc(props.startPeriod).tz(props.timezone)
+const endLocal   = moment.utc(props.endPeriod).tz(props.timezone)
+
+const dateRange = [
+  startLocal.clone().startOf('day').toISOString(), // UTC instant for local start-of-day
+  endLocal.clone().endOf('day').toISOString(),     // UTC instant for local end-of-day
+]
+
 
 const filterData = ref({
     search: props.search,
     showGlobal: props.showGlobal,
-    dateRange: [moment.tz(props.startPeriod, props.timezone).startOf('day').format(), moment.tz(props.endPeriod, props.timezone).endOf('day').format()],
+    // dateRange: [moment.tz(props.startPeriod, props.timezone).startOf('day').format(), moment.tz(props.endPeriod, props.timezone).endOf('day').format()],
+    dateRange: dateRange, 
     // dateRange: ['2024-07-01T00:00:00', '2024-07-01T23:59:59'],
 
 });
