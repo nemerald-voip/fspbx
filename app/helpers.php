@@ -788,6 +788,11 @@ if (!function_exists('generate_password')) {
 if (!function_exists('formatPhoneNumber')) {
     function formatPhoneNumber($phoneNumber, $countryCode = 'US', $format = PhoneNumberFormat::NATIONAL)
     {
+        // If the user dialed internationally (+ or 011), don't touch it
+        if (preg_match('/^\s*(\+|011)/', $phoneNumber)) {
+            return $phoneNumber;
+        }
+
         $phoneNumberUtil = PhoneNumberUtil::getInstance();
 
         try {
