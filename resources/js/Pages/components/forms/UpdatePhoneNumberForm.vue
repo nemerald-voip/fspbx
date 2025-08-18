@@ -60,6 +60,7 @@
                                     fax_uuid: options.item?.fax_uuid ?? null,
                                     destination_cid_name_prefix: options.item?.destination_cid_name_prefix ?? null,
                                     destination_accountcode: options.item?.destination_accountcode ?? null,
+                                    destination_hold_music: options.item.destination_hold_music ?? '',
                                     destination_distinctive_ring: options.item?.destination_distinctive_ring ?? null,
                                 }">
 
@@ -88,6 +89,7 @@
                                                     'destination_cid_name_prefix',
                                                     'destination_accountcode',
                                                     'destination_distinctive_ring',
+                                                    'destination_hold_music',
                                                     'domain_uuid',
                                                     'advanced_container2',
                                                     'submit_advanced'
@@ -218,9 +220,29 @@
                                                     autocomplete="off" />
                                                 <TextElement name="destination_cid_name_prefix"
                                                     label="Caller ID name prefix" />
-                                                <TextElement name="destination_accountcode" label="Account code" />
+                                                <TextElement name="destination_accountcode" label="Account code"
+                                                    :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" />
                                                 <TextElement name="destination_distinctive_ring"
-                                                    label="Distinctive ring" />
+                                                    label="Distinctive ring" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" />
+
+                                                <SelectElement name="destination_hold_music"
+                                                    :items="options.music_on_hold_options" :groups="true" default=""
+                                                    :search="true" :native="false" label="Select custom Music On Hold"
+                                                    input-type="search" autocomplete="off" :strict="false" :columns="{
+                                                        sm: {
+                                                            wrapper: 6,
+                                                        },
+                                                    }"
+                                                    :conditions="[() => options.permissions.destination_hold_music]" />
+
                                                 <SelectElement name="domain_uuid" :items="options.domains"
                                                     :search="true" :native="false" label="Assigned To (Account)"
                                                     :conditions="[() => options?.permissions?.manage_destination_domain]"

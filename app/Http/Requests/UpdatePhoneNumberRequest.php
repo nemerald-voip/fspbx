@@ -96,6 +96,7 @@ class UpdatePhoneNumberRequest extends FormRequest
                 'nullable',
                 'array',
             ],
+            'hold_music' => ['nullable', 'string'],
             'destination_type_fax' => 'present',
         ];
     }
