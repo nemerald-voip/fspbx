@@ -308,7 +308,7 @@ class DeviceController extends Controller
     {
         $inputs = $request->validated();
 
-        logger($inputs);
+        // logger($inputs);
 
         if (!$device) {
             return response()->json([
@@ -594,6 +594,7 @@ class DeviceController extends Controller
                         'device_label',
                         'device_profile_uuid',
                         'device_address',
+                        'serial_number',
                         'device_vendor',
                         'device_description',
                     ])
@@ -627,9 +628,6 @@ class DeviceController extends Controller
                 // New device defaults
                 $deviceDto     = new DeviceData(
                     device_uuid: '',
-                    device_profile_uuid: '',
-                    device_address: '',
-                    device_template: '',
                 );
             }
 

@@ -50,6 +50,7 @@
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
                                     device_address: options.item?.device_address ?? null,
+                                    serial_number: options.item?.serial_number ?? null,
                                     device_template: options.item?.device_template ?? null,
                                     device_profile_uuid: options.item?.device_profile_uuid,
                                     domain_uuid: options.item?.domain_uuid,
@@ -69,6 +70,7 @@
                                                     'device_profile_uuid',
                                                     'domain_uuid',
                                                     'device_description',
+                                                    'serial_number',
                                                     'container_3',
                                                     'submit',
 
@@ -97,7 +99,18 @@
                                                 <StaticElement name="h4" tag="h4" content="Device Settings" />
 
                                                 <TextElement name="device_address" label="MAC Address"
-                                                    placeholder="Enter MAC address" :floating="false" />
+                                                    placeholder="Enter MAC address" :floating="false" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" />
+
+                                                <TextElement name="serial_number" label="Serial Number (Optional)"
+                                                    placeholder="Enter Serial Number" :floating="false" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" />
 
                                                 <SelectElement name="device_template" :items="options.templates"
                                                     :search="true" :native="false" label="Device Template"

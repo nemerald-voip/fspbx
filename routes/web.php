@@ -1,7 +1,5 @@
 <?php
 
-use Aws\Sns\Message;
-use App\Models\WhitelistedNumbers;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
 use App\Http\Controllers\CdrsController;
@@ -31,14 +29,13 @@ use App\Http\Controllers\ProFeaturesController;
 use App\Http\Controllers\WakeupCallsController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\PhoneNumbersController;
-use App\Http\Controllers\UserSettingsController;
+use App\Http\Controllers\ProvisioningController;
 use App\Http\Controllers\BusinessHoursController;
 use App\Http\Controllers\RegistrationsController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\AppsCredentialsController;
 use App\Http\Controllers\MessageSettingsController;
-use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\SansayActiveCallsController;
 use App\Http\Controllers\VoicemailMessagesController;
 use App\Http\Controllers\CallRoutingOptionsController;
@@ -47,6 +44,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\SansayRegistrationsController;
 use App\Http\Controllers\VirtualReceptionistController;
+use App\Http\Controllers\DeviceCloudProvisioningController;
 
 /*
 |--------------------------------------------------------------------------
@@ -90,11 +88,10 @@ Route::get('/csrf-token/refresh', [CsrfTokenController::class, 'store']);
 Route::get('/mobile-app/get-password/{token}', [AppsCredentialsController::class, 'getPasswordByToken'])->name('appsGetPasswordByToken');
 Route::post('/mobile-app/get-password/{token}', [AppsCredentialsController::class, 'retrievePasswordByToken'])->name('appsRetrievePasswordByToken');
 
-// Route::get('preview-email', function () {
-//     $markdown = new \Illuminate\Mail\Markdown(view(), config('mail.markdown'));
-//     $data = "Your data to be use in blade file";
-//     return $markdown->render("emails.app.credentials");
-//    });
+Route::match(['GET','HEAD','PUT'], '/prov/{path?}', [ProvisioningController::class, 'handle'])
+    ->where('path', '.*')
+    ->middleware('provision.digest')   // digest required for ALL requests
+    ->name('provision.handle');
 
 Route::group(['middleware' => 'auth'], function () {
 

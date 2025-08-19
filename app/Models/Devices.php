@@ -29,6 +29,7 @@ class Devices extends Model
         'domain_uuid',
         'device_profile_uuid',
         'device_address',
+        'serial_number',
         'device_label',
         'device_vendor',
         'device_model',

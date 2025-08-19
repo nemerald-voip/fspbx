@@ -28,6 +28,10 @@ class StoreDeviceRequest extends FormRequest
                 'required',
                 'mac_address',
             ],
+            'serial_number' => [
+                'nullable',
+                'string',
+            ],
             'device_address_modified' => [
                 'nullable',
                 Rule::unique('App\Models\Devices', 'device_address')
@@ -132,6 +136,14 @@ class StoreDeviceRequest extends FormRequest
 
         if (!$this->has('device_enabled')) {
             $this->merge(['device_enabled' => 'true']);
+        }
+
+        $serialInput = $this->get('serial_number');
+        if ($serialInput !== null && $serialInput !== '') {
+            // keep only [a–z0–9], lowercased
+            $serialNorm = strtolower(preg_replace('/[^a-z0-9]/i', '', (string)$serialInput));
+            // if becomes empty after normalization, store null
+            $this->merge(['serial_number' => $serialNorm !== '' ? $serialNorm : null]);
         }
     }
 }

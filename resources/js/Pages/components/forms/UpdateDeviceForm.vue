@@ -50,6 +50,7 @@
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
                                     device_address: options.item?.device_address ?? null,
+                                    serial_number: options.item?.serial_number ?? null,
                                     device_template: options.item?.device_template ?? null,
                                     device_profile_uuid: options.item?.device_profile_uuid,
                                     domain_uuid: options.item?.domain_uuid,
@@ -70,6 +71,7 @@
                                                     'device_profile_uuid',
                                                     'domain_uuid',
                                                     'device_description',
+                                                    'serial_number',
                                                     'container_3',
                                                     'submit',
 
@@ -122,7 +124,20 @@
 
                                                 <TextElement name="device_address" label="MAC Address"
                                                     placeholder="Enter MAC address" :floating="false"
-                                                    :disabled="[() => !options?.permissions?.device_address_update]" />
+                                                    :disabled="[() => !options?.permissions?.device_address_update]"
+                                                    :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" />
+
+                                                <TextElement name="serial_number" label="Serial Number (Optional)"
+                                                    placeholder="Enter Serial Number" :floating="false"
+                                                    :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" />
 
                                                 <SelectElement name="device_template" :items="options.templates"
                                                     :search="true" :native="false" label="Device Template"
@@ -252,7 +267,7 @@
                                                                     container: 1,
                                                                 },
                                                             }">
-                                                                
+
 
                                                                 <Cog8ToothIcon @click="showLineAdvSettings(index)"
                                                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
@@ -380,7 +395,7 @@
                                                                     2 errors with your submission</h3> -->
                                                                 <div class="text-sm text-red-700">
                                                                     <span>Last Action: {{ provisioning.last_action
-                                                                    }}</span>
+                                                                        }}</span>
                                                                 </div>
                                                                 <div class="text-sm text-red-700">
                                                                     <span>Error: {{ provisioning.error }}</span>
@@ -480,7 +495,7 @@
                                                         <ObjectElement :name="index">
 
                                                             <TextElement name="device_setting_subcategory" label="Name"
-                                                                 autocomplete="off" :columns="{
+                                                                autocomplete="off" :columns="{
 
                                                                     sm: {
                                                                         container: 4,

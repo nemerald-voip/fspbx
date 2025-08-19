@@ -28,6 +28,10 @@ class UpdateDeviceRequest extends FormRequest
                 'required',
                 'mac_address',
             ],
+            'serial_number' => [
+                'nullable',
+                'string',
+            ],
             'device_address_modified' => [
                 'nullable',
                 Rule::unique('App\Models\Devices', 'device_address')
@@ -134,6 +138,14 @@ class UpdateDeviceRequest extends FormRequest
 
         if (!$this->has('domain_uuid')) {
             $this->merge(['domain_uuid' => session('domain_uuid')]);
+        }
+
+        $serialInput = $this->get('serial_number');
+        if ($serialInput !== null && $serialInput !== '') {
+            // keep only [a–z0–9], lowercased
+            $serialNorm = strtolower(preg_replace('/[^a-z0-9]/i', '', (string)$serialInput));
+            // if becomes empty after normalization, store null
+            $this->merge(['serial_number' => $serialNorm !== '' ? $serialNorm : null]);
         }
     }
 }
