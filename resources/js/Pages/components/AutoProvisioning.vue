@@ -320,17 +320,17 @@ const renderRequestedPage = (url) => {
     fetchTemplates(pageParam);
 };
 
-const handleUpdateTemplateButtonClick = (location) => {
-    selectedLocation.value = location;
-    // Dynamically build the update route
-    locationUpdateRoute.value = `/api/locations/${location.location_uuid}`; // or use your route helper if available
-    showUpdateLocationModal.value = true;
-}
+// const handleUpdateTemplateButtonClick = (location) => {
+//     selectedLocation.value = location;
+//     // Dynamically build the update route
+//     locationUpdateRoute.value = `/api/locations/${location.location_uuid}`; // or use your route helper if available
+//     showUpdateLocationModal.value = true;
+// }
 
-const handleDeleteTemplateButtonClick = (uuid) => {
-    showDeleteLocationConfirmationModal.value = true;
-    confirmDeleteLocationAction.value = () => executeLocationBulkDelete([uuid]);
-};
+// const handleDeleteTemplateButtonClick = (uuid) => {
+//     showDeleteLocationConfirmationModal.value = true;
+//     confirmDeleteLocationAction.value = () => executeLocationBulkDelete([uuid]);
+// };
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
@@ -375,7 +375,7 @@ const handleCreateRequest = (form) => {
     createFormSubmiting.value = true;
     formErrors.value = null;
 
-    axios.post(props.routes.emergency_calls_store, form)
+    axios.post(props.routes.templates_store, form)
         .then((response) => {
             createFormSubmiting.value = false;
             showNotification('success', response.data.messages);
@@ -448,7 +448,7 @@ const getItemOptions = (itemUuid = null) => {
     })
         .then((response) => {
             itemOptions.value = response.data;
-            console.log(itemOptions.value);
+            // console.log(itemOptions.value);
 
         }).catch((error) => {
             handleErrorResponse(error)

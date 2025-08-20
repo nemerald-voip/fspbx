@@ -9,17 +9,18 @@
                 <div class="mt-2">
                     <InputField v-model="form.name" type="text" name="name" placeholder="Enter template name" />
                 </div>
-                <div v-if="errors?.emergency_number" class="mt-2 text-xs text-red-600">
-                    {{ errors.emergency_number[0] }}
+                <div v-if="errors?.name" class="mt-2 text-xs text-red-600">
+                    {{ errors.name[0] }}
                 </div>
             </div>
 
             <div>
                 <LabelInputOptional target="members" label="Base Template" />
                 <div class="mt-2 relative">
-                    <Multiselect v-model="form.base_template" :options="options.default_templates" :multiple="false"
+                    <Multiselect v-model="base_template" :options="options.default_templates" :multiple="false"
                         :close-on-select="true" :clear-on-select="false" :preserve-search="true"
-                        placeholder="Choose Base Template" label="name" track-by="value" :searchable="true" />
+                        placeholder="Choose Base Template" label="name" track-by="value" :searchable="true"
+                        @select="loadBaseTemplate" />
 
                     <!-- <div class="mt-1 text-sm text-gray-500">
                         Selected extensions will be called and notified when an emergency number is dialed.
@@ -35,13 +36,45 @@
 
 
             <div class="col-span-2">
-                <div class="h-[480px]">
-                    <AceEditor v-model="code" lang="php" theme="one_dark" :minLines="16" :maxLines="40"
-                        :showPrintMargin="false" :keyboardHandler="vscode" 
-                        placeholder="Start typing…"
-                        @ready="onReady"
-                        />
+                <div class="col-span-2">
+                    <!-- Toolbar -->
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex gap-2">
+                            <!-- Language selector -->
+                            <select v-model="editorLang"
+                                class="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option value="php_laravel_blade">Blade</option>
+                                <option value="xml">XML</option>
+                                <option value="yaml">YAML</option>
+                                <option value="lua">Lua</option>
+                                <option value="php">PHP</option>
+                            </select>
+
+                            <!-- Theme selector -->
+                            <select v-model="editorTheme"
+                                class="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                <option value="chrome">Light</option>
+                                <option value="one_dark">Dark</option>
+                            </select>
+                        </div>
+                        <div class="text-xs text-gray-500">Editor Settings</div>
+                    </div>
+
+                    <!-- Editor wrapper -->
+                    <div class="editor-wrapper relative rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+                        <!-- Loading overlay -->
+                        <div v-if="isLoadingTemplate"
+                            class="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center">
+                            <Spinner :show="true" />
+                            <span class="ml-2 text-sm text-gray-600">Loading template…</span>
+                        </div>
+
+                        <AceEditor v-model="form.content" :lang="editorLang"
+                            :theme="editorTheme" :options="{ fontSize: 16, tabSize: 4, readOnly: isLoadingTemplate }"
+                            :height="'80vh'" class="editor_wrap" />
+                    </div>
                 </div>
+
             </div>
 
             <div class="col-span-2 border-t mt-4">
@@ -74,35 +107,52 @@ import AceEditor from '@generalComponents/AceEditor.vue'
 
 
 const props = defineProps({
-    selectedKey: Object,
     options: Object,
     isSubmitting: Boolean,
     errors: Object,
 });
 
+const isLoadingTemplate = ref(false)
+const base_template = ref(null);
 
 const form = reactive({
+    vendor: null,
     name: null,
+    content: "",
     base_template: null,
-    emails: '',
-    description: null
+    base_version: null,
+    type: 'custom',
 });
-
 
 const emits = defineEmits(['submit', 'cancel', 'error', 'clear-errors']);
 
+const editorLang = ref('php_laravel_blade');
+const editorTheme = ref('chrome');
+
+const loadBaseTemplate = (selectedOption, id) => {
+    isLoadingTemplate.value = true
+    form.base_template = selectedOption.name
+
+    axios.post(props.options.routes.template_content, {
+        template_uuid: selectedOption.value,
+    })
+        .then((response) => {
+            form.content = response.data?.item?.content ?? ''
+            form.vendor = response.data?.item?.vendor ?? ''
+            form.base_version = response.data?.item?.version ?? ''
+            console.log(response.data);
+
+        }).catch((error) => {
+            handleErrorResponse(error)
+        }).finally(() => {
+            isLoadingTemplate.value = false
+        });
+}
+
 
 const submitForm = () => {
-    const payload = {
-        emergency_number: form.emergency_number,
-        description: form.description,
-        members: form.members.map(m => ({ extension_uuid: m.value })),
-        emails: form.emails
-            ? form.emails.split(',').map(email => email.trim()).filter(email => email !== '')
-            : []
-    };
-
-    emits('submit', payload); // Emit the event with the form data
+    // console.log(form)
+    emits('submit', form); // Emit the event with the form data
 }
 
 

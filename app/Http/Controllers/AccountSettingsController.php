@@ -59,7 +59,8 @@ class AccountSettingsController extends Controller
                     'locations_store' => route('locations.store'),
                     'locations_bulk_delete' => route('locations.bulk.delete'),
                     'templates' => route('provisioning-templates.index'),
-                    'templates_item_options' =>route('provisioning-templates.item.options')
+                    'templates_item_options' =>route('provisioning-templates.item.options'),
+                    'templates_store' => route('provisioning-templates.store'),
 
                     //'bulk_update' => route('devices.bulk.update'),
                 ],

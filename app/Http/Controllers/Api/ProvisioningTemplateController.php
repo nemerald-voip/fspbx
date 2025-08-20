@@ -144,6 +144,10 @@ class ProvisioningTemplateController extends Controller
                     ];
                 });
 
+                $routes = array_merge($routes, [
+                    'template_content' => route('provisioning-templates.content'),    
+                ]);
+
                 // logger($defaultTemplates);
             return response()->json([
                 'item' => $item,
@@ -159,6 +163,26 @@ class ProvisioningTemplateController extends Controller
             ], 500);
         }
     }
+
+    public function getTemplateContent()
+    {
+        try {
+            $uuid = request('template_uuid'); // ✅ correct key
+            $item = $uuid ? ProvisioningTemplate::findOrFail($uuid) : null;
+
+            return response()->json([
+                'item' => $item ?? null,
+            ]);
+        } catch (\Throwable $e) {
+            logger('getTemplateContent@ProvisioningTemplateController: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to fetch template content']]
+            ], 500);
+        }
+    }
+
 
     public function bulkDelete()
     {
