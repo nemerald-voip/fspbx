@@ -32,6 +32,7 @@
         "@vitejs/plugin-vue": "^4.5.2",
         "@vueform/vueform": "^1.12.6",
         "@vuepic/vue-datepicker": "^7.4.0",
+        "ace-builds": "^1.43.2",
         "bootstrap-datepicker": "^1.10.0",
         "bootstrap-timepicker": "^0.5.2",
         "britecharts": "^2.18.2",

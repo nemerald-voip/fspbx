@@ -49,13 +49,13 @@
             <div class="relative">
                 <div class="flex justify-between">
 
-                    <button type="button" @click.prevent="$emit('search-action')"
+                    <button type="button" @click.prevent="handleSearchButtonClick"
                         class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500
                                 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                         Search
                     </button>
 
-                    <button type="button" @click.prevent="$emit('reset-filters')"
+                    <button type="button" @click.prevent="handleFiltersReset"
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2  sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                         Reset
                     </button>
@@ -63,9 +63,19 @@
             </div>
         </div>
 
-        <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+        <div class="mt-4">
+            <button v-if="activeTab != 'default'" type="button" @click.prevent="handleCreateButtonClick()"
+                class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                Create
+            </button>
+        </div>
+
+        <div class="mt-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
             <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                <div class="overflow-hidden border-t border-gray-200">
+                <Paginator class="border border-gray-200" :previous="data.prev_page_url" :next="data.next_page_url"
+                    :from="data.from" :to="data.to" :total="data.total" :currentPage="data.current_page"
+                    :lastPage="data.last_page" :links="data.links" @pagination-change-page="renderRequestedPage" />
+                <div class="overflow-hidden-t border-l border-r border-gray-200">
                     <table class="min-w-full divide-y divide-gray-200 mb-4">
                         <thead class="bg-gray-100">
                             <tr>
@@ -90,8 +100,9 @@
                                 </th>
                             </tr>
                         </thead>
-                        <tbody v-if="!isTemplatesLoading && templates.length" class="divide-y divide-gray-200 bg-white">
-                            <tr v-for="template in templates" :key="template.template_uuid">
+                        <tbody v-if="!isTemplatesLoading && data.data?.length"
+                            class="divide-y divide-gray-200 bg-white">
+                            <tr v-for="template in data.data" :key="template.template_uuid">
                                 <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 capitalize">
                                     {{ template.vendor }}
                                 </td>
@@ -145,7 +156,7 @@
                     </table>
 
                     <!-- Empty State -->
-                    <div v-if="!isTemplatesLoading && templates.length === 0" class="text-center my-5">
+                    <div v-if="!isTemplatesLoading && data.data?.length === 0" class="text-center my-5">
                         <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
                         <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
                         <!-- <p class="mt-1 text-sm text-gray-500">
@@ -169,12 +180,10 @@
         </div>
     </div>
 
-
-
-    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showCreateModal" :header="'Create New Emergency Call'"
+    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showCreateModal" :header="'Create New Provisioning Template'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateEmergencyCallForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
+            <CreateProvisioningTemplateForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
                 @submit="handleCreateRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
                 @success="showNotification('success', $event)" @clear-errors="handleClearErrors" />
         </template>
@@ -201,7 +210,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import AddEditItemModal from "./modal/AddEditItemModal.vue";
-import CreateEmergencyCallForm from "./forms/CreateEmergencyCallForm.vue";
+import CreateProvisioningTemplateForm from "./forms/CreateProvisioningTemplateForm.vue";
 import UpdateEmergencyCallForm from "./forms/UpdateEmergencyCallForm.vue";
 import Notification from "./notifications/Notification.vue";
 import ConfirmationModal from "./modal/ConfirmationModal.vue";
@@ -209,6 +218,7 @@ import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue
 import { registerLicense } from '@syncfusion/ej2-base';
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import { ChevronDownIcon } from '@heroicons/vue/20/solid'
+import Paginator from "@generalComponents/Paginator.vue";
 
 
 const selectedItems = ref([]);
@@ -218,36 +228,6 @@ const props = defineProps({
     routes: Object,
     permissions: Object,
     trigger: Boolean
-})
-
-
-const filterData = ref({
-    search: null,
-    domain_uuid: props.domain_uuid,
-    type: 'default',
-});
-
-// const emits = defineEmits(['edit-item', 'delete-item']);
-
-const tabs = [
-    { id: 'default', name: 'Default Templates' },
-    { id: 'custom', name: 'Custom Templates' },
-]
-
-// state for tabs + templates
-const activeTab = ref('default')
-
-// keep filter[type] in sync with tab
-watch(activeTab, (v) => { filterData.value.type = v }, { immediate: true })
-
-// unify tab change handler (works for both mobile select and desktop clicks)
-const setTab = (id) => {
-    if (activeTab.value !== id) activeTab.value = id
-}
-
-watch(() => props.trigger, (newVal) => {
-    setTab('default')
-    getDefaultTemplates()
 })
 
 const showCreateModal = ref(false);
@@ -263,10 +243,28 @@ const itemOptions = ref([])
 const createFormSubmiting = ref(null);
 const updateFormSubmiting = ref(null);
 const isTemplatesLoading = ref(false)
-const templates = ref([])
+const data = ref({
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: 0,
+    to: 0,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
+});
 
 
-const getDefaultTemplates = async (page = 1) => {
+const filterData = ref({
+    search: null,
+    domain_uuid: props.domain_uuid,
+    type: 'default',
+});
+
+// const emits = defineEmits(['edit-item', 'delete-item']);
+
+const fetchTemplates = async (page = 1) => {
     isTemplatesLoading.value = true
     axios.get(props.routes.templates, {
         params: {
@@ -275,8 +273,8 @@ const getDefaultTemplates = async (page = 1) => {
         }
     })
         .then((response) => {
-            templates.value = response.data;
-            console.log(templates.value);
+            data.value = response.data;
+            // console.log(data.value);
 
         }).catch((error) => {
             handleErrorResponse(error)
@@ -285,6 +283,54 @@ const getDefaultTemplates = async (page = 1) => {
         });
 }
 
+const tabs = [
+    { id: 'default', name: 'Default Templates' },
+    { id: 'custom', name: 'Custom Templates' },
+]
+
+// state for tabs + templates
+const activeTab = ref('default')
+
+// keep filter[type] in sync with tab
+watch(
+    activeTab,
+    (v) => {
+        filterData.value.type = v
+        fetchTemplates(1)               // reload when tab changes
+    },
+    { immediate: true }               // also fetch on mount/first render
+)
+// unify tab change handler (works for both mobile select and desktop clicks)
+const setTab = (id) => {
+    if (activeTab.value !== id) activeTab.value = id
+}
+
+watch(() => props.trigger, (newVal) => {
+    setTab('default')
+})
+
+
+const renderRequestedPage = (url) => {
+    isTemplatesLoading.value = true;
+    // Extract the page number from the url, e.g. "?page=3"
+    const urlObj = new URL(url, window.location.origin);
+    const pageParam = urlObj.searchParams.get("page") ?? 1;
+
+    // Now call getData with the page number
+    fetchTemplates(pageParam);
+};
+
+const handleUpdateTemplateButtonClick = (location) => {
+    selectedLocation.value = location;
+    // Dynamically build the update route
+    locationUpdateRoute.value = `/api/locations/${location.location_uuid}`; // or use your route helper if available
+    showUpdateLocationModal.value = true;
+}
+
+const handleDeleteTemplateButtonClick = (uuid) => {
+    showDeleteLocationConfirmationModal.value = true;
+    confirmDeleteLocationAction.value = () => executeLocationBulkDelete([uuid]);
+};
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
@@ -316,23 +362,7 @@ const handleCreateButtonClick = () => {
 }
 
 const handleSearchButtonClick = () => {
-    loading.value = true;
-    router.visit(props.routes.current_page, {
-        data: {
-            filter: {
-                search: filterData.value.search,
-            },
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-        ],
-        onSuccess: (page) => {
-            loading.value = false;
-            handleClearSelection();
-        }
-    });
+    fetchTemplates(1)
 };
 
 const handleFiltersReset = () => {
@@ -410,19 +440,20 @@ const handleModalClose = () => {
 
 const getItemOptions = (itemUuid = null) => {
     loadingModal.value = true;
-    formErrors.value = null;
 
-    const payload = itemUuid ? { item_uuid: itemUuid } : {};
+    const filter = { type: 'default', }
 
-    axios.post(props.routes.emergency_calls_item_options, payload)
+    axios.post(props.routes.templates_item_options, {
+        filter: filter,
+    })
         .then((response) => {
-            loadingModal.value = false;
             itemOptions.value = response.data;
-            // console.log(itemOptions.value);
-        })
-        .catch((error) => {
-            handleModalClose();
-            handleErrorResponse(error);
+            console.log(itemOptions.value);
+
+        }).catch((error) => {
+            handleErrorResponse(error)
+        }).finally(() => {
+            loadingModal.value = false
         });
 }
 

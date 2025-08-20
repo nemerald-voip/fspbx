@@ -283,36 +283,6 @@ const executeLocationBulkDelete = async (items) => {
     }
 };
 
-// const getTemplates = async () => {
-//     isTemplatesLoading.value = true
-//     axios.get(props.routes.templates, {
-//         params: {
-//             domain_uuid: props.data.domain_uuid
-//         }
-//     })
-//         .then((response) => {
-//             templates.value = response.data;
-//             console.log(templates.value);
-
-//         }).catch((error) => {
-//             handleErrorResponse(error)
-//         }).finally(() => {
-//             isTemplatesLoading.value = false
-//         });
-// }
-
-const handleUpdateTemplateButtonClick = (location) => {
-    selectedLocation.value = location;
-    // Dynamically build the update route
-    locationUpdateRoute.value = `/api/locations/${location.location_uuid}`; // or use your route helper if available
-    showUpdateLocationModal.value = true;
-}
-
-const handleDeleteTemplateButtonClick = (uuid) => {
-    showDeleteLocationConfirmationModal.value = true;
-    confirmDeleteLocationAction.value = () => executeLocationBulkDelete([uuid]);
-};
-
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 

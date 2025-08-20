@@ -49,6 +49,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     // Provisioning Templates
     Route::resource('/provisioning-templates', ProvisioningTemplateController::class);
     Route::post('provisioning-templates/bulk-delete', [ProvisioningTemplateController::class, 'bulkDelete'])->name('provisioning-templates.bulk.delete');
+    Route::post('/provisioning-templates/item-options', [ProvisioningTemplateController::class, 'getItemOptions'])->name('provisioning-templates.item.options');
 
     // Emergency calls
     Route::resource('/emergency-calls', EmergencyCallController::class);

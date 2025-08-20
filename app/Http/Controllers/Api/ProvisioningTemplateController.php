@@ -52,7 +52,7 @@ class ProvisioningTemplateController extends Controller
 
         $templates = $query->paginate($perPage)->appends($request->query());
 
-        logger($templates);
+        // logger($templates);
 
         return response()->json($templates);
     }
@@ -113,52 +113,52 @@ class ProvisioningTemplateController extends Controller
         }
     }
 
-    // public function getItemOptions()
-    // {
-    //     try {
-    //         $domain_uuid = session('domain_uuid');
+    public function getItemOptions()
+    {
+        try {
+            $item = null;
+            $routes = [];
 
-    //         $item = null;
-    //         $updateRoute = null;
+            if (request()->has('item_uuid')) {
+                $item = ProvisioningTemplate::findOrFail(request('item_uuid'));
 
-    //         if (request()->has('item_uuid')) {
-    //             $item = ProvisioningTemplate::where('domain_uuid', $domain_uuid)
-    //                 ->where('ProvisioningTemplate_uuid', request('item_uuid'))
-    //                 ->first();
+                $updateRoute = $item
+                    ? route('provisioning-templates.update', $item->template_uuid)
+                    : null;
+            }
 
-    //             $updateRoute = $item
-    //                 ? route('ProvisioningTemplates.update', $item->ProvisioningTemplate_uuid)
-    //                 : null;
-    //         }
+            $defaultTemplates = QueryBuilder::for(ProvisioningTemplate::query())
+                ->select([
+                    'template_uuid',
+                    'name',
+                ])
+                ->allowedFilters([
+                    AllowedFilter::exact('type'),
+                ])
+                ->defaultSort('name')
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'value' => $item->template_uuid,
+                        'name' => $item->name,
+                    ];
+                });
 
-    //         // Optionally: add a list of assignable extensions/devices/etc.
-    //         $extensions = Extensions::where('domain_uuid', $domain_uuid)
-    //             ->select('extension_uuid', 'extension', 'effective_caller_id_name')
-    //             ->orderBy('extension')
-    //             ->get()
-    //             ->map(function ($ext) {
-    //                 return [
-    //                     'value' => $ext->extension_uuid,
-    //                     'name' => $ext->extension . ' - ' . $ext->effective_caller_id_name,
-    //                 ];
-    //             });
+                // logger($defaultTemplates);
+            return response()->json([
+                'item' => $item,
+                'default_templates' => $defaultTemplates,
+                'routes' => $routes,
+            ]);
+        } catch (\Throwable $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
-    //         return response()->json([
-    //             'item' => $item,
-    //             'extensions' => $extensions,
-    //             'routes' => [
-    //                 'update_route' => $updateRoute,
-    //             ],
-    //         ]);
-    //     } catch (\Throwable $e) {
-    //         logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
-
-    //         return response()->json([
-    //             'success' => false,
-    //             'errors' => ['server' => ['Failed to fetch item details']]
-    //         ], 500);
-    //     }
-    // }
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to fetch item details']]
+            ], 500);
+        }
+    }
 
     public function bulkDelete()
     {
