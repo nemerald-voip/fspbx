@@ -43,7 +43,6 @@ class UpdateProvisioningTemplateRequest extends FormRequest
             'base_version'  => ['nullable', 'string', 'max:50', 'regex:/^[0-9]+(\.[0-9]+){0,2}(-[0-9A-Za-z\.-]+)?$/'],
 
             'domain_uuid'   => [
-                Rule::requiredIf(fn () => $this->input('type') === 'custom'),
                 'nullable',
                 'uuid',
             ],
@@ -69,14 +68,16 @@ class UpdateProvisioningTemplateRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        logger($this);
         // Normalize strings and set domain scoping rules
         $vendor = $this->input('vendor');
         $type   = $this->input('type');
 
-        // If custom and no domain passed, default to current domain (session)
-        $domainUuid = $this->input('domain_uuid');
-        if ($type === 'custom' && empty($domainUuid)) {
+        // If custom not global then set current domain_uuid
+        if ($type === 'custom' && !$this->input('global')) {
             $domainUuid = session('domain_uuid');
+        } else {
+            $domainUuid = null;
         }
 
         // If default, force domain to null (global visibility)

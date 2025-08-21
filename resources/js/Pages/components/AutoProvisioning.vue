@@ -94,7 +94,7 @@
                                 <th v-if="activeTab != 'default'"
                                     class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Base Version</th>
 
-                                <th v-if="activeTab != 'default'"
+                                <th
                                     class="relative px-6 py-3 text-left text-sm font-medium text-gray-500">
                                     <span class="sr-only">Actions</span>
                                 </th>
@@ -129,10 +129,10 @@
                                     class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                                     {{ template.base_version }}
                                 </td>
-                                <td v-if="activeTab != 'default'"
+                                <td 
                                     class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                                     <div class="flex items-center whitespace-nowrap justify-end">
-                                        <ejs-tooltip :content="'Edit'" position='TopCenter'
+                                        <ejs-tooltip v-if="activeTab != 'default'" :content="'Edit'" position='TopCenter'
                                             target="#destination_tooltip_target">
                                             <div id="destination_tooltip_target">
                                                 <PencilSquareIcon @click="handleEditButtonClick(template.template_uuid)"
@@ -141,11 +141,22 @@
                                             </div>
                                         </ejs-tooltip>
 
-                                        <ejs-tooltip :content="'Delete'" position='TopCenter'
+                                        <ejs-tooltip v-if="activeTab != 'default'" :content="'Delete'" position='TopCenter'
                                             target="#delete_tooltip_target">
                                             <div id="delete_tooltip_target">
-                                                <TrashIcon @click="handleSingleItemDeleteRequest(template.template_uuid)"
+                                                <TrashIcon
+                                                    @click="handleSingleItemDeleteRequest(template.template_uuid)"
                                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                            </div>
+                                        </ejs-tooltip>
+
+                                        <ejs-tooltip v-if="activeTab == 'default'"
+                                            :content="'View details'" position='TopCenter'
+                                            target="#view_tooltip_target">
+                                            <div id="view_tooltip_target">
+                                                <MagnifyingGlassIcon @click="handleViewButtonClick(template.template_uuid)"
+                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+
                                             </div>
                                         </ejs-tooltip>
                                     </div>
@@ -183,18 +194,20 @@
     <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showCreateModal" :header="'Create New Provisioning Template'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateProvisioningTemplateForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
-                @submit="handleCreateRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
-                @success="showNotification('success', $event)" @clear-errors="handleClearErrors" />
+            <CreateProvisioningTemplateForm :options="itemOptions" :errors="formErrors"
+                :is-submitting="createFormSubmiting" @submit="handleCreateRequest" @cancel="handleModalClose"
+                @error="handleFormErrorResponse" @success="showNotification('success', $event)"
+                @clear-errors="handleClearErrors" />
         </template>
     </AddEditItemModal>
 
     <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showEditModal" :header="'Edit Provisioning Template'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdateProvisioningTemplateForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
-                @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
-                @success="showNotification('success', $event)" @clear-errors="handleClearErrors" />
+            <UpdateProvisioningTemplateForm :options="itemOptions" :errors="formErrors" :read-only="readOnly"
+                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"
+                @error="handleFormErrorResponse" @success="showNotification('success', $event)"
+                @clear-errors="handleClearErrors" />
         </template>
     </AddEditItemModal>
 
@@ -243,6 +256,7 @@ const itemOptions = ref([])
 const createFormSubmiting = ref(null);
 const updateFormSubmiting = ref(null);
 const isTemplatesLoading = ref(false)
+const readOnly = ref(false)
 const data = ref({
     data: [],
     prev_page_url: null,
@@ -392,6 +406,15 @@ const handleEditButtonClick = (uuid) => {
     showEditModal.value = true
     formErrors.value = null;
     loadingModal.value = true
+    readOnly.value = false
+    getItemOptions(uuid);
+}
+
+const handleViewButtonClick = (uuid) => {
+    showEditModal.value = true
+    formErrors.value = null;
+    loadingModal.value = true
+    readOnly.value = true
     getItemOptions(uuid);
 }
 
@@ -399,7 +422,6 @@ const handleUpdateRequest = (form) => {
     updateFormSubmiting.value = true;
     formErrors.value = null;
 
-    console.log(itemOptions.value.routes.templates_store)
     axios.put(`${props.routes.templates_store}/${itemOptions.value.item.template_uuid}`, form)
         .then((response) => {
             updateFormSubmiting.value = false;
