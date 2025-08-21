@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class StoreProvisioningTemplateRequest extends FormRequest
+class UpdateProvisioningTemplateRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -16,6 +16,7 @@ class StoreProvisioningTemplateRequest extends FormRequest
 
     public function rules(): array
     {
+        $current = $this->route('provisioning_template');
         return [
             'vendor'        => 'nullable|string',
             'name'          => [
@@ -25,7 +26,8 @@ class StoreProvisioningTemplateRequest extends FormRequest
                 // unique per (vendor, domain_uuid) so different domains can reuse names
                 Rule::unique('provisioning_templates', 'name')
                     ->where(fn($q) => $q->where('vendor', $this->input('vendor'))
-                                        ->where('domain_uuid', $this->input('domain_uuid'))),
+                                        ->where('domain_uuid', $this->input('domain_uuid')))
+                                        ->ignore($current, 'template_uuid'),
             ],
             'content'       => ['nullable', 'string'],
 

@@ -135,7 +135,7 @@
                                         <ejs-tooltip :content="'Edit'" position='TopCenter'
                                             target="#destination_tooltip_target">
                                             <div id="destination_tooltip_target">
-                                                <PencilSquareIcon @click="handleEditButtonClick(call.uuid)"
+                                                <PencilSquareIcon @click="handleEditButtonClick(template.template_uuid)"
                                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
 
                                             </div>
@@ -144,7 +144,7 @@
                                         <ejs-tooltip :content="'Delete'" position='TopCenter'
                                             target="#delete_tooltip_target">
                                             <div id="delete_tooltip_target">
-                                                <TrashIcon @click="handleSingleItemDeleteRequest(call.uuid)"
+                                                <TrashIcon @click="handleSingleItemDeleteRequest(template.template_uuid)"
                                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                             </div>
                                         </ejs-tooltip>
@@ -189,10 +189,10 @@
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showEditModal" :header="'Edit Emergency Call'"
+    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showEditModal" :header="'Edit Provisioning Template'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdateEmergencyCallForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
+            <UpdateProvisioningTemplateForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
                 @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleFormErrorResponse"
                 @success="showNotification('success', $event)" @clear-errors="handleClearErrors" />
         </template>
@@ -211,7 +211,7 @@
 import { ref, computed, watch } from 'vue';
 import AddEditItemModal from "./modal/AddEditItemModal.vue";
 import CreateProvisioningTemplateForm from "./forms/CreateProvisioningTemplateForm.vue";
-import UpdateEmergencyCallForm from "./forms/UpdateEmergencyCallForm.vue";
+import UpdateProvisioningTemplateForm from "./forms/UpdateProvisioningTemplateForm.vue";
 import Notification from "./notifications/Notification.vue";
 import ConfirmationModal from "./modal/ConfirmationModal.vue";
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
@@ -380,7 +380,7 @@ const handleCreateRequest = (form) => {
             createFormSubmiting.value = false;
             showNotification('success', response.data.messages);
             handleModalClose();
-            loadData();
+            handleSearchButtonClick();
         }).catch((error) => {
             createFormSubmiting.value = false;
             handleFormErrorResponse(error);
@@ -399,12 +399,13 @@ const handleUpdateRequest = (form) => {
     updateFormSubmiting.value = true;
     formErrors.value = null;
 
-    axios.put(itemOptions.value.routes.update_route, form)
+    console.log(itemOptions.value.routes.templates_store)
+    axios.put(`${props.routes.templates_store}/${itemOptions.value.item.template_uuid}`, form)
         .then((response) => {
             updateFormSubmiting.value = false;
             showNotification('success', response.data.messages);
             handleModalClose();
-            loadData();
+            handleSearchButtonClick();
         })
         .catch((error) => {
             updateFormSubmiting.value = false;
@@ -441,10 +442,8 @@ const handleModalClose = () => {
 const getItemOptions = (itemUuid = null) => {
     loadingModal.value = true;
 
-    const filter = { type: 'default', }
-
     axios.post(props.routes.templates_item_options, {
-        filter: filter,
+        item_uuid: itemUuid,
     })
         .then((response) => {
             itemOptions.value = response.data;

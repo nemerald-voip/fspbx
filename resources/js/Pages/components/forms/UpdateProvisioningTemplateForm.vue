@@ -69,9 +69,9 @@
                             <span class="ml-2 text-sm text-gray-600">Loading template…</span>
                         </div>
 
-                        <AceEditor v-model="form.content" :lang="editorLang"
-                            :theme="editorTheme" :options="{ fontSize: 16, tabSize: 4, readOnly: isLoadingTemplate }"
-                            :height="'80vh'" class="editor_wrap" />
+                        <AceEditor v-model="form.content" :lang="editorLang" :theme="editorTheme"
+                            :options="{ fontSize: 16, tabSize: 4, readOnly: isLoadingTemplate }" :height="'80vh'"
+                            class="editor_wrap" />
                     </div>
                 </div>
 
@@ -96,7 +96,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from "vue";
+import { reactive, ref, watch } from "vue";
 import Multiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.css'
 import InputField from "../general/InputField.vue";
@@ -115,14 +115,28 @@ const props = defineProps({
 const isLoadingTemplate = ref(false)
 const base_template = ref(null);
 
-const form = reactive({
+const defaults = {
     vendor: null,
     name: null,
-    content: "",
+    content: '',
     base_template: null,
     base_version: null,
     type: 'custom',
-});
+}
+
+const form = reactive({ ...defaults })
+
+function hydrate(item) {
+    for (const k in defaults) form[k] = item?.[k] ?? defaults[k]
+}
+
+// set once and whenever the selected item object changes
+watch(() => props.options?.item, (item) => {
+    hydrate(item)
+    const opts = props.options?.default_templates ?? []
+    base_template.value = opts.find(o => o.name === form.base_template) || null
+}, { immediate: true })
+
 
 const emits = defineEmits(['submit', 'cancel', 'error', 'clear-errors']);
 

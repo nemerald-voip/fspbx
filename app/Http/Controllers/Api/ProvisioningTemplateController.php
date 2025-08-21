@@ -31,8 +31,10 @@ class ProvisioningTemplateController extends Controller
             ])
             ->allowedFilters([
                 AllowedFilter::callback('domain_uuid', function ($q, $value) {
-                    $q->where('domain_uuid', $value)
-                        ->orWhereNull('domain_uuid');
+                    $q->where(function ($qq) use ($value) {
+                        $qq->where('domain_uuid', $value)
+                           ->orWhereNull('domain_uuid');
+                    });
                 }),
                 AllowedFilter::exact('type'),
                 AllowedFilter::callback('search', function ($q, $value) {
@@ -69,7 +71,7 @@ class ProvisioningTemplateController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['New ProvisioningTemplate created']]
+                'messages' => ['success' => ['New provisioning template created']]
             ], 201);
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -92,7 +94,7 @@ class ProvisioningTemplateController extends Controller
             $ProvisioningTemplate = ProvisioningTemplate::find($ProvisioningTemplate_uuid);
             if (!$ProvisioningTemplate) {
                 return response()->json([
-                    'messages' => ['error' => ['ProvisioningTemplate not found.']]
+                    'messages' => ['error' => ['Provisioning template not found.']]
                 ], 404);
             }
 
@@ -101,7 +103,7 @@ class ProvisioningTemplateController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['ProvisioningTemplate updated']]
+                'messages' => ['success' => ['Provisioning template updated']]
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -119,12 +121,9 @@ class ProvisioningTemplateController extends Controller
             $item = null;
             $routes = [];
 
-            if (request()->has('item_uuid')) {
+            if (request()->filled('item_uuid')) {
                 $item = ProvisioningTemplate::findOrFail(request('item_uuid'));
 
-                $updateRoute = $item
-                    ? route('provisioning-templates.update', $item->template_uuid)
-                    : null;
             }
 
             $defaultTemplates = QueryBuilder::for(ProvisioningTemplate::query())
@@ -132,9 +131,7 @@ class ProvisioningTemplateController extends Controller
                     'template_uuid',
                     'name',
                 ])
-                ->allowedFilters([
-                    AllowedFilter::exact('type'),
-                ])
+                ->where('type','default')
                 ->defaultSort('name')
                 ->get()
                 ->map(function ($item) {
