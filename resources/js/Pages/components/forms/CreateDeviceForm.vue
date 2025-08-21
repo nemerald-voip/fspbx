@@ -51,7 +51,9 @@
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
                                     device_address: options.item?.device_address ?? null,
                                     serial_number: options.item?.serial_number ?? null,
-                                    device_template: options.item?.device_template ?? null,
+                                    device_template: options.item?.device_template_uuid
+                                        ?? options.item?.device_template
+                                        ?? null,
                                     device_profile_uuid: options.item?.device_profile_uuid,
                                     domain_uuid: options.item?.domain_uuid,
                                     device_keys: options.lines,

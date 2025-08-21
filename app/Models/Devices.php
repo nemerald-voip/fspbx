@@ -46,6 +46,7 @@ class Devices extends Model
         'device_provisioned_ip',
         'device_provisioned_agent',
         'device_template',
+        'device_template_uuid',
         'device_user_uuid',
         'device_username'
     ];
@@ -95,6 +96,15 @@ class Devices extends Model
     public function domain()
     {
         return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
+    }
+
+    public function template()
+    {
+        return $this->hasOne(
+            \App\Models\ProvisioningTemplate::class,
+            'template_uuid',
+            'device_template_uuid'
+        );
     }
 
     /**

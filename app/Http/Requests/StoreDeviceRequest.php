@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use App\Models\ProvisioningTemplate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
@@ -47,10 +49,19 @@ class StoreDeviceRequest extends FormRequest
                     Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid'),
                 )
             ],
-            'device_template' => [
+
+            // LEGACY template path (kept only when not a UUID)
+            'device_template' => ['nullable', 'string'],
+
+            // NEW: DB template pointer (populated from device_template if it's a UUID)
+            'device_template_uuid' => [
                 'nullable',
-                'string',
+                'uuid',
+                Rule::exists('provisioning_templates', 'template_uuid'),
             ],
+
+            'device_vendor' => ['nullable', 'string', 'max:100'],
+
             'device_keys' => [
                 'nullable',
                 'array'
@@ -119,31 +130,76 @@ class StoreDeviceRequest extends FormRequest
             'device_profile_uuid.required' => 'Profile is required',
             'device_template.required' => 'Template is required',
             'device_address_modified.unique' => 'Duplicate MAC address has been found',
+            'device_template_uuid.uuid'   => 'Selected template is invalid.',
+            'device_template_uuid.exists' => 'Selected template was not found.',
         ];
     }
 
     public function prepareForValidation(): void
     {
-        $macAddress = strtolower(trim(tokenizeMacAddress($this->get('device_address') ?? '')));
+        // Normalize MAC
+        $macAddress = strtolower(trim(tokenizeMacAddress($this->input('device_address') ?? '')));
         $this->merge([
-            'device_address' => formatMacAddress($macAddress),
-            'device_address_modified' => $macAddress
+            'device_address'          => formatMacAddress($macAddress),
+            'device_address_modified' => $macAddress,
         ]);
-
+    
+        // Default domain
         if (!$this->has('domain_uuid')) {
             $this->merge(['domain_uuid' => session('domain_uuid')]);
         }
 
-        if (!$this->has('device_enabled')) {
-            $this->merge(['device_enabled' => 'true']);
+        if (!$this->has('domain_uuid')) {
+            $this->merge(['domain_uuid' => session('domain_uuid')]);
+        }
+    
+        // Normalize serial
+        $serialInput = $this->input('serial_number');
+        if ($serialInput !== null && $serialInput !== '') {
+            $serialNorm = strtolower(preg_replace('/[^a-z0-9]/i', '', (string) $serialInput));
+            $this->merge(['serial_number' => $serialNorm !== '' ? $serialNorm : null]);
+        }
+    
+        // Map device_template → device_template_uuid when UUID is sent
+        $incoming = $this->input('device_template');
+        if (is_string($incoming) && Str::isUuid($incoming)) {
+            $this->merge([
+                'device_template_uuid' => $incoming,
+                'device_template'      => null,   // clear legacy path
+            ]);
+        } elseif (!$this->has('device_template_uuid')) {
+            $this->merge(['device_template_uuid' => null]);
+        }
+    
+        // Derive device_vendor from UUID or legacy path
+        $vendor = null;
+    
+        // Prefer UUID → look up vendor from DB
+        $tplUuid = $this->input('device_template_uuid');  
+        if (is_string($tplUuid) && Str::isUuid($tplUuid)) {
+            $v = ProvisioningTemplate::query()
+                ->where('template_uuid', $tplUuid)
+                ->value('vendor');
+            if (is_string($v) && $v !== '') {
+                $vendor = strtolower($v);
+            }
         }
 
-        $serialInput = $this->get('serial_number');
-        if ($serialInput !== null && $serialInput !== '') {
-            // keep only [a–z0–9], lowercased
-            $serialNorm = strtolower(preg_replace('/[^a-z0-9]/i', '', (string)$serialInput));
-            // if becomes empty after normalization, store null
-            $this->merge(['serial_number' => $serialNorm !== '' ? $serialNorm : null]);
+        // Fallback: legacy path prefix "<vendor>/<template>"
+        if (!$vendor) {
+            $legacy = $this->input('device_template');
+            if (is_string($legacy) && strpos($legacy, '/') !== false) {
+                [$vPrefix] = explode('/', $legacy, 2);
+                if ($vPrefix !== '') {
+                    $vendor = strtolower($vPrefix);
+                }
+            }
+        }
+    
+        // Normalize vendor aliases
+        if ($vendor) {
+            if ($vendor === 'poly') $vendor = 'polycom';
+            $this->merge(['device_vendor' => $vendor]);
         }
     }
 }

@@ -188,7 +188,7 @@ class ProvisioningTemplateController extends Controller
 
             $uuids = request('items');
 
-            $items = ProvisioningTemplate::whereIn('ProvisioningTemplate_uuid', $uuids)
+            $items = ProvisioningTemplate::whereIn('template_uuid', $uuids)
                 ->get();
 
             foreach ($items as $item) {
@@ -198,7 +198,7 @@ class ProvisioningTemplateController extends Controller
             DB::commit();
 
             return response()->json([
-                'messages' => ['success' => ['Selected ProvisioningTemplate(s) were deleted successfully.']]
+                'messages' => ['success' => ['Selected provisioning template(s) were deleted successfully.']]
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -206,7 +206,7 @@ class ProvisioningTemplateController extends Controller
             logger('ProvisioningTemplate bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['An error occurred while deleting the selected ProvisioningTemplate(s).']]
+                'messages' => ['error' => ['An error occurred while deleting the selected provisioning template(s).']]
             ], 500);
         }
     }

@@ -9,10 +9,12 @@
                                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900 sm:px-6">
                                     MAC Address
                                 </th>
-                                <th class="hidden px-6 py-3 text-left text-sm font-semibold text-gray-900 sm:table-cell">
+                                <th
+                                    class="hidden px-6 py-3 text-left text-sm font-semibold text-gray-900 sm:table-cell">
                                     Device Template
                                 </th>
-                                <th class="hidden px-6 py-3 text-left text-sm font-semibold text-gray-900 sm:table-cell">
+                                <th
+                                    class="hidden px-6 py-3 text-left text-sm font-semibold text-gray-900 sm:table-cell">
                                     Profile Name
                                 </th>
                                 <th class="relative px-4 py-3 text-left text-sm font-medium text-gray-500 sm:px-6">
@@ -29,7 +31,13 @@
 
                                     <!-- Device Template: show in mobile view -->
                                     <div class="px-6 py-2 text-sm text-gray-500 sm:hidden">
-                                        {{ device.device_template }}
+                                        <span v-if="device.template && device.template.name">
+                                            {{ (device.template.vendor ? device.template.vendor + '/' : '') +
+                                                device.template.name }}
+                                        </span>
+                                        <span v-else>
+                                            {{ device.device_template || '—' }}
+                                        </span>
                                     </div>
 
                                     <!-- Device Profile Name: show in mobile view -->
@@ -43,7 +51,13 @@
 
                                 <!-- Device Template: show in desktop view -->
                                 <td class="hidden px-6 py-2 text-sm text-gray-500 sm:table-cell">
-                                    {{ device.device_template }}
+                                    <span v-if="device.template && device.template.name">
+                                        {{ (device.template.vendor ? device.template.vendor + '/' : '') +
+                                        device.template.name }}
+                                    </span>
+                                    <span v-else>
+                                        {{ device.device_template || '—' }}
+                                    </span>
                                 </td>
                                 <!-- Device Profile Name: show in desktop view -->
                                 <td class="hidden px-6 py-2 text-sm text-gray-500 sm:table-cell">

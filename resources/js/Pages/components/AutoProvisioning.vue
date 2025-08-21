@@ -441,11 +441,11 @@ const handleSingleItemDeleteRequest = (uuid) => {
 };
 
 const executeBulkDelete = (items = selectedItems.value) => {
-    axios.post(props.routes.emergency_calls_bulk_delete, { items })
+    axios.post(props.routes.templates_bulk_delete, { items })
         .then((response) => {
             handleModalClose();
             showNotification('success', response.data.messages);
-            loadData();
+            handleSearchButtonClick();
         })
         .catch((error) => {
             handleModalClose();

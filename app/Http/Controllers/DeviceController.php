@@ -71,6 +71,7 @@ class DeviceController extends Controller
                 'domain_uuid',
                 'device_uuid',
                 'device_template',
+                'device_template_uuid',
                 'device_label',
                 'device_profile_uuid',
                 'device_address',
@@ -78,18 +79,33 @@ class DeviceController extends Controller
             ])
             // allow ?filter[username]=foo or ?filter[user_email]=bar
             ->allowedFilters([
-                // Only email and name_formatted
                 AllowedFilter::callback('search', function ($query, $value) {
-                    $query->where(function ($q) use ($value) {
-                        $q->where('device_address', 'ilike', "%{$value}%")
-                            ->orWhere('device_template', 'ilike', "%{$value}%")
-                            ->orWhereHas('profile', function ($q2) use ($value) {
-                                $q2->where('device_profile_name', 'ilike', "%{$value}%");
-                            })
-                            ->orWhereHas('lines.extension', function ($q3) use ($value) {
-                                $q3->where('extension', 'ilike', "%{$value}%")
-                                    ->orWhere('effective_caller_id_name', 'ilike', "%{$value}%");
-                            });
+                    $needle = trim((string) $value);
+                
+                    // normalize MAC like "00:04:F2:3A:5B:C7" -> "0004f23a5bc7"
+                    $norm = strtolower(preg_replace('/[^0-9a-f]/i', '', $needle));
+                
+                    $query->where(function ($q) use ($needle, $norm) {
+                        // device_address: match raw input OR normalized version
+                        $q->where(function ($q2) use ($needle, $norm) {
+                            // in case someone pasted the DB-format already or a partial
+                            $q2->orWhereRaw('lower(device_address) LIKE ?', ["%{$norm}%"]);
+                
+                            // exact match if a full 12-hex MAC was provided
+                            if (strlen($norm) === 12) {
+                                $q2->orWhereRaw('lower(device_address) = ?', [$norm]);
+                            }
+                        })
+                
+                        // the rest of free-text search 
+                        ->orWhere('device_template', 'ilike', "%{$needle}%")
+                        ->orWhereHas('profile', function ($q2) use ($needle) {
+                            $q2->where('device_profile_name', 'ilike', "%{$needle}%");
+                        })
+                        ->orWhereHas('lines.extension', function ($q3) use ($needle) {
+                            $q3->where('extension', 'ilike', "%{$needle}%")
+                               ->orWhere('effective_caller_id_name', 'ilike', "%{$needle}%");
+                        });
                     });
                 }),
                 AllowedFilter::callback('showGlobal', function ($query, $value) use ($currentDomain) {
@@ -119,6 +135,9 @@ class DeviceController extends Controller
             }])
             ->with(['domain' => function ($query) {
                 $query->select('domain_uuid', 'domain_name', 'domain_description');
+            }])
+            ->with(['template' => function ($query) {
+                $query->select('template_uuid', 'domain_uuid', 'vendor','name');
             }])
 
             ->allowedSorts(['device_address'])
@@ -222,10 +241,7 @@ class DeviceController extends Controller
             DB::beginTransaction();
 
             $inputs = $validated;
-            $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0] ?? null;
-            if ($inputs['device_vendor'] === 'poly') {
-                $inputs['device_vendor'] = 'polycom';
-            }
+
             $inputs['device_address'] = $inputs['device_address_modified'];
 
             // Create device
@@ -319,11 +335,7 @@ class DeviceController extends Controller
 
         try {
             DB::beginTransaction();
-            // Prepare device inputs for update
-            $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0] ?? null;
-            if ($inputs['device_vendor'] === 'poly') {
-                $inputs['device_vendor'] = 'polycom';
-            }
+
             // Device DB uses device_address, set it from device_address_modified
             $inputs['device_address'] = $inputs['device_address_modified'];
 
@@ -591,6 +603,7 @@ class DeviceController extends Controller
                         'domain_uuid',
                         'device_uuid',
                         'device_template',
+                        'device_template_uuid',
                         'device_label',
                         'device_profile_uuid',
                         'device_address',

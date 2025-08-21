@@ -51,7 +51,9 @@
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
                                     device_address: options.item?.device_address ?? null,
                                     serial_number: options.item?.serial_number ?? null,
-                                    device_template: options.item?.device_template ?? null,
+                                    device_template: options.item?.device_template_uuid
+                                        ?? options.item?.device_template
+                                        ?? null, 
                                     device_profile_uuid: options.item?.device_profile_uuid,
                                     domain_uuid: options.item?.domain_uuid,
                                     device_keys: options.lines,
@@ -132,8 +134,7 @@
                                                     }" />
 
                                                 <TextElement name="serial_number" label="Serial Number (Optional)"
-                                                    placeholder="Enter Serial Number" :floating="false"
-                                                    :columns="{
+                                                    placeholder="Enter Serial Number" :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
@@ -395,7 +396,7 @@
                                                                     2 errors with your submission</h3> -->
                                                                 <div class="text-sm text-red-700">
                                                                     <span>Last Action: {{ provisioning.last_action
-                                                                        }}</span>
+                                                                    }}</span>
                                                                 </div>
                                                                 <div class="text-sm text-red-700">
                                                                     <span>Error: {{ provisioning.error }}</span>
