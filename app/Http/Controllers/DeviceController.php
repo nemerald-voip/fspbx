@@ -266,6 +266,8 @@ class DeviceController extends Controller
                             'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
                             'server_address_primary' => $line['server_address_primary'] ?? get_domain_setting('server_address_primary'),
                             'server_address_secondary' => $line['server_address_secondary'] ?? get_domain_setting('server_address_secondary'),
+                            'outbound_proxy_primary' => $line['outbound_proxy_primary'] ?? get_domain_setting('outbound_proxy_primary'),
+                            'outbound_proxy_secondary' => $line['outbound_proxy_secondary'] ?? get_domain_setting('outbound_proxy_secondary') ,
                             'display_name' => $line['display_name'],
                             'user_id' => $extension ? $extension->extension : null,
                             'auth_id' => $extension ? $extension->extension : $line['auth_id'],
@@ -362,6 +364,8 @@ class DeviceController extends Controller
                             'server_address' => $line['server_address'],
                             'server_address_primary' => $line['server_address_primary'],
                             'server_address_secondary' => $line['server_address_secondary'],
+                            'outbound_proxy_primary' => $line['outbound_proxy_primary'],
+                            'outbound_proxy_secondary' => $line['outbound_proxy_secondary'],
                             'display_name' => $line['display_name'],
                             'user_id' => $extension ? $extension->extension : null,
                             'auth_id' => $extension ? $extension->extension : $line['auth_id'],
@@ -699,6 +703,8 @@ class DeviceController extends Controller
                         'server_address',
                         'server_address_primary',
                         'server_address_secondary',
+                        'outbound_proxy_primary',
+                        'outbound_proxy_secondary',
                         'sip_port',
                         'sip_transport',
                         'register_expires',
@@ -759,6 +765,8 @@ class DeviceController extends Controller
                 'server_address' => session('domain_name'),
                 'server_address_primary' => get_domain_setting('server_address_primary'),
                 'server_address_secondary' => get_domain_setting('server_address_secondary'),
+                'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
+                'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
                 'sip_port' => get_domain_setting('line_sip_port'),
                 'sip_transport' => get_domain_setting('line_sip_transport'),
                 'register_expires' => get_domain_setting('line_register_expires'),
@@ -1018,6 +1026,7 @@ class DeviceController extends Controller
         $permissions['device_key_create'] = userCheckPermission('device_key_add');
         $permissions['device_key_update'] = userCheckPermission('device_key_edit');
         $permissions['device_key_destroy'] = userCheckPermission('device_key_delete');
+        $permissions['device_key_advanced'] = userCheckPermission('device_key_advanced');
         $permissions['device_address_update'] = userCheckPermission('device_address');
         $permissions['device_template_update'] = userCheckPermission('device_template');
         $permissions['device_domain_update'] = userCheckPermission('device_domain');
@@ -1026,6 +1035,10 @@ class DeviceController extends Controller
         $permissions['device_setting_add'] = userCheckPermission('device_setting_add');
         $permissions['device_setting_update'] = userCheckPermission('device_setting_edit');
         $permissions['device_setting_destroy'] = userCheckPermission('device_setting_delete');
+        $permissions['manage_device_line_primary_server'] = userCheckPermission('device_line_server_address_primary');
+        $permissions['manage_device_line_secondary_server'] = userCheckPermission('device_line_server_address_secondary');
+        $permissions['manage_device_line_primary_proxy'] = userCheckPermission('device_line_outbound_proxy_primary');
+        $permissions['manage_device_line_secondary_proxy'] = userCheckPermission('device_line_outbound_proxy_secondary');
 
         return $permissions;
     }

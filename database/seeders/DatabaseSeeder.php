@@ -134,6 +134,7 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Locations', 'permission_name' => 'location_create'],
             ['application_name' => 'Locations', 'permission_name' => 'location_update'],
             ['application_name' => 'Locations', 'permission_name' => 'location_delete'],
+            ['application_name' => 'Devices', 'permission_name' => 'device_key_advanced'],
         ];
         $timestamp = date("Y-m-d H:i:s");
 
@@ -215,6 +216,11 @@ class DatabaseSeeder extends Seeder
                 'location_create',
                 'location_update',
                 'location_delete',
+                'device_key_advanced',
+                'device_line_server_address_primary',
+                'device_line_server_address_secondary',
+                'device_line_outbound_proxy_primary',
+                'device_line_outbound_proxy_secondary',
             ],
             'admin' => [
                 'wakeup_calls_list_view',

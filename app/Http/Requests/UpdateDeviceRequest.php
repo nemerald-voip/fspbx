@@ -76,6 +76,8 @@ class UpdateDeviceRequest extends FormRequest
             'device_keys.*.server_address' => ['nullable'],
             'device_keys.*.server_address_primary' => ['nullable'],
             'device_keys.*.server_address_secondary' => ['nullable'],
+            'device_keys.*.outbound_proxy_primary' => ['nullable'],
+            'device_keys.*.outbound_proxy_secondary' => ['nullable'],
             'device_keys.*.sip_port' => ['nullable'],
             'device_keys.*.sip_transport' => ['nullable'],
             'device_keys.*.register_expires' => ['nullable'],
