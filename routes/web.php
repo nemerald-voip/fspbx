@@ -88,10 +88,10 @@ Route::get('/csrf-token/refresh', [CsrfTokenController::class, 'store']);
 Route::get('/mobile-app/get-password/{token}', [AppsCredentialsController::class, 'getPasswordByToken'])->name('appsGetPasswordByToken');
 Route::post('/mobile-app/get-password/{token}', [AppsCredentialsController::class, 'retrievePasswordByToken'])->name('appsRetrievePasswordByToken');
 
-Route::match(['GET','HEAD','PUT'], '/prov/{path?}', [ProvisioningController::class, 'handle'])
+Route::match(['GET','HEAD'], '/prov/{path}', [ProvisioningController::class, 'serve'])
     ->where('path', '.*')
-    ->middleware('provision.digest')   // digest required for ALL requests
-    ->name('provision.handle');
+    ->middleware(['throttle:provision', 'provision.digest'])
+    ->name('provision.serve');
 
 Route::group(['middleware' => 'auth'], function () {
 

@@ -1,39 +1,45 @@
 <?php
+// app/Services/Provisioning/VendorRouter.php
 
 namespace App\Services\Provisioning;
 
-class VendorContext {
-    public string $vendor = 'generic';
-    public ?string $mac = null;        // AABBCCDDEEFF
-    public string $filename = '';      // final segment
-    public array  $segments = [];      // full path split
-    public bool   $isSensitiveConfig = false; // cfg/xml (likely contains creds)
-}
+use App\Models\Devices;
 
 class VendorRouter
 {
-    public function analyze(string $path, string $ua): VendorContext
+    /**
+     * Extract a lookup token from the filename stem.
+     * - Normalize to lowercase, keep only [a-z0-9]
+     * - If the result contains NO digits (e.g., "default"), return null → skip
+     */
+    public static function tokenFromId(string $id): ?string
     {
-        $ctx = new VendorContext;
-        $ctx->segments = array_values(array_filter(explode('/', $path)));
-        $ctx->filename = end($ctx->segments) ?: 'index';
-
-        // Vendor hint from UA / path
-        if (stripos($ua, 'Polycom') !== false || stripos($ua, 'VVX') !== false) {
-            $ctx->vendor = 'polycom';
-        } elseif (preg_match('#^(\d{2})/#', $path) && stripos($ua, 'DAG') !== false) {
-            // Dinstar family prefix like "83/"
-            $ctx->vendor = 'dinstar';
+        $token = strtolower(preg_replace('/[^a-z0-9]/i', '', $id));
+        if ($token === '' || !preg_match('/\d/', $token)) {
+            // e.g., "default", "polycom", etc. → do not attempt a device lookup
+            return null;
         }
+        return $token;
+    }
 
-        // Try to extract a MAC from path or UA (12 hex)
-        if (preg_match('/([0-9A-Fa-f]{12})/', $path, $m)) {
-            $ctx->mac = strtoupper($m[1]);
-        } elseif (preg_match('/([0-9A-Fa-f]{12})/', $ua, $m)) {
-            $ctx->mac = strtoupper($m[1]);
-        }
+    /** Map extension to MIME */
+    public static function contentTypeFromExt(string $ext): string
+    {
+        return strtolower($ext) === 'xml' ? 'application/xml' : 'text/plain';
+    }
 
-        $ctx->isSensitiveConfig = (bool) preg_match('/\.(cfg|xml)$/i', $ctx->filename);
-        return $ctx;
+    /**
+     * Find device by token in EITHER device_address OR serial_number.
+     * Assumes device_address is already stored normalized (lowercase 12-hex).
+     */
+    public static function findDeviceByToken(string $token): ?Devices
+    {
+        if ($token === '') return null;
+
+        return Devices::where(function ($q) use ($token) {
+                $q->where('device_address', $token)
+                  ->orWhere('serial_number', $token);
+            })
+            ->first();
     }
 }
