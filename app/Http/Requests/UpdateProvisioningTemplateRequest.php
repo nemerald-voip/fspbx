@@ -68,7 +68,6 @@ class UpdateProvisioningTemplateRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        logger($this);
         // Normalize strings and set domain scoping rules
         $vendor = $this->input('vendor');
         $type   = $this->input('type');

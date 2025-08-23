@@ -1,13 +1,13 @@
 {{-- 
-version: 1.0.0
+version: 1.0.1
 --}}
 <?xml version="1.0" encoding="UTF-8"?>
 <config version="5.8" md5=" ">
     <sipserver>
         <server0>
-            <param name="domain" value="{$account.1.server_address}" />
-            <param name="port" value="{$account.1.sip_port}" />
-            <param name="reg_interval" value="{$account.1.register_expires}" />
+            <param name="domain" value="{{ $lines[1]['server_address'] ?? '' }}" />
+            <param name="port" value="{{ $lines[1]['sip_port'] ?? '' }}" />
+            <param name="reg_interval" value="{{ $lines[1]['register_expires'] ?? '' }}" />
             <param name="heartbeat" value="enable" />
         </server0>
         <server1>
@@ -17,18 +17,12 @@ version: 1.0.0
             <param name="heartbeat" value="enable" />
         </server1>
         <outbound>
-            <param name="domain" value="{$outbound_proxy_primary}" />
-            <param name="port" value="{$account.1.sip_port}" />
-            <param name="sec_domain" value="" />
-            <param name="sec_port" value="{$account.1.sip_port}" />
+            <param name="domain" value="{{ $lines[1]['outbound_proxy_primary'] ?? '' }}" />
+            <param name="port" value="{{ $lines[1]['sip_port'] ?? '' }}" />
+            <param name="sec_domain" value="{{ $lines[1]['outbound_proxy_secondary'] ?? '' }}" />
+            <param name="sec_port" value="{{ $lines[1]['sip_port'] ?? '' }}" />
         </outbound>
-        <!-- SIP Transport -->
-		<!-- UDP, TCP, Tls Or Tcp -->
-        {$tp=udp}
-        {if $account.1.sip_transport == 'udp'}{$tp=udp}{/if}
-	    {if $account.1.sip_transport == 'tcp'}{$tp=tcp}{/if}
-	    {if $account.1.sip_transport == 'tls'}{$tp=tls}{/if}
-        <param name="transport" value="{$tp}" />
+        <param name="transport" value="{{ $lines[1]['sip_transport'] ?? '' }}" />
         <local>
             <param name="random_port" value="disable" />
             <param name="udp_port" value="5060" />
@@ -46,776 +40,50 @@ version: 1.0.0
         <param name="tls_bidirectional_auth" value="disable" />
     </sipserver>
     <sipacc>
-        <sipacc0>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.1.display_name}" />
-            <param name="user_id" value="{$account.1.user_id}" />
-            <param name="auth_id" value="{$account.1.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.1.password}" />
-            {if !isset($account.1.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="disable" />
-            {else}
+    @foreach ($lines as $line)
+        @php
+            // line_number may be a string — coerce to int
+            $ln  = (int) ($line['line_number'] ?? 0);
+            $idx = $ln > 0 ? $ln - 1 : 0;   // Dinstar uses 0-based block names
+        @endphp
+        <sipacc{{ $idx }}>
+            <param name="serverid"   value="0" />
+            <param name="display"    value="{{ $line['display_name'] ?? $line['auth_id'] }}" />
+            <param name="user_id"    value="{{ $line['auth_id'] ?? ''}}" />
+            <param name="auth_id"    value="{{ $line['auth_id'] ?? ''}}" />
+            <param name="auth_pwd" value="{{ $line['password'] ?? ''}}" />
             <param name="isregister" value="enable" />
-            {/if}
-        </sipacc0>
-        <sipacc1>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.2.display_name}" />
-            <param name="user_id" value="{$account.2.user_id}" />
-            <param name="auth_id" value="{$account.2.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.2.password}" />
-            {if !isset($account.2.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="enable" />
-            {else}
-            <param name="isregister" value="disable" />
-            {/if}
-        </sipacc1>
-        <sipacc2>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.3.display_name}" />
-            <param name="user_id" value="{$account.3.user_id}" />
-            <param name="auth_id" value="{$account.3.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.3.password}" />
-            {if !isset($account.3.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="enable" />
-            {else}
-            <param name="isregister" value="disable" />
-            {/if}
-        </sipacc2>
-        <sipacc3>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.4.display_name}" />
-            <param name="user_id" value="{$account.4.user_id}" />
-            <param name="auth_id" value="{$account.4.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.4.password}" />
-             {if !isset($account.4.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="enable" />
-            {else}
-            <param name="isregister" value="disable" />
-            {/if}
-        </sipacc3>
-        <sipacc4>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.5.display_name}" />
-            <param name="user_id" value="{$account.5.user_id}" />
-            <param name="auth_id" value="{$account.5.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.5.password}" />
-            {if !isset($account.5.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="enable" />
-            {else}
-            <param name="isregister" value="disable" />
-            {/if}
-        </sipacc4>
-        <sipacc5>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.6.display_name}" />
-            <param name="user_id" value="{$account.6.user_id}" />
-            <param name="auth_id" value="{$account.6.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.6.password}" />
-            {if !isset($account.6.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="enable" />
-            {else}
-            <param name="isregister" value="disable" />
-            {/if}
-        </sipacc5>
-        <sipacc6>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.7.display_name}" />
-            <param name="user_id" value="{$account.7.user_id}" />
-            <param name="auth_id" value="{$account.7.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.7.password}" />
-            {if !isset($account.7.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="enable" />
-            {else}
-            <param name="isregister" value="disable" />
-            {/if}
-        </sipacc6>
-        <sipacc7>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.8.display_name}" />
-            <param name="user_id" value="{$account.8.user_id}" />
-            <param name="auth_id" value="{$account.8.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.8.password}" />
-            {if !isset($account.8.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="enable" />
-            {else}
-            <param name="isregister" value="disable" />
-            {/if}
-        </sipacc7>
-        <sipacc8>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.9.display_name}" />
-            <param name="user_id" value="{$account.9.user_id}" />
-            <param name="auth_id" value="{$account.9.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.9.password}" />
-            {if !isset($account.9.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="enable" />
-            {else}
-            <param name="isregister" value="disable" />
-            {/if}
-        </sipacc8>
-        <sipacc9>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.10.display_name}" />
-            <param name="user_id" value="{$account.10.user_id}" />
-            <param name="auth_id" value="{$account.10.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.10.password}" />
-            {if !isset($account.10.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="enable" />
-            {else}
-            <param name="isregister" value="disable" />
-            {/if}
-        </sipacc9>
-        <sipacc10>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.11.display_name}" />
-            <param name="user_id" value="{$account.11.user_id}" />
-            <param name="auth_id" value="{$account.11.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.11.password}" />
-            {if !isset($account.11.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="enable" />
-            {else}
-            <param name="isregister" value="disable" />
-            {/if}
-        </sipacc10>
-        <sipacc11>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.12.display_name}" />
-            <param name="user_id" value="{$account.12.user_id}" />
-            <param name="auth_id" value="{$account.12.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.12.password}" />
-            {if !isset($account.12.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="enable" />
-            {else}
-            <param name="isregister" value="disable" />
-            {/if}
-        </sipacc11>
-        <sipacc12>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.13.display_name}" />
-            <param name="user_id" value="{$account.13.user_id}" />
-            <param name="auth_id" value="{$account.13.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.13.password}" />
-            {if !isset($account.13.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="enable" />
-            {else}
-            <param name="isregister" value="disable" />
-            {/if}
-        </sipacc12>
-        <sipacc13>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.14.display_name}" />
-            <param name="user_id" value="{$account.14.user_id}" />
-            <param name="auth_id" value="{$account.14.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.14.password}" />
-            {if !isset($account.14.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="enable" />
-            {else}
-            <param name="isregister" value="disable" />
-            {/if}
-        </sipacc13>
-        <sipacc14>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.15.display_name}" />
-            <param name="user_id" value="{$account.15.user_id}" />
-            <param name="auth_id" value="{$account.15.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.15.password}" />
-            {if !isset($account.15.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="enable" />
-            {else}
-            <param name="isregister" value="disable" />
-            {/if}
-        </sipacc14>
-        <sipacc15>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.16.display_name}" />
-            <param name="user_id" value="{$account.16.user_id}" />
-            <param name="auth_id" value="{$account.16.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.16.password}" />
-            {if !isset($account.16.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="enable" />
-            {else}
-            <param name="isregister" value="disable" />
-            {/if}
-        </sipacc15>
-        <sipacc16>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.17.display_name}" />
-            <param name="user_id" value="{$account.17.user_id}" />
-            <param name="auth_id" value="{$account.17.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.17.password}" />
-            {if !isset($account.17.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="enable" />
-            {else}
-            <param name="isregister" value="disable" />
-            {/if}
-        </sipacc16>
-        <sipacc17>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.18.display_name}" />
-            <param name="user_id" value="{$account.18.user_id}" />
-            <param name="auth_id" value="{$account.18.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.18.password}" />
-            {if !isset($account.18.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="enable" />
-            {else}
-            <param name="isregister" value="disable" />
-            {/if}
-        </sipacc17>
-        <sipacc18>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.19.display_name}" />
-            <param name="user_id" value="{$account.19.user_id}" />
-            <param name="auth_id" value="{$account.19.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.19.password}" />
-            {if !isset($account.19.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="enable" />
-            {else}
-            <param name="isregister" value="disable" />
-            {/if}
-        </sipacc18>
-        <sipacc19>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.20.display_name}" />
-            <param name="user_id" value="{$account.20.user_id}" />
-            <param name="auth_id" value="{$account.20.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.20.password}" />
-            {if !isset($account.20.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="enable" />
-            {else}
-            <param name="isregister" value="disable" />
-            {/if}
-        </sipacc19>
-        <sipacc20>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.21.display_name}" />
-            <param name="user_id" value="{$account.21.user_id}" />
-            <param name="auth_id" value="{$account.21.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.21.password}" />
-            {if !isset($account.21.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="enable" />
-            {else}
-            <param name="isregister" value="disable" />
-            {/if}
-        </sipacc20>
-        <sipacc21>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.22.display_name}" />
-            <param name="user_id" value="{$account.22.user_id}" />
-            <param name="auth_id" value="{$account.22.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.22.password}" />
-            {if !isset($account.22.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="enable" />
-            {else}
-            <param name="isregister" value="disable" />
-            {/if}
-        </sipacc21>
-        <sipacc22>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.23.display_name}" />
-            <param name="user_id" value="{$account.23.user_id}" />
-            <param name="auth_id" value="{$account.23.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.23.password}" />
-            {if !isset($account.23.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="enable" />
-            {else}
-            <param name="isregister" value="disable" />
-            {/if}
-        </sipacc22>
-        <sipacc23>
-            <param name="serverid" value="0" />
-            <param name="display" value="{$account.24.display_name}" />
-            <param name="user_id" value="{$account.24.user_id}" />
-            <param name="auth_id" value="{$account.24.user_id}" />
-            <param name="auth_pwd_aes" value="{$account.24.password}" />
-            {if !isset($account.24.user_id) && $dinstar_fxs_enabled == enable}
-            <param name="isregister" value="enable" />
-            {else}
-            <param name="isregister" value="disable" />
-            {/if}
-        </sipacc23>
+        </sipacc{{ $idx }}>
+    @endforeach
     </sipacc>
     <ports>
-        <port0>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="0" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_1}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port0>
-        <port1>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="1" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_2}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port1>
-        <port2>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="2" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_3}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port2>
-        <port3>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="3" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_4}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port3>
-        <port4>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="4" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_5}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port4>
-        <port5>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="5" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_6}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port5>
-        <port6>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="6" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_7}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port6>
-        <port7>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="7" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_8}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port7>
-        <port8>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="8" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_9}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port8>
-        <port9>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="9" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_10}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port9>
-        <port10>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="10" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_11}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port10>
-        <port11>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="11" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_12}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port11>
-        <port12>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="12" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_13}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port12>
-        <port13>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="13" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_14}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port13>
-        <port14>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="14" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_15}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port14>
-        <port15>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="15" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_16}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port15>
-        <port16>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="16" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_17}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port16>
-        <port17>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="17" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_18}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port17>
-        <port18>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="18" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_19}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port18>
-        <port19>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="19" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_20}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port19>
-        <port20>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="20" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_21}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port20>
-        <port21>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="21" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_22}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port21>
-        <port22>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="22" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_23}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port22>
-        <port23>
-            <param name="enable" value="enable" />
-            <param name="primary_sipacc_id" value="23" />
-            <param name="second_sipacc_id" value="65535" />
-            <param name="auto_dial" value="{$dinstar_offhook_auto_dial_24}" />
-            <param name="auto_dial_timeout" value="0" />
-            <param name="dnd" value="disable" />
-            <param name="callerid" value="enable" />
-            <param name="cfu" value="" />
-            <param name="cfb" value="" />
-            <param name="cfnry" value="" />
-            <param name="call_waiting" value="disable" />
-            <param name="call_waiting_tone" value="disable" />
-            <param name="call_waiting_send_cid" value="disable" />
-            <param name="function" value="" />
-            <param name="ipprofileindex" value="0" />
-            <param name="telprofileindex" value="0" />
-            <param name="call_limit_count" value="0" />
-            <param name="call_limit_period" value="0" />
-        </port23>
+    @foreach ($lines as $line)
+        @php
+            // line_number may be a string — coerce to int
+            $ln  = (int) ($line['line_number'] ?? 0);
+            $idx = $ln > 0 ? $ln - 1 : 0;   // Dinstar uses 0-based block names
+        @endphp
+        <port{{ $idx }}>
+            <param name="enable"                 value="enable" />
+            <param name="primary_sipacc_id"      value="{{ $idx }}" />
+            <param name="second_sipacc_id"       value="65535" />
+            <param name="auto_dial"              value="" />
+            <param name="auto_dial_timeout"      value="0" />
+            <param name="dnd"                    value="disable" />
+            <param name="callerid"               value="enable" />
+            <param name="cfu"                    value="" />
+            <param name="cfb"                    value="" />
+            <param name="cfnry"                  value="" />
+            <param name="call_waiting"           value="disable" />
+            <param name="call_waiting_tone"      value="disable" />
+            <param name="call_waiting_send_cid"  value="disable" />
+            <param name="function"               value="" />
+            <param name="ipprofileindex"         value="0" />
+            <param name="telprofileindex"        value="0" />
+            <param name="call_limit_count"       value="0" />
+            <param name="call_limit_period"      value="0" />
+        </port{{ $idx }}>
+    @endforeach
     </ports>
     <portgroup />
     <fxs_fxo>
@@ -922,86 +190,6 @@ version: 1.0.0
             <param name="cid_modulation_type" value="0" />
             <param name="dtmf_code" value="" />
         </fxs>
-        <fxo>
-            <incoming>
-                <param name="allow_config_by_fxo" value="enable" />
-                <param name="cid_detect" value="1" />
-                <param name="send_original_cid" value="enable" />
-                <param name="from_format_cid_available" value="2" />
-                <param name="from_format_cid_unavailable" value="0" />
-                <param name="keep_onhook" value="enable" />
-                <param name="call_reject_timeout" value="600" />
-                <param name="play_hint_to_fxo" value="enable" />
-                <param name="allow_call_to_server_without_registration" value="enable" />
-            </incoming>
-            <outgoing>
-                <param name="one_stage_dialing" value="enable" />
-                <param name="dial_delay" value="400" />
-                <param name="answer_caller_when_polarity_reversal" value="enable" />
-                <param name="answer_caller_delay" value="10" />
-                <param name="dial_mode" value="0" />
-                <param name="pulse_mode" value="0" />
-            </outgoing>
-            <param name="onhook_when_busy_detect" value="enable" />
-            <param name="onhook_when_no_current" value="disable" />
-            <param name="current_disconnect_threshold" value="2000" />
-            <param name="dc_impedance" value="0" />
-            <param name="ac_impedance" value="0" />
-            <fxo_acim>
-                <param name="acim_port0" value="255" />
-                <param name="acim_port1" value="255" />
-                <param name="acim_port2" value="255" />
-                <param name="acim_port3" value="255" />
-                <param name="acim_port4" value="255" />
-                <param name="acim_port5" value="255" />
-                <param name="acim_port6" value="255" />
-                <param name="acim_port7" value="255" />
-                <param name="acim_port8" value="255" />
-                <param name="acim_port9" value="255" />
-                <param name="acim_port10" value="255" />
-                <param name="acim_port11" value="255" />
-                <param name="acim_port12" value="255" />
-                <param name="acim_port13" value="255" />
-                <param name="acim_port14" value="255" />
-                <param name="acim_port15" value="255" />
-                <param name="acim_port16" value="255" />
-                <param name="acim_port17" value="255" />
-                <param name="acim_port18" value="255" />
-                <param name="acim_port19" value="255" />
-                <param name="acim_port20" value="255" />
-                <param name="acim_port21" value="255" />
-                <param name="acim_port22" value="255" />
-                <param name="acim_port23" value="255" />
-            </fxo_acim>
-            <fxo_hybrid>
-                <param name="port0" value="255" />
-                <param name="port1" value="255" />
-                <param name="port2" value="255" />
-                <param name="port3" value="255" />
-                <param name="port4" value="255" />
-                <param name="port5" value="255" />
-                <param name="port6" value="255" />
-                <param name="port7" value="255" />
-                <param name="port8" value="255" />
-                <param name="port9" value="255" />
-                <param name="port10" value="255" />
-                <param name="port11" value="255" />
-                <param name="port12" value="255" />
-                <param name="port13" value="255" />
-                <param name="port14" value="255" />
-                <param name="port15" value="255" />
-                <param name="port16" value="255" />
-                <param name="port17" value="255" />
-                <param name="port18" value="255" />
-                <param name="port19" value="255" />
-                <param name="port20" value="255" />
-                <param name="port21" value="255" />
-                <param name="port22" value="255" />
-                <param name="port23" value="255" />
-            </fxo_hybrid>
-            <param name="ac_impedance_select" value="0" />
-            <param name="ac_impedance_country" value="0" />
-        </fxo>
         <dsp>
             <param name="fax_vaolume" value="0" />
             <param name="busy_tone_detect_druation" value="50" />
@@ -1475,7 +663,7 @@ version: 1.0.0
             <param name="enabled" value="enable" />
         </feature30>
         <feature31>
-            <param name="default" value="{$voicemail_number}" />
+            <param name="default" value="*97" />
             <param name="current" value="" />
             <param name="usedefault" value="enable" />
             <param name="enabled" value="enable" />
@@ -1620,7 +808,7 @@ version: 1.0.0
                 <users>
                     <user1>
                         <param name="username" value="admin" />
-                        <param name="password" value="{$admin_password}" />
+                        <param name="password" value="admin" />
                     </user1>
                 </users>
                 <param name="logout_time" value="5" />
@@ -1634,7 +822,7 @@ version: 1.0.0
                 <users>
                     <user1>
                         <param name="username" value="admin" />
-                        <param name="password" value="{$admin_password}" />
+                        <param name="password" value="admin" />
                     </user1>
                 </users>
                 <param name="username_aes" value="admin" />
@@ -2111,19 +1299,6 @@ version: 1.0.0
     <actionurl>
         <param name="HeartbeatInterval" value="10" />
     </actionurl>
-    <websclassify>
-        <users>
-            <user0>
-                <param name="ID" value="0" />
-                <param name="username" value="admin" />
-                <param name="pwd" value="B_&quot;H)\3:,1.1_0&lt;O&lt;9GE:6F]+HT)13#;4%V(Y`YXDJI!er &lt;" />
-                <param name="roleID" value="0" />
-                <param name="disable" value="0" />
-                <param name="pwd_aes" value="euLUpj0cPhoYeh/Yn0ce9Q==" />
-                <param name="hex_pwd_aes" value="Gbxoqge58FJqH2FSaAp9VA==" />
-            </user0>
-        </users>
-    </websclassify>
     <relayserver>
         <param name="flag" value="off" />
         <param name="domain" value="" />
@@ -3315,4 +2490,3 @@ version: 1.0.0
         </security>
     </network>
 </config>
-

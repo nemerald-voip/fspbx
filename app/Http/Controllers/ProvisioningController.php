@@ -48,6 +48,16 @@ class ProvisioningController extends Controller
 
         // Build Blade variables and render
         $vars = $this->buildTemplateVars($device);
+        // Compute flavor + MIME
+        $flv = $this->computeFlavor($request, $device, $id, $ext);
+
+        // Add provisioning context
+        $vars += [
+            'flavor'        => $flv['flavor'],           // 'serial.xml' | 'mac.cfg' | 'poly-index.cfg' | 'yealink-model.cfg'
+            'requested_ext' => strtolower($ext),
+        ];
+
+        logger($vars);
         $body = Blade::render($tpl->content, $vars);
 
         // ETag / 304 support
@@ -102,54 +112,68 @@ class ProvisioningController extends Controller
 
     private function buildTemplateVars(Devices $device): array
     {
-        $macRaw   = strtolower(preg_replace('/[^0-9a-f]/i', '', (string) $device->device_address));
-        $macCol   = strtoupper(implode(':', str_split($macRaw, 2)));
-        $macDash  = strtoupper(implode('-', str_split($macRaw, 2)));
+        $device->load([
+            'lines' => function ($q) {
+                // include the PK and the FK back to devices + anything you actually use
+                $q->select([
+                    'device_line_uuid',   // PK on device_lines
+                    'device_uuid',        // FK to devices (required for the relation)
+                    'line_number',
+                    'auth_id',
+                    'server_address',
+                    'server_address_primary',
+                    'server_address_secondary',
+                    'outbound_proxy_primary',
+                    'outbound_proxy_secondary',
+                    'display_name',
+                    'password',
+                    'sip_port',
+                    'sip_transport',
+                    'register_expires',
+                    'shared_line',
+                    'domain_uuid',
+                ]);
+            },
+            'domain' => function ($q) {
+                $q->select([
+                    'domain_uuid',
+                    'domain_name',
+                ]);
+            },
+        ]);
 
-        $device->loadMissing(['lines', 'lines.extension']);
-        $lines = $device->lines->sortBy('line_number')->values();
-
-        $account = [];
-        foreach ($lines as $line) {
-            $i = max(1, (int) $line->line_number);
-            $ext = $line->extension;
-            $account[$i] = [
-                'auth_id'           => $ext?->extension ?? $line->auth_id,
-                'password'          => $ext?->password ?? null,
-                'display_name'      => $ext?->effective_caller_id_name ?? $line->display_name,
-                'server_address'    => $line->server_address ?: ($line->server_address_primary ?? null),
-                'server_address_primary'   => $line->server_address_primary,
-                'server_address_secondary' => $line->server_address_secondary,
-                'sip_port'          => $line->sip_port,
-                'sip_transport'     => $line->sip_transport,
-                'register_expires'  => $line->register_expires,
-                'line_number'       => $i,
+        $lines = [];
+        foreach ($device->lines as $line) {
+            $lines[$line->line_number] = [
+                'auth_id'           => $line->auth_id ?? null,
+                'password'          => $line->password ?? null,
+                'display_name'      => $line->display_name ?? null,
+                'server_address'    => $line->server_address ?? null,
+                'server_address_primary'   => $line->server_address_primary ?? null,
+                'server_address_secondary' => $line->server_address_secondary ?? null,
+                'outbound_proxy_primary'   => $line->outbound_proxy_primary ?? null,
+                'outbound_proxy_secondary' => $line->outbound_proxy_secondary ?? null,
+                'sip_port'          => $line->sip_port ?? null,
+                'sip_transport'     => $line->sip_transport ?? null,
+                'register_expires'  => $line->register_expires ?? null,
+                'shared_line'  => $line->shared_line ?? null,
+                'line_number'       => $line->line_number,
             ];
         }
 
         return [
             'device_uuid'   => (string) $device->device_uuid,
             'domain_uuid'   => (string) $device->domain_uuid,
-            'vendor'        => strtolower((string) $device->device_vendor),
-            'model'         => (string) $device->device_model,
-            'serial'        => (string) $device->serial_number,
+            'vendor'        => $device->device_vendor ?? null,
+            'domain_name' => $device->domain?->domain_name ?? null,
+            'template' => $device->device_template ?? null,
+            'template_uuid' => $device->device_template_uuid ?? null,
+            'serial'        => (string) $device->serial_number ?? null,
+            'mac'           => $device->device_address ?? null,
+            'prov_url' => 'https://fspbx.us.nemerald.net/prov',
+            'lines'       => $lines,
+            'line_count' => count($lines),
 
-            'mac'           => $macRaw,
-            'mac_colon'     => $macCol,
-            'mac_dash'      => $macDash,
-
-            'account'       => $account,
-            'account_count' => count($account),
-
-            'cfg' => function (string $key, $default = null) use (&$account, $macRaw, $macCol, $macDash, $device) {
-                $map = [
-                    'mac'       => $macRaw,
-                    'mac_colon' => $macCol,
-                    'mac_dash'  => $macDash,
-                    'serial'    => $device->serial_number,
-                ];
-                return $map[$key] ?? ($default ?? null);
-            },
         ];
     }
 
@@ -175,5 +199,49 @@ class ProvisioningController extends Controller
         }
         // fallback: whole tail as id, assume cfg
         return [$tail, 'cfg'];
+    }
+
+    private function computeFlavor(Request $request, Devices $device, string $id, string $ext): array
+    {
+        // Raw tail after /prov/
+        $raw = ltrim((string)($request->route('path') ?? $request->path()), '/');
+        if (str_starts_with($raw, 'prov/')) $raw = substr($raw, 5);
+
+        $vendor = strtolower((string) $device->device_vendor);
+        $idLower = strtolower($id);
+        $extLower = strtolower($ext);
+
+        // Detect Dinstar serial index: "{productId}/{serial}.xml"
+        if ($vendor === 'dinstar' && $extLower === 'xml' && preg_match('#^(?<pid>\d{2})/[A-Za-z0-9-]+\.xml$#', $raw, $m)) {
+            return [
+                'flavor'     => 'serial.xml',
+                'mime'       => 'application/xml',
+            ];
+        }
+
+        // Polycom bootstrap index
+        if ($vendor === 'polycom' && $extLower === 'cfg' && $idLower === '000000000000') {
+            return [
+                'flavor' => 'poly-index.cfg',
+                'mime'   => 'application/xml',
+            ];
+        }
+
+        // Yealink model index (loose check)
+        if ($vendor === 'yealink' && $extLower === 'cfg' && preg_match('/^y0{8}[0-9a-f]{2}$/i', $id)) {
+            return [
+                'flavor' => 'yealink-model.cfg',
+                'mime'   => 'text/plain',
+            ];
+        }
+
+        // Otherwise, treat as per-device config for all vendors
+        // Note: Dinstar's per-device ".cfg" content is XML, others are plain text.
+        $mime = ($vendor === 'dinstar') ? 'application/xml' : ($extLower === 'xml' ? 'application/xml' : 'text/plain');
+
+        return [
+            'flavor' => 'mac.cfg',
+            'mime'   => $mime,
+        ];
     }
 }

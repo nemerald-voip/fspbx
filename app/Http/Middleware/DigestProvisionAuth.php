@@ -12,85 +12,84 @@ class DigestProvisionAuth
 {
     public function handle(Request $request, Closure $next)
     {
-        // 1) Parse {id}.{ext} and build token (skip if no digits → 404)
+        // turn debug off or on 
+        $debug = false;
+
+        // --- your existing code, replacing logger(...) with $this->dbg($debug, 'msg', [...]) ---
         [$id, $ext] = $this->extractIdAndExt($request);
 
-        // Early 404s for files we never serve (cheap, no auth)
         $lower = strtolower($id);
-        if (in_array($lower, ['default', 'index', 'master', '000000000000', 'sip.ld', 'sip_59x.ld'], true)) {
+        if (in_array($lower, ['default','index','master','000000000000','sip.ld','sip_59x.ld'], true)) {
+            $this->dbg($debug, 'early-404.generic', ['path' => $request->getRequestUri()]);
             return response('', 404);
         }
 
-        // Token must contain digits (skip words like "default")
         $token = VendorRouter::tokenFromId($id);
-        if (!$token) return response('', 404);
+        if (!$token) {
+            $this->dbg($debug, 'early-404.no-token', ['id' => $id]);
+            return response('', 404);
+        }
 
-        // Lookup by MAC (normalized) OR serial (as stored)
         $device = VendorRouter::findDeviceByToken($token);
-        if (!$device) return response('', 404);
+        if (!$device) {
+            $this->dbg($debug, '404.device-not-found', ['token' => $token]);
+            return response('', 404);
+        }
 
-        // Per-domain creds (no caching of creds)
         $domainUuid = $device->domain_uuid;
         $username   = get_domain_setting('http_auth_username', $domainUuid);
         $password   = get_domain_setting('http_auth_password', $domainUuid);
         if (!$username || !$password) {
-            // Device is known but creds misconfigured → stop
+            $this->dbg($debug, '401.missing-creds', ['domain_uuid' => $domainUuid]);
             return response('', 401);
         }
 
-        // Realm derived from domain UUID (stable)
-        $base  = (string) $domainUuid;
-        $hash  = substr(hash_hmac('sha256', $base, config('app.key')), 0, 16);
+        $hash  = substr(hash_hmac('sha256', (string) $domainUuid, config('app.key')), 0, 16);
         $realm = "Prov-$hash";
 
-        // Auth policy from settings (default to 'basic')
         $authTypeRaw = get_domain_setting('http_auth_type', $domainUuid);
-        $authType = in_array(strtolower((string)$authTypeRaw), ['basic', 'digest', 'both'], true)
-            ? strtolower((string)$authTypeRaw)
-            : 'basic';
+        $authType = in_array(strtolower((string)$authTypeRaw), ['basic','digest','both'], true)
+            ? strtolower((string)$authTypeRaw) : 'basic';
 
-        // HTTP Authorization header
         $auth   = $request->header('Authorization', '');
         $scheme = strtolower(strtok($auth, ' ')) ?: '';
 
-        logger()->info("prov-auth policy={$authType} scheme={$scheme} method={$request->getMethod()} path={$request->getRequestUri()} realm={$realm}");
+        $this->dbg($debug, 'auth.check', [
+            'policy' => $authType,
+            'scheme' => $scheme,
+            'path'   => $request->getRequestUri(),
+        ]);
 
-        // -------------------- BASIC path --------------------
+        // BASIC
         if ($scheme === 'basic' && ($authType === 'basic' || $authType === 'both')) {
             if (preg_match('/^Basic\s+(.+)$/i', $auth, $m)) {
                 $decoded = base64_decode($m[1], true) ?: '';
-                [$bu, $bp] = array_pad(explode(':', $decoded, 2), 2, '');
-                logger()->info("prov-auth basic-user={$bu}");
+                [$bu] = array_pad(explode(':', $decoded, 2), 2, '');
+                $this->dbg($debug, 'auth.basic.present', ['user' => $this->maskUser($bu)]);
 
-                if (hash_equals($username, $bu) && hash_equals($password, $bp)) {
-                    // Authenticated → attach context and continue
-                    $request->attributes->set('prov.device', $device);
-                    $request->attributes->set('prov.domain_uuid', $domainUuid);
-                    $request->attributes->set('prov.realm', $realm);
-                    $request->attributes->set('prov.auth_mode', 'basic');
+                if (hash_equals($username, $bu) && hash_equals($password, substr($decoded, strlen($bu)+1))) {
+                    $this->attach($request, $device, $domainUuid, $realm, 'basic');
+                    $this->dbg($debug, 'auth.basic.ok');
                     return $next($request);
                 }
             }
-            // Wrong basic creds
-            return $this->challengeAccordingToPolicy($authType, $realm);
+            $this->dbg($debug, 'auth.basic.fail');
+            return $this->challengeAccordingToPolicy($authType, $realm, $debug);
         }
 
-        // -------------------- DIGEST path -------------------
+        // DIGEST
         if ($scheme === 'digest' && ($authType === 'digest' || $authType === 'both')) {
             $parts = $this->parseDigest(substr($auth, 7));
-            logger()->info('prov-auth digest-parts', $parts ?: []);
+            $this->dbg($debug, 'auth.digest.parts', array_intersect_key($parts ?? [], array_flip(['username','nonce','uri','qop','nc'])));
 
-            if (
-                !$parts || empty($parts['username']) || empty($parts['nonce']) ||
-                empty($parts['uri'])      || empty($parts['response'])
-            ) {
-                return $this->challengeDigest($realm);
+            if (!$parts || empty($parts['username']) || empty($parts['nonce']) || empty($parts['uri']) || empty($parts['response'])) {
+                return $this->challengeDigest($realm, false, $debug);
             }
             if (!hash_equals($username, $parts['username'])) {
-                return $this->challengeDigest($realm);
+                return $this->challengeDigest($realm, false, $debug);
             }
             if (!$this->nonceValid($parts['nonce'], $parts['nc'] ?? null)) {
-                return $this->challengeDigest($realm, true);
+                return $this->challengeDigest($realm, true, $debug);
             }
 
             $HA1 = md5($username . ':' . $realm . ':' . $password);
@@ -100,22 +99,44 @@ class DigestProvisionAuth
                 : md5($HA1 . ':' . $parts['nonce'] . ':' . $HA2);
 
             if (!hash_equals($expected, $parts['response'])) {
-                return $this->challengeDigest($realm);
+                $this->dbg($debug, 'auth.digest.bad-response');
+                return $this->challengeDigest($realm, false, $debug);
             }
 
-            // Authenticated → attach context and continue
-            $request->attributes->set('prov.device', $device);
-            $request->attributes->set('prov.domain_uuid', $domainUuid);
-            $request->attributes->set('prov.realm', $realm);
-            $request->attributes->set('prov.auth_mode', 'digest');
+            $this->attach($request, $device, $domainUuid, $realm, 'digest');
+            $this->dbg($debug, 'auth.digest.ok');
             return $next($request);
         }
 
-        // -------------------- No/other auth -----------------
-        return $this->challengeAccordingToPolicy($authType, $realm);
+        // No/other auth
+        $this->dbg($debug, 'auth.missing-or-unsupported', ['scheme' => $scheme]);
+        return $this->challengeAccordingToPolicy($authType, $realm, $debug);
     }
 
     /* ------------------------- helpers ------------------------- */
+
+    private function attach(Request $req, $device, string $domainUuid, string $realm, string $mode): void
+    {
+        $req->attributes->set('prov.device', $device);
+        $req->attributes->set('prov.domain_uuid', $domainUuid);
+        $req->attributes->set('prov.realm', $realm);
+        $req->attributes->set('prov.auth_mode', $mode);
+    }
+
+    private function dbg(bool $enabled, string $msg, array $ctx = []): void
+    {
+        if ($enabled) {
+            // Never log secrets; caller already redacts values
+            logger()->channel(config('logging.default', 'stack'))->info("prov-debug: {$msg}", $ctx);
+        }
+    }
+
+    private function maskUser(?string $u): string
+    {
+        if (!$u) return '';
+        return strlen($u) <= 2 ? '*'
+            : substr($u, 0, 1) . str_repeat('*', max(1, strlen($u)-2)) . substr($u, -1);
+    }
 
     private function extractIdAndExt(Request $request): array
     {
@@ -138,58 +159,51 @@ class DigestProvisionAuth
     
 
     // Challenge according to policy
-    private function challengeAccordingToPolicy(string $authType, string $realm)
+    private function challengeAccordingToPolicy(string $authType, string $realm, bool $debug)
     {
-        switch ($authType) {
-            case 'digest': return $this->challengeDigest($realm);
-            case 'both':   return $this->challengeBoth($realm);
-            case 'basic':
-            default:       return $this->challengeBasic($realm);
-        }
+        return match ($authType) {
+            'digest' => $this->challengeDigest($realm, false, $debug),
+            'both'   => $this->challengeBoth($realm, false, $debug),
+            default  => $this->challengeBasic($realm, $debug),
+        };
     }
 
     // ---- Basic-only challenge
-    private function challengeBasic(string $realm)
+    private function challengeBasic(string $realm, bool $debug)
     {
         $hdr = sprintf('Basic realm="%s", charset="UTF-8"', $realm);
-        logger()->info("prov-auth challenge basic hdr={$hdr}");
-        $resp = response('', 401);
-        $resp->headers->set('WWW-Authenticate', $hdr);
-        return $resp;
+        $this->dbg($debug, 'challenge.basic', ['hdr' => $hdr]);
+        return response('', 401)->withHeaders(['WWW-Authenticate' => $hdr]);
     }
 
     // ---- Digest-only challenge
-    private function challengeDigest(string $realm, bool $stale = false)
+    private function challengeDigest(string $realm, bool $stale, bool $debug)
     {
         $nonce  = $this->makeNonce();
         $opaque = md5(config('app.key') . $realm);
-
         $hdr = sprintf(
             'Digest realm="%s", qop="auth", nonce="%s", opaque="%s", algorithm=MD5%s',
             $realm, $nonce, $opaque, $stale ? ', stale=true' : ''
         );
-        logger()->info("prov-auth challenge digest hdr={$hdr}");
-
+        $this->dbg($debug, 'challenge.digest', ['hdr' => $hdr]);
         return response('', 401)->withHeaders(['WWW-Authenticate' => $hdr]);
     }
 
     // ---- Both challenges (Digest preferred by clients that support it)
-    private function challengeBoth(string $realm, bool $stale = false)
+    private function challengeBoth(string $realm, bool $stale, bool $debug)
     {
         $nonce  = $this->makeNonce();
         $opaque = md5(config('app.key') . $realm);
-
         $digest = sprintf(
             'Digest realm="%s", qop="auth", nonce="%s", opaque="%s", algorithm=MD5%s',
             $realm, $nonce, $opaque, $stale ? ', stale=true' : ''
         );
         $basic  = sprintf('Basic realm="%s", charset="UTF-8"', $realm);
-
-        logger()->info("prov-auth challenge both digest={$digest} basic={$basic}");
+        $this->dbg($debug, 'challenge.both', ['digest' => $digest, 'basic' => $basic]);
 
         $resp = response('', 401);
-        $resp->headers->set('WWW-Authenticate', $digest, false); // append
-        $resp->headers->set('WWW-Authenticate', $basic,  false); // append
+        $resp->headers->set('WWW-Authenticate', $digest, false);
+        $resp->headers->set('WWW-Authenticate', $basic,  false);
         return $resp;
     }
 
