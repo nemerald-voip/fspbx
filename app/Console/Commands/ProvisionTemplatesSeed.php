@@ -2,11 +2,12 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 use App\Models\ProvisioningTemplate;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 
 class ProvisionTemplatesSeed extends Command
 {
@@ -19,6 +20,12 @@ class ProvisionTemplatesSeed extends Command
 
     public function handle(): int
     {
+        // Gracefully skip if table doesn't exist
+        if (!Schema::hasTable('provisioning_templates')) {
+            $this->warn('Skipping prov:templates:seed — table "provisioning_templates" not found. (Run migrations first.)');
+            return 0; // treat as success so callers won't fail
+        }
+
         $base = resource_path('provisioning');
         if (!File::exists($base)) {
             $this->error("Missing folder: $base");
@@ -151,6 +158,10 @@ class ProvisionTemplatesSeed extends Command
      */
     private function runDedupe(bool $dry): array
     {
+        if (!Schema::hasTable('provisioning_templates')) {
+            return [0, 0];
+        }
+
         $removed = 0;
         $repointed = 0;
 

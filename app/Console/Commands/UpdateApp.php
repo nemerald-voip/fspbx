@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Services\GitHubApiService;
 use Symfony\Component\Process\Process;
+use Illuminate\Support\Facades\Artisan;
 use App\Console\Commands\Updates\Update097;
 use App\Console\Commands\Updates\Update0917;
 use App\Console\Commands\Updates\Update0918;
@@ -116,7 +117,18 @@ class UpdateApp extends Command
         $this->runArtisanCommand('db:seed', ['--force' => true]);
 
         //Seed the templates
-        $this->runArtisanCommand('prov:templates:seed');
+        echo "Running prov:templates:seed...\n";
+        try {
+            $exitCode = Artisan::call('prov:templates:seed', [
+                '--no-interaction' => true,
+            ]);
+            echo Artisan::output();
+            if ($exitCode !== 0) {
+                echo "prov:templates:seed returned non-zero exit code: {$exitCode} (continuing)\n";
+            }
+        } catch (\Throwable $e) {
+            echo "Skipping prov:templates:seed due to error: {$e->getMessage()}\n";
+        }
 
         // Create storage link
         $this->runArtisanCommand('storage:link', ['--force' => true]);
