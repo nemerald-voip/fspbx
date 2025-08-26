@@ -1,9 +1,27 @@
-{{-- 
-version: 1.0.1
---}}
+{{-- version: 1.0.3 --}}
+
+@switch($flavor)
+
+{{-- ================= Dinstar {serial}.xml ================= --}}
+@case('serial.xml')
+
+<?xml version="1.0" encoding="UTF-8"?>
+<provision version="2.0">
+  <product id="{{ $product_id ?? '83' }}"
+           snfilter="" macfilter="" model="" language="" dmsno="" oemid=""
+           lowver="" highver="" url="{{ $settings['provision_base_url'] ?? '' }}" force="false">
+    <ConfigFile name="$(MA).cfg" action="merge" reboot="never"></ConfigFile>
+  </product>
+</provision>
+
+@break
+  
+{{-- ================= Dinstar mac.cfg ================= --}}
+@case('mac.cfg')
+
 <?xml version="1.0" encoding="UTF-8"?>
 <config version="5.8" md5=" ">
-    <sipserver>
+<sipserver>
         <server0>
             <param name="domain" value="{{ $lines[1]['server_address'] ?? '' }}" />
             <param name="port" value="{{ $lines[1]['sip_port'] ?? '' }}" />
@@ -39,7 +57,7 @@ version: 1.0.1
         <param name="sips_url" value="1" />
         <param name="tls_bidirectional_auth" value="disable" />
     </sipserver>
-    <sipacc>
+        <sipacc>
     @foreach ($lines as $line)
         @php
             // line_number may be a string — coerce to int
@@ -862,10 +880,10 @@ version: 1.0.1
         </entrypt_param>
     </system>
     <provision>
-        <param name="url" value="" />
+        <param name="url" value="{{ $settings['provision_base_url'] ?? '' }}" />
         <param name="interval" value="86400" />
-        <param name="provison_account" value="" />
-        <param name="provison_password" value="" />
+        <param name="provison_account" value="{{ $settings['http_auth_username'] ?? '' }}" />
+        <param name="provison_password" value="{{ $settings['http_auth_password'] ?? '' }}" />
         <param name="proxy_domain" value="" />
         <param name="proxy_port" value="" />
         <param name="proxy_account" value="" />
@@ -2490,3 +2508,6 @@ version: 1.0.1
         </security>
     </network>
 </config>
+@break
+
+@endswitch

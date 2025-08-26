@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Blade;
-use App\Models\ProvisioningTemplate;
 use App\Models\Devices;
+use Illuminate\Http\Request;
+use App\Models\DeviceSettings;
+use App\Models\DomainSettings;
+use App\Models\DefaultSettings;
+use App\Models\ProvisioningTemplate;
+use Illuminate\Support\Facades\Blade;
 
 class ProvisioningController extends Controller
 {
@@ -57,7 +60,6 @@ class ProvisioningController extends Controller
             'requested_ext' => strtolower($ext),
         ];
 
-        logger($vars);
         $body = Blade::render($tpl->content, $vars);
 
         // ETag / 304 support
@@ -170,10 +172,12 @@ class ProvisioningController extends Controller
             'template_uuid' => $device->device_template_uuid ?? null,
             'serial'        => (string) $device->serial_number ?? null,
             'mac'           => $device->device_address ?? null,
-            'prov_url' => 'https://fspbx.us.nemerald.net/prov',
             'lines'       => $lines,
             'line_count' => count($lines),
-
+            'settings' => $this->getProvisionSettings(
+                (string) $device->domain_uuid,
+                (string) $device->device_uuid
+            ),
         ];
     }
 
@@ -243,5 +247,108 @@ class ProvisioningController extends Controller
             'flavor' => 'mac.cfg',
             'mime'   => $mime,
         ];
+    }
+
+    private function getProvisionSettings(?string $domainUuid, ?string $deviceUuid = null): array
+    {
+        // Defaults → simple [subcategory => cast(value)]
+        $settings = [];
+        DefaultSettings::query()
+            ->select([
+                'default_setting_subcategory',
+                'default_setting_name',
+                'default_setting_value',
+                'default_setting_order',
+                'default_setting_enabled',
+            ])
+            ->where('default_setting_category', 'provision')
+            ->where('default_setting_enabled', 'true')
+            ->orderBy('default_setting_subcategory')
+            ->get()
+            ->each(function ($r) use (&$settings) {
+                $sub = (string) $r->default_setting_subcategory;
+                $settings[$sub] = $this->castSettingValue(
+                    (string) $r->default_setting_name,
+                    (string) $r->default_setting_value
+                );
+            });
+
+        // Domain overrides
+        if (!empty($domainUuid)) {
+            DomainSettings::query()
+                ->select([
+                    'domain_setting_subcategory',
+                    'domain_setting_name',
+                    'domain_setting_value',
+                    'domain_setting_order',
+                    'domain_setting_enabled',
+                ])
+                ->where('domain_uuid', $domainUuid)
+                ->where('domain_setting_category', 'provision')
+                ->where('domain_setting_enabled', 'true')
+                ->orderBy('domain_setting_subcategory')
+                ->get()
+                ->each(function ($r) use (&$settings) {
+                    $sub = (string) $r->domain_setting_subcategory;
+                    $settings[$sub] = $this->castSettingValue(
+                        (string) $r->domain_setting_name,
+                        (string) $r->domain_setting_value
+                    );
+                });
+        }
+
+        // Device overrides (highest precedence)
+        if (!empty($deviceUuid)) {
+            $q = DeviceSettings::query()
+                ->select([
+                    'device_setting_subcategory',
+                    'device_setting_name',
+                    'device_setting_value',
+                    'device_setting_enabled',
+                ])
+                ->where('device_uuid', $deviceUuid)
+                ->where('device_setting_enabled', 'true');
+
+            // optional tenant safety (recommended in multi-tenant setups)
+            if (!empty($domainUuid)) {
+                $q->where('domain_uuid', $domainUuid);
+            }
+
+            $q->orderBy('device_setting_subcategory')
+                ->get()
+                ->each(function ($r) use (&$settings) {
+                    $sub = (string) $r->device_setting_subcategory;
+                    $settings[$sub] = $this->castSettingValue(
+                        (string) $r->device_setting_name,
+                        (string) $r->device_setting_value
+                    );
+                });
+        }
+        return $settings;
+    }
+
+    /**
+     * Cast common FusionPBX types: text, numeric, boolean, json.
+     * Falls back to string.
+     */
+    private function castSettingValue(string $type, string $value)
+    {
+        $t = strtolower($type);
+
+        if ($t === 'boolean' || $t === 'bool' || $t === 'enabled') {
+            return in_array(strtolower($value), ['true', 't', '1', 'yes', 'on'], true);
+        }
+
+        if ($t === 'numeric' || $t === 'number' || $t === 'integer' || $t === 'int' || $t === 'float') {
+            return is_numeric($value) ? ($value + 0) : $value;
+        }
+
+        if ($t === 'json') {
+            $decoded = json_decode($value, true);
+            return json_last_error() === JSON_ERROR_NONE ? $decoded : $value;
+        }
+
+        // text, password, select, label, etc.
+        return $value;
     }
 }

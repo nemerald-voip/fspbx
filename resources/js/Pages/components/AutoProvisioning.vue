@@ -103,34 +103,31 @@
                         <tbody v-if="!isTemplatesLoading && data.data?.length"
                             class="divide-y divide-gray-200 bg-white">
                             <tr v-for="template in data.data" :key="template.template_uuid">
-                                <td class="whitespace-nowrap px-6 py-4 text-sm font-medium text-gray-900 capitalize">
+                                <td class="whitespace-nowrap px-6 py-2 text-sm font-medium text-gray-900 capitalize">
                                     {{ template.vendor }}
                                 </td>
-                                <!-- <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                                    {{ template.members.length }}
-                                </td> -->
 
-                                <td class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
                                     {{ template.name }}
                                 </td>
                                 <td v-if="activeTab === 'default'"
-                                    class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                    class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
                                     {{ template.version }}
                                 </td>
                                 <td v-if="activeTab != 'default'"
-                                    class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                    class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
                                     {{ template.revision }}
                                 </td>
                                 <td v-if="activeTab != 'default'"
-                                    class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                    class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
                                     {{ template.base_template }}
                                 </td>
                                 <td v-if="activeTab != 'default'"
-                                    class="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                                    class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
                                     {{ template.base_version }}
                                 </td>
                                 <td 
-                                    class="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                                    class="whitespace-nowrap px-6 py-2 text-right text-sm font-medium">
                                     <div class="flex items-center whitespace-nowrap justify-end">
                                         <ejs-tooltip v-if="activeTab != 'default'" :content="'Edit'" position='TopCenter'
                                             target="#destination_tooltip_target">
@@ -426,7 +423,6 @@ const handleUpdateRequest = (form) => {
         .then((response) => {
             updateFormSubmiting.value = false;
             showNotification('success', response.data.messages);
-            handleModalClose();
             handleSearchButtonClick();
         })
         .catch((error) => {
