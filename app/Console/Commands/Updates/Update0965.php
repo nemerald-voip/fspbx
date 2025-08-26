@@ -25,7 +25,9 @@ class Update0965
         // Step 2: Seed device vendors
         echo "Running DeviceVendorsSeeder...\n";
         $exitCode = Artisan::call('db:seed', [
-            '--class' => 'Database\\Seeders\\DeviceVendorsSeeder',
+            '--class'          => \Database\Seeders\DeviceVendorsSeeder::class,
+            '--force'          => true,
+            '--no-interaction' => true,
         ]);
         echo Artisan::output();
         if ($exitCode !== 0) {
