@@ -1,4 +1,4 @@
-{{-- version: 1.0.3 --}}
+{{-- version: 1.0.4 --}}
 
 @switch($flavor)
 
@@ -62,7 +62,7 @@
         @php
             // line_number may be a string — coerce to int
             $ln  = (int) ($line['line_number'] ?? 0);
-            $idx = $ln > 0 ? $ln - 1 : 0;   // Dinstar uses 0-based block names
+            $idx = $ln;
         @endphp
         <sipacc{{ $idx }}>
             <param name="serverid"   value="0" />
@@ -79,7 +79,7 @@
         @php
             // line_number may be a string — coerce to int
             $ln  = (int) ($line['line_number'] ?? 0);
-            $idx = $ln > 0 ? $ln - 1 : 0;   // Dinstar uses 0-based block names
+            $idx = $ln;
         @endphp
         <port{{ $idx }}>
             <param name="enable"                 value="enable" />
