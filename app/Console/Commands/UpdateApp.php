@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Services\GitHubApiService;
 use Symfony\Component\Process\Process;
+use Illuminate\Support\Facades\Artisan;
 use App\Console\Commands\Updates\Update097;
 use App\Console\Commands\Updates\Update0917;
 use App\Console\Commands\Updates\Update0918;
@@ -17,6 +18,7 @@ use App\Console\Commands\Updates\Update0942;
 use App\Console\Commands\Updates\Update0951;
 use App\Console\Commands\Updates\Update0955;
 use App\Console\Commands\Updates\Update0961;
+use App\Console\Commands\Updates\Update0965;
 
 
 class UpdateApp extends Command
@@ -73,6 +75,7 @@ class UpdateApp extends Command
             '0.9.51' => Update0951::class,
             '0.9.55' => Update0955::class,
             '0.9.61' => Update0961::class,
+            '0.9.65' => Update0965::class,
             // Add more versions as needed
         ];
 
@@ -88,14 +91,14 @@ class UpdateApp extends Command
                 }
 
                 // If the update is successful, call the version:set command
-                $this->call('version:set', ['version' => $version,'--force' => true]);
+                $this->call('version:set', ['version' => $version, '--force' => true]);
                 $this->info("Version successfully updated to $version.");
             }
         }
 
         if (version_compare($currentVersion, $downloadedVersion, '<')) {
             // Call version:set to update the version to the latest one, even if no steps were needed
-            $this->call('version:set', ['version' => $downloadedVersion,'--force' => true]);
+            $this->call('version:set', ['version' => $downloadedVersion, '--force' => true]);
             $this->info("Version successfully updated to $downloadedVersion.");
         }
 
@@ -112,6 +115,20 @@ class UpdateApp extends Command
 
         //Seed the db
         $this->runArtisanCommand('db:seed', ['--force' => true]);
+
+        //Seed the templates
+        echo "Running prov:templates:seed...\n";
+        try {
+            $exitCode = Artisan::call('prov:templates:seed', [
+                '--no-interaction' => true,
+            ]);
+            echo Artisan::output();
+            if ($exitCode !== 0) {
+                echo "prov:templates:seed returned non-zero exit code: {$exitCode} (continuing)\n";
+            }
+        } catch (\Throwable $e) {
+            echo "Skipping prov:templates:seed due to error: {$e->getMessage()}\n";
+        }
 
         // Create storage link
         $this->runArtisanCommand('storage:link', ['--force' => true]);

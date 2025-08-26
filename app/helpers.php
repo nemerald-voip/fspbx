@@ -17,6 +17,7 @@ use App\Models\SwitchVariable;
 use App\Models\DefaultSettings;
 use Illuminate\Support\Facades\Log;
 use libphonenumber\PhoneNumberUtil;
+use App\Models\ProvisioningTemplate;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use libphonenumber\PhoneNumberFormat;
@@ -313,7 +314,7 @@ if (!function_exists('getDestinationByCategory')) {
     /**
      * @deprecated Please consider to use Services/ActionsService instead
      */
-    function getDestinationByCategory($category, $data = null) 
+    function getDestinationByCategory($category, $data = null)
     {
         $output = [];
         $selectedCategory = null;
@@ -475,7 +476,8 @@ if (!function_exists('getTimeoutDestinations')) {
                 'others'
             ] as $i => $category
         ) {
-            $data = getDestinationByCategory($category)['list'];            $data = getDestinationByCategory($category)['list'];
+            $data = getDestinationByCategory($category)['list'];
+            $data = getDestinationByCategory($category)['list'];
             foreach ($data as $b => $d) {
                 $output['categories'][$category] = [
                     'name' => $d['app_name'],
@@ -788,6 +790,11 @@ if (!function_exists('generate_password')) {
 if (!function_exists('formatPhoneNumber')) {
     function formatPhoneNumber($phoneNumber, $countryCode = 'US', $format = PhoneNumberFormat::NATIONAL)
     {
+        // If the user dialed internationally (+ or 011), don't touch it
+        if (preg_match('/^\s*(\+|011)/', $phoneNumber)) {
+            return $phoneNumber;
+        }
+
         $phoneNumberUtil = PhoneNumberUtil::getInstance();
 
         try {
@@ -816,27 +823,83 @@ if (!function_exists('debugEloquentSqlWithBindings')) {
     }
 }
 
+/**
+ * Return legacy filesystem templates + DB-backed templates
+ * [
+ *   ['name' => 'polycom/Poly_VVX',      'value' => 'polycom/Poly_VVX'],        // legacy (path)
+ *   ['name' => 'polycom/Poly_VVX',      'value' => '0d2e...-uuid'],            // DB default (latest)
+ *   ['name' => 'polycom/ACME Custom 1', 'value' => 'a1b2...-uuid'],            // DB custom (domain/global)
+ * ]
+ */
 if (!function_exists('getVendorTemplateCollection')) {
     function getVendorTemplateCollection(): array
     {
-        $vendorsCollection = DeviceVendor::where('enabled', 'true')->orderBy('name')->get();
-        $templateDir = public_path('resources/templates/provision');
+        $vendors = DeviceVendor::where('enabled', 'true')->orderBy('name')->get();
         $templates = [];
-        foreach ($vendorsCollection ?? [] as $vendor) {
-            //$templates[$vendor->name] = [];
-            if (is_dir($templateDir . '/' . $vendor->name)) {
-                $dirs = scandir($templateDir . '/' . $vendor->name);
-                foreach ($dirs as $dir) {
-                    if ($dir != "." && $dir != ".." && $dir[0] != '.' && is_dir($templateDir . '/' . $vendor->name . '/' . $dir)) {
-                        $templates[] = [
-                            'name' => $vendor->name . "/" . $dir,
-                            'value' => $vendor->name . "/" . $dir
-                        ];
-                    }
-                }
+
+        // 1) Legacy filesystem (unchanged)
+        $legacyBase = public_path('resources/templates/provision');
+        foreach ($vendors as $vendor) {
+            $vname = $vendor->name;
+            $vdir  = $legacyBase . '/' . $vname;
+            if (!is_dir($vdir)) continue;
+
+            foreach (scandir($vdir) as $dir) {
+                if ($dir === '.' || $dir === '..' || $dir[0] === '.') continue;
+                if (!is_dir($vdir . '/' . $dir)) continue;
+
+                $templates[] = [
+                    'name'  => $vname . '/' . $dir,
+                    'value' => $vname . '/' . $dir,   // legacy value is the path-like string
+                ];
             }
         }
-        return $templates;
+
+        $domainUuid = $domainUuid ?? session('domain_uuid');
+
+        // limit DB query to enabled vendors (by name, lowercase match)
+        $vendorNames = $vendors->pluck('name')->map(fn($n) => strtolower($n))->all();
+
+        $rows = ProvisioningTemplate::query()
+            ->select('template_uuid', 'vendor', 'name', 'type', 'version', 'revision', 'domain_uuid', 'created_at')
+            ->whereIn('vendor', $vendorNames)
+            ->where(function ($q) use ($domainUuid) {
+                // defaults are global (domain_uuid NULL); customs can be global or domain-scoped
+                $q->whereNull('domain_uuid');
+                if ($domainUuid) {
+                    $q->orWhere('domain_uuid', $domainUuid);
+                }
+            })
+            ->orderBy('vendor')
+            ->orderBy('name')
+            ->orderByDesc('created_at')
+            ->get();
+
+        // latest DEFAULT per (vendor,name)
+        $latestDefaults = $rows->where('type', 'default')
+            ->groupBy(fn($r) => $r->vendor . '|' . $r->name)
+            ->map->first();
+
+        foreach ($latestDefaults as $r) {
+            $templates[] = [
+                'name'  => "{$r->vendor}/{$r->name}",
+                'value' => (string) $r->template_uuid,
+            ];
+        }
+
+        // include each CUSTOM row (unique by template_uuid)
+        foreach ($rows->where('type', 'custom') as $r) {
+            $templates[] = [
+                'name'  => "{$r->vendor}/{$r->name}",
+                'value' => (string) $r->template_uuid,
+            ];
+        }
+
+        // Sort alphabetically (case-insensitive, natural)
+        return collect($templates)
+            ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
+            ->values()
+            ->all();
     }
 }
 
@@ -1362,26 +1425,25 @@ if (!function_exists('buildDestinationAction')) {
                     ['domain_setting_enabled', '=', 'true'],
                     ['domain_uuid', '=', $domain_uuid]
                 ])->value('domain_setting_value');
-    
+
                 if ($domainLimit !== null && $domainLimit !== '' && is_numeric($domainLimit)) {
                     return (int)$domainLimit;
                 }
             }
-    
+
             // 2. Fallback to default_settings
             $defaultLimit = \App\Models\DefaultSettings::where([
                 ['default_setting_category', '=', 'limit'],
                 ['default_setting_subcategory', '=', $subcategory],
                 ['default_setting_enabled', '=', 'true'],
             ])->value('default_setting_value');
-    
+
             if ($defaultLimit !== null && $defaultLimit !== '' && is_numeric($defaultLimit)) {
                 return (int)$defaultLimit;
             }
-    
+
             // 3. Unlimited if not found
             return null;
         }
     }
-    
 }

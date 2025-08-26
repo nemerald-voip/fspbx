@@ -41,6 +41,13 @@
 
                                 ]" :conditions="[() => permissions?.location_view]" />
 
+                                <FormTab name="auto_provisioning" label="Auto Provisioning" :elements="[
+                                    'auto_provisioning',
+                                    // 'add_location',
+                                    // 'locations_table',
+
+                                ]" :conditions="[() => permissions?.location_view]" />
+
                                 <!-- <FormTab name="page1" label="Billing" :elements="[
 
                                 ]" :conditions="[() => true]" /> -->
@@ -102,6 +109,13 @@
                                         @delete-item="handleDeleteLocationButtonClick" />
                                 </StaticElement>
 
+                                <!-- Auto Provisioning-->
+                                <StaticElement name="auto_provisioning">
+                                    <template #default="{ el$ }">
+                                        <AutoProvisioning :trigger="AutoProvisioningTrigger" :routes="routes" :permissions="permissions" :domain_uuid="data.domain_uuid"/>
+                                    </template>
+                                </StaticElement>
+
                                 <!-- Emergency Calls -->
 
                                 <StaticElement name="emergency_calls">
@@ -139,28 +153,21 @@
             @close="showUpdateLocationModal = false" @success="val => showNotification('success', val)"
             @error="handleErrorResponse" @refresh-data="getLocations" />
 
-        <ConfirmationModal :show="showDeleteLocationConfirmationModal" @close="showDeleteLocationConfirmationModal = false"
-            @confirm="confirmDeleteLocationAction" :header="'Confirm Deletion'" :loading="isDeleteLocationLoading"
+        <ConfirmationModal :show="showDeleteLocationConfirmationModal"
+            @close="showDeleteLocationConfirmationModal = false" @confirm="confirmDeleteLocationAction"
+            :header="'Confirm Deletion'" :loading="isDeleteLocationLoading"
             :text="'This action will permanently delete the selected location. Are you sure you want to proceed?'"
             confirm-button-label="Delete" cancel-button-label="Cancel" />
     </MainLayout>
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import MainLayout from '../Layouts/MainLayout.vue'
-import { Cog6ToothIcon, BellIcon } from '@heroicons/vue/24/outline';
-import LabelInputOptional from "@generalComponents/LabelInputOptional.vue";
-import InputField from "@generalComponents/InputField.vue";
-import Toggle from "@generalComponents/Toggle.vue";
-import Spinner from "@generalComponents/Spinner.vue";
 import Notification from "./components/notifications/Notification.vue";
-import ListboxGroup from "@generalComponents/ListboxGroup.vue";
 import EmergencyCalls from "./components/EmergencyCalls.vue";
+import AutoProvisioning from "./components/AutoProvisioning.vue";
 import EmergencyServiceStatus from "./components/EmergencyServiceStatus.vue";
-import { CheckCircleIcon, QuestionMarkCircleIcon, ExclamationCircleIcon } from '@heroicons/vue/20/solid'
-import { CreditCardIcon } from '@heroicons/vue/24/outline'
-import { ChevronDownIcon } from '@heroicons/vue/16/solid'
 import Locations from "./components/Locations.vue";
 import CreateLocationModal from "./components/modal/CreateLocationModal.vue"
 import UpdateLocationModal from "./components/modal/UpdateLocationModal.vue"
@@ -189,8 +196,7 @@ const selectedLocation = ref(null);
 const locationUpdateRoute = ref(null);
 const showDeleteLocationConfirmationModal = ref(false)
 const confirmDeleteLocationAction = ref(null);
-
-
+const AutoProvisioningTrigger = ref(false)
 
 // const localData = ref(JSON.parse(JSON.stringify(props.data || {})));
 
@@ -219,6 +225,10 @@ const handleTabSelected = (activeTab, previousTab) => {
     if (activeTab.name == 'locations') {
         getLocations()
     }
+    if (activeTab.name == 'auto_provisioning') {
+        AutoProvisioningTrigger.value = !AutoProvisioningTrigger.value
+    }
+
 }
 
 const getLocations = async () => {

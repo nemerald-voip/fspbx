@@ -134,6 +134,7 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Locations', 'permission_name' => 'location_create'],
             ['application_name' => 'Locations', 'permission_name' => 'location_update'],
             ['application_name' => 'Locations', 'permission_name' => 'location_delete'],
+            ['application_name' => 'Devices', 'permission_name' => 'device_key_advanced'],
         ];
         $timestamp = date("Y-m-d H:i:s");
 
@@ -215,6 +216,11 @@ class DatabaseSeeder extends Seeder
                 'location_create',
                 'location_update',
                 'location_delete',
+                'device_key_advanced',
+                'device_line_server_address_primary',
+                'device_line_server_address_secondary',
+                'device_line_outbound_proxy_primary',
+                'device_line_outbound_proxy_secondary',
             ],
             'admin' => [
                 'wakeup_calls_list_view',
@@ -908,27 +914,58 @@ class DatabaseSeeder extends Seeder
                 'default_setting_enabled'       => false,
                 'default_setting_description'   => "",
             ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'provision_base_url',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => 'https://domain.com/prov',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "New provision server base URL",
+            ],
 
 
         ];
 
-        // Log::alert(Category::where('name', trans('custom-fields::general.categories.cost_recovery'))->where('company_id', $company_id)->value('id'));
-        foreach ($settings as $setting) {
-            $existing_item = DefaultSettings::where('default_setting_category', $setting['default_setting_category'])
-                ->where('default_setting_subcategory', $setting['default_setting_subcategory'])
-                ->first();
+        if (empty($settings)) {
+            return;
+        }
 
-            if (empty($existing_item)) {
-                // Add new group
-                DefaultSettings::create([
-                    'default_setting_category'      => $setting['default_setting_category'],
-                    'default_setting_subcategory'   => $setting['default_setting_subcategory'],
-                    'default_setting_name'          => $setting['default_setting_name'],
-                    'default_setting_value'         => $setting['default_setting_value'],
-                    'default_setting_enabled'       => $setting['default_setting_enabled'],
-                    'default_setting_description'   => $setting['default_setting_description'],
-                ]);
+        // Build an OR-of-ANDs to match the exact (category, subcategory, name) triples we care about
+        $existingTriples = DefaultSettings::query()
+            ->where(function ($q) use ($settings) {
+                foreach ($settings as $s) {
+                    $q->orWhere(function ($q2) use ($s) {
+                        $q2->where('default_setting_category', $s['default_setting_category'])
+                            ->where('default_setting_subcategory', $s['default_setting_subcategory'])
+                            ->where('default_setting_name', $s['default_setting_name']);
+                    });
+                }
+            })
+            ->get(['default_setting_category', 'default_setting_subcategory', 'default_setting_name'])
+            ->map(fn($r) => "{$r->default_setting_category}|{$r->default_setting_subcategory}|{$r->default_setting_name}")
+            ->all();
+
+        $existingLookup = array_flip($existingTriples);
+
+        // Build ONLY the missing rows
+        $toInsert = [];
+        foreach ($settings as $s) {
+            $key = "{$s['default_setting_category']}|{$s['default_setting_subcategory']}|{$s['default_setting_name']}";
+            if (!isset($existingLookup[$key])) {
+                $toInsert[] = [
+                    'default_setting_uuid'        => (string) Str::uuid(),
+                    'default_setting_category'    => $s['default_setting_category'],
+                    'default_setting_subcategory' => $s['default_setting_subcategory'],
+                    'default_setting_name'        => $s['default_setting_name'],
+                    'default_setting_value'       => $s['default_setting_value'],
+                    'default_setting_enabled'     => $s['default_setting_enabled'],
+                    'default_setting_description' => $s['default_setting_description'],
+                ];
             }
+        }
+
+        if (!empty($toInsert)) {
+            DefaultSettings::insert($toInsert);
         }
     }
 

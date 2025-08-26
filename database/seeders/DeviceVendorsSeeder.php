@@ -21,6 +21,11 @@ class DeviceVendorsSeeder extends Seeder
                 'enabled'     => 'true',
                 'description' => '',
             ],
+            [
+                'name'        => 'avaya',
+                'enabled'     => 'true',
+                'description' => '',
+            ],
             // Add more vendors here as needed
         ];
 

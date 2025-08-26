@@ -183,6 +183,7 @@ class PhoneNumbersController extends Controller
                         'destination_enabled',
                         'destination_description',
                         'destination_type_fax',
+                        'destination_hold_music',
                     ])
                     ->whereKey($item_uuid)
                     ->firstOrFail();
@@ -203,6 +204,8 @@ class PhoneNumbersController extends Controller
 
             $permissions = $this->getUserPermissions();
 
+            $music_on_hold_options = getMusicOnHoldCollection(session('domain_uuid'));
+
             $routes = [
                 'store_route' => route('phone-numbers.store'),
                 'update_route' => $updateRoute ?? null,
@@ -219,6 +222,7 @@ class PhoneNumbersController extends Controller
                 'routing_types' => $routingTypes,
                 'faxes' => $faxes,
                 'domains' => $domains,
+                'music_on_hold_options' => $music_on_hold_options ?? null,
                 // Define options for other fields as needed
             ];
             // logger($itemOptions);
@@ -1121,6 +1125,7 @@ class PhoneNumbersController extends Controller
         $permissions['manage_recording_setting'] = userCheckPermission('destination_record');
         $permissions['manage_destination_prefix'] = userCheckPermission('destination_prefix');
         $permissions['manage_destination_domain'] = userCheckPermission('destination_domain');
+        $permissions['destination_hold_music'] = userCheckPermission('destination_hold_music');
 
         return $permissions;
     }

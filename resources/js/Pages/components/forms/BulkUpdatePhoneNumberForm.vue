@@ -102,6 +102,8 @@
                                                     'destination_distinctive_ring',
                                                     'domain_uuid_checkbox',
                                                     'domain_uuid',
+                                                    'destination_hold_music_checkbox',
+                                                    'destination_hold_music',
                                                     'advanced_container2',
                                                     'submit_advanced'
                                                 ]" />
@@ -340,6 +342,22 @@
                                                     :columns="{
                                                         container: 11,
                                                     }" />
+
+                                                <CheckboxElement name="destination_hold_music_checkbox"
+                                                    :submit="false" label="&nbsp;" :columns="{
+                                                        container: 1,
+                                                    }" />
+
+                                                <SelectElement name="destination_hold_music"
+                                                    :items="options.music_on_hold_options" :groups="true" default=""
+                                                    :search="true" :native="false" label="Select custom Music On Hold"
+                                                    :disabled="[['destination_hold_music_checkbox', false]]"
+                                                    input-type="search" autocomplete="off" :strict="false" :columns="{
+                                                        sm: {
+                                                            container: 11,
+                                                        },
+                                                    }"
+                                                    :conditions="[() => options.permissions.destination_hold_music]" />
 
                                                 <CheckboxElement name="domain_uuid_checkbox"
                                                     :conditions="[() => options?.permissions?.manage_destination_domain]"

@@ -20,7 +20,7 @@
         <action application="export" data="call_direction=inbound" inline="true" />
         <action application="set" data="domain_uuid={{ $phone_number->domain_uuid }}" inline="true" />
         <action application="set" data="domain_name={{ $domain_name }}" inline="true" />
-        @if (!empty($destination_hold_music))
+        @if (!empty($phone_number->destination_hold_music))
             <action application="export" data="hold_music={{ $phone_number->destination_hold_music }}"
                 inline="true" />
         @endif

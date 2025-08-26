@@ -53,14 +53,38 @@ class DeviceController extends Controller
             return redirect('/');
         }
 
+        return Inertia::render(
+            $this->viewName,
+            [
+
+                'routes' => [
+                    'current_page' => route('devices.index'),
+                    'data_route' => route('devices.data'),
+                    'store' => route('devices.store'),
+                    'select_all' => route('devices.select.all'),
+                    'bulk_delete' => route('devices.bulk.delete'),
+                    'bulk_update' => route('devices.bulk.update'),
+                    'item_options' => route('devices.item.options'),
+                    'restart' => route('devices.restart'),
+                    'cloud_provisioning_item_options' => route('cloud-provisioning.item.options'),
+                    'cloud_provisioning_get_token' => route('cloud-provisioning.token.get'),
+                    'cloud_provisioning_update_api_token' => route('cloud-provisioning.token.update'),
+
+                ]
+            ]
+        );
+    }
+
+    public function getData()
+    {
         $perPage = 50;
         $currentDomain = session('domain_uuid');
 
         // If the filter is not present, assign default value before QueryBuilder
-        if (!$request->has('filter.showGlobal')) {
-            $request->merge([
+        if (!request()->has('filter.showGlobal')) {
+            request()->merge([
                 'filter' => array_merge(
-                    $request->input('filter', []),
+                    request()->input('filter', []),
                     ['showGlobal' => false]
                 ),
             ]);
@@ -71,6 +95,7 @@ class DeviceController extends Controller
                 'domain_uuid',
                 'device_uuid',
                 'device_template',
+                'device_template_uuid',
                 'device_label',
                 'device_profile_uuid',
                 'device_address',
@@ -78,18 +103,33 @@ class DeviceController extends Controller
             ])
             // allow ?filter[username]=foo or ?filter[user_email]=bar
             ->allowedFilters([
-                // Only email and name_formatted
                 AllowedFilter::callback('search', function ($query, $value) {
-                    $query->where(function ($q) use ($value) {
-                        $q->where('device_address', 'ilike', "%{$value}%")
-                            ->orWhere('device_template', 'ilike', "%{$value}%")
-                            ->orWhereHas('profile', function ($q2) use ($value) {
-                                $q2->where('device_profile_name', 'ilike', "%{$value}%");
-                            })
-                            ->orWhereHas('lines.extension', function ($q3) use ($value) {
-                                $q3->where('extension', 'ilike', "%{$value}%")
-                                    ->orWhere('effective_caller_id_name', 'ilike', "%{$value}%");
-                            });
+                    $needle = trim((string) $value);
+                
+                    // normalize MAC like "00:04:F2:3A:5B:C7" -> "0004f23a5bc7"
+                    $norm = strtolower(preg_replace('/[^0-9a-f]/i', '', $needle));
+                
+                    $query->where(function ($q) use ($needle, $norm) {
+                        // device_address: match raw input OR normalized version
+                        $q->where(function ($q2) use ($needle, $norm) {
+                            // in case someone pasted the DB-format already or a partial
+                            $q2->orWhereRaw('lower(device_address) LIKE ?', ["%{$norm}%"]);
+                
+                            // exact match if a full 12-hex MAC was provided
+                            if (strlen($norm) === 12) {
+                                $q2->orWhereRaw('lower(device_address) = ?', [$norm]);
+                            }
+                        })
+                
+                        // the rest of free-text search 
+                        ->orWhere('device_template', 'ilike', "%{$needle}%")
+                        ->orWhereHas('profile', function ($q2) use ($needle) {
+                            $q2->where('device_profile_name', 'ilike', "%{$needle}%");
+                        })
+                        ->orWhereHas('lines.extension', function ($q3) use ($needle) {
+                            $q3->where('extension', 'ilike', "%{$needle}%")
+                               ->orWhere('effective_caller_id_name', 'ilike', "%{$needle}%");
+                        });
                     });
                 }),
                 AllowedFilter::callback('showGlobal', function ($query, $value) use ($currentDomain) {
@@ -120,6 +160,9 @@ class DeviceController extends Controller
             ->with(['domain' => function ($query) {
                 $query->select('domain_uuid', 'domain_name', 'domain_description');
             }])
+            ->with(['template' => function ($query) {
+                $query->select('template_uuid', 'domain_uuid', 'vendor','name');
+            }])
 
             ->allowedSorts(['device_address'])
             ->defaultSort('device_address')
@@ -130,73 +173,10 @@ class DeviceController extends Controller
 
         // logger( $devicesDto);
 
-        return Inertia::render(
-            $this->viewName,
-            [
-                'data' => $devicesDto,
+        return $devicesDto;
 
-                'routes' => [
-                    'current_page' => route('devices.index'),
-                    'store' => route('devices.store'),
-                    'select_all' => route('devices.select.all'),
-                    'bulk_delete' => route('devices.bulk.delete'),
-                    'bulk_update' => route('devices.bulk.update'),
-                    'item_options' => route('devices.item.options'),
-                    'restart' => route('devices.restart'),
-                    'cloud_provisioning_item_options' => route('cloud-provisioning.item.options'),
-                    'cloud_provisioning_get_token' => route('cloud-provisioning.token.get'),
-                    'cloud_provisioning_update_api_token' => route('cloud-provisioning.token.update'),
-
-                ]
-            ]
-        );
     }
 
-
-    /**
-     *  Get device data
-     */
-    public function getData($paginate = 50)
-    {
-
-        // Check if search parameter is present and not empty
-        if (!empty(request('filterData.search'))) {
-            $this->filters['search'] = request('filterData.search');
-        }
-
-        // Check if showGlobal parameter is present and not empty
-        if (!empty(request('filterData.showGlobal'))) {
-            $this->filters['showGlobal'] = request('filterData.showGlobal') === 'true';
-        } else {
-            $this->filters['showGlobal'] = null;
-        }
-
-        // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'device_address'); // Default to 'destination'
-        $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to ascending
-
-        $data = $this->builder($this->filters);
-
-        // Apply pagination if requested
-        if ($paginate) {
-            $data = $data->paginate($paginate);
-        } else {
-            $data = $data->get(); // This will return a collection
-        }
-
-        if (isset($this->filters['showGlobal']) and $this->filters['showGlobal']) {
-            // Access domains through the session and filter extensions by those domains
-            $domainUuids = Session::get('domains')->pluck('domain_uuid');
-            $extensions = Extensions::whereIn('domain_uuid', $domainUuids)
-                ->get(['domain_uuid', 'extension', 'effective_caller_id_name']);
-        } else {
-            // get extensions for session domain
-            $extensions = Extensions::where('domain_uuid', session('domain_uuid'))
-                ->get(['domain_uuid', 'extension', 'effective_caller_id_name']);
-        }
-
-        return $data;
-    }
 
     /**
      * Show the form for creating a new resource.
@@ -222,10 +202,7 @@ class DeviceController extends Controller
             DB::beginTransaction();
 
             $inputs = $validated;
-            $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0] ?? null;
-            if ($inputs['device_vendor'] === 'poly') {
-                $inputs['device_vendor'] = 'polycom';
-            }
+
             $inputs['device_address'] = $inputs['device_address_modified'];
 
             // Create device
@@ -250,6 +227,8 @@ class DeviceController extends Controller
                             'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
                             'server_address_primary' => $line['server_address_primary'] ?? get_domain_setting('server_address_primary'),
                             'server_address_secondary' => $line['server_address_secondary'] ?? get_domain_setting('server_address_secondary'),
+                            'outbound_proxy_primary' => $line['outbound_proxy_primary'] ?? get_domain_setting('outbound_proxy_primary'),
+                            'outbound_proxy_secondary' => $line['outbound_proxy_secondary'] ?? get_domain_setting('outbound_proxy_secondary') ,
                             'display_name' => $line['display_name'],
                             'user_id' => $extension ? $extension->extension : null,
                             'auth_id' => $extension ? $extension->extension : $line['auth_id'],
@@ -308,7 +287,7 @@ class DeviceController extends Controller
     {
         $inputs = $request->validated();
 
-        logger($inputs);
+        // logger($inputs);
 
         if (!$device) {
             return response()->json([
@@ -319,11 +298,7 @@ class DeviceController extends Controller
 
         try {
             DB::beginTransaction();
-            // Prepare device inputs for update
-            $inputs['device_vendor'] = explode("/", $inputs['device_template'])[0] ?? null;
-            if ($inputs['device_vendor'] === 'poly') {
-                $inputs['device_vendor'] = 'polycom';
-            }
+
             // Device DB uses device_address, set it from device_address_modified
             $inputs['device_address'] = $inputs['device_address_modified'];
 
@@ -350,6 +325,8 @@ class DeviceController extends Controller
                             'server_address' => $line['server_address'],
                             'server_address_primary' => $line['server_address_primary'],
                             'server_address_secondary' => $line['server_address_secondary'],
+                            'outbound_proxy_primary' => $line['outbound_proxy_primary'],
+                            'outbound_proxy_secondary' => $line['outbound_proxy_secondary'],
                             'display_name' => $line['display_name'],
                             'user_id' => $extension ? $extension->extension : null,
                             'auth_id' => $extension ? $extension->extension : $line['auth_id'],
@@ -591,9 +568,11 @@ class DeviceController extends Controller
                         'domain_uuid',
                         'device_uuid',
                         'device_template',
+                        'device_template_uuid',
                         'device_label',
                         'device_profile_uuid',
                         'device_address',
+                        'serial_number',
                         'device_vendor',
                         'device_description',
                     ])
@@ -627,9 +606,6 @@ class DeviceController extends Controller
                 // New device defaults
                 $deviceDto     = new DeviceData(
                     device_uuid: '',
-                    device_profile_uuid: '',
-                    device_address: '',
-                    device_template: '',
                 );
             }
 
@@ -688,6 +664,8 @@ class DeviceController extends Controller
                         'server_address',
                         'server_address_primary',
                         'server_address_secondary',
+                        'outbound_proxy_primary',
+                        'outbound_proxy_secondary',
                         'sip_port',
                         'sip_transport',
                         'register_expires',
@@ -748,6 +726,8 @@ class DeviceController extends Controller
                 'server_address' => session('domain_name'),
                 'server_address_primary' => get_domain_setting('server_address_primary'),
                 'server_address_secondary' => get_domain_setting('server_address_secondary'),
+                'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
+                'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
                 'sip_port' => get_domain_setting('line_sip_port'),
                 'sip_transport' => get_domain_setting('line_sip_transport'),
                 'register_expires' => get_domain_setting('line_register_expires'),
@@ -1007,6 +987,7 @@ class DeviceController extends Controller
         $permissions['device_key_create'] = userCheckPermission('device_key_add');
         $permissions['device_key_update'] = userCheckPermission('device_key_edit');
         $permissions['device_key_destroy'] = userCheckPermission('device_key_delete');
+        $permissions['device_key_advanced'] = userCheckPermission('device_key_advanced');
         $permissions['device_address_update'] = userCheckPermission('device_address');
         $permissions['device_template_update'] = userCheckPermission('device_template');
         $permissions['device_domain_update'] = userCheckPermission('device_domain');
@@ -1015,6 +996,10 @@ class DeviceController extends Controller
         $permissions['device_setting_add'] = userCheckPermission('device_setting_add');
         $permissions['device_setting_update'] = userCheckPermission('device_setting_edit');
         $permissions['device_setting_destroy'] = userCheckPermission('device_setting_delete');
+        $permissions['manage_device_line_primary_server'] = userCheckPermission('device_line_server_address_primary');
+        $permissions['manage_device_line_secondary_server'] = userCheckPermission('device_line_server_address_secondary');
+        $permissions['manage_device_line_primary_proxy'] = userCheckPermission('device_line_outbound_proxy_primary');
+        $permissions['manage_device_line_secondary_proxy'] = userCheckPermission('device_line_outbound_proxy_secondary');
 
         return $permissions;
     }

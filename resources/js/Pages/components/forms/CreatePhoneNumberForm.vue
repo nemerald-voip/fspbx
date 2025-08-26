@@ -59,6 +59,7 @@
                                     fax_uuid: options.item?.fax_uuid ?? null,
                                     destination_cid_name_prefix: options.item?.destination_cid_name_prefix ?? null,
                                     destination_accountcode: options.item?.destination_accountcode ?? null,
+                                    destination_hold_music: options.item.destination_hold_music ?? '',
                                     destination_distinctive_ring: options.item?.destination_distinctive_ring ?? null,
                                 }">
 
@@ -87,6 +88,7 @@
                                                     'destination_cid_name_prefix',
                                                     'destination_accountcode',
                                                     'destination_distinctive_ring',
+                                                    'destination_hold_music',
                                                     'advanced_container2',
                                                     'submit_advanced'
                                                 ]" />
@@ -175,10 +177,11 @@
                                                                     return [];  // Return an empty array in case of error
                                                                 }
 
-                                                            }" :search="true" label-prop="name" :native="false" value-prop="extension"
-                                                                label="Target" input-type="search" allow-absent
-                                                                autocomplete="off" placeholder="Choose Target"
-                                                                :floating="false" :strict="false" :columns="{
+                                                            }" :search="true" label-prop="name" :native="false"
+                                                                value-prop="extension" label="Target"
+                                                                input-type="search" allow-absent autocomplete="off"
+                                                                placeholder="Choose Target" :floating="false"
+                                                                :strict="false" :columns="{
 
                                                                     sm: {
                                                                         container: 6,
@@ -203,20 +206,39 @@
 
                                                 <ToggleElement name="destination_record" text="Record Inbound Calls"
                                                     description="Enable this setting to automatically record all inbound calls for this phone number. Once activated, every incoming call will be captured and stored for future reference, ensuring that no important conversation is missed. Note: Ensure compliance with local call recording laws before enabling."
-                                                    true-value="true" false-value="false" 
-                                                    :conditions="[() => options?.permissions?.manage_recording_setting]"/>
+                                                    true-value="true" false-value="false"
+                                                    :conditions="[() => options?.permissions?.manage_recording_setting]" />
 
                                                 <ToggleElement name="destination_type_fax" text="Enable Fax Machine"
                                                     description="Activate this setting if calls will be routed directly to a physical fax machine. This ensures proper handling of fax transmissions."
                                                     :true-value="'1'" />
-                                                <SelectElement name="fax_uuid" :items="options.faxes" :search="true" :native="false" label="Fax detection"
-                                                    input-type="search" autocomplete="off" />
+                                                <SelectElement name="fax_uuid" :items="options.faxes" :search="true"
+                                                    :native="false" label="Fax detection" input-type="search"
+                                                    autocomplete="off" />
                                                 <TextElement name="destination_cid_name_prefix"
                                                     label="Caller ID name prefix" />
-                                                <TextElement name="destination_accountcode" label="Account code" />
+                                                <TextElement name="destination_accountcode" label="Account code"
+                                                    :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" />
                                                 <TextElement name="destination_distinctive_ring"
-                                                    label="Distinctive ring" />
-                                               
+                                                    label="Distinctive ring" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" />
+
+                                                <SelectElement name="destination_hold_music"
+                                                    :items="options.music_on_hold_options" :groups="true" default=""
+                                                    :search="true" :native="false" label="Select custom Music On Hold"
+                                                    input-type="search" autocomplete="off" :strict="false" :columns="{
+                                                        sm: {
+                                                            wrapper: 6,
+                                                        },
+                                                    }"
+                                                    :conditions="[() => options.permissions.destination_hold_music]" />
 
                                                 <GroupElement name="advanced_container2" />
 
@@ -367,7 +389,6 @@ const handleError = (error, details, form$) => {
 
 </script>
 <style>
-
 div[data-lastpass-icon-root] {
     display: none !important
 }

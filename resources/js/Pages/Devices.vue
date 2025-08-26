@@ -131,7 +131,9 @@
                             </div>
                         </ejs-tooltip>
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_template" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.template?.name
+                        ? (row.template.vendor ? `${row.template.vendor}/${row.template.name}` : row.template.name)
+                        : (row.device_template || '—')" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.profile?.device_profile_name" />
                     <TableField v-if="!showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
@@ -243,7 +245,7 @@
 
     <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :show="showBulkUpdateModal"
         :header="'Bulk Update'" :loading="isModalLoading" @close="handleModalClose"
-        @refresh-data="handleSearchButtonClick"  />
+        @refresh-data="handleSearchButtonClick" />
 
 
     <CloudProvisioningSettings :show="showCloudProvisioningSettings" @close="showCloudProvisioningSettings = false"
@@ -263,7 +265,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onBeforeUnmount, ref, watch } from "vue";
+import { computed, onMounted, ref} from "vue";
 import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
@@ -302,11 +304,8 @@ const showCreateModal = ref(false);
 const showBulkUpdateModal = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationRestartTrigger = ref(false);
-const createFormSubmitting = ref(null);
-const updateFormSubmitting = ref(null);
 const confirmDeleteAction = ref(null);
 const confirmRestartAction = ref(null);
-const bulkUpdateFormSubmitting = ref(null);
 const showCloudProvisioningSettings = ref(false);
 const formErrors = ref(null);
 const notificationType = ref(null);
@@ -314,12 +313,26 @@ const notificationMessages = ref(null);
 const notificationShow = ref(null);
 let tooltipCopyContent = ref('Copy to Clipboard');
 
+const data = ref({
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: 0,
+    to: 0,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
+});
+
 const props = defineProps({
-    data: Object,
     routes: Object,
 });
 
-// console.log(props.data);
+
+onMounted(() => {
+    handleSearchButtonClick();
+})
 
 const filterData = ref({
     search: null,
@@ -496,26 +509,31 @@ const handleShowLocal = () => {
     handleSearchButtonClick();
 }
 
-const handleSearchButtonClick = () => {
+const getData = (page = 1) => {
     loading.value = true;
-    router.visit(props.routes.current_page, {
-        data: {
-            filter: {
-                search: filterData.value.search,
-                showGlobal: filterData.value.showGlobal,
-            },
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-        ],
-        onSuccess: (page) => {
-            loading.value = false;
-            handleClearSelection();
+
+    axios.get(props.routes.data_route, {
+        params: {
+            filter: filterData.value,
+            page,
         }
-    });
+    })
+        .then((response) => {
+            data.value = response.data;
+            // console.log(data.value);
+
+        }).catch((error) => {
+
+            handleErrorResponse(error);
+        }).finally(() => {
+            loading.value = false
+        })
+}
+
+const handleSearchButtonClick = () => {
+    getData()
 };
+
 
 const handleFiltersReset = () => {
     filterData.value.search = null;
@@ -526,50 +544,12 @@ const handleFiltersReset = () => {
 
 const renderRequestedPage = (url) => {
     loading.value = true;
-    router.visit(url, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
-    });
-};
+    // Extract the page number from the url, e.g. "?page=3"
+    const urlObj = new URL(url, window.location.origin);
+    const pageParam = urlObj.searchParams.get("page") ?? 1;
 
-
-
-const getAvailableDomains = () => {
-    router.get(props.routes.cloud_provisioning_domains,
-        {
-
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: [
-                'availableDomains',
-            ],
-            onSuccess: (page) => {
-                isModalLoading.value = false;
-            },
-            onFinish: () => {
-                isModalLoading.value = false;
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
-
-        });
-
-    /* try {
-         const response = await axios.post(props.routes.cloud_provisioning_domains, {});
-         availableDomains.value = response.data.data || [];
-     } catch (error) {
-         console.error(error);
-     }*/
+    // Now call getData with the page number
+    getData(pageParam);
 };
 
 

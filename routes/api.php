@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\EmergencyCallController;
 use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
+use App\Http\Controllers\Api\ProvisioningTemplateController;
 
 /*
 |--------------------------------------------------------------------------
@@ -41,10 +42,15 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::resource('/tokens', TokenController::class);
     Route::post('tokens/bulk-delete', [TokenController::class, 'bulkDelete'])->name('tokens.bulk.delete');
 
-    // Locatiosn
+    // Locations
     Route::resource('/locations', LocationsController::class);
     Route::post('locations/bulk-delete', [LocationsController::class, 'bulkDelete'])->name('locations.bulk.delete');
 
+    // Provisioning Templates
+    Route::resource('/provisioning-templates', ProvisioningTemplateController::class);
+    Route::post('provisioning-templates/bulk-delete', [ProvisioningTemplateController::class, 'bulkDelete'])->name('provisioning-templates.bulk.delete');
+    Route::post('/provisioning-templates/item-options', [ProvisioningTemplateController::class, 'getItemOptions'])->name('provisioning-templates.item.options');
+    Route::post('/provisioning-templates/content', [ProvisioningTemplateController::class, 'getTemplateContent'])->name('provisioning-templates.content');
 
     // Emergency calls
     Route::resource('/emergency-calls', EmergencyCallController::class);
@@ -121,6 +127,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     // Devices 
     Route::post('devices', [DeviceController::class, 'store'])->name('devices.store');
     Route::put('devices/{device}', [DeviceController::class, 'update'])->name('devices.update');
+    Route::get('/devices/data', [DeviceController::class, 'getData'])->name('devices.data');
     Route::post('/devices/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('devices.bulk.update');
     Route::post('/devices/bulk-delete', [DeviceController::class, 'bulkDelete'])->name('devices.bulk.delete');
     Route::post('/devices/restart', [DeviceController::class, 'restart'])->name('devices.restart');

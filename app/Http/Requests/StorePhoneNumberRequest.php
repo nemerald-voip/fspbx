@@ -94,6 +94,7 @@ class StorePhoneNumberRequest extends FormRequest
                 'nullable',
                 'string',
             ],
+            'hold_music' => ['nullable', 'string'],
             'routing_options' => [
                 'nullable',
                 'array',

@@ -736,7 +736,7 @@ class FaxesController extends Controller
             DB::beginTransaction();
 
             $data = $request->validated();
-            logger($data);
+            // logger($data);
 
             // Create the fax server
             $fax = Faxes::create($data);
@@ -778,6 +778,9 @@ class FaxesController extends Controller
             // Generate dialplan for the new fax server
             $this->generateDialPlanXML($fax);
 
+            // Build working directories
+            $this->buildWorkingDirectories($fax);
+
             DB::commit();
 
 
@@ -809,7 +812,6 @@ class FaxesController extends Controller
             DB::beginTransaction();
 
             $data = $request->validated();
-            //  logger($data);
 
             // Find the fax by UUID including relations
             $fax = Faxes::with(['allowed_emails', 'allowed_domain_names'])
@@ -874,6 +876,9 @@ class FaxesController extends Controller
 
             $this->generateDialPlanXML($fax);
 
+            // Build working directories
+            $this->buildWorkingDirectories($fax);
+
             DB::commit();
 
             return response()->json([
@@ -886,6 +891,22 @@ class FaxesController extends Controller
             return response()->json([
                 'messages' => ['error' => ['An error occurred while updating the fax.', $e->getMessage()]],
             ], 500);
+        }
+    }
+
+    private function buildWorkingDirectories($fax) 
+    {
+        $temp_dir = Storage::disk('fax')->path("{$fax->accountcode}/{$fax->fax_extension}/temp");
+        if (!is_dir($temp_dir)) {
+            mkdir($temp_dir, 0777, true);
+        }
+        $sent_dir = Storage::disk('fax')->path("{$fax->accountcode}/{$fax->fax_extension}/sent");
+        if (!is_dir($sent_dir)) {
+            mkdir($sent_dir, 0777, true);
+        }
+        $inbox_dir = Storage::disk('fax')->path("{$fax->accountcode}/{$fax->fax_extension}/inbox");
+        if (!is_dir($inbox_dir)) {
+            mkdir($inbox_dir, 0777, true);
         }
     }
 
@@ -943,12 +964,10 @@ class FaxesController extends Controller
             $dialPlan->insert_date = date('Y-m-d H:i:s');
             $dialPlan->insert_user = session('user_uuid');
 
-            logger($fax);
             // Update IVR with the new dialplan_uuid
             $fax->dialplan_uuid = $newDialplanUuid;
             $fax->save();
 
-            logger($fax);
         } else {
             // Update existing dialplan info
             $dialPlan->dialplan_name = $fax->fax_name;
