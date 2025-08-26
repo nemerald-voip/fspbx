@@ -53,14 +53,38 @@ class DeviceController extends Controller
             return redirect('/');
         }
 
+        return Inertia::render(
+            $this->viewName,
+            [
+
+                'routes' => [
+                    'current_page' => route('devices.index'),
+                    'data_route' => route('devices.data'),
+                    'store' => route('devices.store'),
+                    'select_all' => route('devices.select.all'),
+                    'bulk_delete' => route('devices.bulk.delete'),
+                    'bulk_update' => route('devices.bulk.update'),
+                    'item_options' => route('devices.item.options'),
+                    'restart' => route('devices.restart'),
+                    'cloud_provisioning_item_options' => route('cloud-provisioning.item.options'),
+                    'cloud_provisioning_get_token' => route('cloud-provisioning.token.get'),
+                    'cloud_provisioning_update_api_token' => route('cloud-provisioning.token.update'),
+
+                ]
+            ]
+        );
+    }
+
+    public function getData()
+    {
         $perPage = 50;
         $currentDomain = session('domain_uuid');
 
         // If the filter is not present, assign default value before QueryBuilder
-        if (!$request->has('filter.showGlobal')) {
-            $request->merge([
+        if (!request()->has('filter.showGlobal')) {
+            request()->merge([
                 'filter' => array_merge(
-                    $request->input('filter', []),
+                    request()->input('filter', []),
                     ['showGlobal' => false]
                 ),
             ]);
@@ -149,73 +173,10 @@ class DeviceController extends Controller
 
         // logger( $devicesDto);
 
-        return Inertia::render(
-            $this->viewName,
-            [
-                'data' => $devicesDto,
+        return $devicesDto;
 
-                'routes' => [
-                    'current_page' => route('devices.index'),
-                    'store' => route('devices.store'),
-                    'select_all' => route('devices.select.all'),
-                    'bulk_delete' => route('devices.bulk.delete'),
-                    'bulk_update' => route('devices.bulk.update'),
-                    'item_options' => route('devices.item.options'),
-                    'restart' => route('devices.restart'),
-                    'cloud_provisioning_item_options' => route('cloud-provisioning.item.options'),
-                    'cloud_provisioning_get_token' => route('cloud-provisioning.token.get'),
-                    'cloud_provisioning_update_api_token' => route('cloud-provisioning.token.update'),
-
-                ]
-            ]
-        );
     }
 
-
-    /**
-     *  Get device data
-     */
-    public function getData($paginate = 50)
-    {
-
-        // Check if search parameter is present and not empty
-        if (!empty(request('filterData.search'))) {
-            $this->filters['search'] = request('filterData.search');
-        }
-
-        // Check if showGlobal parameter is present and not empty
-        if (!empty(request('filterData.showGlobal'))) {
-            $this->filters['showGlobal'] = request('filterData.showGlobal') === 'true';
-        } else {
-            $this->filters['showGlobal'] = null;
-        }
-
-        // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'device_address'); // Default to 'destination'
-        $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to ascending
-
-        $data = $this->builder($this->filters);
-
-        // Apply pagination if requested
-        if ($paginate) {
-            $data = $data->paginate($paginate);
-        } else {
-            $data = $data->get(); // This will return a collection
-        }
-
-        if (isset($this->filters['showGlobal']) and $this->filters['showGlobal']) {
-            // Access domains through the session and filter extensions by those domains
-            $domainUuids = Session::get('domains')->pluck('domain_uuid');
-            $extensions = Extensions::whereIn('domain_uuid', $domainUuids)
-                ->get(['domain_uuid', 'extension', 'effective_caller_id_name']);
-        } else {
-            // get extensions for session domain
-            $extensions = Extensions::where('domain_uuid', session('domain_uuid'))
-                ->get(['domain_uuid', 'extension', 'effective_caller_id_name']);
-        }
-
-        return $data;
-    }
 
     /**
      * Show the form for creating a new resource.

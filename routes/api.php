@@ -127,6 +127,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     // Devices 
     Route::post('devices', [DeviceController::class, 'store'])->name('devices.store');
     Route::put('devices/{device}', [DeviceController::class, 'update'])->name('devices.update');
+    Route::get('/devices/data', [DeviceController::class, 'getData'])->name('devices.data');
     Route::post('/devices/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('devices.bulk.update');
     Route::post('/devices/bulk-delete', [DeviceController::class, 'bulkDelete'])->name('devices.bulk.delete');
     Route::post('/devices/restart', [DeviceController::class, 'restart'])->name('devices.restart');

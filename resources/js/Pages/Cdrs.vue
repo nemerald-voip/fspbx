@@ -403,7 +403,6 @@ const getEntities = () => {
 
             handleErrorResponse(error);
         }).finally(() => {
-            loading.value = false
         })
 
 }
