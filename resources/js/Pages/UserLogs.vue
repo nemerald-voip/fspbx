@@ -128,20 +128,20 @@
                 <template #table-body>
                     <tr v-for="row in data.data" :key="row.user_log_uuid">
                         <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500"
-                            :text="row.fax_caller_id_number">
+                            >
                             <div class="flex items-center">
                                 <input v-if="row.user_log_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
                                     :value="row.user_log_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                                 <div class="ml-9">
                                     <span class="flex items-center">
-                                        {{ row.user.name_formatted }}
+                                        {{ row.user?.name_formatted ?? 'User missing?' }}
                                     </span>
                                 </div>
                             </div>
                         </TableField>
 
                         <!-- Email -->
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.user.user_email" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.user?.user_email ?? ''" />
 
                         <TableField v-if="filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                             :text="row.domain?.domain_description">
@@ -238,15 +238,8 @@ import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import Badge from "./components/general/Badge.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 
-
-
-import {
-    startOfDay, endOfDay,
-} from 'date-fns';
 import Loading from "./components/general/Loading.vue";
 
-const page = usePage()
-const today = new Date();
 const loading = ref(false)
 const loadingModal = ref(false)
 const notificationType = ref(null);
@@ -267,11 +260,18 @@ const props = defineProps({
     statusOptions: Object,
 });
 
+const startLocal = moment.utc(props.startPeriod).tz(props.timezone)
+const endLocal   = moment.utc(props.endPeriod).tz(props.timezone)
+
+const dateRange = [
+  startLocal.clone().startOf('day').toISOString(), // UTC instant for local start-of-day
+  endLocal.clone().endOf('day').toISOString(),     // UTC instant for local end-of-day
+]
+
 const filterData = ref({
     search: props.search,
     showGlobal: false,
-    dateRange: [moment.tz(props.startPeriod, props.timezone).startOf('day').format(), moment.tz(props.endPeriod, props.timezone).endOf('day').format()],
-    // dateRange: ['2024-07-01T00:00:00', '2024-07-01T23:59:59'],
+    dateRange: dateRange, 
     timezone: props.timezone,
 
 });
@@ -310,8 +310,10 @@ const handleSearchButtonClick = () => {
 };
 
 const handleFiltersReset = () => {
-    filterData.value.dateRange = [startOfDay(today), endOfDay(today)];
-
+    filterData.value.dateRange = [
+        startLocal.clone().startOf('day').toISOString(), // UTC instant for local start-of-day
+        endLocal.clone().endOf('day').toISOString(),     // UTC instant for local end-of-day
+    ]
     filterData.value.search = null;
     filterData.value.direction = null;
     filterData.value.entity = null;

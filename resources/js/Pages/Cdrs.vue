@@ -106,7 +106,8 @@
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     </TableColumnHeader>
 
-                    <TableColumnHeader v-if="permissions.cdr_mos_view" header="MOS" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader v-if="permissions.cdr_mos_view" header="MOS"
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                     <TableColumnHeader header="Rec" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
@@ -157,7 +158,7 @@
 
                             <div v-if="row.extension && row.direction == 'outbound' && false">{{
                                 row.extension?.extension
-                            }}</div>
+                                }}</div>
                             <div v-else>{{ row.caller_id_number_formatted }}</div>
                         </TableField>
 
@@ -178,8 +179,8 @@
                                 :ringColor="statusBadgeConfig[row.status]?.ringColor || 'ring-blue-600/20'" />
                         </TableField>
 
-                        <TableField v-if="permissions.cdr_mos_view" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                            :text="row.rtp_audio_in_mos" />
+                        <TableField v-if="permissions.cdr_mos_view"
+                            class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.rtp_audio_in_mos" />
 
                         <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                             <template v-if="(row.record_name && row.record_path) || row.record_path === 'S3'
@@ -280,9 +281,6 @@ import { DocumentArrowDownIcon } from "@heroicons/vue/24/outline";
 import Multiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.css'
 
-import {
-    startOfDay, endOfDay,
-} from 'date-fns';
 import Loading from "./components/general/Loading.vue";
 import Spinner from "./components/general/Spinner.vue";
 
@@ -329,17 +327,17 @@ onMounted(() => {
 })
 
 const startLocal = moment.utc(props.startPeriod).tz(props.timezone)
-const endLocal   = moment.utc(props.endPeriod).tz(props.timezone)
+const endLocal = moment.utc(props.endPeriod).tz(props.timezone)
 
 const dateRange = [
-  startLocal.clone().startOf('day').toISOString(), // UTC instant for local start-of-day
-  endLocal.clone().endOf('day').toISOString(),     // UTC instant for local end-of-day
+    startLocal.clone().startOf('day').toISOString(), // UTC instant for local start-of-day
+    endLocal.clone().endOf('day').toISOString(),     // UTC instant for local end-of-day
 ]
 
 const filterData = ref({
     search: null,
     showGlobal: props.showGlobal,
-    dateRange: dateRange, 
+    dateRange: dateRange,
     direction: null,
     entity: null,
     status: null,
@@ -450,7 +448,10 @@ const handleSearchButtonClick = () => {
 };
 
 const handleFiltersReset = () => {
-    filterData.value.dateRange = [startOfDay(today), endOfDay(today)];
+    filterData.value.dateRange = [
+        startLocal.clone().startOf('day').toISOString(), // UTC instant for local start-of-day
+        endLocal.clone().endOf('day').toISOString(),     // UTC instant for local end-of-day
+    ]
 
     filterData.value.search = null;
     filterData.value.direction = null;

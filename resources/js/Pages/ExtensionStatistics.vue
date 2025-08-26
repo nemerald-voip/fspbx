@@ -137,29 +137,20 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { usePage } from '@inertiajs/vue3'
-import { router } from "@inertiajs/vue3";
 import MainLayout from '../Layouts/MainLayout.vue'
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
 import moment from 'moment-timezone';
-import { registerLicense } from '@syncfusion/ej2-base';
 import DatePicker from "./components/general/DatePicker.vue";
-import CallDetailsModal from "./components/modal/CallDetailsModal.vue"
 import Notification from "./components/notifications/Notification.vue";
 import {
     MagnifyingGlassIcon,
 } from "@heroicons/vue/24/solid";
-import { DocumentArrowDownIcon } from "@heroicons/vue/24/outline";
 
-import {
-    startOfDay, endOfDay,
-} from 'date-fns';
 import Loading from "./components/general/Loading.vue";
 
-const page = usePage()
-const today = new Date();
 const loading = ref(false)
 const viewModalTrigger = ref(false);
 const loadingModal = ref(false)
@@ -203,7 +194,6 @@ const dateRange = [
 const filterData = ref({
     search: props.search,
     showGlobal: props.showGlobal,
-    // dateRange: [moment.tz(props.startPeriod, props.timezone).startOf('day').format(), moment.tz(props.endPeriod, props.timezone).endOf('day').format()],
     dateRange: dateRange, 
     // dateRange: ['2024-07-01T00:00:00', '2024-07-01T23:59:59'],
 
@@ -237,13 +227,11 @@ const handleSearchButtonClick = () => {
 };
 
 const handleFiltersReset = () => {
-    filterData.value.dateRange = [startOfDay(today), endOfDay(today)];
-
+    filterData.value.dateRange = [
+        startLocal.clone().startOf('day').toISOString(), // UTC instant for local start-of-day
+        endLocal.clone().endOf('day').toISOString(),     // UTC instant for local end-of-day
+    ]
     filterData.value.search = null;
-    filterData.value.direction = null;
-    filterData.value.entity = null;
-    filterData.value.entityType = null;
-    filterData.value.statuses = [];
 
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();

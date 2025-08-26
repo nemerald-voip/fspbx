@@ -293,12 +293,18 @@ const props = defineProps({
 const itemOptions = ref({})
 const settings = ref({})
 
+const startLocal = moment.utc(props.startPeriod).tz(props.timezone)
+const endLocal = moment.utc(props.endPeriod).tz(props.timezone)
+
+const dateRange = [
+    startLocal.clone().startOf('day').toISOString(), // UTC instant for local start-of-day
+    endLocal.clone().endOf('day').toISOString(),     // UTC instant for local end-of-day
+]
 
 const filterData = ref({
     search: props.search,
     showGlobal: false,
-    dateRange: [moment.tz(props.startPeriod, props.timezone).startOf('day').format(), moment.tz(props.endPeriod, props.timezone).endOf('day').format()],
-    // dateRange: ['2024-07-01T00:00:00', '2024-07-01T23:59:59'],
+    dateRange: dateRange,
     timezone: props.timezone,
 
 });
@@ -470,8 +476,11 @@ const handleSearchButtonClick = () => {
 };
 
 const handleFiltersReset = () => {
-    filterData.value.dateRange = [moment.tz(props.startPeriod, props.timezone).startOf('day').format(), moment.tz(props.endPeriod, props.timezone).endOf('day').format()],
-        filterData.value.search = null;
+    filterData.value.dateRange = [
+        startLocal.clone().startOf('day').toISOString(), // UTC instant for local start-of-day
+        endLocal.clone().endOf('day').toISOString(),     // UTC instant for local end-of-day
+    ]        
+    filterData.value.search = null;
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();
 }
