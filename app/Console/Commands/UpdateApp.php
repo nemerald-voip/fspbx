@@ -90,14 +90,14 @@ class UpdateApp extends Command
                 }
 
                 // If the update is successful, call the version:set command
-                $this->call('version:set', ['version' => $version,'--force' => true]);
+                $this->call('version:set', ['version' => $version, '--force' => true]);
                 $this->info("Version successfully updated to $version.");
             }
         }
 
         if (version_compare($currentVersion, $downloadedVersion, '<')) {
             // Call version:set to update the version to the latest one, even if no steps were needed
-            $this->call('version:set', ['version' => $downloadedVersion,'--force' => true]);
+            $this->call('version:set', ['version' => $downloadedVersion, '--force' => true]);
             $this->info("Version successfully updated to $downloadedVersion.");
         }
 
@@ -114,6 +114,9 @@ class UpdateApp extends Command
 
         //Seed the db
         $this->runArtisanCommand('db:seed', ['--force' => true]);
+
+        //Seed the templates
+        $this->runArtisanCommand('provisioning:link-templates');
 
         // Create storage link
         $this->runArtisanCommand('storage:link', ['--force' => true]);
