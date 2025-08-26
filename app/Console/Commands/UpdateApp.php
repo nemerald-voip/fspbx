@@ -116,7 +116,7 @@ class UpdateApp extends Command
         $this->runArtisanCommand('db:seed', ['--force' => true]);
 
         //Seed the templates
-        $this->runArtisanCommand('provisioning:link-templates');
+        $this->runArtisanCommand('prov:templates:seed');
 
         // Create storage link
         $this->runArtisanCommand('storage:link', ['--force' => true]);
