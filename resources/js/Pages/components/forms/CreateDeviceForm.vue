@@ -50,7 +50,10 @@
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
                                     device_address: options.item?.device_address ?? null,
-                                    device_template: options.item?.device_template ?? null,
+                                    serial_number: options.item?.serial_number ?? null,
+                                    device_template: options.item?.device_template_uuid
+                                        ?? options.item?.device_template
+                                        ?? null,
                                     device_profile_uuid: options.item?.device_profile_uuid,
                                     domain_uuid: options.item?.domain_uuid,
                                     device_keys: options.lines,
@@ -69,6 +72,7 @@
                                                     'device_profile_uuid',
                                                     'domain_uuid',
                                                     'device_description',
+                                                    'serial_number',
                                                     'container_3',
                                                     'submit',
 
@@ -97,7 +101,18 @@
                                                 <StaticElement name="h4" tag="h4" content="Device Settings" />
 
                                                 <TextElement name="device_address" label="MAC Address"
-                                                    placeholder="Enter MAC address" :floating="false" />
+                                                    placeholder="Enter MAC address" :floating="false" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" />
+
+                                                <TextElement name="serial_number" label="Serial Number (Optional)"
+                                                    placeholder="Enter Serial Number" :floating="false" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" />
 
                                                 <SelectElement name="device_template" :items="options.templates"
                                                     :search="true" :native="false" label="Device Template"
@@ -141,6 +156,10 @@
                                                                 :default="options.default_line_options?.server_address_primary" />
                                                             <HiddenElement name="server_address_secondary" :meta="true"
                                                                 :default="options.default_line_options?.server_address_secondary" />
+                                                            <HiddenElement name="outbound_proxy_primary" :meta="true"
+                                                                :default="options.default_line_options?.outbound_proxy_primary" />
+                                                            <HiddenElement name="outbound_proxy_secondary" :meta="true"
+                                                                :default="options.default_line_options?.outbound_proxy_secondary" />
                                                             <HiddenElement name="sip_port" :meta="true"
                                                                 :default="options.default_line_options?.sip_port" />
                                                             <HiddenElement name="sip_transport" :meta="true"
@@ -219,50 +238,7 @@
                                                                 sm: {
                                                                     container: 1,
                                                                 },
-                                                            }">
-                                                                <!-- <div
-                                                                    class="text-sm font-medium leading-6 text-gray-900 text-end">
-
-                                                                    <Menu as="div"
-                                                                        class="relative inline-block text-left">
-                                                                        <div>
-                                                                            <MenuButton
-                                                                                class="flex items-center rounded-full bg-gray-100 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-100">
-                                                                                <span class="sr-only">Open
-                                                                                    options</span>
-                                                                                <EllipsisVerticalIcon
-                                                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-500 hover:bg-gray-200 hover:text-gray-900 active:bg-gray-300 active:duration-150 cursor-pointer"
-                                                                                    aria-hidden="true" />
-                                                                            </MenuButton>
-                                                                        </div>
-
-                                                                        <transition
-                                                                            enter-active-class="transition ease-out duration-100"
-                                                                            enter-from-class="transform opacity-0 scale-95"
-                                                                            enter-to-class="transform opacity-100 scale-100"
-                                                                            leave-active-class="transition ease-in duration-75"
-                                                                            leave-from-class="transform opacity-100 scale-100"
-                                                                            leave-to-class="transform opacity-0 scale-95">
-                                                                            <MenuItems
-                                                                                class="absolute right-0 z-10 mt-2 w-36 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                                                                                <div class="py-1">
-                                                                                    <MenuItem v-slot="{ active }">
-                                                                                    <a href="#"
-                                                                                        @click.prevent="showLineAdvSettings(index)"
-                                                                                        :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Advanced</a>
-                                                                                    </MenuItem>
-                                                                                    <MenuItem v-slot="{ active }">
-                                                                                    <a href="#"
-                                                                                        @click.prevent="deleteLineKey(index)"
-                                                                                        :class="[active ? 'bg-gray-100 text-gray-900' : 'text-gray-700', 'block px-4 py-2 text-sm']">Delete</a>
-                                                                                    </MenuItem>
-
-                                                                                </div>
-                                                                            </MenuItems>
-                                                                        </transition>
-                                                                    </Menu>
-
-                                                                </div> -->
+                                                            }" :conditions="[() => options?.permissions?.device_key_advanced]">
 
                                                                 <Cog8ToothIcon @click="showLineAdvSettings(index)"
                                                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
@@ -287,7 +263,20 @@
                                                                     <TextElement name="server_address_secondary"
                                                                         label="Secondary Server Address"
                                                                         placeholder="Enter secondary server address"
-                                                                        :floating="false" />
+                                                                        :floating="false"
+                                                                        :default="options.default_line_options?.server_address_secondary" />
+
+                                                                    <TextElement name="outbound_proxy_primary"
+                                                                        label="Primary Proxy Address"
+                                                                        placeholder="Enter primary proxy address"
+                                                                        :floating="false"
+                                                                        :default="options.default_line_options?.outbound_proxy_primary" />
+
+                                                                    <TextElement name="outbound_proxy_secondary"
+                                                                        label="Secondary Proxy Address"
+                                                                        placeholder="Enter secondary Proxy address"
+                                                                        :floating="false"
+                                                                        :default="options.default_line_options?.outbound_proxy_secondary" />
 
                                                                     <TextElement name="sip_port" label="SIP Port"
                                                                         placeholder="Enter SIP port" :floating="false"

@@ -50,7 +50,10 @@
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
                                     device_address: options.item?.device_address ?? null,
-                                    device_template: options.item?.device_template ?? null,
+                                    serial_number: options.item?.serial_number ?? null,
+                                    device_template: options.item?.device_template_uuid
+                                        ?? options.item?.device_template
+                                        ?? null,
                                     device_profile_uuid: options.item?.device_profile_uuid,
                                     domain_uuid: options.item?.domain_uuid,
                                     device_keys: options.lines,
@@ -70,6 +73,7 @@
                                                     'device_profile_uuid',
                                                     'domain_uuid',
                                                     'device_description',
+                                                    'serial_number',
                                                     'container_3',
                                                     'submit',
 
@@ -122,7 +126,19 @@
 
                                                 <TextElement name="device_address" label="MAC Address"
                                                     placeholder="Enter MAC address" :floating="false"
-                                                    :disabled="[() => !options?.permissions?.device_address_update]" />
+                                                    :disabled="[() => !options?.permissions?.device_address_update]"
+                                                    :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" />
+
+                                                <TextElement name="serial_number" label="Serial Number (Optional)"
+                                                    placeholder="Enter Serial Number" :floating="false" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" />
 
                                                 <SelectElement name="device_template" :items="options.templates"
                                                     :search="true" :native="false" label="Device Template"
@@ -173,6 +189,10 @@
                                                                 :default="options.default_line_options?.server_address_primary" />
                                                             <HiddenElement name="server_address_secondary" :meta="true"
                                                                 :default="options.default_line_options?.server_address_secondary" />
+                                                            <HiddenElement name="outbound_proxy_primary" :meta="true"
+                                                                :default="options.default_line_options?.outbound_proxy_primary" />
+                                                            <HiddenElement name="outbound_proxy_secondary" :meta="true"
+                                                                :default="options.default_line_options?.outbound_proxy_secondary" />
                                                             <HiddenElement name="sip_port" :meta="true"
                                                                 :default="options.default_line_options?.sip_port" />
                                                             <HiddenElement name="sip_transport" :meta="true"
@@ -251,8 +271,8 @@
                                                                 sm: {
                                                                     container: 1,
                                                                 },
-                                                            }">
-                                                                
+                                                            }" :conditions="[() => options?.permissions?.device_key_advanced]" >
+
 
                                                                 <Cog8ToothIcon @click="showLineAdvSettings(index)"
                                                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
@@ -272,12 +292,29 @@
                                                                         label="Primary Server Address"
                                                                         placeholder="Enter primary server address"
                                                                         :floating="false"
-                                                                        :default="options.default_line_options?.server_address_primary" />
+                                                                        :default="options.default_line_options?.server_address_primary" 
+                                                                        :conditions="[() => options?.permissions?.manage_device_line_primary_server]" />
 
                                                                     <TextElement name="server_address_secondary"
                                                                         label="Secondary Server Address"
                                                                         placeholder="Enter secondary server address"
-                                                                        :floating="false" />
+                                                                        :floating="false" 
+                                                                        :default="options.default_line_options?.server_address_secondary" 
+                                                                        :conditions="[() => options?.permissions?.manage_device_line_secondary_server]" />
+
+                                                                    <TextElement name="outbound_proxy_primary"
+                                                                        label="Primary Proxy Address"
+                                                                        placeholder="Enter primary proxy address"
+                                                                        :floating="false"
+                                                                        :default="options.default_line_options?.outbound_proxy_primary" 
+                                                                        :conditions="[() => options?.permissions?.manage_device_line_primary_proxy]" />
+
+                                                                    <TextElement name="outbound_proxy_secondary"
+                                                                        label="Secondary Proxy Address"
+                                                                        placeholder="Enter secondary Proxy address"
+                                                                        :floating="false" 
+                                                                        :default="options.default_line_options?.outbound_proxy_secondary" 
+                                                                        :conditions="[() => options?.permissions?.manage_device_line_secondary_proxy]"/>
 
                                                                     <TextElement name="sip_port" label="SIP Port"
                                                                         placeholder="Enter SIP port" :floating="false"
@@ -480,7 +517,7 @@
                                                         <ObjectElement :name="index">
 
                                                             <TextElement name="device_setting_subcategory" label="Name"
-                                                                 autocomplete="off" :columns="{
+                                                                autocomplete="off" :columns="{
 
                                                                     sm: {
                                                                         container: 4,

@@ -7,11 +7,11 @@
        
 
         <div class="flex flex-1 justify-end sm:hidden">
-            <button @click="$emit('pagination-change-page', previous)"
+            <button type="button" @click="$emit('pagination-change-page', previous)"
                 class="relative inline-flex items-center rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                 Previous
             </button>
-            <button @click="$emit('pagination-change-page', next)"
+            <button type="button" @click="$emit('pagination-change-page', next)"
                 class="relative ml-3 inline-flex items-center rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                 Next
             </button>
@@ -21,22 +21,22 @@
                 <p class="text-sm text-gray-700">
                     Showing
                     {{ ' ' }}
-                    <span class="font-medium">{{ from }}</span>
+                    <span class="font-medium">{{ from ?? 0 }}</span>
                     {{ ' ' }}
                     to
                     {{ ' ' }}
-                    <span class="font-medium">{{ to }}</span>
+                    <span class="font-medium">{{ to ?? 0 }}</span>
                     {{ ' ' }}
                     of
                     {{ ' ' }}
-                    <span class="font-medium">{{ total }}</span>
+                    <span class="font-medium">{{ total ?? 0 }}</span>
                     {{ ' ' }}
                     results
                 </p>
             </div>
             <div>
                 <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                    <button v-for="(link, index) in visibleLinks" :key="index"
+                    <button v-for="(link, index) in visibleLinks" :key="index" type="button"
                         @click="link.url ? $emit('pagination-change-page', link.url) : null"
                         :class="linkClass(index, link.active)">
                         <ChevronLeftIcon v-if="index === 0" class="h-5 w-5" aria-hidden="true" />

@@ -131,7 +131,9 @@
                             </div>
                         </ejs-tooltip>
                     </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.device_template" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.template?.name
+                        ? (row.template.vendor ? `${row.template.vendor}/${row.template.name}` : row.template.name)
+                        : (row.device_template || '—')" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.profile?.device_profile_name" />
                     <TableField v-if="!showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
@@ -243,7 +245,7 @@
 
     <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :show="showBulkUpdateModal"
         :header="'Bulk Update'" :loading="isModalLoading" @close="handleModalClose"
-        @refresh-data="handleSearchButtonClick"  />
+        @refresh-data="handleSearchButtonClick" />
 
 
     <CloudProvisioningSettings :show="showCloudProvisioningSettings" @close="showCloudProvisioningSettings = false"
@@ -302,11 +304,8 @@ const showCreateModal = ref(false);
 const showBulkUpdateModal = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationRestartTrigger = ref(false);
-const createFormSubmitting = ref(null);
-const updateFormSubmitting = ref(null);
 const confirmDeleteAction = ref(null);
 const confirmRestartAction = ref(null);
-const bulkUpdateFormSubmitting = ref(null);
 const showCloudProvisioningSettings = ref(false);
 const formErrors = ref(null);
 const notificationType = ref(null);

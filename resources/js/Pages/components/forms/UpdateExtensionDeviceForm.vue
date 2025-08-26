@@ -50,7 +50,9 @@
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
                                     device_profile_uuid: options.item.device_profile_uuid,
-                                    device_template: options.item.device_template,
+                                    device_template: options.item?.device_template_uuid
+                                        ?? options.item?.device_template
+                                        ?? null,
                                     device_uuid: options.item.device_uuid,
                                     device_address: options.item.device_address,
                                     device_keys: options.lines,

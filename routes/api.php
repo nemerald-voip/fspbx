@@ -23,6 +23,7 @@ use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\EmergencyCallController;
 use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
+use App\Http\Controllers\Api\ProvisioningTemplateController;
 
 /*
 |--------------------------------------------------------------------------
@@ -41,10 +42,15 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::resource('/tokens', TokenController::class);
     Route::post('tokens/bulk-delete', [TokenController::class, 'bulkDelete'])->name('tokens.bulk.delete');
 
-    // Locatiosn
+    // Locations
     Route::resource('/locations', LocationsController::class);
     Route::post('locations/bulk-delete', [LocationsController::class, 'bulkDelete'])->name('locations.bulk.delete');
 
+    // Provisioning Templates
+    Route::resource('/provisioning-templates', ProvisioningTemplateController::class);
+    Route::post('provisioning-templates/bulk-delete', [ProvisioningTemplateController::class, 'bulkDelete'])->name('provisioning-templates.bulk.delete');
+    Route::post('/provisioning-templates/item-options', [ProvisioningTemplateController::class, 'getItemOptions'])->name('provisioning-templates.item.options');
+    Route::post('/provisioning-templates/content', [ProvisioningTemplateController::class, 'getTemplateContent'])->name('provisioning-templates.content');
 
     // Emergency calls
     Route::resource('/emergency-calls', EmergencyCallController::class);
