@@ -175,7 +175,6 @@
                                                 <GroupElement name="keys_container" />
 
                                                 <ListElement name="device_keys" :sort="true" size="sm"
-                                                    store-order="line_number"
                                                     :controls="{ add: options.permissions.device_key_create, remove: options.permissions.destination_delete, sort: options.permissions.destination_update }"
                                                     :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
                                                     <template #default="{ index }">
@@ -213,7 +212,7 @@
                                                                 sm: {
                                                                     container: 1,
                                                                 },
-                                                            }" />
+                                                            }" :default="nextLineNumber" />
 
                                                             <SelectElement name="line_type_id" label="Function"
                                                                 :items="options.line_key_types" :search="true"
@@ -271,7 +270,8 @@
                                                                 sm: {
                                                                     container: 1,
                                                                 },
-                                                            }" :conditions="[() => options?.permissions?.device_key_advanced]" >
+                                                            }"
+                                                                :conditions="[() => options?.permissions?.device_key_advanced]">
 
 
                                                                 <Cog8ToothIcon @click="showLineAdvSettings(index)"
@@ -292,29 +292,29 @@
                                                                         label="Primary Server Address"
                                                                         placeholder="Enter primary server address"
                                                                         :floating="false"
-                                                                        :default="options.default_line_options?.server_address_primary" 
+                                                                        :default="options.default_line_options?.server_address_primary"
                                                                         :conditions="[() => options?.permissions?.manage_device_line_primary_server]" />
 
                                                                     <TextElement name="server_address_secondary"
                                                                         label="Secondary Server Address"
                                                                         placeholder="Enter secondary server address"
-                                                                        :floating="false" 
-                                                                        :default="options.default_line_options?.server_address_secondary" 
+                                                                        :floating="false"
+                                                                        :default="options.default_line_options?.server_address_secondary"
                                                                         :conditions="[() => options?.permissions?.manage_device_line_secondary_server]" />
 
                                                                     <TextElement name="outbound_proxy_primary"
                                                                         label="Primary Proxy Address"
                                                                         placeholder="Enter primary proxy address"
                                                                         :floating="false"
-                                                                        :default="options.default_line_options?.outbound_proxy_primary" 
+                                                                        :default="options.default_line_options?.outbound_proxy_primary"
                                                                         :conditions="[() => options?.permissions?.manage_device_line_primary_proxy]" />
 
                                                                     <TextElement name="outbound_proxy_secondary"
                                                                         label="Secondary Proxy Address"
                                                                         placeholder="Enter secondary Proxy address"
-                                                                        :floating="false" 
-                                                                        :default="options.default_line_options?.outbound_proxy_secondary" 
-                                                                        :conditions="[() => options?.permissions?.manage_device_line_secondary_proxy]"/>
+                                                                        :floating="false"
+                                                                        :default="options.default_line_options?.outbound_proxy_secondary"
+                                                                        :conditions="[() => options?.permissions?.manage_device_line_secondary_proxy]" />
 
                                                                     <TextElement name="sip_port" label="SIP Port"
                                                                         placeholder="Enter SIP port" :floating="false"
@@ -576,7 +576,7 @@
 </template>
 
 <script setup>
-import { ref, reactive } from "vue";
+import { ref, reactive, computed } from "vue";
 
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
@@ -616,9 +616,15 @@ function closeAdvSettings() {
     advModalIndex.value = null
 }
 
-
-
-const activeLineIndex = ref(null);
+const nextLineNumber = computed(() => {
+    const deviceKeys = form$?.value?.el$('device_keys')
+    const children = deviceKeys?.children$Array ?? []
+    const maxLine = children.reduce((max, child) => {
+        const n = parseInt(child?.value?.line_number, 10)
+        return Number.isFinite(n) && n > max ? n : max
+    }, 0)
+    return maxLine + 1
+})
 
 const handleTabSelected = (activeTab, previousTab) => {
     if (activeTab.name == 'cloud_provisioning') {
