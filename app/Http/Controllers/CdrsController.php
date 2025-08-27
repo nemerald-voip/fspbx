@@ -837,8 +837,7 @@ class CdrsController extends Controller
                 $params['filter']['entityType'],
                 $params['filter']['dateRange'],
             );
-            // $params['user_email'] = auth()->user()->user_email;
-            $params['user_email'] = 'dexter@stellarvoip.com';
+            $params['user_email'] = auth()->user()->user_email;
 
             // $cdrs = $this->getData(false); // returns lazy collection
 
