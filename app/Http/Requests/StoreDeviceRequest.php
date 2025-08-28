@@ -36,8 +36,7 @@ class StoreDeviceRequest extends FormRequest
             ],
             'device_address_modified' => [
                 'nullable',
-                Rule::unique('App\Models\Devices', 'device_address')
-                    ->ignore($this->device_address_modified, 'device_address'),
+                Rule::unique('v_devices', 'device_address'),
             ],
             'device_profile_uuid' => [
                 'nullable',
