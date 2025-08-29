@@ -104,7 +104,9 @@
             @php
                 // prepare destination
                 $extField = $fieldMap[$h->action] ?? null;
-                $extValue = $extField ? $h->target->{$extField} : $businessHour->extension;
+                $extValue = $extField
+                    ? ($h->target?->{$extField} ?? $businessHour->extension)
+                    : $businessHour->extension;                
                 $dest = buildDestinationAction([
                     'type' => $h->action,
                     'extension' => $extValue,
