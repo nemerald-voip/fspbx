@@ -168,6 +168,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
                 'voicemail_recording_instructions' => 'true',
                 'voicemail_file' => 'attach',
                 'voicemail_local_after_email' => 'true',
+                'voicemail_tutorial' => 'true',
                 'voicemail_enabled' => 'true',
             ]);
             $extension->voicemail->save();
