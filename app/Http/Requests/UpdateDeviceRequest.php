@@ -94,6 +94,9 @@ class UpdateDeviceRequest extends FormRequest
             'device_description' => [
                 'nullable',
             ],
+            'device_enabled' => [
+                'present',
+            ],
             'device_settings' => [
                 'nullable',
                 'array'
@@ -155,6 +158,10 @@ class UpdateDeviceRequest extends FormRequest
         // Default domain
         if (!$this->has('domain_uuid')) {
             $this->merge(['domain_uuid' => session('domain_uuid')]);
+        }
+
+        if (!$this->has('device_enabled')) {
+            $this->merge(['device_enabled' => 'true']);
         }
     
         // Normalize serial

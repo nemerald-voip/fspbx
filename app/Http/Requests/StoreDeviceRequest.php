@@ -150,8 +150,8 @@ class StoreDeviceRequest extends FormRequest
             $this->merge(['domain_uuid' => session('domain_uuid')]);
         }
 
-        if (!$this->has('domain_uuid')) {
-            $this->merge(['domain_uuid' => session('domain_uuid')]);
+        if (!$this->has('device_enabled')) {
+            $this->merge(['device_enabled' => 'true']);
         }
     
         // Normalize serial
