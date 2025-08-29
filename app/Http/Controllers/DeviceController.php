@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Inertia\Inertia;
-use App\Models\Domain;
 use App\Models\Devices;
 use App\Data\DeviceData;
 use App\Models\Extensions;
@@ -17,10 +16,8 @@ use App\Services\LineKeyTypesService;
 use Spatie\QueryBuilder\QueryBuilder;
 use App\Services\FreeswitchEslService;
 use Spatie\QueryBuilder\AllowedFilter;
-use Illuminate\Support\Facades\Session;
 use App\Http\Requests\StoreDeviceRequest;
 use App\Http\Requests\UpdateDeviceRequest;
-use App\Services\CloudProvisioningService;
 use App\Http\Requests\BulkUpdateDeviceRequest;
 use App\Services\DeviceCloudProvisioningService;
 
@@ -100,6 +97,9 @@ class DeviceController extends Controller
                 'device_profile_uuid',
                 'device_address',
                 'device_description',
+                'device_provisioned_method',
+                'device_provisioned_date',
+
             ])
             // allow ?filter[username]=foo or ?filter[user_email]=bar
             ->allowedFilters([
