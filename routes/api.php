@@ -9,6 +9,7 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\UserLogsController;
+use App\Http\Controllers\HotelRoomController;
 use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\RingGroupsController;
@@ -51,6 +52,11 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('provisioning-templates/bulk-delete', [ProvisioningTemplateController::class, 'bulkDelete'])->name('provisioning-templates.bulk.delete');
     Route::post('/provisioning-templates/item-options', [ProvisioningTemplateController::class, 'getItemOptions'])->name('provisioning-templates.item.options');
     Route::post('/provisioning-templates/content', [ProvisioningTemplateController::class, 'getTemplateContent'])->name('provisioning-templates.content');
+
+    // Hotel rooms
+    Route::resource('/hotel-rooms', HotelRoomController::class);
+    Route::post('/hotel-rooms/item-options', [HotelRoomController::class, 'getItemOptions'])->name('hotel-rooms.item.options');
+    Route::post('hotel-rooms/bulk-delete', [HotelRoomController::class, 'bulkDelete'])->name('hotel-rooms.bulk.delete');
 
     // Emergency calls
     Route::resource('/emergency-calls', EmergencyCallController::class);
