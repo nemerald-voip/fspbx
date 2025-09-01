@@ -48,53 +48,61 @@
                     <table class="min-w-full divide-y divide-gray-200 mb-4">
                         <thead class="bg-gray-100">
                             <tr>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Room Name</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Extension
-                                </th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Check-in Status</th>
-
-
-
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Room</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Occupancy</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Housekeeping</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Guest</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Arrival</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Departure</th>
                                 <th class="relative px-6 py-3 text-left text-sm font-medium text-gray-500">
                                     <span class="sr-only">Actions</span>
                                 </th>
                             </tr>
                         </thead>
                         <tbody v-if="!isRoomsLoading && data.data?.length" class="divide-y divide-gray-200 bg-white">
-                            <tr v-for="room in data.data" :key="room.uuid">
+                            <tr v-for="row in data.data" :key="row.uuid">
                                 <td class="whitespace-nowrap px-6 py-2 text-sm font-medium text-gray-900 capitalize">
-                                    {{ room.room_name }}
+                                    {{ row.room_name }}
                                 </td>
-
-
+                                <td class="whitespace-nowrap px-6 py-2 text-sm">
+                                    
+                                        {{ row.occupancy_status || 'Not checked in' }}
+                                    
+                                </td>
+                                <td class="whitespace-nowrap px-6 py-2 text-sm">
+                                    
+                                        {{ row.housekeeping_status || 'Not checked in' }}
+                                    
+                                </td>
+                                <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-800">
+                                    <span v-if="row.guest_last_name || row.guest_first_name">
+                                        {{ [row.guest_last_name, row.guest_first_name].filter(Boolean).join(', ') }}
+                                    </span>
+                                    <span v-else>—</span>
+                                </td>
                                 <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
-                                    {{ room.extension?.extension ?? '' }}
+                                    {{ row.arrival_date ?? '—' }}
                                 </td>
-
-                                <td class="whitespace-nowrap px-6 py-2 text-sm font-medium text-gray-900 capitalize">
-                                    {{ room.check_in ?? '' }}
+                                <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                    {{ row.departure_date ?? '—' }}
                                 </td>
 
                                 <td class="whitespace-nowrap px-6 py-2 text-right text-sm font-medium">
-                                    <div class="flex items-center whitespace-nowrap justify-end">
-                                        <ejs-tooltip :content="'Edit'" position='TopCenter'
-                                            target="#destination_tooltip_target">
-                                            <div id="destination_tooltip_target">
-                                                <PencilSquareIcon @click="handleEditButtonClick(room.uuid)"
+                                    <div class="flex items-center whitespace-nowrap justify-end gap-1">
+                                        <ejs-tooltip :content="'Edit'" position="TopCenter" target="#rs_edit_tt">
+                                            <div id="rs_edit_tt">
+                                                <PencilSquareIcon @click="handleEditButtonClick(row.uuid)"
                                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-
                                             </div>
                                         </ejs-tooltip>
 
-                                        <ejs-tooltip :content="'Delete'" position='TopCenter'
-                                            target="#delete_tooltip_target">
-                                            <div id="delete_tooltip_target">
-                                                <TrashIcon @click="handleSingleItemDeleteRequest(room.uuid)"
+                                        <ejs-tooltip :content="'Delete'" position="TopCenter" target="#rs_del_tt">
+                                            <div id="rs_del_tt">
+                                                <TrashIcon @click="handleSingleItemDeleteRequest(row.uuid)"
                                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                             </div>
                                         </ejs-tooltip>
                                     </div>
-
                                 </td>
                             </tr>
                         </tbody>
@@ -125,19 +133,17 @@
         </div>
     </div>
 
-    <CreateHotelRoomModal :options="itemOptions" :show="showCreateModal" :loading="loadingModal"
-        @close="showCreateModal = false" @error="handleFormErrorResponse" @refresh-data="fetchRooms"
+    <!-- <CreateRoomStatusModal :options="itemOptions" :show="showCreateModal" :loading="loadingModal"
+        @close="showCreateModal = false" @error="handleFormErrorResponse" @refresh-data="fetchRoomStatuses"
         @success="showNotification('success', $event)" />
 
-
-    <UpdateHotelRoomModal :options="itemOptions" :show="showEditModal" :loading="loadingModal"
-        @close="showEditModal = false" @error="handleFormErrorResponse" @refresh-data="fetchRooms"
-        @success="showNotification('success', $event)" />
-
+    <UpdateRoomStatusModal :options="itemOptions" :show="showEditModal" :loading="loadingModal"
+        @close="showEditModal = false" @error="handleFormErrorResponse" @refresh-data="fetchRoomStatuses"
+        @success="showNotification('success', $event)" /> -->
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
         @confirm="confirmDeleteAction" :header="'Confirm Deletion'"
-        :text="'This action will permanently delete the selected hotel room(s). Are you sure you want to proceed?'"
+        :text="'This will permanently delete the selected room status record(s). Proceed?'"
         :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
@@ -146,8 +152,8 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-import CreateHotelRoomModal from "./modal/CreateHotelRoomModal.vue";
-import UpdateHotelRoomModal from "./modal/UpdateHotelRoomModal.vue";
+// import CreateRoomStatusModal from "./modal/CreateRoomStatusModal.vue";
+// import UpdateRoomStatusModal from "./modal/UpdateRoomStatusModal.vue";
 import Notification from "./notifications/Notification.vue";
 import ConfirmationModal from "./modal/ConfirmationModal.vue";
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
@@ -197,9 +203,9 @@ const filterData = ref({
 
 // const emits = defineEmits(['edit-item', 'delete-item']);
 
-const fetchRooms = async (page = 1) => {
+const fetchRoomStatuses = async (page = 1) => {
     isRoomsLoading.value = true
-    axios.get(props.routes.hotel_rooms, {
+    axios.get(props.routes.hotel_room_status, {
         params: {
             filter: filterData.value,
             page,
@@ -218,7 +224,7 @@ const fetchRooms = async (page = 1) => {
 
 
 watch(() => props.trigger, (newVal) => {
-    fetchRooms(1)
+    fetchRoomStatuses(1)
 })
 
 
@@ -229,7 +235,7 @@ const renderRequestedPage = (url) => {
     const pageParam = urlObj.searchParams.get("page") ?? 1;
 
     // Now call getData with the page number
-    fetchRooms(pageParam);
+    fetchRoomStatuses(pageParam);
 };
 
 // Computed property for bulk actions based on permissions
@@ -261,7 +267,7 @@ const handleCreateButtonClick = () => {
 }
 
 const handleSearchButtonClick = () => {
-    fetchRooms(1)
+    fetchRoomStatuses(1)
 };
 
 const handleFiltersReset = () => {
@@ -322,6 +328,20 @@ const getItemOptions = (itemUuid = null) => {
 }
 
 
+const handleBulkActionRequest = (action) => {
+    if (action === 'bulk_delete') {
+        showDeleteConfirmationModal.value = true;
+        confirmDeleteAction.value = () => executeBulkDelete();
+    }
+    if (action === 'bulk_update') {
+        formErrors.value = [];
+        getItemOptions();
+        loadingModal.value = true
+        bulkUpdateModalTrigger.value = true;
+    }
+
+}
+
 const hideNotification = () => {
     notificationShow.value = false;
     notificationType.value = null;
@@ -332,6 +352,10 @@ const showNotification = (type, messages = null) => {
     notificationType.value = type;
     notificationMessages.value = messages;
     notificationShow.value = true;
+}
+
+const handleClearErrors = () => {
+    formErrors.value = null;
 }
 
 const handleFormErrorResponse = (error) => {

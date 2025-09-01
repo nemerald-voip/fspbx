@@ -46,7 +46,7 @@
                                                     <component :is="item.icon" class="size-6 shrink-0"
                                                         :class="parentHasActiveChild(item) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
                                                     <span class="truncate" v-show="!isNavCollapsed">{{ item.name
-                                                        }}</span>
+                                                    }}</span>
                                                     <ChevronRightIcon v-show="!isNavCollapsed"
                                                         :class="[open ? 'rotate-90 text-gray-500' : 'text-gray-400', 'ml-auto size-5 shrink-0']" />
                                                 </DisclosureButton>
@@ -63,7 +63,7 @@
                                             'group flex w-full items-center gap-x-3 rounded-md py-2 pr-2 text-sm/6 text-gray-700',
                                             isNavCollapsed ? 'justify-center' : 'pl-1'
                                         ]">
-                                            
+
                                             <component v-if="subItem.icon" :is="subItem.icon" class="size-5 shrink-0"
                                                 :class="isActive(subItem.key) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
 
@@ -216,15 +216,23 @@
 
                 <!-- ROOM MANAGEMENT -->
                 <section v-show="activeSection === 'room_management'">
-
                     <Vueform>
                         <StaticElement name="room_management_title" tag="h4" content="Room Management" description="" />
-
-
                         <GroupElement name="container_1" />
                     </Vueform>
 
                     <RoomManagement :trigger="roomManagementTrigger" :routes="routes" :permissions="permissions"
+                        :domain_uuid="data.domain_uuid" />
+                </section>
+
+                <!-- ROOM STATUS -->
+                <section v-show="activeSection === 'room_status'">
+                    <Vueform>
+                        <StaticElement name="room_management_title" tag="h4" content="Room Status" description="" />
+                        <GroupElement name="container_1" />
+                    </Vueform>
+
+                    <RoomStatus :trigger="roomStatusTrigger" :routes="routes" :permissions="permissions"
                         :domain_uuid="data.domain_uuid" />
                 </section>
 
@@ -281,6 +289,7 @@ import Notification from "./components/notifications/Notification.vue";
 import EmergencyCalls from "./components/EmergencyCalls.vue";
 import AutoProvisioning from "./components/AutoProvisioning.vue";
 import RoomManagement from "./components/RoomManagement.vue";
+import RoomStatus from "./components/RoomStatus.vue";
 import EmergencyServiceStatus from "./components/EmergencyServiceStatus.vue";
 import Locations from "./components/Locations.vue";
 import CreateLocationModal from "./components/modal/CreateLocationModal.vue"
@@ -295,7 +304,8 @@ import {
     BuildingOffice2Icon,
     ChevronDoubleLeftIcon,
     KeyIcon,
-    BellAlertIcon
+    BellAlertIcon,
+    ClipboardDocumentCheckIcon
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -326,6 +336,7 @@ const showDeleteLocationConfirmationModal = ref(false)
 const confirmDeleteLocationAction = ref(null);
 const autoProvisioningTrigger = ref(false)
 const roomManagementTrigger = ref(false)
+const roomStatusTrigger = ref(false)
 const activeSection = ref('general')
 const isActive = (key) => activeSection.value === key
 
@@ -337,6 +348,7 @@ watch(activeSection, (key) => {
     if (key === 'locations') getLocations()
     if (key === 'auto_provisioning') autoProvisioningTrigger.value = !autoProvisioningTrigger.value
     if (key === 'room_management') roomManagementTrigger.value = !roomManagementTrigger.value
+    if (key === 'room_status') roomStatusTrigger.value = !roomStatusTrigger.value
 })
 
 const navigation = [
@@ -349,6 +361,7 @@ const navigation = [
         icon: BuildingOffice2Icon,
         children: [
             { key: 'room_management', name: 'Room Management', icon: KeyIcon },
+            { key: 'room_status', name: 'Room Status', icon: ClipboardDocumentCheckIcon },
             { key: 'emergency_calls', name: 'Emergency Calls', icon: BellAlertIcon },
 
         ],

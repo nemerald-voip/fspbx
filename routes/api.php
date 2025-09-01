@@ -20,6 +20,7 @@ use App\Http\Controllers\BusinessHoursController;
 use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\AccountSettingsController;
+use App\Http\Controllers\HotelRoomStatusController;
 use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\EmergencyCallController;
 use App\Http\Controllers\ExtensionStatisticsController;
@@ -57,6 +58,9 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::resource('/hotel-rooms', HotelRoomController::class);
     Route::post('/hotel-rooms/item-options', [HotelRoomController::class, 'getItemOptions'])->name('hotel-rooms.item.options');
     Route::post('hotel-rooms/bulk-delete', [HotelRoomController::class, 'bulkDelete'])->name('hotel-rooms.bulk.delete');
+
+    // Hotel room status
+    Route::get('/hotel-room-status', [HotelRoomStatusController::class, 'index'])->name('hotel-room-status.index');
 
     // Emergency calls
     Route::resource('/emergency-calls', EmergencyCallController::class);

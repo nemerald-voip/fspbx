@@ -1,11 +1,10 @@
 <?php
-// app/Http/Controllers/HotelRoomController.php
+
 namespace App\Http\Controllers;
 
 use App\Models\HotelRoom;
 use App\Models\Extensions;
 use Illuminate\Http\Request;
-use App\Models\HotelReservation;
 use App\Services\HotelRoomService;
 use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\QueryBuilder;

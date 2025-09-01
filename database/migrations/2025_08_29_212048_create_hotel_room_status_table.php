@@ -8,11 +8,11 @@ use Illuminate\Database\Migrations\Migration;
 return new class extends Migration {
     public function up(): void
     {
-        if (Schema::hasTable('hote_room_status')) {
+        if (Schema::hasTable('hotel_room_status')) {
             return; // already exists
         }
     
-        Schema::create('hote_room_status', function (Blueprint $t) {
+        Schema::create('hotel_room_status', function (Blueprint $t) {
             $t->uuid('uuid')->primary()->default(DB::raw('uuid_generate_v4()'));
             $t->uuid('domain_uuid')->index();
             $t->uuid('hotel_room_uuid')->index();
@@ -26,6 +26,6 @@ return new class extends Migration {
         });
     }
     
-    public function down(): void { Schema::dropIfExists('hote_room_status'); }
+    public function down(): void { Schema::dropIfExists('hotel_room_status'); }
 };
 

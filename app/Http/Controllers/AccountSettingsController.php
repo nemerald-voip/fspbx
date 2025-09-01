@@ -65,6 +65,7 @@ class AccountSettingsController extends Controller
                     'hotel_rooms' => route('hotel-rooms.index'),
                     'hotel_rooms_item_options' =>route('hotel-rooms.item.options'),
                     'hotel_rooms_bulk_delete' => route('hotel-rooms.bulk.delete'),
+                    'hotel_room_status' => route('hotel-room-status.index'),
 
                     //'bulk_update' => route('devices.bulk.update'),
                 ],
