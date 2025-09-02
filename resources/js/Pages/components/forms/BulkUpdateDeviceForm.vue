@@ -169,7 +169,6 @@
                                                 <GroupElement name="keys_container" />
 
                                                 <ListElement name="device_keys" :sort="true" size="sm" :disabled="true"
-                                                    store-order="line_number"
                                                     :controls="{ add: options.permissions.device_key_create, remove: options.permissions.destination_delete, sort: options.permissions.destination_update }"
                                                     :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
                                                     <template #default="{ index }">
@@ -203,7 +202,7 @@
                                                                 sm: {
                                                                     container: 1,
                                                                 },
-                                                            }" />
+                                                            }" :default="nextLineNumber"/>
 
                                                             <SelectElement name="line_type_id" label="Function"
                                                                 :items="options.line_key_types" :search="true"
@@ -341,7 +340,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
@@ -358,7 +357,6 @@ const props = defineProps({
 });
 
 const form$ = ref(null)
-
 
 const advModalIndex = ref(null)
 
@@ -377,6 +375,15 @@ const handleTabSelected = (activeTab, previousTab) => {
 
 }
 
+const nextLineNumber = computed(() => {
+    const deviceKeys = form$?.value?.el$('device_keys')
+    const children = deviceKeys?.children$Array ?? []
+    const maxLine = children.reduce((max, child) => {
+        const n = parseInt(child?.value?.line_number, 10)
+        return Number.isFinite(n) && n > max ? n : max
+    }, 0)
+    return maxLine + 1
+})
 
 const submitForm = async (FormData, form$) => {
     // Using FormData will EXCLUDE conditional elements and it

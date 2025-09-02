@@ -14,7 +14,7 @@
                 </div>
             </div>
 
-            <div v-if="form.global ==false">
+            <div v-if="form.global == false || form.type == 'custom'">
                 <LabelInputOptional target="members" label="Base Template" />
                 <div class="mt-2 relative">
                     <Multiselect v-model="base_template" :options="options.default_templates" :multiple="false"
@@ -28,7 +28,7 @@
                 </div>
             </div>
 
-            <div v-if="form.global ==false" class="mt-2">
+            <div v-if="form.global == false || form.type == 'custom'" class="mt-2">
                 <Toggle label="Share across accounts" description="Let other accounts view and use this template."
                     v-model="form.global" customClass="py-4" />
             </div>
@@ -77,7 +77,7 @@
 
         <div class="col-span-3 border-t mt-4">
             <div class="mt-4 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-                <button @click.prevent="submitForm" v-if="form.global ==false"
+                <button @click.prevent="submitForm" v-if="form.global == false || form.type == 'custom'"
                     class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:col-start-2"
                     :disabled="isSubmitting">
                     <Spinner :show="isSubmitting" />

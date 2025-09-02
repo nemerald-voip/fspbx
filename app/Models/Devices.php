@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use App\Models\DeviceLines;
 use App\Models\DeviceCloudProvisioning;
 use Illuminate\Database\Eloquent\Model;
@@ -51,7 +52,16 @@ class Devices extends Model
         'device_username'
     ];
 
-    protected $appends = ['device_address_formatted'];
+    protected $appends = ['device_address_formatted', 'device_provisioned_date_formatted'];
+
+    public function getDeviceProvisionedDateFormattedAttribute()
+    {
+        if (!$this->device_provisioned_date || !$this->domain_uuid) {
+            return null;
+        }
+        $timeZone = get_local_time_zone($this->domain_uuid);
+        return Carbon::parse($this->device_provisioned_date)->setTimezone($timeZone)->format('g:i:s A M d, Y');
+    }
 
     public function getDeviceAddressFormattedAttribute()
     {

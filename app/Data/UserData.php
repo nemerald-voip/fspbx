@@ -12,7 +12,7 @@ class UserData extends Data
 {
     public function __construct(
         public string  $user_uuid,
-        public string  $user_email,
+        public ?string  $user_email,
         public ?string  $first_name,
         public ?string  $last_name,
         public ?string  $name_formatted,
