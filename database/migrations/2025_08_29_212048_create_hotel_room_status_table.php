@@ -17,7 +17,7 @@ return new class extends Migration {
             $t->uuid('domain_uuid')->index();
             $t->uuid('hotel_room_uuid')->index();
             $t->string('occupancy_status')->nullable();
-            $t->string('housekeeping_status')->nullable();
+            $t->smallInteger('housekeeping_status')->nullable();
             $t->string('guest_first_name')->nullable();
             $t->string('guest_last_name')->nullable();
             $t->date('arrival_date')->nullable();
