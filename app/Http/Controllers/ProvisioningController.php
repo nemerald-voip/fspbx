@@ -226,7 +226,15 @@ class ProvisioningController extends Controller
         // Polycom bootstrap index
         if ($vendor === 'polycom' && $extLower === 'cfg' && $idLower === '000000000000') {
             return [
-                'flavor' => 'poly-index.cfg',
+                'flavor' => 'mac.cfg',
+                'mime'   => 'application/xml',
+            ];
+        }
+
+        // Polycom per-device: phone<MAC>.cfg (e.g., phone0004f2abcdef.cfg)
+        if ($vendor === 'polycom' && $extLower === 'cfg' && preg_match('#(^|/)phone[0-9a-f]{12}\.cfg$#i', $raw)) {
+            return [
+                'flavor' => 'phonemac.cfg',
                 'mime'   => 'application/xml',
             ];
         }
