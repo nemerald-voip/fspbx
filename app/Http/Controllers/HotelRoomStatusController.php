@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
+use App\Models\HotelHousekeepingDefinition;
 
 class HotelRoomStatusController extends Controller
 {
@@ -32,7 +33,7 @@ class HotelRoomStatusController extends Controller
                 }),
             ])
             ->with(['status' => function ($query) {
-                $query->select('uuid', 'hotel_room_uuid','occupancy_status','housekeeping_status','guest_first_name','guest_last_name','arrival_date','departure_date');
+                $query->select('uuid', 'hotel_room_uuid', 'occupancy_status', 'housekeeping_status', 'guest_first_name', 'guest_last_name', 'arrival_date', 'departure_date');
             }])
             ->allowedSorts(['room_name'])
             ->defaultSort('room_name');
@@ -55,7 +56,7 @@ class HotelRoomStatusController extends Controller
             'guest_first_name'    => ['nullable', 'string', 'max:120'],
             'guest_last_name'     => ['nullable', 'string', 'max:120'],
             'arrival_date'        => ['nullable', 'date'],
-            'departure_date'      => ['nullable', 'date','after_or_equal:arrival_date'],
+            'departure_date'      => ['nullable', 'date', 'after_or_equal:arrival_date'],
         ]);
 
         try {
@@ -85,7 +86,7 @@ class HotelRoomStatusController extends Controller
             return response()->json(['messages' => ['success' => ['Room status saved']]], 201);
         } catch (\Throwable $e) {
             DB::rollBack();
-            logger('HotelRoomStatusController@store error: '.$e->getMessage().' at '.$e->getFile().':'.$e->getLine());
+            logger('HotelRoomStatusController@store error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json(['messages' => ['error' => ['Failed to save room status']]], 500);
         }
     }
@@ -98,7 +99,7 @@ class HotelRoomStatusController extends Controller
             'guest_first_name'    => ['nullable', 'string', 'max:120'],
             'guest_last_name'     => ['nullable', 'string', 'max:120'],
             'arrival_date'        => ['nullable', 'date'],
-            'departure_date'      => ['nullable', 'date','after_or_equal:arrival_date'],
+            'departure_date'      => ['nullable', 'date', 'after_or_equal:arrival_date'],
         ]);
 
         try {
@@ -116,7 +117,7 @@ class HotelRoomStatusController extends Controller
             return response()->json(['messages' => ['success' => ['Room status updated']]]);
         } catch (\Throwable $e) {
             DB::rollBack();
-            logger('HotelRoomStatusController@update error: '.$e->getMessage().' at '.$e->getFile().':'.$e->getLine());
+            logger('HotelRoomStatusController@update error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json(['messages' => ['error' => ['Failed to update room status']]], 500);
         }
     }
@@ -143,6 +144,30 @@ class HotelRoomStatusController extends Controller
                 ->get()
                 ->map(fn($r) => ['value' => $r->uuid, 'label' => $r->room_name]);
 
+            // Housekeeping options (global + domain override), sorted by code
+            $globals = QueryBuilder::for(HotelHousekeepingDefinition::query())
+                ->enabled()->globalOnly()
+                ->defaultSort('code')
+                ->get(['code', 'label']);
+
+            $domainRows = QueryBuilder::for(HotelHousekeepingDefinition::query())
+                ->enabled()->forDomain($currentDomain)
+                ->defaultSort('code')
+                ->get(['code', 'label']);
+
+            // Build map keyed by code; domain overrides global
+            $byCode = [];
+            foreach ($globals as $g) {
+                $byCode[(int)$g->code] = ['code' => (int)$g->code, 'label' => $g->label];
+            }
+            foreach ($domainRows as $d) {
+                $byCode[(int)$d->code] = ['code' => (int)$d->code, 'label' => $d->label]; // override or add
+            }
+
+            // Sort by code (numeric), output as array
+            ksort($byCode, SORT_NUMERIC);
+            $housekeepingOptions = array_values($byCode);
+
             $routes = array_merge($routes, [
                 'store_route' => route('hotel-room-status.store'),
             ]);
@@ -150,10 +175,11 @@ class HotelRoomStatusController extends Controller
             return response()->json([
                 'item' => $item,
                 'rooms' => $rooms,
+                'housekeeping_options' => $housekeepingOptions, // [{code:int, label:string}]
                 'routes' => $routes,
             ]);
         } catch (\Throwable $e) {
-            logger('HotelRoomStatusController@getItemOptions '.$e->getMessage().' at '.$e->getFile().':'.$e->getLine());
+            logger('HotelRoomStatusController@getItemOptions ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => ['Failed to fetch item details']]
@@ -175,7 +201,7 @@ class HotelRoomStatusController extends Controller
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
-            logger('HotelRoomStatusController@bulkDelete error: '.$e->getMessage().' at '.$e->getFile().':'.$e->getLine());
+            logger('HotelRoomStatusController@bulkDelete error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
                 'messages' => ['error' => ['An error occurred while deleting the selected record(s).']]
             ], 500);
