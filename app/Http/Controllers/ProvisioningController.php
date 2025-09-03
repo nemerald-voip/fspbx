@@ -116,7 +116,7 @@ class ProvisioningController extends Controller
     {
         $device->load([
             'lines' => function ($q) {
-                // include the PK and the FK back to devices + anything you actually use
+                // Include PK, FK, and only the columns you use
                 $q->select([
                     'device_line_uuid',   // PK on device_lines
                     'device_uuid',        // FK to devices (required for the relation)
@@ -135,6 +135,41 @@ class ProvisioningController extends Controller
                     'shared_line',
                     'domain_uuid',
                 ]);
+            },
+            'profile' => function ($q) {
+                $q->select([
+                    'device_profile_uuid',
+                    'device_profile_name',
+                ])->with([
+                    'keys' => function ($k) {
+                        // Need FK back to profile + correct orderBy column
+                        $k->select([
+                            'device_profile_key_uuid',
+                            'device_profile_uuid',
+                            'profile_key_id',
+                            'profile_key_category',
+                            'profile_key_type',
+                            'profile_key_line',
+                            'profile_key_value',
+                            'profile_key_extension',
+                            'profile_key_label',
+                        ])->orderBy('profile_key_line');
+                    },
+                ]);
+            },
+            'keys' => function ($k) {
+                // Need FK back to device + correct orderBy column
+                $k->select([
+                    'device_key_uuid',
+                    'device_uuid',
+                    'device_key_id',
+                    'device_key_category',
+                    'device_key_type',
+                    'device_key_line',
+                    'device_key_value',
+                    'device_key_extension',
+                    'device_key_label',
+                ])->orderBy('device_key_line');
             },
             'domain' => function ($q) {
                 $q->select([
@@ -172,6 +207,7 @@ class ProvisioningController extends Controller
             'template_uuid' => $device->device_template_uuid ?? null,
             'serial'        => (string) $device->serial_number ?? null,
             'mac'           => $device->device_address ?? null,
+            'keys'        => $this->getEffectiveDeviceKeys($device),
             'lines'       => $lines,
             'line_count' => count($lines),
             'settings' => $this->getProvisionSettings(
@@ -336,7 +372,7 @@ class ProvisioningController extends Controller
     }
 
     /**
-     * Cast common FusionPBX types: text, numeric, boolean, json.
+     * Cast common types: text, numeric, boolean, json.
      * Falls back to string.
      */
     private function castSettingValue(string $type, string $value)
@@ -358,5 +394,74 @@ class ProvisioningController extends Controller
 
         // text, password, select, label, etc.
         return $value;
+    }
+
+
+    /**
+     * Build final key layout where device-level keys override profile keys
+     * by the same key order (device_key_id === profile_key_id).
+     *
+     * Output is a zero-indexed array sorted by 'id' (key order), each item:
+     * [
+     *   'id'        => int,   // key order
+     *   'category'  => ?string,
+     *   'type'      => ?string,
+     *   'line'      => ?int,
+     *   'value'     => ?string,
+     *   'extension' => ?string,
+     *   'label'     => ?string,
+     *   'source'    => 'profile'|'device',
+     * ]
+     */
+    private function getEffectiveDeviceKeys(Devices $device): array
+    {
+        $profileKeys = collect($device->profile?->keys ?? []);
+        $deviceKeys  = collect($device->keys ?? []);
+
+        $map = [];
+
+        // Seed with profile keys (base)
+        foreach ($profileKeys as $pk) {
+            $id = (int) $pk->profile_key_id;
+            if ($id <= 0) {
+                continue;
+            }
+            $map[$id] = [
+                'id'        => $id,
+                'category'  => $pk->profile_key_category ?? null,
+                'type'      => $pk->profile_key_type ?? null,
+                'line'      => $pk->profile_key_line !== null ? (int) $pk->profile_key_line : null,
+                'value'     => $pk->profile_key_value ?? null,
+                'extension' => $pk->profile_key_extension ?? null,
+                'label'     => $pk->profile_key_label ?? null,
+                'source'    => 'profile',
+            ];
+        }
+
+        // Overlay with device keys (override by same key order)
+        foreach ($deviceKeys as $dk) {
+            $id = (int) $dk->device_key_id;
+            if ($id <= 0) {
+                continue;
+            }
+            $map[$id] = [
+                'id'        => $id,
+                'category'  => $dk->device_key_category ?? null,
+                'type'      => $dk->device_key_type ?? null,
+                'line'      => $dk->device_key_line !== null ? (int) $dk->device_key_line : null,
+                'value'     => $dk->device_key_value ?? null,
+                'extension' => $dk->device_key_extension ?? null,
+                'label'     => $dk->device_key_label ?? null,
+                'source'    => 'device',
+            ];
+        }
+
+        ksort($map, SORT_NUMERIC);
+
+        // Use this if array needs to be normilized by key_id
+        // $keys = collect(array_values($map))->keyBy('id')->toArray();
+
+        // Return as list (sorted)
+        return array_values($map);
     }
 }
