@@ -2,8 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class DeviceProfile extends Model
 {
@@ -23,5 +24,15 @@ class DeviceProfile extends Model
      * @var array<int, string>
      */
     protected $guarded = [];
+
+    /**
+     * Get the Device Profile Key object associated with this profile.
+     *  returns Eloquent Object
+     */
+    public function keys(): HasMany
+    {
+        return $this->hasMany(DeviceProfileKey::class, 'device_profile_uuid', 'device_profile_uuid');
+    }
+
 
 }

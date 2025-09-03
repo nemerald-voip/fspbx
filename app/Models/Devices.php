@@ -7,6 +7,8 @@ use App\Models\DeviceLines;
 use App\Models\DeviceCloudProvisioning;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Devices extends Model
@@ -78,12 +80,22 @@ class Devices extends Model
     }
 
     /**
+     * Get the Device Keys objects associated with this device.
+     *  returns Eloquent Object
+     */
+    public function keys(): HasMany
+    {
+        return $this->hasMany(DeviceKey::class, 'device_uuid', 'device_uuid');
+    }
+
+    /**
      * Get the Device Profile object associated with this device.
      *  returns Eloquent Object
      */
-    public function profile()
+    public function profile(): BelongsTo
     {
-        return $this->hasOne(DeviceProfile::class, 'device_profile_uuid', 'device_profile_uuid');
+        // Device has FK device_profile_uuid → it *belongsTo* a DeviceProfile
+        return $this->belongsTo(DeviceProfile::class, 'device_profile_uuid', 'device_profile_uuid');
     }
 
     public function cloudProvisioning()
