@@ -275,6 +275,20 @@ class ProvisioningController extends Controller
             ];
         }
 
+        // Polycom model-MAC (3–4 digit models, e.g., VVX600-, SPIP321-, SSIP7000-; also SSDuo)
+        if (
+            $vendor === 'polycom' &&
+            $extLower === 'cfg' &&
+            preg_match('#(^|/)(?:(?:SPIP|VVX|SSIP)\d{3,4}|SSDuo)-[0-9a-f]{12}\.cfg$#i', $raw)
+        ) {
+            return [
+                'flavor' => 'model-mac.cfg',
+                'mime'   => 'application/xml',
+            ];
+        }
+
+
+
         // Yealink model index (loose check)
         if ($vendor === 'yealink' && $extLower === 'cfg' && preg_match('/^y0{8}[0-9a-f]{2}$/i', $id)) {
             return [
