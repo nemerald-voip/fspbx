@@ -96,7 +96,7 @@ class HotelHousekeepingDefinitionController extends Controller
 
             $currentDomain = (string) session('domain_uuid');
 
-            // Housekeeping options (global + domain override), sorted by code
+            // Housekeeping options 
             $defaultHousekeepingOptions = QueryBuilder::for(HotelHousekeepingDefinition::query())
                 ->enabled()->globalOnly()
                 ->defaultSort('code')

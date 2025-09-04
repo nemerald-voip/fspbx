@@ -179,7 +179,6 @@ const confirmDeleteAction = ref(null);
 const itemOptions = ref([])
 const housekeepingItemOptions = ref([])
 const isRoomsLoading = ref(false)
-const readOnly = ref(false)
 const data = ref({
     data: [],
     prev_page_url: null,
@@ -282,12 +281,12 @@ const handleCheckInButtonClick = (uuid) => {
 const getItemOptions = (itemUuid = null) => {
     loadingModal.value = true;
 
-    axios.post(props.routes.housekeeping_item_options, {
+    axios.post(props.routes.hotel_room_status_item_options, {
         item_uuid: itemUuid,
     })
         .then((response) => {
-            housekeepingItemOptions.value = response.data;
-            // console.log(housekeepingItemOptions.value);
+            itemOptions.value = response.data;
+            console.log(itemOptions.value);
 
         }).catch((error) => {
             handleErrorResponse(error)

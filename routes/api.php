@@ -61,7 +61,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('hotel-rooms/bulk-delete', [HotelRoomController::class, 'bulkDelete'])->name('hotel-rooms.bulk.delete');
 
     // Hotel room status
-    Route::get('/hotel-room-status', [HotelRoomStatusController::class, 'index'])->name('hotel-room-status.index');
+    Route::resource('/hotel-room-status', HotelRoomStatusController::class);
     Route::post('/hotel-room-status/item-options', [HotelRoomStatusController::class, 'getItemOptions'])->name('hotel-room-status.item.options');
 
     // Hotel housekeeping

@@ -127,6 +127,7 @@ class HotelRoomStatusController extends Controller
         try {
             $item = null;
             $routes = [];
+            logger('here');
 
             if (request()->filled('item_uuid')) {
                 $item = DB::table('hotel_room_status')->where('uuid', request('item_uuid'))->first();
@@ -137,36 +138,16 @@ class HotelRoomStatusController extends Controller
 
             $currentDomain = (string) session('domain_uuid');
 
-            // Rooms in this domain (for dropdown)
-            $rooms = QueryBuilder::for(DB::table('hotel_rooms')->where('domain_uuid', $currentDomain))
-                ->select(['uuid', 'room_name'])
-                ->defaultSort('room_name')
-                ->get()
-                ->map(fn($r) => ['value' => $r->uuid, 'label' => $r->room_name]);
-
-            // Housekeeping options (global + domain override), sorted by code
-            $globals = QueryBuilder::for(HotelHousekeepingDefinition::query())
-                ->enabled()->globalOnly()
-                ->defaultSort('code')
-                ->get(['code', 'label']);
-
-            $domainRows = QueryBuilder::for(HotelHousekeepingDefinition::query())
-                ->enabled()->forDomain($currentDomain)
-                ->defaultSort('code')
-                ->get(['code', 'label']);
-
-            // Build map keyed by code; domain overrides global
-            $byCode = [];
-            foreach ($globals as $g) {
-                $byCode[(int)$g->code] = ['code' => (int)$g->code, 'label' => $g->label];
-            }
-            foreach ($domainRows as $d) {
-                $byCode[(int)$d->code] = ['code' => (int)$d->code, 'label' => $d->label]; // override or add
-            }
-
-            // Sort by code (numeric), output as array
-            ksort($byCode, SORT_NUMERIC);
-            $housekeepingOptions = array_values($byCode);
+            $defaultHousekeepingOptions = QueryBuilder::for(HotelHousekeepingDefinition::query())
+            ->enabled()->globalOnly()
+            ->defaultSort('code')
+            ->get(['code', 'label'])
+            ->map(function ($option) {
+                return [
+                    'value' => $option->label,
+                    'label' => $option->label,
+                ];
+            });
 
             $routes = array_merge($routes, [
                 'store_route' => route('hotel-room-status.store'),
@@ -174,8 +155,7 @@ class HotelRoomStatusController extends Controller
 
             return response()->json([
                 'item' => $item,
-                'rooms' => $rooms,
-                'housekeeping_options' => $housekeepingOptions, // [{code:int, label:string}]
+                'housekeeping_options' => $defaultHousekeepingOptions, 
                 'routes' => $routes,
             ]);
         } catch (\Throwable $e) {
