@@ -33,9 +33,9 @@
         </div>
 
         <div class="mt-4">
-            <button type="button" @click.prevent="handleCreateButtonClick()"
+            <button type="button" @click.prevent="handleManageCodesButtonClick()"
                 class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                Add Room
+                Housekeeping Codes
             </button>
         </div>
 
@@ -89,19 +89,14 @@
 
                                 <td class="whitespace-nowrap px-6 py-2 text-right text-sm font-medium">
                                     <div class="flex items-center whitespace-nowrap justify-end gap-1">
-                                        <ejs-tooltip :content="'Edit'" position="TopCenter" target="#rs_edit_tt">
+                                        <ejs-tooltip :content="'Check In'" position="TopCenter" target="#rs_edit_tt">
                                             <div id="rs_edit_tt">
-                                                <PencilSquareIcon @click="handleEditButtonClick(row.uuid)"
+                                                <ClipboardDocumentCheckIcon @click="handleCheckInButtonClick(row.uuid)"
                                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                             </div>
                                         </ejs-tooltip>
 
-                                        <ejs-tooltip :content="'Delete'" position="TopCenter" target="#rs_del_tt">
-                                            <div id="rs_del_tt">
-                                                <TrashIcon @click="handleSingleItemDeleteRequest(row.uuid)"
-                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-                                            </div>
-                                        </ejs-tooltip>
+                                    
                                     </div>
                                 </td>
                             </tr>
@@ -133,13 +128,13 @@
         </div>
     </div>
 
-    <!-- <CreateRoomStatusModal :options="itemOptions" :show="showCreateModal" :loading="loadingModal"
-        @close="showCreateModal = false" @error="handleFormErrorResponse" @refresh-data="fetchRoomStatuses"
+    <ManageHousekeepingCodesModal :options="housekeepingItemOptions" :show="showManageCodesModal" :loading="loadingModal"
+        @close="showManageCodesModal = false" @error="handleFormErrorResponse" 
         @success="showNotification('success', $event)" />
 
-    <UpdateRoomStatusModal :options="itemOptions" :show="showEditModal" :loading="loadingModal"
-        @close="showEditModal = false" @error="handleFormErrorResponse" @refresh-data="fetchRoomStatuses"
-        @success="showNotification('success', $event)" /> -->
+    <HotelRoomCheckInModal :options="itemOptions" :show="showCheckInModal" :loading="loadingModal"
+        @close="showCheckInModal = false" @error="handleFormErrorResponse" @refresh-data="fetchRoomStatuses"
+        @success="showNotification('success', $event)" /> 
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
         @confirm="confirmDeleteAction" :header="'Confirm Deletion'"
@@ -152,11 +147,12 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
-// import CreateRoomStatusModal from "./modal/CreateRoomStatusModal.vue";
-// import UpdateRoomStatusModal from "./modal/UpdateRoomStatusModal.vue";
+import ManageHousekeepingCodesModal from "./modal/ManageHousekeepingCodesModal.vue";
+import HotelRoomCheckInModal from "./modal/HotelRoomCheckInModal.vue";
 import Notification from "./notifications/Notification.vue";
 import ConfirmationModal from "./modal/ConfirmationModal.vue";
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
+import {ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import { registerLicense } from '@syncfusion/ej2-base';
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import Paginator from "@generalComponents/Paginator.vue";
@@ -171,8 +167,8 @@ const props = defineProps({
     trigger: Boolean
 })
 
-const showCreateModal = ref(false);
-const showEditModal = ref(false);
+const showManageCodesModal = ref(false);
+const showCheckInModal = ref(false);
 const loadingModal = ref(false)
 const formErrors = ref(null);
 const notificationType = ref(null);
@@ -181,6 +177,7 @@ const notificationShow = ref(null);
 const showDeleteConfirmationModal = ref(false);
 const confirmDeleteAction = ref(null);
 const itemOptions = ref([])
+const housekeepingItemOptions = ref([])
 const isRoomsLoading = ref(false)
 const readOnly = ref(false)
 const data = ref({
@@ -260,10 +257,10 @@ const bulkActions = computed(() => {
     return actions;
 });
 
-const handleCreateButtonClick = () => {
-    showCreateModal.value = true
+const handleManageCodesButtonClick = () => {
+    showManageCodesModal.value = true
     loadingModal.value = true
-    getItemOptions();
+    getCodeItemOptions();
 }
 
 const handleSearchButtonClick = () => {
@@ -276,12 +273,27 @@ const handleFiltersReset = () => {
     handleSearchButtonClick();
 }
 
-const handleEditButtonClick = (uuid) => {
-    showEditModal.value = true
-    formErrors.value = null;
+const handleCheckInButtonClick = (uuid) => {
+    showCheckInModal.value = true
     loadingModal.value = true
-    readOnly.value = false
     getItemOptions(uuid);
+}
+
+const getItemOptions = (itemUuid = null) => {
+    loadingModal.value = true;
+
+    axios.post(props.routes.housekeeping_item_options, {
+        item_uuid: itemUuid,
+    })
+        .then((response) => {
+            housekeepingItemOptions.value = response.data;
+            // console.log(housekeepingItemOptions.value);
+
+        }).catch((error) => {
+            handleErrorResponse(error)
+        }).finally(() => {
+            loadingModal.value = false
+        });
 }
 
 const handleSingleItemDeleteRequest = (uuid) => {
@@ -305,20 +317,20 @@ const executeBulkDelete = (items = selectedItems.value) => {
 
 const handleModalClose = () => {
     showCreateModal.value = false;
-    showEditModal.value = false;
+    showCheckInModal.value = false;
     showDeleteConfirmationModal.value = false;
     // bulkUpdateModalTrigger.value = false;
 }
 
-const getItemOptions = (itemUuid = null) => {
+const getCodeItemOptions = (itemUuid = null) => {
     loadingModal.value = true;
 
-    axios.post(props.routes.hotel_rooms_item_options, {
+    axios.post(props.routes.housekeeping_item_options, {
         item_uuid: itemUuid,
     })
         .then((response) => {
-            itemOptions.value = response.data;
-            // console.log(itemOptions.value);
+            housekeepingItemOptions.value = response.data;
+            // console.log(housekeepingItemOptions.value);
 
         }).catch((error) => {
             handleErrorResponse(error)

@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\EmergencyCallController;
 use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\Api\ProvisioningTemplateController;
+use App\Http\Controllers\HotelHousekeepingDefinitionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -61,6 +62,11 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // Hotel room status
     Route::get('/hotel-room-status', [HotelRoomStatusController::class, 'index'])->name('hotel-room-status.index');
+    Route::post('/hotel-room-status/item-options', [HotelRoomStatusController::class, 'getItemOptions'])->name('hotel-room-status.item.options');
+
+    // Hotel housekeeping
+    Route::post('/housekeeping/item-options', [HotelHousekeepingDefinitionController::class, 'getItemOptions'])->name('housekeeping.item.options');
+    Route::resource('/housekeeping', HotelHousekeepingDefinitionController::class);
 
     // Emergency calls
     Route::resource('/emergency-calls', EmergencyCallController::class);

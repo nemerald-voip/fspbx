@@ -41,7 +41,7 @@ class HotelRoomStatusController extends Controller
 
         $rooms = $query->paginate($perPage)->appends($request->query());
 
-        logger($rooms);
+        // logger($rooms);
         return response()->json($rooms);
     }
 
