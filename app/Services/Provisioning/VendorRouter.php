@@ -6,7 +6,7 @@ namespace App\Services\Provisioning;
 use App\Models\Devices;
 
 class VendorRouter
-{
+    {
     /**
      * Extract a lookup token from a filename/path or stem.
      * Accepts:
@@ -23,7 +23,7 @@ class VendorRouter
         $base = strtolower(basename($id));
         $stem = preg_replace('/\.[^.]+$/', '', $base); // remove last extension, if any
 
-        // 2) NEW: Polycom model-MAC (e.g., vvx600-0004f27a9446, spip321-<mac>, ssip7000-<mac>, ssduo-<mac>)
+        // 2) Polycom model-MAC (e.g., vvx600-0004f27a9446, spip321-<mac>, ssip7000-<mac>, ssduo-<mac>)
         if (preg_match('/^(?:spip|vvx|ssip)\d{3,4}-([0-9a-f]{12})$/', $stem, $m) || preg_match('/^ssduo-([0-9a-f]{12})$/', $stem, $m)) {
             return $m[1];
         }
@@ -49,6 +49,7 @@ class VendorRouter
         // 7) No digits → skip lookup
         return null;
     }
+
 
     /** Map extension to MIME */
     public static function contentTypeFromExt(string $ext): string
