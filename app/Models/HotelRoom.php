@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\HotelRoomStatus;
 use App\Models\Traits\TraitUuid;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class HotelRoom extends Model {
 

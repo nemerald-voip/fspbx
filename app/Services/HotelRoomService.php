@@ -1,92 +1,71 @@
 <?php
+
 namespace App\Services;
 
 use App\Models\HotelRoom;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
+use App\Models\HotelRoomStatus;
 use App\Models\HotelReservation;
-use App\Services\FreeswitchEslService;
 use Illuminate\Support\Facades\DB;
+use App\Services\FreeswitchEslService;
 
-class HotelRoomService {
-    public function __construct(private FreeswitchEslService $esl) {}
+class HotelRoomService
+{
+    // public function __construct(private FreeswitchEslService $esl) {}
 
-    public function checkIn(HotelRoom $room, array $payload): void {
-        DB::transaction(function() use ($room, $payload) {
-            $room->update([
-                'occupancy_status' => 'occupied',
-                'guest_first_name' => $payload['guest_first_name'],
-                'guest_last_name'  => $payload['guest_last_name'],
-                'dnd' => false, 'message_waiting'=>false,
+    /**
+     * Create a new status row for a guest check-in (no updates).
+     *
+     * @param  HotelRoom $room
+     * @param  array     $payload  (validated request data)
+     */
+    public function checkIn(HotelRoom $room, array $payload): HotelRoomStatus
+    {
+        return DB::transaction(function () use ($room, $payload) {
+            // only fields that truly belong to HotelRoomStatus (exclude 'uuid')
+            $data = Arr::only($payload, [
+                'occupancy_status',
+                'housekeeping_status',
+                'guest_first_name',
+                'guest_last_name',
+                'arrival_date',
+                'departure_date',
+            ]);
+    
+            return HotelRoomStatus::create([
+                'uuid'            => (string) Str::uuid(),   // new row every time
+                'domain_uuid'     => $room->domain_uuid,     // derive (no session reliance)
+                'hotel_room_uuid' => $room->uuid,
+                ...$data,
+            ]);
+        });
+    }
+
+    /**
+     * Create a new status row for a guest check-out (no updates).
+     * Opinionated defaults: mark vacant & set departure_date=now() if not provided elsewhere.
+     */
+    public function checkOut(HotelRoom $room): HotelRoomStatus
+    {
+        return DB::transaction(function () use ($room) {
+            $status = HotelRoomStatus::create([
+                'uuid'            => (string) Str::uuid(),
+                'domain_uuid'     => $room->domain_uuid,
+                'hotel_room_uuid' => $room->uuid,
+                'occupancy_status' => 'vacant',
+                'guest_first_name' => null,
+                'guest_last_name' => null,
+                'departure_date'  => now()->toDateString(),
             ]);
 
-            // Create/attach reservation if provided
-            if (!empty($payload['reservation_id'])) {
-                HotelReservation::where('id',$payload['reservation_id'])
-                    ->where('domain_uuid',$room->domain_uuid)
-                    ->update(['hotel_room_id'=>$room->id,'checked_in_at'=>now()]);
-            } else {
-                HotelReservation::create([
-                    'domain_uuid'=>$room->domain_uuid,
-                    'hotel_room_id'=>$room->id,
-                    'guest_first_name'=>$payload['guest_first_name'],
-                    'guest_last_name'=>$payload['guest_last_name'],
-                    'arrival_date'=>now()->toDateString(),
-                    'departure_date'=>$payload['departure_date'],
-                    'checked_in_at'=>now(),
-                ]);
+            try {
+                // Example (commented): $this->esl->executeCommand("bgapi lua hotel_checkout.lua {$room->extension_uuid}");
+            } catch (\Throwable $e) {
+                logger('HotelRoomService@checkOut ESL error: ' . $e->getMessage());
             }
+
+            return $status;
         });
-
-        // PBX side effects (adjust to your dialplan):
-        if ($room->extension_uuid) {
-            // example: set caller-id name to "LAST, FIRST (Rm 123)"
-            $name = sprintf('%s, %s (Rm %s)',
-                $room->guest_last_name, $room->guest_first_name, $room->room_number);
-
-            $this->esl->executeCommand('uuid_setvar_multi', [
-                'uuid' => $room->extension_uuid, // or set vars by directory auth
-                'data' => "effective_caller_id_name=$name"
-            ]);
-
-            // clear voicemail + MWI, reset PIN (make your own helper)
-            // $this->resetVoicemail($room);
-
-            // set class-of-service / dialplan vars for guests if you use CoS
-            // $this->applyClassOfService($room,'guest');
-        }
     }
-
-    public function checkOut(HotelRoom $room): void {
-        DB::transaction(function() use ($room) {
-            // Close active reservation
-            HotelReservation::where('hotel_room_id',$room->id)
-                ->whereNull('checked_out_at')
-                ->update(['checked_out_at'=>now()]);
-
-            $room->update([
-                'occupancy_status'=>'vacant',
-                'housekeeping_status'=>'dirty', // typical
-                'guest_first_name'=>null,
-                'guest_last_name'=>null,
-                'dnd'=>false,
-                'message_waiting'=>false,
-            ]);
-        });
-
-        if ($room->extension_uuid) {
-            // revert caller-id name to room label, remove guest CoS, clear VM
-            // $this->applyClassOfService($room,'default');
-            // $this->clearCallerId($room);
-        }
-    }
-
-    public function applyDndToExtension(HotelRoom $room): void {
-        if (!$room->extension_uuid) return;
-        // Depending on your design, you can set a user/dir var or a channel var.
-        // Common pattern: set directory param "call_screen_dnd" or custom var that dialplan reads.
-        $flag = $room->dnd ? 'true' : 'false';
-        $this->esl->executeCommand('bgapi', [
-            'command' => "fsctl loglevel notice" // placeholder; replace with your DND sync action
-        ]);
-    }
-
 }

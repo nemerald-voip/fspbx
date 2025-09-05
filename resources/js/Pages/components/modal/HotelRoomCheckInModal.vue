@@ -44,34 +44,39 @@
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
-                                    // housekeeping_options: options?.housekeeping_options ?? null,
+                                    uuid: options?.item?.uuid ?? null,
+                                    occupancy_status: options?.item?.occupancy_status ?? 'Checked in',
+                                    room_name: options?.item?.room_name ?? null,
+                                    housekeeping_status: options?.item?.housekeeping_status ?? null,
+                                    guest_first_name: options?.item?.guest_first_name ?? null,
+                                    guest_last_name: options?.item?.guest_last_name ?? null,
+                                    arrival_date: options?.item?.arrival_date ?? null,
+                                    departure_date: options?.item?.departure_date ?? null,
                                 }">
                                 <StaticElement name="title" tag="h4" content="Guest Check In Form"
                                     description="Please fill out the following information to complete the guest details." />
-                                <HiddenElement name="hotel_room_uuid" :meta="true" />
-                                <TextElement name="room_number" label="Room Number" :floating="false" />
-                                <SelectElement name="select" :items="[
-                                    {
-                                        value: 0,
-                                        label: 'Label',
-                                    },
-                                ]" :search="true" :native="false" label="Room Status" input-type="search" autocomplete="off"
+                                <HiddenElement name="uuid" :meta="true" />
+                                <HiddenElement name="occupancy_status" :meta="true" />
+
+                                <TextElement name="room_name" label="Room" :floating="false" :disabled="true"/>
+
+                                <SelectElement name="housekeeping_status" :items="options.housekeeping_options" :search="true" :native="false" label="Room Status" input-type="search" autocomplete="off"
                                     placeholder="Select room status" :floating="false"
                                     description="Select the current status of the room." />
+
                                 <TextElement name="guest_first_name" label="First Name"
                                     description="Enter your first name." placeholder="Enter guest's first name"
                                     :floating="false" />
+
                                 <TextElement name="guest_last_name" label="Last Name"
                                     description="Enter your last name." placeholder="Enter guest's last name"
                                     :floating="false" />
-                                <DateElement name="arrival_date" label="Arrival Date"
-                                    description="Select arrival date and time." :rules="[
-                                        'required',
-                                    ]" />
-                                <DateElement name="departure_date" label="Expected Departure Date"
-                                    description="Select expected departure date and time." :rules="[
-                                        'required',
-                                    ]" />
+
+                                <DateElement name="arrival_date" label="Arrival Date" :time="true"
+                                    description="Select arrival date and time."  />
+
+                                <DateElement name="departure_date" label="Expected Departure Date" :time="true"
+                                    description="Select expected departure date and time." />
 
                                 <GroupElement name="container_3" />
                                 <ButtonElement name="reset" button-label="Cancel" :secondary="true" :resets="true"
@@ -112,7 +117,7 @@ const submitForm = async (FormData, form$) => {
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
 
-    // console.log(requestData);
+    console.log(requestData);
     return await form$.$vueform.services.axios.post(props.options.routes.store_route, requestData)
 };
 

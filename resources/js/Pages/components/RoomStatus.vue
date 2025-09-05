@@ -65,14 +65,16 @@
                                     {{ row.room_name }}
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-2 text-sm">
-                                    
-                                        {{ row.occupancy_status || 'Not checked in' }}
-                                    
+
+                                    {{ row.status?.occupancy_status || 'Not checked in' }}
+
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-2 text-sm">
-                                    
-                                        {{ row.housekeeping_status || 'Not checked in' }}
-                                    
+                                    {{
+                                        (row.housekeeping_status != null && row.housekeeping_status !== '')
+                                            ? row.housekeeping_status
+                                    : ((row.status != null && row.status !== '') ? '-' : 'Not checked in')
+                                    }}
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-800">
                                     <span v-if="row.guest_last_name || row.guest_first_name">
@@ -96,7 +98,7 @@
                                             </div>
                                         </ejs-tooltip>
 
-                                    
+
                                     </div>
                                 </td>
                             </tr>
@@ -128,13 +130,13 @@
         </div>
     </div>
 
-    <ManageHousekeepingCodesModal :options="housekeepingItemOptions" :show="showManageCodesModal" :loading="loadingModal"
-        @close="showManageCodesModal = false" @error="handleFormErrorResponse" 
+    <ManageHousekeepingCodesModal :options="housekeepingItemOptions" :show="showManageCodesModal"
+        :loading="loadingModal" @close="showManageCodesModal = false" @error="handleFormErrorResponse"
         @success="showNotification('success', $event)" />
 
     <HotelRoomCheckInModal :options="itemOptions" :show="showCheckInModal" :loading="loadingModal"
         @close="showCheckInModal = false" @error="handleFormErrorResponse" @refresh-data="fetchRoomStatuses"
-        @success="showNotification('success', $event)" /> 
+        @success="showNotification('success', $event)" />
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
         @confirm="confirmDeleteAction" :header="'Confirm Deletion'"
@@ -152,7 +154,7 @@ import HotelRoomCheckInModal from "./modal/HotelRoomCheckInModal.vue";
 import Notification from "./notifications/Notification.vue";
 import ConfirmationModal from "./modal/ConfirmationModal.vue";
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
-import {ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
+import { ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
 import { registerLicense } from '@syncfusion/ej2-base';
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import Paginator from "@generalComponents/Paginator.vue";
@@ -209,7 +211,7 @@ const fetchRoomStatuses = async (page = 1) => {
     })
         .then((response) => {
             data.value = response.data;
-            // console.log(data.value);
+            console.log(data.value);
 
         }).catch((error) => {
             handleErrorResponse(error)
