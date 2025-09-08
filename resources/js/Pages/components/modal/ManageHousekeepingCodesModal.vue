@@ -42,16 +42,27 @@
                                 </div>
                             </div>
 
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
-                                @response="handleResponse" :display-errors="false" :default="{
+                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                                @error="handleError" @response="handleResponse" :display-errors="false" :default="{
                                     housekeeping_options: options?.housekeeping_options ?? null,
+                                    codes_loaded: (Array.isArray(options?.housekeeping_options) && options.housekeeping_options.length > 0) ? 'true' : 'false'
                                 }">
-                                <!-- <HiddenElement name="user_uuid" :meta="true" /> -->
+                                <HiddenElement name="codes_loaded" :default="'false'" />
                                 <StaticElement name="h4" tag="h4" content="Manage Housekeeping Codes" />
                                 <GroupElement name="container_1" />
 
+                                <ButtonElement name="load_defaults_button" button-label="Load Defaults"
+                                    :loading="isDefaultCodesLoading" :secondary="true"
+                                    label="No custom codes defined. Load defaults?" @click="loadDefaultCodes"
+                                    :conditions="[
+                                        ['codes_loaded', '==', 'false']
+                                    ]" />
+
                                 <ListElement name="housekeeping_options" size="sm"
-                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }"
+                                    :conditions="[
+                                        ['codes_loaded', '==', 'true']
+                                    ]">
                                     <template #default="{ index }">
                                         <ObjectElement :name="index">
                                             <TextElement name="code" label="Status code" :columns="{
@@ -68,21 +79,20 @@
                                             <GroupElement name="container" :columns="{
                                                 container: 1,
                                             }">
-                                                <HiddenElement name="hidden" :submit="false"/>
+                                                <HiddenElement name="hidden" :submit="false" />
                                             </GroupElement>
 
-                                            <SelectElement name="label" :items="options?.default_housekeeping_options" :create="true" allow-absent
-                                                    :native="false" label="Label"
-                                                    input-type="search" autocomplete="off" placeholder="Select Status"
-                                                    :floating="false" :strict="false" 
-                                                    :columns="{
-                                                container: 6,
-                                                label: 3,
-                                            }"/>
+                                            <SelectElement name="label" :items="options?.default_housekeeping_options"
+                                                :create="true" allow-absent :native="false" label="Label"
+                                                input-type="search" autocomplete="off" placeholder="Select Status"
+                                                :floating="false" :strict="false" :columns="{
+                                                    container: 6,
+                                                    label: 3,
+                                                }" />
 
-                                           
 
-                                            
+
+
                                         </ObjectElement>
                                     </template>
                                 </ListElement>
@@ -92,10 +102,9 @@
                                     @click="emit('close')" :columns="{
                                         container: 6,
                                     }" />
-                                <ButtonElement name="submit" button-label="Save" :submits="true" align="right"
-                                    :columns="{
-                                        container: 6,
-                                    }" />
+                                <ButtonElement name="submit" button-label="Save" :submits="true" align="right" :columns="{
+                                    container: 6,
+                                }" />
                             </Vueform>
                         </DialogPanel>
 
@@ -121,6 +130,23 @@ const props = defineProps({
 });
 
 const form$ = ref(null)
+const isDefaultCodesLoading = ref(false)
+const defaultsLoaded = ref(false)
+
+const loadDefaultCodes = async () => {
+    isDefaultCodesLoading.value = true
+    axios.post(props.options.routes.default_codes_route)
+        .then((response) => {
+            form$.value.el$('housekeeping_options').update(response.data)
+            form$.value.el$('codes_loaded').update('true')
+            defaultsLoaded.value = true
+
+        }).catch((error) => {
+            emit('error', error);
+        }).finally(() => {
+            isDefaultCodesLoading.value = false
+        });
+}
 
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
@@ -207,7 +233,6 @@ const handleError = (error, details, form$) => {
             break
     }
 }
-
 
 
 </script>

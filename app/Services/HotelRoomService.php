@@ -32,6 +32,8 @@ class HotelRoomService
                 'arrival_date',
                 'departure_date',
             ]);
+
+            $room->status()->delete();
     
             return HotelRoomStatus::create([
                 'uuid'            => (string) Str::uuid(),   // new row every time
@@ -46,26 +48,26 @@ class HotelRoomService
      * Create a new status row for a guest check-out (no updates).
      * Opinionated defaults: mark vacant & set departure_date=now() if not provided elsewhere.
      */
-    public function checkOut(HotelRoom $room): HotelRoomStatus
+    public function checkOut(HotelRoom $room): bool
     {
         return DB::transaction(function () use ($room) {
-            $status = HotelRoomStatus::create([
-                'uuid'            => (string) Str::uuid(),
-                'domain_uuid'     => $room->domain_uuid,
-                'hotel_room_uuid' => $room->uuid,
-                'occupancy_status' => 'vacant',
-                'guest_first_name' => null,
-                'guest_last_name' => null,
-                'departure_date'  => now()->toDateString(),
-            ]);
-
-            try {
-                // Example (commented): $this->esl->executeCommand("bgapi lua hotel_checkout.lua {$room->extension_uuid}");
-            } catch (\Throwable $e) {
-                logger('HotelRoomService@checkOut ESL error: ' . $e->getMessage());
+            // lock the current status row (if any) to avoid race conditions
+            $current = $room->status()->lockForUpdate()->first();
+    
+            if (!$current) {
+                return false; // idempotent: nothing to delete
             }
-
-            return $status;
+    
+            $current->delete();
+    
+            try {
+                // Example ESL hook if you want to reflect DND/BLF, etc.
+                // $this->esl->executeCommand("bgapi lua hotel_checkout.lua {$room->extension_uuid}");
+            } catch (\Throwable $e) {
+                logger('HotelRoomService@checkOut ESL error: '.$e->getMessage());
+            }
+    
+            return true;
         });
     }
 }

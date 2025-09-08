@@ -71,11 +71,26 @@
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-2 text-sm">
                                     {{
-                                        (row.housekeeping_status != null && row.housekeeping_status !== '')
-                                            ? row.housekeeping_status
-                                    : ((row.status != null && row.status !== '') ? '-' : 'Not checked in')
+                                        row?.status
+                                            ? (
+                                                (row.status.housekeeping_definition?.label ??
+                                                    row.status.housekeepingDefinition?.label) // handle snake/camel
+                                                    && String((row.status.housekeeping_definition?.label ??
+                                                        row.status.housekeepingDefinition?.label)).trim() !== ''
+                                                    ? (row.status.housekeeping_definition?.label ??
+                                                        row.status.housekeepingDefinition?.label)
+                                                    : (
+                                                        row.status.housekeeping_status !== null &&
+                                    row.status.housekeeping_status !== undefined &&
+                                    String(row.status.housekeeping_status) !== ''
+                                    ? row.status.housekeeping_status
+                                    : '—'
+                                    )
+                                    )
+                                    : 'Not checked in'
                                     }}
                                 </td>
+
                                 <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-800">
                                     <span v-if="row.guest_last_name || row.guest_first_name">
                                         {{ [row.guest_last_name, row.guest_first_name].filter(Boolean).join(', ') }}
@@ -91,10 +106,21 @@
 
                                 <td class="whitespace-nowrap px-6 py-2 text-right text-sm font-medium">
                                     <div class="flex items-center whitespace-nowrap justify-end gap-1">
-                                        <ejs-tooltip :content="'Check In'" position="TopCenter" target="#rs_edit_tt">
+                                        <ejs-tooltip v-if="!row.status?.occupancy_status" :content="'Check In'"
+                                            position="TopCenter" target="#rs_edit_tt">
                                             <div id="rs_edit_tt">
-                                                <ClipboardDocumentCheckIcon @click="handleCheckInButtonClick(row.uuid)"
-                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                                <ArrowRightEndOnRectangleIcon
+                                                    @click="handleCheckInButtonClick(row.uuid)"
+                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-green-400 hover:bg-green-200 hover:text-green-600 active:bg-green-300 active:duration-150 cursor-pointer" />
+                                            </div>
+                                        </ejs-tooltip>
+
+                                        <ejs-tooltip v-if="row.status?.occupancy_status" :content="'Check Out'"
+                                            position="TopCenter" target="#rs_edit_tt">
+                                            <div id="rs_edit_tt">
+                                                <ArrowRightStartOnRectangleIcon
+                                                    @click="handleCheckOutButtonClick(row.uuid)"
+                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-amber-400 hover:bg-amber-200 hover:text-amber-600 active:bg-amber-300 active:duration-150 cursor-pointer" />
                                             </div>
                                         </ejs-tooltip>
 
@@ -139,9 +165,9 @@
         @success="showNotification('success', $event)" />
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
-        @confirm="confirmDeleteAction" :header="'Confirm Deletion'"
-        :text="'This will permanently delete the selected room status record(s). Proceed?'"
-        :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+        @confirm="confirmDeleteAction" :header="'Confirm Check-Out'"
+        :text="'This will check out the selected room(s). Proceed?'" :confirm-button-label="'Check Out'"
+        cancel-button-label="Cancel" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -153,8 +179,8 @@ import ManageHousekeepingCodesModal from "./modal/ManageHousekeepingCodesModal.v
 import HotelRoomCheckInModal from "./modal/HotelRoomCheckInModal.vue";
 import Notification from "./notifications/Notification.vue";
 import ConfirmationModal from "./modal/ConfirmationModal.vue";
-import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
-import { ClipboardDocumentCheckIcon } from '@heroicons/vue/24/outline'
+import { MagnifyingGlassIcon, ArrowRightEndOnRectangleIcon, ArrowRightStartOnRectangleIcon } from "@heroicons/vue/24/solid";
+// import { ArrowRightEndOnRectangleIcon, ArrowRightStartOnRectangleIcon } from '@heroicons/vue/24/outline'
 import { registerLicense } from '@syncfusion/ej2-base';
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import Paginator from "@generalComponents/Paginator.vue";
@@ -211,7 +237,7 @@ const fetchRoomStatuses = async (page = 1) => {
     })
         .then((response) => {
             data.value = response.data;
-            console.log(data.value);
+            // console.log(data.value);
 
         }).catch((error) => {
             handleErrorResponse(error)
@@ -288,7 +314,7 @@ const getItemOptions = (itemUuid = null) => {
     })
         .then((response) => {
             itemOptions.value = response.data;
-            console.log(itemOptions.value);
+            // console.log(itemOptions.value);
 
         }).catch((error) => {
             handleErrorResponse(error)
@@ -297,13 +323,13 @@ const getItemOptions = (itemUuid = null) => {
         });
 }
 
-const handleSingleItemDeleteRequest = (uuid) => {
+const handleCheckOutButtonClick = (uuid) => {
     showDeleteConfirmationModal.value = true;
     confirmDeleteAction.value = () => executeBulkDelete([uuid]);
 };
 
 const executeBulkDelete = (items = selectedItems.value) => {
-    axios.post(props.routes.hotel_rooms_bulk_delete, { items })
+    axios.post(props.routes.hotel_room_status_bulk_delete, { items })
         .then((response) => {
             handleModalClose();
             showNotification('success', response.data.messages);
@@ -317,7 +343,6 @@ const executeBulkDelete = (items = selectedItems.value) => {
 
 
 const handleModalClose = () => {
-    showCreateModal.value = false;
     showCheckInModal.value = false;
     showDeleteConfirmationModal.value = false;
     // bulkUpdateModalTrigger.value = false;

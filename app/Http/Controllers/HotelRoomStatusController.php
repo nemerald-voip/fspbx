@@ -36,7 +36,8 @@ class HotelRoomStatusController extends Controller
                 }),
             ])
             ->with(['status' => function ($query) {
-                $query->select('uuid', 'hotel_room_uuid', 'occupancy_status', 'housekeeping_status', 'guest_first_name', 'guest_last_name', 'arrival_date', 'departure_date');
+                $query->select('uuid', 'hotel_room_uuid', 'occupancy_status', 'housekeeping_status', 'guest_first_name', 'guest_last_name', 'arrival_date', 'departure_date')
+                ->with('housekeepingDefinition:uuid,code,label');
             }])
             ->allowedSorts(['room_name'])
             ->defaultSort('room_name');
@@ -70,33 +71,6 @@ class HotelRoomStatusController extends Controller
 
     public function update(Request $request, string $uuid)
     {
-        $data = $request->validate([
-            'occupancy_status'    => ['nullable', 'string', 'in:vacant,reserved,occupied,ooo'],
-            'housekeeping_status' => ['nullable', 'numeric', 'in:clean,dirty,inspected'],
-            'guest_first_name'    => ['nullable', 'string', 'max:120'],
-            'guest_last_name'     => ['nullable', 'string', 'max:120'],
-            'arrival_date'        => ['nullable', 'date'],
-            'departure_date'      => ['nullable', 'date', 'after_or_equal:arrival_date'],
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            $row = DB::table('hotel_room_status')->where('uuid', $uuid)->first();
-            if (!$row) {
-                return response()->json(['messages' => ['error' => ['Room status not found.']]], 404);
-            }
-
-            DB::table('hotel_room_status')->where('uuid', $uuid)
-                ->update(array_merge($data, ['updated_at' => now()]));
-
-            DB::commit();
-            return response()->json(['messages' => ['success' => ['Room status updated']]]);
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            logger('HotelRoomStatusController@update error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
-            return response()->json(['messages' => ['error' => ['Failed to update room status']]], 500);
-        }
     }
 
     public function getItemOptions()
@@ -126,12 +100,12 @@ class HotelRoomStatusController extends Controller
             $currentDomain = (string) session('domain_uuid');
 
             $defaultHousekeepingOptions = QueryBuilder::for(HotelHousekeepingDefinition::query())
-                ->enabled()->globalOnly()
+                ->enabled()->forDomain($currentDomain)
                 ->defaultSort('code')
-                ->get(['code', 'label'])
+                ->get(['uuid', 'label'])
                 ->map(function ($option) {
                     return [
-                        'value' => $option->code,
+                        'value' => $option->uuid,
                         'label' => $option->label,
                     ];
                 });
@@ -154,20 +128,47 @@ class HotelRoomStatusController extends Controller
         }
     }
 
-    public function delete(Request $request, HotelRoomService $service)
+    public function bulkDelete(HotelRoomService $service)
     {
-        $data = $request->validate([
-            'uuid' => ['required', 'uuid', 'exists:hotel_rooms,uuid'],
-        ]);
-
-        $room = HotelRoom::query()
-            ->where('uuid', $data['uuid'])
-            ->firstOrFail();
-
-        $service->checkOut($room);
-
-        return response()->json([
-            'messages' => ['success' => ['Guest checked out']],
-        ], 201);
+        try {
+            $uuids = (array) request('items', []);
+            if (empty($uuids)) {
+                return response()->json([
+                    'messages' => ['error' => ['No rooms selected.']]
+                ], 422);
+            }
+    
+            $rooms = HotelRoom::whereIn('uuid', $uuids)->get();
+    
+            $checkedOut = 0;
+            $alreadyVacant = 0;
+    
+            foreach ($rooms as $room) {
+                $deleted = $service->checkOut($room); // returns bool (deleted? true : false)
+                if ($deleted) {
+                    $checkedOut++;
+                } else {
+                    $alreadyVacant++;
+                }
+            }
+    
+            return response()->json([
+                'messages' => [
+                    'success' => [
+                        sprintf(
+                            'Checkout processed: %d room(s)%s.',
+                            $checkedOut,
+                            $alreadyVacant ? " ({$alreadyVacant} already vacant)" : ''
+                        )
+                    ]
+                ],
+            ]);
+        } catch (\Throwable $e) {
+            logger('HotelRoomController@bulkDelete error: '.$e->getMessage().' at '.$e->getFile().':'.$e->getLine());
+            return response()->json([
+                'messages' => ['error' => ['An error occurred while checking out.']]
+            ], 500);
+        }
     }
+    
 }

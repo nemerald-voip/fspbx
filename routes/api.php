@@ -63,10 +63,13 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     // Hotel room status
     Route::resource('/hotel-room-status', HotelRoomStatusController::class);
     Route::post('/hotel-room-status/item-options', [HotelRoomStatusController::class, 'getItemOptions'])->name('hotel-room-status.item.options');
+    Route::post('hotel-room-status/bulk-delete', [HotelRoomStatusController::class, 'bulkDelete'])->name('hotel-room-status.bulk.delete');
 
     // Hotel housekeeping
-    Route::post('/housekeeping/item-options', [HotelHousekeepingDefinitionController::class, 'getItemOptions'])->name('housekeeping.item.options');
     Route::resource('/housekeeping', HotelHousekeepingDefinitionController::class);
+    Route::post('/housekeeping/item-options', [HotelHousekeepingDefinitionController::class, 'getItemOptions'])->name('housekeeping.item.options');
+    Route::post('/housekeeping/default-codes', [HotelHousekeepingDefinitionController::class, 'defaultCodes'])->name('housekeeping.default-codes');
+    
 
     // Emergency calls
     Route::resource('/emergency-calls', EmergencyCallController::class);

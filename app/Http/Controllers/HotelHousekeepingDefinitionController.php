@@ -116,6 +116,7 @@ class HotelHousekeepingDefinitionController extends Controller
 
             $routes = array_merge($routes, [
                 'store_route' => route('housekeeping.store'),
+                'default_codes_route' => route('housekeeping.default-codes'),
             ]);
 
             return response()->json([
@@ -123,6 +124,25 @@ class HotelHousekeepingDefinitionController extends Controller
                 'default_housekeeping_options' => $defaultHousekeepingOptions,
                 'routes' => $routes,
             ]);
+        } catch (\Throwable $e) {
+            logger('HotelRoomStatusController@getItemOptions ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to fetch item details']]
+            ], 500);
+        }
+    }
+
+    public function defaultCodes()
+    {
+        try {
+            $defaultHousekeepingOptions = QueryBuilder::for(HotelHousekeepingDefinition::query())
+            ->enabled()->globalOnly()
+            ->defaultSort('code')
+            ->get(['code', 'label']);
+
+            return response()->json($defaultHousekeepingOptions);
+            
         } catch (\Throwable $e) {
             logger('HotelRoomStatusController@getItemOptions ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([

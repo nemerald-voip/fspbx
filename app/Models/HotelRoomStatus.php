@@ -42,6 +42,11 @@ class HotelRoomStatus extends Model
         return $this->belongsTo(HotelRoom::class, 'hotel_room_uuid', 'uuid');
     }
 
+    public function housekeepingDefinition(): BelongsTo
+    {
+        return $this->belongsTo(HotelHousekeepingDefinition::class, 'housekeeping_status', 'uuid');
+    }
+
     /** Accessors */
     public function getGuestFullNameAttribute(): ?string
     {

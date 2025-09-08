@@ -117,7 +117,7 @@ const submitForm = async (FormData, form$) => {
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
 
-    console.log(requestData);
+    // console.log(requestData);
     return await form$.$vueform.services.axios.post(props.options.routes.store_route, requestData)
 };
 

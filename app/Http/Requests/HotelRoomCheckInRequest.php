@@ -17,7 +17,7 @@ class HotelRoomCheckInRequest extends FormRequest
             // NOTE: payload 'uuid' is the HotelRoom UUID
             'uuid'               => ['required', 'uuid', 'exists:hotel_rooms,uuid'],
             'occupancy_status'   => ['nullable', 'string', 'max:50'],
-            'housekeeping_status'=> ['nullable', 'integer'],
+            'housekeeping_status'=> ['nullable', 'uuid'],
             'guest_first_name'   => ['nullable', 'string', 'max:120'],
             'guest_last_name'    => ['nullable', 'string', 'max:120'],
             'arrival_date'       => ['nullable', 'date'],
