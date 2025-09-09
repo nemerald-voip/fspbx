@@ -71,7 +71,7 @@ class CharPmsWebhookController extends Controller
 
         // ---------------- 3) BASIC SYNTAX VALIDATION (→ 400) ----------------
         $action = strtoupper((string) $request->input('action', ''));
-        if (!in_array($action, ['CHKI','UPDATE','MOVE','CHKO'], true)) {
+        if (!in_array($action, ['CHKI', 'UPDATE', 'MOVE', 'CHKO'], true)) {
             return response()->json(['code' => 1, 'description' => 'Unsupported action'], 400);
         }
 
@@ -85,13 +85,13 @@ class CharPmsWebhookController extends Controller
         $ext = $request->input('extension_id');
         $dst = $request->input('destination_id');
 
-        if (in_array($action, ['CHKI','UPDATE','CHKO'], true) && (!is_string($ext) || $ext === '')) {
+        if (in_array($action, ['CHKI', 'UPDATE', 'CHKO'], true) && (!is_string($ext) || $ext === '')) {
             return response()->json(['code' => 4, 'description' => 'Missing extension_id'], 400);
         }
         if ($action === 'MOVE' && (!is_string($ext) || $ext === '' || !is_string($dst) || $dst === '')) {
             return response()->json(['code' => 5, 'description' => 'Missing extension_id or destination_id'], 400);
         }
-        foreach (['arrival','departure'] as $df) {
+        foreach (['arrival', 'departure'] as $df) {
             if (!$dateOk($request->input($df))) {
                 return response()->json(['code' => 6, 'description' => "Invalid {$df} format (use YYYY/MM/DDTHH:MM:SS or YYYYMMDDHHMMSS)"], 400);
             }
@@ -106,27 +106,43 @@ class CharPmsWebhookController extends Controller
             if (!$extensionUuid) return null;
 
             return HotelRoom::query()
+                ->select(['uuid', 'domain_uuid', 'extension_uuid', 'room_name'])
                 ->where('domain_uuid', $domainUuid)
                 ->where('extension_uuid', $extensionUuid)
+                ->with(['status' => function ($q) {
+                    // presence is enough; pick minimal columns
+                    $q->select('uuid', 'hotel_room_uuid');
+                }])
                 ->first();
         };
 
-        if (in_array($action, ['CHKI','UPDATE','CHKO'], true)) {
+        if (in_array($action, ['CHKI', 'UPDATE', 'CHKO'], true)) {
             if (!$findRoomByExt($domainUuid, (string)$ext)) {
                 return response()->json(['code' => 8, 'description' => 'Extension does not exist'], 403);
             }
         } elseif ($action === 'MOVE') {
             $src   = $findRoomByExt($domainUuid, (string)$ext);
             $dstRm = $findRoomByExt($domainUuid, (string)$dst);
-            if (!$src)   return response()->json(['code' => 8, 'description' => 'Source extension does not exist'], 403);
-            if (!$dstRm) return response()->json(['code' => 9, 'description' => 'Destination extension does not exist'], 403);
+
+            if (!$src)   return response()->json(['code' => 8,  'description' => 'Source extension does not exist'], 403);
+            if (!$dstRm) return response()->json(['code' => 9,  'description' => 'Destination extension does not exist'], 403);
+
+            // MOVE-specific business rules (clear response to CHAR):
+            if (!$src->status) {
+                // No active guest in source
+                return response()->json(['code' => 11, 'description' => 'Source room has no active guest'], 403);
+            }
+            if ($dstRm->status) {
+                // Destination already occupied
+                return response()->json(['code' => 10, 'description' => 'Destination room is already occupied'], 403);
+            }
         }
 
         // ---------------- 5) Persist + enqueue via Spatie ----------------
         $webhookConfig = new WebhookConfig([
             'name'                 => 'char-pms',
             'signing_secret'       => '', // auth handled here
-            'signature_header_name'=> 'Authorization',
+            'signature_header_name' => 'Authorization',
             'signature_validator'  => \App\Http\Webhooks\SignatureValidators\AlwaysValidSignatureValidator::class,
             'webhook_profile'      => \Spatie\WebhookClient\WebhookProfile\ProcessEverythingWebhookProfile::class,
             'webhook_response'     => \Spatie\WebhookClient\WebhookResponse\DefaultRespondsTo::class,

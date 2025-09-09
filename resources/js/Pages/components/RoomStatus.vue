@@ -98,10 +98,10 @@
                                     <span v-else>—</span>
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
-                                    {{ row.status?.arrival_date ?? '—' }}
+                                    {{ row.status?.arrival_date_formatted ?? '—' }}
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
-                                    {{ row.status?.departure_date ?? '—' }}
+                                    {{ row.status?.departure_date_formatted ?? '—' }}
                                 </td>
 
                                 <td class="whitespace-nowrap px-6 py-2 text-right text-sm font-medium">
@@ -237,7 +237,7 @@ const fetchRoomStatuses = async (page = 1) => {
     })
         .then((response) => {
             data.value = response.data;
-            console.log(data.value);
+            // console.log(data.value);
 
         }).catch((error) => {
             handleErrorResponse(error)
