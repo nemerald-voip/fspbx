@@ -92,16 +92,16 @@
                                 </td>
 
                                 <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-800">
-                                    <span v-if="row.guest_last_name || row.guest_first_name">
-                                        {{ [row.guest_last_name, row.guest_first_name].filter(Boolean).join(', ') }}
+                                    <span v-if="row.status?.guest_last_name || row.status?.guest_first_name">
+                                        {{ [row.status?.guest_first_name, row.status?.guest_last_name].filter(Boolean).join(' ') }}
                                     </span>
                                     <span v-else>—</span>
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
-                                    {{ row.arrival_date ?? '—' }}
+                                    {{ row.status?.arrival_date ?? '—' }}
                                 </td>
                                 <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
-                                    {{ row.departure_date ?? '—' }}
+                                    {{ row.status?.departure_date ?? '—' }}
                                 </td>
 
                                 <td class="whitespace-nowrap px-6 py-2 text-right text-sm font-medium">
@@ -237,7 +237,7 @@ const fetchRoomStatuses = async (page = 1) => {
     })
         .then((response) => {
             data.value = response.data;
-            // console.log(data.value);
+            console.log(data.value);
 
         }).catch((error) => {
             handleErrorResponse(error)

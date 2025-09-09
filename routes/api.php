@@ -17,6 +17,7 @@ use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\Api\LocationsController;
 use App\Http\Controllers\BusinessHoursController;
+use App\Http\Controllers\CharPmsWebhookController;
 use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\AccountSettingsController;
@@ -206,4 +207,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // Payment Gateways
     Route::put('/gateways', [PaymentGatewayController::class, 'update'])->name('gateway.update');
+
+    // CHAR PMS
+    Route::post('/pms/char', CharPmsWebhookController::class)->name('pms.char'); 
 });

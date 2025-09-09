@@ -20,8 +20,8 @@ return new class extends Migration {
             $t->uuid('housekeeping_status')->nullable();
             $t->string('guest_first_name')->nullable();
             $t->string('guest_last_name')->nullable();
-            $t->date('arrival_date')->nullable();
-            $t->date('departure_date')->nullable();
+            $t->timestamp('arrival_date')->nullable();
+            $t->timestamp('departure_date')->nullable();
             $t->timestamps();
         });
     }
