@@ -103,7 +103,6 @@ class ProcessCharPmsWebhookJob extends SpatieProcessWebhookJob implements Should
                         ];
                         // Atomic move (locks rows, checks occupancy again to avoid races)
                         $svc->move($src, $dstRm, array_filter($changes, fn($v) => $v !== null && $v !== ''));
-
                     } catch (\DomainException $e) {
                         // Permanent business rule violation detected after acceptance (race window)
                         // Do not throw: we already returned 200 to CHAR; just log for audit.
@@ -128,6 +127,31 @@ class ProcessCharPmsWebhookJob extends SpatieProcessWebhookJob implements Should
                     $room = $findRoomByExt($domainUuid, (string)$ext);
                     if ($room) {
                         $svc->checkOut($room);
+                    }
+                    break;
+                }
+
+            case 'DND': {
+                    $ext    = (string) $payload['extension_id'];
+                    // Laravel boolean validator already normalized; still guard:
+                    $active = filter_var($payload['active'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+                    $active = (bool) ($active ?? false);
+
+                    $svc->setDndByExtension($domainUuid, $ext, $active);
+                    break;
+                }
+
+            case 'WAKE': {
+                    $ext        = (string) $payload['extension_id'];
+                    $wakeAction = strtoupper((string) $payload['wake_action']);
+                    $wakeTime   = (string) $payload['wake_time']; // "YYYYMMDDTHHMMSS"
+                    // wake_uid is optional in CHAR, not stored in your schema; ignore or log:
+                    // $wakeUid    = $payload['wake_uid'] ?? null;
+
+                    if ($wakeAction === 'S') {
+                        $svc->scheduleWakeCallByExtension($domainUuid, $ext, $wakeTime);
+                    } else { // 'C'
+                        $svc->cancelWakeCallByExtension($domainUuid, $ext, $wakeTime);
                     }
                     break;
                 }

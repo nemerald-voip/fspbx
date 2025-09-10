@@ -71,7 +71,7 @@ class CharPmsWebhookController extends Controller
 
         // ---------------- 3) BASIC SYNTAX VALIDATION (→ 400) ----------------
         $action = strtoupper((string) $request->input('action', ''));
-        if (!in_array($action, ['CHKI', 'UPDATE', 'MOVE', 'CHKO'], true)) {
+        if (!in_array($action, ['CHKI', 'UPDATE', 'MOVE', 'CHKO', 'DND', 'WAKE'], true)) {
             return response()->json(['code' => 1, 'description' => 'Unsupported action'], 400);
         }
 
@@ -85,16 +85,70 @@ class CharPmsWebhookController extends Controller
         $ext = $request->input('extension_id');
         $dst = $request->input('destination_id');
 
-        if (in_array($action, ['CHKI', 'UPDATE', 'CHKO'], true) && (!is_string($ext) || $ext === '')) {
-            return response()->json(['code' => 4, 'description' => 'Missing extension_id'], 400);
-        }
-        if ($action === 'MOVE' && (!is_string($ext) || $ext === '' || !is_string($dst) || $dst === '')) {
-            return response()->json(['code' => 5, 'description' => 'Missing extension_id or destination_id'], 400);
-        }
-        foreach (['arrival', 'departure'] as $df) {
-            if (!$dateOk($request->input($df))) {
-                return response()->json(['code' => 6, 'description' => "Invalid {$df} format (use YYYY/MM/DDTHH:MM:SS or YYYYMMDDHHMMSS)"], 400);
-            }
+        // Per-action syntax checks
+        switch ($action) {
+            case 'CHKI':
+            case 'UPDATE':
+            case 'CHKO':
+                if (!is_string($ext) || $ext === '') {
+                    return response()->json(['code' => 4, 'description' => 'Missing extension_id'], 400);
+                }
+                foreach (['arrival', 'departure'] as $df) {
+                    if (!$dateOk($request->input($df))) {
+                        return response()->json(['code' => 6, 'description' => "Invalid {$df} format (use YYYY/MM/DDTHH:MM:SS or YYYYMMDDHHMMSS)"], 400);
+                    }
+                }
+                break;
+
+            case 'MOVE':
+                if (!is_string($ext) || $ext === '' || !is_string($dst) || $dst === '') {
+                    return response()->json(['code' => 5, 'description' => 'Missing extension_id or destination_id'], 400);
+                }
+                foreach (['arrival', 'departure'] as $df) {
+                    if (!$dateOk($request->input($df))) {
+                        return response()->json(['code' => 6, 'description' => "Invalid {$df} format (use YYYY/MM/DDTHH:MM:SS or YYYYMMDDHHMMSS)"], 400);
+                    }
+                }
+                break;
+
+            case 'DND':
+                if (!is_string($ext) || $ext === '') {
+                    return response()->json(['code' => 4, 'description' => 'Missing extension_id'], 400);
+                }
+                // active must be boolean
+                if (!is_bool($request->input('active'))) {
+                    // Allow "true"/"false"/1/0 strings but normalize below before queuing
+                    $raw = $request->input('active');
+                    $filter = filter_var($raw, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+                    if (!is_bool($filter)) {
+                        return response()->json(['code' => 6, 'description' => 'Invalid active (boolean)'], 400);
+                    }
+                    // normalize for downstream
+                    $request->merge(['active' => (bool) $filter]);
+                }
+                break;
+
+            case 'WAKE':
+                // extension_id required
+                if (!is_string($ext) || $ext === '') {
+                    return response()->json(['code' => 4, 'description' => 'Missing extension_id'], 400);
+                }
+                // wake_action required: S (set) or C (cancel)
+                $wakeAction = strtoupper((string) $request->input('wake_action', ''));
+                if (!in_array($wakeAction, ['S', 'C'], true)) {
+                    return response()->json(['code' => 6, 'description' => 'Invalid wake_action (use S or C)'], 400);
+                }
+                // wake_time required and must match CHAR format
+                $wakeTime = (string) $request->input('wake_time', '');
+                if (!$dateOk($wakeTime)) {
+                    return response()->json(['code' => 6, 'description' => 'Invalid wake_time (use YYYYMMDDTHHMMSS)'], 400);
+                }
+                // normalize for downstream
+                $request->merge([
+                    'wake_action' => $wakeAction,
+                    'wake_time'   => $wakeTime,
+                ]);
+                break;
         }
 
         // ---------------- 4) DATA VALIDATION (→ 403) ----------------
@@ -116,26 +170,57 @@ class CharPmsWebhookController extends Controller
                 ->first();
         };
 
-        if (in_array($action, ['CHKI', 'UPDATE', 'CHKO'], true)) {
-            if (!$findRoomByExt($domainUuid, (string)$ext)) {
-                return response()->json(['code' => 8, 'description' => 'Extension does not exist'], 403);
-            }
-        } elseif ($action === 'MOVE') {
-            $src   = $findRoomByExt($domainUuid, (string)$ext);
-            $dstRm = $findRoomByExt($domainUuid, (string)$dst);
+        switch ($action) {
+            case 'CHKI':
+            case 'UPDATE':
+            case 'CHKO':
+                if (!$findRoomByExt($domainUuid, (string) $ext)) {
+                    return response()->json(['code' => 8, 'description' => 'Extension does not exist'], 403);
+                }
+                break;
 
-            if (!$src)   return response()->json(['code' => 8,  'description' => 'Source extension does not exist'], 403);
-            if (!$dstRm) return response()->json(['code' => 9,  'description' => 'Destination extension does not exist'], 403);
+            case 'MOVE':
+                $src   = $findRoomByExt($domainUuid, (string) $ext);
+                $dstRm = $findRoomByExt($domainUuid, (string) $dst);
 
-            // MOVE-specific business rules (clear response to CHAR):
-            if (!$src->status) {
-                // No active guest in source
-                return response()->json(['code' => 11, 'description' => 'Source room has no active guest'], 403);
-            }
-            if ($dstRm->status) {
-                // Destination already occupied
-                return response()->json(['code' => 10, 'description' => 'Destination room is already occupied'], 403);
-            }
+                if (!$src)   return response()->json(['code' => 8,  'description' => 'Source extension does not exist'], 403);
+                if (!$dstRm) return response()->json(['code' => 9,  'description' => 'Destination extension does not exist'], 403);
+
+                if (!$src->status) {
+                    return response()->json(['code' => 11, 'description' => 'Source room has no active guest'], 403);
+                }
+                if ($dstRm->status) {
+                    return response()->json(['code' => 10, 'description' => 'Destination room is already occupied'], 403);
+                }
+                break;
+
+            case 'DND': {
+                    $room = $findRoomByExt($domainUuid, (string) $ext);
+                    if (!$room) {
+                        // Only allow DND on extensions that are mapped to a hotel room
+                        return response()->json(['code' => 8, 'description' => 'Extension is not mapped to a hotel room'], 403);
+                    }
+
+                    // (Optional) stash for the job so it doesn’t need to re-query
+                    $request->merge([
+                        '_hotel_room_uuid' => $room->uuid,
+                        '_extension_uuid'  => $room->extension_uuid,
+                    ]);
+                    break;
+                }
+
+            case 'WAKE': {
+                    $room = $findRoomByExt($domainUuid, (string) $ext);
+                    if (!$room) {
+                        return response()->json(['code' => 8, 'description' => 'Extension is not mapped to a hotel room'], 403);
+                    }
+                    // Optional: stash for the job so it doesn’t need to re-query
+                    $request->merge([
+                        '_hotel_room_uuid' => $room->uuid,
+                        '_extension_uuid'  => $room->extension_uuid,
+                    ]);
+                    break;
+                }
         }
 
         // ---------------- 5) Persist + enqueue via Spatie ----------------

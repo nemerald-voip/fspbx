@@ -223,7 +223,120 @@ class HotelRoomService
     }
 
 
+    /**
+     * Set DND for an extension within a domain.
+     * - Updates v_extensions.do_not_disturb to "true"/"false"
+     */
+    public function setDndByExtension(string $domainUuid, string $extension, bool $active): void
+    {
+        DB::transaction(function () use ($domainUuid, $extension, $active) {
+            $extRow = Extensions::query()
+                ->where('domain_uuid', $domainUuid)
+                ->where('extension', $extension)
+                ->first(['extension_uuid', 'domain_uuid', 'extension']);
 
+            if (!$extRow) {
+                // silently return or throw; controller pre-check should prevent this
+                return;
+            }
+
+            // v_extensions.do_not_disturb is a text field storing "true"/"false"
+            Extensions::query()
+                ->where('domain_uuid', $domainUuid)
+                ->where('extension_uuid', $extRow->extension_uuid)
+                ->update(['do_not_disturb' => $active ? "true" : "false"]);
+        });
+    }
+
+
+    /**
+     * Schedule (or idempotently upsert) a wake-up call for the given extension at local time.
+     * - Converts local wake_time (YYYY/MM/DDTHH:MM:SS) to UTC before saving
+     * - Upserts by (domain_uuid, extension_uuid, wake_up_time) to avoid duplicates
+     * - Sets next_attempt_at to wake_up_time initially; status to 'scheduled'
+     */
+    public function scheduleWakeCallByExtension(string $domainUuid, string $extension, string|\DateTimeInterface $wakeTimeLocal): WakeupCall
+    {
+        // resolve extension_uuid
+        $extensionUuid = Extensions::query()
+            ->where('domain_uuid', $domainUuid)
+            ->where('extension', $extension)
+            ->value('extension_uuid');
+
+        if (!$extensionUuid) {
+            // Controller should have validated; bail safely
+            throw new \RuntimeException('Extension not found when scheduling wake-up call.');
+        }
+
+        $localTz = get_local_time_zone($domainUuid);
+        // Reuse your strict parser; expects local wall clock → UTC Carbon
+        $wakeUtc = $this->parseLocalToUtc($wakeTimeLocal, $localTz);
+        if (!$wakeUtc) {
+            throw new \InvalidArgumentException('Invalid wake_time format.');
+        }
+
+        // Idempotent upsert by domain + extension + wake_up_time
+        return DB::transaction(function () use ($domainUuid, $extensionUuid, $wakeUtc) {
+            /** @var WakeupCall $row */
+            $row = WakeupCall::query()->where([
+                'domain_uuid'    => $domainUuid,
+                'extension_uuid' => $extensionUuid,
+                'wake_up_time'   => $wakeUtc, // Carbon ok (casts to timestamp)
+            ])->first();
+
+            if ($row) {
+                // refresh status to scheduled, reset retries and next_attempt_at
+                $row->update([
+                    'next_attempt_at' => $wakeUtc,
+                    'recurring'       => false,
+                    'status'          => 'scheduled',
+                    'retry_count'     => 0,
+                ]);
+                return $row->refresh();
+            }
+
+            return WakeupCall::create([
+                'uuid'            => (string) Str::uuid(),
+                'domain_uuid'     => $domainUuid,
+                'extension_uuid'  => $extensionUuid,
+                'wake_up_time'    => $wakeUtc,
+                'next_attempt_at' => $wakeUtc,
+                'recurring'       => false,
+                'status'          => 'scheduled',
+                'retry_count'     => 0,
+            ]);
+        });
+    }
+
+    /**
+     * Cancel a specific wake-up call for the given extension at the provided local time.
+     * - Converts local wake_time (YYYY/MM/DDTHH:MM:SS) to UTC and deletes matching row(s).
+     * - Returns number of deleted rows (0 is fine if nothing matched).
+     */
+    public function cancelWakeCallByExtension(string $domainUuid, string $extension, string|\DateTimeInterface $wakeTimeLocal): int
+    {
+        $extensionUuid = Extensions::query()
+            ->where('domain_uuid', $domainUuid)
+            ->where('extension', $extension)
+            ->value('extension_uuid');
+
+        if (!$extensionUuid) {
+            // Controller should have validated; bail safely
+            return 0;
+        }
+
+        $localTz = get_local_time_zone($domainUuid);
+        $wakeUtc = $this->parseLocalToUtc($wakeTimeLocal, $localTz);
+        if (!$wakeUtc) {
+            return 0;
+        }
+
+        return (int) WakeupCall::query()
+            ->where('domain_uuid', $domainUuid)
+            ->where('extension_uuid', $extensionUuid)
+            ->where('wake_up_time', $wakeUtc)
+            ->delete();
+    }
 
 
     /**
