@@ -9,6 +9,7 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\UserLogsController;
+use App\Http\Controllers\HotelRoomController;
 use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\RingGroupsController;
@@ -16,14 +17,17 @@ use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\Api\LocationsController;
 use App\Http\Controllers\BusinessHoursController;
+use App\Http\Controllers\CharPmsWebhookController;
 use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\AccountSettingsController;
+use App\Http\Controllers\HotelRoomStatusController;
 use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\EmergencyCallController;
 use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\Api\ProvisioningTemplateController;
+use App\Http\Controllers\HotelHousekeepingDefinitionController;
 
 /*
 |--------------------------------------------------------------------------
@@ -51,6 +55,22 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('provisioning-templates/bulk-delete', [ProvisioningTemplateController::class, 'bulkDelete'])->name('provisioning-templates.bulk.delete');
     Route::post('/provisioning-templates/item-options', [ProvisioningTemplateController::class, 'getItemOptions'])->name('provisioning-templates.item.options');
     Route::post('/provisioning-templates/content', [ProvisioningTemplateController::class, 'getTemplateContent'])->name('provisioning-templates.content');
+
+    // Hotel rooms
+    Route::resource('/hotel-rooms', HotelRoomController::class);
+    Route::post('/hotel-rooms/item-options', [HotelRoomController::class, 'getItemOptions'])->name('hotel-rooms.item.options');
+    Route::post('hotel-rooms/bulk-delete', [HotelRoomController::class, 'bulkDelete'])->name('hotel-rooms.bulk.delete');
+
+    // Hotel room status
+    Route::resource('/hotel-room-status', HotelRoomStatusController::class);
+    Route::post('/hotel-room-status/item-options', [HotelRoomStatusController::class, 'getItemOptions'])->name('hotel-room-status.item.options');
+    Route::post('hotel-room-status/bulk-delete', [HotelRoomStatusController::class, 'bulkDelete'])->name('hotel-room-status.bulk.delete');
+
+    // Hotel housekeeping
+    Route::resource('/housekeeping', HotelHousekeepingDefinitionController::class);
+    Route::post('/housekeeping/item-options', [HotelHousekeepingDefinitionController::class, 'getItemOptions'])->name('housekeeping.item.options');
+    Route::post('/housekeeping/default-codes', [HotelHousekeepingDefinitionController::class, 'defaultCodes'])->name('housekeeping.default-codes');
+    
 
     // Emergency calls
     Route::resource('/emergency-calls', EmergencyCallController::class);
@@ -187,4 +207,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // Payment Gateways
     Route::put('/gateways', [PaymentGatewayController::class, 'update'])->name('gateway.update');
+
+    // CHAR PMS
+    Route::post('/pms/char', CharPmsWebhookController::class)->name('pms.char'); 
 });

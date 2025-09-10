@@ -1,7 +1,7 @@
 <template>
     <div class="space-y-6 px-4 py-6 sm:p-6">
-        <div class="flex justify-between items-center">
-            <h3 class="text-base font-semibold leading-6 text-gray-900">Emergency Calls</h3>
+        <div class="flex justify-end items-center">
+            <!-- <h3 class="text-base font-semibold leading-6 text-gray-900">Emergency Calls</h3> -->
             <button type="button" @click.prevent="handleCreateButtonClick()"
                 class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                 Create

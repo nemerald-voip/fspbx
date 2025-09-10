@@ -190,7 +190,7 @@ if call_type == "remote" then
     end)
 
     if not authorized then
-        debug_log("ERR", "[wakeup_service.lua] Unauthorized access attempt by extension " .. extension .. "\n")
+        freeswitch.consoleLog("ERR", "[wakeup_service.lua] Unauthorized access attempt by extension " .. extension .. "\n")
         return
     else 
         debug_log("INFO", "[wakeup_service.lua] User is authorized to access remote wake up service.\n")
