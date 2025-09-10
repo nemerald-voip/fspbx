@@ -175,20 +175,25 @@ class HotelRoomService
 
             // Resolve voicemail info (src & dst) and update DB rows in one go
             $voicemailContext = $this->prepareVoicemailMoveContext($source, $destination);
+
             if ($voicemailContext) {
-                // Move all message rows source -> destination
-                VoicemailMessages::query()
+                // Repoint all voicemail messages (DB) src -> dst
+                \App\Models\VoicemailMessages::query()
                     ->where('domain_uuid', $source->domain_uuid)
                     ->where('voicemail_uuid', $voicemailContext['src']['uuid'])
                     ->update(['voicemail_uuid' => $voicemailContext['dst']['uuid']]);
-    
-                // **Reset source greetings in DB**
-                $this->resetVoicemailGreetings($source->domain_uuid, $voicemailContext['src']['id']);
+            
+                // Move greetings (DB) + carry over selected greeting
+                $this->moveVoicemailGreetings(
+                    $source->domain_uuid,
+                    $voicemailContext['src']['id'],
+                    $voicemailContext['dst']['id']
+                );
             }
 
             // Update extensions (no file ops here)
             $this->vacateExtension($source);                                  // DND=true, VM disabled, name "Vacant"
-            $this->updateExtension($destination, ['extension_name' => $guestName]); // DND=false, VM enabled, name guest
+            $this->updateExtension($destination, ['extension_name' => $guestName, 'extension_id' => $voicemailContext['dst']['id']]); // DND=false, VM enabled, name guest
 
             return $srcStatus->refresh();
         });
@@ -307,6 +312,7 @@ class HotelRoomService
                 'effective_caller_id_name' => $name !== '' ? $name : null,
                 'do_not_disturb'           => "false",
             ]);
+        logger($payload);
 
         Voicemails::query()
             ->where('domain_uuid', $room->domain_uuid)
@@ -506,6 +512,9 @@ class HotelRoomService
             if ($disk->exists($srcDir)) {
                 $disk->deleteDirectory($srcDir);
             }
+
+            $disk->makeDirectory($srcDir); // recreate empty
+
         } catch (\Throwable $e) {
             logger('Voicemail file move error: ' . $e->getMessage());
         }
@@ -523,18 +532,42 @@ class HotelRoomService
         }
     }
 
-    private function resetVoicemailGreetings(string $domainUuid, string $voicemailId): void
+    /**
+     * Move all greeting rows from SRC voicemail to DST voicemail and
+     * carry over the selected greeting. Source greeting_id -> -1.
+     */
+    private function moveVoicemailGreetings(string $domainUuid, string $srcVoicemailId, string $dstVoicemailId): void
     {
-        // delete all greeting rows for this mailbox
+        // Load both mailboxes (we need current greeting selections)
+        $srcVm = Voicemails::query()
+            ->where('domain_uuid', $domainUuid)
+            ->where('voicemail_id', $srcVoicemailId)
+            ->first(['voicemail_uuid', 'voicemail_id', 'greeting_id']);
+
+        $dstVm = Voicemails::query()
+            ->where('domain_uuid', $domainUuid)
+            ->where('voicemail_id', $dstVoicemailId)
+            ->first(['voicemail_uuid', 'voicemail_id', 'greeting_id']);
+
+        if (!$srcVm || !$dstVm) {
+            return;
+        }
+
+        // Move all greeting rows (DB) from SRC -> DST
         VoicemailGreetings::query()
             ->where('domain_uuid', $domainUuid)
-            ->where('voicemail_id', $voicemailId)
-            ->delete();
+            ->where('voicemail_id', $srcVoicemailId)
+            ->update(['voicemail_id' => $dstVoicemailId]);
 
-        // set greeting_id = -1 on the mailbox itself
-        Voicemails::query()
-            ->where('domain_uuid', $domainUuid)
-            ->where('voicemail_id', $voicemailId)
-            ->update(['greeting_id' => -1]);
+        // Carry over selected greeting if set on source (>= 0)
+        $srcGreeting = is_null($srcVm->greeting_id) ? -1 : (int)$srcVm->greeting_id;
+        if ($srcGreeting >= 0) {
+            $dstVm->greeting_id = $srcGreeting;
+            $dstVm->save();
+        }
+
+        // Reset source selection to default
+        $srcVm->greeting_id = -1;
+        $srcVm->save();
     }
 }
