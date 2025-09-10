@@ -51,7 +51,7 @@
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Room Name</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Extension
                                 </th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Check-in Status</th>
+                                <!-- <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Check-in Status</th> -->
 
 
 
@@ -71,9 +71,9 @@
                                     {{ room.extension?.extension ?? '' }}
                                 </td>
 
-                                <td class="whitespace-nowrap px-6 py-2 text-sm font-medium text-gray-900 capitalize">
+                                <!-- <td class="whitespace-nowrap px-6 py-2 text-sm font-medium text-gray-900 capitalize">
                                     {{ room.check_in ?? '' }}
-                                </td>
+                                </td> -->
 
                                 <td class="whitespace-nowrap px-6 py-2 text-right text-sm font-medium">
                                     <div class="flex items-center whitespace-nowrap justify-end">

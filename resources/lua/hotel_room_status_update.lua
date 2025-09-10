@@ -1,7 +1,7 @@
 -- hotel_room_status_update.lua
 -- Updates housekeeping_status for the calling room using a 1–2 digit code.
 
-DEBUG_MODE = true -- set true to see logs in fs_cli
+DEBUG_MODE = false -- set true to see logs in fs_cli
 
 local function log(level, msg)
   if DEBUG_MODE then freeswitch.consoleLog(level, "[hotel_room_status] " .. msg .. "\n") end

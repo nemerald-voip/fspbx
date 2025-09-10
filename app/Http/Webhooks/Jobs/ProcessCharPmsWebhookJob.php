@@ -51,6 +51,7 @@ class ProcessCharPmsWebhookJob extends SpatieProcessWebhookJob implements Should
                         'guest_last_name'  => Arr::get($payload, 'surname'),
                         'arrival_date'     => Arr::get($payload, 'arrival'),
                         'departure_date'   => Arr::get($payload, 'departure'),
+                        'occupancy_status' => "Checked in",
                         'extension_id'      => Arr::get($payload, 'extension_id'),
                         'extension_name'    => Arr::get($payload, 'extension_name'),
                     ];
@@ -68,6 +69,7 @@ class ProcessCharPmsWebhookJob extends SpatieProcessWebhookJob implements Should
                         'guest_last_name'  => Arr::get($payload, 'surname'),
                         'arrival_date'     => Arr::get($payload, 'arrival'),
                         'departure_date'   => Arr::get($payload, 'departure'),
+                        'occupancy_status' => "Checked in",
                         'extension_id'      => Arr::get($payload, 'extension_id'),
                         'extension_name'    => Arr::get($payload, 'extension_name'),
                     ];

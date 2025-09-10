@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use App\Models\HotelRoom;
 use App\Models\Extensions;
 use App\Models\Voicemails;
+use App\Models\WakeupCall;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use App\Models\HotelRoomStatus;
@@ -49,6 +50,9 @@ class HotelRoomService
             // Purge entire mailbox (messages + greetings + recorded name)
             $this->purgeVoicemailBox($room);
 
+            // remove any pre-existing wakeup calls for this extension
+            $this->deleteWakeupCallsForExtension($room);
+
             return HotelRoomStatus::create([
                 'uuid'            => (string) Str::uuid(),   // new row every time
                 'domain_uuid'     => $room->domain_uuid,     // derive (no session reliance)
@@ -80,6 +84,9 @@ class HotelRoomService
 
             // Purge entire mailbox first
             $this->purgeVoicemailBox($room);
+
+            //New: remove wakeup calls for this extension
+            $this->deleteWakeupCallsForExtension($room);
 
             return true;
         });
@@ -182,7 +189,7 @@ class HotelRoomService
                     ->where('domain_uuid', $source->domain_uuid)
                     ->where('voicemail_uuid', $voicemailContext['src']['uuid'])
                     ->update(['voicemail_uuid' => $voicemailContext['dst']['uuid']]);
-            
+
                 // Move greetings (DB) + carry over selected greeting
                 $this->moveVoicemailGreetings(
                     $source->domain_uuid,
@@ -194,6 +201,9 @@ class HotelRoomService
             // Update extensions (no file ops here)
             $this->vacateExtension($source);                                  // DND=true, VM disabled, name "Vacant"
             $this->updateExtension($destination, ['extension_name' => $guestName, 'extension_id' => $voicemailContext['dst']['id']]); // DND=false, VM enabled, name guest
+
+            //New: transfer wakeup calls src -> dst (extension_uuid)
+            $this->transferWakeupCallsForMove($source, $destination);
 
             return $srcStatus->refresh();
         });
@@ -312,7 +322,6 @@ class HotelRoomService
                 'effective_caller_id_name' => $name !== '' ? $name : null,
                 'do_not_disturb'           => "false",
             ]);
-        logger($payload);
 
         Voicemails::query()
             ->where('domain_uuid', $room->domain_uuid)
@@ -569,5 +578,34 @@ class HotelRoomService
         // Reset source selection to default
         $srcVm->greeting_id = -1;
         $srcVm->save();
+    }
+
+
+    /**
+     * Delete all scheduled wakeup calls for the room's bound extension.
+     */
+    private function deleteWakeupCallsForExtension(HotelRoom $room): void
+    {
+        if (empty($room->extension_uuid)) return;
+
+        WakeupCall::query()
+            ->where('domain_uuid', $room->domain_uuid)
+            ->where('extension_uuid', $room->extension_uuid)
+            ->delete();
+    }
+
+    /**
+     * Transfer all wakeup calls source -> destination by updating extension_uuid.
+     * Safe no-op if either room has no bound extension.
+     */
+    private function transferWakeupCallsForMove(HotelRoom $source, HotelRoom $destination): void
+    {
+        if (empty($source->extension_uuid) || empty($destination->extension_uuid)) return;
+
+        // Same domain already enforced by move(); keep it anyway for safety.
+        WakeupCall::query()
+            ->where('domain_uuid', $source->domain_uuid)
+            ->where('extension_uuid', $source->extension_uuid)
+            ->update(['extension_uuid' => $destination->extension_uuid]);
     }
 }
