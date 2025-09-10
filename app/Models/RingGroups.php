@@ -7,8 +7,6 @@ use Illuminate\Support\Facades\Session;
 use App\Services\CallRoutingOptionsService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-use function PHPUnit\Framework\isEmpty;
-
 class RingGroups extends Model
 {
     use HasFactory, \App\Models\Traits\TraitUuid;
@@ -135,7 +133,7 @@ class RingGroups extends Model
             return $this->forwardDetailsCache;
         }
 
-        if ($this->ring_group_forward_enabled != 'true' || !isEmpty($this->ring_group_forward_destination)) {
+        if ($this->ring_group_forward_enabled != 'true' || empty($this->ring_group_forward_destination)) {
             return $this->forwardDetailsCache = [
                 'type' => null,
                 'extension' => null,
