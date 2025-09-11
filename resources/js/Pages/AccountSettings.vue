@@ -16,131 +16,252 @@
 
         </div>
 
-        <main class="mx-auto max-w-full pb-10 lg:px-8 lg:py-12">
-            <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
-                @response="handleResponse" :display-errors="false">
-                <template #empty>
+        <main class="mx-auto max-w-full pb-10 sm:px-6 md:py-12 flex gap-2 md:gap-8 relative">
+            <aside :class="isNavCollapsed ? 'w-15' : 'w-64'"
+                class="flex flex-col flex-none transition-all duration-300">
+                <div class="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-4">
+                    <nav class="flex flex-1 flex-col mt-12">
+                        <ul role="list" class="flex flex-1 flex-col gap-y-7">
+                            <li>
+                                <ul role="list" class="-mx-2 space-y-1">
+                                    <li v-for="item in navigation" :key="item.key">
+                                        <div v-if="!item.children" class="relative">
+                                            <button type="button" @click="navigateTo(item.key)"
+                                                :class="[isActive(item.key) ? 'bg-gray-100' : 'hover:bg-gray-100', 'group flex items-center gap-x-3 w-full text-left rounded-md p-2 text-sm/6 font-semibold text-gray-700']">
+                                                <component :is="item.icon" class="size-6 shrink-0"
+                                                    :class="isActive(item.key) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
+                                                <span class="truncate" v-show="!isNavCollapsed">{{ item.name }}</span>
+                                            </button>
+                                            <span v-if="isNavCollapsed"
+                                                class="absolute left-full top-1/2 -translate-y-1/2 ml-4 w-auto min-w-max scale-0 rounded bg-gray-900 p-2 text-xs font-bold text-white transition-all group-hover:scale-100 origin-left z-10">
+                                                {{ item.name }}
+                                            </span>
+                                        </div>
 
-                    <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
-                        <div class="px-2 py-6 sm:px-6 lg:col-span-2 lg:px-0 lg:py-0">
-                            <FormTabs view="vertical" @select="handleTabSelected">
-                                <FormTab name="page0" label="General" :elements="[
-                                    'general_tab_label',
-                                    'domain_enabled',
-                                    'domain_description',
-                                    'domain_name',
-                                    'time_zone',
-                                    'general_submit',
+                                        <Disclosure as="div" v-else v-slot="{ open }"
+                                            :default-open="parentHasActiveChild(item)">
+                                            <div class="relative">
+                                                <DisclosureButton
+                                                    :class="[parentHasActiveChild(item) ? 'bg-gray-100' : 'hover:bg-gray-100', 'group flex w-full items-center gap-x-3 rounded-md p-2 text-left text-sm/6 font-semibold text-gray-700']">
+                                                    <component :is="item.icon" class="size-6 shrink-0"
+                                                        :class="parentHasActiveChild(item) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
+                                                    <span class="truncate" v-show="!isNavCollapsed">{{ item.name
+                                                    }}</span>
+                                                    <ChevronRightIcon v-show="!isNavCollapsed"
+                                                        :class="[open ? 'rotate-90 text-gray-500' : 'text-gray-400', 'ml-auto size-5 shrink-0']" />
+                                                </DisclosureButton>
+                                                <span v-if="isNavCollapsed"
+                                                    class="absolute left-full top-1/2 -translate-y-1/2 ml-4 w-auto min-w-max scale-0 rounded bg-gray-900 p-2 text-xs font-bold text-white transition-all group-hover:scale-100 origin-left z-10">
+                                                    {{ item.name }}
+                                                </span>
+                                            </div>
+                                            <DisclosurePanel as="ul" class="mt-1"
+                                                :class="isNavCollapsed ? 'pl-0' : 'pl-6'">
+                                    <li v-for="subItem in item.children" :key="subItem.key" class="relative">
+                                        <button type="button" @click="navigateTo(subItem.key)" :class="[
+                                            isActive(subItem.key) ? 'bg-gray-100' : 'hover:bg-gray-100',
+                                            'group flex w-full items-center gap-x-3 rounded-md py-2 pr-2 text-sm/6 text-gray-700',
+                                            isNavCollapsed ? 'justify-center' : 'pl-1'
+                                        ]">
 
-                                ]" :conditions="[() => true]" />
+                                            <component v-if="subItem.icon" :is="subItem.icon" class="size-5 shrink-0"
+                                                :class="isActive(subItem.key) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
 
-                                <FormTab name="locations" label="Locations" :elements="[
-                                    'locations_title',
-                                    'add_location',
-                                    'locations_table',
+                                            <!-- label (hidden when collapsed) -->
+                                            <span v-show="!isNavCollapsed" class="truncate">{{ subItem.name }}</span>
 
-                                ]" :conditions="[() => permissions?.location_view]" />
+                                            <!-- fallback initial only if no icon and collapsed -->
+                                            <span v-if="isNavCollapsed && !subItem.icon" class="font-bold">
+                                                {{ subItem.name.charAt(0) }}
+                                            </span>
+                                        </button>
 
-                                <FormTab name="auto_provisioning" label="Auto Provisioning" :elements="[
-                                    'auto_provisioning',
-                                    // 'add_location',
-                                    // 'locations_table',
+                                        <!-- tooltip when collapsed -->
+                                        <span v-if="isNavCollapsed"
+                                            class="absolute left-full top-1/2 -translate-y-1/2 ml-4 w-auto min-w-max scale-0 rounded bg-gray-900 p-2 text-xs font-bold text-white transition-all group-hover:scale-100 origin-left z-10">
+                                            {{ subItem.name }}
+                                        </span>
+                                    </li>
+                                    </DisclosurePanel>
+                                    </Disclosure>
+                            </li>
+                        </ul>
+                        </li>
+                        </ul>
+                    </nav>
 
-                                ]" :conditions="[() => permissions?.location_view]" />
+                </div>
+            </aside>
 
-                                <!-- <FormTab name="page1" label="Billing" :elements="[
+            <button @click="toggleNav" :class="isNavCollapsed ? 'left-10 sm:left-14' : 'left-64'"
+                class="absolute top-1 md:top-14 -translate-x-1/2 bg-white rounded-full p-1.5 border shadow-md text-gray-500 hover:text-indigo-600 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300 z-10">
+                <ChevronDoubleLeftIcon class="size-5 transition-transform duration-300"
+                    :class="{ 'rotate-180': isNavCollapsed }" />
+            </button>
 
-                                ]" :conditions="[() => true]" /> -->
+            <!-- MAIN content -->
+            <div class="flex-1 shadow md:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 md:p-6">
 
-                                <FormTab name="page2" label="Emergency Calls" :elements="[
-                                    'emergency_calls',
-                                    'container_1',
-                                    'container_2',
-                                    'divider',
-                                    'emergency_calls_service_status'
-                                ]" :conditions="[() => true]" />
+                <!-- GENERAL -->
+                <section v-show="activeSection === 'general'">
+                    <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
+                        @response="handleResponse" :display-errors="false">
+                        <template #empty>
 
-                            </FormTabs>
-                        </div>
+                            <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
+                                <!-- <div class="px-2 py-6 sm:px-6 lg:col-span-2 lg:px-0 lg:py-0">
+                                <FormTabs view="vertical" @select="handleTabSelected">
+                                    <FormTab name="page0" label="General" :elements="[
+                                        'general_tab_label',
+                                        'domain_enabled',
+                                        'domain_description',
+                                        'domain_name',
+                                        'time_zone',
+                                        'general_submit',
 
-                        <div
-                            class="sm:px-6 lg:col-span-10 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
-                            <FormElements>
+                                    ]" :conditions="[() => true]" />
 
-                                <!-- General Tab -->
+                                    <FormTab name="locations" label="Locations" :elements="[
+                                        'locations_title',
+                                        'add_location',
+                                        'locations_table',
 
-                                <StaticElement name="general_tab_label" tag="h4" content="General" />
-                                <HiddenElement name="domain_uuid" :meta="true" />
-                                <ToggleElement name="domain_enabled" text="Account Status" />
-                                <TextElement name="domain_description" label="Account Name"
-                                    placeholder="Enter Account Name" :floating="false" :columns="{
-                                        sm: {
-                                            container: 6,
-                                        },
-                                    }" />
-                                <TextElement name="domain_name" label="Domain" :readonly="true" :columns="{
-                                    sm: {
-                                        container: 6,
-                                    },
-                                }" />
-                                <SelectElement name="time_zone" :groups="true" :items="timezones" :search="true"
-                                    :native="false" label="Time Zone" input-type="search" autocomplete="off"
-                                    placeholder="Select Time Zone" :floating="false" :strict="false" :columns="{
-                                        sm: {
-                                            container: 6,
-                                        },
-                                    }" />
+                                    ]" :conditions="[() => permissions?.location_view]" />
 
-                                <ButtonElement name="general_submit" button-label="Save" :submits="true"
-                                    align="right" />
+                                    <FormTab name="auto_provisioning" label="Auto Provisioning" :elements="[
+                                        'auto_provisioning',
+                                        // 'add_location',
+                                        // 'locations_table',
 
-                                <!-- Locations -->
+                                    ]" :conditions="[() => permissions?.location_view]" />
 
-                                <StaticElement name="locations_title" tag="h4" content="Locations"
-                                    description="Locations help you group your users and resources within your organization. When you assign users to specific locations, they will only be able to see the resources that belong to those locations." />
+                                    <FormTab name="page2" label="Emergency Calls" :elements="[
+                                        'emergency_calls',
+                                        'container_1',
+                                        'container_2',
+                                        'divider',
+                                        'emergency_calls_service_status'
+                                    ]" :conditions="[() => true]" />
 
-                                <ButtonElement name="add_location" button-label="Add Location" align="right"
-                                    @click="handleAddLocationButtonClick" :loading="addLocationButtonLoading"
-                                    :conditions="[() => permissions?.location_create]" />
+                                </FormTabs>
+                            </div> -->
 
-                                <StaticElement name="locations_table">
-                                    <Locations :locations="locations" :loading="isLocationsLoading"
-                                        :permissions="permissions" @edit-item="handleUpdateLocationButtonClick"
-                                        @delete-item="handleDeleteLocationButtonClick" />
-                                </StaticElement>
+                                <div class="lg:col-span-12">
+                                    <FormElements>
 
-                                <!-- Auto Provisioning-->
-                                <StaticElement name="auto_provisioning">
-                                    <template #default="{ el$ }">
-                                        <AutoProvisioning :trigger="AutoProvisioningTrigger" :routes="routes" :permissions="permissions" :domain_uuid="data.domain_uuid"/>
-                                    </template>
-                                </StaticElement>
+                                        <!-- General Tab -->
 
-                                <!-- Emergency Calls -->
+                                        <StaticElement name="general_tab_label" tag="h4" content="General" />
+                                        <HiddenElement name="domain_uuid" :meta="true" />
+                                        <ToggleElement name="domain_enabled" text="Account Status" />
+                                        <TextElement name="domain_description" label="Account Name"
+                                            placeholder="Enter Account Name" :floating="false" :columns="{
+                                                sm: {
+                                                    container: 6,
+                                                },
+                                            }" />
+                                        <TextElement name="domain_name" label="Domain" :readonly="true" :columns="{
+                                            sm: {
+                                                container: 6,
+                                            },
+                                        }" />
+                                        <SelectElement name="time_zone" :groups="true" :items="timezones" :search="true"
+                                            :native="false" label="Time Zone" input-type="search" autocomplete="off"
+                                            placeholder="Select Time Zone" :floating="false" :strict="false" :columns="{
+                                                sm: {
+                                                    container: 6,
+                                                },
+                                            }" />
 
-                                <StaticElement name="emergency_calls">
-                                    <template #default="{ el$ }">
-                                        <EmergencyCalls :routes="routes" />
-                                    </template>
-                                </StaticElement>
-
-                                <GroupElement name="container_1" />
-                                <StaticElement name="divider" tag="hr" />
-                                <GroupElement name="container_2" />
+                                        <ButtonElement name="general_submit" button-label="Save" :submits="true"
+                                            align="right" />
 
 
-                                <StaticElement name="emergency_calls_service_status">
-                                    <template #default="{ el$ }">
-                                        <EmergencyServiceStatus :routes="routes" />
-                                    </template>
-                                </StaticElement>
 
-                            </FormElements>
-                        </div>
+                                    </FormElements>
+                                </div>
+                            </div>
+                        </template>
+                    </Vueform>
+                </section>
+
+                <!-- LOCATIONS -->
+                <section v-show="activeSection === 'locations'">
+                    <Vueform>
+                        <StaticElement name="locations_title" tag="h4" content="Locations"
+                            description="Locations help you group your users and resources within your organization. When you assign users to specific locations, they will only be able to see the resources that belong to those locations." />
+
+                        <ButtonElement name="add_location" button-label="Add Location" align="right"
+                            @click="handleAddLocationButtonClick" :loading="addLocationButtonLoading"
+                            :conditions="[() => permissions?.location_create]" />
+                        <GroupElement name="container_1" />
+                    </Vueform>
+
+                    <Locations :locations="locations" :loading="isLocationsLoading" :permissions="permissions"
+                        @edit-item="handleUpdateLocationButtonClick" @delete-item="handleDeleteLocationButtonClick" />
+                </section>
+
+                <!-- AUTO PROVISIONING -->
+                <section v-show="activeSection === 'auto_provisioning'">
+                    <Vueform>
+                        <StaticElement name="locations_title" tag="h4" content="Auto Provisioning"
+                            description="Manage your auto provisioning templates." />
+
+                        <GroupElement name="container_1" />
+                    </Vueform>
+
+                    <AutoProvisioning :trigger="autoProvisioningTrigger" :routes="routes" :permissions="permissions"
+                        :domain_uuid="data.domain_uuid" />
+                </section>
+
+                <!-- ROOM MANAGEMENT -->
+                <section v-show="activeSection === 'room_management'">
+                    <Vueform>
+                        <StaticElement name="room_management_title" tag="h4" content="Room Management" description="" />
+                        <GroupElement name="container_1" />
+                    </Vueform>
+
+                    <RoomManagement :trigger="roomManagementTrigger" :routes="routes" :permissions="permissions"
+                        :domain_uuid="data.domain_uuid" />
+                </section>
+
+                <!-- ROOM STATUS -->
+                <section v-show="activeSection === 'room_status'">
+                    <Vueform>
+                        <StaticElement name="room_management_title" tag="h4" content="Room Status" description="" />
+                        <GroupElement name="container_1" />
+                    </Vueform>
+
+                    <RoomStatus :trigger="roomStatusTrigger" :routes="routes" :permissions="permissions"
+                        :domain_uuid="data.domain_uuid" />
+                </section>
+
+                <!-- EMERGENCY CALLS -->
+                <section v-show="activeSection === 'emergency_calls'">
+
+                    <Vueform>
+                        <StaticElement name="locations_title" tag="h4" content="Emergency Calls" description="" />
+
+
+                        <GroupElement name="container_1" />
+                    </Vueform>
+
+                    <EmergencyCalls :routes="routes" />
+                    <div class="flex p-5 items-center">
+                        <div class="w-full border-t border-gray-300" aria-hidden="true" />
+
+                        <div class="w-full border-t border-gray-300" aria-hidden="true" />
                     </div>
-                </template>
-            </Vueform>
+
+                    <EmergencyServiceStatus :routes="routes" />
+                </section>
+
+            </div>
         </main>
+
+
+
+        <!-- </main> -->
 
         <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
             @update:show="hideNotification" />
@@ -162,17 +283,30 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import MainLayout from '../Layouts/MainLayout.vue'
 import Notification from "./components/notifications/Notification.vue";
 import EmergencyCalls from "./components/EmergencyCalls.vue";
 import AutoProvisioning from "./components/AutoProvisioning.vue";
+import RoomManagement from "./components/RoomManagement.vue";
+import RoomStatus from "./components/RoomStatus.vue";
 import EmergencyServiceStatus from "./components/EmergencyServiceStatus.vue";
 import Locations from "./components/Locations.vue";
 import CreateLocationModal from "./components/modal/CreateLocationModal.vue"
 import UpdateLocationModal from "./components/modal/UpdateLocationModal.vue"
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
-
+import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
+import { ChevronRightIcon } from '@heroicons/vue/20/solid'
+import {
+    Cog6ToothIcon,
+    MapPinIcon,
+    WrenchScrewdriverIcon,
+    BuildingOffice2Icon,
+    ChevronDoubleLeftIcon,
+    KeyIcon,
+    BellAlertIcon,
+    ClipboardDocumentCheckIcon
+} from '@heroicons/vue/24/outline'
 
 const props = defineProps({
     data: {
@@ -185,6 +319,10 @@ const props = defineProps({
 
 })
 
+// State for collapsible navigation
+const isNavCollapsed = ref(false)
+const toggleNav = () => isNavCollapsed.value = !isNavCollapsed.value
+
 const form$ = ref(null)
 const isLocationsLoading = ref(false)
 const isDeleteLocationLoading = ref(false)
@@ -196,11 +334,58 @@ const selectedLocation = ref(null);
 const locationUpdateRoute = ref(null);
 const showDeleteLocationConfirmationModal = ref(false)
 const confirmDeleteLocationAction = ref(null);
-const AutoProvisioningTrigger = ref(false)
+const autoProvisioningTrigger = ref(false)
+const roomManagementTrigger = ref(false)
+const roomStatusTrigger = ref(false)
+const activeSection = ref('general')
+const isActive = (key) => activeSection.value === key
 
-// const localData = ref(JSON.parse(JSON.stringify(props.data || {})));
+const navOpen = ref(false)
+const parentHasActiveChild = (item) =>
+    Array.isArray(item.children) && item.children.some((c) => isActive(c.key))
+
+watch(activeSection, (key) => {
+    if (key === 'locations') getLocations()
+    if (key === 'auto_provisioning') autoProvisioningTrigger.value = !autoProvisioningTrigger.value
+    if (key === 'room_management') roomManagementTrigger.value = !roomManagementTrigger.value
+    if (key === 'room_status') roomStatusTrigger.value = !roomStatusTrigger.value
+})
+
+const navigation = [
+    { key: 'general', name: 'General', icon: Cog6ToothIcon },
+    { key: 'locations', name: 'Locations', icon: MapPinIcon },
+    { key: 'auto_provisioning', name: 'Auto Provisioning', icon: WrenchScrewdriverIcon },
+    {
+        key: 'hotel',
+        name: 'Hotel Management',
+        icon: BuildingOffice2Icon,
+        children: [
+            { key: 'room_management', name: 'Room Management', icon: KeyIcon },
+            { key: 'room_status', name: 'Room Status', icon: ClipboardDocumentCheckIcon },
+            { key: 'emergency_calls', name: 'Emergency Calls', icon: BellAlertIcon },
+
+        ],
+    },
+]
+
+const navigateTo = (key) => {
+    activeSection.value = key
+    navOpen.value = false // close mobile drawer if open
+}
+
+// --- Responsive Collapse Logic ---
+const checkScreenSize = () => {
+    // Tailwind's `md` breakpoint is 768px.
+    // If the window is smaller, collapse the navigation.
+    isNavCollapsed.value = window.innerWidth < 768;
+};
 
 onMounted(() => {
+    // Check screen size on initial load
+    checkScreenSize();
+    // Add event listener for window resize
+    window.addEventListener('resize', checkScreenSize);
+
     form$.value.update({ // updates form data
         domain_uuid: props.data.domain_uuid ?? null,
         domain_enabled: props.data.domain_enabled ?? false,
@@ -214,6 +399,11 @@ onMounted(() => {
     // console.log(form$.value.data);
 })
 
+onUnmounted(() => {
+    // Clean up the event listener when the component is destroyed
+    window.removeEventListener('resize', checkScreenSize);
+});
+
 // console.log(props.data)
 
 
@@ -221,15 +411,15 @@ const notificationType = ref(null);
 const notificationShow = ref(null);
 const notificationMessages = ref(null);
 
-const handleTabSelected = (activeTab, previousTab) => {
-    if (activeTab.name == 'locations') {
-        getLocations()
-    }
-    if (activeTab.name == 'auto_provisioning') {
-        AutoProvisioningTrigger.value = !AutoProvisioningTrigger.value
-    }
+// const handleTabSelected = (activeTab, previousTab) => {
+//     if (activeTab.name == 'locations') {
+//         getLocations()
+//     }
+//     if (activeTab.name == 'auto_provisioning') {
+//         autoProvisioningTrigger.value = !autoProvisioningTrigger.value
+//     }
 
-}
+// }
 
 const getLocations = async () => {
     isLocationsLoading.value = true

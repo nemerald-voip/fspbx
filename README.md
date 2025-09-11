@@ -21,17 +21,19 @@ This project started as a fork of the FusionPBX system but has been extensively 
 
 
 ## Screenshots
-<img width="2365" alt="image" src="https://github.com/user-attachments/assets/66921621-ab47-4457-ab11-14888c6419ae">
+<img width="1780" height="940" alt="image" src="https://github.com/user-attachments/assets/55df5cfd-8884-4eab-82a5-e37ed08482c8" />
 
-<img width="2409" alt="image" src="https://github.com/user-attachments/assets/6bcd653e-da7a-4de0-9ab6-18a5de02f8c8">
 
-<img width="2401" alt="image" src="https://github.com/user-attachments/assets/18159468-9d74-42ec-b2db-e7cc35bf0162">
+<img width="1743" height="788" alt="image" src="https://github.com/user-attachments/assets/58fccf2e-fa37-48cd-8fba-95638cdce509" />
 
-<img width="2390" alt="image" src="https://github.com/user-attachments/assets/c5f1265a-147b-4dfe-a85b-bf4541c46ead">
+<img width="1799" height="949" alt="image" src="https://github.com/user-attachments/assets/6b386d8a-8d03-49ea-bb13-13aa7ed70bba" />
 
-<img width="1600" alt="image" src="https://github.com/user-attachments/assets/89f22edc-ccad-4002-a978-f0fae63f9186">
+<img width="1803" height="948" alt="image" src="https://github.com/user-attachments/assets/0033182b-cefe-4ed3-8202-78f1d93c16f6" />
 
-<img width="1600" alt="image" src="https://github.com/user-attachments/assets/fe3a5405-9f4b-4452-ac12-223cf4c92831">
+<img width="1754" height="813" alt="image" src="https://github.com/user-attachments/assets/be79b843-44c6-4e8f-bacb-1457c103d24d" />
+
+<img width="1793" height="947" alt="image" src="https://github.com/user-attachments/assets/a354035a-6a90-4c6d-a32a-bc0ff301f416" />
+
 
 ![Image](https://github.com/user-attachments/assets/507dfa97-0264-480d-a186-767f1bcf7da8)
 
@@ -61,6 +63,10 @@ Before you begin, ensure you have met the following requirements:
     Follow the steps in this article to configure your custom domain.
    
     [How to Secure FS PBX with a Let’s Encrypt SSL Certificate](https://github.com/nemerald-voip/fspbx/wiki/How-to-Secure-FS-PBX-with-a-Let%E2%80%99s-Encrypt-SSL-Certificate)
+
+3. **Troubleshooting Error 419 (Page Expired)**
+
+    Read [this article](https://github.com/nemerald-voip/fspbx/wiki/Troubleshooting-Error-419-(Page-Expired)) to learn how CSRF tokens protect your app and how to configure your server to prevent 419 responses.
    
 ### Usage
 After completing the installation steps, you can access the application at your domain.

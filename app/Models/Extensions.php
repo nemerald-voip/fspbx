@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Model;
 use App\Services\CallRoutingOptionsService;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use function PHPUnit\Framework\isEmpty;
 
 
 class Extensions extends Model
@@ -299,7 +298,7 @@ class Extensions extends Model
         $destinationField = "{$type}_destination";
         // $enabledField = "{$type}_enabled";
 
-        if (!isEmpty($this->$destinationField)) {
+        if (empty($this->$destinationField)) {
             return $this->forwardOptionDetailsCache[$type] = [
                 'type'      => null,
                 'extension' => null,

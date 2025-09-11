@@ -51,7 +51,6 @@ class StoreProvisioningTemplateRequest extends FormRequest
     {
         return [
             'vendor.required'         => 'Choose a vendor.',
-            'vendor.in'               => 'Vendor must be one of: poly, yealink, grandstream, dinstar.',
             'name.required'           => 'Template name is required.',
             'name.unique'             => 'A template with this name already exists for this vendor in this scope.',
             'content.required'        => 'Template content is required.',

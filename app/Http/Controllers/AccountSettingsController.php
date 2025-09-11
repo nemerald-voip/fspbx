@@ -62,6 +62,13 @@ class AccountSettingsController extends Controller
                     'templates_item_options' =>route('provisioning-templates.item.options'),
                     'templates_store' => route('provisioning-templates.store'),
                     'templates_bulk_delete' => route('provisioning-templates.bulk.delete'),
+                    'hotel_rooms' => route('hotel-rooms.index'),
+                    'hotel_rooms_item_options' =>route('hotel-rooms.item.options'),
+                    'hotel_rooms_bulk_delete' => route('hotel-rooms.bulk.delete'),
+                    'hotel_room_status' => route('hotel-room-status.index'),
+                    'hotel_room_status_item_options' =>route('hotel-room-status.item.options'),
+                    'hotel_room_status_bulk_delete' =>route('hotel-room-status.bulk.delete'),
+                    'housekeeping_item_options' =>route('housekeeping.item.options'),
 
                     //'bulk_update' => route('devices.bulk.update'),
                 ],
