@@ -206,7 +206,7 @@ class UpdateExtensionRequest extends FormRequest
 
             'voicemail_enabled' => ['required', 'in:true,false,1,0'],
             'voicemail_id' => ['sometimes', 'required'],
-            'greeting_id' => 'required|string',
+            'greeting_id' => 'sometimes|required|string',
             'voicemail_file'        => ['nullable'],
             'voicemail_local_after_email'        => ['sometimes', 'required', 'in:true,false,1,0'],
             'voicemail_transcription_enabled' => ['sometimes', 'required', 'in:true,false,1,0'],
