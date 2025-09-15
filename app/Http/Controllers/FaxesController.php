@@ -946,7 +946,6 @@ class FaxesController extends Controller
         $dialPlan = Dialplans::where('dialplan_uuid', $fax->dialplan_uuid)->first();
 
         if (!$dialPlan) {
-            logger('no dialplan');
             $newDialplanUuid = Str::uuid();
 
             $dialPlan = new Dialplans();
@@ -983,7 +982,7 @@ class FaxesController extends Controller
         $dialPlan->save();
 
         // clear fusionpbx cache
-        FusionCache::clear("dialplan:" . $fax->domain_uuid);
+        FusionCache::clear("dialplan:" . $fax->accountcode);
     }
 
 
@@ -1025,7 +1024,7 @@ class FaxesController extends Controller
             }
 
             // clear fusionpbx cache
-            FusionCache::clear("dialplan:" . $fax->domain_uuid);
+            FusionCache::clear("dialplan:" . $fax->accountcode);
 
             DB::commit();
 
