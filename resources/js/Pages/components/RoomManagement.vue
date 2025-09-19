@@ -32,10 +32,15 @@
             </div>
         </div>
 
-        <div class="mt-4">
+        <div class="mt-4 space-x-2">
             <button type="button" @click.prevent="handleCreateButtonClick()"
                 class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                 Add Room
+            </button>
+
+            <button type="button" @click.prevent="handleBulkCreateButtonClick()"
+                class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                Bulk Add Rooms
             </button>
         </div>
 
@@ -129,6 +134,10 @@
         @close="showCreateModal = false" @error="handleFormErrorResponse" @refresh-data="fetchRooms"
         @success="showNotification('success', $event)" />
 
+    <CreateBulkHotelRoomModal :options="itemOptions" :show="showBulkCreateModal" :loading="loadingModal"
+        @close="showBulkCreateModal = false" @error="handleFormErrorResponse" @refresh-data="fetchRooms"
+        @success="showNotification('success', $event)" />
+
 
     <UpdateHotelRoomModal :options="itemOptions" :show="showEditModal" :loading="loadingModal"
         @close="showEditModal = false" @error="handleFormErrorResponse" @refresh-data="fetchRooms"
@@ -147,6 +156,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import CreateHotelRoomModal from "./modal/CreateHotelRoomModal.vue";
+import CreateBulkHotelRoomModal from "./modal/CreateBulkHotelRoomModal.vue";
 import UpdateHotelRoomModal from "./modal/UpdateHotelRoomModal.vue";
 import Notification from "./notifications/Notification.vue";
 import ConfirmationModal from "./modal/ConfirmationModal.vue";
@@ -166,6 +176,7 @@ const props = defineProps({
 })
 
 const showCreateModal = ref(false);
+const showBulkCreateModal = ref(false);
 const showEditModal = ref(false);
 const loadingModal = ref(false)
 const formErrors = ref(null);
@@ -260,6 +271,12 @@ const handleCreateButtonClick = () => {
     getItemOptions();
 }
 
+const handleBulkCreateButtonClick = () => {
+  showBulkCreateModal.value = true;
+  loadingModal.value = true;
+  getItemOptions(); 
+};
+
 const handleSearchButtonClick = () => {
     fetchRooms(1)
 };
@@ -300,6 +317,7 @@ const executeBulkDelete = (items = selectedItems.value) => {
 const handleModalClose = () => {
     showCreateModal.value = false;
     showEditModal.value = false;
+    showBulkCreateModal.value = false;
     showDeleteConfirmationModal.value = false;
     // bulkUpdateModalTrigger.value = false;
 }

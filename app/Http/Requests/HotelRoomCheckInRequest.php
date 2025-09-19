@@ -20,6 +20,7 @@ class HotelRoomCheckInRequest extends FormRequest
             'housekeeping_status'=> ['nullable', 'uuid'],
             'guest_first_name'   => ['nullable', 'string', 'max:120'],
             'guest_last_name'    => ['nullable', 'string', 'max:120'],
+            'extension_name'    => ['nullable', 'string', 'max:120'],
             'arrival_date'       => ['nullable', 'date'],
             'departure_date'     => ['nullable', 'date', 'after_or_equal:arrival_date'],
         ];
@@ -31,5 +32,9 @@ class HotelRoomCheckInRequest extends FormRequest
             'guest_first_name' => $this->filled('guest_first_name') ? trim((string) $this->input('guest_first_name')) : null,
             'guest_last_name'  => $this->filled('guest_last_name')  ? trim((string) $this->input('guest_last_name'))  : null,
         ]);
+
+        if (!$this->has('extension_name')) {
+            $this->merge(['extension_name' => trim($this->input('guest_first_name') . ' ' . $this->input('guest_last_name')) ]);
+        }
     }
 }

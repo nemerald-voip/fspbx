@@ -42,25 +42,23 @@
                                 </div>
                             </div>
 
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
-                                @response="handleResponse" :display-errors="false" :default="{
+                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                                @error="handleError" @response="handleResponse" :display-errors="false" :default="{
                                     // user_uuid: options.item.user_uuid,
                                 }">
                                 <!-- <HiddenElement name="user_uuid" :meta="true" /> -->
-                                <StaticElement name="h4" tag="h4" content="Create New Hotel Room" />
+                                <StaticElement name="h4" tag="h4" content="Create Multiple Hotel Rooms" />
 
-                                <TextElement name="room_name" label="Room Name"/>
 
-                                <SelectElement name="extension_uuid" :items="options.extensions" :search="true"
-                                            :native="false" label="Assosiate with extension" input-type="search" autocomplete="off"
-                                            placeholder="Select extension" :floating="false" :strict="false"  />
+                                <TagsElement name="extensions" :close-on-select="false" :search="true" :items="options.extensions" 
+                                label="Choose Extensions to Assign to Rooms" input-type="search" autocomplete="off" />
 
                                 <GroupElement name="container_3" />
                                 <ButtonElement name="reset" button-label="Cancel" :secondary="true" :resets="true"
                                     @click="emit('close')" :columns="{
                                         container: 6,
                                     }" />
-                                <ButtonElement name="submit" button-label="Create" :submits="true" align="right"
+                                <ButtonElement name="submit" button-label="Add Rooms" :submits="true" align="right"
                                     :columns="{
                                         container: 6,
                                     }" />
@@ -97,8 +95,7 @@ const submitForm = async (FormData, form$) => {
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
 
-    // console.log(requestData);
-    return await form$.$vueform.services.axios.post(props.options.routes.store_route, requestData)
+    return await form$.$vueform.services.axios.post(props.options.routes.bulk_store_route, requestData)
 };
 
 function clearErrorsRecursive(el$) {
