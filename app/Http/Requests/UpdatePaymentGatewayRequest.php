@@ -26,10 +26,12 @@ class UpdatePaymentGatewayRequest extends FormRequest
         return [
             'uuid'                      => ['required', 'uuid'],
             'status'                    => ['required'],
+            'sandbox'                   => ['nullable', 'string'],
             'sandbox_secret_key'        => ['nullable', 'string'],
             'sandbox_publishable_key'   => ['nullable', 'string'],
             'live_mode_secret_key'      => ['nullable', 'string'],
             'live_mode_publishable_key' => ['nullable', 'string'],
+            'webhook_secret'            => ['nullable', 'string'],
         ];
     }
 

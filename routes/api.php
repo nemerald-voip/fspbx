@@ -207,6 +207,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // Payment Gateways
     Route::put('/gateways', [PaymentGatewayController::class, 'update'])->name('gateway.update');
+    Route::post('/gateways/deactivate', [PaymentGatewayController::class, 'deactivate'])->name('gateway.deactivate');
 
     // CHAR PMS
     Route::post('/pms/char', CharPmsWebhookController::class)->name('pms.char'); 

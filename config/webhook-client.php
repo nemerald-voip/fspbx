@@ -418,7 +418,6 @@ return [
 
         [
             'name' => 'stripe',
-            'signing_secret' => env('STRIPE_WEBHOOK_SECRET'),
             'signature_header_name' => 'Stripe-Signature',
             'signature_validator' => \App\Http\Webhooks\SignatureValidators\StripeSignatureValidator::class,
 

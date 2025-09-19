@@ -11,11 +11,17 @@ class StripeSignatureValidator implements SignatureValidator
 {
     public function isValid(Request $request, WebhookConfig $config): bool
     {
-        logger('StripeSignatureValidator');
 
         // Header name & secret come from the WebhookConfig object
         $signatureHeader = $config->signatureHeaderName ?? 'Stripe-Signature';
-        $signingSecret   = $config->signingSecret;
+
+        $settingKey = 'webhook_secret';
+        $signingSecret = gateway_setting('stripe', $settingKey);
+
+        if (empty($signingSecret)) {
+            logger("StripeSignatureValidator: missing signing secret for stripe:{$settingKey}");
+            return false;
+        }
 
         try {
             // Throws if body or signature is invalid
@@ -25,7 +31,6 @@ class StripeSignatureValidator implements SignatureValidator
                 $signingSecret,
                 300 // optional tolerance (seconds)
             );
-            logger('validated');
             return true;
         } catch (SignatureVerificationException $e) {
             logger('StripeSignatureValidator@isValid  Stripe sig verify failed: '.$e->getMessage());
