@@ -46,18 +46,19 @@ class CeretaxService
      *
      * Returns the decoded CereTax response (includes KSUID, tax breakdown by line, etc.).
      */
-    public function createTelcoTransaction(object $stripeInvoice): array
+    public function createTelcoTransaction($stripeInvoice, $lines): array
     {
-        logger($stripeInvoice);
+        // logger($stripeInvoice);
+        // logger($lines);
         //override variables based on invoice if needed
-        if ($stripeInvoice['customer']['metadata']['ceretax_sandbox'] == 'true') {
+        if (data_get($stripeInvoice, 'customer.metadata.ceretax_sandbox') == 'true') {
             $this->baseUrl = config('services.ceretax.sandbox_url', "https://calc.cert.ceretax.net/");
             $this->apiKey = config('services.ceretax.sandbox_api_key', '');
             $this->clientProfileId = config('services.ceretax.sandbox_api_key', 'default');
             $this->status = "Quote";
         }
 
-        $payload       = $this->buildTelcoPayloadFromStripe($stripeInvoice);
+        $payload       = $this->buildTelcoPayloadFromStripe($stripeInvoice, $lines);
         $invoiceNumber = (string) Arr::get($payload, 'invoice.invoiceNumber');
         $env           = config('services.ceretax.env', 'sandbox');
 
@@ -251,9 +252,10 @@ class CeretaxService
     /**
      * —— Mapping from Stripe invoice -> CereTax telco payload ——
      */
-    protected function buildTelcoPayloadFromStripe(object $invoice): array
+    protected function buildTelcoPayloadFromStripe($invoice, $lines): array
     {
         // logger($invoice);
+        // logger($lines);
         // --- Config knobs (tune or lift from config/services.php) ---
         $cfg     = config('services.ceretax');
         $profile = $cfg['sandbox_client_profile_id'] ?? $cfg['prod_client_profile_id'] ?? 'default';
@@ -264,8 +266,8 @@ class CeretaxService
 
         // Dates
         // Prefer invoice.period_start; fall back to created; then now()
-        $periodStartTs = $invoice->period_start
-            ?? $invoice->created
+        $periodStartTs = data_get($invoice, 'period_start')
+            ?? data_get($invoice, 'created')
             ?? time();
         $invDate   = Carbon::createFromTimestamp((int) $periodStartTs)->utc();
         $yyyy      = $invDate->format('Y');
@@ -273,10 +275,10 @@ class CeretaxService
         $isoDate   = $invDate->toDateString(); // YYYY-MM-DD
 
         // Identifiers
-        $invoiceNumber = $invoice->id;
-        $customerAccount = $invoice->customer->id;
+        $invoiceNumber = data_get($invoice, 'id');
+        $customerAccount = data_get($invoice, 'customer.id');
 
-        $productIds = collect($invoice->lines->data ?? [])
+        $productIds = collect($lines ?? [])
             ->map(fn($li) => Arr::get($li, 'pricing.price_details.product'))
             ->filter()
             ->unique()
@@ -292,19 +294,24 @@ class CeretaxService
         $lineItems = [];
         $lineId = 1;
 
-        foreach ($invoice->lines->data as $li) {
+        foreach ($lines as $li) {
+            // --- SKIP any telecom tax lines you previously added ---
+            $isTaxGenerated = Arr::get($li, 'metadata.is_telecom_tax') === 'true';
+            if ($isTaxGenerated) {
+                continue;
+            }
 
             $productId = Arr::get($li, 'pricing.price_details.product');
             $bp        = $productId ? $productsById->get($productId) : null;
             $psCode    = $bp ? data_get($bp, 'metadata.ceretax_code') : null; // null if missing
 
             // Amounts: Stripe is in minor units; convert to major
-            $amountMinor = (int) ($li->amount ?? 0);
+            $amountMinor = (int) (data_get($li, 'amount') ?? 0);
             $amountMajor = round($amountMinor / 100, $decimals);
 
-            $desc   = $li->description;
-            $qty    = (int) ($li->quantity ?? 1);
-            $itemNumber = $li->id; // Stripe line id (il_...) is fine for itemNumber
+            $desc       = data_get($li, 'description');
+            $qty        = (int) (data_get($li, 'quantity') ?? 1); 
+            $itemNumber = (string) data_get($li, 'id'); // Stripe line id (il_...) is fine for itemNumber
 
             $lineItems[] = [
                 'revenueIncludesTax' => false,
@@ -316,11 +323,11 @@ class CeretaxService
                 'situs' => [
                     'customerAddress' => [
                         'serviceAddress' => [
-                            'addressLine1' => $invoice->customer_address->line1 ?? null,
-                            'addressLine2' => $invoice->customer_address->line2 ?? null,
-                            'city'         => $invoice->customer_address->city ?? null,
-                            'state'        => $invoice->customer_address->state ?? null,
-                            'postalCode'   => $invoice->customer_address->postal_code ?? null,
+                            'addressLine1' => data_get($invoice, 'customer_address.line1') ?? null,
+                            'addressLine2' => data_get($invoice, 'customer_address.line2') ?? null,
+                            'city'         => data_get($invoice, 'customer_address.city') ?? null,
+                            'state'        => data_get($invoice, 'customer_address.state') ?? null,
+                            'postalCode'   => data_get($invoice, 'customer_address.postal_code') ?? null,
                         ],
                     ],
                     'taxSitusRule' => $taxSitusRule,

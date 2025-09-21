@@ -115,12 +115,12 @@ class ProcessStripeWebhookJob extends SpatieProcessWebhookJob
 
                 switch ($payload['type']) {
                     case 'invoice.created':
-                        $this->processInvoice($payload['data']['object']['id']);
+                        $this->processInvoice($payload['data']['object']);
                         break;
 
                     case 'invoice.updated':
                         if ($this->shouldProcessUpdate($payload)) {
-                            $this->processInvoice($payload['data']['object']['id']);
+                            $this->processInvoice($payload['data']['object']);
                         }
                         break;
 
@@ -141,7 +141,7 @@ class ProcessStripeWebhookJob extends SpatieProcessWebhookJob
             }
         }, function () {
             // Could not obtain lock; this job will be re-queued
-            return $this->release(5);
+            return $this->release(15);
         });
     }
 
@@ -160,85 +160,104 @@ class ProcessStripeWebhookJob extends SpatieProcessWebhookJob
     }
 
 
-    protected function processInvoice(string $invoiceId): void
+    protected function processInvoice($invoice): void
     {
-        if (!$invoiceId) return;
-
         $stripe  = new \Stripe\StripeClient(['api_key' => $this->stripe_api_key]);
         $ceretax = app(\App\Services\CeretaxService::class);
 
+        // Only work on draft invoices
+        if ((data_get($invoice, 'status') ?? null) !== 'draft') return;
+
         // Fetch once with the expansions you truly need
-        $invoice = $stripe->invoices->retrieve($invoiceId, [
+        $stripeInvoice = $stripe->invoices->retrieve(data_get($invoice, 'id'), [
             'expand' => [
-                'lines.data',
                 'customer',
             ],
         ]);
 
-        // Only work on draft invoices
-        if (($invoice->status ?? null) !== 'draft') return;
+        $lines = $this->fetchAllInvoiceLines(data_get($invoice, 'id'));
+
+        $this->applyProductMetadataToInvoiceLines($stripe, (string) data_get($invoice, 'id'), $lines);
 
         // 1) Remove prior tax lines (identified by metadata flag)
         $toDelete = [];
-        foreach ($invoice->lines->data as $li) {
-            if (($li->metadata['is_telecom_tax'] ?? null) === 'true') {
+        foreach ($lines as $li) {
+            if ((Arr::get($li, 'metadata.is_telecom_tax') ?? null) === 'true') {
                 $toDelete[] = [
-                    'id'       => $li->id,
+                    'id'       => (string) data_get($li, 'id'),
                     'behavior' => 'delete',
                 ];
             }
         }
 
         if (!empty($toDelete)) {
-            // 3) Bulk remove in one API call
             $updated = $stripe->invoices->removeLines(
-                $invoice->id,
+                (string) data_get($invoice, 'id'),
                 ['lines' => $toDelete],
-                ['idempotency_key' => "fspbx:" . Str::uuid()]
+                ['idempotency_key' => 'fspbx:' . (string) Str::uuid()]
             );
         }
 
-        // $stripe->invoiceItems->create([
-        //     'invoice'     => $invoice->id,
-        //     'customer'    => $invoice->customer,
-        //     'currency'    => $invoice->currency,
-        //     'amount'      => 123, // 1.23 in minor units; change as needed
-        //     'description' => 'TEST Ceretax tax (dummy)',
-        //     'tax_rates'   => [],  // don’t tax the tax
-        //     'metadata'    => [
-        //         'is_telecom_tax' => 'true',     // so you can identify/remove it later
-        //         'note'            => 'loop-proof test',
-        //     ],
-        // ], [
-        //     'idempotency_key' => "fspbx:" . Str::uuid() ,  
-        // ]);
-
-
         // 2) Ask Ceretax to create a new transaction
-        $result = $ceretax->createTelcoTransaction($invoice, 'Quote');
+        $result = $ceretax->createTelcoTransaction($stripeInvoice, $lines);
         $taxes = $this->summarizeTaxesCollapsed($result);
 
-        $components = $result['components'] ?? [];
+        $toAdd = [];
+        foreach ($taxes as $idx => $tax) {
+            $amountCents = (int) ($tax['amount_cents'] ?? 0);
+            if ($amountCents <= 0) continue;
 
-        // 3) Add itemized tax lines (don’t tax the tax)
-        foreach ($components as $c) {
-            $amount = (int) ($c['amount_minor'] ?? 0);
-            if ($amount <= 0) continue;
-
-            $stripe->invoiceItems->create([
-                'invoice'     => $invoice->id,
-                'customer'    => $invoice->customer,
-                'currency'    => $invoice->currency,
-                'amount'      => $amount,
-                'description' => $c['label'] ?? 'Telecom Tax',
-                'tax_rates'   => [],
+            $toAdd[] = [
+                'amount'      => $amountCents,                   // integer cents
+                'description' => $tax['description'],
+                'tax_rates'   => [],                             // don't tax the tax
                 'metadata'    => [
-                    'is_telecom_tax' => 'true',
-                    'jurisdiction'   => $c['jurisdiction'] ?? null,
-                    'tax_code'       => $c['code'] ?? null,
+                    'is_telecom_tax' => 'true',              // mark as ours 
+                    'ceretax_tax_type'  => (string)($tax['taxType'] ?? ''),
+                    'ceretax_tax_desc'  => $tax['taxTypeDesc'] ?? '',
                 ],
-            ]);
+            ];
         }
+
+        if (!empty($toAdd)) {
+            // One idempotent call to add all taxes as lines
+            $idk = 'fspbx:add:' . Str::uuid();
+            $updated = $stripe->invoices->addLines(
+                data_get($invoice, 'id'),
+                [
+                    'lines' => $toAdd,
+                    // merge/overwrite invoice metadata in the same call:
+                    'invoice_metadata' => [
+                        'ceretax_status'   => $result['status']['currentStatus'],
+                        'ceretax_ksuid' => $result['ksuid'] ?? null,
+                    ],
+                ],
+                ['idempotency_key' => $idk]
+            );
+        }
+
+        $stripe->invoices->update(
+            data_get($invoice, 'id'),
+            [
+                'rendering' => [
+                    'template' => ''   // empty string unsets the template
+                ],
+            ],
+            ['idempotency_key' => 'fspbx:' . (string) Str::uuid()]
+        );
+
+        $stripe->invoices->update(
+            data_get($invoice, 'id'),
+            [
+                'rendering' => [
+                    'template' => 'inrtem_1S9EDfRt1tNxM7pPVdJbmRoB'
+                ],
+            ],
+            ['idempotency_key' => 'fspbx:' . (string) Str::uuid()]
+        );
+
+
+        logger('taxes added');
 
         // 4) Status move in Ceretax — usually do this when you finalize/charge.
         // If you must do it here, consider 'Active' now and 'Posted' at finalization.
@@ -383,5 +402,111 @@ class ProcessStripeWebhookJob extends SpatieProcessWebhookJob
             . " at " . $e->getFile() . ":" . $e->getLine());
 
         return response()->json(['error' => $e->getMessage()], 400);
+    }
+
+    /**
+     * Page through all invoice lines (limit 100 per page).
+     * @return array<\Stripe\InvoiceLineItem>
+     */
+    protected function fetchAllInvoiceLines($invoiceId)
+    {
+        $stripe  = new \Stripe\StripeClient(['api_key' => $this->stripe_api_key]);
+        $params = ['limit' => 100];
+
+        $lines = [];
+        foreach ($stripe->invoices->allLines($invoiceId, $params)->autoPagingIterator() as $li) {
+            // Convert Stripe\InvoiceLineItem to a plain array for easy Arr::get(), logging, etc.
+            $lines[] = $li->toArray();
+        }
+
+        return $lines;
+    }
+
+    /**
+     * For each NON-tax invoice line:
+     *   - read Stripe product id from the line
+     *   - load local BillingProduct by provider_product_id
+     *   - copy BillingProduct->metadata (JSONB) onto the line as Stripe metadata
+     * Does one or more bulk updateLines calls (invoice must be DRAFT).
+     */
+    protected function applyProductMetadataToInvoiceLines(\Stripe\StripeClient $stripe, string $invoiceId, array $lines): void
+    {
+        // 1) Keep only non-tax lines
+        $nonTax = array_filter($lines, fn($li) => (Arr::get($li, 'metadata.is_telecom_tax') ?? 'false') !== 'true');
+        if (!$nonTax) return;
+
+        // 2) Collect Stripe product IDs from line shapes you showed
+        $productIds = [];
+        foreach ($nonTax as $li) {
+            $pid = Arr::get($li, 'pricing.price_details.product') ?? null;
+            if ($pid) $productIds[] = (string) $pid;
+        }
+        $productIds = array_values(array_unique(array_filter($productIds)));
+        if (!$productIds) return;
+
+        // 3) Load local products keyed by Stripe product id (provider_product_id)
+        $catalog = BillingProduct::query()
+            ->where('provider', 'stripe')
+            ->whereIn('provider_product_id', $productIds)
+            ->get()
+            ->keyBy('provider_product_id');
+
+        // 4) Build bulk line updates
+        $updates = [];
+        foreach ($nonTax as $li) {
+            $lineId = (string) Arr::get($li, 'id');
+            $pid = Arr::get($li, 'pricing.price_details.product')
+                ?? Arr::get($li, 'price.product')
+                ?? Arr::get($li, 'plan.product');
+
+            if (!$lineId || !$pid) continue;
+
+            $bp = $catalog->get($pid);
+            if (!$bp) continue;
+
+            // Start with JSONB metadata (must be string=>string for Stripe)
+            $meta = $this->toStripeMetadata($bp->metadata ?? []);
+
+            if ($meta) {
+                $updates[] = [
+                    'id'       => $lineId,
+                    'metadata' => $meta,
+                ];
+            }
+        }
+
+        if (!$updates) return;
+
+        // 5) Single bulk call (idempotent)
+        $stripe->invoices->updateLines(
+            $invoiceId,
+            ['lines' => $updates],
+            ['idempotency_key' => 'fspbx:' . (string) Str::uuid()]
+        );
+    }
+
+    /**
+     * Convert arbitrary PHP array (from JSONB) into Stripe-safe metadata:
+     * - values must be strings
+     * - nested arrays/objects are JSON-encoded
+     * - nulls dropped, booleans cast to 'true'/'false'
+     */
+    protected function toStripeMetadata(array $data): array
+    {
+        $out = [];
+        foreach ($data as $k => $v) {
+            $key = (string) $k;
+            if ($v === null) {
+                continue;
+            } elseif (is_bool($v)) {
+                $out[$key] = $v ? 'true' : 'false';
+            } elseif (is_scalar($v)) {
+                $out[$key] = (string) $v;
+            } else {
+                // arrays/objects -> JSON
+                $out[$key] = json_encode($v, JSON_UNESCAPED_SLASHES);
+            }
+        }
+        return $out;
     }
 }
