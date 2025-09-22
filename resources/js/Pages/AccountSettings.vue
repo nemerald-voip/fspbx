@@ -305,7 +305,8 @@ import {
     ChevronDoubleLeftIcon,
     KeyIcon,
     BellAlertIcon,
-    ClipboardDocumentCheckIcon
+    ClipboardDocumentCheckIcon,
+    CreditCardIcon
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -355,6 +356,7 @@ const navigation = [
     { key: 'general', name: 'General', icon: Cog6ToothIcon },
     { key: 'locations', name: 'Locations', icon: MapPinIcon },
     { key: 'auto_provisioning', name: 'Auto Provisioning', icon: WrenchScrewdriverIcon },
+    { key: 'billing', name: 'Billing', icon: CreditCardIcon },
     {
         key: 'hotel',
         name: 'Hotel Management',

@@ -13,6 +13,8 @@ use App\Models\DeviceVendor;
 use App\Models\MusicStreams;
 use App\Models\DeviceProfile;
 use App\Models\DomainSettings;
+use App\Models\GatewaySetting;
+use App\Models\PaymentGateway;
 use App\Models\SwitchVariable;
 use App\Models\DefaultSettings;
 use Illuminate\Support\Facades\Log;
@@ -1286,32 +1288,36 @@ if (!function_exists('formatMacAddress')) {
 }
 
 
-// if (!function_exists('getGroupedTimezones')) {
-//     function getGroupedTimezones()
-//     {
-//         $groupedTimezones = [];
+if (! function_exists('gateway_setting')) {
+    function gateway_setting(string $slug, string $key, $default = null)
+    {
+        $cacheKey = "gateways:{$slug}:{$key}";
 
-//         foreach (DateTimeZone::listIdentifiers() as $tz) {
-//             $parts = explode('/', $tz, 2);
-//             $region = $parts[0];
-//             $label = $tz;
-//             $offset = (new DateTime('now', new DateTimeZone($tz)))->format('P');
+        // Fast path: cache hit
+        $cached = Cache::tags(['gateways', $slug])->get($cacheKey);
+        if ($cached !== null) {
+            return $cached;
+        }
 
-//             $groupedTimezones[$region][] = [
-//                 'value' => $tz,
-//                 'name' => "(UTC $offset) $label"
-//             ];
-//         }
+        // Fallback: DB -> cache for a week
+        $uuid = PaymentGateway::where('slug', $slug)
+            ->where('is_enabled', true)
+            ->value('uuid');
+        if (! $uuid) return $default;
 
-//         ksort($groupedTimezones); // Optional: sort regions alphabetically
+        $value = GatewaySetting::where('gateway_uuid', $uuid)
+            ->where('setting_key', $key)
+            ->value('setting_value');
 
-//         // Prepend "System Default" with a null value at the very top
-//         $groupedTimezones = ['System Default' => [['value' => null, 'name' => 'System Default']]] + $groupedTimezones;
+        if ($value !== null) {
+            Cache::tags(['gateways', $slug])->put($cacheKey, $value, now()->addWeek());
+            return $value;
+        }
 
+        return $default;
+    }
+}
 
-//         return $groupedTimezones;
-//     }
-// }
 
 if (!function_exists('getGroupedTimezones')) {
     function getGroupedTimezones()

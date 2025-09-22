@@ -22,6 +22,7 @@ use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\HotelRoomStatusController;
+use App\Http\Controllers\InboundWebhooksController;
 use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\EmergencyCallController;
 use App\Http\Controllers\ExtensionStatisticsController;
@@ -71,7 +72,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::resource('/housekeeping', HotelHousekeepingDefinitionController::class);
     Route::post('/housekeeping/item-options', [HotelHousekeepingDefinitionController::class, 'getItemOptions'])->name('housekeeping.item.options');
     Route::post('/housekeeping/default-codes', [HotelHousekeepingDefinitionController::class, 'defaultCodes'])->name('housekeeping.default-codes');
-    
+
 
     // Emergency calls
     Route::resource('/emergency-calls', EmergencyCallController::class);
@@ -142,6 +143,9 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     // Extension statistics
     Route::get('/extension-statistics/data', [ExtensionStatisticsController::class, 'getData'])->name('extension-statistics.data');
 
+    // Inbound Webhooks
+    Route::get('/inbound-webhooks/data', [InboundWebhooksController::class, 'getData'])->name('inbound-webhooks.data');
+
     // User logs
     Route::post('user-logs/select-all', [UserLogsController::class, 'selectAll'])->name('user-logs.select.all');
 
@@ -208,7 +212,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // Payment Gateways
     Route::put('/gateways', [PaymentGatewayController::class, 'update'])->name('gateway.update');
+    Route::post('/gateways/deactivate', [PaymentGatewayController::class, 'deactivate'])->name('gateway.deactivate');
 
     // CHAR PMS
-    Route::post('/pms/char', CharPmsWebhookController::class)->name('pms.char'); 
+    Route::post('/pms/char', CharPmsWebhookController::class)->name('pms.char');
 });

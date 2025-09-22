@@ -183,8 +183,6 @@ class CdrDataService
             ->where('domain_uuid', $domain_uuid)
             ->get(['extension_uuid', 'extension', 'effective_caller_id_name']);
 
-        logger($extensions);
-
         // Lookups and pre-initialized stats
         $extToUuid  = [];
         $metaByUuid = [];

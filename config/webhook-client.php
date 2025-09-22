@@ -28,7 +28,7 @@ return [
             //'signature_validator' => \Spatie\WebhookClient\SignatureValidator\DefaultSignatureValidator::class,
 
             'signature_validator' => \App\Http\Webhooks\SignatureValidators\PostmarkSignatureValidator::class,
-            
+
             /*
              * This class determines if the webhook call should be stored and processed.
              */
@@ -51,9 +51,7 @@ return [
              *
              * To store all headers, set this value to `*`.
              */
-            'store_headers' => [
-
-            ],
+            'store_headers' => [],
 
             /*
              * The class name of the job that will process the webhook request.
@@ -89,7 +87,7 @@ return [
             //'signature_validator' => \Spatie\WebhookClient\SignatureValidator\DefaultSignatureValidator::class,
 
             'signature_validator' => \App\Http\Webhooks\SignatureValidators\MailgunSignatureValidator::class,
-            
+
             /*
              * This class determines if the webhook call should be stored and processed.
              */
@@ -112,9 +110,7 @@ return [
              *
              * To store all headers, set this value to `*`.
              */
-            'store_headers' => [
-
-            ],
+            'store_headers' => [],
 
             /*
              * The class name of the job that will process the webhook request.
@@ -150,7 +146,7 @@ return [
             //'signature_validator' => \Spatie\WebhookClient\SignatureValidator\DefaultSignatureValidator::class,
 
             'signature_validator' => \App\Http\Webhooks\SignatureValidators\CommioSignatureValidator::class,
-            
+
             /*
              * This class determines if the webhook call should be stored and processed.
              */
@@ -173,9 +169,7 @@ return [
              *
              * To store all headers, set this value to `*`.
              */
-            'store_headers' => [
-
-            ],
+            'store_headers' => [],
 
             /*
              * The class name of the job that will process the webhook request.
@@ -211,7 +205,7 @@ return [
             //'signature_validator' => \Spatie\WebhookClient\SignatureValidator\DefaultSignatureValidator::class,
 
             'signature_validator' => \App\Http\Webhooks\SignatureValidators\SinchSignatureValidator::class,
-            
+
             /*
              * This class determines if the webhook call should be stored and processed.
              */
@@ -234,9 +228,7 @@ return [
              *
              * To store all headers, set this value to `*`.
              */
-            'store_headers' => [
-
-            ],
+            'store_headers' => [],
 
             /*
              * The class name of the job that will process the webhook request.
@@ -272,7 +264,7 @@ return [
             //'signature_validator' => \Spatie\WebhookClient\SignatureValidator\DefaultSignatureValidator::class,
 
             'signature_validator' => \App\Http\Webhooks\SignatureValidators\BandwidthSignatureValidator::class,
-            
+
             /*
              * This class determines if the webhook call should be stored and processed.
              */
@@ -295,9 +287,7 @@ return [
              *
              * To store all headers, set this value to `*`.
              */
-            'store_headers' => [
-
-            ],
+            'store_headers' => [],
 
             /*
              * The class name of the job that will process the webhook request.
@@ -334,7 +324,7 @@ return [
             //'signature_validator' => \Spatie\WebhookClient\SignatureValidator\DefaultSignatureValidator::class,
 
             'signature_validator' => \App\Http\Webhooks\SignatureValidators\RingotelSignatureValidator::class,
-            
+
             /*
              * This class determines if the webhook call should be stored and processed.
              */
@@ -357,9 +347,7 @@ return [
              *
              * To store all headers, set this value to `*`.
              */
-            'store_headers' => [
-
-            ],
+            'store_headers' => [],
 
             /*
              * The class name of the job that will process the webhook request.
@@ -395,7 +383,7 @@ return [
             //'signature_validator' => \Spatie\WebhookClient\SignatureValidator\DefaultSignatureValidator::class,
 
             'signature_validator' => \Spatie\WebhookClient\SignatureValidator\DefaultSignatureValidator::class,
-            
+
             /*
              * This class determines if the webhook call should be stored and processed.
              */
@@ -418,9 +406,7 @@ return [
              *
              * To store all headers, set this value to `*`.
              */
-            'store_headers' => [
-
-            ],
+            'store_headers' => [],
 
             /*
              * The class name of the job that will process the webhook request.
@@ -430,8 +416,20 @@ return [
             'process_webhook_job' => \App\Http\Webhooks\Jobs\ProcessFreeswitchWebhookJob::class,
         ],
 
+        [
+            'name' => 'stripe',
+            'signature_header_name' => 'Stripe-Signature',
+            'signature_validator' => \App\Http\Webhooks\SignatureValidators\StripeSignatureValidator::class,
+
+            // Default queueable job that will receive the call:
+            'webhook_profile' => \Spatie\WebhookClient\WebhookProfile\ProcessEverythingWebhookProfile::class,
+            'webhook_model'   => \App\Models\WhCall::class,
+            'process_webhook_job' => \App\Http\Webhooks\Jobs\ProcessStripeWebhookJob::class,
+        ],
+
+
     ],
-    
+
     /*
      * The number of days after which models should be deleted.
      *

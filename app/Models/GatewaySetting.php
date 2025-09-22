@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class GatewaySetting extends Model
 {
+    protected $table = "gateway_settings";
     public $incrementing = false;
     protected $keyType = 'string';
     protected $primaryKey = 'uuid';

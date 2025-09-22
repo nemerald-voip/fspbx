@@ -16,162 +16,238 @@
 
         </div>
 
-        <main class="mx-auto max-w-full pb-10 lg:px-8 lg:py-12">
-            <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
-                @response="handleResponse" :display-errors="false">
-                <template #empty>
+        <main class="mx-auto max-w-full pb-10 sm:px-6 md:py-12 flex gap-2 md:gap-8 relative">
+            <aside :class="isNavCollapsed ? 'w-15' : 'w-64'"
+                class="flex flex-col flex-none transition-all duration-300">
+                <div class="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-4">
+                    <nav class="flex flex-1 flex-col mt-12">
+                        <ul role="list" class="flex flex-1 flex-col gap-y-7">
+                            <li>
+                                <ul role="list" class="-mx-2 space-y-1">
+                                    <li v-for="item in navigation" :key="item.key">
+                                        <div v-if="!item.children" class="relative">
+                                            <button type="button" @click="navigateTo(item.key)"
+                                                :class="[isActive(item.key) ? 'bg-gray-100' : 'hover:bg-gray-100', 'group flex items-center gap-x-3 w-full text-left rounded-md p-2 text-sm/6 font-semibold text-gray-700']">
+                                                <component :is="item.icon" class="size-6 shrink-0"
+                                                    :class="isActive(item.key) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
+                                                <span class="truncate" v-show="!isNavCollapsed">{{ item.name }}</span>
+                                            </button>
+                                            <span v-if="isNavCollapsed"
+                                                class="absolute left-full top-1/2 -translate-y-1/2 ml-4 w-auto min-w-max scale-0 rounded bg-gray-900 p-2 text-xs font-bold text-white transition-all group-hover:scale-100 origin-left z-10">
+                                                {{ item.name }}
+                                            </span>
+                                        </div>
 
-                    <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
-                        <div class="px-2 py-6 sm:px-6 lg:col-span-2 lg:px-0 lg:py-0">
-                            <FormTabs view="vertical" @select="getData">
-                                <FormTab name="payment_gateways" label="Payment Gateways" :elements="[
-                                    'payment_gateways_tab_label',
-                                    'gateways',
-                                    'domain_description',
-                                    'domain_name',
-                                    'time_zone',
-                                    'general_submit',
+                                        <Disclosure as="div" v-else v-slot="{ open }"
+                                            :default-open="parentHasActiveChild(item)">
+                                            <div class="relative">
+                                                <DisclosureButton
+                                                    :class="[parentHasActiveChild(item) ? 'bg-gray-100' : 'hover:bg-gray-100', 'group flex w-full items-center gap-x-3 rounded-md p-2 text-left text-sm/6 font-semibold text-gray-700']">
+                                                    <component :is="item.icon" class="size-6 shrink-0"
+                                                        :class="parentHasActiveChild(item) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
+                                                    <span class="truncate" v-show="!isNavCollapsed">{{ item.name
+                                                        }}</span>
+                                                    <ChevronRightIcon v-show="!isNavCollapsed"
+                                                        :class="[open ? 'rotate-90 text-gray-500' : 'text-gray-400', 'ml-auto size-5 shrink-0']" />
+                                                </DisclosureButton>
+                                                <span v-if="isNavCollapsed"
+                                                    class="absolute left-full top-1/2 -translate-y-1/2 ml-4 w-auto min-w-max scale-0 rounded bg-gray-900 p-2 text-xs font-bold text-white transition-all group-hover:scale-100 origin-left z-10">
+                                                    {{ item.name }}
+                                                </span>
+                                            </div>
+                                            <DisclosurePanel as="ul" class="mt-1"
+                                                :class="isNavCollapsed ? 'pl-0' : 'pl-6'">
+                                    <li v-for="subItem in item.children" :key="subItem.key" class="relative">
+                                        <button type="button" @click="navigateTo(subItem.key)" :class="[
+                                            isActive(subItem.key) ? 'bg-gray-100' : 'hover:bg-gray-100',
+                                            'group flex w-full items-center gap-x-3 rounded-md py-2 pr-2 text-sm/6 text-gray-700',
+                                            isNavCollapsed ? 'justify-center' : 'pl-1'
+                                        ]">
 
-                                ]" :conditions="[() => true]" />
+                                            <component v-if="subItem.icon" :is="subItem.icon" class="size-5 shrink-0"
+                                                :class="isActive(subItem.key) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
 
-                            </FormTabs>
-                        </div>
+                                            <!-- label (hidden when collapsed) -->
+                                            <span v-show="!isNavCollapsed" class="truncate">{{ subItem.name }}</span>
 
-                        <div
-                            class="sm:px-6 lg:col-span-10 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
-                            <FormElements>
+                                            <!-- fallback initial only if no icon and collapsed -->
+                                            <span v-if="isNavCollapsed && !subItem.icon" class="font-bold">
+                                                {{ subItem.name.charAt(0) }}
+                                            </span>
+                                        </button>
 
-                                <!-- Payment Gateways Tab -->
+                                        <!-- tooltip when collapsed -->
+                                        <span v-if="isNavCollapsed"
+                                            class="absolute left-full top-1/2 -translate-y-1/2 ml-4 w-auto min-w-max scale-0 rounded bg-gray-900 p-2 text-xs font-bold text-white transition-all group-hover:scale-100 origin-left z-10">
+                                            {{ subItem.name }}
+                                        </span>
+                                    </li>
+                                    </DisclosurePanel>
+                                    </Disclosure>
+                            </li>
+                        </ul>
+                        </li>
+                        </ul>
+                    </nav>
 
-                                <StaticElement name="payment_gateways_tab_label" tag="h4" content="Payment Gateways"
-                                    description="Manage Payment Providers" />
-                                <ListElement name="gateways" :controls="{
-                                    add: false,
-                                    remove: false,
-                                }"
-                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
-                                    <template #default="{ index }">
-                                        <ObjectElement :name="index">
-                                            <StaticElement name="name" tag="p" :content="(el$) => {
-                                                // console.log (el$.form$.el$('gateways').value[index].name);
-                                                return el$.form$.el$('gateways').value[index].name
-                                            }" :columns="{ container: 6, }"
-                                                :attrs="{ class: 'text-base font-semibold' }">
-                                                <template #after="{ el$ }">
-                                                    <Badge v-if="el$.form$.el$('gateways').value[index].is_enabled"
-                                                        class="mt-1" :text="'Activated'" :backgroundColor="'bg-green-50'"
-                                                        :textColor="'text-green-700'" :ringColor="'ring-green-600/20'" />
+                </div>
+            </aside>
 
-                                                    <Badge v-else class="mt-1" :text="'Disabled'"
-                                                        :backgroundColor="'bg-rose-50'" :textColor="'text-rose-700'"
-                                                        :ringColor="'ring-rose-600/20'" />
-                                                </template>
-                                            </StaticElement>
-                                            <HiddenElement name="is_enabled" :meta="true" />
-                                            <ButtonElement name="stripe_activate" button-label="Configure"
-                                                @click="handlePaymentGatewaySettingsClick(index)" :columns="{
-                                                    container: 6,
-                                                }" align="right" :conditions="[
-    ['gateways.*.is_enabled', false]
-]" />
+            <button @click="toggleNav" :class="isNavCollapsed ? 'left-10 sm:left-14' : 'left-64'"
+                class="absolute top-1 md:top-14 -translate-x-1/2 bg-white rounded-full p-1.5 border shadow-md text-gray-500 hover:text-indigo-600 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300 z-10">
+                <ChevronDoubleLeftIcon class="size-5 transition-transform duration-300"
+                    :class="{ 'rotate-180': isNavCollapsed }" />
+            </button>
 
-                                            <ButtonElement name="stripe_deactivate" button-label="Deactivate"
-                                                @click="handlePaymentGatewaySettingsClick()" :secondary="true" :columns="{
-                                                    container: 6,
-                                                }" align="right" :conditions="[
-    ['gateways.*.is_enabled', true]
-]" />
-                                            <ToggleElement name="stripe_sandbox" text="Sandbox"
-                                                description="You can use the Stripe API in test mode, which doesn’t affect your live data or interact with the banking networks."
-                                                :conditions="[
-                                                    ['gateways.*.is_enabled', true]
-                                                ]" />
-                                        </ObjectElement>
-                                    </template>
-                                </ListElement>
+            <!-- MAIN content -->
+            <div class="flex-1 shadow md:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 md:p-6">
+
+                <!-- PAYMENT GATEWAYS -->
+                <section v-show="activeSection === 'payment_gateways'">
+
+                    <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
+                        @response="handleResponse" :display-errors="false">
+                        <template #empty>
+
+                            <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
+
+                                <div class="lg:col-span-12">
+                                    <FormElements>
+
+                                        <!-- Payment Gateways Tab -->
+
+                                        <StaticElement name="payment_gateways_tab_label" tag="h4"
+                                            content="Payment Gateways" description="Manage Payment Providers" />
+                                        <ListElement name="gateways" :controls="{
+                                            add: false,
+                                            remove: false,
+                                        }"
+                                            :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                            <template #default="{ index }">
+                                                <ObjectElement :name="index">
+                                                    <StaticElement name="name" tag="p" :content="(el$) => {
+                                                        // console.log (el$.form$.el$('gateways').value[index].name);
+                                                        return el$.form$.el$('gateways').value[index].name
+                                                    }" :columns="{ container: 6, }"
+                                                        :attrs="{ class: 'text-base font-semibold' }">
+                                                        <template #after="{ el$ }">
+                                                            <Badge
+                                                                v-if="el$.form$.el$('gateways').value[index].is_enabled"
+                                                                class="mt-1" :text="'Activated'"
+                                                                :backgroundColor="'bg-green-50'"
+                                                                :textColor="'text-green-700'"
+                                                                :ringColor="'ring-green-600/20'" />
+
+                                                            <Badge v-else class="mt-1" :text="'Disabled'"
+                                                                :backgroundColor="'bg-rose-50'"
+                                                                :textColor="'text-rose-700'"
+                                                                :ringColor="'ring-rose-600/20'" />
+                                                        </template>
+                                                    </StaticElement>
+                                                    <HiddenElement name="is_enabled" :meta="true" />
+                                                    <ButtonElement name="gateway_activate" button-label="Configure"
+                                                        @click="handlePaymentGatewaySettingsClick(index)" :columns="{
+                                                            container: 6,
+                                                        }" align="right" :conditions="[
+                                                            ['gateways.*.is_enabled', false]
+                                                        ]" />
+
+                                                    <ButtonElement name="gwateway_deactivate" button-label="Deactivate"
+                                                        @click="handlePaymentGatewayDeactivateClick(index)"
+                                                        :secondary="true" :columns="{
+                                                            container: 6,
+                                                        }" align="right" :conditions="[
+                                                            ['gateways.*.is_enabled', true]
+                                                        ]" />
+
+                                                </ObjectElement>
+                                            </template>
+                                        </ListElement>
 
 
 
-                            </FormElements>
-                        </div>
-                    </div>
-                </template>
-            </Vueform>
+                                    </FormElements>
+                                </div>
+                            </div>
+                        </template>
+                    </Vueform>
+                </section>
+            </div>
         </main>
 
         <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
             @update:show="hideNotification" />
 
-        <UpdateStripeSettingsModal :settings="gatewaySettings" :uuid="gatewayUuid" :is-enabled="gatewayEnabled" :show="showStripeSettingsModal" :route="routes.payment_gateway_update"
-        @confirm="handleGreetingUpdate" @close="showStripeSettingsModal = false" />
+        <UpdateStripeSettingsModal :settings="gatewaySettings" :uuid="gatewayUuid" :is-enabled="gatewayEnabled"
+            :show="showStripeSettingsModal" :route="routes.payment_gateway_update"
+            @refresh-data="getPaymentGatewaysData" @close="showStripeSettingsModal = false" />
 
 
     </MainLayout>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import MainLayout from '../Layouts/MainLayout.vue'
 
 import Notification from "./components/notifications/Notification.vue";
 import UpdateStripeSettingsModal from "./components/modal/UpdateStripeSettingsModal.vue";
 import Badge from "@generalComponents/Badge.vue";
-
-
+import { ChevronRightIcon } from '@heroicons/vue/20/solid'
+import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
+import {
+    Cog6ToothIcon,
+    ChevronDoubleLeftIcon,
+} from '@heroicons/vue/24/outline'
 
 
 const props = defineProps({
-    data: {
-        type: Object,
-        default: () => ({}) // Providing an empty object as default
-    },
-    timezones: Object,
     routes: Object,
-    errors: Object,
-
 })
 
 const form$ = ref(null)
+const isNavCollapsed = ref(false)
+const toggleNav = () => isNavCollapsed.value = !isNavCollapsed.value
 const showStripeSettingsModal = ref(false);
 const gatewaySettings = ref(null);
 const gatewayUuid = ref(null);
 const gatewayEnabled = ref(null);
+const activeSection = ref('payment_gateways')
+const isActive = (key) => activeSection.value === key
+const navOpen = ref(false)
 
+const navigation = [
+    { key: 'payment_gateways', name: 'Payment Gateways', icon: Cog6ToothIcon },
 
-// const localData = ref(JSON.parse(JSON.stringify(props.data || {})));
+    // {
+    //     key: 'hotel',
+    //     name: 'Hotel Management',
+    //     icon: BuildingOffice2Icon,
+    //     children: [
+    //         { key: 'room_management', name: 'Room Management', icon: KeyIcon },
+    //         { key: 'room_status', name: 'Room Status', icon: ClipboardDocumentCheckIcon },
+    //         { key: 'emergency_calls', name: 'Emergency Calls', icon: BellAlertIcon },
 
-// onMounted(() => {
-//     form$.value.update({ // updates form data
-//         gateways: [],
-//     })
+    //     ],
+    // },
+]
 
-//     form$.value.clean()
-//     // console.log(form$.value.data);
-// })
+watch(activeSection, (key) => {
+    if (key === 'payment_gateways') getPaymentGatewaysData()
 
+})
 
 const notificationType = ref(null);
 const notificationShow = ref(null);
 const notificationMessages = ref(null);
 
 
-const getData = (activeTab, previousTab) => {
-    if (activeTab.name == 'payment_gateways') {
-        getPaymentGatewaysData();
-    }
-}
-
 const getPaymentGatewaysData = async () => {
     try {
-        // hit your endpoint
         const response = await form$.value.$vueform.services.axios.get(props.routes.payment_gateways)
-
         form$.value.update({
             gateways: response.data
         })
-
-        console.log(form$.value.data);
-
         form$.value.clean()
     }
     catch (err) {
@@ -182,12 +258,6 @@ const getPaymentGatewaysData = async () => {
 
 
 const handlePaymentGatewaySettingsClick = (index) => {
-    // if (activeTab.name == 'payment_gateways') {
-    //     getPaymentGatewaysData(activeTab.form$);
-    // }
-
-    console.log(form$.value.el$('gateways').value[index].slug);
-
     if (form$.value.el$('gateways').value[index].slug == 'stripe') {
         showStripeSettingsModal.value = true;
         gatewaySettings.value = form$.value.el$('gateways').value[index].settings
@@ -195,6 +265,48 @@ const handlePaymentGatewaySettingsClick = (index) => {
         gatewayEnabled.value = form$.value.el$('gateways').value[index].is_enabled
     }
 }
+
+const handlePaymentGatewayDeactivateClick = (index) => {
+
+    axios.post(props.routes.payment_gateway_deactivate,
+        { 'uuid': form$.value.el$('gateways').value[index].uuid },
+    )
+        .then((response) => {
+            showNotification('success', response.data.messages);
+        }).catch((error) => {
+            handleErrorResponse(error);
+        }).finally(() => {
+            getPaymentGatewaysData()
+        });
+}
+
+const navigateTo = (key) => {
+    activeSection.value = key
+    navOpen.value = false // close mobile drawer if open
+}
+
+// --- Responsive Collapse Logic ---
+const checkScreenSize = () => {
+    // Tailwind's `md` breakpoint is 768px.
+    // If the window is smaller, collapse the navigation.
+    isNavCollapsed.value = window.innerWidth < 768;
+};
+
+onMounted(() => {
+    // Check screen size on initial load
+    checkScreenSize();
+    // Add event listener for window resize
+    window.addEventListener('resize', checkScreenSize);
+
+    getPaymentGatewaysData()
+
+    // console.log(form$.value.data);
+})
+
+onUnmounted(() => {
+    // Clean up the event listener when the component is destroyed
+    window.removeEventListener('resize', checkScreenSize);
+});
 
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
@@ -342,38 +454,6 @@ const handleError = (error, details, form$) => {
             break
     }
 }
-
-
-
-const plans = [
-    { name: 'Startup', priceMonthly: '$29', priceYearly: '$290', limit: 'Up to 5 active job postings', selected: true },
-    {
-        name: 'Business',
-        priceMonthly: '$99',
-        priceYearly: '$990',
-        limit: 'Up to 25 active job postings',
-        selected: false,
-    },
-    {
-        name: 'Enterprise',
-        priceMonthly: '$249',
-        priceYearly: '$2490',
-        limit: 'Unlimited active job postings',
-        selected: false,
-    },
-]
-const payments = [
-    {
-        id: 1,
-        date: '1/1/2020',
-        datetime: '2020-01-01',
-        description: 'Business Plan - Annual Billing',
-        amount: 'CA$109.00',
-        href: '#',
-    },
-    // More payments...
-]
-
 
 
 const handleErrorResponse = (error) => {

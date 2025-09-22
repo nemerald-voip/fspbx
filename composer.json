@@ -35,6 +35,7 @@
         "spatie/laravel-query-builder": "^5.7",
         "spatie/laravel-webhook-client": "^3.2",
         "spatie/simple-excel": "^3.6",
+        "stripe/stripe-php": "^17.6",
         "symfony/http-client": "^6.4",
         "symfony/postmark-mailer": "^6.4"
     },
