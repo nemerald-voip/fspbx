@@ -55,11 +55,14 @@ class CeretaxService
             $this->baseUrl = config('services.ceretax.sandbox_url', "https://calc.cert.ceretax.net/");
             $this->apiKey = config('services.ceretax.sandbox_api_key', '');
             $this->clientProfileId = config('services.ceretax.sandbox_client_profile_id', 'default');
-            $this->status = "Active";
+            $this->status = "Quote";
         }
 
-        // Preflight: suspend any existing tx tied to this invoice
-        $this->suspendExistingFromInvoiceMetadata($stripeInvoice);
+        // Preflight: suspend any existing tx tied to this invoice is status is not Quote
+        if (data_get($stripeInvoice,'metadata.ceretax_status' != 'Quote')) {
+            $this->suspendExistingFromInvoiceMetadata($stripeInvoice);
+        }
+        
 
         $payload       = $this->buildTelcoPayloadFromStripe($stripeInvoice, $lines);
         $invoiceNumber = (string) Arr::get($payload, 'invoice.invoiceNumber');

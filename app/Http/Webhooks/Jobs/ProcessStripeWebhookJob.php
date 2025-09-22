@@ -201,7 +201,7 @@ class ProcessStripeWebhookJob extends SpatieProcessWebhookJob
             }
         }
 
-        // 👉 Early exit: nothing to tax
+        // Early exit: nothing to tax
         if (count($nonTaxLines) === 0) {
             return;
         }
@@ -273,7 +273,7 @@ class ProcessStripeWebhookJob extends SpatieProcessWebhookJob
             data_get($invoice, 'id'),
             [
                 'rendering' => [
-                    'template' => 'inrtem_1S9EDfRt1tNxM7pPVdJbmRoB'
+                    'template' => data_get($invoice, 'rendering.template')
                 ],
             ],
             ['idempotency_key' => 'fspbx:' . (string) Str::uuid()]
