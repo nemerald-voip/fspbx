@@ -35,6 +35,7 @@ use App\Http\Controllers\RegistrationsController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\AppsCredentialsController;
+use App\Http\Controllers\InboundWebhooksController;
 use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\SansayActiveCallsController;
 use App\Http\Controllers\VoicemailMessagesController;
@@ -89,7 +90,7 @@ Route::get('/csrf-token/refresh', [CsrfTokenController::class, 'store']);
 Route::get('/mobile-app/get-password/{token}', [AppsCredentialsController::class, 'getPasswordByToken'])->name('appsGetPasswordByToken');
 Route::post('/mobile-app/get-password/{token}', [AppsCredentialsController::class, 'retrievePasswordByToken'])->name('appsRetrievePasswordByToken');
 
-Route::match(['GET','HEAD'], '/prov/{path}', [ProvisioningController::class, 'serve'])
+Route::match(['GET', 'HEAD'], '/prov/{path}', [ProvisioningController::class, 'serve'])
     ->where('path', '.*')
     ->middleware(['throttle:provision', 'provision.digest'])
     ->name('provision.serve');
@@ -118,6 +119,9 @@ Route::group(['middleware' => 'auth'], function () {
 
     //Extension Statistics
     Route::get('/extension-statistics', [ExtensionStatisticsController::class, 'index'])->name('extension-statistics.index');
+
+    //Inbound Webhooks
+    Route::get('/inbound-webhooks', [InboundWebhooksController::class, 'index'])->name('inbound-webhooks.index');
 
     //Domains
     Route::get('domains/extensions', [DomainController::class, 'countExtensionsInDomains']);

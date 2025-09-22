@@ -2,30 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CDR;
 use Inertia\Inertia;
+use App\Models\WhCall;
 use App\Jobs\ExportCdrs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use App\Services\CdrDataService;
+use Spatie\QueryBuilder\QueryBuilder;
+use Spatie\QueryBuilder\AllowedFilter;
 
-class ExtensionStatisticsController extends Controller
+class InboundWebhooksController extends Controller
 {
+    protected $viewName = 'InboundWebhooks';
 
-    public $model;
-    public $filters = [];
-    public $sortField;
-    public $sortOrder;
-    protected $viewName = 'ExtensionStatistics';
-    protected $searchable = ['extension.extension', 'extension.effective_caller_id_name'];
-    public $item_domain_uuid;
-    protected $cdrDataService;
-
-    public function __construct(CdrDataService $cdrDataService)
-    {
-        $this->cdrDataService = $cdrDataService;
-        $this->model = new CDR();
-    }
 
     /**
      * Display a listing of the resource.
@@ -34,12 +22,6 @@ class ExtensionStatisticsController extends Controller
      */
     public function index(Request $request)
     {
-        // logger($request->all());
-        // Check permissions
-        if (!userCheckPermission("xml_cdr_view")) {
-            return redirect('/');
-        }
-
         $domain_uuid = session('domain_uuid');
         $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->startOfDay()->setTimeZone('UTC');
         $endPeriod = Carbon::now(get_local_time_zone($domain_uuid))->endOfDay()->setTimeZone('UTC');
@@ -57,20 +39,18 @@ class ExtensionStatisticsController extends Controller
                     return get_local_time_zone($domain_uuid);
                 },
                 'routes' => [
-                    'current_page' => route('extension-statistics.index'),
-                    'data_route' => route('extension-statistics.data'),
-                    // 'export' => route('cdrs.export'),
+                    // 'current_page' => route('inbound-webhhooks.index'),
+                    'data_route' => route('inbound-webhooks.data'),
                 ]
 
             ]
         );
     }
 
-    //Most of this function has been moved to CdrDataService service container
     public function getData()
     {
         $params = request()->all();
-        $params['paginate'] = false;
+        $params['paginate'] = 50;
         $domain_uuid = session('domain_uuid');
         $params['domain_uuid'] = $domain_uuid;
 
@@ -79,26 +59,61 @@ class ExtensionStatisticsController extends Controller
             $endPeriod = Carbon::parse(request('filter.dateRange')[1])->setTimeZone('UTC');
         }
 
-        $params['filter']['startPeriod'] = $startPeriod->getTimestamp();
-        $params['filter']['endPeriod'] = $endPeriod->getTimestamp();
+        $params['filter']['startPeriod'] = $startPeriod;
+        $params['filter']['endPeriod'] = $endPeriod;
 
         unset(
             $params['filter']['dateRange'],
         );
 
-        $this->filters = [
-            'startPeriod' => $startPeriod,
-            'endPeriod' => $endPeriod,
-        ];
+        // $this->filters = [
+        //     'startPeriod' => $startPeriod,
+        //     'endPeriod' => $endPeriod,
+        // ];
 
         // logger($params);
 
-        // Fetch CDR data
-        $cdrData = $this->cdrDataService->getExtensionStatistics($params);
+        $webhooks = QueryBuilder::for(WhCall::class, request()->merge($params))
+            ->select([
+                'id',
+                'name',
+                'url',
+                'headers',
+                'payload',
+                'exception',
+                'created_at',
+            ])
+         
+            ->allowedFilters([
+                AllowedFilter::callback('startPeriod', function ($query, $value) {
+                    $query->where('created_at', '>=', $value);
+                }),
+                AllowedFilter::callback('endPeriod', function ($query, $value) {
+                    $query->where('created_at', '<=', $value);
+                }),
+                AllowedFilter::callback('name', function ($query, $value) {
+                    $query->where('name',  $value);
+                }),
+                AllowedFilter::callback('search', function ($query, $value) {
+                    $query->where(function ($q) use ($value) {
+                        $q->where('payload', 'ilike', "%{$value}%")
+                            ->orWhere('exception', 'ilike', "%{$value}%");
+                    });
+                }),
+            ])
+            // Sorting
+            ->allowedSorts(['created_at']) // add more if needed
+            ->defaultSort('-created_at');
 
-        // logger($cdrData);
+        if ($params['paginate']) {
+            $webhooks = $webhooks->paginate($params['paginate']);
+        } else {
+            $webhooks = $webhooks->cursor();
+        }
 
-        return $cdrData;
+        // logger($webhooks);
+
+        return $webhooks;
 
     }
 
