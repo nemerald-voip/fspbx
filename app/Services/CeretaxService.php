@@ -54,9 +54,12 @@ class CeretaxService
         if (data_get($stripeInvoice, 'customer.metadata.ceretax_sandbox') == 'true') {
             $this->baseUrl = config('services.ceretax.sandbox_url', "https://calc.cert.ceretax.net/");
             $this->apiKey = config('services.ceretax.sandbox_api_key', '');
-            $this->clientProfileId = config('services.ceretax.sandbox_api_key', 'default');
-            $this->status = "Quote";
+            $this->clientProfileId = config('services.ceretax.sandbox_client_profile_id', 'default');
+            $this->status = "Active";
         }
+
+        // Preflight: suspend any existing tx tied to this invoice
+        $this->suspendExistingFromInvoiceMetadata($stripeInvoice);
 
         $payload       = $this->buildTelcoPayloadFromStripe($stripeInvoice, $lines);
         $invoiceNumber = (string) Arr::get($payload, 'invoice.invoiceNumber');
@@ -173,29 +176,63 @@ class CeretaxService
     }
 
 
-    /**
-     * Update the status of a transaction (Quote|Active|Posted|Suspended|Pending).
-     * Use your own unique invoice number (we pass Stripe’s invoice id by default).
-     */
-    public function updateTransactionStatus(string $invoiceNumber, string $status): array
-    {
-        $data = [
-            // CereTax commonly keys by invoice/system trace fields. We use invoiceNumber here.
-            'invoiceNumber' => $invoiceNumber,
-            'status'        => $status,
-        ];
+    public function updateTransactionStatusByKsuid(
+        string $ksuid,
+        string $toStatus,
+        ?string $invoiceNumber = null,
+        ?string $systemTraceAuditNumber = null
+    ): array {
+        // Build request body exactly per docs
+        $payload = array_filter([
+            'ksuid'                  => $ksuid,               // required
+            'systemTraceAuditNumber' => $systemTraceAuditNumber, // include only if you used STAN
+            'transactionStatus'      => $toStatus,            // required: Active|Posted|Suspended
+        ], fn($v) => $v !== null && $v !== '');
 
+        // Create a new row to record this status update attempt
+        $row = CeretaxTransaction::create([
+            'invoice_number' => (string)($invoiceNumber ?? ''),
+            'status'         => $toStatus,
+            'ksuid'          => $ksuid,
+            'request_json'   => $payload,
+            'env'            => config('services.ceretax.env', 'sandbox'),
+        ]);
+
+        // Call the API (no ->throw so we can capture full body on 4xx/404)
+        $resp = $this->base()->post('status', $payload);
+
+        // Parse JSON if available
+        $json = null;
         try {
-            $resp = $this->http->post('status', [
-                'headers' => $this->headers(),
-                'json'    => $data,
-            ]);
-            return json_decode((string) $resp->getBody(), true) ?: [];
-        } catch (RequestException $e) {
-            $body = (string) optional($e->getResponse())->getBody();
-            logger()->error('CereTax status update failed', ['err' => $e->getMessage(), 'body' => $body, 'data' => $data]);
-            throw $e;
+            $json = $resp->json();
+        } catch (\Throwable $e) {
         }
+
+        // Compact any error messages (if your helper exists)
+        $summary = method_exists($this, 'compactCeretaxErrors')
+            ? $this->compactCeretaxErrors($json)
+            : null;
+
+        // Update the row with response info
+        $row->update([
+            'http_status'   => $resp->status(),
+            'response_json' => $json ?: ['raw' => $resp->body()],
+            'error_summary' => $summary,
+        ]);
+
+        if ($resp->successful()) {
+            return $json ?? [];
+        }
+
+        // Log + throw concise error; details are in DB
+        logger()->warning('CereTax status update failed', [
+            'ksuid'       => $ksuid,
+            'to_status'   => $toStatus,
+            'http_status' => $resp->status(),
+            'body'        => $resp->body(),
+        ]);
+
+        throw new \RuntimeException("CereTax status update failed (HTTP {$resp->status()})");
     }
 
     /**
@@ -310,7 +347,7 @@ class CeretaxService
             $amountMajor = round($amountMinor / 100, $decimals);
 
             $desc       = data_get($li, 'description');
-            $qty        = (int) (data_get($li, 'quantity') ?? 1); 
+            $qty        = (int) (data_get($li, 'quantity') ?? 1);
             $itemNumber = (string) data_get($li, 'id'); // Stripe line id (il_...) is fine for itemNumber
 
             $lineItems[] = [
@@ -372,6 +409,32 @@ class CeretaxService
             ],
         ];
     }
+
+    public function suspendExistingFromInvoiceMetadata($stripeInvoice): void
+    {
+        $existingKsuid = data_get($stripeInvoice, 'metadata.ceretax_ksuid');
+        if (!$existingKsuid) return;
+
+        try {
+            $this->updateTransactionStatusByKsuid(
+                ksuid: $existingKsuid,
+                toStatus: 'Suspended',
+                invoiceNumber: (string) data_get($stripeInvoice,'id')
+            );
+            logger()->info('CereTax preflight: suspended prior transaction', [
+                'invoice' => (string) data_get($stripeInvoice,'id'),
+                'ksuid'   => $existingKsuid,
+            ]);
+        } catch (\Throwable $e) {
+            // Non-blocking: we still proceed to create a fresh transaction
+            logger()->warning('CereTax preflight suspend failed', [
+                'invoice' => (string) data_get($stripeInvoice,'id'),
+                'ksuid'   => $existingKsuid,
+                'err'     => $e->getMessage(),
+            ]);
+        }
+    }
+
 
 
 

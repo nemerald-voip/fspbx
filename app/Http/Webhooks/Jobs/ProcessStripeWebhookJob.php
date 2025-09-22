@@ -62,6 +62,9 @@ class ProcessStripeWebhookJob extends SpatieProcessWebhookJob
     private $acceptedTypes = [
         'invoice.created',
         'invoice.updated',
+        'invoice.deleted',
+        'invoice.voided',
+        'invoice.marked_uncollectible',
         'product.created',
         'product.deleted',
         'product.updated',
@@ -124,6 +127,12 @@ class ProcessStripeWebhookJob extends SpatieProcessWebhookJob
                         }
                         break;
 
+                    case 'invoice.marked_uncollectible':
+                    case 'invoice.deleted':
+                    case 'invoice.voided':
+                        $this->handleDeleteInvoice($payload['data']['object']);
+                        break;
+
                     case 'product.updated':
                     case 'product.created':
                     case 'product.deleted':
@@ -179,24 +188,38 @@ class ProcessStripeWebhookJob extends SpatieProcessWebhookJob
 
         $this->applyProductMetadataToInvoiceLines($stripe, (string) data_get($invoice, 'id'), $lines);
 
-        // 1) Remove prior tax lines (identified by metadata flag)
-        $toDelete = [];
+        // Separate lines: tax vs non-tax
+        $taxLines = [];
+        $nonTaxLines = [];
         foreach ($lines as $li) {
-            if ((Arr::get($li, 'metadata.is_telecom_tax') ?? null) === 'true') {
-                $toDelete[] = [
-                    'id'       => (string) data_get($li, 'id'),
-                    'behavior' => 'delete',
-                ];
+            $isTax = (Arr::get($li, 'metadata.is_telecom_tax') === 'true')
+                || (Arr::get($li, 'metadata.ceretax_generated') === 'true');
+            if ($isTax) {
+                $taxLines[] = $li;
+            } else {
+                $nonTaxLines[] = $li;
             }
         }
 
-        if (!empty($toDelete)) {
-            $updated = $stripe->invoices->removeLines(
+        // 👉 Early exit: nothing to tax
+        if (count($nonTaxLines) === 0) {
+            return;
+        }
+
+        // 1) Bulk remove prior tax lines (if any)
+        if (!empty($taxLines)) {
+            $toDelete = array_map(fn($li) => [
+                'id'       => (string) data_get($li, 'id'),
+                'behavior' => 'delete',
+            ], $taxLines);
+
+            $stripe->invoices->removeLines(
                 (string) data_get($invoice, 'id'),
                 ['lines' => $toDelete],
-                ['idempotency_key' => 'fspbx:' . (string) Str::uuid()]
+                ['idempotency_key' => 'fspbx:bulkdel:' . (string) Str::uuid()]
             );
         }
+
 
         // 2) Ask Ceretax to create a new transaction
         $result = $ceretax->createTelcoTransaction($stripeInvoice, $lines);
@@ -262,6 +285,16 @@ class ProcessStripeWebhookJob extends SpatieProcessWebhookJob
         // 4) Status move in Ceretax — usually do this when you finalize/charge.
         // If you must do it here, consider 'Active' now and 'Posted' at finalization.
         // $ceretax->updateTransactionStatus($invoice->id, 'Active');
+    }
+
+    protected function handleDeleteInvoice($stripeInvoice): void
+    {
+        $ceretax = app(\App\Services\CeretaxService::class);
+
+        $existingKsuid = data_get($stripeInvoice, 'metadata.ceretax_ksuid');
+        if (!$existingKsuid) return;
+
+        $result = $ceretax->suspendExistingFromInvoiceMetadata($stripeInvoice);
     }
 
 
