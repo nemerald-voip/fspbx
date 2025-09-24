@@ -244,29 +244,6 @@ const handleUpdateDateRange = (newDateRange) => {
     filterData.value.dateRange = newDateRange;
 }
 
-const exportCsv = () => {
-    isExporting.value = true;
-
-    axios.post(props.routes.export, {
-        filterData: filterData._rawValue,
-    })
-        .then(response => {
-            showNotification('success', response.data.messages);
-            isExporting.value = false;
-        })
-        .catch(error => {
-            console.error('There was an error with the request:', error);
-            isExporting.value = false;
-            handleErrorResponse(error);
-        });
-
-
-};
-
-
-const handleModalClose = () => {
-    viewModalTrigger.value = false;
-}
 
 const hideNotification = () => {
     notificationShow.value = false;

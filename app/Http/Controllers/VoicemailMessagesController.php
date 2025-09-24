@@ -56,53 +56,6 @@ class VoicemailMessagesController extends Controller
             ]
         );
 
-        $data = array();
-        $data['voicemail'] = $voicemail;
-        $messages = VoicemailMessages::where('voicemail_uuid', $voicemail->voicemail_uuid)->orderBy('created_epoch', 'desc')->get();
-
-        //Get libphonenumber object
-        $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
-
-        // Get local Time Zone
-        $time_zone = get_local_time_zone($voicemail->domain_uuid);
-
-        foreach ($messages as $message) {
-
-            // Try to convert caller ID number to National format
-            try {
-                $phoneNumberObject = $phoneNumberUtil->parse($message->caller_id_number, 'US');
-                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $message->caller_id_number = $phoneNumberUtil
-                        ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::NATIONAL);
-                }
-            } catch (NumberParseException $e) {
-                // Do nothing and leave the numner as is
-            }
-
-            // Try to convert the date to human redable format
-            $message->date = Carbon::createFromTimestamp($message->created_epoch, $time_zone)->toDayDateTimeString();
-
-            // Get the path to message file
-            if (Storage::disk('voicemail')->exists($voicemail->domain->domain_name . '/' . $voicemail->voicemail_id .  '/msg_' . $message->voicemail_message_uuid . '.wav')) {
-                $message->file = Storage::disk('voicemail')->path($voicemail->domain->domain_name . '/' . $voicemail->voicemail_id .  '/msg_' . $message->voicemail_message_uuid . '.wav');
-            } elseif (Storage::disk('voicemail')->exists($voicemail->domain->domain_name . '/' . $voicemail->voicemail_id .  '/msg_' . $message->voicemail_message_uuid . '.mp3')) {
-                $message->file = Storage::disk('voicemail')->path($voicemail->domain->domain_name . '/' . $voicemail->voicemail_id .  '/msg_' . $message->voicemail_message_uuid . '.mp3');
-            }
-            // $message->file = Storage::disk('voicemail') . '/' . $voicemail->domain_uuid . '/' . $voicemail->voicemail_id . 
-            //     '/msg_' . $message->voicemail_message_uuid;
-        }
-
-
-        $data['messages'] = $messages;
-
-        //assign permissions
-        $permissions['add_new'] = userCheckPermission('voicemail_add');
-        $permissions['edit'] = userCheckPermission('voicemail_edit');
-        $permissions['delete'] = userCheckPermission('voicemail_delete');
-
-        return view('layouts.voicemails.messages.list')
-            ->with($data)
-            ->with('permissions', $permissions);
     }
 
 

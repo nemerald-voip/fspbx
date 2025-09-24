@@ -8,6 +8,7 @@ use App\Http\Controllers\TokenController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\GroupsController;
+use App\Http\Controllers\FaxInboxController;
 use App\Http\Controllers\UserLogsController;
 use App\Http\Controllers\HotelRoomController;
 use App\Http\Controllers\VoicemailController;
@@ -194,10 +195,13 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::delete('/faxes/deleteSentFax/{id}', [FaxesController::class, 'deleteSentFax'])->name('faxes.file.deleteSentFax');
     Route::delete('/faxes/deleteReceivedFax/{id}', [FaxesController::class, 'deleteReceivedFax'])->name('faxes.file.deleteReceivedFax');
     Route::delete('/faxes/deleteFaxLog/{id}', [FaxesController::class, 'deleteFaxLog'])->name('faxes.file.deleteFaxLog');
-    Route::get('/fax/inbox/{file}/download', [FaxesController::class, 'downloadInboxFaxFile'])->name('downloadInboxFaxFile');
+    Route::get('/fax/inbox/{file}/download', [FaxInboxController::class, 'download'])->name('fax-inbox.fax.download');
+    Route::post('/fax/inbox/bulk-delete', [FaxInboxController::class, 'bulkDelete'])->name('fax-inbox.bulk.delete');
+    Route::post('/fax/inbox/select-all', [FaxInboxController::class, 'selectAll'])->name('fax-inbox.select.all');
     Route::get('/fax/sent/{file}/download', [FaxesController::class, 'downloadSentFaxFile'])->name('downloadSentFaxFile');
     Route::get('/fax/sent/{faxQueue}/{status?}', [FaxesController::class, 'updateStatus'])->name('faxes.file.updateStatus');
     Route::post('/faxes/send', [FaxesController::class, 'sendFax'])->name('faxes.new.fax.send');
+    Route::get('/fax/inbox/data', [FaxInboxController::class, 'getData'])->name('fax-inbox.data');
 
     // Call Detail Records
     Route::get('/call-detail-records/data', [CdrsController::class, 'getData'])->name('cdrs.data');

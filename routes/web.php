@@ -10,6 +10,7 @@ use App\Http\Controllers\DomainController;
 use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\ContactsController;
+use App\Http\Controllers\FaxInboxController;
 use App\Http\Controllers\FaxQueueController;
 use App\Http\Controllers\FirewallController;
 use App\Http\Controllers\MessagesController;
@@ -137,7 +138,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     //Fax
     Route::get('faxes', [FaxesController::class, 'index'])->name('faxes.index');
-    Route::get('/faxes/inbox/{id}', [FaxesController::class, 'inbox'])->name('faxes.inbox.list');
+    Route::get('/fax/{fax}/inbox', [FaxInboxController::class, 'index'])->name('fax-inbox.index');
     Route::get('/faxes/sent/{id}', [FaxesController::class, 'sent'])->name('faxes.sent.list');
     Route::get('/faxes/active/{id}', [FaxesController::class, 'active'])->name('faxes.active.list');
     Route::get('/faxes/log/{id}', [FaxesController::class, 'log'])->name('faxes.log.list');
