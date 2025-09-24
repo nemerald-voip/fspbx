@@ -1138,17 +1138,38 @@ class PhoneNumbersController extends Controller
     public function selectAll(): JsonResponse
     {
         try {
-            if (request()->get('showGlobal')) {
-                $uuids = $this->model::get($this->model->getKeyName())->pluck($this->model->getKeyName());
-            } else {
-                $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
-                    ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
-            }
+            $params = request()->all();
 
+            $domain_uuid = session('domain_uuid');
+            $params['domain_uuid'] = $domain_uuid;
+
+            $data = QueryBuilder::for(Destinations::class, request()->merge($params))
+                ->select([
+                    'destination_uuid',
+                    'domain_uuid',
+                ])
+                ->allowedFilters([
+                    AllowedFilter::callback('showGlobal', function ($query, $value) use ($domain_uuid) {
+                        // If showGlobal is falsey (0, '0', false, null), restrict to the current domain
+                        if (!$value || $value === '0' || $value === 0 || $value === 'false') {
+                            $query->where('domain_uuid', $domain_uuid);
+                        }
+                        // else, do nothing and show all domains
+                    }),
+                    AllowedFilter::callback('search', function ($query, $value) {
+                        $query->where(function ($q) use ($value) {
+                            $q->where('destination_number', 'ilike', "%{$value}%")
+                                ->orWhere('destination_data', 'ilike', "%{$value}%")
+                                ->orWhere('destination_description', 'ilike', "%{$value}%");
+                        });
+                    }),
+                ])
+                ->pluck('destination_uuid');
+                
             // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['All items selected']],
-                'items' => $uuids,
+                'items' => $data,
             ], 200);
         } catch (\Exception $e) {
             logger($e);

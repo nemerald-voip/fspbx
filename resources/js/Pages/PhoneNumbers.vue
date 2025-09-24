@@ -360,7 +360,9 @@ const handleCreateButtonClick = () => {
 }
 
 const handleSelectAll = () => {
-    axios.post(props.routes.select_all, filterData._rawValue)
+    axios.post(props.routes.select_all,  {
+            filter: filterData.value,
+    })
         .then((response) => {
             selectedItems.value = response.data.items;
             selectAll.value = true;
