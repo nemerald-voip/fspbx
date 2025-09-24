@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use libphonenumber\NumberParseException;
+use Spatie\QueryBuilder\QueryBuilder;
+use Spatie\QueryBuilder\AllowedFilter;
 
 class VoicemailMessagesController extends Controller
 {
@@ -40,9 +42,12 @@ class VoicemailMessagesController extends Controller
             return redirect('/');
         }
 
+        $voicemail_uuid = request()->route('voicemail');
+
         return Inertia::render(
             $this->viewName,
             [
+                'voicemail_uuid' => $voicemail_uuid,
                 'data' => function () {
                     return $this->getData();
                 },
@@ -426,17 +431,52 @@ class VoicemailMessagesController extends Controller
     public function selectAll()
     {
         try {
-            if (request()->get('showGlobal')) {
-                $uuids = $this->model::get($this->model->getKeyName())->pluck($this->model->getKeyName());
-            } else {
-                $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
-                    ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
+            $params = request()->all();
+
+            $domain_uuid = session('domain_uuid');
+            $params['domain_uuid'] = $domain_uuid;
+
+            if (!empty(data_get($params, 'filter.dateRange'))) {
+                $startTs = Carbon::parse(data_get($params, 'filter.dateRange.0'))
+                    ->getTimestamp();
+    
+                $endTs = Carbon::parse(data_get($params, 'filter.dateRange.1'))
+                    ->getTimestamp();
+    
+                $params['filter']['startPeriod'] = $startTs;
+                $params['filter']['endPeriod']   = $endTs;
+    
+                unset($params['filter']['dateRange']);
             }
+
+            $data = QueryBuilder::for(VoicemailMessages::class, request()->merge($params))
+                ->select([
+                    'voicemail_message_uuid',
+                    'domain_uuid',
+
+                ])
+                ->allowedFilters([
+                    AllowedFilter::exact('voicemail_uuid'),
+                    // AllowedFilter::callback('startPeriod', function ($query, $value) {
+                    //     $query->where('fax_epoch', '>=', $value);
+                    // }),
+                    // AllowedFilter::callback('endPeriod', function ($query, $value) {
+                    //     $query->where('fax_epoch', '<=', $value);
+                    // }),
+
+                    AllowedFilter::callback('search', function ($query, $value) {
+                        $query->where(function ($q) use ($value) {
+                            $q->where('caller_id_name', 'ilike', "%{$value}%")
+                                ->orWhere('caller_id_number', 'ilike', "%{$value}%");
+                        });
+                    }),
+                ])
+                ->pluck('voicemail_message_uuid');
 
             // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['All items selected']],
-                'items' => $uuids,
+                'items' => $data,
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
