@@ -82,11 +82,6 @@ class HandleInertiaRequests extends Middleware
         $permissions['manage_cloud_provision_providers'] = userCheckPermission('manage_cloud_provision_providers');
         $permissions['polycom_api_token_edit'] = userCheckPermission('polycom_api_token_edit');
 
-        $permissions['destination_add'] = userCheckPermission('destination_add');
-        $permissions['destination_update'] = userCheckPermission('destination_edit');
-        $permissions['destination_destroy'] = userCheckPermission('destination_delete');
-        $permissions['destination_edit_domain'] = userCheckPermission('destination_domain');
-
         $permissions['cdrs_view_global'] = userCheckPermission('xml_cdr_all');
         $permissions['cdrs_export'] = userCheckPermission('xml_cdr_export');
         $permissions['cdr_view_details'] = userCheckPermission('xml_cdr_details');
@@ -106,11 +101,6 @@ class HandleInertiaRequests extends Middleware
         $permissions['registrations_view_global'] = userCheckPermission('registration_all');
 
         $permissions['active_calls_view_global'] = userCheckPermission('call_active_all');
-
-        $permissions['phone_numbers_view_global'] = userCheckPermission('destination_all');
-        $permissions['phone_numbers_create'] = userCheckPermission('destination_add');
-        $permissions['phone_numbers_update'] = userCheckPermission('destination_edit');
-        $permissions['phone_numbers_destroy'] = userCheckPermission('destination_delete');
 
         $permissions['virtual_receptionist_create'] = userCheckPermission('ivr_menu_add');
         $permissions['virtual_receptionist_update'] = userCheckPermission('ivr_menu_edit');
@@ -147,6 +137,7 @@ class HandleInertiaRequests extends Middleware
         $permissions['extension_create'] = userCheckPermission('extension_add');
         $permissions['extension_update'] = userCheckPermission('extension_edit');
         $permissions['extension_destroy'] = userCheckPermission('extension_delete');
+        $permissions['extension_upload'] = userCheckPermission('extension_import');
 
         $permissions['fax_server_create'] = userCheckPermission('fax_add');
         $permissions['fax_server_update'] = userCheckPermission('fax_edit');

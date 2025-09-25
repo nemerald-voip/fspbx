@@ -22,17 +22,23 @@
             </template>
 
             <template #action>
-                <button type="button" v-if="page.props.auth.can.phone_numbers_create"
+                <button type="button" v-if="permissions.create"
                     @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
-                <button v-if="page.props.auth.can.phone_numbers_view_global && !showGlobal" type="button"
+                <button v-if="permissions.upload" type="button"
+                    @click.prevent="handleImportButtonClick()"
+                    class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    <DocumentArrowUpIcon class="h-5 w-5" aria-hidden="true" />
+                    Import CSV
+                </button>
+                <button v-if="permissions.view_global && !showGlobal" type="button"
                     @click.prevent="handleShowGlobal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show global
                 </button>
-                <button v-if="page.props.auth.can.phone_numbers_view_global && showGlobal" type="button"
+                <button v-if="permissions.view_global && showGlobal" type="button"
                     @click.prevent="handleShowLocal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show local
@@ -90,8 +96,8 @@
                                 name="action_box[]" :value="row.destination_uuid"
                                 class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-4"
-                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.phone_numbers_update, }"
-                                @click="page.props.auth.can.phone_numbers_update && handleEditRequest(row.destination_uuid)">
+                                :class="{ 'cursor-pointer hover:text-gray-900': permissions.update, }"
+                                @click="permissions.update && handleEditRequest(row.destination_uuid)">
                                 {{ row.destination_number_formatted }}
                             </div>
 
@@ -147,14 +153,14 @@
                     <TableField class="w-4 whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center space-x-2 whitespace-nowrap">
-                                <ejs-tooltip v-if="page.props.auth.can.destination_update"
+                                <ejs-tooltip v-if="permissions.update"
                                     :content="'Edit phone number'" position='TopLeft' target="#edit_tooltip_target">
                                     <div id="edit_tooltip_target">
                                         <PencilSquareIcon @click="handleEditRequest(row.destination_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
-                                <ejs-tooltip v-if="page.props.auth.can.destination_destroy"
+                                <ejs-tooltip v-if="permissions.destroy"
                                     :content="'Remove phone number'" position='TopLeft' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.destination_uuid)"
@@ -193,21 +199,25 @@
 
     <CreatePhoneNumberForm :show="showCreateModal" :header="'Add New Phone Number'" :loading="loadingModal"
         :options="itemOptions" @close="showCreateModal = false" @success="showNotification" @error="handleErrorResponse"
-        @refresh-data="handleSearchButtonClick"/>
+        @refresh-data="handleSearchButtonClick" />
 
     <UpdatePhoneNumberForm :show="showUpdateModal"
         :header="'Update Phone Number Settings - ' + itemOptions?.item?.destination_number_formatted ?? 'loading'"
-        :loading="loadingModal" @close="showUpdateModal = false" :options="itemOptions"  @success="showNotification" @error="handleErrorResponse"
-        @refresh-data="handleSearchButtonClick" />
+        :loading="loadingModal" @close="showUpdateModal = false" :options="itemOptions" @success="showNotification"
+        @error="handleErrorResponse" @refresh-data="handleSearchButtonClick" />
 
     <BulkUpdatePhoneNumberForm :show="showBulkUpdateModal" :header="'Bulk Update'" :loading="loadingModal"
-        @close="showBulkUpdateModal = false" :items="selectedItems" :options="itemOptions" @success="showNotification" @error="handleErrorResponse"
-        @refresh-data="handleSearchButtonClick"/>
+        @close="showBulkUpdateModal = false" :items="selectedItems" :options="itemOptions" @success="showNotification"
+        @error="handleErrorResponse" @refresh-data="handleSearchButtonClick" />
 
     <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="confirmDeleteAction" />
+
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
+
+    <UploadModal :show="showUploadModal" @close="showUploadModal = false" :header="'Upload File'" @upload="uploadFile"
+        @download-template="downloadTemplateFile" :is-submitting="isUploadingFile" :errors="uploadErrors" />
 </template>
 
 <script setup>
@@ -227,11 +237,12 @@ import { registerLicense } from '@syncfusion/ej2-base';
 import { MagnifyingGlassIcon, TrashIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import MainLayout from "../Layouts/MainLayout.vue";
-import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import Notification from "./components/notifications/Notification.vue";
 import { PencilSquareIcon } from "@heroicons/vue/24/solid/index.js";
 import BulkUpdatePhoneNumberForm from "./components/forms/BulkUpdatePhoneNumberForm.vue";
 import Badge from "@generalComponents/Badge.vue";
+import { DocumentArrowUpIcon } from "@heroicons/vue/24/outline";
+import UploadModal from "./components/modal/UploadModal.vue";
 
 const page = usePage()
 const loading = ref(false)
@@ -243,20 +254,21 @@ const showCreateModal = ref(false);
 const showUpdateModal = ref(false);
 const showBulkUpdateModal = ref(false);
 const confirmationModalTrigger = ref(false);
-const confirmationModalDestroyPath = ref(null);
 const confirmDeleteAction = ref(null);
-const createFormSubmitting = ref(null);
-const bulkUpdateFormSubmitting = ref(null);
 const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
+const uploadErrors = ref(null);
+const showUploadModal = ref(false);
+const isUploadingFile = ref(null);
 let tooltipCopyContent = ref('Copy to Clipboard');
 
 const props = defineProps({
     data: Object,
     showGlobal: Boolean,
     routes: Object,
+    permissions: Object,
 });
 
 // console.log(props.data)
@@ -273,14 +285,14 @@ const showGlobal = ref(props.showGlobal);
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
     const actions = [];
-    if (page.props.auth.can.destination_update) {
+    if (props.permissions.update) {
         actions.push({
             id: 'bulk_update',
             label: 'Edit',
             icon: 'PencilSquareIcon'
         });
     }
-    if (page.props.auth.can.destination_destroy) {
+    if (props.permissions.destroy) {
         actions.push({
             id: 'bulk_delete',
             label: 'Delete',
@@ -301,24 +313,59 @@ const handleEditRequest = (itemUuid) => {
     getItemOptions(itemUuid);
 }
 
-const handleCreateRequest = (form) => {
-    createFormSubmitting.value = true;
-    formErrors.value = null;
 
-    axios.post(props.routes.store, form)
-        .then((response) => {
-            createFormSubmitting.value = false;
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-            handleModalClose();
-            handleClearSelection();
-        }).catch((error) => {
-            createFormSubmitting.value = false;
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        });
-
+const handleImportButtonClick = () => {
+    uploadErrors.value = null;
+    showUploadModal.value = true;
 };
+
+const uploadFile = (file) => {
+    isUploadingFile.value = true;
+    uploadErrors.value = null;
+    const formData = new FormData();
+    formData.append('file', file);
+
+    axios.post(props.routes.import, formData)
+        .then((response) => {
+            showNotification('success', response.data.messages);
+            handleModalClose();
+            handleSearchButtonClick();
+        })
+        .catch((error) => {
+            handleClearSelection();
+            handleErrorResponse(error);
+            if (error.response) {
+                uploadErrors.value = error.response.data.errors;
+            }
+        })
+        .finally(() => {
+            isUploadingFile.value = false;
+        });
+}
+
+function downloadTemplateFile() {
+    // Make a GET request to your Laravel route
+    axios.get(props.routes.download_template, {
+        responseType: 'blob' // Important: so we get back a Blob object
+    })
+        .then((response) => {
+            // Create a Blob from the response data
+            const fileBlob = new Blob([response.data], { type: 'text/csv' })
+            // Create a URL for the blob
+            const fileURL = window.URL.createObjectURL(fileBlob)
+
+            // Create a hidden link element, set it to the blob URL, and trigger a download
+            const link = document.createElement('a')
+            link.href = fileURL
+            link.setAttribute('download', 'template.csv') // The filename you want
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+        })
+        .catch((error) => {
+            console.error('Error downloading template:', error)
+        })
+}
 
 
 const handleSingleItemDeleteRequest = (uuid) => {
@@ -360,8 +407,8 @@ const handleCreateButtonClick = () => {
 }
 
 const handleSelectAll = () => {
-    axios.post(props.routes.select_all,  {
-            filter: filterData.value,
+    axios.post(props.routes.select_all, {
+        filter: filterData.value,
     })
         .then((response) => {
             selectedItems.value = response.data.items;
