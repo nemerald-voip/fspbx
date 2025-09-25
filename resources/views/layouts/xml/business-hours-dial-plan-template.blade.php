@@ -251,7 +251,7 @@
                         break="never">
                         <condition field="${strftime_tz({{ $tz }} %H%M)}" expression="{{ $c['time_regex'] }}"
                             break="on-true">
-                            <action application="set" data="slot_matched=1" />
+                            <action application="set" data="slot_matched=1" inline="true"/>
                             <action application="{{ $dest['destination_app'] }}"
                                 data="{{ $dest['destination_data'] }}" />
                         </condition>
@@ -263,7 +263,7 @@
                     @foreach ($useAttrs as $attr => $val)
                 {{ $attr }}="{{ $val }}" @endforeach
                     {!! $timeAttr !!} break="on-true">
-                    <action application="set" data="slot_matched=1" />
+                    <action application="set" data="slot_matched=1" inline="true"/>
                     <action application="{{ $dest['destination_app'] }}" data="{{ $dest['destination_data'] }}" />
                 </condition>
             @endif
@@ -302,7 +302,7 @@
             <condition wday="{{ $days }}" time-of-day="{{ $start->format('H:i') }}-{{ $end->format('H:i') }}"
                 break="on-true">
                 {{-- mark that a slot matched --}}
-                <action application="set" data="slot_matched=1" />
+                <action application="set" data="slot_matched=1" inline="true"/>
                 <action application="{{ $destApp }}" data="{{ $destData }}" />
             </condition>
         @endforeach
