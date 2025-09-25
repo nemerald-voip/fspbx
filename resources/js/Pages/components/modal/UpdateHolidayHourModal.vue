@@ -72,8 +72,8 @@
                                         label: 'Recurring Pattern',
                                     },
                                 ]" :search="true" :native="false" label="Holiday Type" input-type="search"
-                                    @change="handleHolidayTypeChange" autocomplete="off" placeholder="Select Holiday Type"
-                                    :floating="false" />
+                                    @change="handleHolidayTypeChange" autocomplete="off"
+                                    placeholder="Select Holiday Type" :floating="false" />
 
 
                                 <StaticElement name="p1" tag="p" :conditions="[
@@ -90,7 +90,8 @@
                                     <div class="rounded-md bg-blue-50 p-4">
                                         <div class="flex">
                                             <div class="shrink-0">
-                                                <InformationCircleIcon class="size-5 text-blue-400" aria-hidden="true" />
+                                                <InformationCircleIcon class="size-5 text-blue-400"
+                                                    aria-hidden="true" />
                                             </div>
 
                                             <div class="ml-3">
@@ -116,14 +117,16 @@
                                     <div class="rounded-md bg-blue-50 p-4">
                                         <div class="flex">
                                             <div class="shrink-0">
-                                                <InformationCircleIcon class="size-5 text-blue-400" aria-hidden="true" />
+                                                <InformationCircleIcon class="size-5 text-blue-400"
+                                                    aria-hidden="true" />
                                             </div>
 
                                             <div class="ml-3">
 
                                                 Define a holiday for one specific calendar date.
                                                 Pick your date and, if needed, enter a start and/or end time.
-                                                Leaving the time fields blank will cover the entire day from 00:00 to 23:59.
+                                                Leaving the time fields blank will cover the entire day from 00:00 to
+                                                23:59.
                                             </div>
                                         </div>
                                     </div>
@@ -143,14 +146,17 @@
                                     <div class="rounded-md bg-blue-50 p-4">
                                         <div class="flex">
                                             <div class="shrink-0">
-                                                <InformationCircleIcon class="size-5 text-blue-400" aria-hidden="true" />
+                                                <InformationCircleIcon class="size-5 text-blue-400"
+                                                    aria-hidden="true" />
                                             </div>
 
                                             <div class="ml-3">
                                                 Create an exception spanning multiple days.
-                                                Select a “From” date and a “To” date, and optionally specify start/end times
+                                                Select a “From” date and a “To” date, and optionally specify start/end
+                                                times
                                                 for each day.
-                                                If you leave the time fields blank, each day in the range will default to a
+                                                If you leave the time fields blank, each day in the range will default
+                                                to a
                                                 full-day exception.
                                             </div>
                                         </div>
@@ -171,7 +177,8 @@
                                     <div class="rounded-md bg-blue-50 p-4">
                                         <div class="flex">
                                             <div class="shrink-0">
-                                                <InformationCircleIcon class="size-5 text-blue-400" aria-hidden="true" />
+                                                <InformationCircleIcon class="size-5 text-blue-400"
+                                                    aria-hidden="true" />
                                             </div>
 
                                             <div class="ml-3">
@@ -180,7 +187,8 @@
                                                 <strong>recurring
                                                     pattern</strong>.
                                                 If you set multiple options (like a specific month and a specific day of
-                                                the week), the condition will only be met when <strong>all</strong> selected
+                                                the week), the condition will only be met when <strong>all</strong>
+                                                selected
                                                 criteria are true simultaneously.
                                                 Any field you leave blank will not restrict the condition (for example,
                                                 leaving <strong>Month</strong> blank means “every month”).
@@ -241,24 +249,6 @@
                                         }
 
                                     }" :columns="{
-    default: {
-        container: 6,
-    },
-    sm: {
-        container: 4,
-    },
-}" :conditions="[
-    [
-        'holiday_type',
-        'in',
-        [
-            'single_date',
-            'date_range',
-        ],
-    ],
-]" />
-                                <DateElement name="start_time" label="Start Time" :date="false" :time="true" :hour24="false"
-                                    value-format="HH:mm" :columns="{
                                         default: {
                                             container: 6,
                                         },
@@ -275,6 +265,24 @@
         ],
     ],
 ]" />
+                                <DateElement name="start_time" label="Start Time" :date="false" :time="true"
+                                    :hour24="false" value-format="HH:mm" :columns="{
+                                        default: {
+                                            container: 6,
+                                        },
+                                        sm: {
+                                            container: 4,
+                                        },
+                                    }" :conditions="[
+                                        [
+                                            'holiday_type',
+                                            'in',
+                                            [
+                                                'single_date',
+                                                'date_range',
+                                            ],
+                                        ],
+                                    ]" />
                                 <GroupElement name="container" :conditions="[
                                     [
                                         'holiday_type',
@@ -292,14 +300,14 @@
                                         container: 4,
                                     },
                                 }" :conditions="[
-    [
-        'holiday_type',
-        'in',
-        [
-            'date_range',
-        ],
-    ],
-]" />
+                                    [
+                                        'holiday_type',
+                                        'in',
+                                        [
+                                            'date_range',
+                                        ],
+                                    ],
+                                ]" />
                                 <DateElement name="end_time" label="End Time" :date="false" :time="true" :hour24="false"
                                     value-format="HH:mm" :columns="{
                                         default: {
@@ -309,21 +317,21 @@
                                             container: 4,
                                         },
                                     }" :conditions="[
-    [
-        'holiday_type',
-        'in',
-        [
-            'single_date',
-            'date_range',
-        ],
-    ],
-]" />
+                                        [
+                                            'holiday_type',
+                                            'in',
+                                            [
+                                                'single_date',
+                                                'date_range',
+                                            ],
+                                        ],
+                                    ]" />
                                 <GroupElement name="container_1" />
 
                                 <SelectElement name="mon" :items="monthOptions" :search="true" :native="false"
                                     input-type="search" autocomplete="off" label="Month" :strict="false"
-                                    description="Select the month of the year. Leave blank for any month." :floating="false"
-                                    :conditions="[
+                                    description="Select the month of the year. Leave blank for any month."
+                                    :floating="false" :conditions="[
                                         [
                                             'holiday_type',
                                             'in',
@@ -387,9 +395,9 @@
                                     content="Define how incoming calls are handled during this holiday."
                                     :conditions="[['holiday_type', '!=', null],]" />
 
-                                <SelectElement name="action" :items="options.routing_types" label-prop="name" :search="true"
-                                    :native="false" label="Choose Action" input-type="search" autocomplete="off"
-                                    placeholder="Choose Action" :floating="false" :strict="false"
+                                <SelectElement name="action" :items="options.routing_types" label-prop="name"
+                                    :search="true" :native="false" label="Choose Action" input-type="search"
+                                    autocomplete="off" placeholder="Choose Action" :floating="false" :strict="false"
                                     :columns="{ sm: { container: 6, }, }" @change="(newValue, oldValue, el$) => {
                                         let target = el$.form$.el$('target')
 
@@ -673,7 +681,7 @@ const dayOfWeekOptions = [
 ];
 
 const usHolidays = [
-     {
+    {
         label: "New Year's Eve (December 31)",
         value: { mon: "12", wday: "", mday: "31", mweek: "" }
     },
@@ -731,7 +739,7 @@ const usHolidays = [
     },
     {
         label: "Black Friday (4th Friday in November)",
-        value: { mon: "11", wday: "6",  mday: "23-29",  mweek: "" }
+        value: { mon: "11", wday: "6", mday: "23-29", mweek: "" }
     },
     {
         label: "Christmas Eve (December 24)",
@@ -824,3 +832,12 @@ const caHolidays = [
 ];
 
 </script>
+<style>
+div[data-lastpass-icon-root] {
+    display: none !important
+}
+
+div[data-lastpass-root] {
+    display: none !important
+}
+</style>

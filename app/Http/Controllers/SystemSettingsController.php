@@ -51,7 +51,8 @@ class SystemSettingsController extends Controller
                 'routes' => [
                     'settings_update' => route('system-settings.update'),
                     'payment_gateways' => route('system-settings.payment_gateways'),
-                    'payment_gateway_update' => route('gateway.update')
+                    'payment_gateway_update' => route('gateway.update'),
+                    'payment_gateway_deactivate' => route('gateway.deactivate'),
                 ],
 
             ]
@@ -59,47 +60,6 @@ class SystemSettingsController extends Controller
     }
 
 
-    /**
-     * @return Collection
-     */
-    public function getData()
-    {
-        $data = $this->builder();
-
-        $data = $data->first(); // This will return a collection
-
-        $data->append('named_settings');
-
-        // logger($data);
-
-        return $data;
-    }
-
-
-    /**
-     * @param  array  $filters
-     * @return Builder
-     */
-    public function builder(array $filters = []): Builder
-    {
-        $data =  $this->model::query();
-
-        $domainUuid = Session::get('domain_uuid');
-        $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
-
-        $data->select(
-            'domain_uuid',
-            'domain_name',
-            'domain_description',
-            'domain_enabled',
-        );
-
-        // $data->with(['settings' => function ($query) {
-        //     $query->select('domain_uuid', 'domain_setting_uuid', 'domain_setting_category', 'domain_setting_subcategory', 'domain_setting_value', 'domain_setting_enabled');
-        // }]);
-
-        return $data;
-    }
 
 
     /**
@@ -110,7 +70,6 @@ class SystemSettingsController extends Controller
      */
     public function update(UpdateAccountSettingsRequest $request)
     {
-
         try {
             // Begin Transaction
             DB::beginTransaction();

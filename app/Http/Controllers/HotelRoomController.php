@@ -11,6 +11,7 @@ use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
 use App\Http\Requests\StoreHotelRoomRequest;
 use App\Http\Requests\UpdateHotelRoomRequest;
+use App\Http\Requests\BulkStoreHotelRoomsRequest;
 
 class HotelRoomController extends Controller
 {
@@ -71,6 +72,49 @@ class HotelRoomController extends Controller
 
             return response()->json([
                 'messages' => ['error' => ['Something went wrong while saving.']]
+            ], 500);
+        }
+    }
+
+    public function bulkStore(BulkStoreHotelRoomsRequest $request)
+    {
+        $data = $request->validated();
+        $domainUuid = (string) $data['domain_uuid'];
+        $uuids = $data['extensions'];
+
+        try {
+            DB::beginTransaction();
+
+            // Pull extension number + uuid for the provided UUIDs (scoped to domain)
+            $extensions = Extensions::query()
+                ->where('domain_uuid', $domainUuid)
+                ->whereIn('extension_uuid', $uuids)
+                ->select(['extension_uuid', 'extension'])
+                ->get();
+
+            $created = [];
+
+            foreach ($extensions as $ext) {
+                $created[] = HotelRoom::create([
+                    'domain_uuid'    => $domainUuid,
+                    'extension_uuid' => $ext->extension_uuid,
+                    'room_name'      => (string) $ext->extension, // as requested
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'messages' => ['success' => [count($created) . ' room(s) created']],
+                // If helpful for the UI:
+                // 'data' => collect($created)->map->only(['uuid','room_name','extension_uuid']),
+            ], 201);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger('HotelRoomController@bulkStore error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'messages' => ['error' => ['Something went wrong while saving.']],
             ], 500);
         }
     }
@@ -155,9 +199,28 @@ class HotelRoomController extends Controller
 
             $currentDomain = session('domain_uuid');
 
-            $extensions = QueryBuilder::for(Extensions::class)
-                // only extensions in the current domain
-                ->where('domain_uuid', $currentDomain)
+            // Subquery of extensions already tied to a room (in this domain)
+            $assignedExtensionsSub = HotelRoom::query()
+                ->select('extension_uuid')
+                ->whereNotNull('extension_uuid')
+                ->where('domain_uuid', $currentDomain);
+
+            // Base: current-domain extensions
+            $base = Extensions::query()
+                ->where('domain_uuid', $currentDomain);
+
+            // For "add new": exclude all assigned.
+            // For "edit": exclude assigned EXCEPT keep the current room's extension.
+            $extensionsQuery = $base->when(
+                $item,
+                fn($q) => $q->where(function ($q2) use ($assignedExtensionsSub, $item) {
+                    $q2->whereNotIn('extension_uuid', $assignedExtensionsSub)
+                        ->orWhere('extension_uuid', $item->extension_uuid);
+                }),
+                fn($q) => $q->whereNotIn('extension_uuid', $assignedExtensionsSub)
+            );
+
+            $extensions = QueryBuilder::for($extensionsQuery)
                 ->select([
                     'extension_uuid',
                     'extension',
@@ -172,9 +235,10 @@ class HotelRoomController extends Controller
                     ];
                 });
 
-                $routes = array_merge($routes, [
-                    'store_route'  => route('hotel-rooms.store'),
-                ]);
+            $routes = array_merge($routes, [
+                'store_route'  => route('hotel-rooms.store'),
+                'bulk_store_route' => route('hotel-rooms.bulk.store'),
+            ]);
 
             // logger($extensions);
 
@@ -204,6 +268,12 @@ class HotelRoomController extends Controller
                 ->get();
 
             foreach ($items as $item) {
+
+                //delete hotel room status
+                if (method_exists($item, 'status')) {
+                    $item->status()->delete();
+                }
+
                 $item->delete();
             }
 

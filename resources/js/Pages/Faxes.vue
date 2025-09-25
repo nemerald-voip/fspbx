@@ -308,7 +308,7 @@
                         </template>
 
                         <template v-if="page.props.auth.can.fax_inbox_view">
-                            <a :href="`/faxes/inbox/${row.fax_uuid}`"
+                            <a :href="`/fax/${row.fax_uuid}/inbox`"
                                 class="inline-flex items-center px-2 py-1 rounded text-gray-700 hover:bg-gray-100 transition text-xs font-medium"
                                 title="Inbox">
                                 <EnvelopeIcon class="w-4 h-4 mr-1" />

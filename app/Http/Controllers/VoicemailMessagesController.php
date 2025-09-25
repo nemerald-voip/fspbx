@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
 use libphonenumber\NumberParseException;
+use Spatie\QueryBuilder\QueryBuilder;
+use Spatie\QueryBuilder\AllowedFilter;
 
 class VoicemailMessagesController extends Controller
 {
@@ -40,9 +42,12 @@ class VoicemailMessagesController extends Controller
             return redirect('/');
         }
 
+        $voicemail_uuid = request()->route('voicemail');
+
         return Inertia::render(
             $this->viewName,
             [
+                'voicemail_uuid' => $voicemail_uuid,
                 'data' => function () {
                     return $this->getData();
                 },
@@ -56,53 +61,6 @@ class VoicemailMessagesController extends Controller
             ]
         );
 
-        $data = array();
-        $data['voicemail'] = $voicemail;
-        $messages = VoicemailMessages::where('voicemail_uuid', $voicemail->voicemail_uuid)->orderBy('created_epoch', 'desc')->get();
-
-        //Get libphonenumber object
-        $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
-
-        // Get local Time Zone
-        $time_zone = get_local_time_zone($voicemail->domain_uuid);
-
-        foreach ($messages as $message) {
-
-            // Try to convert caller ID number to National format
-            try {
-                $phoneNumberObject = $phoneNumberUtil->parse($message->caller_id_number, 'US');
-                if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                    $message->caller_id_number = $phoneNumberUtil
-                        ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::NATIONAL);
-                }
-            } catch (NumberParseException $e) {
-                // Do nothing and leave the numner as is
-            }
-
-            // Try to convert the date to human redable format
-            $message->date = Carbon::createFromTimestamp($message->created_epoch, $time_zone)->toDayDateTimeString();
-
-            // Get the path to message file
-            if (Storage::disk('voicemail')->exists($voicemail->domain->domain_name . '/' . $voicemail->voicemail_id .  '/msg_' . $message->voicemail_message_uuid . '.wav')) {
-                $message->file = Storage::disk('voicemail')->path($voicemail->domain->domain_name . '/' . $voicemail->voicemail_id .  '/msg_' . $message->voicemail_message_uuid . '.wav');
-            } elseif (Storage::disk('voicemail')->exists($voicemail->domain->domain_name . '/' . $voicemail->voicemail_id .  '/msg_' . $message->voicemail_message_uuid . '.mp3')) {
-                $message->file = Storage::disk('voicemail')->path($voicemail->domain->domain_name . '/' . $voicemail->voicemail_id .  '/msg_' . $message->voicemail_message_uuid . '.mp3');
-            }
-            // $message->file = Storage::disk('voicemail') . '/' . $voicemail->domain_uuid . '/' . $voicemail->voicemail_id . 
-            //     '/msg_' . $message->voicemail_message_uuid;
-        }
-
-
-        $data['messages'] = $messages;
-
-        //assign permissions
-        $permissions['add_new'] = userCheckPermission('voicemail_add');
-        $permissions['edit'] = userCheckPermission('voicemail_edit');
-        $permissions['delete'] = userCheckPermission('voicemail_delete');
-
-        return view('layouts.voicemails.messages.list')
-            ->with($data)
-            ->with('permissions', $permissions);
     }
 
 
@@ -473,17 +431,52 @@ class VoicemailMessagesController extends Controller
     public function selectAll()
     {
         try {
-            if (request()->get('showGlobal')) {
-                $uuids = $this->model::get($this->model->getKeyName())->pluck($this->model->getKeyName());
-            } else {
-                $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
-                    ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
+            $params = request()->all();
+
+            $domain_uuid = session('domain_uuid');
+            $params['domain_uuid'] = $domain_uuid;
+
+            if (!empty(data_get($params, 'filter.dateRange'))) {
+                $startTs = Carbon::parse(data_get($params, 'filter.dateRange.0'))
+                    ->getTimestamp();
+    
+                $endTs = Carbon::parse(data_get($params, 'filter.dateRange.1'))
+                    ->getTimestamp();
+    
+                $params['filter']['startPeriod'] = $startTs;
+                $params['filter']['endPeriod']   = $endTs;
+    
+                unset($params['filter']['dateRange']);
             }
+
+            $data = QueryBuilder::for(VoicemailMessages::class, request()->merge($params))
+                ->select([
+                    'voicemail_message_uuid',
+                    'domain_uuid',
+
+                ])
+                ->allowedFilters([
+                    AllowedFilter::exact('voicemail_uuid'),
+                    // AllowedFilter::callback('startPeriod', function ($query, $value) {
+                    //     $query->where('fax_epoch', '>=', $value);
+                    // }),
+                    // AllowedFilter::callback('endPeriod', function ($query, $value) {
+                    //     $query->where('fax_epoch', '<=', $value);
+                    // }),
+
+                    AllowedFilter::callback('search', function ($query, $value) {
+                        $query->where(function ($q) use ($value) {
+                            $q->where('caller_id_name', 'ilike', "%{$value}%")
+                                ->orWhere('caller_id_number', 'ilike', "%{$value}%");
+                        });
+                    }),
+                ])
+                ->pluck('voicemail_message_uuid');
 
             // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['All items selected']],
-                'items' => $uuids,
+                'items' => $data,
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());

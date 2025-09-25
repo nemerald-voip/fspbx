@@ -95,7 +95,7 @@ const form$ = ref(null)
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
-    const requestData = form$.data
+    const requestData = form$.requestData
 
     // console.log(requestData);
     return await form$.$vueform.services.axios.post(props.options.routes.store_route, requestData)

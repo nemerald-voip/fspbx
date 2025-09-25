@@ -41,10 +41,11 @@ class HotelRoomService
                 'housekeeping_status',
                 'guest_first_name',
                 'guest_last_name',
+                'extension_name',
             ]);
 
             $room->status()->delete();
-
+            
             $this->updateExtension($room, $payload);
 
             // Purge entire mailbox (messages + greetings + recorded name)
@@ -393,6 +394,8 @@ class HotelRoomService
             ['pattern' => '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/',   'format' => 'Y-m-d\TH:i:s'],
             // 2015-01-01 10:11:12
             ['pattern' => '/^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}:\d{2}$/',  'format' => 'Y-m-d H:i:s'],
+            // 2015-01-01 10:11
+            ['pattern' => '/^\d{4}-\d{2}-\d{2}\s\d{2}:\d{2}$/',  'format' => 'Y-m-d H:i'],
             // 01/01/2015 10:11:12
             ['pattern' => '/^\d{2}\/\d{2}\/\d{4}\s\d{2}:\d{2}:\d{2}$/', 'format' => 'm/d/Y H:i:s'],
             // 01/01/2015 10:11

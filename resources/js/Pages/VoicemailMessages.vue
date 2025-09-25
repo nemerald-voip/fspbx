@@ -173,15 +173,13 @@ import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
 import Loading from "./components/general/Loading.vue";
-import { TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
+import { TrashIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import Notification from "./components/notifications/Notification.vue";
-import Badge from "@generalComponents/Badge.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { UserGroupIcon, UserIcon, EnvelopeIcon } from "@heroicons/vue/24/outline";
 import Spinner from "@generalComponents/Spinner.vue";
 import {
     PlayCircleIcon,
@@ -208,6 +206,7 @@ const notificationShow = ref(null);
 const isDownloading = ref(false);
 
 const props = defineProps({
+    voicemail_uuid: String,
     data: Object,
     routes: Object,
     itemData: Object,
@@ -215,8 +214,8 @@ const props = defineProps({
 
 
 const filterData = ref({
+    voicemail_uuid: props.voicemail_uuid,
     search: null,
-    showGlobal: props.showGlobal,
 });
 
 const currentAudio = ref(null);
@@ -423,7 +422,10 @@ const executeBulkDelete = () => {
 
 
 const handleSelectAll = () => {
-    axios.post(props.routes.select_all, filterData._rawValue)
+    axios.post(props.routes.select_all, {
+            filter: filterData.value,
+        
+    })
         .then((response) => {
             selectedItems.value = response.data.items;
             selectAll.value = true;

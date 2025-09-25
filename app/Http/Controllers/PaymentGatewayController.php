@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use App\Models\GatewaySetting;
 use App\Models\PaymentGateway;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use App\Http\Requests\UpdatePaymentGatewayRequest;
 
 class PaymentGatewayController extends Controller
@@ -22,27 +24,38 @@ class PaymentGatewayController extends Controller
             $gateway->is_enabled = filter_var($data['status'], FILTER_VALIDATE_BOOLEAN);
             $gateway->save();
 
-            // 2) upsert its four settings
-            $settings = [
-                'sandbox_secret_key'        => $data['sandbox_secret_key'],
-                'sandbox_publishable_key'   => $data['sandbox_publishable_key'],
-                'live_mode_secret_key'      => $data['live_mode_secret_key'],
-                'live_mode_publishable_key' => $data['live_mode_publishable_key'],
-            ];
+            // Clear all cached settings for this gateway (requires Redis/Memcached for tags)
+            Cache::tags(['gateways', $gateway->slug])->flush();
 
-            foreach ($settings as $key => $value) {
-                $setting = GatewaySetting::firstOrNew([
-                    'gateway_uuid' => $gateway->uuid,
-                    'setting_key'  => $key,
-                ]);
+            // 2) Erase all current settings for this gateway
+            GatewaySetting::where('gateway_uuid', $gateway->uuid)->delete();
 
-                $setting->setting_value = $value;
+            // 3) Insert new settings from payload (everything except uuid/status)
+            $settingsPayload = Arr::except($data, ['uuid', 'status']);
 
-                if (! $setting->exists) {
-                    $setting->uuid = (string) Str::uuid();
+            if (!empty($settingsPayload)) {
+                $now = now();
+                $rows = [];
+                $ttl = now()->addWeek();
+                foreach ($settingsPayload as $key => $value) {
+                    $rows[] = [
+                        'uuid'          => (string) Str::uuid(),
+                        'gateway_uuid'  => $gateway->uuid,
+                        'setting_key'   => $key,
+                        'setting_value' => $value,
+                        'created_at'    => $now,
+                        'updated_at'    => $now,
+                    ];
+
+                    // write each setting to cache for one week. format gateways:{slug}:{setting_name}
+                    if ($gateway->is_enabled) {
+                        Cache::tags(['gateways', $gateway->slug])
+                        ->put("gateways:{$gateway->slug}:{$key}", $value, $ttl);
+                    }
+                    
                 }
+                GatewaySetting::insert($rows);
 
-                $setting->save();
             }
 
             DB::commit();
@@ -54,7 +67,6 @@ class PaymentGatewayController extends Controller
                     ],
                 ],
             ], 200);
-
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -67,6 +79,40 @@ class PaymentGatewayController extends Controller
                     'server' => [
                         'Server returned an error while processing your request.'
                     ],
+                ],
+            ], 500);
+        }
+    }
+
+
+    public function deactivate()
+    {
+        $validated = request()->validate([
+            'uuid' => ['required', 'uuid', 'exists:payment_gateways,uuid'],
+        ]);
+
+        try {
+            $gateway = PaymentGateway::findOrFail($validated['uuid']);
+
+            if ($gateway->is_enabled) {
+                $gateway->is_enabled = false;
+                $gateway->save();
+            }
+
+            Cache::tags(['gateways', $gateway->slug])->flush();
+
+            return response()->json([
+                'messages' => [
+                    'server' => ['Gateway deactivated successfully.'],
+                ],
+            ], 200);
+        } catch (\Throwable $e) {
+            logger('PaymentGateway@deactivate error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'errors'  => [
+                    'server' => ['Server returned an error while processing your request.'],
                 ],
             ], 500);
         }

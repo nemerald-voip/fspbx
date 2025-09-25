@@ -7,8 +7,6 @@ use Inertia\Inertia;
 use App\Jobs\ExportCdrs;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Session;
 use App\Services\CdrDataService;
 
 class ExtensionStatisticsController extends Controller

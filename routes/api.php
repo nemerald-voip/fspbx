@@ -8,6 +8,7 @@ use App\Http\Controllers\TokenController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\GroupsController;
+use App\Http\Controllers\FaxInboxController;
 use App\Http\Controllers\UserLogsController;
 use App\Http\Controllers\HotelRoomController;
 use App\Http\Controllers\VoicemailController;
@@ -22,6 +23,7 @@ use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\HotelRoomStatusController;
+use App\Http\Controllers\InboundWebhooksController;
 use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\EmergencyCallController;
 use App\Http\Controllers\ExtensionStatisticsController;
@@ -60,6 +62,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::resource('/hotel-rooms', HotelRoomController::class);
     Route::post('/hotel-rooms/item-options', [HotelRoomController::class, 'getItemOptions'])->name('hotel-rooms.item.options');
     Route::post('hotel-rooms/bulk-delete', [HotelRoomController::class, 'bulkDelete'])->name('hotel-rooms.bulk.delete');
+    Route::post('hotel-rooms/bulk-store', [HotelRoomController::class, 'bulkStore'])->name('hotel-rooms.bulk.store');
 
     // Hotel room status
     Route::resource('/hotel-room-status', HotelRoomStatusController::class);
@@ -70,7 +73,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::resource('/housekeeping', HotelHousekeepingDefinitionController::class);
     Route::post('/housekeeping/item-options', [HotelHousekeepingDefinitionController::class, 'getItemOptions'])->name('housekeeping.item.options');
     Route::post('/housekeeping/default-codes', [HotelHousekeepingDefinitionController::class, 'defaultCodes'])->name('housekeeping.default-codes');
-    
+
 
     // Emergency calls
     Route::resource('/emergency-calls', EmergencyCallController::class);
@@ -141,6 +144,9 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     // Extension statistics
     Route::get('/extension-statistics/data', [ExtensionStatisticsController::class, 'getData'])->name('extension-statistics.data');
 
+    // Inbound Webhooks
+    Route::get('/inbound-webhooks/data', [InboundWebhooksController::class, 'getData'])->name('inbound-webhooks.data');
+
     // User logs
     Route::post('user-logs/select-all', [UserLogsController::class, 'selectAll'])->name('user-logs.select.all');
 
@@ -163,6 +169,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/phone-numbers/bulk-update', [PhoneNumbersController::class, 'bulkUpdate'])->name('phone-numbers.bulk.update');
     Route::post('/phone-numbers/bulk-delete', [PhoneNumbersController::class, 'bulkDelete'])->name('phone-numbers.bulk.delete');
     Route::post('phone-numbers/item-options', [PhoneNumbersController::class, 'getItemOptions'])->name('phone-numbers.item.options');
+    Route::get('/phone-numbers/template/download', [PhoneNumbersController::class, 'downloadTemplate'])->name('phone-numbers.template.download');
+    Route::post('/phone-numbers/import', [PhoneNumbersController::class, 'import'])->name('phone-numbers.import');
 
     //Cloud Provisioning
     Route::get('/cloud-provisioning/{device}/status', [DeviceCloudProvisioningController::class, 'status'])->name('cloud-provisioning.status');
@@ -189,10 +197,13 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::delete('/faxes/deleteSentFax/{id}', [FaxesController::class, 'deleteSentFax'])->name('faxes.file.deleteSentFax');
     Route::delete('/faxes/deleteReceivedFax/{id}', [FaxesController::class, 'deleteReceivedFax'])->name('faxes.file.deleteReceivedFax');
     Route::delete('/faxes/deleteFaxLog/{id}', [FaxesController::class, 'deleteFaxLog'])->name('faxes.file.deleteFaxLog');
-    Route::get('/fax/inbox/{file}/download', [FaxesController::class, 'downloadInboxFaxFile'])->name('downloadInboxFaxFile');
+    Route::get('/fax/inbox/{file}/download', [FaxInboxController::class, 'download'])->name('fax-inbox.fax.download');
+    Route::post('/fax/inbox/bulk-delete', [FaxInboxController::class, 'bulkDelete'])->name('fax-inbox.bulk.delete');
+    Route::post('/fax/inbox/select-all', [FaxInboxController::class, 'selectAll'])->name('fax-inbox.select.all');
     Route::get('/fax/sent/{file}/download', [FaxesController::class, 'downloadSentFaxFile'])->name('downloadSentFaxFile');
     Route::get('/fax/sent/{faxQueue}/{status?}', [FaxesController::class, 'updateStatus'])->name('faxes.file.updateStatus');
     Route::post('/faxes/send', [FaxesController::class, 'sendFax'])->name('faxes.new.fax.send');
+    Route::get('/fax/inbox/data', [FaxInboxController::class, 'getData'])->name('fax-inbox.data');
 
     // Call Detail Records
     Route::get('/call-detail-records/data', [CdrsController::class, 'getData'])->name('cdrs.data');
@@ -207,7 +218,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // Payment Gateways
     Route::put('/gateways', [PaymentGatewayController::class, 'update'])->name('gateway.update');
+    Route::post('/gateways/deactivate', [PaymentGatewayController::class, 'deactivate'])->name('gateway.deactivate');
 
     // CHAR PMS
-    Route::post('/pms/char', CharPmsWebhookController::class)->name('pms.char'); 
+    Route::post('/pms/char', CharPmsWebhookController::class)->name('pms.char');
 });

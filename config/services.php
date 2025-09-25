@@ -44,5 +44,14 @@ return [
             'api_url' => env('POLYCOM_API_URL', 'https://api.ztp.poly.com/v1'),
         ]
     ],
+    'ceretax' => [
+        'env' => env('CERETAX_ENV', 'sandbox'),
+        'sandbox_url' => env('CERETAX_SANDBOX_URL', "https://calc.cert.ceretax.net/"),
+        'prod_url' => env('CERETAX_PRODUCTION_URL', "https://calc.prod.ceretax.net/"),
+        'sandbox_api_key' => env('CERETAX_SANDBOX_API_KEY', ""),
+        'prod_api_key' => env('CERETAX_PROD_API_KEY',""),
+        'sandbox_client_profile_id' => env('CERETAX_SANDBOX_CLIENT_PROFILE_ID', "default"),
+        'prod_client_profile_id' => env('CERETAX_PROD_CLIENT_PROFILE_ID', "default"),
+    ],
 
 ];

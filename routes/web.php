@@ -10,6 +10,7 @@ use App\Http\Controllers\DomainController;
 use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\ContactsController;
+use App\Http\Controllers\FaxInboxController;
 use App\Http\Controllers\FaxQueueController;
 use App\Http\Controllers\FirewallController;
 use App\Http\Controllers\MessagesController;
@@ -35,6 +36,7 @@ use App\Http\Controllers\RegistrationsController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\AppsCredentialsController;
+use App\Http\Controllers\InboundWebhooksController;
 use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\SansayActiveCallsController;
 use App\Http\Controllers\VoicemailMessagesController;
@@ -73,6 +75,7 @@ Route::webhooks('webhook/sinch/sms', 'sinch_messaging');
 Route::webhooks('webhook/bandwidth/sms', 'bandwidth_messaging');
 Route::webhooks('/sms/ringotelwebhook', 'ringotel_messaging');
 Route::webhooks('/webhook/freeswitch', 'freeswitch');
+Route::webhooks('/webhook/stripe', 'stripe');
 
 // Routes for 2FA email challenge. Used as a backup when 2FA is not enabled.
 Route::get('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeController::class, 'create'])->name('email-challenge.login');
@@ -88,7 +91,7 @@ Route::get('/csrf-token/refresh', [CsrfTokenController::class, 'store']);
 Route::get('/mobile-app/get-password/{token}', [AppsCredentialsController::class, 'getPasswordByToken'])->name('appsGetPasswordByToken');
 Route::post('/mobile-app/get-password/{token}', [AppsCredentialsController::class, 'retrievePasswordByToken'])->name('appsRetrievePasswordByToken');
 
-Route::match(['GET','HEAD'], '/prov/{path}', [ProvisioningController::class, 'serve'])
+Route::match(['GET', 'HEAD'], '/prov/{path}', [ProvisioningController::class, 'serve'])
     ->where('path', '.*')
     ->middleware(['throttle:provision', 'provision.digest'])
     ->name('provision.serve');
@@ -118,6 +121,9 @@ Route::group(['middleware' => 'auth'], function () {
     //Extension Statistics
     Route::get('/extension-statistics', [ExtensionStatisticsController::class, 'index'])->name('extension-statistics.index');
 
+    //Inbound Webhooks
+    Route::get('/inbound-webhooks', [InboundWebhooksController::class, 'index'])->name('inbound-webhooks.index');
+
     //Domains
     Route::get('domains/extensions', [DomainController::class, 'countExtensionsInDomains']);
 
@@ -132,7 +138,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     //Fax
     Route::get('faxes', [FaxesController::class, 'index'])->name('faxes.index');
-    Route::get('/faxes/inbox/{id}', [FaxesController::class, 'inbox'])->name('faxes.inbox.list');
+    Route::get('/fax/{fax}/inbox', [FaxInboxController::class, 'index'])->name('fax-inbox.index');
     Route::get('/faxes/sent/{id}', [FaxesController::class, 'sent'])->name('faxes.sent.list');
     Route::get('/faxes/active/{id}', [FaxesController::class, 'active'])->name('faxes.active.list');
     Route::get('/faxes/log/{id}', [FaxesController::class, 'log'])->name('faxes.log.list');
