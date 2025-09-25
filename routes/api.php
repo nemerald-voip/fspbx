@@ -169,6 +169,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/phone-numbers/bulk-update', [PhoneNumbersController::class, 'bulkUpdate'])->name('phone-numbers.bulk.update');
     Route::post('/phone-numbers/bulk-delete', [PhoneNumbersController::class, 'bulkDelete'])->name('phone-numbers.bulk.delete');
     Route::post('phone-numbers/item-options', [PhoneNumbersController::class, 'getItemOptions'])->name('phone-numbers.item.options');
+    Route::get('/phone-numbers/template/download', [PhoneNumbersController::class, 'downloadTemplate'])->name('phone-numbers.template.download');
+    Route::post('/phone-numbers/import', [PhoneNumbersController::class, 'import'])->name('phone-numbers.import');
 
     //Cloud Provisioning
     Route::get('/cloud-provisioning/{device}/status', [DeviceCloudProvisioningController::class, 'status'])->name('cloud-provisioning.status');
