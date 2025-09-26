@@ -78,44 +78,42 @@ class DeleteOldVoicemails implements ShouldQueue
     {
         Redis::throttle('fax')->allow(1)->every(60)->then(function () {
 
-            $days = $this->daysKeepVoicemail;
-            $cutoffTimestamp = Carbon::now()->subDays($days)->timestamp;
+            try {
+                $days = $this->daysKeepVoicemail;
+                $cutoffTimestamp = Carbon::now()->subDays($days)->timestamp;
 
-            // Access the 'voicemail' disk (root: /var/lib/freeswitch/storage/voicemail/default)
-            $disk = Storage::disk('voicemail');
-            // Retrieve the absolute path for the disk
-            $basePath = $disk->path('');
+                // Access the 'voicemail' disk (root: /var/lib/freeswitch/storage/voicemail/default)
+                $disk = Storage::disk('voicemail');
+                // Retrieve the absolute path for the disk
+                $basePath = $disk->path('');
 
-            // Ensure the base path ends with a directory separator if needed
-            $basePath = rtrim($basePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
-            
-            $pattern = $basePath . 'msg_*.{wav,mp3}';
-            $files = glob($pattern, GLOB_BRACE);
+                // Ensure the base path ends with a directory separator if needed
+                $basePath = rtrim($basePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
 
-            foreach ($files as $file) {
-                if (filemtime($file) < $cutoffTimestamp) {
-                    try {
-                        if (unlink($file)) {
-                            // logger("Deleted voicemail file: {$file}");
-                        } else {
-                            logger("Failed to delete voicemail file: {$file}");
+                $pattern = $basePath . 'msg_*.{wav,mp3}';
+                $files = glob($pattern, GLOB_BRACE);
+
+                foreach ($files as $file) {
+                    if (filemtime($file) < $cutoffTimestamp) {
+                        try {
+                            if (unlink($file)) {
+                                // logger("Deleted voicemail file: {$file}");
+                            } else {
+                                logger("Failed to delete voicemail file: {$file}");
+                            }
+                        } catch (\Exception $e) {
+                            logger("Error deleting voicemail file {$file}: " . $e->getMessage());
                         }
-                    } catch (\Exception $e) {
-                        logger("Error deleting voicemail file {$file}: " . $e->getMessage());
                     }
                 }
-            }
 
-            // Delete voicemail message records using the VoicemailMessages model
-            try {
-                // Assuming created_epoch stores Unix timestamps, delete messages older than the cutoff
+                // Delete voicemail message records using the VoicemailMessages model
                 VoicemailMessages::where('created_epoch', '<', $cutoffTimestamp)->delete();
                 // logger("Deleted voicemail messages older than {$days} days from VoicemailMessages.");
             } catch (\Exception $e) {
                 logger("Error deleting voicemail messages: " . $e->getMessage());
             }
 
-            // logger("🔕 Wake-up call snoozed: {$this->uuid} until {$newAttemptTime->toDateTimeString()}");
         }, function () {
             return $this->release(30); // If locked, retry in 30 seconds
         });

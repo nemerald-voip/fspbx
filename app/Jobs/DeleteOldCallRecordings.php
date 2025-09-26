@@ -115,7 +115,6 @@ class DeleteOldCallRecordings implements ShouldQueue
                 logger("Error deleting call recording records from CallRecordings: " . $e->getMessage());
             }
 
-            // logger("🔕 Wake-up call snoozed: {$this->uuid} until {$newAttemptTime->toDateTimeString()}");
         }, function () {
             return $this->release(30); // If locked, retry in 30 seconds
         });
