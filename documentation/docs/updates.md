@@ -38,9 +38,11 @@ Below steps apply to **multinode server deployments** where **Server A** and **S
 
 On **Server A** and **Server B**, pull the latest updates and apply them:
 
-`cd /var/www/fspbx
+``` bash
+cd /var/www/fspbx
 git pull
-php artisan app:update`
+php artisan app:update
+```
 
 * * * * *
 
@@ -60,8 +62,10 @@ If you see any pending migrations, run:
 
 Because **Server B** replicates from **Server A**, it may incorrectly mark migrations as already applied. To ensure proper synchronization, reset and reapply the latest batch:
 
-`php artisan migrate:delete-last-batch
-php artisan migrate`
+```bash
+php artisan migrate:delete-last-batch
+php artisan migrate
+```
 
 * * * * *
 
