@@ -275,7 +275,8 @@ class ProcessStripeWebhookJob extends SpatieProcessWebhookJob
                 'rendering' => [
                     'template' => data_get($invoice, 'rendering.template')
                 ],
-                'collection_method' => 'charge_automatically',
+                'collection_method' => data_get($stripeInvoice, 'customer.invoice_settings.default_payment_method') ? 'charge_automatically' : 'send_invoice',
+                'days_until_due' => data_get($stripeInvoice, 'customer.invoice_settings.default_payment_method') ? 0 : 14,
             ],
             ['idempotency_key' => 'fspbx:' . (string) Str::uuid()]
         );
