@@ -16,4 +16,12 @@ class MusicOnHold extends Model
     protected $primaryKey = 'music_on_hold_uuid';
 
     protected $keyType = 'string';
+
+    /**
+     * Get domain that this model belongs to
+     */
+    public function domain()
+    {
+        return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
+    }
 }
