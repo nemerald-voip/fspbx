@@ -37,7 +37,7 @@ class DeleteOldVoicemails implements ShouldQueue
      *
      * @var int
      */
-    public $timeout = 60;
+    public $timeout = 300;
 
     /**
      * Indicate if the job should be marked as failed on timeout.
@@ -76,7 +76,7 @@ class DeleteOldVoicemails implements ShouldQueue
      */
     public function handle()
     {
-        Redis::throttle('fax')->allow(1)->every(60)->then(function () {
+        Redis::throttle('default')->allow(2)->every(60)->then(function () {
 
             try {
                 $days = $this->daysKeepVoicemail;
@@ -115,7 +115,7 @@ class DeleteOldVoicemails implements ShouldQueue
             }
 
         }, function () {
-            return $this->release(30); // If locked, retry in 30 seconds
+            return $this->release(60); // If locked, retry in 30 seconds
         });
     }
 }
