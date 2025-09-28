@@ -96,6 +96,8 @@ class BackupApp extends Command
             '/etc/freeswitch',
             '/usr/share/fusionpbx/templates/provision',
             '/usr/share/fspbx/templates/provision',
+            '/var/lib/freeswitch/storage/',
+            '/var/lib/freeswitch/recordings/',
         ];
 
         // Check which directories exist

@@ -9,7 +9,7 @@ class CallRecordings extends Model
 {
     use HasFactory, \App\Models\Traits\TraitUuid;
 
-    protected $table = "v_call_recordings";
+    protected $table = "view_call_recordings";
 
     public $timestamps = false;
 

@@ -154,7 +154,7 @@ class CallRoutingOptionsService
                     $name = $row->extension->name_formatted;
                 } else {
                     // Fallback to voicemail_id - "Team voicemail" if extension does not exist
-                    $name =  $row->voicemail_id . " - Team voicemail";
+                    $name =  $row->voicemail_id . " - Team voicemail" . ($row->voicemail_description ? ' ('. $row->voicemail_description . ')': '');
                 }
             }
 
