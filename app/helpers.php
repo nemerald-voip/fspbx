@@ -1110,6 +1110,7 @@ if (! function_exists('getRingBackTonesCollectionGrouped')) {
             ->orderBy('music_on_hold_name')
             ->get()
             ->unique('music_on_hold_name')
+            ->values()
             ->map(fn($m) => [
                 'label' => $m->music_on_hold_name,
                 'value' => $m->domain_uuid ? 'local_stream://' . $m->domain->domain_name . '/' .$m->music_on_hold_name : 'local_stream://' . $m->music_on_hold_name,
