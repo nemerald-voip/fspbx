@@ -244,7 +244,7 @@ class FaxInboxController extends Controller
                 in_array($ext, ['tif', 'tiff']) ? 'image/tiff' : 'application/octet-stream'
             );
 
-            $downloadName = "{$baseName}.{$ext}";
+            $downloadName = "{$baseName}.pdf";
 
             return Storage::disk('fax')->download($relative, $downloadName, [
                 'Content-Type' => $mime,
