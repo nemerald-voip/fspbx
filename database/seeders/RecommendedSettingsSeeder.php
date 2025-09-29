@@ -723,6 +723,14 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "Filter by domain",
             ],
+            [
+                'default_setting_category'      => 'voicemail',
+                'default_setting_subcategory'   => 'transcribe_enabled',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Enable voicemail transcriptions",
+            ],
             
             // Add more settings here...
         ];
