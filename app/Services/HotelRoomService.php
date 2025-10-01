@@ -11,6 +11,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 use App\Models\HotelRoomStatus;
 use App\Models\VoicemailMessages;
+use App\Models\HotelPendingAction;
 use App\Models\VoicemailGreetings;
 use Illuminate\Support\Facades\DB;
 use App\Services\FreeswitchEslService;
@@ -45,7 +46,7 @@ class HotelRoomService
             ]);
 
             $room->status()->delete();
-            
+
             $this->updateExtension($room, $payload);
 
             // Purge entire mailbox (messages + greetings + recorded name)
@@ -221,6 +222,27 @@ class HotelRoomService
         }
 
         return $moved;
+    }
+
+    /**
+     * Create pending action to database
+     * @param string $domainUuid
+     * @param string $hotelRoomUuid
+     * @param string $smdr_type  One of: S, C, P, W, D  (currently we use S)
+     * @param array  $data       Type-specific payload. For S: ['room_status' => '2', 'maid' => '45']
+     */
+    public function createPendingAction(
+        string $domainUuid,
+        string $hotelRoomUuid,
+        string $smdr_type,
+        array $data // ['room_status' => '2', 'maid' => '45']
+    ): HotelPendingAction {
+        return HotelPendingAction::create([
+            'domain_uuid'     => $domainUuid,
+            'hotel_room_uuid' => $hotelRoomUuid,
+            'smdr_type'       => $smdr_type,
+            'data'            => $data,
+        ]);
     }
 
 
