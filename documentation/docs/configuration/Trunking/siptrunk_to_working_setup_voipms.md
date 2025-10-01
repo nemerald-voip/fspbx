@@ -54,4 +54,4 @@ This should give you inbound, and outbound calling capabilities.
 * Github (https://github.com/nemerald-voip/fspbx/issues)
 
 ## Conclusion
-By following these steps, you will have a fully branded FS PBX with custom logos and favicons optimized for all devices and platforms.
+By following these steps, you will have a fully working system.
