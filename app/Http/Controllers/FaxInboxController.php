@@ -227,11 +227,10 @@ class FaxInboxController extends Controller
             // Build relative path, keeping original filename base
             $original   = basename($file->fax_file_path);                 // e.g. "+1213...-17-17-03.tif"
             $baseName   = pathinfo($original, PATHINFO_FILENAME);
-            $ext        = strtolower(pathinfo($original, PATHINFO_EXTENSION)); // "tif" or "tiff"
 
 
             // Build relative path on the "fax" disk
-            $relative = "{$file->domain->domain_name}/{$file->fax->fax_extension}/inbox/{$baseName}.{$ext}";
+            $relative = "{$file->domain->domain_name}/{$file->fax->fax_extension}/inbox/{$baseName}.pdf";
 
             if (!Storage::disk('fax')->exists($relative)) {
                 return response()->json([
@@ -240,14 +239,11 @@ class FaxInboxController extends Controller
                 ], 404);
             }
 
-            $mime = Storage::disk('fax')->mimeType($relative) ?: (
-                in_array($ext, ['tif', 'tiff']) ? 'image/tiff' : 'application/octet-stream'
-            );
-
-            $downloadName = "{$baseName}.{$ext}";
+            $downloadName = "{$baseName}.pdf";
 
             return Storage::disk('fax')->download($relative, $downloadName, [
-                'Content-Type' => $mime,
+                'Content-Type'  => 'application/pdf',
+                'Cache-Control' => 'private, max-age=0, no-cache, no-store, must-revalidate',
             ]);
         } catch (ModelNotFoundException $e) {
             return response()->json([

@@ -178,9 +178,17 @@ class CdrDataService
     {
         $domain_uuid = $params['domain_uuid'] ?? session('domain_uuid');
 
+        $search = trim($params['filter']['search'] ?? '');
+
         // 1) Load all extensions in this domain (only what we need)
         $extensions = \App\Models\Extensions::query()
             ->where('domain_uuid', $domain_uuid)
+            ->when($search !== '', function ($q) use ($search) {
+                $q->where(function ($qq) use ($search) {
+                    $qq->where('extension', 'ILIKE', "%{$search}%")
+                       ->orWhere('effective_caller_id_name', 'ILIKE', "%{$search}%");
+                });
+            })
             ->get(['extension_uuid', 'extension', 'effective_caller_id_name']);
 
         // Lookups and pre-initialized stats

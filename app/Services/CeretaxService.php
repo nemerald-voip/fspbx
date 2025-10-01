@@ -18,6 +18,7 @@ class CeretaxService
     protected string $apiKey;
     protected string $clientProfileId;
     protected string $status;
+    protected string $env;
 
     public function __construct(?Client $client = null)
     {
@@ -29,6 +30,7 @@ class CeretaxService
         $this->clientProfileId = $isSandbox ? ($cfg['sandbox_client_profile_id'] ?? 'default')
             : ($cfg['prod_client_profile_id'] ?? 'default');
         $this->status          =  $isSandbox ? 'Quote' : 'Active';
+        $this->env = $cfg['env'] ??  'sandbox';
     }
 
     protected function base(): \Illuminate\Http\Client\PendingRequest
@@ -50,30 +52,24 @@ class CeretaxService
     {
         // logger($stripeInvoice);
         // logger($lines);
-        //override variables based on invoice if needed
-        if (data_get($stripeInvoice, 'customer.metadata.ceretax_sandbox') == 'true') {
-            $this->baseUrl = config('services.ceretax.sandbox_url', "https://calc.cert.ceretax.net/");
-            $this->apiKey = config('services.ceretax.sandbox_api_key', '');
-            $this->clientProfileId = config('services.ceretax.sandbox_client_profile_id', 'default');
-            $this->status = "Quote";
-        }
+        $this->overrideDefaults($stripeInvoice);
 
         // Preflight: suspend any existing tx tied to this invoice is status is not Quote
-        if (data_get($stripeInvoice,'metadata.ceretax_status' != 'Quote')) {
+
+        if (data_get($stripeInvoice,'metadata.ceretax_status') != 'Quote') {
             $this->suspendExistingFromInvoiceMetadata($stripeInvoice);
         }
         
 
         $payload       = $this->buildTelcoPayloadFromStripe($stripeInvoice, $lines);
         $invoiceNumber = (string) Arr::get($payload, 'invoice.invoiceNumber');
-        $env           = config('services.ceretax.env', 'sandbox');
 
         // Persist request upfront so nothing gets lost
         $row = CeretaxTransaction::create([
             'invoice_number' => $invoiceNumber,
             'status'         => $this->status,
             'request_json'   => $payload,   // full payload
-            'env'            => $env,
+            'env'            => $this->env,
         ]);
 
         // Call CereTax (do not ->throw(); we want full body even on failure)
@@ -198,7 +194,7 @@ class CeretaxService
             'status'         => $toStatus,
             'ksuid'          => $ksuid,
             'request_json'   => $payload,
-            'env'            => config('services.ceretax.env', 'sandbox'),
+            'env'            => $this->env,
         ]);
 
         // Call the API (no ->throw so we can capture full body on 4xx/404)
@@ -419,6 +415,19 @@ class CeretaxService
         if (!$existingKsuid) return;
 
         try {
+            //find original transcation in database
+            $transaction = CeretaxTransaction::firstWhere('ksuid', $existingKsuid);
+            if (!$transaction || $transaction->status === 'Quote') {
+                return; 
+            }
+
+            //set parameters based on transaction enviroment
+            $isSandbox   = $transaction->env === 'sandbox';
+            $cfg    = config('services.ceretax');
+            $this->baseUrl         = rtrim($isSandbox ? $cfg['sandbox_url'] : $cfg['prod_url'], '/') . '/';
+            $this->apiKey          = $isSandbox ? ($cfg['sandbox_api_key'] ?? '') : ($cfg['prod_api_key'] ?? '');
+            $this->env = $transaction->env;
+
             $this->updateTransactionStatusByKsuid(
                 ksuid: $existingKsuid,
                 toStatus: 'Suspended',
@@ -435,6 +444,18 @@ class CeretaxService
                 'ksuid'   => $existingKsuid,
                 'err'     => $e->getMessage(),
             ]);
+        }
+    }
+
+    private function overrideDefaults($stripeInvoice)
+    {
+        //override variables based on invoice if needed
+        if (data_get($stripeInvoice, 'customer.metadata.ceretax_sandbox') == 'true') {
+            $this->baseUrl = config('services.ceretax.sandbox_url', "https://calc.cert.ceretax.net/");
+            $this->apiKey = config('services.ceretax.sandbox_api_key', '');
+            $this->clientProfileId = config('services.ceretax.sandbox_client_profile_id', 'default');
+            $this->status = "Quote";
+            $this->env = 'sandbox';
         }
     }
 
