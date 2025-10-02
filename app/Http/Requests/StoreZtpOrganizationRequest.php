@@ -83,4 +83,19 @@ class StoreZtpOrganizationRequest extends FormRequest
 
         return $input;
     }
+
+    public function prepareForValidation(): void
+    {
+        if ($this->has('prov_un')) {
+            $this->merge([
+                'username' => $this->prov_un,
+            ]);
+        }
+
+        if ($this->has('prov_pw')) {
+            $this->merge([
+                'password' => $this->prov_pw,
+            ]);
+        }
+    }
 }
