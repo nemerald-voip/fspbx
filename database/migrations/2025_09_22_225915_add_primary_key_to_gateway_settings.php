@@ -20,6 +20,9 @@ return new class extends Migration {
             });
         }
 
+        // BEFORE step 2 (the UPDATE), temporarily allow updates without a PK
+        DB::statement("ALTER TABLE public.gateway_settings REPLICA IDENTITY FULL;");
+
         // 2) Backfill any NULL uuids
         DB::statement("UPDATE public.gateway_settings SET uuid = uuid_generate_v4() WHERE uuid IS NULL;");
 
@@ -42,6 +45,8 @@ BEGIN
 END
 $$;
 SQL);
+
+        DB::statement("ALTER TABLE public.gateway_settings REPLICA IDENTITY USING INDEX gateway_settings_pkey;");
 
         // 5) (Optional) Drop the default now that rows are populated
         DB::statement("ALTER TABLE public.gateway_settings ALTER COLUMN uuid DROP DEFAULT;");
