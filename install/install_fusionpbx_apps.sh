@@ -24,11 +24,8 @@ chown -R www-data:www-data "$APP_DIR"
 
 # List of FS PBX apps and their correct repositories
 declare -A APPS=(
-    ["transcribe"]="https://github.com/fusionpbx/fusionpbx-app-transcribe.git"
-    ["speech"]="https://github.com/fusionpbx/fusionpbx-app-speech.git"
     ["device_logs"]="https://github.com/fusionpbx/fusionpbx-app-device_logs.git"
     ["dialplan_tools"]="https://github.com/fusionpbx/fusionpbx-app-dialplan_tools.git"
-    ["edit"]="https://github.com/fusionpbx/fusionpbx-app-edit.git"
     ["sip_trunks"]="https://github.com/fusionpbx/fusionpbx-app-sip_trunks.git"
 )
 
