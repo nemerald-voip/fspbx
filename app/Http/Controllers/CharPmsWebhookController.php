@@ -2,18 +2,21 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
+use App\Models\HotelRoom;
+use App\Models\Extensions;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Http\JsonResponse;
-use Laravel\Sanctum\PersonalAccessToken;
-use Spatie\WebhookClient\WebhookConfig;
-use Spatie\WebhookClient\WebhookProcessor;
+use App\Models\HotelPendingAction;
+use Illuminate\Routing\Controller;
 
 // Fast existence checks
-use App\Models\Extensions;
-use App\Models\HotelRoom;
+use Illuminate\Support\Facades\DB;
+use Spatie\WebhookClient\WebhookConfig;
+use Laravel\Sanctum\PersonalAccessToken;
+use Spatie\WebhookClient\WebhookProcessor;
+use Illuminate\Support\Facades\RateLimiter;
 
 class CharPmsWebhookController extends Controller
 {
@@ -71,7 +74,7 @@ class CharPmsWebhookController extends Controller
 
         // ---------------- 3) BASIC SYNTAX VALIDATION (→ 400) ----------------
         $action = strtoupper((string) $request->input('action', ''));
-        if (!in_array($action, ['CHKI', 'UPDATE', 'MOVE', 'CHKO', 'DND', 'WAKE'], true)) {
+        if (!in_array($action, ['CHKI', 'UPDATE', 'MOVE', 'CHKO', 'DND', 'WAKE', 'GET_SMDR'], true)) {
             return response()->json(['code' => 1, 'description' => 'Unsupported action'], 400);
         }
 
@@ -221,6 +224,19 @@ class CharPmsWebhookController extends Controller
                     ]);
                     break;
                 }
+
+            case 'GET_SMDR': {
+                    try {
+                        $records = $this->getSmdrData($domainUuid);
+                        return $records;
+                    } catch (\Throwable $e) {
+                        report($e);
+                        return response()->json([
+                            'code'        => 100,
+                            'description' => 'Temporary error while generating SMDR. Please retry.',
+                        ], 200);
+                    }
+                }
         }
 
         // ---------------- 5) Persist + enqueue via Spatie ----------------
@@ -248,5 +264,76 @@ class CharPmsWebhookController extends Controller
 
         // Accepted: 200 + code=0
         return response()->json(['code' => 0, 'description' => 'success'], 200);
+    }
+
+    private function getSmdrData($domainUuid)
+    {
+
+        // 1) Pick up to 100 rows, locking them so other workers skip them
+        $picked = DB::transaction(function () use ($domainUuid) {
+            $rows = HotelPendingAction::query()
+                ->where('domain_uuid', $domainUuid)
+                ->orderBy('created_at')
+                ->limit(100)
+                ->get(['uuid', 'hotel_room_uuid', 'smdr_type', 'created_at', 'data']);
+
+            if ($rows->isEmpty()) {
+                return collect(); // empty collection
+            }
+
+            // 2) Delete the locked rows (safe within the same tx)
+            HotelPendingAction::query()
+                ->whereIn('uuid', $rows->pluck('uuid'))
+                ->delete();
+
+            return $rows; // return the *data we just dequeued*
+        });
+
+        if ($picked->isEmpty()) {
+            return response()->json(['code' => 0, 'description' => 'no data'], 200);
+        }
+
+        // Map room -> extension (string). Adjust table names if needed.
+        $roomUuids = $picked->pluck('hotel_room_uuid')->unique()->values();
+        $rooms = HotelRoom::query()
+            ->where('domain_uuid', $domainUuid)
+            ->whereIn('uuid', $roomUuids)
+            ->with([
+                'extension' => fn($q) => $q->select('extension_uuid', 'extension'),
+            ])
+            ->get(['uuid', 'extension_uuid']);
+
+        $extByRoom = $rooms
+            ->mapWithKeys(fn($room) => [
+                $room->uuid => (string) optional($room->extension)->extension,
+            ])
+            ->all(); // ['room_uuid' => '1002']
+
+        // Normalize per type (S only for now)
+        $normalize = function (string $type, $data): array {
+            $arr = is_string($data) ? (array) json_decode($data, true) : (array) $data;
+            if ($type === 'S') {
+                return [
+                    'room_status' => isset($arr['room_status']) ? (string) $arr['room_status'] : '',
+                    'maid'        => array_key_exists('maid', $arr) && $arr['maid'] !== null ? (string) $arr['maid'] : null,
+                ];
+            }
+            return $arr; // ready for C/P/W/D later
+        };
+
+        $records = $picked->map(function ($row) use ($extByRoom, $normalize) {
+            return [
+                'smdr_type'    => $row->smdr_type,
+                'datetime'     => Carbon::parse($row->created_at)->format('Y/m/d\TH:i:s'),
+                'extension_id' => (string) ($extByRoom[$row->hotel_room_uuid] ?? ''),
+                'data'         => $normalize($row->smdr_type, $row->data),
+            ];
+        })->all();
+
+        return response()->json([
+            'code'        => 0,
+            'description' => 'data',
+            'SMDR'        => $records,
+        ], 200);
     }
 }

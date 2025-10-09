@@ -56,8 +56,8 @@
                                     polling: options?.organization?.template?.provisioning?.polling,
                                     quickSetup: options?.organization?.template?.provisioning?.quickSetup,
                                     address: options?.organization?.template?.provisioning?.server?.address,
-                                    username: options?.organization?.template?.provisioning?.server?.username,
-                                    password: options?.provider_settings?.http_auth_password,
+                                    prov_un: options?.organization?.template?.provisioning?.server?.username,
+                                    prov_pw: options?.provider_settings?.http_auth_password,
                                     bootServerOption: options?.organization?.template?.dhcp?.bootServerOption,
                                     option60Type: options?.organization?.template?.dhcp?.option60Type,
                                     software: options?.organization?.template?.software?.version,
@@ -78,8 +78,8 @@
                                                     'divider',
                                                     'provisioning_title',
                                                     'address',
-                                                    'username',
-                                                    'password',
+                                                    'prov_un',
+                                                    'prov_pw',
                                                     'restore_defaults',
                                                     'polling',
                                                     'quickSetup',
@@ -126,9 +126,9 @@
 
                                                 <TextElement name="address" label="Address" />
 
-                                                <TextElement name="username" label="Username" />
+                                                <TextElement name="prov_un" label="Username" />
 
-                                                <TextElement name="password" label="Password"
+                                                <TextElement name="prov_pw" label="Password"
                                                     :attrs="{ type: 'password' }" />
 
                                                 <ButtonElement name="restore_defaults"
@@ -231,7 +231,7 @@ const handleTabSelected = (activeTab, previousTab) => {
 
 const restoreDefaults = () => {
     form$.value.el$('address').update(props.options.provider_settings.polycom_provision_url)
-    form$.value.el$('username').update(props.options.provider_settings.http_auth_username)
+    form$.value.el$('prov_un').update(props.options.provider_settings.http_auth_username)
 };
 
 
@@ -336,5 +336,13 @@ const handleError = (error, details, form$) => {
     /* For Chrome and Safari */
     -moz-text-security: disc;
     /* For Firefox */
+}
+
+div[data-lastpass-icon-root] {
+    display: none !important
+}
+
+div[data-lastpass-root] {
+    display: none !important
 }
 </style>

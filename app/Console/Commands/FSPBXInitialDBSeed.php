@@ -143,16 +143,16 @@ class FSPBXInitialDBSeed extends Command
         Artisan::call('config:cache');
         $this->info("App version is " . config('version.release') . ".");
 
-        $this->info("Updating edit app folder from GitHub...");
-        $process = new \Symfony\Component\Process\Process(['/bin/bash', '/var/www/fspbx/install/fix-edit-app.sh']);
-        $process->setTimeout(180);
-        $process->run();
+        // $this->info("Updating edit app folder from GitHub...");
+        // $process = new \Symfony\Component\Process\Process(['/bin/bash', '/var/www/fspbx/install/fix-edit-app.sh']);
+        // $process->setTimeout(180);
+        // $process->run();
 
-        if ($process->isSuccessful()) {
-            $this->info("✅ Edit app folder updated from GitHub.");
-        } else {
-            $this->error("❌ Failed to update edit app folder: " . $process->getErrorOutput());
-        }
+        // if ($process->isSuccessful()) {
+        //     $this->info("✅ Edit app folder updated from GitHub.");
+        // } else {
+        //     $this->error("❌ Failed to update edit app folder: " . $process->getErrorOutput());
+        // }
 
         // Step 15: Restart FreeSWITCH
         $this->restartFreeSwitch();
