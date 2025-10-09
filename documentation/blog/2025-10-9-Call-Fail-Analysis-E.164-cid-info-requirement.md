@@ -1,20 +1,21 @@
 ---
 slug: multi-fi-call-analysis
-title: Multi.fi Call Analysis
+title: Call Analysis - JNT.fi (aka multi.fi)
 authors: [lemstrom]
 tags: [inbound, call analysis]
 ---
 
 Call Failure Analysis E.164 - Caller ID Format Issue
 
-Working with multi.fi, we had problems with synchronizing connectivity, and ended up being mitigated by business opening (as ip auth), and regex.
+Working with multi.fi, we had problems with synchronizing connectivity, and ended up being mitigated by business opening (as ip auth) firewall settings, and regex alterations to dialplan.
 
 
 <!-- truncate -->
 
 ================================
 
-SIP Carrier - multi.fi
+SIP Carrier - JNT.fi
+JNT is the local telecom company that provides personal service. We offer services within everything that telecommunications stands for today: data, telephony, television and IT solutions. Ostrobothnia is our home and we deliver consumer services from Kokkola in the north to Kristinestad in the south, we deliver business services in a significantly larger area. It is a wonderfully diverse group that has one thing in common: everyone wants affordable and reliable services and good service in Swedish, Finnish or English. And we can offer that.
 
 Finnish Mobile carrier
 
@@ -112,7 +113,7 @@ Root Cause Analysis
 The `effective_caller_id_number` was set to:
 
 ```
-effective_caller_id_number: 35867898450
+effective_caller_id_number: 358678984xx
 ```
 
 However, the upstream SIP provider (85.134.34.xxx) required the caller ID to be in **international E.164 format with a leading `+` sign**.
@@ -168,7 +169,7 @@ Solution Implemented
 xml
 
 ```
-<action application="set" data="effective_caller_id_number=+35867898450"/>
+<action application="set" data="effective_caller_id_number=+358678984xx"/>
 ```
 
 The correct format is:
@@ -245,7 +246,7 @@ The failure was caused by:
 -   ❌ Provider (85.134.34.186) requires strict E.164 format
 -   ❌ Malformed caller ID triggered 403 Forbidden response
 
-**Solution:** Update outbound route to set `effective_caller_id_number=+35867898450` with the `+` prefix included.
+**Solution:** Update outbound route to set `effective_caller_id_number=+358678984xx` with the `+` prefix included.
 
 Next Steps
 ----------
