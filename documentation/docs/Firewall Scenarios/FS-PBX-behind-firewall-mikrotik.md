@@ -8,17 +8,11 @@ Your firewall must have specific ports forwarded to the internal IP address of y
 
 ## Required ports to forward:
 
-	-SIP:
+	* SIP: UDP/TCP - `5060` (or `5060-5091`): For SIP signaling traffic. Note that FS PBX may use port 5080 for the external SIP profile, depending on the configuration.
 
-		-UDP/TCP: `5060` (or `5060-5091`): For SIP signaling traffic. Note that FS PBX may use port 5080 for the external SIP profile, depending on the configuration.
+	* RTP: UDP: `16384-32768`: For the voice and media traffic. Some providers or setups might use a different range, so it's best to confirm with them.
 
-	-RTP:
-
-		-UDP: `16384-32768`: For the voice and media traffic. Some providers or setups might use a different range, so it's best to confirm with them.
-
-	-Web GUI (Optional):
-
-		-TCP: `443` and `80`: If you need to access the FS PBX web interface from outside your network.
+	* Web GUI (Optional): TCP: `443` and `80`: If you need to access the FS PBX web interface from outside your network.
 
 ## Update FS PBX settings
 
