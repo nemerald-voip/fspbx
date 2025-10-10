@@ -7,6 +7,8 @@ use App\Events\ExtensionCreated;
 use App\Events\ExtensionDeleted;
 use App\Events\ExtensionUpdated;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Queue\Events\JobFailed;
+use App\Listeners\HandleFailedEmailJob;
 use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Mail\Events\MessageSending;
 use App\Listeners\NotifySuperadminListener;
@@ -55,6 +57,9 @@ class EventServiceProvider extends ServiceProvider
         ],
         MessageSent::class => [
             \App\Listeners\EmailSentLogger::class,
+        ],
+        JobFailed::class => [
+            HandleFailedEmailJob::class,
         ],
 
     ];

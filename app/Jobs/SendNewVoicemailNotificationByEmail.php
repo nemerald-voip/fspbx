@@ -38,7 +38,7 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
      *
      * @var int
      */
-    public $maxExceptions = 3;
+    public $maxExceptions = 1;
 
     /**
      * The number of seconds the job can run before timing out.
@@ -269,15 +269,15 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
         });
     }
 
-    public function failed(\Throwable $e): void
-    {
-        // Best effort: if the row exists, mark permanent failure and store the last error.
-        EmailLog::where('uuid', $this->logId)->update([
-            'status'      => 'permanent_failed',   // distinct from interim 'failed' if you want
-            'sent_debug_info'  => $e->getMessage(),
+    // public function failed(\Throwable $e): void
+    // {
+    //     // Best effort: if the row exists, mark permanent failure and store the last error.
+    //     EmailLog::where('uuid', $this->logId)->update([
+    //         'status'      => 'permanent_failed',   // distinct from interim 'failed' if you want
+    //         'sent_debug_info'  => $e->getMessage(),
 
-        ]);
-    }
+    //     ]);
+    // }
 
     /**
      * Cast common types: text, numeric, boolean, json.
