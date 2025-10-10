@@ -218,9 +218,6 @@ const selectPageItems = ref(false);
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
-const confirmationModalDestroyPath = ref(null);
-const createFormSubmiting = ref(null);
-const updateFormSubmiting = ref(null);
 const confirmDeleteAction = ref(null);
 const bulkUpdateFormSubmiting = ref(null);
 const formErrors = ref(null);
@@ -235,7 +232,6 @@ const props = defineProps({
     itemData: Object,
 });
 
-console.log(props.data)
 const filterData = ref({
     search: null,
 });
