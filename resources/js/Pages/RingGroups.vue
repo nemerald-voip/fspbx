@@ -80,8 +80,11 @@
                             <div class="ml-9"
                                 :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.ring_group_update, }"
                                 @click="page.props.auth.can.ring_group_update && handleEditButtonClick(row.ring_group_uuid)">
-                                <span class="flex items-center">
+                                <span class="flex flex-col lg:flex-row items-start gap-2">
                                     {{ row.ring_group_name }}
+                                    <Badge v-if="row.ring_group_forward_enabled == 'true'" :text="'FWD'"
+                                            :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
+                                            ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
                                 </span>
                             </div>
                         </div>
@@ -232,7 +235,7 @@ const props = defineProps({
     itemData: Object,
 });
 
-
+console.log(props.data)
 const filterData = ref({
     search: null,
 });
