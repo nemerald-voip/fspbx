@@ -7,6 +7,8 @@ use App\Events\ExtensionCreated;
 use App\Events\ExtensionDeleted;
 use App\Events\ExtensionUpdated;
 use Illuminate\Auth\Events\Login;
+use Illuminate\Mail\Events\MessageSent;
+use Illuminate\Mail\Events\MessageSending;
 use App\Listeners\NotifySuperadminListener;
 use App\Events\ExtensionSuspendedStatusChanged;
 use App\Listeners\NotifyModelsOnGreetingDeleted;
@@ -47,6 +49,12 @@ class EventServiceProvider extends ServiceProvider
         ],
         \Illuminate\Auth\Events\PasswordReset::class => [
             \App\Listeners\LogPasswordReset::class,
+        ],
+        MessageSending::class => [
+            \App\Listeners\EmailSendingLogger::class,
+        ],
+        MessageSent::class => [
+            \App\Listeners\EmailSentLogger::class,
         ],
 
     ];
