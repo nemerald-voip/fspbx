@@ -2,7 +2,7 @@
 slug: multi-fi-call-analysis
 title: Call Analysis - JNT.fi (aka multi.fi)
 authors: [lemstrom]
-tags: [inbound, call analysis]
+tags: [inbound, call-analysis]
 ---
 
 Call Failure Analysis E.164 - Caller ID Format Issue
