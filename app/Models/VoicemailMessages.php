@@ -51,10 +51,18 @@ class VoicemailMessages extends Model
 
 
     /**
-     * Get the voicemial this message belongs to.
+     * Get the voicemail this message belongs to.
      */
     public function voicemail()
     {
         return $this->hasOne(Voicemails::class,'voicemail_uuid','voicemail_uuid');
+    }
+
+    /**
+     * Get the domain this message belongs to.
+     */
+    public function domain()
+    {
+        return $this->hasOne(Domain::class,'domain_uuid','domain_uuid');
     }
 }

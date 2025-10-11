@@ -3,15 +3,17 @@
 namespace App\Http\Webhooks\Jobs;
 
 use App\Models\Messages;
+use App\Models\Voicemails;
 use App\Models\SmsDestinations;
+use App\Models\VoicemailMessages;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use App\Services\SinchMessageProvider;
 use App\Services\CommioMessageProvider;
 use App\Jobs\SendSmsNotificationToSlack;
-use App\Models\Voicemails;
 use App\Services\BandwidthMessageProvider;
 use Spatie\WebhookClient\Models\WebhookCall;
+use App\Jobs\SendNewVoicemailNotificationByEmail;
 use Spatie\WebhookClient\Jobs\ProcessWebhookJob as SpatieProcessWebhookJob;
 
 class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
@@ -70,18 +72,18 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
     protected $messageProvider;
     protected $deliveryReceipt;
 
-
-    /**
-     * Get the middleware the job should pass through.
-     *
-     * @return array
-     */
-
-
     public function __construct(WebhookCall $webhookCall)
     {
-        $this->queue = 'messages';
         $this->webhookCall = $webhookCall;
+        $event = $this->webhookCall->payload['event'];
+
+        $event = data_get($webhookCall->payload, 'event');
+
+        $this->queue = match ($event) {
+            'send_vm_sms_notification'   => 'messages',
+            'send_vm_email_notification' => 'emails',
+            default                      => 'default',
+        };
     }
 
     public function handle()
@@ -98,15 +100,14 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
                 $timestamp = $payload['timestamp'] ?? null;
                 $data = $payload['data'] ?? [];
 
-                // logger("[Webhook] Received event: $event", $payload);
-
                 switch ($event) {
                     case 'send_vm_sms_notification':
-                        // Dispatch SMS job, log, etc.
-                        // logger("[Webhook] Processing SMS System Notification", $data);
                         $response = $this->sendSystemSms($data);
                         break;
 
+                    case 'send_vm_email_notification':
+                        SendNewVoicemailNotificationByEmail::dispatch($data);
+                        break;
                     // Add more event types as needed
 
                     default:
@@ -114,14 +115,13 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
                         break;
                 }
 
-
                 return true;
             } catch (\Exception $e) {
                 return $this->handleError($e);
             }
         }, function () {
             // Could not obtain lock; this job will be re-queued
-            return $this->release(5);
+            return $this->release(15);
         });
     }
 
@@ -175,7 +175,6 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
 
         return response()->json(['status' => 'Message sent']);
     }
-
 
 
     private function getPhoneNumberSmsConfig($from)

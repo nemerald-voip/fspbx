@@ -13,6 +13,7 @@
         "aws/aws-sdk-php": "~3.0",
         "doctrine/dbal": "^3.4",
         "firebase/php-jwt": "^6.4",
+        "google/auth": "^1.48",
         "guzzlehttp/guzzle": "^7.0.1",
         "inertiajs/inertia-laravel": "^0.6.11",
         "laravel/fortify": "^1.21",
