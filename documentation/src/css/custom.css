@@ -4,8 +4,16 @@
  * work well for content-centric websites.
  */
 
-@import "tailwindcss";
+ @import "tailwindcss/theme.css" layer(theme);
 
+ @layer base {
+   #tw-scope {
+     @import "tailwindcss/preflight.css" layer(base);
+   }
+ }
+ 
+ @import "tailwindcss/utilities.css" layer(utilities);
+ 
 @custom-variant dark (&:is([data-theme="dark"] *));
 
 /* You can override the default Infima variables here. */
@@ -32,3 +40,33 @@
   --ifm-color-primary-lightest: #4fddbf;
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }
+
+/* Align items in the navbar */
+/* .navbar .navbar__item {
+    display: flex;
+    align-items: center;
+  } */
+
+
+/* Center breadcrumb items vertically */
+
+  /* a {
+    display: inline-flex;
+    align-items: center;
+  } */
+
+  /* Restore bullets/numbers in docs after Tailwind */
+/* .theme-doc-markdown ul {
+    list-style-type: disc;
+    list-style-position: outside;
+    padding-left: 1.25rem;
+  }
+  
+  .theme-doc-markdown ol {
+    list-style-type: decimal;
+    list-style-position: outside;
+    padding-left: 1.25rem;
+  }
+  
+  .theme-doc-markdown li > ul { list-style-type: circle; }
+  .theme-doc-markdown li > ul > li > ul { list-style-type: square; } */
