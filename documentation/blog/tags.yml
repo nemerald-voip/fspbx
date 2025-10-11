@@ -17,3 +17,14 @@ hola:
   label: Hola
   permalink: /hola
   description: Hola tag description
+
+inbound:
+  label: inbound
+  permalink: /inbound
+  description: inbound calling
+
+call-analysis:
+  label: call-analysis
+  permalink: /call-analysis
+  description: call analysis
+
