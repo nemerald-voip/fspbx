@@ -58,9 +58,6 @@ class EventServiceProvider extends ServiceProvider
         MessageSent::class => [
             \App\Listeners\EmailSentLogger::class,
         ],
-        JobFailed::class => [
-            HandleFailedEmailJob::class,
-        ],
 
     ];
 

@@ -5,18 +5,22 @@ namespace App\Console\Commands\Updates;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Artisan;
 
 class Update0969
 {
-    // protected $file1 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/email_queue/resources/jobs/email_send.php';
-    // protected $file2 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/email_queue/resources/functions/transcribe.php';
-    // protected $filePath1;
-    // protected $filePath2;
+    protected $file1 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/voicemail/resources/functions/send_email.lua';
+    protected $file2 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/devices/device_edit.php';
+    protected $file3 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/devices/device_profile_edit.php';
+    protected $filePath1;
+    protected $filePath2;
+    protected $filePath3;
 
     public function __construct()
     {
-        // $this->filePath1 = base_path('public/app/email_queue/resources/jobs/email_send.php');
-        // $this->filePath2 = base_path('public/app/email_queue/resources/functions/transcribe.php');
+        $this->filePath1 = base_path('public/app/switch/resources/scripts/app/voicemail/resources/functions/send_email.lua');
+        $this->filePath2 = base_path('public/app/devices/device_edit.php');
+        $this->filePath3 = base_path('public/app/devices/device_profile_edit.php');
     }
 
     /**
@@ -26,17 +30,43 @@ class Update0969
      */
     public function apply()
     {
-        // if (!$this->downloadAndReplaceFile($this->file1, $this->filePath1, 'email_send.php')) {
-        //     return false;
-        // }
-        // if (!$this->downloadAndReplaceFile($this->file2, $this->filePath2, 'transcribe.php')) {
-        //     return false;
-        // }
+        if (!$this->downloadAndReplaceFile($this->file1, $this->filePath1, 'send_email.lua')) {
+            return false;
+        }
+        if (!$this->downloadAndReplaceFile($this->file2, $this->filePath2, 'device_edit.php')) {
+            return false;
+        }
+        if (!$this->downloadAndReplaceFile($this->file3, $this->filePath3, 'device_profile_edit.php')) {
+            return false;
+        }
 
         // Update email template in DB
         $this->updateEmailTemplate();
 
+        $result = $this->runMenuUpdate();
+
         return true;
+    }
+
+    /**
+     * Run the artisan command to update the FS PBX menu.
+     *
+     * @return int Exit code of the Artisan call
+     */
+    protected function runMenuUpdate(): int
+    {
+        echo "Running menu:update (menu:create-fspbx --update)...\n";
+        $exitCode = Artisan::call('menu:create-fspbx', ['--update' => true]);
+        $output   = Artisan::output();
+        echo $output;
+
+        if ($exitCode !== 0) {
+            echo "Error: Menu update command failed with exit code $exitCode.\n";
+        } else {
+            echo "Menu update completed successfully.\n";
+        }
+
+        return $exitCode;
     }
 
     /**
@@ -423,8 +453,8 @@ EOT;
         </body>
         </html>
         EOT;
-        
-                $oldTemplateBody = <<<EOT
+
+        $oldTemplateBody = <<<EOT
         <html>
         <body>
         Voicemail from \${caller_id_name} <a href="tel:\${caller_id_number}">\${caller_id_number}</a><br />
@@ -436,18 +466,18 @@ EOT;
         </body>
         </html>
         EOT;
-        
-                // Replace {$appName} placeholders with the actual app name
-                $newTemplateBody = str_replace('{$appName}', $appName, $newTemplateBody);
-        
-                DB::table('v_email_templates')
-                    ->where('template_category', 'voicemail')
-                    ->where('template_subcategory', 'default')
-                    ->where('template_body', $oldTemplateBody)
-                    ->update([
-                        'template_body' => $newTemplateBody
-                    ]);
-        
-                echo "Voicemail email template updated successfully.\n";
+
+        // Replace {$appName} placeholders with the actual app name
+        $newTemplateBody = str_replace('{$appName}', $appName, $newTemplateBody);
+
+        DB::table('v_email_templates')
+            ->where('template_category', 'voicemail')
+            ->where('template_subcategory', 'default')
+            ->where('template_body', $oldTemplateBody)
+            ->update([
+                'template_body' => $newTemplateBody
+            ]);
+
+        echo "Voicemail email template updated successfully.\n";
     }
 }
