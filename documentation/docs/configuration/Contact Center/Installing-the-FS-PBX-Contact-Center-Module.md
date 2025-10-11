@@ -1,3 +1,5 @@
+# Installing the FS PBX Contact Center Module
+
 The FS PBX Contact Center is a premium module that adds advanced call center functionality to your FS PBX system. Before proceeding with the installation, please note that a valid license is required, which can be obtained through our sales team. Trial licenses are available for a 30-day evaluation period.
 
 [YouTube Video Walkthrough](https://youtu.be/OEshZIH5qAs)

@@ -135,6 +135,7 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Locations', 'permission_name' => 'location_update'],
             ['application_name' => 'Locations', 'permission_name' => 'location_delete'],
             ['application_name' => 'Devices', 'permission_name' => 'device_key_advanced'],
+            ['application_name' => 'Logs', 'permission_name' => 'logs_list_view'],
         ];
         $timestamp = date("Y-m-d H:i:s");
 
@@ -221,6 +222,7 @@ class DatabaseSeeder extends Seeder
                 'device_line_server_address_secondary',
                 'device_line_outbound_proxy_primary',
                 'device_line_outbound_proxy_secondary',
+                'logs_list_view',
             ],
             'admin' => [
                 'wakeup_calls_list_view',
@@ -921,6 +923,14 @@ class DatabaseSeeder extends Seeder
                 'default_setting_value'         => 'New voicemail: ${caller_id_name} - ${caller_id_number} left a message for mailbox ${voicemail_id} at ${message_date}. Duration: ${message_length} sec.',
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "SMS notification text",
+            ],
+            [
+                'default_setting_category'      => 'voicemail',
+                'default_setting_subcategory'   => 'voicemail_queue_strategy',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => 'legacy',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "modern: enables the new, optimized queue handling with improved performance and stability. legacy: uses the original queue behavior for backward compatibility.",
             ],
             [
                 'default_setting_category'      => 'limit',

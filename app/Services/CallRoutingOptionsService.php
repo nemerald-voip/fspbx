@@ -509,6 +509,7 @@ class CallRoutingOptionsService
             'conferences' => '/conference_uuid=([0-9a-fA-F-]+)/',
             'check_voicemail' => '/app.lua voicemail/',
             'company_directory' => '/directory.lua/',
+            'external' => '/disa.lua/',
         ];
 
         foreach ($patterns as $type => $pattern) {
@@ -544,6 +545,16 @@ class CallRoutingOptionsService
 
                 if ($type === 'company_directory') {
                     // For time conditions, return the dialplan UUID as the option
+                    return [
+                        'type' => $type,
+                        'extension' => $extension,
+                        'option' => null,
+                        // 'name' => $dialplan->dialplan_name,
+                    ];
+                }
+
+                if ($type === 'external') {
+                    // For unknown destination
                     return [
                         'type' => $type,
                         'extension' => $extension,

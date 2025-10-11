@@ -20,34 +20,8 @@ class InboundWebhooksController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(Request $request)
-    {
-        $domain_uuid = session('domain_uuid');
-        $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->startOfDay()->setTimeZone('UTC');
-        $endPeriod = Carbon::now(get_local_time_zone($domain_uuid))->endOfDay()->setTimeZone('UTC');
 
-        return Inertia::render(
-            $this->viewName,
-            [
-                'startPeriod' => function () use ($startPeriod) {
-                    return $startPeriod;
-                },
-                'endPeriod' => function ()  use ($endPeriod) {
-                    return $endPeriod;
-                },
-                'timezone' => function () use ($domain_uuid) {
-                    return get_local_time_zone($domain_uuid);
-                },
-                'routes' => [
-                    // 'current_page' => route('inbound-webhhooks.index'),
-                    'data_route' => route('inbound-webhooks.data'),
-                ]
-
-            ]
-        );
-    }
-
-    public function getData()
+    public function index()
     {
         $params = request()->all();
         $params['paginate'] = 50;
@@ -65,13 +39,6 @@ class InboundWebhooksController extends Controller
         unset(
             $params['filter']['dateRange'],
         );
-
-        // $this->filters = [
-        //     'startPeriod' => $startPeriod,
-        //     'endPeriod' => $endPeriod,
-        // ];
-
-        // logger($params);
 
         $webhooks = QueryBuilder::for(WhCall::class, request()->merge($params))
             ->select([

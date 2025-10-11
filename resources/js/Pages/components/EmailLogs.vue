@@ -1,0 +1,415 @@
+<template>
+    <div class="mt-4 flex flex-col">
+
+        <div class="flex flex-col sm:flex-row sm:flex-wrap">
+            <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
+                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                </div>
+                <input type="text" v-model="filterData.search" name="mobile-search-candidate"
+                    id="mobile-search-candidate"
+                    class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                    placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                <input type="text" v-model="filterData.search" name="desktop-search-candidate"
+                    id="desktop-search-candidate"
+                    class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                    placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+            </div>
+
+            <div class="relative z-10 min-w-64 -mt-0.5 mb-2 scale-y-95 shrink-0 sm:mr-4">
+                <DatePicker :dateRange="filterData.dateRange" :timezone="timezone"
+                    @update:date-range="handleUpdateDateRange" />
+            </div>
+
+            <div class="relative">
+                <div class="flex justify-between">
+
+                    <button type="button" @click.prevent="handleSearchButtonClick"
+                        class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500
+                                focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                        Search
+                    </button>
+
+                    <button type="button" @click.prevent="handleFiltersReset"
+                        class="rounded-md bg-white px-2.5 py-1.5 ml-2  sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+            <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                <Paginator class="border border-gray-200" :previous="data.prev_page_url" :next="data.next_page_url"
+                    :from="data.from" :to="data.to" :total="data.total" :currentPage="data.current_page"
+                    :lastPage="data.last_page" :links="data.links" @pagination-change-page="renderRequestedPage" />
+                <div class="overflow-hidden-t border-l border-r border-gray-200">
+                    <table class="min-w-full divide-y divide-gray-200 mb-4">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Date</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">To</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Subject</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
+
+                                <!-- <th class="relative px-6 py-3 text-left text-sm font-medium text-gray-500">
+                                    <span class="sr-only">Actions</span>
+                                </th> -->
+                            </tr>
+                        </thead>
+                        <tbody v-if="!isDataLoading && data.data?.length" class="divide-y divide-gray-200 bg-white">
+                            <template v-for="row in data.data" :key="row.uuid">
+                                <tr @click="toggleExpand(row.uuid)" class="hover:bg-gray-50 cursor-pointer">
+                                    <td class="whitespace-nowrap px-6 py-2 text-sm font-medium text-gray-500">
+                                        {{ row.created_at_formatted ?? '' }}
+                                    </td>
+
+
+                                    <td class=" whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                        {{ row.to ?? '' }}
+                                    </td>
+
+                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                        {{ row.subject ?? '' }}
+                                    </td>
+
+                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                        <Badge v-if="row.status == 'sending'" :text="row.status"
+                                            :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
+                                            ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
+                                        <Badge v-if="row.status == 'sent'" :text="row.status"
+                                            :backgroundColor="'bg-green-100'" :textColor="'text-green-800'"
+                                            ringColor="ring-green-400/20" class="px-2 py-1 text-xs" />
+                                        <Badge v-if="row.status == 'permanent_failed'" :text="row.status"
+                                            :backgroundColor="'bg-rose-100'" :textColor="'text-rose-800'"
+                                            ringColor="ring-rose-400/20" class="px-2 py-1 text-xs" />
+                                    </td>
+
+                                    <!-- <td class="whitespace-nowrap px-6 py-2 text-right text-sm font-medium">
+                                        <div class="flex items-center whitespace-nowrap justify-end">
+                                            <ejs-tooltip :content="'Edit'" position='TopCenter'
+                                                target="#destination_tooltip_target">
+                                                <div id="destination_tooltip_target">
+                                                    <PencilSquareIcon @click.stop="handleEditButtonClick(row.uuid)"
+                                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+
+                                                </div>
+                                            </ejs-tooltip>
+
+                                            <ejs-tooltip :content="'Delete'" position='TopCenter'
+                                                target="#delete_tooltip_target">
+                                                <div id="delete_tooltip_target">
+                                                    <TrashIcon @click.stop="handleSingleItemDeleteRequest(row.uuid)"
+                                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                                </div>
+                                            </ejs-tooltip>
+                                        </div>
+
+                                    </td> -->
+                                </tr>
+                                <!-- EXPANDABLE ROW -->
+                                <tr v-if="expandedRow === row.uuid">
+                                    <td :colspan="5" class="bg-gray-50 px-6 py-4">
+
+                                        <div class="flex gap-2">
+                                            <div class="text-gray-500 text-sm ">From: </div>
+                                            <div class="text-gray-400 text-sm "> {{ row.from }}</div>
+                                        </div>
+                                        <div class="flex gap-2">
+                                            <div class="text-gray-500 text-sm ">To: </div>
+                                            <div class="text-gray-400 text-sm "> {{ row.to }}</div>
+                                        </div>
+                                        <div v-if="row.cc" class="flex gap-2">
+                                            <div class="text-gray-500 text-sm ">CC: </div>
+                                            <div class="text-gray-400 text-sm "> {{ row.cc }}</div>
+                                        </div>
+                                        <div v-if="row.bcc" class="flex gap-2">
+                                            <div class="text-gray-500 text-sm ">BCC: </div>
+                                            <div class="text-gray-400 text-sm "> {{ row.bcc }}</div>
+                                        </div>
+                                        <div v-if="row.sent_debug_info" class="flex gap-2">
+                                            <div class="text-gray-500 text-sm ">Debug: </div>
+                                            <div class="text-gray-400 text-sm "> {{ row.sent_debug_info }}</div>
+                                        </div>
+
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+
+                    <!-- Empty State -->
+                    <div v-if="!isDataLoading && data.data?.length === 0" class="text-center my-5">
+                        <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
+                        <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                        <!-- <p class="mt-1 text-sm text-gray-500">
+                Adjust your search and try again.
+              </p> -->
+                    </div>
+
+                    <!-- Loading -->
+                    <div v-if="isDataLoading" class="text-center my-5 text-sm text-gray-500">
+                        <div class="animate-pulse flex space-x-4">
+                            <div class="flex-1 space-y-6 py-1">
+                                <div class="h-2 bg-slate-200 rounded"></div>
+                                <div class="h-2 bg-slate-200 rounded"></div>
+                                <div class="h-2 bg-slate-200 rounded"></div>
+                                <div class="h-2 bg-slate-200 rounded"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
+        @confirm="confirmDeleteAction" :header="'Confirm Deletion'"
+        :text="'This action will permanently delete the selected hotel room(s). Are you sure you want to proceed?'"
+        :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+
+    <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
+        @update:show="hideNotification" />
+</template>
+
+<script setup>
+import { ref, computed, watch } from 'vue';
+import Notification from "./notifications/Notification.vue";
+import ConfirmationModal from "./modal/ConfirmationModal.vue";
+import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
+import { registerLicense } from '@syncfusion/ej2-base';
+import DatePicker from "@generalComponents/DatePicker.vue";
+import Paginator from "@generalComponents/Paginator.vue";
+import Badge from "@generalComponents/Badge.vue";
+import moment from 'moment-timezone';
+
+const selectedItems = ref([]);
+
+const props = defineProps({
+    startPeriod: String,
+    endPeriod: String,
+    timezone: String,
+    routes: Object,
+    permissions: Object,
+    trigger: Boolean
+})
+
+const showCreateModal = ref(false);
+const showBulkCreateModal = ref(false);
+const showEditModal = ref(false);
+const loadingModal = ref(false)
+const formErrors = ref(null);
+const notificationType = ref(null);
+const notificationMessages = ref(null);
+const notificationShow = ref(null);
+const showDeleteConfirmationModal = ref(false);
+const confirmDeleteAction = ref(null);
+const itemOptions = ref([])
+const isDataLoading = ref(false)
+const readOnly = ref(false)
+const data = ref({
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: 0,
+    to: 0,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
+});
+const expandedRow = ref(null)
+
+
+const startLocal = moment.utc(props.startPeriod).tz(props.timezone)
+const endLocal = moment.utc(props.endPeriod).tz(props.timezone)
+
+const dateRange = [
+    startLocal.clone().startOf('day').toISOString(), // UTC instant for local start-of-day
+    endLocal.clone().endOf('day').toISOString(),     // UTC instant for local end-of-day
+]
+
+const filterData = ref({
+    search: props.search,
+    showGlobal: props.showGlobal,
+    dateRange: dateRange,
+    // dateRange: ['2024-07-01T00:00:00', '2024-07-01T23:59:59'],
+
+});
+
+// const emits = defineEmits(['edit-item', 'delete-item']);
+
+const fetchData = async (page = 1) => {
+    isDataLoading.value = true
+    axios.get(props.routes.email_logs, {
+        params: {
+            filter: filterData.value,
+            page,
+        }
+    })
+        .then((response) => {
+            data.value = response.data;
+            // console.log(data.value);
+
+        }).catch((error) => {
+            handleErrorResponse(error)
+        }).finally(() => {
+            isDataLoading.value = false
+        });
+}
+
+
+watch(() => props.trigger, (newVal) => {
+    fetchData(1)
+})
+
+const toggleExpand = (uuid) => {
+    expandedRow.value = expandedRow.value === uuid ? null : uuid;
+};
+
+const handleUpdateDateRange = (newDateRange) => {
+    filterData.value.dateRange = newDateRange;
+}
+
+const renderRequestedPage = (url) => {
+    isDataLoading.value = true;
+    // Extract the page number from the url, e.g. "?page=3"
+    const urlObj = new URL(url, window.location.origin);
+    const pageParam = urlObj.searchParams.get("page") ?? 1;
+
+    // Now call getData with the page number
+    fetchData(pageParam);
+};
+
+// Computed property for bulk actions based on permissions
+const bulkActions = computed(() => {
+    const actions = [
+        // {
+        //     id: 'bulk_update',
+        //     label: 'Edit',
+        //     icon: 'PencilSquareIcon'
+        // }
+    ];
+
+    // Conditionally add the delete action if permission is granted
+    if (props.permissions.user_destroy) {
+        actions.push({
+            id: 'bulk_delete',
+            label: 'Delete',
+            icon: 'TrashIcon'
+        });
+    }
+
+    return actions;
+});
+
+const handleCreateButtonClick = () => {
+    showCreateModal.value = true
+    loadingModal.value = true
+    getItemOptions();
+}
+
+const handleSearchButtonClick = () => {
+    fetchData(1)
+};
+
+const handleFiltersReset = () => {
+    filterData.value.search = null;
+    // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
+    handleSearchButtonClick();
+}
+
+const handleEditButtonClick = (uuid) => {
+    showEditModal.value = true
+    formErrors.value = null;
+    loadingModal.value = true
+    readOnly.value = false
+    getItemOptions(uuid);
+}
+
+const handleSingleItemDeleteRequest = (uuid) => {
+    showDeleteConfirmationModal.value = true;
+    confirmDeleteAction.value = () => executeBulkDelete([uuid]);
+};
+
+const executeBulkDelete = (items = selectedItems.value) => {
+    axios.post(props.routes.hotel_rooms_bulk_delete, { items })
+        .then((response) => {
+            handleModalClose();
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+        })
+        .catch((error) => {
+            handleModalClose();
+            handleErrorResponse(error);
+        });
+}
+
+
+const handleModalClose = () => {
+    showCreateModal.value = false;
+    showEditModal.value = false;
+    showBulkCreateModal.value = false;
+    showDeleteConfirmationModal.value = false;
+    // bulkUpdateModalTrigger.value = false;
+}
+
+const getItemOptions = (itemUuid = null) => {
+    loadingModal.value = true;
+
+    axios.post(props.routes.hotel_rooms_item_options, {
+        item_uuid: itemUuid,
+    })
+        .then((response) => {
+            itemOptions.value = response.data;
+            // console.log(itemOptions.value);
+
+        }).catch((error) => {
+            handleErrorResponse(error)
+        }).finally(() => {
+            loadingModal.value = false
+        });
+}
+
+
+const hideNotification = () => {
+    notificationShow.value = false;
+    notificationType.value = null;
+    notificationMessages.value = null;
+}
+
+const showNotification = (type, messages = null) => {
+    notificationType.value = type;
+    notificationMessages.value = messages;
+    notificationShow.value = true;
+}
+
+const handleErrorResponse = (error) => {
+    if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        // console.log(error.response.data);
+        showNotification('error', error.response.data.errors || { request: [error.message] });
+    } else if (error.request) {
+        // The request was made but no response was received
+        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+        // http.ClientRequest in node.js
+        showNotification('error', { request: [error.request] });
+        console.log(error.request);
+    } else {
+        // Something happened in setting up the request that triggered an Error
+        showNotification('error', { request: [error.message] });
+        console.log(error.message);
+    }
+}
+
+registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
+
+
+</script>
+
+<style>
+@import "@syncfusion/ej2-base/styles/tailwind.css";
+@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";
+</style>

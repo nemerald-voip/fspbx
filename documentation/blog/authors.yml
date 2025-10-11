@@ -9,15 +9,10 @@ lemstrom:
     github: alemstrom
 
 dexter:
-  name: Sébastien Lorber
-  title: Docusaurus maintainer
-  url: https://sebastienlorber.com
-  image_url: https://github.com/slorber.png
-  page:
-    # customize the url of the author page at /blog/authors/<permalink>
-    permalink: '/all-sebastien-lorber-articles'
+  name: Dexter A.
+  title: FS PBX Developer
+  url: https://www.linkedin.com/in/dexterallen/
+  image_url: https://media.licdn.com/dms/image/v2/D5603AQEcoDY-g-Y4Mw/profile-displayphoto-scale_400_400/B56ZnR1tyDJoAg-/0/1760162143778?e=1762992000&v=beta&t=DGTl6UFBE1-sKLzPawmUEVleqHO2_TYPwZklbFkc_Ok
+  page: true
   socials:
-    x: sebastienlorber
-    linkedin: sebastienlorber
-    github: slorber
-    newsletter: https://thisweekinreact.com
+    linkedin: dexterallen

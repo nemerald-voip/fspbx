@@ -111,7 +111,8 @@ class RingGroupsController extends Controller
             'ring_group_name',
             'ring_group_extension',
             'ring_group_enabled',
-            'ring_group_description'
+            'ring_group_description',
+            'ring_group_forward_enabled',
         );
 
 
