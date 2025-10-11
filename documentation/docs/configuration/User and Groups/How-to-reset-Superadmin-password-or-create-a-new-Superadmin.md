@@ -1,3 +1,5 @@
+# Reset Superadmin password
+
 ### Overview
 
 The `create:superadmin` Artisan command allows administrators to create a new Superadmin user or reset the password of an existing Superadmin in the FS PBX system. This command ensures that the Superadmin is assigned to the appropriate domain and has the necessary permissions.

@@ -1,3 +1,5 @@
+# How to set up Call Flows
+
 Menu -> Applications > Call Flows
 
 Call flows are used to direct calls to one of two destinations. This is often used for Day Night Mode but can be used to toggle calls between a primary and secondary destination.
