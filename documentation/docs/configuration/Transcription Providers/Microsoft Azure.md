@@ -81,8 +81,8 @@ php artisan queue:restart
 Once the credentials are in place, the final step is to instruct the application to use Azure for new voicemail transcriptions.
 
 1.  In the FS PBX user interface, navigate to the **Default Settings** section and then select **Voicemail**.
-2.  Locate the setting named `transcribe_provider`.
-3.  Update its value to `azure`.
+2.  Locate the setting named `voicemail_queue_strategy`. Update its value to `modern`.
+3.  Locate the setting named `transcribe_provider`. Update its value to `azure`.
 4.  Save the changes.
 
 All new voicemails will now be sent to Azure Cognitive Services for transcription.
