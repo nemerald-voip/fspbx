@@ -27,6 +27,15 @@ else
     exit 1
 fi
 
+print_success "Preflight: ensuring base tools..."
+apt-get update -y && apt-get install -y libc-bin sysvinit-utils
+if [ $? -eq 0 ]; then
+    print_success "Preflight tools installed successfully (ldconfig, service)."
+else
+    print_error "Error occurred during preflight tool installation."
+    exit 1
+fi
+
 # Unset the environment variable to restore normal behavior
 unset DEBIAN_FRONTEND
 
@@ -68,7 +77,16 @@ print_success "Installing and configuring SNMP..."
 apt-get install -y snmpd
 if [ $? -eq 0 ]; then
     echo "rocommunity public" > /etc/snmp/snmpd.conf
-    service snmpd restart
+
+    # Restart snmpd across systemd/sysvinit/bare init
+    if command -v systemctl >/dev/null 2>&1; then
+        systemctl restart snmpd
+    elif command -v service >/dev/null 2>&1; then
+        service snmpd restart
+    else
+        /etc/init.d/snmpd restart 2>/dev/null || true
+    fi
+
     print_success "SNMP installed and configured successfully."
 else
     print_error "Error occurred while installing SNMP."
@@ -345,12 +363,16 @@ else
 fi
 
 
-service nginx reload && service nginx restart
-if [ $? -eq 0 ]; then
-    print_success "Nginx reloaded and restarted successfully."
+# --- Reload Nginx safely across environments ---
+if command -v systemctl >/dev/null 2>&1; then
+   echo "Reloading Nginx via systemctl..."
+   systemctl reload nginx || systemctl restart nginx
+elif command -v service >/dev/null 2>&1; then
+   echo "Reloading Nginx via service..."
+   service nginx reload || service nginx restart
 else
-    print_error "Error occurred during Nginx reload and restart."
-    exit 1
+   echo "Reloading Nginx directly..."
+   nginx -t && nginx -s reload || nginx -s reopen
 fi
 
 # Ensure the FusionPBX cache directory exists
