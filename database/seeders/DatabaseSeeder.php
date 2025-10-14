@@ -413,11 +413,19 @@ class DatabaseSeeder extends Seeder
         $settings = [
             [
                 'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'polycom_vvx_firmware_url',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Example: https://domain.com/sip.ld",
+            ],
+            [
+                'default_setting_category'      => 'provision',
                 'default_setting_subcategory'   => 'poly_e350_firmware',
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => "",
+                'default_setting_description'   => "Example: https://domain.com/sip.ld",
             ],
             [
                 'default_setting_category'      => 'provision',
@@ -425,7 +433,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => "",
+                'default_setting_description'   => "Example: https://domain.com/sip.ld",
             ],
             [
                 'default_setting_category'      => 'provision',
@@ -433,7 +441,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => "",
+                'default_setting_description'   => "Example: https://domain.com/sip.ld",
             ],
             [
                 'default_setting_category'      => 'provision',
@@ -441,7 +449,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => "",
+                'default_setting_description'   => "Example: https://domain.com/sip.ld",
             ],
             [
                 'default_setting_category'      => 'provision',
@@ -449,7 +457,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => "",
+                'default_setting_description'   => "Example: https://domain.com/sip.ld",
             ],
             [
                 'default_setting_category'      => 'provision',
@@ -462,6 +470,22 @@ class DatabaseSeeder extends Seeder
             [
                 'default_setting_category'      => 'provision',
                 'default_setting_subcategory'   => 'polycom_vvx_480x272_wallpaper',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e300_logo',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e300_wallpaper',
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
                 'default_setting_enabled'       => true,

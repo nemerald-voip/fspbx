@@ -884,7 +884,7 @@ if (!function_exists('getVendorTemplateCollection')) {
 
         foreach ($latestDefaults as $r) {
             $templates[] = [
-                'name'  => "{$r->vendor}/{$r->name}",
+                'name'  => "{$r->vendor}/{$r->name} v{$r->version}",
                 'value' => (string) $r->template_uuid,
             ];
         }

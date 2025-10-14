@@ -1,4 +1,4 @@
-{{-- version: 1.0.1 --}}
+{{-- version: 1.0.0 --}}
 
 @switch($flavor)
 
@@ -7,7 +7,7 @@
 
 <?xml version="1.0" standalone="yes"?>
 <APPLICATION
-    APP_FILE_PATH="{$polycom_vvx_firmware_url}"
+    APP_FILE_PATH="{$poly_e350_firmware}"
     CONFIG_FILES="phone[PHONE_MAC_ADDRESS].cfg,  [PHONE_MODEL]-[PHONE_MAC_ADDRESS].cfg" 
     MISC_FILES="" 
     LOG_FILE_DIRECTORY="" 
@@ -499,11 +499,7 @@
 @case('model-mac.cfg')
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <polycomConfig>
-    <bg bg.color.bm.1.name="{{ $settings['polycom_vvx_480x272_wallpaper'] ?? ''}}" 
-		bg.color.VVX600.selection="2,1" bg.color.VVX601.selection="2,1" bg.color.VVX450.selection="2,1"/>
-	<bg bg.color.bm.2.name="{{ $settings['polycom_vvx_320x240_wallpaper'] ?? ''}}" 
-		bg.color.VVX400.selection="2,2" bg.color.VVX401.selection="2,2" bg.color.VVX410.selection="2,2" bg.color.VVX411.selection="2,2" bg.color.VVX500.selection="2,2" 
-        bg.color.VVX501.selection="2,2" bg.color.VVX250.selection="2,2"/>
+    <bg bg.color.bm.1.name="{{ $settings['poly_e350_wallpaper'] ?? ''}}" bg.color.selection="2,1" bg.logo="{{ $settings['poly_e350_logo'] ?? ''}}" />
 </polycomConfig>
 @break
 

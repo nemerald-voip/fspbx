@@ -68,6 +68,9 @@ class ProvisioningController extends Controller
         // If the rendered body is valid XML, pretty-print it (keeps XML decl if present)
         if ($pretty = $this->maybePrettyPrintXml($body)) {
             $body = $pretty;
+        } else {
+            // Not XML → normalize provisioning text
+            $body = $this->normalizeProvisionText($body);
         }
 
         // ETag / 304 support
@@ -242,7 +245,7 @@ class ProvisioningController extends Controller
         // Only care about the last segment
         $tail = basename($tail);
 
-        if (preg_match('#^([^/]+)\.(cfg|xml)$#i', $tail, $m)) {
+        if (preg_match('#^([^/]+)\.(cfg|xml|boot)$#i', $tail, $m)) {
             return [$m[1], strtolower($m[2])];
         }
         // fallback: whole tail as id, assume cfg
@@ -294,8 +297,6 @@ class ProvisioningController extends Controller
                 'mime'   => 'application/xml',
             ];
         }
-
-
 
         // Yealink model index (loose check)
         if ($vendor === 'yealink' && $extLower === 'cfg' && preg_match('/^y0{8}[0-9a-f]{2}$/i', $id)) {
@@ -573,7 +574,36 @@ class ProvisioningController extends Controller
             };
         }
 
+        if ($vendor === 'yealink') {
+            return match ($t) {
+                'tcp' => '1',
+                'tls' => '2',
+                'dns srv', 'dnssrv', 'dnsnaptr' => '3',
+                '', 'udp' => '0',
+                default => '0',
+            };
+        }
+
         // Other vendors: leave as-is (or extend with more mappings later)
         return $transport ?: null;
+    }
+
+    private function normalizeProvisionText(string $raw): string
+    {
+        // 1) Strip leading indentation on each non-empty line
+        $out = preg_replace('/^[ \t]+/m', '', $raw);
+
+        // 2) Collapse 3+ blank lines into a single blank line
+        $out = preg_replace('/\R{3,}/', PHP_EOL . PHP_EOL, $out);
+
+        // 3) Trim trailing whitespace at line ends
+        $out = preg_replace('/[ \t]+$/m', '', $out);
+
+        // 4) Ensure file ends with a single newline (many phones prefer it)
+        if ($out === '' || substr($out, -1) !== "\n") {
+            $out .= "\n";
+        }
+
+        return $out;
     }
 }

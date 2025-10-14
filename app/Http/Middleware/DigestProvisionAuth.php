@@ -15,11 +15,18 @@ class DigestProvisionAuth
         // turn debug off or on 
         $debug = false;
 
-        // --- your existing code, replacing logger(...) with $this->dbg($debug, 'msg', [...]) ---
         [$id, $ext] = $this->extractIdAndExt($request);
 
+        // Send 404 if requested file matches one of the generic names
         $lower = strtolower($id);
-        if (in_array($lower, ['default','index','master','000000000000','sip.ld','sip_59x.ld'], true)) {
+        if (in_array($lower, ['default', 'index', 'master', '000000000000', 'sip.ld', 'sip_59x.ld'], true)) {
+            $this->dbg($debug, 'early-404.generic', ['path' => $request->getRequestUri()]);
+            return response('', 404);
+        }
+
+        // Send 404 if requested file extension matches one of the generic names
+        $lower = strtolower($ext);
+        if (in_array($lower, ['boot'], true)) {
             $this->dbg($debug, 'early-404.generic', ['path' => $request->getRequestUri()]);
             return response('', 404);
         }
@@ -48,7 +55,7 @@ class DigestProvisionAuth
         $realm = "Prov-$hash";
 
         $authTypeRaw = get_domain_setting('http_auth_type', $domainUuid);
-        $authType = in_array(strtolower((string)$authTypeRaw), ['basic','digest','both'], true)
+        $authType = in_array(strtolower((string)$authTypeRaw), ['basic', 'digest', 'both'], true)
             ? strtolower((string)$authTypeRaw) : 'basic';
 
         $auth   = $request->header('Authorization', '');
@@ -67,7 +74,7 @@ class DigestProvisionAuth
                 [$bu] = array_pad(explode(':', $decoded, 2), 2, '');
                 $this->dbg($debug, 'auth.basic.present', ['user' => $this->maskUser($bu)]);
 
-                if (hash_equals($username, $bu) && hash_equals($password, substr($decoded, strlen($bu)+1))) {
+                if (hash_equals($username, $bu) && hash_equals($password, substr($decoded, strlen($bu) + 1))) {
                     $this->attach($request, $device, $domainUuid, $realm, 'basic');
                     $this->dbg($debug, 'auth.basic.ok');
                     return $next($request);
@@ -80,7 +87,7 @@ class DigestProvisionAuth
         // DIGEST
         if ($scheme === 'digest' && ($authType === 'digest' || $authType === 'both')) {
             $parts = $this->parseDigest(substr($auth, 7));
-            $this->dbg($debug, 'auth.digest.parts', array_intersect_key($parts ?? [], array_flip(['username','nonce','uri','qop','nc'])));
+            $this->dbg($debug, 'auth.digest.parts', array_intersect_key($parts ?? [], array_flip(['username', 'nonce', 'uri', 'qop', 'nc'])));
 
             if (!$parts || empty($parts['username']) || empty($parts['nonce']) || empty($parts['uri']) || empty($parts['response'])) {
                 return $this->challengeDigest($realm, false, $debug);
@@ -135,7 +142,7 @@ class DigestProvisionAuth
     {
         if (!$u) return '';
         return strlen($u) <= 2 ? '*'
-            : substr($u, 0, 1) . str_repeat('*', max(1, strlen($u)-2)) . substr($u, -1);
+            : substr($u, 0, 1) . str_repeat('*', max(1, strlen($u) - 2)) . substr($u, -1);
     }
 
     private function extractIdAndExt(Request $request): array
@@ -143,20 +150,20 @@ class DigestProvisionAuth
         $id  = (string) ($request->route('id')  ?? '');
         $ext = (string) ($request->route('ext') ?? '');
         if ($id !== '' && $ext !== '') return [$id, strtolower($ext)];
-    
+
         // Catch-all path like "prov/83/da44-1017-9088-0092.xml"
         $path = (string) ($request->route('path') ?? $request->path());
         $path = ltrim($path, '/');
         if (str_starts_with($path, 'prov/')) $path = substr($path, 5);
-    
+
         // Use the last segment only
         $tail = basename($path);
-        if (preg_match('#^([^/]+)\.(cfg|xml)$#i', $tail, $m)) {
+        if (preg_match('#^([^/]+)\.(cfg|xml|boot)$#i', $tail, $m)) {
             return [$m[1], strtolower($m[2])];
         }
         return [$tail, 'cfg'];
     }
-    
+
 
     // Challenge according to policy
     private function challengeAccordingToPolicy(string $authType, string $realm, bool $debug)
@@ -183,7 +190,10 @@ class DigestProvisionAuth
         $opaque = md5(config('app.key') . $realm);
         $hdr = sprintf(
             'Digest realm="%s", qop="auth", nonce="%s", opaque="%s", algorithm=MD5%s',
-            $realm, $nonce, $opaque, $stale ? ', stale=true' : ''
+            $realm,
+            $nonce,
+            $opaque,
+            $stale ? ', stale=true' : ''
         );
         $this->dbg($debug, 'challenge.digest', ['hdr' => $hdr]);
         return response('', 401)->withHeaders(['WWW-Authenticate' => $hdr]);
@@ -196,7 +206,10 @@ class DigestProvisionAuth
         $opaque = md5(config('app.key') . $realm);
         $digest = sprintf(
             'Digest realm="%s", qop="auth", nonce="%s", opaque="%s", algorithm=MD5%s',
-            $realm, $nonce, $opaque, $stale ? ', stale=true' : ''
+            $realm,
+            $nonce,
+            $opaque,
+            $stale ? ', stale=true' : ''
         );
         $basic  = sprintf('Basic realm="%s", charset="UTF-8"', $realm);
         $this->dbg($debug, 'challenge.both', ['digest' => $digest, 'basic' => $basic]);
