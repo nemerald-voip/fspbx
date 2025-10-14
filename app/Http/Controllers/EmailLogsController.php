@@ -64,7 +64,7 @@ class EmailLogsController extends Controller
                 }),
             ])
             ->allowedSorts(['created_at'])
-            ->defaultSort('created_at');
+            ->defaultSort('-created_at');
 
 
         if ($params['paginate']) {
