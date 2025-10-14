@@ -25,6 +25,7 @@
         "laravel/ui": "^4.2",
         "league/flysystem-aws-s3-v3": "^3.0",
         "linfo/linfo": "^4.0",
+        "livewire/livewire": "*",
         "maatwebsite/excel": "^3.1",
         "nwidart/laravel-modules": "^10.0",
         "predis/predis": "^2.0",
