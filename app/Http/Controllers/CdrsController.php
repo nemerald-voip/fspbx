@@ -10,9 +10,10 @@ use App\Models\Extensions;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use App\Models\CallCenterQueues;
-use Illuminate\Support\Facades\Session;
 use App\Services\CdrDataService;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
+use App\Services\CallRecordingUrlService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 class CdrsController extends Controller
@@ -78,6 +79,7 @@ class CdrsController extends Controller
                     'item_options' => route('cdrs.item.options'),
                     'data_route' => route('cdrs.data'),
                     'entities_route' => route('cdrs.entities'),
+                    'call_recording_route' => route('cdrs.recording.options'),
                 ],
                 'permissions' => function () {
                     return $this->getPermissions();
@@ -288,6 +290,63 @@ class CdrsController extends Controller
             // Construct the itemOptions object
             $itemOptions = [
                 'item' => $item,
+            ];
+
+            return $itemOptions;
+        } catch (\Exception $e) {
+            // Log the error message
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // report($e);
+
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to fetch item details']]
+            ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+    public function getRecordingOptions(CallRecordingUrlService $urlService)
+    {
+        try {
+            // Get item data
+            $item = $this->model::where($this->model->getKeyName(), request('item_uuid'))
+                ->select([
+                    'xml_cdr_uuid',
+                    'extension_uuid',
+                    'domain_uuid',
+                    'sip_call_id',
+                    'direction',
+                    'caller_id_name',
+                    'caller_id_number',
+                    'caller_destination',
+                    'start_epoch',
+                    'duration',
+                    'status',
+                    'record_path',
+                    'record_name',
+                    'record_length',
+                ])
+                ->with([
+                    'extension:extension_uuid,extension,effective_caller_id_name',
+                ])
+                ->first();
+
+            // logger($item);
+
+            // If item doesn't exist throw and error 
+            if (!$item) {
+                throw new \Exception("Failed to fetch item details. Item not found");
+            }
+
+            // Add a temporary URL for the audio file (S3 or Local)
+            $audioUrl = $urlService->temporaryUrlForCdr($item->xml_cdr_uuid, 600); // 10 minutes
+
+            // Construct the itemOptions object
+            $itemOptions = [
+                'item' => $item,
+                'audio_url' => $audioUrl, 
+
             ];
 
             return $itemOptions;
@@ -867,6 +926,8 @@ class CdrsController extends Controller
         $permissions = [];
         $permissions['all_cdr_view'] = userCheckPermission('xml_cdr_domain');
         $permissions['cdr_mos_view'] = userCheckPermission('xml_cdr_mos');
+        $permissions['call_recording_play'] = userCheckPermission('call_recording_play');
+        $permissions['call_recording_download'] = userCheckPermission('call_recording_download');
 
         return $permissions;
     }

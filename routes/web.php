@@ -114,10 +114,7 @@ Route::group(['middleware' => 'auth'], function () {
     // Call Detail Records
     Route::get('/call-detail-records', [CdrsController::class, 'index'])->name('cdrs.index');
     Route::post('/call-detail-records', [CdrsController::class, 'index'])->name('cdrs.download');
-    Route::get('/call-detail-records/file/{filePath}/{fileName}', [CdrsController::class, 'serveRecording'])->name('serve.recording');
     Route::post('/call-detail-records/export', [CdrsController::class, 'export'])->name('cdrs.export');
-    Route::post('/call-detail-records/item-options', [CdrsController::class, 'getItemOptions'])->name('cdrs.item.options');
-
 
     //Extension Statistics
     Route::get('/extension-statistics', [ExtensionStatisticsController::class, 'index'])->name('extension-statistics.index');
