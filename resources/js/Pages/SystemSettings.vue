@@ -1,179 +1,184 @@
 <template>
     <MainLayout>
 
-        <div class="mt-3 px-4 sm:px-6 lg:px-8">
-            <div class="sm:flex sm:items-center">
-                <div class="sm:flex-auto">
-                    <div>
-                        <div class="mt-3 text-lg font-semibold leading-6 text-gray-600">
-                            System Settings
+
+        <div class="relative mx-auto max-w-full sm:px-6">
+
+            <main class="flex gap-2 pb-10 pt-12 md:gap-8">
+                <aside :class="isNavCollapsed ? 'w-15' : 'w-64'"
+                    class="relative z-20 flex flex-col flex-none transition-all duration-300">
+                    <div class="flex grow flex-col gap-y-5 border-r border-gray-200 bg-white"
+                        :class="isNavCollapsed ? 'overflow-visible px-2.5' : 'overflow-y-auto px-4'">
+
+                        <!-- Header -->
+                        <div class="flex h-16 shrink-0 items-center">
+                            <!-- Logo and Title section -->
+                            <div class="flex flex-1 items-center gap-x-3">
+                                <Cog6ToothIcon class="size-7 text-indigo-600 shrink-0" />
+                                <span v-show="!isNavCollapsed" class="font-semibold text-gray-800 truncate">System
+                                    Settings</span>
+                            </div>
+
+                            <!-- Collapse Button -->
+                            <button v-if="!isNavCollapsed" @click="toggleNav"
+                                class="rounded-md border border-gray-300 p-1.5 text-gray-500 hover:border-indigo-600 hover:text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <ChevronDoubleLeftIcon class="size-4 shrink-0" />
+                            </button>
                         </div>
-                    </div>
 
-                </div>
-            </div>
-
-
-        </div>
-
-        <main class="mx-auto max-w-full pb-10 sm:px-6 md:py-12 flex gap-2 md:gap-8 relative">
-            <aside :class="isNavCollapsed ? 'w-15' : 'w-64'"
-                class="flex flex-col flex-none transition-all duration-300">
-                <div class="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-4">
-                    <nav class="flex flex-1 flex-col mt-12">
-                        <ul role="list" class="flex flex-1 flex-col gap-y-7">
-                            <li>
-                                <ul role="list" class="-mx-2 space-y-1">
-                                    <li v-for="item in navigation" :key="item.key">
-                                        <div v-if="!item.children" class="relative">
-                                            <button type="button" @click="navigateTo(item.key)"
-                                                :class="[isActive(item.key) ? 'bg-gray-100' : 'hover:bg-gray-100', 'group flex items-center gap-x-3 w-full text-left rounded-md p-2 text-sm/6 font-semibold text-gray-700']">
-                                                <component :is="item.icon" class="size-6 shrink-0"
-                                                    :class="isActive(item.key) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
-                                                <span class="truncate" v-show="!isNavCollapsed">{{ item.name }}</span>
-                                            </button>
-                                            <span v-if="isNavCollapsed"
-                                                class="absolute left-full top-1/2 -translate-y-1/2 ml-4 w-auto min-w-max scale-0 rounded bg-gray-900 p-2 text-xs font-bold text-white transition-all group-hover:scale-100 origin-left z-10">
-                                                {{ item.name }}
-                                            </span>
-                                        </div>
-
-                                        <Disclosure as="div" v-else v-slot="{ open }"
-                                            :default-open="parentHasActiveChild(item)">
-                                            <div class="relative">
-                                                <DisclosureButton
-                                                    :class="[parentHasActiveChild(item) ? 'bg-gray-100' : 'hover:bg-gray-100', 'group flex w-full items-center gap-x-3 rounded-md p-2 text-left text-sm/6 font-semibold text-gray-700']">
+                        <!-- Navigation -->
+                        <nav class="flex flex-1 flex-col pb-5">
+                            <ul role="list" class="flex flex-1 flex-col gap-y-7">
+                                <li>
+                                    <ul role="list" class="-mx-2 space-y-1">
+                                        <li v-for="item in navigation" :key="item.key">
+                                            <!-- Item WITHOUT children -->
+                                            <div v-if="!item.children" class="relative group">
+                                                <button type="button" @click="navigateTo(item.key)"
+                                                    :class="[isActive(item.key) ? 'bg-gray-100' : 'hover:bg-gray-100', 'flex items-center gap-x-3 w-full text-left rounded-md p-2 text-sm/6 font-semibold text-gray-700']">
                                                     <component :is="item.icon" class="size-6 shrink-0"
-                                                        :class="parentHasActiveChild(item) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
+                                                        :class="isActive(item.key) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
                                                     <span class="truncate" v-show="!isNavCollapsed">{{ item.name
                                                         }}</span>
-                                                    <ChevronRightIcon v-show="!isNavCollapsed"
-                                                        :class="[open ? 'rotate-90 text-gray-500' : 'text-gray-400', 'ml-auto size-5 shrink-0']" />
-                                                </DisclosureButton>
+                                                </button>
+                                                <!-- Tooltip for collapsed state -->
                                                 <span v-if="isNavCollapsed"
-                                                    class="absolute left-full top-1/2 -translate-y-1/2 ml-4 w-auto min-w-max scale-0 rounded bg-gray-900 p-2 text-xs font-bold text-white transition-all group-hover:scale-100 origin-left z-10">
+                                                    class="absolute left-full top-1/2 -translate-y-1/2 ml-4 w-auto min-w-max scale-0 rounded bg-gray-900 p-2 text-xs font-bold text-white transition-all group-hover:scale-100 origin-left z-30">
                                                     {{ item.name }}
                                                 </span>
                                             </div>
-                                            <DisclosurePanel as="ul" class="mt-1"
-                                                :class="isNavCollapsed ? 'pl-0' : 'pl-6'">
-                                    <li v-for="subItem in item.children" :key="subItem.key" class="relative">
-                                        <button type="button" @click="navigateTo(subItem.key)" :class="[
-                                            isActive(subItem.key) ? 'bg-gray-100' : 'hover:bg-gray-100',
-                                            'group flex w-full items-center gap-x-3 rounded-md py-2 pr-2 text-sm/6 text-gray-700',
-                                            isNavCollapsed ? 'justify-center' : 'pl-1'
-                                        ]">
 
-                                            <component v-if="subItem.icon" :is="subItem.icon" class="size-5 shrink-0"
-                                                :class="isActive(subItem.key) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
+                                            <!-- Item WITH children -->
+                                            <div v-else>
+                                                <!-- Expanded View -->
+                                                <Disclosure as="div" v-if="!isNavCollapsed" v-slot="{ open }"
+                                                    :default-open="parentHasActiveChild(item)">
+                                                    <DisclosureButton
+                                                        :class="[parentHasActiveChild(item) ? 'bg-gray-100' : 'hover:bg-gray-100', 'flex w-full items-center gap-x-3 rounded-md p-2 text-left text-sm/6 font-semibold text-gray-700']">
+                                                        <component :is="item.icon" class="size-6 shrink-0"
+                                                            :class="parentHasActiveChild(item) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
+                                                        <span class="truncate">{{ item.name }}</span>
+                                                        <ChevronRightIcon
+                                                            :class="[open ? 'rotate-90 text-gray-500' : 'text-gray-400', 'ml-auto size-5 shrink-0']" />
+                                                    </DisclosureButton>
+                                                    <DisclosurePanel as="ul" class="mt-1 pl-6">
+                                        <li v-for="subItem in item.children" :key="subItem.key">
+                                            <button type="button" @click="navigateTo(subItem.key)" :class="[
+                                                isActive(subItem.key) ? 'bg-gray-100' : 'hover:bg-gray-100',
+                                                'group flex w-full items-center gap-x-3 rounded-md py-2 px-3 text-sm/6 font-semibold text-gray-700'
+                                            ]">
+                                                <component v-if="subItem.icon" :is="subItem.icon"
+                                                    class="size-5 shrink-0"
+                                                    :class="isActive(subItem.key) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
+                                                <span class="truncate">{{ subItem.name }}</span>
+                                            </button>
+                                        </li>
+                                        </DisclosurePanel>
+                                        </Disclosure>
 
-                                            <!-- label (hidden when collapsed) -->
-                                            <span v-show="!isNavCollapsed" class="truncate">{{ subItem.name }}</span>
-
-                                            <!-- fallback initial only if no icon and collapsed -->
-                                            <span v-if="isNavCollapsed && !subItem.icon" class="font-bold">
-                                                {{ subItem.name.charAt(0) }}
-                                            </span>
-                                        </button>
-
-                                        <!-- tooltip when collapsed -->
-                                        <span v-if="isNavCollapsed"
-                                            class="absolute left-full top-1/2 -translate-y-1/2 ml-4 w-auto min-w-max scale-0 rounded bg-gray-900 p-2 text-xs font-bold text-white transition-all group-hover:scale-100 origin-left z-10">
-                                            {{ subItem.name }}
-                                        </span>
-                                    </li>
-                                    </DisclosurePanel>
-                                    </Disclosure>
-                            </li>
-                        </ul>
-                        </li>
-                        </ul>
+                                        <!-- Collapsed View -->
+                                        <div v-else class="relative group">
+                                            <div
+                                                :class="[parentHasActiveChild(item) ? 'bg-gray-100' : '', 'flex items-center rounded-md p-2']">
+                                                <component :is="item.icon" class="size-6 shrink-0"
+                                                    :class="parentHasActiveChild(item) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
+                                            </div>
+                                            <div class="absolute left-full top-0 h-full w-4" />
+                                            <div
+                                                class="absolute left-full top-0 ml-4 w-auto min-w-max scale-0 rounded-md bg-white shadow-lg ring-1 ring-gray-900/5 transition-transform group-hover:scale-100 origin-left z-30">
+                                                <div class="p-2">
+                                                    <p class="px-2 py-1 text-sm font-semibold text-gray-800">{{
+                                                        item.name }}</p>
+                                                    <ul role="list" class="mt-1 space-y-1">
+                                                        <li v-for="subItem in item.children" :key="subItem.key">
+                                                            <button type="button" @click="navigateTo(subItem.key)"
+                                                                :class="[
+                                                                    isActive(subItem.key) ? 'bg-gray-100 text-indigo-600' : 'hover:bg-gray-100 text-gray-700',
+                                                                    'group flex w-full items-center gap-x-3 rounded-md p-2 text-left text-sm/6 font-semibold'
+                                                                ]">
+                                                                <component v-if="subItem.icon" :is="subItem.icon"
+                                                                    class="size-5 shrink-0"
+                                                                    :class="isActive(subItem.key) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
+                                                                <span class="truncate">{{ subItem.name }}</span>
+                                                            </button>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                    </div>
+                    </li>
+                    </ul>
+                    </li>
+                    </ul>
                     </nav>
+        </div>
 
-                </div>
-            </aside>
+        <!-- EXPAND BUTTON -->
+        <button v-if="isNavCollapsed" @click="toggleNav" class="absolute left-full
+         rounded-md border border-gray-300 bg-white p-1.5 text-gray-500
+         hover:border-indigo-600 hover:text-indigo-600
+         focus:outline-none focus:ring-2 focus:ring-indigo-500 z-30">
+            <ChevronDoubleLeftIcon class="size-4 shrink-0 rotate-180" />
+        </button>
+        </aside>
 
-            <button @click="toggleNav" :class="isNavCollapsed ? 'left-10 sm:left-14' : 'left-64'"
-                class="absolute top-1 md:top-14 -translate-x-1/2 bg-white rounded-full p-1.5 border shadow-md text-gray-500 hover:text-indigo-600 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300 z-10">
-                <ChevronDoubleLeftIcon class="size-5 transition-transform duration-300"
-                    :class="{ 'rotate-180': isNavCollapsed }" />
-            </button>
-
-            <!-- MAIN content -->
-            <div class="flex-1 shadow md:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 md:p-6">
-
-                <!-- PAYMENT GATEWAYS -->
-                <section v-show="activeSection === 'payment_gateways'">
-
-                    <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
-                        @response="handleResponse" :display-errors="false">
-                        <template #empty>
-
-                            <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
-
-                                <div class="lg:col-span-12">
-                                    <FormElements>
-
-                                        <!-- Payment Gateways Tab -->
-
-                                        <StaticElement name="payment_gateways_tab_label" tag="h4"
-                                            content="Payment Gateways" description="Manage Payment Providers" />
-                                        <ListElement name="gateways" :controls="{
-                                            add: false,
-                                            remove: false,
-                                        }"
-                                            :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
-                                            <template #default="{ index }">
-                                                <ObjectElement :name="index">
-                                                    <StaticElement name="name" tag="p" :content="(el$) => {
-                                                        // console.log (el$.form$.el$('gateways').value[index].name);
-                                                        return el$.form$.el$('gateways').value[index].name
-                                                    }" :columns="{ container: 6, }"
-                                                        :attrs="{ class: 'text-base font-semibold' }">
-                                                        <template #after="{ el$ }">
-                                                            <Badge
-                                                                v-if="el$.form$.el$('gateways').value[index].is_enabled"
-                                                                class="mt-1" :text="'Activated'"
-                                                                :backgroundColor="'bg-green-50'"
-                                                                :textColor="'text-green-700'"
-                                                                :ringColor="'ring-green-600/20'" />
-
-                                                            <Badge v-else class="mt-1" :text="'Disabled'"
-                                                                :backgroundColor="'bg-rose-50'"
-                                                                :textColor="'text-rose-700'"
-                                                                :ringColor="'ring-rose-600/20'" />
-                                                        </template>
-                                                    </StaticElement>
-                                                    <HiddenElement name="is_enabled" :meta="true" />
-                                                    <ButtonElement name="gateway_activate" button-label="Configure"
-                                                        @click="handlePaymentGatewaySettingsClick(index)" :columns="{
-                                                            container: 6,
-                                                        }" align="right" :conditions="[
-                                                            ['gateways.*.is_enabled', false]
-                                                        ]" />
-
-                                                    <ButtonElement name="gwateway_deactivate" button-label="Deactivate"
-                                                        @click="handlePaymentGatewayDeactivateClick(index)"
-                                                        :secondary="true" :columns="{
-                                                            container: 6,
-                                                        }" align="right" :conditions="[
-                                                            ['gateways.*.is_enabled', true]
-                                                        ]" />
-
-                                                </ObjectElement>
-                                            </template>
-                                        </ListElement>
-
-
-
-                                    </FormElements>
-                                </div>
+        <!-- MAIN CONTENT AREA -->
+        <div class="flex-1 shadow md:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 md:p-6">
+            <section v-show="activeSection === 'payment_gateways'">
+                <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
+                    @response="handleResponse" :display-errors="false">
+                    <template #empty>
+                        <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
+                            <div class="lg:col-span-12">
+                                <FormElements>
+                                    <StaticElement name="payment_gateways_tab_label" tag="h4" content="Payment Gateways"
+                                        description="Manage Payment Providers" />
+                                    <ListElement name="gateways" :controls="{ add: false, remove: false }"
+                                        :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                        <template #default="{ index }">
+                                            <ObjectElement :name="index">
+                                                <StaticElement name="name" tag="p" :content="(el$) => {
+                                                    return el$.form$.el$('gateways').value[index].name
+                                                }" :columns="{ container: 6, }"
+                                                    :attrs="{ class: 'text-base font-semibold' }">
+                                                    <template #after="{ el$ }">
+                                                        <Badge v-if="el$.form$.el$('gateways').value[index].is_enabled"
+                                                            class="mt-1" :text="'Activated'"
+                                                            :backgroundColor="'bg-green-50'"
+                                                            :textColor="'text-green-700'"
+                                                            :ringColor="'ring-green-600/20'" />
+                                                        <Badge v-else class="mt-1" :text="'Disabled'"
+                                                            :backgroundColor="'bg-rose-50'" :textColor="'text-rose-700'"
+                                                            :ringColor="'ring-rose-600/20'" />
+                                                    </template>
+                                                </StaticElement>
+                                                <HiddenElement name="is_enabled" :meta="true" />
+                                                <ButtonElement name="gateway_activate" button-label="Configure"
+                                                    @click="handlePaymentGatewaySettingsClick(index)" :columns="{
+                                                        container: 6,
+                                                    }" align="right" :conditions="[
+                                                        ['gateways.*.is_enabled', false]
+                                                    ]" />
+                                                <ButtonElement name="gwateway_deactivate" button-label="Deactivate"
+                                                    @click="handlePaymentGatewayDeactivateClick(index)"
+                                                    :secondary="true" :columns="{
+                                                        container: 6,
+                                                    }" align="right" :conditions="[
+                                                        ['gateways.*.is_enabled', true]
+                                                    ]" />
+                                            </ObjectElement>
+                                        </template>
+                                    </ListElement>
+                                </FormElements>
                             </div>
-                        </template>
-                    </Vueform>
-                </section>
-            </div>
+                        </div>
+                    </template>
+                </Vueform>
+            </section>
+        </div>
         </main>
+        </div>
 
         <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
             @update:show="hideNotification" />
@@ -187,7 +192,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted, markRaw } from 'vue'
 import MainLayout from '../Layouts/MainLayout.vue'
 
 import Notification from "./components/notifications/Notification.vue";
@@ -199,10 +204,12 @@ import {
     Cog6ToothIcon,
     ChevronDoubleLeftIcon,
 } from '@heroicons/vue/24/outline'
+import GraphicEqIcon from "@icons/GraphicEqIcon.vue"
 
 
 const props = defineProps({
     routes: Object,
+    permissions: Object,
 })
 
 const form$ = ref(null)
@@ -212,25 +219,14 @@ const showStripeSettingsModal = ref(false);
 const gatewaySettings = ref(null);
 const gatewayUuid = ref(null);
 const gatewayEnabled = ref(null);
-const activeSection = ref('payment_gateways')
+const activeSection = ref(null)
 const isActive = (key) => activeSection.value === key
 const navOpen = ref(false)
+const navigation = ref([])
 
-const navigation = [
-    { key: 'payment_gateways', name: 'Payment Gateways', icon: Cog6ToothIcon },
+const parentHasActiveChild = (item) =>
+    Array.isArray(item.children) && item.children.some((c) => isActive(c.key))
 
-    // {
-    //     key: 'hotel',
-    //     name: 'Hotel Management',
-    //     icon: BuildingOffice2Icon,
-    //     children: [
-    //         { key: 'room_management', name: 'Room Management', icon: KeyIcon },
-    //         { key: 'room_status', name: 'Room Status', icon: ClipboardDocumentCheckIcon },
-    //         { key: 'emergency_calls', name: 'Emergency Calls', icon: BellAlertIcon },
-
-    //     ],
-    // },
-]
 
 watch(activeSection, (key) => {
     if (key === 'payment_gateways') getPaymentGatewaysData()
@@ -293,14 +289,30 @@ const checkScreenSize = () => {
 };
 
 onMounted(() => {
+
+    if (props.permissions.payment_gateways_view)
+        navigation.value.push({ key: 'payment_gateways', name: 'Payment Gateways', icon: Cog6ToothIcon })
+
+    if (props.permissions.call_transcription_view) {
+        navigation.value.push({
+            key: 'call_transcription',
+            name: 'Call Transcription',
+            icon: markRaw(GraphicEqIcon),
+            children: [
+                { key: 'assemblyai', name: 'AssemblyAI', icon: markRaw(GraphicEqIcon) },
+            ],
+        })
+    }
+    // Set default section to first visible one
+    if (navigation.value.length) {
+        activeSection.value = navigation.value[0].key
+    }
+
     // Check screen size on initial load
     checkScreenSize();
     // Add event listener for window resize
     window.addEventListener('resize', checkScreenSize);
 
-    getPaymentGatewaysData()
-
-    // console.log(form$.value.data);
 })
 
 onUnmounted(() => {

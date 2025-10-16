@@ -97,9 +97,26 @@
                                 </div>
 
 
-                                <AudioWave v-if="!loading" :url="audioUrl"  />
+                                <AudioPlayer v-if="!loading" :url="props.options?.audio_url"
+                                    :download-url="props.options?.download_url" :file-name="props.options?.filename" />
 
-                                
+                                <Vueform>
+                                    <template #empty>
+                                        <FormTabs>
+                                            <FormTab name="page0" label="Transcript" :elements="[
+                                                'transcribeButton',
+                                            ]" />
+                                            <FormTab name="page1" label="Recap" :elements="[]" />
+                                        </FormTabs>
+
+                                        <FormElements>
+                                            <ButtonElement name="transcribeButton" button-label="Transcribe"
+                                                :secondary="true" />
+                                        </FormElements>
+                                    </template>
+                                </Vueform>
+
+
                             </div>
 
                             <!-- <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
@@ -119,10 +136,9 @@
 </template>
 
 <script setup>
-import { ref, computed  } from "vue";
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
-import AudioWave from "@generalComponents/AudioWave.vue"
+import AudioPlayer from "@generalComponents/AudioPlayer.vue"
 
 
 const emit = defineEmits(['close', 'confirm', 'success', 'error', 'refresh-data'])
@@ -132,97 +148,6 @@ const props = defineProps({
     show: Boolean,
     loading: Boolean,
 });
-
-const audioUrl = computed(() => props.options?.audio_url || null)
-
-const form$ = ref(null)
-
-const submitForm = async (FormData, form$) => {
-    // Using form$.requestData will EXCLUDE conditional elements and it 
-    // will submit the form as Content-Type: application/json . 
-    const requestData = form$.requestData
-
-    // console.log(requestData);
-    return await form$.$vueform.services.axios.post(props.options.routes.store_route, requestData)
-};
-
-function clearErrorsRecursive(el$) {
-    // clear this element’s errors
-    el$.messageBag?.clear()
-
-    // if it has child elements, recurse into each
-    if (el$.children$) {
-        Object.values(el$.children$).forEach(childEl$ => {
-            clearErrorsRecursive(childEl$)
-        })
-    }
-}
-
-const handleResponse = (response, form$) => {
-    // Clear form including nested elements 
-    Object.values(form$.elements$).forEach(el$ => {
-        clearErrorsRecursive(el$)
-    })
-
-    // Display custom errors for elements
-    if (response.data.errors) {
-        Object.keys(response.data.errors).forEach((elName) => {
-            if (form$.el$(elName)) {
-                form$.el$(elName).messageBag.append(response.data.errors[elName][0])
-            }
-        })
-    }
-}
-
-const handleSuccess = (response, form$) => {
-    // console.log(response) // axios response
-    // console.log(response.status) // HTTP status code
-    // console.log(response.data) // response data
-
-    emit('success', response.data.messages);
-    emit('close');
-    emit('refresh-data');
-}
-
-const handleError = (error, details, form$) => {
-    form$.messageBag.clear() // clear message bag
-
-    switch (details.type) {
-        // Error occured while preparing elements (no submit happened)
-        case 'prepare':
-            console.log(error) // Error object
-
-            form$.messageBag.append('Could not prepare form')
-            break
-
-        // Error occured because response status is outside of 2xx
-        case 'submit':
-            emit('error', error);
-            console.log(error) // AxiosError object
-            // console.log(error.response) // axios response
-            // console.log(error.response.status) // HTTP status code
-            // console.log(error.response.data) // response data
-
-            // console.log(error.response.data.errors)
-
-
-            break
-
-        // Request cancelled (no response object)
-        case 'cancel':
-            console.log(error) // Error object
-
-            form$.messageBag.append('Request cancelled')
-            break
-
-        // Some other errors happened (no response object)
-        case 'other':
-            console.log(error) // Error object
-
-            form$.messageBag.append('Couldn\'t submit form')
-            break
-    }
-}
 
 function capitalizeFirstLetter(string) {
     if (!string) return '';

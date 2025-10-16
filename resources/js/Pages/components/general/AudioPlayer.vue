@@ -5,8 +5,8 @@
         <div class="w-full max-w-xl mx-auto rounded-2xl bg-white shadow-sm ring-1 ring-gray-200 overflow-hidden">
             <!-- Top bar: timeline (full width) -->
             <div class="px-4 pt-3">
-                <input type="range" class="slider text-indigo-500 accent-indigo-500 w-full" min="0" max="100" step="0.1" :value="progress"
-                    @input="onTimeSlider" @change="onTimeSlider" />
+                <input type="range" class="slider text-indigo-500 accent-indigo-500 w-full" min="0" max="100" step="0.1"
+                    :value="progress" @input="onTimeSlider" @change="onTimeSlider" />
             </div>
 
             <!-- Bottom controls: center row -->
@@ -54,6 +54,16 @@
                     <!-- Speed -->
                     <button @click="cycleRate" class="text-sm font-semibold text-slate-600 hover:text-slate-800"> {{
                         rate }}x </button>
+
+                    <!-- Download (mobile) -->
+                    <button @click="handleDownload" :disabled="isDownloading"
+                        class="grid h-9 w-9 place-items-center rounded-full text-slate-600 hover:text-slate-800 disabled:opacity-50"
+                        title="Download">
+                        <DownloadIcon v-if="!isDownloading" class="h-6 w-6 text-slate-600" aria-hidden="true" />
+                        <Spinner :show="isDownloading"
+                            class="h-6 w-6 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                    </button>
+
                 </div>
             </div>
         </div>
@@ -136,6 +146,17 @@
                     <!-- Volume slider -->
                     <input type="range" min="0" max="1" step="0.01" v-model.number="volume"
                         class="w-14 sm:w-20 lg:w-28 accent-indigo-500" :title="`Volume: ${(volume * 100) | 0}%`" />
+
+                    <!-- Download (desktop) -->
+                    <button @click="handleDownload" :disabled="isDownloading"
+                        class="ml-2 grid h-9 w-9 place-items-center rounded-full text-slate-600 hover:text-slate-800 disabled:opacity-50"
+                        title="Download">
+                        <DownloadIcon v-if="!isDownloading" class="h-6 w-6" aria-hidden="true" />
+                        <Spinner :show="isDownloading"
+                            class="h-6 w-6 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                    </button>
+
+
                 </div>
             </div>
         </div>
@@ -196,9 +217,13 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import DownloadIcon from "@icons/DownloadIcon.vue"
+import Spinner from "@generalComponents/Spinner.vue";
 
 const props = defineProps({
     url: { type: String, required: true },
+    downloadUrl: { type: String, default: null },
+    fileName: { type: String, default: 'recording.wav' },
 })
 
 const audio = ref(null)
@@ -294,6 +319,18 @@ const toggleMute = () => {
     muted.value = !muted.value
     applyVolume()
 }
+
+const isDownloading = ref(false)
+
+const handleDownload = () => {
+  const href = props.downloadUrl;  
+  if (!href) return;
+  const a = document.createElement('a');
+  a.href = href;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+};
 
 watch(volume, applyVolume)
 

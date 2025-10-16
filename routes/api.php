@@ -220,7 +220,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/call-detail-records/item-options', [CdrsController::class, 'getItemOptions'])->name('cdrs.item.options');
     Route::get('/call-detail-records/recording-options', [CdrsController::class, 'getRecordingOptions'])->name('cdrs.recording.options');
     Route::get('/call-detail-records/recordings/{uuid}', CallRecordingStreamController::class)->name('cdrs.recording.stream');
-
+    Route::get('/call-detail-records/recordings/{uuid}/download', [CallRecordingStreamController::class, 'download'])->name('cdrs.recording.download');
+    
     // Account Settings
     Route::put('account-settings/update', [AccountSettingsController::class, 'update'])->name('account-settings.update');
 

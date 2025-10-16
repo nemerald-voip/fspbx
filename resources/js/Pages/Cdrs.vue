@@ -380,7 +380,7 @@ const getCallRecordingOptions = (uuid) => {
     })
         .then((response) => {
             recordingOptions.value = response.data;
-            console.log(recordingOptions.value);
+            // console.log(recordingOptions.value);
 
         }).catch((error) => {
 
@@ -454,18 +454,6 @@ const getItemOptions = (itemUuid = null) => {
         });
 }
 
-const handleUpdateCallDirectionFilter = (newSelectedItem) => {
-    if (newSelectedItem.value == "NULL") {
-        filterData.value.direction = null;
-    } else {
-        filterData.value.direction = newSelectedItem.value;
-    }
-}
-
-const handleUpdateUserOrGroupFilter = (newSelectedItem) => {
-    filterData.value.entity = newSelectedItem.value;
-    filterData.value.entityType = newSelectedItem.type;
-}
 
 const handleSearchButtonClick = () => {
     getData();
@@ -495,83 +483,6 @@ const renderRequestedPage = (url) => {
 
     // Now call getData with the page number
     getData(pageParam);
-};
-
-const currentAudio = ref(null);
-const currentAudioUuid = ref(null);
-const isAudioPlaying = ref(false);
-
-const fetchAndPlayAudio = (uuid) => {
-    router.visit("/call-detail-records", {
-        data: {
-            callUuid: uuid,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["recordingUrl"],
-        onSuccess: (page) => {
-            // Stop the currently playing audio (if any)
-            if (currentAudio.value) {
-                currentAudio.value.pause();
-                currentAudio.value.currentTime = 0; // Reset the playback position
-            }
-
-            currentAudioUuid.value = uuid;
-            isAudioPlaying.value = true;
-
-            currentAudio.value = new Audio(props.recordingUrl);
-            currentAudio.value.play();
-
-            // Add an event listener for when the audio ends
-            currentAudio.value.addEventListener("ended", () => {
-                isAudioPlaying.value = false;
-                currentAudioUuid.value = null;
-            });
-        },
-    });
-};
-
-const downloadAudio = (uuid) => {
-    router.visit("/call-detail-records", {
-        data: {
-            filterData: filterData._rawValue,
-            callUuid: uuid,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["recordingUrl"],
-        onSuccess: (page) => {
-            let fileName;
-
-            if (props.recordingUrl.includes("call-detail-records/file")) {
-                // Shorten the name
-                fileName = uuid;
-            } else {
-                // If the substring is not present, use the original URL
-                fileName = props.recordingUrl;
-            }
-
-            // Create an anchor element and set the attributes for downloading
-            const anchor = document.createElement("a");
-            anchor.href = props.recordingUrl;
-            anchor.download = fileName; // You can set a specific filename here if desired
-            document.body.appendChild(anchor);
-
-            // Trigger the download
-            anchor.click();
-
-            // Clean up by removing the anchor element
-            document.body.removeChild(anchor);
-        },
-    });
-};
-
-const pauseAudio = () => {
-    // Check if currentAudio has an Audio object before calling pause
-    if (currentAudio.value) {
-        currentAudio.value.pause();
-        isAudioPlaying.value = false;
-    }
 };
 
 const handleUpdateDateRange = (newDateRange) => {

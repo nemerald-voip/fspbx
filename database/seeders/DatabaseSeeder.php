@@ -136,6 +136,8 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Locations', 'permission_name' => 'location_delete'],
             ['application_name' => 'Devices', 'permission_name' => 'device_key_advanced'],
             ['application_name' => 'Logs', 'permission_name' => 'logs_list_view'],
+            ['application_name' => 'System Settings', 'permission_name' => 'payment_gateways_view'],
+            ['application_name' => 'System Settings', 'permission_name' => 'call_transcription_view'],
         ];
         $timestamp = date("Y-m-d H:i:s");
 
@@ -223,6 +225,7 @@ class DatabaseSeeder extends Seeder
                 'device_line_outbound_proxy_primary',
                 'device_line_outbound_proxy_secondary',
                 'logs_list_view',
+                'call_transcription_view',
             ],
             'admin' => [
                 'wakeup_calls_list_view',

@@ -14,8 +14,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Contracts\Foundation\Application;
 use App\Http\Requests\UpdateAccountSettingsRequest;
 
@@ -54,7 +52,9 @@ class SystemSettingsController extends Controller
                     'payment_gateway_update' => route('gateway.update'),
                     'payment_gateway_deactivate' => route('gateway.deactivate'),
                 ],
-
+                'permissions' => function () {
+                    return $this->getUserPermissions();
+                },
             ]
         );
     }
@@ -166,42 +166,50 @@ class SystemSettingsController extends Controller
 
 
     public function getPaymentGatewayData(Request $request)
-{
-    // 1) Permission check (adjust the permission slug as needed)
-    // if (! userCheckPermission('system_settings_view')) {
-    //     return response()->json([
-    //         'messages' => ['error' => ['Access denied.']],
-    //     ], 403);
-    // }
+    {
+        // 1) Permission check (adjust the permission slug as needed)
+        // if (! userCheckPermission('system_settings_view')) {
+        //     return response()->json([
+        //         'messages' => ['error' => ['Access denied.']],
+        //     ], 403);
+        // }
 
-    try {
-        // 2) Fetch + transform
-        $gateways = PaymentGateway::with('settings')->get()
-            ->map(function($gw) {
-                return [
-                    'uuid'       => $gw->uuid,
-                    'slug'       => $gw->slug,
-                    'name'       => $gw->name,
-                    'is_enabled' => (bool) $gw->is_enabled,
-                    'settings'   => $gw->settings->pluck('setting_value','setting_key')->toArray(),
-                ];
-            });
+        try {
+            // 2) Fetch + transform
+            $gateways = PaymentGateway::with('settings')->get()
+                ->map(function ($gw) {
+                    return [
+                        'uuid'       => $gw->uuid,
+                        'slug'       => $gw->slug,
+                        'name'       => $gw->name,
+                        'is_enabled' => (bool) $gw->is_enabled,
+                        'settings'   => $gw->settings->pluck('setting_value', 'setting_key')->toArray(),
+                    ];
+                });
 
-        // 3) Success response
-        return response()->json($gateways);
+            // 3) Success response
+            return response()->json($gateways);
+        } catch (\Throwable $e) {
+            // 4) Log & error response
+            logger(
+                'PaymentGateway fetch error: '
+                    . $e->getMessage()
+                    . ' in ' . $e->getFile()
+                    . ':' . $e->getLine()
+            );
 
-    } catch (\Throwable $e) {
-        // 4) Log & error response
-        logger('PaymentGateway fetch error: ' 
-            . $e->getMessage() 
-            . ' in ' . $e->getFile() 
-            . ':' . $e->getLine()
-        );
-
-        return response()->json([
-            'messages' => ['error' => ['Something went wrong while loading payment gateways.']],
-        ], 500);
+            return response()->json([
+                'messages' => ['error' => ['Something went wrong while loading payment gateways.']],
+            ], 500);
+        }
     }
-}
 
+    public function getUserPermissions()
+    {
+        $permissions = [];
+        $permissions['payment_gateways_view'] = userCheckPermission('payment_gateways_view');
+        $permissions['call_transcription_view'] = userCheckPermission('call_transcription_view');
+
+        return $permissions;
+    }
 }

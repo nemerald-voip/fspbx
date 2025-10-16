@@ -340,14 +340,15 @@ class CdrsController extends Controller
             }
 
             // Add a temporary URL for the audio file (S3 or Local)
-            $audioUrl = $urlService->temporaryUrlForCdr($item->xml_cdr_uuid, 600); // 10 minutes
+            $urls = $urlService->urlsForCdr($item->xml_cdr_uuid, 600); // 10 minutes
 
             // Construct the itemOptions object
-            $itemOptions = [
-                'item' => $item,
-                'audio_url' => $audioUrl, 
-
-            ];
+            return response()->json([
+                'item'        => $item,          
+                'audio_url'   => $urls['audio_url'],
+                'download_url'=> $urls['download_url'],
+                'filename'    => $urls['filename'],
+            ]);
 
             return $itemOptions;
         } catch (\Exception $e) {

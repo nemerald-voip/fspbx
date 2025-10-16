@@ -109,43 +109,7 @@
                         <template #empty>
 
                             <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
-                                <!-- <div class="px-2 py-6 sm:px-6 lg:col-span-2 lg:px-0 lg:py-0">
-                                <FormTabs view="vertical" @select="handleTabSelected">
-                                    <FormTab name="page0" label="General" :elements="[
-                                        'general_tab_label',
-                                        'domain_enabled',
-                                        'domain_description',
-                                        'domain_name',
-                                        'time_zone',
-                                        'general_submit',
-
-                                    ]" :conditions="[() => true]" />
-
-                                    <FormTab name="locations" label="Locations" :elements="[
-                                        'locations_title',
-                                        'add_location',
-                                        'locations_table',
-
-                                    ]" :conditions="[() => permissions?.location_view]" />
-
-                                    <FormTab name="auto_provisioning" label="Auto Provisioning" :elements="[
-                                        'auto_provisioning',
-                                        // 'add_location',
-                                        // 'locations_table',
-
-                                    ]" :conditions="[() => permissions?.location_view]" />
-
-                                    <FormTab name="page2" label="Emergency Calls" :elements="[
-                                        'emergency_calls',
-                                        'container_1',
-                                        'container_2',
-                                        'divider',
-                                        'emergency_calls_service_status'
-                                    ]" :conditions="[() => true]" />
-
-                                </FormTabs>
-                            </div> -->
-
+                               
                                 <div class="lg:col-span-12">
                                     <FormElements>
 
@@ -356,7 +320,7 @@ const navigation = [
     { key: 'general', name: 'General', icon: Cog6ToothIcon },
     { key: 'locations', name: 'Locations', icon: MapPinIcon },
     { key: 'auto_provisioning', name: 'Auto Provisioning', icon: WrenchScrewdriverIcon },
-    { key: 'billing', name: 'Billing', icon: CreditCardIcon },
+    // { key: 'billing', name: 'Billing', icon: CreditCardIcon },
     {
         key: 'hotel',
         name: 'Hotel Management',

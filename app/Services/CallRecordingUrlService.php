@@ -13,37 +13,60 @@ class CallRecordingUrlService
      * - Local: returns a signed route to a streaming controller (supports HTTP range).
      * - S3: returns a pre-signed S3 URL.
      */
-    public function temporaryUrlForCdr(string $xmlCdrUuid, int $ttlSeconds = 600): ?string
+    public function urlsForCdr(string $xmlCdrUuid, int $ttlSeconds = 600): array
     {
-        /** @var CDR|null $rec */
         $rec = CDR::query()
             ->select('xml_cdr_uuid', 'record_path', 'record_name', 'domain_uuid')
             ->with('archive_recording:xml_cdr_uuid,object_key')
             ->where('xml_cdr_uuid', $xmlCdrUuid)
             ->first();
 
-        if (!$rec) return null;
+        if (!$rec) return ['audio_url' => null, 'download_url' => null, 'filename' => null];
 
-        // S3 route
         if ($rec->record_path === 'S3') {
             $objectKey = $this->resolveS3ObjectKey($rec);
-            if (!$objectKey) return null;
+            if (!$objectKey) return ['audio_url' => null, 'download_url' => null, 'filename' => null];
 
             $disk = $this->buildS3DiskForDomain($rec->domain_uuid);
-            if (!$disk) return null;
+            if (!$disk) return ['audio_url' => null, 'download_url' => null, 'filename' => null];
 
-            // Content-Disposition optional; can switch to inline if preferred
-            $opts = ['ResponseContentDisposition' => 'inline; filename="'.basename($objectKey).'"'];
-            return $disk->temporaryUrl($objectKey, now()->addSeconds($ttlSeconds), $opts);
+            $filename = basename($objectKey);
+
+            // 1) inline for <audio> playback
+            $audioUrl = $disk->temporaryUrl(
+                $objectKey,
+                now()->addSeconds($ttlSeconds),
+                ['ResponseContentDisposition' => 'inline; filename="' . $filename . '"']
+            );
+
+            // 2) attachment for download (force download)
+            $downloadUrl = $disk->temporaryUrl(
+                $objectKey,
+                now()->addSeconds($ttlSeconds),
+                [
+                    'ResponseContentDisposition' => 'attachment; filename="' . $filename . '"',
+                    // optional: make it even harder to inline-preview:
+                    'ResponseContentType'        => 'application/octet-stream',
+                ]
+            );
+
+            return [
+                'audio_url'    => $audioUrl,
+                'download_url' => $downloadUrl,
+                'filename'     => $filename,
+            ];
         }
 
-        // We pass only the UUID; controller re-validates and streams securely.
-        return URL::temporarySignedRoute(
-            'cdrs.recording.stream',
-            now()->addSeconds($ttlSeconds),
-            ['uuid' => $rec->xml_cdr_uuid]
-        );
+        // LOCAL: stream vs download routes (signed)
+        $filename = basename($rec->record_name ?: ($rec->archive_recording->object_key ?? 'recording'));
+        return [
+            'audio_url'    => URL::temporarySignedRoute('cdrs.recording.stream',   now()->addSeconds($ttlSeconds), ['uuid' => $rec->xml_cdr_uuid]),
+            'download_url' => URL::temporarySignedRoute('cdrs.recording.download', now()->addSeconds($ttlSeconds), ['uuid' => $rec->xml_cdr_uuid]),
+            'filename'     => $filename,
+        ];
     }
+
+
 
     private function resolveS3ObjectKey($rec): ?string
     {
@@ -56,7 +79,7 @@ class CallRecordingUrlService
 
     private function buildS3DiskForDomain(string $domainUuid)
     {
-        $required = ['access_key','bucket_name','region','secret_key'];
+        $required = ['access_key', 'bucket_name', 'region', 'secret_key'];
 
         $domain = \App\Models\DomainSettings::query()
             ->where('domain_uuid', $domainUuid)
