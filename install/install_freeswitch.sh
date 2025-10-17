@@ -212,12 +212,6 @@ else
     exit 1
 fi
 
-    if [[ "$OS_CODENAME" == "trixie" ]]; then
-sudo sed -i '/EnvironmentFile=-\/etc\/default\/freeswitch/a \
-RuntimeDirectory=freeswitch\nRuntimeDirectoryMode=0755\nUser=www-data\nGroup=www-data' /lib/systemd/system/freeswitch.service
-sudo systemctl daemon-reload
-    fi
-
 # Set correct permissions
 chmod 644 /lib/systemd/system/freeswitch.service 
 
