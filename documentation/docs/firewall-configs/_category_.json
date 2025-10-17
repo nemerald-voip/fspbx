@@ -1,0 +1,8 @@
+{
+  "label": "Firewall Configs",
+  "position": 10,
+  "link": {
+    "type": "generated-index",
+    "description": "Some helpful links for configuring your firewalls"
+  }
+}

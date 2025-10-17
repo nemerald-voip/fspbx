@@ -1,0 +1,8 @@
+{
+  "label": "Call Transcription Providers",
+  "position": 8,
+  "link": {
+    "type": "generated-index",
+    "description": "Let's dive into how you can configure various providers for your call transcriptions."
+  }
+}

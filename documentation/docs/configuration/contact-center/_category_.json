@@ -1,0 +1,8 @@
+{
+  "label": "Contact Center",
+  "position": 10,
+  "link": {
+    "type": "generated-index",
+    "description": "Let's dive into how you can configure FS PBX Contact Center Module"
+  }
+}

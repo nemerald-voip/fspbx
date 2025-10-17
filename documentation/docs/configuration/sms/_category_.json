@@ -1,0 +1,8 @@
+{
+  "label": "SMS",
+  "position": 9,
+  "link": {
+    "type": "generated-index",
+    "description": "FS PBX SMS module"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "label": "Trunk Providers",
+  "position": 5,
+  "link": {
+    "type": "generated-index",
+    "description": "Here you can find how to configure various trunk providers for your PBX"
+  }
+}

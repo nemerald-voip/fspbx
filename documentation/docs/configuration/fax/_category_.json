@@ -1,0 +1,8 @@
+{
+  "label": "Fax",
+  "position": 9,
+  "link": {
+    "type": "generated-index",
+    "description": "FS PBX Fax module"
+  }
+}
