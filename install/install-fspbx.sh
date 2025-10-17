@@ -22,17 +22,22 @@ echo "Detected OS_CODENAME=$OS_CODENAME"
 
 # Signalwire Token Handling
 if [[ "$OS_CODENAME" == "trixie" ]]; then
-SW_TOKEN_FILE="$HOME/.signalwire_token"
+  SW_TOKEN_FILE="$HOME/.signalwire_token"
 
-if [[ -f "$SW_TOKEN_FILE" ]]; then
-    TOKEN=$(<"$SW_TOKEN_FILE")
-    echo "Using saved Signalwire token."
-else
-    PROMPT=$'Enter your Signalwire token, then press ENTER or RETURN on your keyboard.\nInstructions to obtain this token can be retrieved from https://COMING-SOON.none\nTOKEN:: '
-    read -rp "$PROMPT" TOKEN
-    echo "$TOKEN" > "$SW_TOKEN_FILE"
-    echo "Token saved for future runs in $SW_TOKEN_FILE."
-fi
+  if [[ -f "$SW_TOKEN_FILE" ]]; then
+      TOKEN=$(<"$SW_TOKEN_FILE")
+      echo "Using saved Signalwire token."
+  else
+      PROMPT=$'Enter your Signalwire token, then press ENTER or RETURN on your keyboard.\nInstructions to obtain this token can be retrieved from ...\n> '
+      # Read from the terminal even if script stdin is a pipe
+      read -rp "$PROMPT" TOKEN </dev/tty
+      if [[ -z "$TOKEN" ]]; then
+        echo "No token entered. Exiting."
+        exit 1
+      fi
+      echo "$TOKEN" > "$SW_TOKEN_FILE"
+      echo "Token saved for future runs in $SW_TOKEN_FILE."
+  fi
 fi
 
 # Export the token so child scripts can access it
