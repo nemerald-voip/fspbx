@@ -731,6 +731,14 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "Enable voicemail transcriptions",
             ],
+            [
+                'default_setting_category'      => 'voicemail',
+                'default_setting_subcategory'   => 'voicemail_queue_strategy',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "modern",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "modern: enables the new, optimized queue handling with improved performance and stability. legacy: uses the original queue behavior for backward compatibility.",
+            ],
             
             // Add more settings here...
         ];
