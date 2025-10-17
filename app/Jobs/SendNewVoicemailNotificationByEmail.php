@@ -11,6 +11,7 @@ use App\Models\DomainSettings;
 use Illuminate\Support\Carbon;
 use App\Models\DefaultSettings;
 use App\Models\VoicemailMessages;
+use App\Models\Extensions;
 use App\Mail\VoicemailNotification;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Cache;
@@ -102,6 +103,7 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
             if (!$message) return;
 
             $domain_uuid = $message->domain_uuid;
+
             // Defaults → simple [subcategory => cast(value)]
             $settings = [];
             DefaultSettings::query()
@@ -228,6 +230,14 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
                 'message_text'    => (string) $message->message_transcription,
                 // add more as needed…
             ];
+
+            if (strpos($bodyTpl, '${origination_callee_id_name}') !== false) {
+                $extension = Extensions::where('extension', $message->voicemail?->voicemail_id ?? null)
+                ->where('domain_uuid', $domain_uuid)
+                ->select('extension_uuid', 'extension', 'effective_caller_id_name')
+                ->first();
+                $vars['origination_callee_id_name'] = $extension->name_formatted ?? null;
+            }
 
             $replacements = [];
             foreach ($vars as $k => $v) {
