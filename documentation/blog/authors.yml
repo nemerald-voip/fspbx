@@ -1,25 +1,18 @@
-yangshun:
-  name: Yangshun Tay
-  title: Ex-Meta Staff Engineer, Co-founder GreatFrontEnd
-  url: https://linkedin.com/in/yangshun
-  image_url: https://github.com/yangshun.png
+lemstrom:
+  name: Andrew Lemstrom
+  title: Resident Documentation Master
+  url: https://linkedin.com/in/andrew-lemstrom
+  image_url: https://media.licdn.com/dms/image/v2/D5603AQHv0zUOSkyIzg/profile-displayphoto-crop_800_800/B56ZmrN87SH8AI-/0/1759514185823?e=1762992000&v=beta&t=yIssk3U7oykN7vjqnNE_AAjyClGvAVD3ww5W-D3tBWs
   page: true
   socials:
-    x: yangshunz
-    linkedin: yangshun
-    github: yangshun
-    newsletter: https://www.greatfrontend.com
+    linkedin: andrew-lemstrom
+    github: alemstrom
 
-slorber:
-  name: Sébastien Lorber
-  title: Docusaurus maintainer
-  url: https://sebastienlorber.com
-  image_url: https://github.com/slorber.png
-  page:
-    # customize the url of the author page at /blog/authors/<permalink>
-    permalink: '/all-sebastien-lorber-articles'
+dexter:
+  name: Dexter A.
+  title: FS PBX Developer
+  url: https://www.linkedin.com/in/dexterallen/
+  image_url: https://media.licdn.com/dms/image/v2/D5603AQEcoDY-g-Y4Mw/profile-displayphoto-scale_400_400/B56ZnR1tyDJoAg-/0/1760162143778?e=1762992000&v=beta&t=DGTl6UFBE1-sKLzPawmUEVleqHO2_TYPwZklbFkc_Ok
+  page: true
   socials:
-    x: sebastienlorber
-    linkedin: sebastienlorber
-    github: slorber
-    newsletter: https://thisweekinreact.com
+    linkedin: dexterallen

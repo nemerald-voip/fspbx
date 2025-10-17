@@ -321,7 +321,6 @@ class DeviceController extends Controller
                         $deviceLineData = [
                             'device_uuid' => $device->device_uuid,
                             'line_number' => $line['line_number'],
-                            'line_type_id' => $line['line_type_id'] ?? null,
                             'server_address' => $line['server_address'],
                             'server_address_primary' => $line['server_address_primary'],
                             'server_address_secondary' => $line['server_address_secondary'],
@@ -335,7 +334,7 @@ class DeviceController extends Controller
                             'sip_port' => $line['sip_port'],
                             'sip_transport' => $line['sip_transport'],
                             'register_expires' => $line['register_expires'],
-                            'shared_line' => $line['shared_line'] ?? null,
+                            'shared_line' => $line['line_type_id'] == 'sharedline' ? '1' : '',
                             'device_line_uuid' => $line['device_line_uuid'] ?? null,
                             'domain_uuid' => $device->domain_uuid,
                             'enabled' => 'true',

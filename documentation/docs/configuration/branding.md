@@ -40,7 +40,7 @@ Copy the generated favicon and logo files to the `/storage/app/public/` director
 
 `/var/www/fspbx/storage/app/public/`
 
-### Step 1: Ensure proper permissions:
+### Step 2: Ensure proper permissions:
 
 `chmod -R 755 /var/www/fspbx/storage/app/public/`
 
@@ -57,7 +57,7 @@ To apply the new logo in FS PBX:
 
 5. Click **Save** and apply changes.
 
-## Step 2: Update the Favicon
+### Step 2: Update the Favicon
 To apply the new favicon:
 
 1. Go to **Advanced > Default Settings**.

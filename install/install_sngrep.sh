@@ -13,6 +13,10 @@ print_error() {
     echo -e "\e[31m$1 \e[0m"
 }
 
+# Detect OS codename
+OS_CODENAME=$(lsb_release -sc 2>/dev/null || echo "")
+echo "Detected OS_CODENAME=$OS_CODENAME"
+
 print_success "Installing Sngrep..."
 
 # Detect OS details
@@ -27,7 +31,16 @@ fi
 
 # Install dependencies for all installations
 apt-get update
-apt-get install -y git autoconf automake gcc make libncurses5-dev libpcap-dev libssl-dev libpcre3-dev
+apt-get install -y git autoconf automake gcc make libncurses5-dev libpcap-dev libssl-dev
+
+
+    if [[ "$OS_CODENAME" == "bookworm" ]]; then
+        apt-get install libpcre3-dev -y
+    fi
+
+    if [[ "$OS_CODENAME" == "trixie" ]]; then
+	    apt-get install libpcre2-dev -y
+	fi
 
 # Install Sngrep based on CPU architecture
 if [[ "$CPU_ARCHITECTURE" == "arm"* ]]; then

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Devices;
+use App\Models\Extensions;
 use Illuminate\Http\Request;
 use App\Models\DeviceSettings;
 use App\Models\DomainSettings;
@@ -51,6 +52,8 @@ class ProvisioningController extends Controller
 
         // Build Blade variables and render
         $vars = $this->buildTemplateVars($device);
+
+        // logger($vars);
         // Compute flavor + MIME
         $flv = $this->computeFlavor($request, $device, $id, $ext);
 
@@ -61,6 +64,14 @@ class ProvisioningController extends Controller
         ];
 
         $body = Blade::render($tpl->content, $vars);
+
+        // If the rendered body is valid XML, pretty-print it (keeps XML decl if present)
+        if ($pretty = $this->maybePrettyPrintXml($body)) {
+            $body = $pretty;
+        } else {
+            // Not XML → normalize provisioning text
+            $body = $this->normalizeProvisionText($body);
+        }
 
         // ETag / 304 support
         $etag = '"' . hash('sha256', $body) . '"';
@@ -191,7 +202,7 @@ class ProvisioningController extends Controller
                 'outbound_proxy_primary'   => $line->outbound_proxy_primary ?? null,
                 'outbound_proxy_secondary' => $line->outbound_proxy_secondary ?? null,
                 'sip_port'          => $line->sip_port ?? null,
-                'sip_transport'     => $line->sip_transport ?? null,
+                'sip_transport'     => $this->normalizeTransportForVendor($device->device_vendor, $line->sip_transport),
                 'register_expires'  => $line->register_expires ?? null,
                 'shared_line'  => $line->shared_line ?? null,
                 'line_number'       => $line->line_number,
@@ -234,7 +245,7 @@ class ProvisioningController extends Controller
         // Only care about the last segment
         $tail = basename($tail);
 
-        if (preg_match('#^([^/]+)\.(cfg|xml)$#i', $tail, $m)) {
+        if (preg_match('#^([^/]+)\.(cfg|xml|boot)$#i', $tail, $m)) {
             return [$m[1], strtolower($m[2])];
         }
         // fallback: whole tail as id, assume cfg
@@ -279,15 +290,13 @@ class ProvisioningController extends Controller
         if (
             $vendor === 'polycom' &&
             $extLower === 'cfg' &&
-            preg_match('#(^|/)(?:(?:SPIP|VVX|SSIP)\d{3,4}|SSDuo)-[0-9a-f]{12}\.cfg$#i', $raw)
+            preg_match('#(^|/)(?:(?:SPIP|VVX|SSIP|EdgeE)\d{3,4}|SSDuo)-[0-9a-f]{12}\.cfg$#i', $raw)
         ) {
             return [
                 'flavor' => 'model-mac.cfg',
                 'mime'   => 'application/xml',
             ];
         }
-
-
 
         // Yealink model index (loose check)
         if ($vendor === 'yealink' && $extLower === 'cfg' && preg_match('/^y0{8}[0-9a-f]{2}$/i', $id)) {
@@ -475,7 +484,126 @@ class ProvisioningController extends Controller
         // Use this if array needs to be normilized by key_id
         // $keys = collect(array_values($map))->keyBy('id')->toArray();
 
-        // Return as list (sorted)
-        return array_values($map);
+        $keys = array_values($map);
+        // --- New: fill BLF labels from Extensions.effective_caller_id_name (domain-scoped)
+        $blfTargets = collect($keys)
+            ->filter(fn($k) => strtolower($k['category'] ?? '') === 'blf'
+                && (empty($k['label']) || $k['label'] === null)
+                && !empty($k['value']))
+            ->map(fn($k) => (string) $k['value'])
+            ->unique()
+            ->values();
+
+        if ($blfTargets->isNotEmpty()) {
+            $extLabels = Extensions::query()
+                ->where('domain_uuid', $device->domain_uuid)
+                ->whereIn('extension', $blfTargets->all())
+                ->get(['extension', 'effective_caller_id_name'])
+                ->keyBy('extension')
+                ->map(fn($r) => $r->effective_caller_id_name)
+                ->toArray();
+
+
+            foreach ($keys as &$k) {
+                if (
+                    strtolower($k['category'] ?? '') === 'blf'
+                    && (empty($k['label']) || $k['label'] === null)
+                ) {
+
+                    $val = (string) ($k['value'] ?? '');
+                    if ($val !== '' && !empty($extLabels[$val])) {
+                        $k['label'] = $extLabels[$val];
+                    }
+                    // else: leave label null; Blade will fall back to value
+                }
+            }
+            unset($k);
+        }
+
+        return $keys;
+    }
+
+    /**
+     * If $raw is valid XML, returns pretty-printed XML.
+     * Keeps the XML declaration if the original had one.
+     * Otherwise returns null (so callers can no-op for plain text).
+     */
+    private function maybePrettyPrintXml(string $raw): ?string
+    {
+        $trimmed = ltrim($raw);
+        // quick heuristic to avoid wasting work for obvious non-XML
+        if ($trimmed === '' || $trimmed[0] !== '<') {
+            return null;
+        }
+
+        $hadDeclaration = str_starts_with($trimmed, '<?xml');
+
+        $prev = libxml_use_internal_errors(true);
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $dom->preserveWhiteSpace = false;
+
+        // suppress warnings; we'll check success explicitly
+        $ok = $dom->loadXML($raw, LIBXML_NOERROR | LIBXML_NOWARNING);
+        if (!$ok) {
+            libxml_clear_errors();
+            libxml_use_internal_errors($prev);
+            return null;
+        }
+
+        $dom->formatOutput = true;
+
+        // If the original had an XML declaration, keep it; otherwise output element only
+        $out = $hadDeclaration ? $dom->saveXML() : $dom->saveXML($dom->documentElement);
+
+        libxml_use_internal_errors($prev);
+        return $out;
+    }
+
+    private function normalizeTransportForVendor(?string $vendor, ?string $transport): ?string
+    {
+        $vendor = strtolower((string) $vendor);
+        $t = strtolower(trim((string) $transport));
+
+        if ($vendor === 'polycom') {
+            return match ($t) {
+                'tcp' => 'TCPOnly',
+                'tls' => 'TLS',
+                'dns srv', 'dnssrv', 'dnsnaptr' => 'DNSnaptr',
+                '', 'udp' => 'UDPOnly',
+                default => 'UDPOnly',
+            };
+        }
+
+        if ($vendor === 'yealink') {
+            return match ($t) {
+                'tcp' => '1',
+                'tls' => '2',
+                'dns srv', 'dnssrv', 'dnsnaptr' => '3',
+                '', 'udp' => '0',
+                default => '0',
+            };
+        }
+
+        // Other vendors: leave as-is (or extend with more mappings later)
+        return $transport ?: null;
+    }
+
+    private function normalizeProvisionText(string $raw): string
+    {
+        // 1) Strip leading indentation on each non-empty line
+        $out = preg_replace('/^[ \t]+/m', '', $raw);
+
+        // 2) Collapse 3+ blank lines into a single blank line
+        $out = preg_replace('/\R{3,}/', PHP_EOL . PHP_EOL, $out);
+
+        // 3) Trim trailing whitespace at line ends
+        $out = preg_replace('/[ \t]+$/m', '', $out);
+
+        // 4) Ensure file ends with a single newline (many phones prefer it)
+        if ($out === '' || substr($out, -1) !== "\n") {
+            $out .= "\n";
+        }
+
+        return $out;
     }
 }

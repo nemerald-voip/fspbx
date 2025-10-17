@@ -136,6 +136,7 @@ export default function Home(): ReactNode {
             description="FS PBX: World’s Best Open-Source PBX">
             {/* <HomepageHeader /> */}
 
+            <div id="tw-scope">
             <div className="relative pt-14">
                 <div
                     aria-hidden="true"
@@ -586,6 +587,7 @@ export default function Home(): ReactNode {
                     />
                 </Modal>
             </main >
+            </div>
         </Layout >
     );
 }

@@ -135,6 +135,7 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Locations', 'permission_name' => 'location_update'],
             ['application_name' => 'Locations', 'permission_name' => 'location_delete'],
             ['application_name' => 'Devices', 'permission_name' => 'device_key_advanced'],
+            ['application_name' => 'Logs', 'permission_name' => 'logs_list_view'],
         ];
         $timestamp = date("Y-m-d H:i:s");
 
@@ -221,6 +222,7 @@ class DatabaseSeeder extends Seeder
                 'device_line_server_address_secondary',
                 'device_line_outbound_proxy_primary',
                 'device_line_outbound_proxy_secondary',
+                'logs_list_view',
             ],
             'admin' => [
                 'wakeup_calls_list_view',
@@ -411,11 +413,19 @@ class DatabaseSeeder extends Seeder
         $settings = [
             [
                 'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'polycom_vvx_firmware_url',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Example: https://domain.com/sip.ld",
+            ],
+            [
+                'default_setting_category'      => 'provision',
                 'default_setting_subcategory'   => 'poly_e350_firmware',
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => "",
+                'default_setting_description'   => "Example: https://domain.com/sip.ld",
             ],
             [
                 'default_setting_category'      => 'provision',
@@ -423,7 +433,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => "",
+                'default_setting_description'   => "Example: https://domain.com/sip.ld",
             ],
             [
                 'default_setting_category'      => 'provision',
@@ -431,7 +441,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => "",
+                'default_setting_description'   => "Example: https://domain.com/sip.ld",
             ],
             [
                 'default_setting_category'      => 'provision',
@@ -439,7 +449,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => "",
+                'default_setting_description'   => "Example: https://domain.com/sip.ld",
             ],
             [
                 'default_setting_category'      => 'provision',
@@ -447,7 +457,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => "",
+                'default_setting_description'   => "Example: https://domain.com/sip.ld",
             ],
             [
                 'default_setting_category'      => 'provision',
@@ -460,6 +470,22 @@ class DatabaseSeeder extends Seeder
             [
                 'default_setting_category'      => 'provision',
                 'default_setting_subcategory'   => 'polycom_vvx_480x272_wallpaper',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e300_logo',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'poly_e300_wallpaper',
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
                 'default_setting_enabled'       => true,
@@ -528,6 +554,30 @@ class DatabaseSeeder extends Seeder
                 'default_setting_value'         => "",
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'polycom_softkey_recent_calls',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "1",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Enable to display the Recent Calls softkey. 1 (default) - Enabled. 0 - Disabled",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'polycom_vm_transfer_enable',
+                'default_setting_name'          => 'numeric',
+                'default_setting_value'         => "1",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Enable to display transfer to voicemail. 1 - Enabled. 0 - Disabled",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'polycom_speeddial_enable',
+                'default_setting_name'          => 'numeric',
+                'default_setting_value'         => "0",
+                'default_setting_enabled'       => false,
+                'default_setting_description'   => "Enable to display speed dial button. 1 - Enabled. 0 - Disabled",
             ],
             [
                 'default_setting_category'      => 'provision',
@@ -897,6 +947,14 @@ class DatabaseSeeder extends Seeder
                 'default_setting_value'         => 'New voicemail: ${caller_id_name} - ${caller_id_number} left a message for mailbox ${voicemail_id} at ${message_date}. Duration: ${message_length} sec.',
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "SMS notification text",
+            ],
+            [
+                'default_setting_category'      => 'voicemail',
+                'default_setting_subcategory'   => 'voicemail_queue_strategy',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => 'legacy',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "modern: enables the new, optimized queue handling with improved performance and stability. legacy: uses the original queue behavior for backward compatibility.",
             ],
             [
                 'default_setting_category'      => 'limit',

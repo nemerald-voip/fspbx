@@ -861,17 +861,22 @@ class AppsController extends Controller
         $this->ringotelApiService = $ringotelApiService;
         try {
             $currentDomain = session('domain_uuid');
+
             // ------ LIMIT CHECK ------
-            $limit = get_limit_setting('mobile_app_users', $currentDomain);
-            if ($limit !== null) {
-                $currentCount = \App\Models\MobileAppUsers::where('domain_uuid', $currentDomain)->count();
-                if ($currentCount >= $limit) {
-                    return response()->json([
-                        'success' => false,
-                        'errors' => ['mobile_app_users' => [
-                            "You have reached the maximum number of mobile app users allowed ($limit)."
-                        ]],
-                    ], 403);
+            if (request('status') == 1) {
+                $limit = get_limit_setting('mobile_app_users', $currentDomain);
+                if ($limit !== null) {
+                    $currentCount = \App\Models\MobileAppUsers::where('domain_uuid', $currentDomain)
+                        ->where('status', 1)
+                        ->count();
+                    if ($currentCount >= $limit) {
+                        return response()->json([
+                            'success' => false,
+                            'errors' => ['mobile_app_users' => [
+                                "You have reached the maximum number of mobile app users allowed ($limit)."
+                            ]],
+                        ], 403);
+                    }
                 }
             }
 
@@ -924,7 +929,7 @@ class AppsController extends Controller
 
             // Send request to create user
             $user = $this->ringotelApiService->createUser($params);
-            
+
             $passwordUrlShow = null;
 
             // If success and user is activated send user email with credentials

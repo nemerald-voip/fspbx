@@ -157,6 +157,26 @@ local function fetch_one(sql, params, field)
       { domain_uuid = domain_uuid, room_uuid = room_uuid, hk_uuid = hk_def_uuid }
     )
   end
+
+  -- Build optional maid code (if you have one; set to nil or a var you collect elsewhere)
+    local maid_code = session:getVariable("maid_code") or ""
+
+    -- Queue a pending PMS action: smdr_type = 'S' (Room Status)
+    local ok = dbh:query(
+        [[INSERT INTO hotel_pending_actions
+            (uuid, domain_uuid, hotel_room_uuid, smdr_type, data, created_at, updated_at)
+            VALUES
+            (uuid_generate_v4(), :domain_uuid, :room_uuid, 'S',
+            jsonb_build_object('room_status', :room_status, 'maid', :maid)::jsonb,
+            NOW(), NOW())
+        ]],
+        {
+            domain_uuid = domain_uuid,
+            room_uuid   = room_uuid,
+            room_status = tostring(code_num),  -- "2" per spec (string)
+            maid        = maid_code            -- nil if not present
+        }
+    )
   
   if ok then
     dbh:query("COMMIT", {})

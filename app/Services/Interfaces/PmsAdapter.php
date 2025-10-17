@@ -1,5 +1,5 @@
 <?php
-namespace App\Services\Inerfaces;
+namespace App\Services\Interfaces;
 
 use App\Models\HotelRoom;
 

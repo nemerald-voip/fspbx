@@ -259,6 +259,7 @@ class ProcessStripeWebhookJob extends SpatieProcessWebhookJob
             );
         }
 
+        // remove current template. This is needed so we can reaply it later and invoice groups render correctly
         $stripe->invoices->update(
             data_get($invoice, 'id'),
             [
@@ -269,15 +270,24 @@ class ProcessStripeWebhookJob extends SpatieProcessWebhookJob
             ['idempotency_key' => 'fspbx:' . (string) Str::uuid()]
         );
 
+        // Reapply the template and change collection method
+        $auto = (bool) data_get($stripeInvoice, 'customer.invoice_settings.default_payment_method');
+
+        $params = [
+            'rendering' => [
+                'template' => data_get($stripeInvoice, 'rendering.template'),
+            ],
+            'collection_method' => $auto ? 'charge_automatically' : 'send_invoice',
+        ];
+        
+        if (!$auto) {
+            // only for send_invoice
+            $params['days_until_due'] = 14; // or whatever you want
+        }
+        
         $stripe->invoices->update(
             data_get($invoice, 'id'),
-            [
-                'rendering' => [
-                    'template' => data_get($invoice, 'rendering.template')
-                ],
-                'collection_method' => data_get($stripeInvoice, 'customer.invoice_settings.default_payment_method') ? 'charge_automatically' : 'send_invoice',
-                'days_until_due' => data_get($stripeInvoice, 'customer.invoice_settings.default_payment_method') ? 0 : 14,
-            ],
+            $params,
             ['idempotency_key' => 'fspbx:' . (string) Str::uuid()]
         );
 

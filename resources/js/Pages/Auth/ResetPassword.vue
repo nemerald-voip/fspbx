@@ -42,7 +42,8 @@
                     </div>
 
                     <div>
-                        <label for="password_confirmation" class="block text-sm font-medium leading-6 text-gray-900">Confirm
+                        <label for="password_confirmation"
+                            class="block text-sm font-medium leading-6 text-gray-900">Confirm
                             Password</label>
                         <div class="mt-2">
                             <input v-model="form.password_confirmation" id="password_confirmation"
@@ -53,6 +54,16 @@
                         <div v-if="errors.password_confirmation" class="mt-2 text-sm text-red-600">
                             {{ errors.password_confirmation }}
                         </div>
+
+                        <ul class="list-disc ml-5 mt-3 space-y-0.5 text-xs">
+                            <li>At least <strong>10 characters</strong></li>
+                            <li>Includes <strong>letters</strong></li>
+                            <li>Has <strong>both uppercase and lowercase</strong> letters</li>
+                            <li>Has <strong>at least one number</strong> (0–9)</li>
+                            <li>Has <strong>at least one symbol</strong> (e.g., ! @ # $ % ^ & * ( ) _ +)</li>
+                            <li><strong>Not a known compromised password</strong> (checked automatically)</li>
+                        </ul>
+
                     </div>
 
 
@@ -61,7 +72,8 @@
                             class="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                             <svg v-if="isLoading" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
                                 xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4">
                                 </circle>
                                 <path class="opacity-75" fill="currentColor"
                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">

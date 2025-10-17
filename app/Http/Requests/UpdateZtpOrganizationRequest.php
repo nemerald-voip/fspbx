@@ -61,11 +61,6 @@ class UpdateZtpOrganizationRequest extends FormRequest
         ];
     }
 
-    public function prepareForValidation(): void
-    {
-
-    }
-
     /**
      * Sanitize the input field to prevent XSS and remove unwanted characters.
      *
@@ -87,5 +82,20 @@ class UpdateZtpOrganizationRequest extends FormRequest
         $input = preg_replace('/[^\x20-\x7E]/', '', $input);
 
         return $input;
+    }
+
+    public function prepareForValidation(): void
+    {
+        if ($this->has('prov_un')) {
+            $this->merge([
+                'username' => $this->prov_un,
+            ]);
+        }
+
+        if ($this->has('prov_pw')) {
+            $this->merge([
+                'password' => $this->prov_pw,
+            ]);
+        }
     }
 }

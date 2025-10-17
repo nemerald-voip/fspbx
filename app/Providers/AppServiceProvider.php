@@ -104,7 +104,7 @@ class AppServiceProvider extends ServiceProvider
 
 
         Password::defaults(function () {
-            $rule = Password::min(8)
+            $rule = Password::min(10)
                 ->letters()
                 ->mixedCase()
                 ->numbers()

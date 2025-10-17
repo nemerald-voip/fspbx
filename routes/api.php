@@ -10,6 +10,7 @@ use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\FaxInboxController;
 use App\Http\Controllers\UserLogsController;
+use App\Http\Controllers\EmailLogsController;
 use App\Http\Controllers\HotelRoomController;
 use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\ExtensionsController;
@@ -57,6 +58,13 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('provisioning-templates/bulk-delete', [ProvisioningTemplateController::class, 'bulkDelete'])->name('provisioning-templates.bulk.delete');
     Route::post('/provisioning-templates/item-options', [ProvisioningTemplateController::class, 'getItemOptions'])->name('provisioning-templates.item.options');
     Route::post('/provisioning-templates/content', [ProvisioningTemplateController::class, 'getTemplateContent'])->name('provisioning-templates.content');
+
+    // Email logs
+    Route::resource('/email-logs', EmailLogsController::class);
+    // Route::post('/email-logs/item-options', [HotelRoomController::class, 'getItemOptions'])->name('hotel-rooms.item.options');
+
+    // Inbound Webhooks
+    Route::resource('/inbound-webhooks', InboundWebhooksController::class);
 
     // Hotel rooms
     Route::resource('/hotel-rooms', HotelRoomController::class);

@@ -13,6 +13,30 @@ print_error() {
     echo -e "\e[31m$1 \e[0m"
 }
 
+# Detect OS codename
+OS_CODENAME=$(lsb_release -sc 2>/dev/null || echo "")
+echo "Detected OS_CODENAME=$OS_CODENAME"
+
+if [[ "$OS_CODENAME" == "trixie" ]]; then
+# Signalwire Token Handling
+SW_TOKEN_FILE="$HOME/.signalwire_token"
+fi
+
+if [[ "$OS_CODENAME" == "trixie" ]]; then
+# Signalwire Token Handling
+SW_TOKEN_FILE="$HOME/.signalwire_token"
+# Load from file if exists
+if [[ -f "$SW_TOKEN_FILE" ]]; then
+    SW_TOKEN=$(<"$SW_TOKEN_FILE")
+    echo "Using saved Signalwire token from $SW_TOKEN_FILE."
+fi
+
+if [[ -z "$SW_TOKEN" ]]; then
+    echo "Error: Signalwire TOKEN not set and no saved token found."
+    exit 1
+fi
+fi
+
 print_success "Starting FreeSWITCH Installation (Version 1.10)..."
 
 # Detect OS version
@@ -25,12 +49,20 @@ apt update
 
 # Install dependencies
 apt install -y autoconf automake devscripts g++ git-core libncurses5-dev libtool make libjpeg-dev \
-               pkg-config flac libgdbm-dev libdb-dev gettext sudo equivs mlocate git dpkg-dev \
+               pkg-config flac libgdbm-dev libdb-dev gettext sudo equivs git dpkg-dev \
                libpq-dev liblua5.2-dev libtiff5-dev libperl-dev libcurl4-openssl-dev libsqlite3-dev \
                libpcre3-dev devscripts libspeexdsp-dev libspeex-dev libldns-dev libedit-dev libopus-dev \
                libmemcached-dev libshout3-dev libmpg123-dev libmp3lame-dev yasm nasm libsndfile1-dev \
-               libuv1-dev libvpx-dev libavformat-dev libswscale-dev libvlc-dev python3-distutils \
+               libuv1-dev libvpx-dev libavformat-dev libswscale-dev libvlc-dev \
                sox libsox-fmt-all sqlite3 unzip cmake uuid-dev libssl-dev
+
+    if [[ "$OS_CODENAME" == "bookworm" ]]; then
+        apt install -y mlocate python3-distutils
+	fi
+
+    if [[ "$OS_CODENAME" == "trixie" ]]; then
+        apt install -y plocate python3-setuptools
+	fi
 
 print_success "All required dependencies installed."
 
@@ -49,6 +81,7 @@ export C_INCLUDE_PATH=/usr/include/libks
 print_success "libks installed successfully."
 
 # Install sofia-sip
+    if [[ "$OS_CODENAME" == "bookworm" ]]; then
 cd /usr/src
 rm -rf sofia-sip
 git clone https://github.com/freeswitch/sofia-sip.git
@@ -58,9 +91,17 @@ sh autogen.sh
 ./configure --enable-debug
 make -j $(getconf _NPROCESSORS_ONLN)
 make install
+	fi
+
+if [[ "$OS_CODENAME" == "trixie" ]]; then
+    curl -sSL https://freeswitch.org/fsget | bash -s $SW_TOKEN
+    apt install -y libsofia-sip-ua-dev libsofia-sip-ua0
+fi
+
 print_success "sofia-sip installed successfully."
 
 # Install spandsp
+    if [[ "$OS_CODENAME" == "bookworm" ]]; then
 cd /usr/src
 rm -rf spandsp
 git clone https://github.com/freeswitch/spandsp.git
@@ -71,6 +112,12 @@ sh autogen.sh
 make -j $(getconf _NPROCESSORS_ONLN)
 make install
 ldconfig
+    fi
+
+if [[ "$OS_CODENAME" == "trixie" ]]; then
+    apt install -y libspandsp3-dev libspandsp3
+fi
+
 print_success "spandsp installed successfully."
 
 # Move to `/usr/src/` for FreeSWITCH installation
@@ -109,6 +156,8 @@ sed -i modules.conf -e s:'endpoints/mod_verto:#endpoints/mod_verto:'
 sed -i modules.conf -e s:'applications/mod_say_es:#applications/mod_say_es:'
 sed -i modules.conf -e s:'applications/mod_say_fr:#applications/mod_say_fr:'
 sed -i modules.conf -e s:'applications/mod_nibblebill:#applications/mod_nibblebill:'
+sed -i modules.conf -e s:'applications/mod_av:#applications/mod_av:'
+sed -i modules.conf -e s:'xml_int/mod_xml_rpc:#xml_int/mod_xml_rpc:'
 
 print_success "Modules configured successfully."
 

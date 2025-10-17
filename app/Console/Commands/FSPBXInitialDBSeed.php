@@ -122,39 +122,44 @@ class FSPBXInitialDBSeed extends Command
         Artisan::call('db:seed', ['--force' => true]);  // Add --force flag
         $this->info("Settings seeded successfully.");
 
-        // Step 10: Create FS PBX menu
+        // Step 11: Create FS PBX menu
         $this->info("Creating FS PBX menu...");
         Artisan::call('menu:create-fspbx');
         $this->info("Created FS PBX menu...");
 
-        // Step 11: Install & Build Frontend (NPM)
+        // Step 12: Run Provision Template seeder
+        $this->info("Seeding provisioning templates...");
+        Artisan::call('prov:templates:seed'); 
+        $this->info("Provisioning templates seeded successfully.");
+
+        // Step 13: Install & Build Frontend (NPM)
         $this->installAndBuildNpm();
 
-        // Step 12: Set Correct Permissions
+        // Step 14: Set Correct Permissions
         $this->updatePermissions();
 
-        // Step 13: Migrate SQLite to RAM
+        // Step 15: Migrate SQLite to RAM
         $this->info("Migrating SQLite to RAM...");
         $this->call('fs:migrate-sqlite-to-ram');
         $this->info("SQLite migration to RAM completed.");
 
-        // Step 14: Set App version
+        // Step 16: Set App version
         Artisan::call('version:set', ['version' => config('version.release'), '--force' => true]);
         Artisan::call('config:cache');
         $this->info("App version is " . config('version.release') . ".");
 
-        $this->info("Updating edit app folder from GitHub...");
-        $process = new \Symfony\Component\Process\Process(['/bin/bash', '/var/www/fspbx/install/fix-edit-app.sh']);
-        $process->setTimeout(180);
-        $process->run();
+        // $this->info("Updating edit app folder from GitHub...");
+        // $process = new \Symfony\Component\Process\Process(['/bin/bash', '/var/www/fspbx/install/fix-edit-app.sh']);
+        // $process->setTimeout(180);
+        // $process->run();
 
-        if ($process->isSuccessful()) {
-            $this->info("✅ Edit app folder updated from GitHub.");
-        } else {
-            $this->error("❌ Failed to update edit app folder: " . $process->getErrorOutput());
-        }
+        // if ($process->isSuccessful()) {
+        //     $this->info("✅ Edit app folder updated from GitHub.");
+        // } else {
+        //     $this->error("❌ Failed to update edit app folder: " . $process->getErrorOutput());
+        // }
 
-        // Step 15: Restart FreeSWITCH
+        // Step 17: Restart FreeSWITCH
         $this->restartFreeSwitch();
 
         DefaultSettings::where('default_setting_category', 'switch')->delete();

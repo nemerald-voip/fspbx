@@ -5,6 +5,8 @@ namespace App\Mail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use App\Models\DefaultSettings;
+use Illuminate\Mail\Mailables\Address;
+use Illuminate\Mail\Mailables\Headers;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Mail\Mailables\Envelope;
 
@@ -57,13 +59,31 @@ abstract class BaseMailable extends Mailable
         });
     }
 
+    public function headers(): Headers
+    {
+        $text = [];
+
+        if (!empty($this->attributes['unsubscribe_email'])) {
+            $text['List-Unsubscribe']      = '<mailto:'.$this->attributes['unsubscribe_email'].'>';
+        }
+    
+        if (!empty($this->attributes['logId'])) {
+            $text['X-Email-Log-Id'] = $this->attributes['logId'];
+        }
+    
+        return new Headers(text: $text);
+    }
+
     /**
      * Get the message envelope.
      */
     public function envelope(): Envelope
     {
+        $fromEmail = $this->attributes['from_email'] ?? config('mail.from.address');
+        $fromName  = $this->attributes['from_name']  ?? config('mail.from.name');
+
         return new Envelope(
-            // from: new Address('jeffrey@example.com', 'Jeffrey Way'),
+            from: new Address($fromEmail, $fromName),
             subject: $this->attributes['email_subject'],
         );
     }

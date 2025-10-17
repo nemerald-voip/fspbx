@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AppsController;
 use App\Http\Controllers\CdrsController;
+use App\Http\Controllers\LogsController;
 use App\Http\Controllers\FaxesController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\DeviceController;
@@ -121,9 +122,6 @@ Route::group(['middleware' => 'auth'], function () {
     //Extension Statistics
     Route::get('/extension-statistics', [ExtensionStatisticsController::class, 'index'])->name('extension-statistics.index');
 
-    //Inbound Webhooks
-    Route::get('/inbound-webhooks', [InboundWebhooksController::class, 'index'])->name('inbound-webhooks.index');
-
     //Domains
     Route::get('domains/extensions', [DomainController::class, 'countExtensionsInDomains']);
 
@@ -193,9 +191,11 @@ Route::group(['middleware' => 'auth'], function () {
     Route::put('/virtual-receptionists/key/update', [VirtualReceptionistController::class, 'updateKey'])->name('virtual-receptionist.key.update');
     Route::post('/virtual-receptionists/key/delete', [VirtualReceptionistController::class, 'destroyKey'])->name('virtual-receptionist.key.destroy');
 
-    //Account ettings
-    // Route::resource('account-settings', AccountSettingsController::class);
+    // Account settings
     Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings.index');
+
+    // Logs
+    Route::get('logs', [LogsController::class, 'index'])->name('logs.index');
 
     // System Settings
     Route::get('system-settings', [SystemSettingsController::class, 'index'])->name('system-settings.index');
