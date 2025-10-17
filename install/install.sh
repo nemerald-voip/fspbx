@@ -10,6 +10,29 @@ print_error() {
     echo -e "\e[31m$1 \e[0m"  # Red text
 }
 
+# Detect OS codename
+OS_CODENAME=$(lsb_release -sc 2>/dev/null || echo "")
+echo "Detected OS_CODENAME=$OS_CODENAME"
+
+if [[ "$OS_CODENAME" == "trixie" ]]; then
+# Signalwire Token Handling
+SW_TOKEN_FILE="$HOME/.signalwire_token"
+fi
+
+if [[ "$OS_CODENAME" == "trixie" ]]; then
+# Signalwire Token Handling
+SW_TOKEN_FILE="$HOME/.signalwire_token"
+# Load from file if exists
+if [[ -f "$SW_TOKEN_FILE" ]]; then
+    SW_TOKEN=$(<"$SW_TOKEN_FILE")
+    echo "Using saved Signalwire token from $SW_TOKEN_FILE."
+fi
+
+if [[ -z "$SW_TOKEN" ]]; then
+    echo "Error: Signalwire TOKEN not set and no saved token found."
+    exit 1
+fi
+fi
 
 print_success  "Welcome to FS PBX installation script"
 
@@ -63,8 +86,12 @@ apt-get install -y \
     libreoffice-java-common \
     supervisor \
     redis-server \
-    software-properties-common \
     apt-transport-https
+
+if [[ "$OS_CODENAME" == "bookworm" ]]; then
+    apt-get install -y software-properties-common
+fi
+
 if [ $? -eq 0 ]; then
     print_success "Essential dependencies installed successfully."
 else
@@ -72,6 +99,7 @@ else
     exit 1
 fi
 
+    if [[ "$OS_CODENAME" == "bookworm" ]]; then
 # Install SNMP and configure it
 print_success "Installing and configuring SNMP..."
 apt-get install -y snmpd
@@ -92,6 +120,7 @@ else
     print_error "Error occurred while installing SNMP."
     exit 1
 fi
+    fi
 
 print_success "Configuring IPTables firewall rules..."
 bash /var/www/fspbx/install/configure_iptables.sh
@@ -238,41 +267,54 @@ else
 fi
 
 # Install Node.js
-if [ $? -eq 0 ]; then
-    if [ $? -eq 0 ]; then
-        sudo mkdir -p /etc/apt/keyrings
-        curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor --batch --yes -o /etc/apt/keyrings/nodesource.gpg
-        if [ $? -eq 0 ]; then
-            NODE_MAJOR=20
-            echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list > /dev/null
-            sudo apt-get update
-            if [ $? -eq 0 ]; then
-                sudo apt-get install -y nodejs
-                if [ $? -eq 0 ]; then
-                    print_success "Node.js installed successfully."
-                else
-                    print_error "Error occurred during Node.js installation."
-                    exit 1
-                fi
-            else
-                print_error "Error occurred during APT update after adding Node.js repository."
-                exit 1
-            fi
-        else
-            print_error "Error occurred while setting up Node.js GPG key."
-            exit 1
-        fi
-    else
-        print_error "Error occurred during installation of CA certificates, curl, or gnupg."
-        exit 1
-    fi
-else
+sudo apt-get update -y
+if [ $? -ne 0 ]; then
     print_error "Error occurred during APT update."
     exit 1
 fi
 
+sudo mkdir -p /etc/apt/keyrings
+if [ $? -ne 0 ]; then
+    print_error "Failed to create /etc/apt/keyrings."
+    exit 1
+fi
 
-# Change to the Freeswitch PBX directory
+if [[ "$OS_CODENAME" == "bookworm" ]]; then
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+        | sudo gpg --dearmor --batch --yes -o /etc/apt/keyrings/nodesource.gpg
+    if [ $? -ne 0 ]; then
+        print_error "Error occurred while setting up Node.js GPG key."
+        exit 1
+    fi
+
+    NODE_MAJOR=20
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" \
+        | sudo tee /etc/apt/sources.list.d/nodesource.list > /dev/null
+fi
+
+if [[ "$OS_CODENAME" == "trixie" ]]; then
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    if [ $? -ne 0 ]; then
+        print_error "Error occurred while running NodeSource setup script."
+        exit 1
+    fi
+fi
+
+sudo apt-get update -y
+if [ $? -ne 0 ]; then
+    print_error "Error occurred during APT update after adding Node.js repository."
+    exit 1
+fi
+
+sudo apt-get install -y nodejs
+if [ $? -eq 0 ]; then
+    print_success "Node.js installed successfully."
+else
+    print_error "Error occurred during Node.js installation."
+    exit 1
+fi
+
+# Change to the FS PBX directory
 cd /var/www/fspbx/
 if [ $? -eq 0 ]; then
     print_success "Changed to /var/www/fspbx/ directory."
