@@ -20,7 +20,7 @@ Before you begin, ensure you have met the following requirements:
 
 :::tip
 
-If you’re installing on **Debian 13**, a **SignalWire Personal Access Token** is required. Instractions how to update it here: [How To Create a SignalWire Personal Access Token](#)
+If you’re installing on **Debian 13**, a **SignalWire Personal Access Token** is required. Instractions how to update it here: [How To Create a SignalWire Personal Access Token](additional-information/signalwire-token.md)
 
 :::
 
