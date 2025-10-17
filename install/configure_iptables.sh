@@ -58,10 +58,15 @@ iptables -P INPUT ACCEPT
 iptables -P FORWARD ACCEPT
 iptables -P OUTPUT ACCEPT
 iptables -F
-ip6tables -P INPUT ACCEPT
-ip6tables -P FORWARD ACCEPT
-ip6tables -P OUTPUT ACCEPT
+
 ip6tables -F
+ip6tables -A INPUT -i lo -j ACCEPT
+ip6tables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+ip6tables -P INPUT DROP
+ip6tables -P FORWARD DROP
+ip6tables -P OUTPUT ACCEPT
+ip6tables -A INPUT -p ipv6-icmp -j ACCEPT
+ip6tables-save > /etc/iptables/rules.v6
 
 # Allow loopback traffic
 iptables -A INPUT -i lo -j ACCEPT
