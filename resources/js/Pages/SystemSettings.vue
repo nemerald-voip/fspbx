@@ -55,9 +55,9 @@
                 </Vueform>
             </section>
 
-            // ASSEMBLY AI
+            <!--  ASSEMBLY AI -->
             <section v-show="selectedMenuOption === 'assemblyai'">
-
+                <AssemblyAiForm />
 
             </section>
         </template>
@@ -85,6 +85,7 @@ import UpdateStripeSettingsModal from "./components/modal/UpdateStripeSettingsMo
 import Badge from "@generalComponents/Badge.vue";
 import { CreditCardIcon, Cog6ToothIcon } from '@heroicons/vue/24/outline'
 import GraphicEqIcon from "@icons/GraphicEqIcon.vue"
+import AssemblyAiForm from "./components/forms/AssemblyAiForm.vue"
 
 const props = defineProps({
     routes: Object,
