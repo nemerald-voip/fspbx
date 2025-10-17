@@ -36,6 +36,6 @@ This release ensures seamless installation and operation on the latest Debian pl
 
 -   Updated default paths and permission handling for new Debian configurations
 
--   Improved compatibility with FreeSWITCH 1.10.12
+-   Improved compatibility with FreeSWITCH 1.10.13
 
 -   General code clean-up and logging enhancements
