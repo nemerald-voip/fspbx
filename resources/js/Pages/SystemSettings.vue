@@ -1,131 +1,9 @@
 <template>
-    <MainLayout>
+    <PageWithSideMenu title="System Settings" :navigation="navigation" :pages="pages" :header-icon="Cog6ToothIcon"
+        :initial-menu-option="initialMenuOption" @update-selected-menu-option="handleUpdateSelectedMenuOption">
 
-
-        <div class="relative mx-auto max-w-full sm:px-6">
-
-            <main class="flex gap-2 pb-10 pt-12 md:gap-8">
-                <aside :class="isNavCollapsed ? 'w-15' : 'w-64'"
-                    class="relative z-20 flex flex-col flex-none transition-all duration-300">
-                    <div class="flex grow flex-col gap-y-5 border-r border-gray-200 bg-white"
-                        :class="isNavCollapsed ? 'overflow-visible px-2.5' : 'overflow-y-auto px-4'">
-
-                        <!-- Header -->
-                        <div class="flex h-16 shrink-0 items-center">
-                            <!-- Logo and Title section -->
-                            <div class="flex flex-1 items-center gap-x-3">
-                                <Cog6ToothIcon class="size-7 text-indigo-600 shrink-0" />
-                                <span v-show="!isNavCollapsed" class="font-semibold text-gray-800 truncate">System
-                                    Settings</span>
-                            </div>
-
-                            <!-- Collapse Button -->
-                            <button v-if="!isNavCollapsed" @click="toggleNav"
-                                class="rounded-md border border-gray-300 p-1.5 text-gray-500 hover:border-indigo-600 hover:text-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                                <ChevronDoubleLeftIcon class="size-4 shrink-0" />
-                            </button>
-                        </div>
-
-                        <!-- Navigation -->
-                        <nav class="flex flex-1 flex-col pb-5">
-                            <ul role="list" class="flex flex-1 flex-col gap-y-7">
-                                <li>
-                                    <ul role="list" class="-mx-2 space-y-1">
-                                        <li v-for="item in navigation" :key="item.key">
-                                            <!-- Item WITHOUT children -->
-                                            <div v-if="!item.children" class="relative group">
-                                                <button type="button" @click="navigateTo(item.key)"
-                                                    :class="[isActive(item.key) ? 'bg-gray-100' : 'hover:bg-gray-100', 'flex items-center gap-x-3 w-full text-left rounded-md p-2 text-sm/6 font-semibold text-gray-700']">
-                                                    <component :is="item.icon" class="size-6 shrink-0"
-                                                        :class="isActive(item.key) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
-                                                    <span class="truncate" v-show="!isNavCollapsed">{{ item.name
-                                                        }}</span>
-                                                </button>
-                                                <!-- Tooltip for collapsed state -->
-                                                <span v-if="isNavCollapsed"
-                                                    class="absolute left-full top-1/2 -translate-y-1/2 ml-4 w-auto min-w-max scale-0 rounded bg-gray-900 p-2 text-xs font-bold text-white transition-all group-hover:scale-100 origin-left z-30">
-                                                    {{ item.name }}
-                                                </span>
-                                            </div>
-
-                                            <!-- Item WITH children -->
-                                            <div v-else>
-                                                <!-- Expanded View -->
-                                                <Disclosure as="div" v-if="!isNavCollapsed" v-slot="{ open }"
-                                                    :default-open="parentHasActiveChild(item)">
-                                                    <DisclosureButton
-                                                        :class="[parentHasActiveChild(item) ? 'bg-gray-100' : 'hover:bg-gray-100', 'flex w-full items-center gap-x-3 rounded-md p-2 text-left text-sm/6 font-semibold text-gray-700']">
-                                                        <component :is="item.icon" class="size-6 shrink-0"
-                                                            :class="parentHasActiveChild(item) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
-                                                        <span class="truncate">{{ item.name }}</span>
-                                                        <ChevronRightIcon
-                                                            :class="[open ? 'rotate-90 text-gray-500' : 'text-gray-400', 'ml-auto size-5 shrink-0']" />
-                                                    </DisclosureButton>
-                                                    <DisclosurePanel as="ul" class="mt-1 pl-6">
-                                        <li v-for="subItem in item.children" :key="subItem.key">
-                                            <button type="button" @click="navigateTo(subItem.key)" :class="[
-                                                isActive(subItem.key) ? 'bg-gray-100' : 'hover:bg-gray-100',
-                                                'group flex w-full items-center gap-x-3 rounded-md py-2 px-3 text-sm/6 font-semibold text-gray-700'
-                                            ]">
-                                                <component v-if="subItem.icon" :is="subItem.icon"
-                                                    class="size-5 shrink-0"
-                                                    :class="isActive(subItem.key) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
-                                                <span class="truncate">{{ subItem.name }}</span>
-                                            </button>
-                                        </li>
-                                        </DisclosurePanel>
-                                        </Disclosure>
-
-                                        <!-- Collapsed View -->
-                                        <div v-else class="relative group">
-                                            <div
-                                                :class="[parentHasActiveChild(item) ? 'bg-gray-100' : '', 'flex items-center rounded-md p-2']">
-                                                <component :is="item.icon" class="size-6 shrink-0"
-                                                    :class="parentHasActiveChild(item) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
-                                            </div>
-                                            <div class="absolute left-full top-0 h-full w-4" />
-                                            <div
-                                                class="absolute left-full top-0 ml-4 w-auto min-w-max scale-0 rounded-md bg-white shadow-lg ring-1 ring-gray-900/5 transition-transform group-hover:scale-100 origin-left z-30">
-                                                <div class="p-2">
-                                                    <p class="px-2 py-1 text-sm font-semibold text-gray-800">{{
-                                                        item.name }}</p>
-                                                    <ul role="list" class="mt-1 space-y-1">
-                                                        <li v-for="subItem in item.children" :key="subItem.key">
-                                                            <button type="button" @click="navigateTo(subItem.key)"
-                                                                :class="[
-                                                                    isActive(subItem.key) ? 'bg-gray-100 text-indigo-600' : 'hover:bg-gray-100 text-gray-700',
-                                                                    'group flex w-full items-center gap-x-3 rounded-md p-2 text-left text-sm/6 font-semibold'
-                                                                ]">
-                                                                <component v-if="subItem.icon" :is="subItem.icon"
-                                                                    class="size-5 shrink-0"
-                                                                    :class="isActive(subItem.key) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
-                                                                <span class="truncate">{{ subItem.name }}</span>
-                                                            </button>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                            </div>
-                                        </div>
-                    </div>
-                    </li>
-                    </ul>
-                    </li>
-                    </ul>
-                    </nav>
-        </div>
-
-        <!-- EXPAND BUTTON -->
-        <button v-if="isNavCollapsed" @click="toggleNav" class="absolute left-full
-         rounded-md border border-gray-300 bg-white p-1.5 text-gray-500
-         hover:border-indigo-600 hover:text-indigo-600
-         focus:outline-none focus:ring-2 focus:ring-indigo-500 z-30">
-            <ChevronDoubleLeftIcon class="size-4 shrink-0 rotate-180" />
-        </button>
-        </aside>
-
-        <!-- MAIN CONTENT AREA -->
-        <div class="flex-1 shadow md:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 md:p-6">
-            <section v-show="activeSection === 'payment_gateways'">
+        <template #default="{ selectedMenuOption }">
+            <section v-show="selectedMenuOption === 'payment_gateways'">
                 <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
                     @response="handleResponse" :display-errors="false">
                     <template #empty>
@@ -176,36 +54,37 @@
                     </template>
                 </Vueform>
             </section>
-        </div>
-        </main>
-        </div>
 
-        <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
-            @update:show="hideNotification" />
-
-        <UpdateStripeSettingsModal :settings="gatewaySettings" :uuid="gatewayUuid" :is-enabled="gatewayEnabled"
-            :show="showStripeSettingsModal" :route="routes.payment_gateway_update"
-            @refresh-data="getPaymentGatewaysData" @close="showStripeSettingsModal = false" />
+            // ASSEMBLY AI
+            <section v-show="selectedMenuOption === 'assemblyai'">
 
 
-    </MainLayout>
+            </section>
+        </template>
+
+        <template #overlays>
+            <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
+                @update:show="hideNotification" />
+
+            <UpdateStripeSettingsModal :settings="gatewaySettings" :uuid="gatewayUuid" :is-enabled="gatewayEnabled"
+                :show="showStripeSettingsModal" :route="routes.payment_gateway_update"
+                @refresh-data="getPaymentGatewaysData" @close="showStripeSettingsModal = false" />
+
+        </template>
+
+    </PageWithSideMenu>
+
+
 </template>
 
 <script setup>
-import { ref, watch, onMounted, onUnmounted, markRaw } from 'vue'
-import MainLayout from '../Layouts/MainLayout.vue'
-
+import { ref, markRaw, onMounted } from 'vue'
+import PageWithSideMenu from '../Layouts/PageWithSideMenu.vue'
 import Notification from "./components/notifications/Notification.vue";
 import UpdateStripeSettingsModal from "./components/modal/UpdateStripeSettingsModal.vue";
 import Badge from "@generalComponents/Badge.vue";
-import { ChevronRightIcon } from '@heroicons/vue/20/solid'
-import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
-import {
-    Cog6ToothIcon,
-    ChevronDoubleLeftIcon,
-} from '@heroicons/vue/24/outline'
+import { CreditCardIcon, Cog6ToothIcon } from '@heroicons/vue/24/outline'
 import GraphicEqIcon from "@icons/GraphicEqIcon.vue"
-
 
 const props = defineProps({
     routes: Object,
@@ -213,30 +92,47 @@ const props = defineProps({
 })
 
 const form$ = ref(null)
-const isNavCollapsed = ref(false)
-const toggleNav = () => isNavCollapsed.value = !isNavCollapsed.value
 const showStripeSettingsModal = ref(false);
 const gatewaySettings = ref(null);
 const gatewayUuid = ref(null);
 const gatewayEnabled = ref(null);
-const activeSection = ref(null)
-const isActive = (key) => activeSection.value === key
-const navOpen = ref(false)
 const navigation = ref([])
+const initialMenuOption = ref(null)
 
-const parentHasActiveChild = (item) =>
-    Array.isArray(item.children) && item.children.some((c) => isActive(c.key))
+const pages = [
+    { name: 'Dashboard', href: props.routes.dashboard_route, current: true },
+    { name: 'System Settings', href: '#', current: true },
+]
 
-
-watch(activeSection, (key) => {
+const handleUpdateSelectedMenuOption = (key) => {
     if (key === 'payment_gateways') getPaymentGatewaysData()
-
-})
+}
 
 const notificationType = ref(null);
 const notificationShow = ref(null);
 const notificationMessages = ref(null);
 
+onMounted(() => {
+    navigation.value = [] // reset if needed
+
+    if (props.permissions?.payment_gateways_view) {
+        navigation.value.push({ key: 'payment_gateways', name: 'Payment Gateways', icon: CreditCardIcon })
+    }
+
+    if (props.permissions?.call_transcription_view) {
+        navigation.value.push({
+            key: 'call_transcription',
+            name: 'Call Transcription',
+            icon: markRaw(GraphicEqIcon),
+            children: [{ key: 'assemblyai', name: 'AssemblyAI', icon: markRaw(GraphicEqIcon) }],
+        })
+    }
+
+    if (navigation.value.length) {
+        initialMenuOption.value = navigation.value[0].key
+        // handleUpdateSelectedMenuOption(navigation.value[0].key)
+    }
+})
 
 const getPaymentGatewaysData = async () => {
     try {
@@ -275,50 +171,6 @@ const handlePaymentGatewayDeactivateClick = (index) => {
             getPaymentGatewaysData()
         });
 }
-
-const navigateTo = (key) => {
-    activeSection.value = key
-    navOpen.value = false // close mobile drawer if open
-}
-
-// --- Responsive Collapse Logic ---
-const checkScreenSize = () => {
-    // Tailwind's `md` breakpoint is 768px.
-    // If the window is smaller, collapse the navigation.
-    isNavCollapsed.value = window.innerWidth < 768;
-};
-
-onMounted(() => {
-
-    if (props.permissions.payment_gateways_view)
-        navigation.value.push({ key: 'payment_gateways', name: 'Payment Gateways', icon: Cog6ToothIcon })
-
-    if (props.permissions.call_transcription_view) {
-        navigation.value.push({
-            key: 'call_transcription',
-            name: 'Call Transcription',
-            icon: markRaw(GraphicEqIcon),
-            children: [
-                { key: 'assemblyai', name: 'AssemblyAI', icon: markRaw(GraphicEqIcon) },
-            ],
-        })
-    }
-    // Set default section to first visible one
-    if (navigation.value.length) {
-        activeSection.value = navigation.value[0].key
-    }
-
-    // Check screen size on initial load
-    checkScreenSize();
-    // Add event listener for window resize
-    window.addEventListener('resize', checkScreenSize);
-
-})
-
-onUnmounted(() => {
-    // Clean up the event listener when the component is destroyed
-    window.removeEventListener('resize', checkScreenSize);
-});
 
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 

@@ -49,6 +49,7 @@ class AccountSettingsController extends Controller
                     return getGroupedTimezones();
                 },
                 'routes' => [
+                    'dashboard_route' => route('dashboard'),
                     'settings_update' => route('account-settings.update'),
                     'emergency_calls' => route('emergency-calls.index'),
                     'emergency_calls_store' => route('emergency-calls.store'),

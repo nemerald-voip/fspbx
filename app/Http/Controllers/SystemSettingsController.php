@@ -47,6 +47,7 @@ class SystemSettingsController extends Controller
                 // },
 
                 'routes' => [
+                    'dashboard_route' => route('dashboard'),
                     'settings_update' => route('system-settings.update'),
                     'payment_gateways' => route('system-settings.payment_gateways'),
                     'payment_gateway_update' => route('gateway.update'),
