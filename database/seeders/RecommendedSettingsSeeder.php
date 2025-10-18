@@ -762,6 +762,7 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_value'         => $setting['default_setting_value'],
                 'default_setting_enabled'       => $setting['default_setting_enabled'],
                 'default_setting_description'   => $setting['default_setting_description'],
+                'insert_date'                   => now(),
             ]);
         }
     }
