@@ -747,12 +747,10 @@ class RecommendedSettingsSeeder extends Seeder
             // Check for existing setting
             $existing_item = DefaultSettings::where('default_setting_category', $setting['default_setting_category'])
                 ->where('default_setting_subcategory', $setting['default_setting_subcategory'])
-                ->first();
+                ->get();
 
-            if ($existing_item) {
-                // Delete the existing item
-                $existing_item->delete();
-            }
+            // Delete the existing items
+            $existing_item->each->delete();
 
             // Recreate the setting
             DefaultSettings::create([

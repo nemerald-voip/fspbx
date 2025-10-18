@@ -112,11 +112,6 @@ class FSPBXInitialDBSeed extends Command
         Artisan::call('migrate', ['--force' => true]); // --force to prevent confirmation prompt
         $this->info("Database migrations completed successfully.");
 
-        // Step 9: Run Recommended Settings Seeder
-        $this->info("Seeding recommended settings...");
-        Artisan::call('db:seed', ['--class' => 'RecommendedSettingsSeeder', '--force' => true]);
-        $this->info("Recommended settings seeded successfully.");
-
         // Step 10: Run Recommended Settings Seeder
         $this->info("Seeding settings...");
         Artisan::call('db:seed', ['--force' => true]);  // Add --force flag
@@ -148,23 +143,17 @@ class FSPBXInitialDBSeed extends Command
         Artisan::call('config:cache');
         $this->info("App version is " . config('version.release') . ".");
 
-        // $this->info("Updating edit app folder from GitHub...");
-        // $process = new \Symfony\Component\Process\Process(['/bin/bash', '/var/www/fspbx/install/fix-edit-app.sh']);
-        // $process->setTimeout(180);
-        // $process->run();
-
-        // if ($process->isSuccessful()) {
-        //     $this->info("✅ Edit app folder updated from GitHub.");
-        // } else {
-        //     $this->error("❌ Failed to update edit app folder: " . $process->getErrorOutput());
-        // }
-
         // Step 17: Restart FreeSWITCH
         $this->restartFreeSwitch();
 
         DefaultSettings::where('default_setting_category', 'switch')->delete();
         $this->runUpgradeDefaults();
         $this->runUpgradeDomains();
+
+        // Step 18: Run Recommended Settings Seeder
+        $this->info("Seeding recommended settings...");
+        Artisan::call('db:seed', ['--class' => 'RecommendedSettingsSeeder', '--force' => true]);
+        $this->info("Recommended settings seeded successfully.");
 
         // Step 16: Display Installation Summary
         $this->displayCompletionMessage($username, $password);
