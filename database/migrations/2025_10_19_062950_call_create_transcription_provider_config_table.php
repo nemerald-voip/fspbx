@@ -1,0 +1,27 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    public function up(): void
+    {
+        if (!Schema::hasTable('call_transcription_provider_config')) {
+            Schema::create('call_transcription_provider_config', function (Blueprint $table) {
+                $table->uuid('uuid')->primary()->default(DB::raw('uuid_generate_v4()'));
+                $table->uuid('tenant_uuid')->nullable();     // NULL = system scope
+                $table->uuid('provider_uuid');                 // FK -> provider
+                $table->jsonb('config')->nullable();         // credentials + options (JSONB)
+                $table->timestamps();
+
+                $table->index(['provider_id', 'tenant_uuid']);
+            });
+        }
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('call_transcription_provider_config');
+    }
+};
