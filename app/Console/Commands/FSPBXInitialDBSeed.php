@@ -124,7 +124,7 @@ class FSPBXInitialDBSeed extends Command
 
         // Step 12: Run Provision Template seeder
         $this->info("Seeding provisioning templates...");
-        Artisan::call('prov:templates:seed'); 
+        Artisan::call('prov:templates:seed');
         $this->info("Provisioning templates seeded successfully.");
 
         // Step 13: Install & Build Frontend (NPM)
@@ -155,7 +155,12 @@ class FSPBXInitialDBSeed extends Command
         Artisan::call('db:seed', ['--class' => 'RecommendedSettingsSeeder', '--force' => true]);
         $this->info("Recommended settings seeded successfully.");
 
-        // Step 16: Display Installation Summary
+        // Step 19: Run Device Vendor Seeder
+        $this->info("Seeding recommended settings...");
+        Artisan::call('db:seed', ['--class' => 'DeviceVendorsSeeder', '--force' => true]);
+        $this->info("Recommended settings seeded successfully.");
+
+        // Step 20: Display Installation Summary
         $this->displayCompletionMessage($username, $password);
 
         return 0;
