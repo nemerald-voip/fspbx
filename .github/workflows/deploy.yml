@@ -2,10 +2,7 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches:
-      - main
-    # Review gh actions docs if you want to further define triggers, paths, etc
-    # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#on
+    branches: [ main ]
 
 jobs:
   build:
@@ -18,13 +15,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      # Use Node 20 (or 22 LTS)
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: npm
+          cache-dependency-path: documentation/package-lock.json
 
       - name: Install dependencies
         run: npm ci
+
       - name: Build website
         run: npm run build
 
@@ -36,17 +37,17 @@ jobs:
   deploy:
     name: Deploy to GitHub Pages
     needs: build
-
     # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
-    permissions:
+     permissions:
       pages: write # to deploy to Pages
+      pages: write
       id-token: write # to verify the deployment originates from an appropriate source
+      id-token: write
 
     # Deploy to the github-pages environment
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to GitHub Pages
