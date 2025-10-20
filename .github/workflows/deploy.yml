@@ -16,7 +16,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Use Node 20 (or 22 LTS)
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -37,17 +36,16 @@ jobs:
   deploy:
     name: Deploy to GitHub Pages
     needs: build
+
     # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
-     permissions:
-      pages: write # to deploy to Pages
+    permissions:
       pages: write
-      id-token: write # to verify the deployment originates from an appropriate source
       id-token: write
 
-    # Deploy to the github-pages environment
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to GitHub Pages
