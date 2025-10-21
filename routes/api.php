@@ -31,6 +31,7 @@ use App\Http\Controllers\CallRecordingStreamController;
 use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\Api\ProvisioningTemplateController;
+use App\Http\Controllers\CallTranscriptionProviderController;
 use App\Http\Controllers\HotelHousekeepingDefinitionController;
 
 /*
@@ -221,13 +222,16 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/call-detail-records/recording-options', [CdrsController::class, 'getRecordingOptions'])->name('cdrs.recording.options');
     Route::get('/call-detail-records/recordings/{uuid}', CallRecordingStreamController::class)->name('cdrs.recording.stream');
     Route::get('/call-detail-records/recordings/{uuid}/download', [CallRecordingStreamController::class, 'download'])->name('cdrs.recording.download');
-    
+
     // Account Settings
     Route::put('account-settings/update', [AccountSettingsController::class, 'update'])->name('account-settings.update');
 
     // System Settings
     Route::put('system-settings/update', [SystemSettingsController::class, 'update'])->name('system-settings.update');
     Route::get('system-settings/payment_gateways', [SystemSettingsController::class, 'getPaymentGatewayData'])->name('system-settings.payment_gateways');
+
+    // Call Transcription
+    Route::resource('/call-transcription-providers', CallTranscriptionProviderController::class);
 
     // Payment Gateways
     Route::put('/gateways', [PaymentGatewayController::class, 'update'])->name('gateway.update');

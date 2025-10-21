@@ -234,10 +234,14 @@
 
 
 <script setup>
-import { ref } from 'vue'
+import { ref,onMounted } from 'vue'
 
 const form$ = ref(null)
 
+onMounted(() => {
+
+    console.log('assemblyai')
+})
 
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
@@ -329,13 +333,3 @@ const handleError = (error, details, form$) => {
 
 
 </script>
-
-<style scoped>
-/* This will mask the text input to behave like a password field */
-.password-field {
-    -webkit-text-security: disc;
-    /* For Chrome and Safari */
-    -moz-text-security: disc;
-    /* For Firefox */
-}
-</style>

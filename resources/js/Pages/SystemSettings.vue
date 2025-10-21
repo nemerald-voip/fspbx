@@ -55,8 +55,13 @@
                 </Vueform>
             </section>
 
+            <!--  Transcription - General Settings -->
+            <section v-if="selectedMenuOption === 'transcription_options'">
+                <CallTranscriptionOptionsForm :routes="routes" @error="handleErrorResponse"/>
+            </section>
+
             <!--  ASSEMBLY AI -->
-            <section v-show="selectedMenuOption === 'assemblyai'">
+            <section v-if="selectedMenuOption === 'assemblyai'">
                 <AssemblyAiForm />
 
             </section>
@@ -86,6 +91,9 @@ import Badge from "@generalComponents/Badge.vue";
 import { CreditCardIcon, Cog6ToothIcon } from '@heroicons/vue/24/outline'
 import GraphicEqIcon from "@icons/GraphicEqIcon.vue"
 import AssemblyAiForm from "./components/forms/AssemblyAiForm.vue"
+import CallTranscriptionOptionsForm from "./components/forms/CallTranscriptionOptionsForm.vue"
+import { AdjustmentsVerticalIcon } from "@heroicons/vue/24/outline";
+
 
 const props = defineProps({
     routes: Object,
@@ -125,7 +133,10 @@ onMounted(() => {
             key: 'call_transcription',
             name: 'Call Transcription',
             icon: markRaw(GraphicEqIcon),
-            children: [{ key: 'assemblyai', name: 'AssemblyAI', icon: markRaw(GraphicEqIcon) }],
+            children: [
+                { key: 'transcription_options', name: 'Options', icon: markRaw(AdjustmentsVerticalIcon) },
+                { key: 'assemblyai', name: 'AssemblyAI', icon: markRaw(GraphicEqIcon) }
+            ],
         })
     }
 
@@ -134,6 +145,7 @@ onMounted(() => {
         // handleUpdateSelectedMenuOption(navigation.value[0].key)
     }
 })
+
 
 const getPaymentGatewaysData = async () => {
     try {

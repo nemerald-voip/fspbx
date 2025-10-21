@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\CallTranscriptionProvider;
 use App\Models\Groups;
 use App\Models\Permissions;
 use App\Models\ProFeatures;
@@ -39,6 +40,8 @@ class DatabaseSeeder extends Seeder
         $this->createProFeatures();
 
         $this->createPaymentGateways();
+
+        $this->createCallTranscriptionProviders();
 
         Model::reguard();
     }
@@ -1055,6 +1058,46 @@ class DatabaseSeeder extends Seeder
             logger("Error seeding ProFeatures");
         }
     }
+
+    private function createCallTranscriptionProviders(): void
+    {
+        if (! Schema::hasTable('call_transcription_providers')) {
+            return;
+        }
+
+        // Define the providers you want available by default
+        $providers = [
+            ['key' => 'assemblyai', 'name' => 'AssemblyAI', 'is_active' => true],
+            // add more here later, e.g. ['key' => 'whisper', 'name' => 'OpenAI Whisper', 'is_active' => true],
+        ];
+
+        // Find existing keys so we only insert missing ones
+        $keys      = array_column($providers, 'key');
+        $existing  = CallTranscriptionProvider::whereIn('key', $keys)
+            ->pluck('key')
+            ->all();
+
+        $now       = now();
+        $toInsert  = [];
+
+        foreach ($providers as $p) {
+            if (!in_array($p['key'], $existing, true)) {
+                $toInsert[] = [
+                    'uuid'       => (string) \Illuminate\Support\Str::uuid(),
+                    'key'        => $p['key'],
+                    'name'       => $p['name'],
+                    'is_active'  => $p['is_active'] ?? true,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+        }
+
+        if (!empty($toInsert)) {
+            CallTranscriptionProvider::insert($toInsert);
+        }
+    }
+
 
 
     private function createPaymentGateways()
