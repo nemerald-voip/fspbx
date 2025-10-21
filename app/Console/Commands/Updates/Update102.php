@@ -13,7 +13,7 @@ class Update102
      */
     public function apply(): bool
     {
-        $source = '/var/www/fspbx/install/nginx_fspbx_internal.conf';
+        $source = base_path('install/nginx_fspbx_internal.conf');
         $nginxAvailable = '/etc/nginx/sites-available';
         $nginxEnabled   = '/etc/nginx/sites-enabled';
         $targetName     = 'fspbx_internal.conf';
