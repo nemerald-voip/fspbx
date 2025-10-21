@@ -8,6 +8,7 @@ use Symfony\Component\Process\Process;
 use Illuminate\Support\Facades\Artisan;
 use App\Console\Commands\Updates\Update097;
 use App\Console\Commands\Updates\Update101;
+use App\Console\Commands\Updates\Update102;
 use App\Console\Commands\Updates\Update0917;
 use App\Console\Commands\Updates\Update0918;
 use App\Console\Commands\Updates\Update0924;
@@ -85,6 +86,7 @@ class UpdateApp extends Command
             '0.9.69' => Update0969::class,
             '0.9.70' => Update0970::class,
             '1.0.1' => Update101::class,
+            '1.0.2' => Update102::class,
             // Add more versions as needed
         ];
 
