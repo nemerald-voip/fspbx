@@ -239,6 +239,14 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
                 $vars['origination_callee_id_name'] = $extension->name_formatted ?? null;
             }
 
+        if (strpos($subjectTpl, '${new_messages}') !== false) {
+            $voicemail_id = $message->voicemail?->voicemail_id ?? null;
+            $newMessagesCount = VoicemailMessages:: where('voicemail_uuid', $message->voicemail->voicemail_uuid)
+           ->whereNull('message_status')
+           ->count();
+        $vars['new_messages'] = $newMessagesCount;
+        }
+            
             $replacements = [];
             foreach ($vars as $k => $v) {
                 $replacements['${' . $k . '}'] = e($v);
