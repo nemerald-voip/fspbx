@@ -5,17 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\HotelRoom;
 use App\Models\Extensions;
 use Illuminate\Http\Request;
-use App\Services\HotelRoomService;
 use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\QueryBuilder;
-use Spatie\QueryBuilder\AllowedFilter;
 use App\Http\Requests\StoreHotelRoomRequest;
 use App\Http\Requests\UpdateHotelRoomRequest;
 use App\Http\Requests\BulkStoreHotelRoomsRequest;
 use App\Models\CallTranscriptionProvider;
 use Exception;
 
-class CallTranscriptionProviderController extends Controller
+class CallTranscriptionController extends Controller
 {
 
     public function index(Request $request)
@@ -30,15 +28,12 @@ class CallTranscriptionProviderController extends Controller
             ->allowedSorts(['name'])
             ->defaultSort('name');
 
-throw new Exception('hi');
         $data = $query->get()->map(function ($item) {
             return [
                 'value' => $item->uuid,
                 'label' => $item->name,
             ];
         })->toArray();;
-
-        logger($data);
 
         return response()->json($data);
     }
@@ -142,38 +137,6 @@ throw new Exception('hi');
         }
     }
 
-    public function toggleDnd(HotelRoom $room, HotelRoomService $svc)
-    {
-        $room->update(['dnd' => !$room->dnd]);
-        $svc->applyDndToExtension($room); // sync to FreeSWITCH
-        return response()->json(['dnd' => $room->dnd]);
-    }
-
-    public function setHousekeeping(Request $req, HotelRoom $room)
-    {
-        $status = $req->validate(['housekeeping_status' => 'required|in:clean,dirty,inspected']);
-        $room->update($status);
-        return $room->fresh();
-    }
-
-    public function checkIn(Request $req, HotelRoom $room, HotelRoomService $svc)
-    {
-        $payload = $req->validate([
-            'reservation_id' => 'nullable|uuid',
-            'guest_first_name' => 'required|string|max:120',
-            'guest_last_name' => 'required|string|max:120',
-            'departure_date' => 'required|date'
-        ]);
-
-        $svc->checkIn($room, $payload);
-        return $room->fresh();
-    }
-
-    public function checkOut(HotelRoom $room, HotelRoomService $svc)
-    {
-        $svc->checkOut($room);
-        return $room->fresh();
-    }
 
     public function getItemOptions()
     {

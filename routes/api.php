@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\DomainGroups;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CdrsController;
 use App\Http\Controllers\FaxesController;
@@ -12,7 +11,6 @@ use App\Http\Controllers\FaxInboxController;
 use App\Http\Controllers\UserLogsController;
 use App\Http\Controllers\EmailLogsController;
 use App\Http\Controllers\HotelRoomController;
-use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\DomainGroupsController;
@@ -27,11 +25,11 @@ use App\Http\Controllers\HotelRoomStatusController;
 use App\Http\Controllers\InboundWebhooksController;
 use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\EmergencyCallController;
+use App\Http\Controllers\CallTranscriptionController;
 use App\Http\Controllers\CallRecordingStreamController;
 use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\Api\ProvisioningTemplateController;
-use App\Http\Controllers\CallTranscriptionProviderController;
 use App\Http\Controllers\HotelHousekeepingDefinitionController;
 
 /*
@@ -231,7 +229,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('system-settings/payment_gateways', [SystemSettingsController::class, 'getPaymentGatewayData'])->name('system-settings.payment_gateways');
 
     // Call Transcription
-    Route::resource('/call-transcription-providers', CallTranscriptionProviderController::class);
+    Route::name('call-transcription')->resource('/call-transcription/providers', CallTranscriptionController::class);
 
     // Payment Gateways
     Route::put('/gateways', [PaymentGatewayController::class, 'update'])->name('gateway.update');

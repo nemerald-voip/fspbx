@@ -52,7 +52,7 @@ class SystemSettingsController extends Controller
                     'payment_gateways' => route('system-settings.payment_gateways'),
                     'payment_gateway_update' => route('gateway.update'),
                     'payment_gateway_deactivate' => route('gateway.deactivate'),
-                    'transcription_providers_route' => route('call-transcription-providers.index'),
+                    'transcription_providers_route' => route('call-transcription.providers.index'),
                 ],
                 'permissions' => function () {
                     return $this->getUserPermissions();
