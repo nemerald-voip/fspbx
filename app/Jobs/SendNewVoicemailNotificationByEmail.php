@@ -264,11 +264,18 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
             $uuid    = (string) $message->voicemail_message_uuid;
             $sentKey = "vm:sent:$uuid";
 
+            // Single recipient guard
+            $to = trim((string) ($message->voicemail?->voicemail_mail_to ?? ''));
+
+            if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                Cache::put($sentKey, 1, now()->addDays(1));
+                return; // bail out before attempting to send
+            }
+
             if (!Cache::has($sentKey)) {
                 try {
                     // send; if it throws, the job RETRIES
-                    Mail::to($message->voicemail?->voicemail_mail_to ?? null)
-                        ->send(new VoicemailNotification($attributes));
+                    Mail::to($to)->send(new VoicemailNotification($attributes));
 
                     // mark as sent so future retries won't resend
                     Cache::put($sentKey, 1, now()->addDays(1));
@@ -337,11 +344,11 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
                 }
             }
             $message->delete();
-
+            
             // Best-effort MWI; never throw
             try {
                 $esl = app(FreeswitchEslService::class);
-                $esl->executeCommand(sprintf("bgapi luarun app.lua voicemail mwi '%s'@'%s'", $voicemailId, $domainName));
+                $esl->executeCommand(sprintf("bgapi luarun app/voicemail/resources/scripts/mwi_notify.lua %s %s", $voicemailId, $domainName));
             } catch (\Throwable $e) {
                 logger()->warning('MWI update failed after voicemail delete', ['v' => $voicemailId, 'd' => $domainName, 'e' => $e->getMessage()]);
             }
