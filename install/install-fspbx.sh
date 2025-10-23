@@ -19,7 +19,6 @@ OS_CODENAME=$(lsb_release -sc 2>/dev/null || echo "")
 
 echo "Detected OS_CODENAME=$OS_CODENAME"
 
-
 # Signalwire Token Handling
 if [[ "$OS_CODENAME" == "trixie" ]]; then
   SW_TOKEN_FILE="$HOME/.signalwire_token"
@@ -28,7 +27,7 @@ if [[ "$OS_CODENAME" == "trixie" ]]; then
       TOKEN=$(<"$SW_TOKEN_FILE")
       echo "Using saved Signalwire token."
   else
-      PROMPT=$'Enter your Signalwire token, then press ENTER or RETURN on your keyboard.\nInstructions to obtain this token can be retrieved from ...\n> '
+      PROMPT=$'Enter your Signalwire token, then press ENTER or RETURN on your keyboard.\nInstructions to obtain this token can be retrieved from https://www.fspbx.com/docs/additional-information/signalwire-token/ \n> '
       # Read from the terminal even if script stdin is a pipe
       read -rp "$PROMPT" TOKEN </dev/tty
       if [[ -z "$TOKEN" ]]; then

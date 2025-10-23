@@ -66,7 +66,6 @@ ip6tables -P INPUT DROP
 ip6tables -P FORWARD DROP
 ip6tables -P OUTPUT ACCEPT
 ip6tables -A INPUT -p ipv6-icmp -j ACCEPT
-ip6tables-save > /etc/iptables/rules.v6
 
 # Allow loopback traffic
 iptables -A INPUT -i lo -j ACCEPT

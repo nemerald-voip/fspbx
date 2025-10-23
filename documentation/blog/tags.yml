@@ -28,3 +28,7 @@ call-analysis:
   permalink: /call-analysis
   description: call analysis
 
+osupgrade:
+  label: os-upgrade
+  permalink: /os-upgrade
+  description: os upgrade

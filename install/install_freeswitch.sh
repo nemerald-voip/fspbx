@@ -51,7 +51,7 @@ apt update
 apt install -y autoconf automake devscripts g++ git-core libncurses5-dev libtool make libjpeg-dev \
                pkg-config flac libgdbm-dev libdb-dev gettext sudo equivs git dpkg-dev \
                libpq-dev liblua5.2-dev libtiff5-dev libperl-dev libcurl4-openssl-dev libsqlite3-dev \
-               libpcre3-dev devscripts libspeexdsp-dev libspeex-dev libldns-dev libedit-dev libopus-dev \
+               devscripts libspeexdsp-dev libspeex-dev libldns-dev libedit-dev libopus-dev \
                libmemcached-dev libshout3-dev libmpg123-dev libmp3lame-dev yasm nasm libsndfile1-dev \
                libuv1-dev libvpx-dev libavformat-dev libswscale-dev libvlc-dev \
                sox libsox-fmt-all sqlite3 unzip cmake uuid-dev libssl-dev

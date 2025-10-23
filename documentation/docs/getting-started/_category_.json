@@ -1,0 +1,8 @@
+{
+  "label": "Getting Started Guide",
+  "position": 4,
+  "link": {
+    "type": "generated-index",
+    "description": "Quickly get start to configure the basics of FS PBX."
+  }
+}
