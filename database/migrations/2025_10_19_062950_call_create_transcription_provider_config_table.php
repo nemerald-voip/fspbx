@@ -11,12 +11,12 @@ return new class extends Migration {
         if (!Schema::hasTable('call_transcription_provider_config')) {
             Schema::create('call_transcription_provider_config', function (Blueprint $table) {
                 $table->uuid('uuid')->primary()->default(DB::raw('uuid_generate_v4()'));
-                $table->uuid('tenant_uuid')->nullable();     // NULL = system scope
+                $table->uuid('domain_uuid')->nullable();     // NULL = system scope
                 $table->uuid('provider_uuid');                 // FK -> provider
                 $table->jsonb('config')->nullable();         // credentials + options (JSONB)
                 $table->timestamps();
 
-                $table->index(['provider_uuid', 'tenant_uuid']);
+                $table->index(['provider_uuid', 'domain_uuid']);
             });
         }
     }

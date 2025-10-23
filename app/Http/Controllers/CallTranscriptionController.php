@@ -4,19 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Models\HotelRoom;
 use App\Models\Extensions;
+use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\QueryBuilder;
+use App\Models\CallTranscriptionPolicy;
+use App\Models\CallTranscriptionProvider;
 use App\Http\Requests\StoreHotelRoomRequest;
 use App\Http\Requests\UpdateHotelRoomRequest;
+use App\Services\CallTranscriptionConfigService;
 use App\Http\Requests\BulkStoreHotelRoomsRequest;
-use App\Models\CallTranscriptionProvider;
-use Exception;
+use App\Http\Requests\StoreTranscriptionOptionsRequest;
 
 class CallTranscriptionController extends Controller
 {
 
-    public function index(Request $request)
+    public function getProviders(Request $request)
     {
 
         $query = QueryBuilder::for(CallTranscriptionProvider::query())
@@ -38,67 +41,69 @@ class CallTranscriptionController extends Controller
         return response()->json($data);
     }
 
-    public function store(StoreHotelRoomRequest $request)
+    public function getPolicy(Request $request)
     {
-        $data = $request->validated();
+        $data = $request->validate([
+            'domain_uuid' => ['nullable', 'uuid'],
+        ]);
+        $domainUuid = $data['domain_uuid'] ?? null;
 
-        try {
-            DB::beginTransaction();
+        $rows = CallTranscriptionPolicy::query()
+            ->where(function ($q) use ($domainUuid) {
+                $q->whereNull('domain_uuid');
+                if (!empty($domainUuid)) {
+                    $q->orWhere('domain_uuid', $domainUuid);
+                }
+            })
+            ->get()
+            ->keyBy(fn($r) => $r->domain_uuid === null ? 'system' : 'domain');
 
-            $hotelRoom = HotelRoom::create($data);
+        $system = $rows->get('system'); // may be null
+        $domain = $rows->get('domain'); // may be null
 
-            DB::commit();
+        // Effective: domain overrides if set; else system
+        $enabled       = $domain?->enabled ?? ($system?->enabled ?? false);
+        $providerUuid  = $domain?->provider_uuid ?? ($system?->provider_uuid ?? null);
 
-            return response()->json([
-                'messages' => ['success' => ['New hotel room created']]
-            ], 201);
-        } catch (\Throwable $e) {
-            DB::rollBack();
-
-            logger('HotelRoomController@store error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
-
-            return response()->json([
-                'messages' => ['error' => ['Something went wrong while saving.']]
-            ], 500);
-        }
+        return response()->json([
+            'scope'         => $domain ? 'domain' : 'system',
+            'domain_uuid'   => $domainUuid,
+            'enabled'       => (bool) $enabled,
+            'provider_uuid' => $providerUuid,
+        ]);
     }
 
-    public function bulkStore(BulkStoreHotelRoomsRequest $request)
+
+    public function storePolicy(StoreTranscriptionOptionsRequest $request)
     {
-        $data = $request->validated();
-        $domainUuid = (string) $data['domain_uuid'];
-        $uuids = $data['extensions'];
+        $data       = $request->validated();
+        $domainUuid = $data['domain_uuid'] ?? null;
 
         try {
             DB::beginTransaction();
 
-            // Pull extension number + uuid for the provided UUIDs (scoped to domain)
-            $extensions = Extensions::query()
-                ->where('domain_uuid', $domainUuid)
-                ->whereIn('extension_uuid', $uuids)
-                ->select(['extension_uuid', 'extension'])
-                ->get();
-
-            $created = [];
-
-            foreach ($extensions as $ext) {
-                $created[] = HotelRoom::create([
-                    'domain_uuid'    => $domainUuid,
-                    'extension_uuid' => $ext->extension_uuid,
-                    'room_name'      => (string) $ext->extension, // as requested
-                ]);
-            }
+            // Upsert one row per scope (system = domain_uuid NULL)
+            CallTranscriptionPolicy::updateOrCreate(
+                ['domain_uuid' => $domainUuid],
+                [
+                    'enabled'       => (bool) $data['enabled'],
+                    // In domain scope this may be null to inherit system provider
+                    'provider_uuid' => $data['provider_uuid'] ?? null,
+                ]
+            );
 
             DB::commit();
 
+            // Invalidate cached effective config for this scope
+            app(CallTranscriptionConfigService::class)->invalidate($domainUuid);
+
             return response()->json([
-                'messages' => ['success' => [count($created) . ' room(s) created']],
-                // If helpful for the UI:
-                // 'data' => collect($created)->map->only(['uuid','room_name','extension_uuid']),
+                'messages' => ['success' => ['Call transcription options saved']],
             ], 201);
         } catch (\Throwable $e) {
             DB::rollBack();
-            logger('HotelRoomController@bulkStore error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            logger('CallTranscriptionPolicyController@storePolicy error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
                 'messages' => ['error' => ['Something went wrong while saving.']],
@@ -106,36 +111,44 @@ class CallTranscriptionController extends Controller
         }
     }
 
-    public function update(UpdateHotelRoomRequest $request, $uuid)
+    public function destroyPolicy(Request $request)
     {
-        $data = $request->validated();
+        $data = $request->validate([
+            'domain_uuid' => ['required', 'uuid'],
+        ]);
+
+        $domainUuid = $data['domain_uuid'];
 
         try {
             DB::beginTransaction();
 
-            $hotelRoom = HotelRoom::find($uuid);
-            if (!$hotelRoom) {
-                return response()->json([
-                    'messages' => ['error' => ['Hotel room not found.']]
-                ], 404);
-            }
-
-            $hotelRoom->update($data);
+            // Remove the domain override (if present)
+            $deleted = CallTranscriptionPolicy::where('domain_uuid', $domainUuid)->delete();
 
             DB::commit();
 
-            return response()->json([
-                'messages' => ['success' => ['Hotel room updated']]
-            ]);
-        } catch (\Throwable $e) {
-            DB::rollBack();
-            logger('HotelRoomController@update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // Invalidate cached effective config for this domain
+            app(CallTranscriptionConfigService::class)->invalidate($domainUuid);
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while updating.']]
+                'messages' => ['success' => [
+                    $deleted ? 'Reverted to defaults.' : 'No custom options found; already using defaults.'
+                ]],
+            ], 200);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            logger(
+                'CallTranscriptionPolicyController@destroyPolicy error: ' .
+                    $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine()
+            );
+
+            return response()->json([
+                'messages' => ['error' => ['Something went wrong while reverting to defaults.']],
             ], 500);
         }
     }
+
 
 
     public function getItemOptions()
@@ -208,42 +221,6 @@ class CallTranscriptionController extends Controller
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => ['Failed to fetch item details']]
-            ], 500);
-        }
-    }
-
-    public function bulkDelete()
-    {
-        try {
-            DB::beginTransaction();
-
-            $uuids = request('items');
-
-            $items = HotelRoom::whereIn('uuid', $uuids)
-                ->get();
-
-            foreach ($items as $item) {
-
-                //delete hotel room status
-                if (method_exists($item, 'status')) {
-                    $item->status()->delete();
-                }
-
-                $item->delete();
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'messages' => ['success' => ['Selected hotel room(s) were deleted successfully.']]
-            ]);
-        } catch (\Throwable $e) {
-            DB::rollBack();
-
-            logger('HotelRoomController@bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
-
-            return response()->json([
-                'messages' => ['error' => ['An error occurred while deleting the selected hotel room(s).']]
             ], 500);
         }
     }

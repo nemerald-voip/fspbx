@@ -80,6 +80,12 @@
                     :domain_uuid="data.domain_uuid" />
             </section>
 
+            <!--  Transcription - General Settings -->
+            <section v-if="selectedMenuOption === 'transcription_options'">
+                <CallTranscriptionOptionsForm :domain_uuid="data?.domain_uuid" :routes="routes" @error="handleErrorResponse"
+                    @success="showNotification" />
+            </section>
+
             <!-- ROOM MANAGEMENT -->
             <section v-show="selectedMenuOption === 'room_management'">
                 <Vueform>
@@ -150,7 +156,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, markRaw } from 'vue'
 import PageWithSideMenu from '../Layouts/PageWithSideMenu.vue'
 import Notification from "./components/notifications/Notification.vue";
 import EmergencyCalls from "./components/EmergencyCalls.vue";
@@ -162,6 +168,8 @@ import Locations from "./components/Locations.vue";
 import CreateLocationModal from "./components/modal/CreateLocationModal.vue"
 import UpdateLocationModal from "./components/modal/UpdateLocationModal.vue"
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
+import GraphicEqIcon from "@icons/GraphicEqIcon.vue"
+import CallTranscriptionOptionsForm from "./components/forms/CallTranscriptionOptionsForm.vue"
 import {
     Cog6ToothIcon,
     MapPinIcon,
@@ -170,6 +178,7 @@ import {
     KeyIcon,
     BellAlertIcon,
     ClipboardDocumentCheckIcon,
+    AdjustmentsVerticalIcon,
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -217,6 +226,15 @@ const navigation = [
     { key: 'locations', name: 'Locations', icon: MapPinIcon },
     { key: 'auto_provisioning', name: 'Auto Provisioning', icon: WrenchScrewdriverIcon },
     // { key: 'billing', name: 'Billing', icon: CreditCardIcon },
+    {
+        key: 'call_transcription',
+        name: 'Call Transcription',
+        icon: markRaw(GraphicEqIcon),
+        children: [
+            { key: 'transcription_options', name: 'Options', icon: markRaw(AdjustmentsVerticalIcon) },
+            // { key: 'assemblyai', name: 'AssemblyAI', icon: markRaw(GraphicEqIcon) }
+        ],
+    },
     {
         key: 'hotel',
         name: 'Hotel Management',

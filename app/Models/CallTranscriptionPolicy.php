@@ -16,7 +16,7 @@ class CallTranscriptionPolicy extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
-    protected $fillable = ['tenant_uuid', 'enabled', 'provider_uuid'];
+    protected $fillable = ['domain_uuid', 'enabled', 'provider_uuid'];
 
     public function provider() 
     { 

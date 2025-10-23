@@ -57,7 +57,7 @@
 
             <!--  Transcription - General Settings -->
             <section v-if="selectedMenuOption === 'transcription_options'">
-                <CallTranscriptionOptionsForm :routes="routes" @error="handleErrorResponse"/>
+                <CallTranscriptionOptionsForm :routes="routes" @error="handleErrorResponse" @success="showNotification"/>
             </section>
 
             <!--  ASSEMBLY AI -->

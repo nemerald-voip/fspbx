@@ -229,7 +229,10 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('system-settings/payment_gateways', [SystemSettingsController::class, 'getPaymentGatewayData'])->name('system-settings.payment_gateways');
 
     // Call Transcription
-    Route::name('call-transcription')->resource('/call-transcription/providers', CallTranscriptionController::class);
+    Route::get('/call-transcription/providers', [CallTranscriptionController::class, 'getProviders'])->name('call-transcription.providers');
+    Route::get('/call-transcription/policy', [CallTranscriptionController::class, 'getPolicy'])->name('call-transcription.policy');
+    Route::post('/call-transcription/policy', [CallTranscriptionController::class, 'storePolicy'])->name('call-transcription.policy.store');
+    Route::delete('/call-transcription/policy', [CallTranscriptionController::class, 'destroyPolicy'])->name('call-transcription.policy.destroy');
 
     // Payment Gateways
     Route::put('/gateways', [PaymentGatewayController::class, 'update'])->name('gateway.update');

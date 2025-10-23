@@ -11,12 +11,12 @@ return new class extends Migration {
         if (!Schema::hasTable('call_transcription_policy')) {
             Schema::create('call_transcription_policy', function (Blueprint $table) {
                 $table->uuid('uuid')->primary()->default(DB::raw('uuid_generate_v4()'));
-                $table->uuid('tenant_uuid')->nullable();
+                $table->uuid('domain_uuid')->nullable();
                 $table->boolean('enabled')->default(false); 
                 $table->uuid('provider_uuid')->nullable(); 
                 $table->timestamps();
 
-                $table->index('tenant_uuid');
+                $table->index('domain_uuid');
             });
         }
     }
