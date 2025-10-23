@@ -8,6 +8,8 @@
                     <div class="space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                         <FormElements>
 
+                            <HiddenElement name="domain_uuid" :meta="true" />
+
                             <!-- 1) General & Language Settings -->
                             <StaticElement name="h_general" tag="h4" content="AssemblyAI General & Language Settings" />
                             <SelectElement name="speech_model" :items="[
@@ -217,6 +219,11 @@
                                 autocomplete="off" :columns="{ lg: { wrapper: 5 } }" />
 
 
+                            <GroupElement name="container" />
+
+                            <ButtonElement name="save" button-label="Save" :submits="true" />
+
+
 
                         </FormElements>
                     </div>
@@ -234,7 +241,12 @@
 
 
 <script setup>
-import { ref,onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
+
+const props = defineProps({
+    domain_uuid: String,
+    routes: Object,
+})
 
 const form$ = ref(null)
 
@@ -248,8 +260,8 @@ const submitForm = async (FormData, form$) => {
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
 
-    // console.log(requestData);
-    return await form$.$vueform.services.axios.post(props.options.routes.store_route, requestData)
+    console.log(requestData);
+    return await form$.$vueform.services.axios.post(props.routes.transcription_provider_store_route, requestData)
 };
 
 function clearErrorsRecursive(el$) {

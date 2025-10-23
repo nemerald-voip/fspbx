@@ -16,7 +16,7 @@ class CallTranscriptionProviderConfig extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
-    protected $fillable = ['tenant_uuid', 'provider_uuid', 'config'];
+    protected $fillable = ['domain_uuid', 'provider_uuid', 'config'];
 
     // Store/retrieve JSONB as array; AsArrayObject keeps array semantics
     protected $casts = ['config' => AsArrayObject::class];

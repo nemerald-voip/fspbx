@@ -12,8 +12,10 @@ use App\Models\CallTranscriptionPolicy;
 use App\Models\CallTranscriptionProvider;
 use App\Http\Requests\StoreHotelRoomRequest;
 use App\Http\Requests\UpdateHotelRoomRequest;
+use App\Models\CallTranscriptionProviderConfig;
 use App\Services\CallTranscriptionConfigService;
 use App\Http\Requests\BulkStoreHotelRoomsRequest;
+use App\Http\Requests\StoreAssemblyAiConfigRequest;
 use App\Http\Requests\StoreTranscriptionOptionsRequest;
 
 class CallTranscriptionController extends Controller
@@ -149,6 +151,57 @@ class CallTranscriptionController extends Controller
         }
     }
 
+
+    public function storeAssemblyAiConfig(StoreAssemblyAiConfigRequest $request)
+    {
+        $validated  = $request->validated();
+        $domainUuid = $validated['domain_uuid'] ?? null;
+
+        // Resolve provider_uuid for AssemblyAI (adjust the key/column if needed)
+        $provider = CallTranscriptionProvider::where('key', 'assemblyai')->where('is_active', true)->first();
+
+        if (!$provider) {
+            return response()->json([
+                'messages' => ['error' => ['AssemblyAI provider is not configured or inactive.']],
+            ], 422);
+        }
+
+        // Build config blob (remove meta/scope keys)
+        $config = Arr::except($validated, ['domain_uuid']);
+
+        try {
+            DB::beginTransaction();
+
+            CallTranscriptionProviderConfig::updateOrCreate(
+                [
+                    'provider_uuid' => $provider->uuid,
+                    'domain_uuid'   => $domainUuid,       // NULL = system scope
+                ],
+                [
+                    'provider_uuid' => $provider->uuid,   // explicit on create
+                    'domain_uuid'   => $domainUuid,
+                    'config'        => $config,
+                ]
+            );
+
+            DB::commit();
+
+            // Invalidate cache for this scope so effective settings refresh
+            app(CallTranscriptionConfigService::class)->invalidate($domainUuid);
+
+            return response()->json([
+                'messages' => ['success' => ['AssemblyAI options saved']],
+            ], 201);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            logger('AssemblyAiController@storeAssemblyAiConfig error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'messages' => ['error' => ['Something went wrong while saving.']],
+            ], 500);
+        }
+    }
 
 
     public function getItemOptions()
