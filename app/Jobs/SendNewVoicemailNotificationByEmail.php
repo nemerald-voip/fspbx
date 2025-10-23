@@ -95,7 +95,7 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
         Redis::throttle('email')->allow(2)->every(1)->then(function () {
 
             $message = VoicemailMessages::select('voicemail_message_uuid', 'domain_uuid', 'voicemail_uuid', 'created_epoch', 'caller_id_name', 'caller_id_number', 'message_length', 'message_transcription')
-                ->with('voicemail:voicemail_uuid,voicemail_id,voicemail_mail_to,voicemail_transcription_enabled,voicemail_local_after_email,voicemail_description')
+                ->with('voicemail:voicemail_uuid,voicemail_id,voicemail_mail_to,voicemail_transcription_enabled,voicemail_local_after_email,voicemail_description,voicemail_file')
                 ->with('domain:domain_uuid,domain_name')
                 ->find($this->params['message_uuid']);
 
@@ -189,12 +189,13 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
                 if ($text !== '') {
 
                     // Persist without clobbering an existing value (idempotent on retries)
-                    VoicemailMessages::where('voicemail_message_uuid', $message->voicemail_message_uuid)
+                    $updated = VoicemailMessages::where('voicemail_message_uuid', $message->voicemail_message_uuid)
                         ->whereNull('message_transcription')
                         ->update(['message_transcription' => $text]);
 
-                    // Ensure in-memory instance is current for template variables below
-                    $message->refresh();
+                    if ($updated) {
+                        $message->message_transcription = $text; // keep in-memory model in sync
+                    }
                 }
             }
 
@@ -233,20 +234,20 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
 
             if (strpos($bodyTpl, '${origination_callee_id_name}') !== false) {
                 $extension = Extensions::where('extension', $message->voicemail?->voicemail_id ?? null)
-                ->where('domain_uuid', $domain_uuid)
-                ->select('extension_uuid', 'extension', 'effective_caller_id_name')
-                ->first();
+                    ->where('domain_uuid', $domain_uuid)
+                    ->select('extension_uuid', 'extension', 'effective_caller_id_name')
+                    ->first();
                 $vars['origination_callee_id_name'] = $extension->name_formatted ?? null;
             }
 
-        if (strpos($subjectTpl, '${new_messages}') !== false) {
-            $voicemail_id = $message->voicemail?->voicemail_id ?? null;
-            $newMessagesCount = VoicemailMessages:: where('voicemail_uuid', $message->voicemail->voicemail_uuid)
-           ->whereNull('message_status')
-           ->count();
-        $vars['new_messages'] = $newMessagesCount;
-        }
-            
+            if (strpos($subjectTpl, '${new_messages}') !== false) {
+                $voicemail_id = $message->voicemail?->voicemail_id ?? null;
+                $newMessagesCount = VoicemailMessages::where('voicemail_uuid', $message->voicemail->voicemail_uuid)
+                    ->whereNull('message_status')
+                    ->count();
+                $vars['new_messages'] = $newMessagesCount;
+            }
+
             $replacements = [];
             foreach ($vars as $k => $v) {
                 $replacements['${' . $k . '}'] = e($v);
