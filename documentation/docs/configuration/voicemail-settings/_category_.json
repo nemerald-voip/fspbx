@@ -1,0 +1,8 @@
+{
+  "label": "Voicemail Settings",
+  "position": 9,
+  "link": {
+    "type": "generated-index",
+    "description": "Voicemail settings are global settings you can configure for your voicemail management."
+  }
+}
