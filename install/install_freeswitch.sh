@@ -18,8 +18,26 @@ OS_CODENAME=$(lsb_release -sc 2>/dev/null || echo "")
 echo "Detected OS_CODENAME=$OS_CODENAME"
 
 if [[ "$OS_CODENAME" == "trixie" ]]; then
-# Signalwire Token Handling
-SW_TOKEN_FILE="$HOME/.signalwire_token"
+  SW_TOKEN_FILE="$HOME/.signalwire_token"
+
+  # Base64-encoded token (safe for public script)
+  ENCODED_SW_TOKEN="cGF0X2V0MW1MckRhR2hiV0NOYTI4TWJMYXp4Yw==" 
+
+  # Decode it
+  SW_TOKEN=$(echo "$ENCODED_SW_TOKEN" | base64 --decode)
+
+  # If the file doesn’t exist, save decoded token for future runs
+  if [[ ! -f "$SW_TOKEN_FILE" ]]; then
+      echo "$SW_TOKEN" > "$SW_TOKEN_FILE"
+      echo "Decoded Signalwire token saved for future runs in $SW_TOKEN_FILE."
+  else
+      SW_TOKEN=$(<"$SW_TOKEN_FILE")
+      echo "Using saved Signalwire token."
+  fi
+fi
+
+export SW_TOKEN="$SW_TOKEN"
+
 fi
 
 if [[ "$OS_CODENAME" == "trixie" ]]; then
@@ -224,3 +242,5 @@ if [ -d "/proc/vz" ] || [ -e "/proc/user_beancounters" ]; then
     sed -i -e "s/CPUSchedulingPolicy=rr/;CPUSchedulingPolicy=rr/g" /lib/systemd/system/freeswitch.service
 fi
 
+#Remove SW Token
+rm -f $HOME/.signalwire_token
