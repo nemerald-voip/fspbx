@@ -62,7 +62,7 @@
 
             <!--  ASSEMBLY AI -->
             <section v-if="selectedMenuOption === 'assemblyai'">
-                <AssemblyAiForm />
+                <AssemblyAiForm :routes="routes" @error="handleErrorResponse" @success="showNotification"/>
 
             </section>
         </template>

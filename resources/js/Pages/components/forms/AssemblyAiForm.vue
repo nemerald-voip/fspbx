@@ -1,5 +1,7 @@
 <template>
-    <div class="flex flex-col xl:flex-row">
+    <Skeleton v-if="isFormLoading" />
+
+    <div v-show="!isFormLoading" class="flex flex-col xl:flex-row">
         <div class="basis-3/4">
             <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
                 @response="handleResponse" :display-errors="false">
@@ -21,7 +23,7 @@
                                 description="The speech model to use for the transcription. When null, the 'universal' model is used." />
                             <TextElement name="language_code" label="Language Code"
                                 description="The language of your audio file. Default: en_us." placeholder="Optional"
-                                :floating="false" :columns="{ lg: { wrapper: 5 } }" default="en_us" />
+                                :floating="false" :columns="{ lg: { wrapper: 5 } }" />
                             <TextElement name="keyterms_prompt" label="Key terms"
                                 description="Up to 200 (Universal) or 1000 (Slam-1) domain terms; max 6 words per phrase."
                                 placeholder="Optional. List of strings" :floating="false"
@@ -83,10 +85,10 @@
                                     :add-classes="{ StaticElement: { container: 'pointer-events-none absolute left-0 top-0 h-full w-1 rounded-l-lg bg-indigo-500' } }" />
 
                                 <TextElement name="min_speakers_expected" label="Minimum Speakers Expected"
-                                    description="Default: 1" placeholder="Optional" :columns="{ lg: { wrapper: 5 } }" />
+                                    description="Default: 1" :floating="false" placeholder="Optional" :columns="{ lg: { wrapper: 5 } }" />
                                 <TextElement name="max_speakers_expected" label="Maximum Speakers Expected"
                                     description="Default: 10. Setting too high may reduce accuracy."
-                                    placeholder="Optional" :columns="{ lg: { wrapper: 5 } }" />
+                                    placeholder="Optional" :floating="false" :columns="{ lg: { wrapper: 5 } }" />
                             </ObjectElement>
                             <TextElement name="speakers_expected" label="Number of Expected Speakers"
                                 description="Tell the diarization model how many speakers to identify."
@@ -198,10 +200,10 @@
                                 placeholder="Optional. List of strings" :floating="false"
                                 :columns="{ lg: { wrapper: 5 } }" />
 
-                            <StaticElement name="div_g3" tag="hr" top="2" bottom="2" />
+                            <!-- <StaticElement name="div_g3" tag="hr" top="2" bottom="2" /> -->
 
                             <!-- 4) Summarization -->
-                            <StaticElement name="h_summarization" tag="h4" content="Summarization" />
+                            <!-- <StaticElement name="h_summarization" tag="h4" content="Summarization" />
                             <ToggleElement name="summarization" text="Enable Summarization" />
                             <SelectElement name="summary_model" :items="[
                                 { value: 'informative', label: 'Informative' },
@@ -216,7 +218,7 @@
                                 { value: 'headline', label: 'Headline' },
                                 { value: 'paragraph', label: 'Paragraph' },
                             ]" :search="true" :native="false" label="Summary Type" input-type="search"
-                                autocomplete="off" :columns="{ lg: { wrapper: 5 } }" />
+                                autocomplete="off" :columns="{ lg: { wrapper: 5 } }" /> -->
 
 
                             <GroupElement name="container" />
@@ -242,26 +244,51 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import Skeleton from "@generalComponents/Skeleton.vue";
+
 
 const props = defineProps({
     domain_uuid: String,
     routes: Object,
 })
 
+const emit = defineEmits(['error', 'success']);
+
 const form$ = ref(null)
+const assemblyAiConfig = ref(null)
+const isFormLoading = ref(false)
 
 onMounted(() => {
-
-    console.log('assemblyai')
+    getAssemblyAiConfig()
 })
+
+const getAssemblyAiConfig = async () => {
+    isFormLoading.value = true
+    try {
+        const { data } = await axios.get(
+            props.routes.assemblyai_route,
+            { params: { domain_uuid: props.domain_uuid ?? null } }
+        )
+        assemblyAiConfig.value = data
+        // console.log(assemblyAiConfig.value)
+        form$.value.update(assemblyAiConfig.value)
+        return data
+    } catch (err) {
+        emit('error', err);
+        assemblyAiConfig.value = []
+        return []
+    } finally {
+        isFormLoading.value = false
+    }
+}
 
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
 
-    console.log(requestData);
-    return await form$.$vueform.services.axios.post(props.routes.transcription_provider_store_route, requestData)
+    // console.log(requestData);
+    return await form$.$vueform.services.axios.post(props.routes.assemblyai_store_route, requestData)
 };
 
 function clearErrorsRecursive(el$) {
@@ -297,10 +324,9 @@ const handleSuccess = (response, form$) => {
     // console.log(response.status) // HTTP status code
     // console.log(response.data) // response data
 
-    emit('success', 'success', response.data.messages);
-    emit('close');
-    emit('refresh-data');
-    emit('open-edit-form', response.data.business_hours_uuid);
+    emit('success', 'success', response.data.messages)
+
+    getAssemblyAiConfig()
 }
 
 const handleError = (error, details, form$) => {

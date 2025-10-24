@@ -8,159 +8,142 @@ use App\Models\CallTranscriptionProviderConfig;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Arr;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Casts\ArrayObject;
 
 class CallTranscriptionConfigService
 {
-    /** Cache for 24 hour by default */
+    /** Cache for 24 hours */
     private const CACHE_TTL_HOURS = 24;
 
-    public function forTenant(?string $tenantUuid): array
+    /**
+     * Resolve effective transcription config for a domain.
+     * - Policy: domain row overrides system row.
+     * - Config: if a domain config exists, use it as-is; else use system config.
+     */
+    public function forDomain(?string $domainUuid): array
     {
-        $key = $this->cacheKey($tenantUuid);
+        return Cache::remember(
+            $this->cacheKey($domainUuid),
+            now()->addHours(self::CACHE_TTL_HOURS),
+            function () use ($domainUuid) {
+                // 1) Load policies (system + domain)
+                $systemPolicy = $this->getSystemPolicy();
+                $domainPolicy = $this->getDomainPolicy($domainUuid);
 
-        return Cache::remember($key, now()->addHours(self::CACHE_TTL_HOURS), function () use ($tenantUuid) {
-            // 1) Load policies (system + tenant) via Eloquent
-            $systemPolicy = $this->getSystemPolicy();
-            $tenantPolicy = $this->getTenantPolicy($tenantUuid);
+                // 2) Resolve flags & provider
+                $enabled      = $this->resolveEnabled($systemPolicy, $domainPolicy);
+                $providerUuid = $this->resolveProviderUuid($systemPolicy, $domainPolicy);
 
-            // 2) Resolve flags & provider
-            $enabled = $this->resolveEnabled($systemPolicy, $tenantPolicy);
-            $providerId = $this->resolveProviderId($systemPolicy, $tenantPolicy);
+                if (!$enabled || !$providerUuid) {
+                    return $this->disabledResponse($domainUuid);
+                }
 
-            if (!$enabled || !$providerId) {
-                return $this->disabledResponse($tenantUuid);
+                // 3) Ensure provider is active
+                $provider = CallTranscriptionProvider::query()
+                    ->whereKey($providerUuid)
+                    ->where('is_active', true)
+                    ->first();
+
+                if (!$provider) {
+                    return $this->disabledResponse($domainUuid);
+                }
+
+                // 4) Pick config: domain first, else system (NO MERGE)
+                $config = $this->pickProviderConfig($providerUuid, $domainUuid);
+
+                return [
+                    'domain_uuid'   => $domainUuid,
+                    'enabled'       => true,
+                    'provider_uuid' => $provider->getKey(),
+                    'provider_key'  => $provider->key,
+                    'provider_name' => $provider->name,
+                    'config'        => $config,        // domain as-is OR system as-is
+                    'resolved_at'   => Carbon::now(),
+                ];
             }
-
-            // 3) Ensure provider is active
-            $provider = CallTranscriptionProvider::query()
-                ->whereKey($providerId)
-                ->where('is_active', true)
-                ->first();
-
-            if (!$provider) {
-                // Chosen provider is missing/inactive -> effectively disabled
-                return $this->disabledResponse($tenantUuid);
-            }
-
-            // 4) Load configs for this provider in one query (system + tenant)
-            [$systemCfg, $tenantCfg] = $this->getProviderConfigs($providerId, $tenantUuid);
-
-            // 5) Deep-merge in PHP: tenant overrides keys over system
-            $merged = $this->deepMergeAssoc($systemCfg, $tenantCfg);
-
-            return [
-                'tenant_uuid'   => $tenantUuid,
-                'enabled'       => true,
-                'provider_id'   => $provider->getKey(),
-                'provider_key'  => $provider->key,
-                'provider_name' => $provider->name,
-                'config'        => $merged,
-                'resolved_at'   => Carbon::now(),
-            ];
-        });
+        );
     }
 
-    /** Forget the cached effective config (call from observers after writes) */
-    public function invalidate(?string $tenantUuid = null): void
+    /** Bust cache after writes */
+    public function invalidate(?string $domainUuid = null): void
     {
-        Cache::forget($this->cacheKey($tenantUuid));
+        Cache::forget($this->cacheKey($domainUuid));
     }
 
-    /* =========================
-       Internals (small helpers)
-       ========================= */
+    // =========================
+    // Internals
+    // =========================
 
-    private function cacheKey(?string $tenantUuid): string
+    private function cacheKey(?string $domainUuid): string
     {
-        return 'txcfg:' . ($tenantUuid ?: 'system');
+        return 'txcfg:' . ($domainUuid ?: 'system');
     }
 
     private function getSystemPolicy(): ?CallTranscriptionPolicy
     {
-        return CallTranscriptionPolicy::query()->whereNull('tenant_uuid')->first();
+        return CallTranscriptionPolicy::query()->whereNull('domain_uuid')->first();
     }
 
-    private function getTenantPolicy(?string $tenantUuid): ?CallTranscriptionPolicy
+    private function getDomainPolicy(?string $domainUuid): ?CallTranscriptionPolicy
     {
-        if (!$tenantUuid) {
-            return null;
-        }
-        return CallTranscriptionPolicy::query()->where('tenant_uuid', $tenantUuid)->first();
+        if (!$domainUuid) return null;
+
+        return CallTranscriptionPolicy::query()
+            ->where('domain_uuid', $domainUuid)
+            ->first();
     }
 
-    private function resolveEnabled(?CallTranscriptionPolicy $system, ?CallTranscriptionPolicy $tenant): bool
+    private function resolveEnabled(?CallTranscriptionPolicy $system, ?CallTranscriptionPolicy $domain): bool
     {
-        // system must be ON, tenant defaults to inherit(true) unless explicitly false
+        // system must be ON; domain inherits true unless explicitly false
         $systemEnabled = (bool) ($system->enabled ?? false);
-        $tenantEnabled = (bool) ($tenant->enabled ?? true);
-        return $systemEnabled && $tenantEnabled;
+        $domainEnabled = (bool) ($domain->enabled ?? true);
+        return $systemEnabled && $domainEnabled;
     }
 
-    private function resolveProviderId(?CallTranscriptionPolicy $system, ?CallTranscriptionPolicy $tenant): ?string
+    private function resolveProviderUuid(?CallTranscriptionPolicy $system, ?CallTranscriptionPolicy $domain): ?string
     {
-        return $tenant->provider_id ?? $system->provider_id ?? null;
-    }
-
-    /**
-     * Fetch system + tenant provider configs in one Eloquent query.
-     * Returns two associative arrays (system, tenant).
-     */
-    private function getProviderConfigs(string $providerId, ?string $tenantUuid): array
-    {
-        $rows = CallTranscriptionProviderConfig::query()
-            ->where('provider_id', $providerId)
-            ->where(function ($q) use ($tenantUuid) {
-                $q->whereNull('tenant_uuid');
-                if ($tenantUuid) {
-                    $q->orWhere('tenant_uuid', $tenantUuid);
-                }
-            })
-            ->get();
-
-        $sys = optional($rows->firstWhere('tenant_uuid', null))->config ?? [];
-        $ten = $tenantUuid ? (optional($rows->firstWhere('tenant_uuid', $tenantUuid))->config ?? []) : [];
-
-        // Normalize to arrays
-        $sysArr = is_array($sys) ? $sys : (is_string($sys) ? (json_decode($sys, true) ?: []) : []);
-        $tenArr = is_array($ten) ? $ten : (is_string($ten) ? (json_decode($ten, true) ?: []) : []);
-
-        return [$sysArr, $tenArr];
+        return $domain->provider_uuid ?? $system->provider_uuid ?? null;
     }
 
     /**
-     * Deep merge associative arrays; lists/scalars are replaced.
-     * Tenant ($override) wins over system ($base).
+     * Return provider config with precedence:
+     *   1) domain row (exact domain_uuid)
+     *   2) system row (domain_uuid NULL)
+     * If none found, returns [].
      */
-    private function deepMergeAssoc(?array $base, ?array $override): array
+    private function pickProviderConfig(string $providerUuid, ?string $domainUuid): array
     {
-        if ($base === null) return $override ?? [];
-        if ($override === null) return $base;
+        $query = CallTranscriptionProviderConfig::query()
+            ->where('provider_uuid', $providerUuid);
 
-        $isAssoc = fn(array $a) => Arr::isAssoc($a);
-
-        $result = $base;
-        foreach ($override as $key => $val) {
-            $exists = array_key_exists($key, $base);
-            if ($exists) {
-                $a = $base[$key];
-                if (is_array($a) && is_array($val) && $isAssoc($a) && $isAssoc($val)) {
-                    $result[$key] = $this->deepMergeAssoc($a, $val); // recurse for objects
-                } else {
-                    $result[$key] = $val; // replace lists/scalars
-                }
-            } else {
-                $result[$key] = $val;
+        if ($domainUuid) {
+            // Try domain first
+            $domainRow = (clone $query)->where('domain_uuid', $domainUuid)->first();
+            if ($domainRow) {
+                return $this->toArray($domainRow->config);
             }
         }
-        return $result;
+
+        // Fallback to system
+        $systemRow = $query->whereNull('domain_uuid')->first();
+        return $this->toArray($systemRow?->config);
     }
 
-    private function disabledResponse(?string $tenantUuid): array
+    private function toArray(mixed $val): array
+    {
+        if (is_array($val)) return $val;
+        if ($val instanceof ArrayObject) return $val->toArray();
+        if (is_string($val)) return json_decode($val, true) ?: [];
+        return [];
+    }
+
+    private function disabledResponse(?string $domainUuid): array
     {
         return [
-            'tenant_uuid'   => $tenantUuid,
+            'domain_uuid'   => $domainUuid,
             'enabled'       => false,
-            'provider_id'   => null,
+            'provider_uuid' => null,
             'provider_key'  => null,
             'provider_name' => null,
             'config'        => [],

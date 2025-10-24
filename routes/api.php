@@ -233,6 +233,8 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('/call-transcription/policy', [CallTranscriptionController::class, 'getPolicy'])->name('call-transcription.policy');
     Route::post('/call-transcription/policy', [CallTranscriptionController::class, 'storePolicy'])->name('call-transcription.policy.store');
     Route::delete('/call-transcription/policy', [CallTranscriptionController::class, 'destroyPolicy'])->name('call-transcription.policy.destroy');
+    Route::get('/call-transcription/assemblyai', [CallTranscriptionController::class, 'getAssemblyAiConfig'])->name('call-transcription.assemblyai');
+    Route::post('/call-transcription/assemblyai', [CallTranscriptionController::class, 'storeAssemblyAiConfig'])->name('call-transcription.assemblyai.store');
 
     // Payment Gateways
     Route::put('/gateways', [PaymentGatewayController::class, 'update'])->name('gateway.update');

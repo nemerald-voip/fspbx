@@ -203,6 +203,52 @@ class CallTranscriptionController extends Controller
         }
     }
 
+    public function getAssemblyAiConfig(Request $request)
+    {
+        $data = $request->validate([
+            'domain_uuid' => ['nullable', 'uuid'],
+        ]);
+        $domainUuid = $data['domain_uuid'] ?? null;
+
+        // Find the provider row (active AssemblyAI)
+        $provider = CallTranscriptionProvider::where('key', 'assemblyai')
+            ->where('is_active', true)
+            ->first();
+
+        if (!$provider) {
+            return response()->json([
+                'messages' => ['error' => ['AssemblyAI provider is not configured or inactive.']],
+            ], 422);
+        }
+
+        // Prefer domain row if requested & exists
+        if ($domainUuid) {
+            $domainCfg = CallTranscriptionProviderConfig::where('provider_uuid', $provider->uuid)
+                ->where('domain_uuid', $domainUuid)
+                ->first()
+                ->toArray();
+
+            if ($domainCfg) {
+                // Return flat config fields + meta
+                return response()->json(array_merge([
+                    'scope'       => 'domain',
+                    'domain_uuid' => $domainUuid,
+                ], $domainCfg['config'] ?? []));
+            }
+        }
+
+        // Fall back to system row (domain_uuid = NULL)
+        $systemCfg = CallTranscriptionProviderConfig::where('provider_uuid', $provider->uuid)
+            ->whereNull('domain_uuid')
+            ->first()
+            ->toArray();
+
+        return response()->json(array_merge([
+            'scope'       => 'system',
+            'domain_uuid' => $domainUuid,
+        ], $systemCfg['config'] ?? []));
+    }
+
 
     public function getItemOptions()
     {
