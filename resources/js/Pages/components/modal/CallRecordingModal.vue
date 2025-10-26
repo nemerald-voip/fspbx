@@ -110,7 +110,7 @@
                                         </FormTabs>
 
                                         <FormElements>
-                                            <ButtonElement name="transcribeButton" button-label="Transcribe"
+                                            <ButtonElement name="transcribeButton" button-label="Transcribe" :loading="isRequestingTranscription" @click="requestTranscription"
                                                 :secondary="true" />
                                         </FormElements>
                                     </template>
@@ -136,6 +136,8 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
+
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import AudioPlayer from "@generalComponents/AudioPlayer.vue"
@@ -148,6 +150,32 @@ const props = defineProps({
     show: Boolean,
     loading: Boolean,
 });
+
+
+const isRequestingTranscription = ref(null)
+
+const requestTranscription = async () => {
+    isRequestingTranscription.value = true
+    try {
+        const { data } = await axios.post(
+            props.options.routes.transcribe_route,
+      {
+        uuid: props.options?.item?.xml_cdr_uuid ?? null,
+        domain_uuid: props.options?.item?.domain_uuid ?? null, 
+        // options: overrides,                      // optional provider overrides
+      },
+        )
+        // policy.value = data
+        console.log(data);
+        return data
+    } catch (err) {
+        emit('error', err);
+        return []
+    } finally {
+        isRequestingTranscription.value = false
+    }
+}
+
 
 function capitalizeFirstLetter(string) {
     if (!string) return '';

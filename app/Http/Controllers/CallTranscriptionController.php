@@ -10,13 +10,11 @@ use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\QueryBuilder;
 use App\Models\CallTranscriptionPolicy;
 use App\Models\CallTranscriptionProvider;
-use App\Http\Requests\StoreHotelRoomRequest;
-use App\Http\Requests\UpdateHotelRoomRequest;
 use App\Models\CallTranscriptionProviderConfig;
 use App\Services\CallTranscriptionConfigService;
-use App\Http\Requests\BulkStoreHotelRoomsRequest;
 use App\Http\Requests\StoreAssemblyAiConfigRequest;
 use App\Http\Requests\StoreTranscriptionOptionsRequest;
+use App\Services\CallTranscription\CallTranscriptionService;
 
 class CallTranscriptionController extends Controller
 {
@@ -247,6 +245,46 @@ class CallTranscriptionController extends Controller
             'scope'       => 'system',
             'domain_uuid' => $domainUuid,
         ], $systemCfg['config'] ?? []));
+    }
+
+    /**
+     * Start a transcription for a CDR recording.
+     * Route: POST /call-detail-records/recordings/{uuid}/transcribe
+     *
+     * Query/body params (optional):
+     * - domain_uuid: uuid|null  (scope to a domain, otherwise system)
+     * - options: array           (provider-specific overrides, forwarded as-is)
+     */
+    public function transcribe(Request $request, CallTranscriptionService $transcriptionService)
+    {
+        // Validate optional inputs
+        $data = $request->validate([
+            'uuid'        => ['required', 'uuid'],
+            'domain_uuid' => ['nullable', 'uuid'],
+            'options'     => ['nullable', 'array'],
+        ]);
+
+        $uuid       = $data['uuid'];
+        $domainUuid = $data['domain_uuid'] ?? null;
+        $overrides  = $data['options'] ?? [];
+
+        try {
+            // Kick off transcription
+            $result = $transcriptionService->transcribeCdr($uuid, $domainUuid, $overrides);
+
+            // Example $result: ['id' => 'transcript_xxx', 'status' => 'queued', ...]
+            return response()->json([
+                'messages' => ['success' => ['Transcription request created.']],
+                'data'     => $result,
+            ], 201);
+        } catch (\Exception $e) {
+            // Business-rule errors (disabled policy, missing provider config, missing recording URL, etc.)
+            logger("CallTranscriptionController@transcribe error: {$e->getMessage()}");
+
+            return response()->json([
+                'messages' => ['error' => ['Something went wrong while starting transcription.']],
+            ], 500);
+        }
     }
 
 

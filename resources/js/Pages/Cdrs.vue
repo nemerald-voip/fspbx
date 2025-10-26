@@ -248,8 +248,8 @@
         :customClass="'sm:max-w-4xl'" @close="handleModalClose">
     </CallDetailsModal>
 
-    <CallRecordingModal :show="showCallRecordingModal" :options="recordingOptions" :loading="loadingModal" @close="showCallRecordingModal = false">
-    </CallRecordingModal>
+    <CallRecordingModal :show="showCallRecordingModal" :options="recordingOptions" :loading="loadingModal" @close="showCallRecordingModal = false"
+        @error="handleErrorResponse" @success="showNotification" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />

@@ -6,7 +6,6 @@ use App\Models\CallTranscriptionPolicy;
 use App\Models\CallTranscriptionProvider;
 use App\Models\CallTranscriptionProviderConfig;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Arr;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\ArrayObject;
 
@@ -16,52 +15,78 @@ class CallTranscriptionConfigService
     private const CACHE_TTL_HOURS = 24;
 
     /**
-     * Resolve effective transcription config for a domain.
-     * - Policy: domain row overrides system row.
-     * - Config: if a domain config exists, use it as-is; else use system config.
+     * Build the effective transcription config for a domain (or system if null).
+     *
+     * Returns:
+     * [
+     *   'enabled'         => bool,
+     *   'provider_uuid'   => string|null,
+     *   'provider_key'    => string|null,   // e.g. 'assemblyai'
+     *   'provider_active' => bool|null,
+     *   'provider_config' => array|null,    // exact domain config if present, else system config; no merge
+     * ]
      */
-    public function forDomain(?string $domainUuid): array
+    public function effective(?string $domainUuid): array
     {
-        return Cache::remember(
-            $this->cacheKey($domainUuid),
-            now()->addHours(self::CACHE_TTL_HOURS),
-            function () use ($domainUuid) {
-                // 1) Load policies (system + domain)
-                $systemPolicy = $this->getSystemPolicy();
-                $domainPolicy = $this->getDomainPolicy($domainUuid);
-
-                // 2) Resolve flags & provider
-                $enabled      = $this->resolveEnabled($systemPolicy, $domainPolicy);
-                $providerUuid = $this->resolveProviderUuid($systemPolicy, $domainPolicy);
-
-                if (!$enabled || !$providerUuid) {
-                    return $this->disabledResponse($domainUuid);
+        // 1) Load both possible policy rows (system + domain), pick domain if present
+        /** @var Collection<int,CallTranscriptionPolicy> $policies */
+        $policies = CallTranscriptionPolicy::query()
+            ->where(function ($q) use ($domainUuid) {
+                $q->whereNull('domain_uuid');
+                if ($domainUuid) {
+                    $q->orWhere('domain_uuid', $domainUuid);
                 }
+            })
+            ->get()
+            ->keyBy(fn($r) => $r->domain_uuid === null ? 'system' : 'domain');
 
-                // 3) Ensure provider is active
-                $provider = CallTranscriptionProvider::query()
-                    ->whereKey($providerUuid)
-                    ->where('is_active', true)
-                    ->first();
+        $system = $policies->get('system'); // may be null
+        $domain = $policies->get('domain'); // may be null
 
-                if (!$provider) {
-                    return $this->disabledResponse($domainUuid);
-                }
+        // Effective: domain overrides if set; else system
+        $enabled       = $domain?->enabled ?? ($system?->enabled ?? false);
+        $providerUuid  = $domain?->provider_uuid ?? ($system?->provider_uuid ?? null);
 
-                // 4) Pick config: domain first, else system (NO MERGE)
-                $config = $this->pickProviderConfig($providerUuid, $domainUuid);
 
-                return [
-                    'domain_uuid'   => $domainUuid,
-                    'enabled'       => true,
-                    'provider_uuid' => $provider->getKey(),
-                    'provider_key'  => $provider->key,
-                    'provider_name' => $provider->name,
-                    'config'        => $config,        // domain as-is OR system as-is
-                    'resolved_at'   => Carbon::now(),
-                ];
+        // 2) Provider row (may be null if not set yet)
+        $provider = null;
+        $providerKey = null;
+        $providerActive = null;
+
+        if ($providerUuid) {
+            $provider = CallTranscriptionProvider::query()->find($providerUuid);
+            $providerKey = $provider?->key;
+            $providerActive = $provider?->is_active;
+        }
+
+        // 3) Provider config: use DOMAIN config if exists, otherwise SYSTEM config. 
+        $providerConfig = null;
+
+        if ($providerUuid) {
+            // Domain-specific config takes precedence if present
+            $providerConfig = CallTranscriptionProviderConfig::query()
+                ->where('provider_uuid', $providerUuid)
+                ->where('domain_uuid', $domainUuid) 
+                ->first();
+
+            if (!$providerConfig) {
+                // Fall back to system-level config (domain_uuid IS NULL)
+                $providerConfig = CallTranscriptionProviderConfig::query()
+                    ->where('provider_uuid', $providerUuid)
+                    ->whereNull('domain_uuid')
+                    ->first()
+                    ->toArray();
+
             }
-        );
+        }
+
+        return [
+            'enabled'          => $enabled,
+            'provider_uuid'    => $providerUuid,
+            'provider_key'     => $providerKey,
+            'provider_active'  => $providerActive,
+            'provider_config'  => $providerConfig,
+        ];
     }
 
     /** Bust cache after writes */
@@ -76,7 +101,7 @@ class CallTranscriptionConfigService
 
     private function cacheKey(?string $domainUuid): string
     {
-        return 'txcfg:' . ($domainUuid ?: 'system');
+        return 'call-transcription:config:' . ($domainUuid ?: 'system');
     }
 
     private function getSystemPolicy(): ?CallTranscriptionPolicy

@@ -241,7 +241,8 @@ const muted = ref(false)
 let raf
 
 const fmt = (s) => {
-    s = Math.floor(s || 0)
+    if (!Number.isFinite(s) || s <= 0) return '00:00'
+    s = Math.floor(s)
     const m = String(Math.floor(s / 60)).padStart(2, '0')
     const r = String(s % 60).padStart(2, '0')
     return `${m}:${r}`
@@ -250,8 +251,9 @@ const fmt = (s) => {
 const update = () => {
     const a = audio.value
     if (!a) return
-    current.value = a.currentTime || 0
-    duration.value = a.duration || 0
+    current.value = Number.isFinite(a.currentTime) ? a.currentTime : 0
+    const d = a.duration
+    duration.value = Number.isFinite(d) && d > 0 ? d : 0
     progress.value = duration.value ? (current.value / duration.value) * 100 : 0
     raf = requestAnimationFrame(update)
 }
@@ -270,7 +272,12 @@ const toggle = async () => {
 const seekBy = (sec) => {
     const a = audio.value
     if (!a) return
-    a.currentTime = Math.max(0, Math.min((a.currentTime || 0) + sec, a.duration || Infinity))
+    if (Number.isFinite(a.duration) && a.duration > 0) {
+        a.currentTime = Math.max(0, Math.min((a.currentTime || 0) + sec, a.duration))
+    } else {
+        // Unknown/streaming duration: just step without upper clamp
+        a.currentTime = Math.max(0, (a.currentTime || 0) + sec)
+    }
 }
 
 const seekTo = (e) => {
@@ -323,13 +330,13 @@ const toggleMute = () => {
 const isDownloading = ref(false)
 
 const handleDownload = () => {
-  const href = props.downloadUrl;  
-  if (!href) return;
-  const a = document.createElement('a');
-  a.href = href;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+    const href = props.downloadUrl;
+    if (!href) return;
+    const a = document.createElement('a');
+    a.href = href;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
 };
 
 watch(volume, applyVolume)
@@ -344,7 +351,10 @@ onMounted(() => {
     a.addEventListener('play', () => (playing.value = true))
     a.addEventListener('pause', () => (playing.value = false))
     a.addEventListener('ended', () => (playing.value = false))
-    a.addEventListener('loadedmetadata', () => (duration.value = a.duration || 0))
+    a.addEventListener('loadedmetadata', () => {
+        const d = a.duration
+        duration.value = Number.isFinite(d) && d > 0 ? d : 0
+    })
 
     raf = requestAnimationFrame(update)
 })
@@ -355,9 +365,9 @@ onBeforeUnmount(() => {
 })
 
 watch(() => props.url, () => {
-    // reset state on new URL
     playing.value = false
     current.value = 0
     progress.value = 0
+    duration.value = 0
 })
 </script>

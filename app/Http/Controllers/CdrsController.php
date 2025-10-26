@@ -342,12 +342,17 @@ class CdrsController extends Controller
             // Add a temporary URL for the audio file (S3 or Local)
             $urls = $urlService->urlsForCdr($item->xml_cdr_uuid, 600); // 10 minutes
 
+            $routes = [
+                'transcribe_route' => route('cdrs.recording.transcribe'),
+            ];
+
             // Construct the itemOptions object
             return response()->json([
                 'item'        => $item,          
                 'audio_url'   => $urls['audio_url'],
                 'download_url'=> $urls['download_url'],
                 'filename'    => $urls['filename'],
+                'routes' => $routes,
             ]);
 
             return $itemOptions;
