@@ -55,22 +55,37 @@
                 </div>
 
                 <div class="col-span-3 sm:col-span-2 text-sm font-medium leading-6 text-gray-900">
-                    <LabelInputOptional label="Voice" class="truncate mb-1" />
+                    <!-- <LabelInputOptional label="Voice" class="truncate mb-1" />
                     <ComboBox :options="voices" :search="true" :placeholder="'Choose voice'"
                         :selectedItem="default_voice ?? voices[0]?.value" @update:model-value="handleUpdateVoice"
                         :error="!!errors?.voice" />
                     <div v-if="errors?.voice" class="mt-2 text-xs text-red-600">
                         {{ errors.voice[0] }}
-                    </div>
+                    </div> -->
+
+                    <Vueform>
+                        <SelectElement name="voice" label-prop="name" :items="voices" :default="default_voice ?? voices[0]?.value" 
+                        @change="handleUpdateVoice"
+                        :search="true" :native="false" label="Voice" input-type="search" autocomplete="off" placeholder="Choose Voice"
+                            :floating="false" />
+                    </Vueform>
+
                 </div>
 
                 <div class="col-span-3 sm:col-span-2 text-sm font-medium leading-6 text-gray-900">
-                    <LabelInputOptional label="Speed" class="truncate mb-1" />
+                    <!-- <LabelInputOptional label="Speed" class="truncate mb-1" />
                     <ComboBox :options="speeds" :search="true" :placeholder="'Choose Speed'" :selectedItem="'1.00'"
                         @update:model-value="handleUpdateSpeed" :error="!!errors?.speed" />
                     <div v-if="errors?.speed" class="mt-2 text-xs text-red-600">
                         {{ errors.speed[0] }}
-                    </div>
+                    </div> -->
+
+                    <Vueform>
+                        <SelectElement name="speed" label-prop="name" :items="speeds" :default="'1.00'" 
+                        @change="handleUpdateSpeed"
+                        :search="true" :native="false" label="Speed" input-type="search" autocomplete="off" placeholder="Choose Speed"
+                            :floating="false" />
+                    </Vueform>
                 </div>
 
                 <div class="content-end col-span-2 text-sm font-medium leading-6 text-gray-900">
@@ -222,12 +237,12 @@ const greetingForm = reactive({
     _token: page.props.csrf_token,
 });
 
-const handleUpdateVoice = (voice) => {
-    greetingForm.voice = voice.value;
+const handleUpdateVoice = (newValue, oldValue, el$) => {
+    greetingForm.voice = newValue
 };
 
-const handleUpdateSpeed = (speed) => {
-    greetingForm.speed = speed.value;
+const handleUpdateSpeed = (newValue, oldValue, el$) => {
+    greetingForm.speed = newValue
 };
 
 const browseFile = () => {

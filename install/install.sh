@@ -14,26 +14,6 @@ print_error() {
 OS_CODENAME=$(lsb_release -sc 2>/dev/null || echo "")
 echo "Detected OS_CODENAME=$OS_CODENAME"
 
-if [[ "$OS_CODENAME" == "trixie" ]]; then
-# Signalwire Token Handling
-SW_TOKEN_FILE="$HOME/.signalwire_token"
-fi
-
-if [[ "$OS_CODENAME" == "trixie" ]]; then
-# Signalwire Token Handling
-SW_TOKEN_FILE="$HOME/.signalwire_token"
-# Load from file if exists
-if [[ -f "$SW_TOKEN_FILE" ]]; then
-    SW_TOKEN=$(<"$SW_TOKEN_FILE")
-    echo "Using saved Signalwire token from $SW_TOKEN_FILE."
-fi
-
-if [[ -z "$SW_TOKEN" ]]; then
-    echo "Error: Signalwire TOKEN not set and no saved token found."
-    exit 1
-fi
-fi
-
 print_success  "Welcome to FS PBX installation script"
 
 # Set the environment variable to suppress prompts
