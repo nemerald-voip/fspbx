@@ -64,7 +64,7 @@ return [
         'url' => env('WATSON_SPEECH_URL'),
     ],
 
-    'assameblyai' => [
+    'assemblyai' => [
         'api_key' => env('ASSEMBLYAI_API_KEY', ''),
         'region' => env('ASSEMBLYAI_REGION', 'US'), 
         'base_url' => env('ASSEMBLYAI_BASE_URL', 'api.assemblyai.com'),

@@ -14,7 +14,6 @@ class CallTranscriptionPolicyObserver
 
     public function deleted(CallTranscriptionPolicy $model): void
     {
-        logger('deleting');
         app(CallTranscriptionConfigService::class)->invalidate($model->domain_uuid);
     }
 }

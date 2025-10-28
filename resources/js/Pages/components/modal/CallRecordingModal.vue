@@ -169,6 +169,7 @@ const requestTranscription = async () => {
         console.log(data);
         return data
     } catch (err) {
+        console.log(err);
         emit('error', err);
         return []
     } finally {

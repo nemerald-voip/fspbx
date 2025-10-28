@@ -2,6 +2,7 @@
 namespace App\Services\CallTranscription;
 
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Http;
 use GuzzleHttp\Exception\RequestException;
 use App\Services\Interfaces\TranscriptionProviderInterface;
 
@@ -12,105 +13,89 @@ class AssemblyAiService implements TranscriptionProviderInterface
         private array $options  // provider config JSON already mapped to AAI options (raw)
     ) {}
 
-    // ---- public API ----
-    public function transcribe(string $audioUrl, array $options = []): array
-    {
-        $payload = $this->pruneNulls($this->merge($this->options, $options));
-        $res = $this->request('POST', 'v2/transcripts', ['json' => ['audio_url' => $audioUrl] + $payload]);
-        return json_decode((string) $res->getBody(), true) ?: [];
-    }
+  // ---- public API ----
+  public function transcribe(string $audioUrl, array $options = []): array
+  {
+      $payload = $this->pruneNulls($this->merge($this->options, $options));
+      logger($payload);
+      $res = $this->http()->post('v2/transcript', ['audio_url' => $audioUrl] + $payload)->throw();
 
-    public function fetchTranscript(string $transcriptId): array
-    {
-        $res = $this->request('GET', "v2/transcripts/{$transcriptId}");
-        return json_decode((string) $res->getBody(), true) ?: [];
-    }
+      return $res->json() ?? [];
+  }
 
-    public function fetchParagraphs(string $transcriptId, array $query = []): array
-    {
-        $res = $this->request('GET', "v2/transcripts/{$transcriptId}/paragraphs", ['query' => $query]);
-        return json_decode((string) $res->getBody(), true) ?: [];
-    }
+  public function fetchTranscript(string $transcriptId): array
+  {
+      $res = $this->http()->get("v2/transcript/{$transcriptId}")->throw();
+      return $res->json() ?? [];
+  }
 
-    public function fetchSentences(string $transcriptId, array $query = []): array
-    {
-        $res = $this->request('GET', "v2/transcripts/{$transcriptId}/sentences", ['query' => $query]);
-        return json_decode((string) $res->getBody(), true) ?: [];
-    }
+  // ---- internals ----
+  private function http(): \Illuminate\Http\Client\PendingRequest
+  {
+      $baseUrl = rtrim($this->resolveBaseUrl(), '/') . '/';
+      $timeout = (int) ($this->conn['timeout'] ?? 30);
+      $apiKey  = (string) ($this->conn['api_key'] ?? '');
 
-    public function fetchSubtitles(string $transcriptId, string $format = 'srt'): string
-    {
-        $res = $this->request('GET', "v2/transcripts/{$transcriptId}/subtitles", [
-            'query' => ['format' => $format],
-            'headers' => ['Accept' => 'text/plain, application/octet-stream, */*'],
-        ]);
-        return (string) $res->getBody();
-    }
+      // Retry on 429 + 5xx + connection errors, small backoff
+      return Http::baseUrl($baseUrl)
+          ->timeout($timeout)
+          ->withHeaders([
+              // AssemblyAI expects raw API key in Authorization (not Bearer)
+              'Authorization' => $apiKey,
+              'Content-Type'  => 'application/json',
+              'Accept'        => 'application/json',
+          ])
+          ->retry(
+              3,
+              250, // ms
+              function ($exception, $request) {
+                  if ($exception instanceof ConnectionException) {
+                      return true;
+                  }
+                  // Some Laravel versions pass an exception with a response() method
+                  $response = method_exists($exception, 'response') ? $exception->response() : null;
+                  $status   = $response?->status();
 
-    // ---- internals ----
-    private function http(): Client
-    {
-        return new Client([
-            'base_uri' => rtrim($this->resolveBaseUrl(), '/') . '/',
-            'timeout'  => (int) ($this->conn['timeout'] ?? 30),
-            'headers'  => [
-                'Authorization' => (string) ($this->conn['api_key'] ?? ''),
-                'Content-Type'  => 'application/json',
-                'Accept'        => 'application/json',
-            ],
-        ]);
-    }
+                  return in_array($status, [429, 500, 502, 503, 504], true);
+              },
+              throw: true
+          );
+  }
 
-    private function request(string $method, string $uri, array $options = [], int $retries = 2)
-    {
-        $http = $this->http();
-        $attempt = 0;
-        start:
-        try {
-            return $http->request($method, $uri, $options);
-        } catch (RequestException $e) {
-            $code = $e->getResponse()?->getStatusCode();
-            if ($attempt < $retries && in_array($code, [429,500,502,503,504], true)) {
-                $attempt++;
-                usleep((int) (200000 * $attempt + random_int(0, 100000))); // backoff + jitter
-                goto start;
-            }
-            throw $e;
-        }
-    }
+  private function resolveBaseUrl(): string
+  {
+      $base = trim((string) ($this->conn['base_url'] ?? ''));
+      if ($base !== '') return $base;
 
-    private function resolveBaseUrl(): string
-    {
-        $base = trim((string) ($this->conn['base_url'] ?? ''));
-        if ($base !== '') return $base;
+      $region = strtoupper((string) ($this->conn['region'] ?? 'US'));
+      return $region === 'EU'
+          ? 'https://api.eu.assemblyai.com'
+          : 'https://api.assemblyai.com';
+  }
 
-        $region = strtoupper((string) ($this->conn['region'] ?? 'US'));
-        return $region === 'EU'
-            ? 'https://api.eu.assemblyai.com'
-            : 'https://api.assemblyai.com';
-    }
+  private function merge(array $a, array $b): array
+  {
+      foreach ($b as $k => $v) {
+          if (is_array($v) && isset($a[$k]) && is_array($a[$k])) {
+              $a[$k] = $this->merge($a[$k], $v);
+          } else {
+              $a[$k] = $v;
+          }
+      }
+      return $a;
+  }
 
-    private function merge(array $a, array $b): array
-    {
-        foreach ($b as $k => $v) {
-            if (is_array($v) && isset($a[$k]) && is_array($a[$k])) {
-                $a[$k] = $this->merge($a[$k], $v);
-            } else {
-                $a[$k] = $v;
-            }
-        }
-        return $a;
-    }
-
-    private function pruneNulls(array $a): array
-    {
-        foreach ($a as $k => $v) {
-            if (is_array($v)) {
-                $a[$k] = $this->pruneNulls($v);
-            } elseif ($v === null) {
-                unset($a[$k]);
-            }
-        }
-        return $a;
-    }
+  private function pruneNulls(array $a): array
+  {
+      foreach ($a as $k => $v) {
+          if (is_array($v)) {
+              $a[$k] = $this->pruneNulls($v);
+              // keep empty arrays (AAI tolerates them), but drop empty sub-arrays if you prefer:
+              // if ($a[$k] === []) unset($a[$k]);
+          } elseif ($v === null) {
+              unset($a[$k]);
+          }
+      }
+      return $a;
+  }
 }

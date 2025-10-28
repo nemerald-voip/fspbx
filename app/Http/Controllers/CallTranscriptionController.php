@@ -272,17 +272,18 @@ class CallTranscriptionController extends Controller
             // Kick off transcription
             $result = $transcriptionService->transcribeCdr($uuid, $domainUuid, $overrides);
 
+            logger($result);
+
             // Example $result: ['id' => 'transcript_xxx', 'status' => 'queued', ...]
             return response()->json([
                 'messages' => ['success' => ['Transcription request created.']],
                 'data'     => $result,
             ], 201);
         } catch (\Exception $e) {
-            // Business-rule errors (disabled policy, missing provider config, missing recording URL, etc.)
-            logger("CallTranscriptionController@transcribe error: {$e->getMessage()}");
+            logger("CallTranscriptionController@transcribe error: ".  $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => ['Something went wrong while starting transcription.']],
+                'errors' => ['error' => [$e->getMessage()]],
             ], 500);
         }
     }

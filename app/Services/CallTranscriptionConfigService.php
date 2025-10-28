@@ -2,17 +2,19 @@
 
 namespace App\Services;
 
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Redis;
 use App\Models\CallTranscriptionPolicy;
 use App\Models\CallTranscriptionProvider;
 use App\Models\CallTranscriptionProviderConfig;
-use Illuminate\Support\Facades\Cache;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\ArrayObject;
 
 class CallTranscriptionConfigService
 {
     /** Cache for 24 hours */
     private const CACHE_TTL_HOURS = 24;
+    private const CACHE_PREFIX = 'call-transcription:config:';
 
     /**
      * Build the effective transcription config for a domain (or system if null).
@@ -66,7 +68,7 @@ class CallTranscriptionConfigService
             // Domain-specific config takes precedence if present
             $providerConfig = CallTranscriptionProviderConfig::query()
                 ->where('provider_uuid', $providerUuid)
-                ->where('domain_uuid', $domainUuid) 
+                ->where('domain_uuid', $domainUuid)
                 ->first();
 
             if (!$providerConfig) {
@@ -76,7 +78,6 @@ class CallTranscriptionConfigService
                     ->whereNull('domain_uuid')
                     ->first()
                     ->toArray();
-
             }
         }
 
@@ -92,7 +93,13 @@ class CallTranscriptionConfigService
     /** Bust cache after writes */
     public function invalidate(?string $domainUuid = null): void
     {
-        Cache::forget($this->cacheKey($domainUuid));
+        if ($domainUuid) {
+            Cache::tags('ct-config')->forget($this->cacheKey($domainUuid));
+            return;
+        }
+    
+        // no domain => wipe *all* tagged entries (system + every domain)
+        Cache::tags('ct-config')->flush();
     }
 
     // =========================
@@ -101,8 +108,9 @@ class CallTranscriptionConfigService
 
     private function cacheKey(?string $domainUuid): string
     {
-        return 'call-transcription:config:' . ($domainUuid ?: 'system');
+        return self::CACHE_PREFIX . ($domainUuid ?: 'system');
     }
+
 
     private function getSystemPolicy(): ?CallTranscriptionPolicy
     {
