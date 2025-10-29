@@ -380,7 +380,7 @@ const getCallRecordingOptions = (uuid) => {
     })
         .then((response) => {
             recordingOptions.value = response.data;
-            // console.log(recordingOptions.value);
+            console.log(recordingOptions.value);
 
         }).catch((error) => {
 

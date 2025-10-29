@@ -101,11 +101,10 @@ class TranscribeCdrJob implements ShouldQueue
             $result = $service->transcribeCdr($this->xmlCdrUuid, $this->domainUuid, $this->overrides);
 
             logger("submitted");
-    
-            // Expected: ['id' => '...', 'status' => 'queued'|'processing'|...]
-            $row->update([
-                'external_id'      => $result['id'] ?? null,
-                'status'           => $result['status'] ?? null,
+
+            CallTranscription::where('xml_cdr_uuid', $this->xmlCdrUuid)->update([
+                'external_id'      => data_get($result, 'id'),
+                'status'           => data_get($result, 'status'),
                 'request_payload'  => $service->payload ?? null,
                 'response_payload' => $result ?: null,
             ]);

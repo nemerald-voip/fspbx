@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Traits\TraitUuid;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class CallTranscription extends Model
 {
+    use HasFactory, TraitUuid;
+    
     protected $table = 'call_transcriptions';
     protected $primaryKey = 'uuid';
     public $incrementing = false;

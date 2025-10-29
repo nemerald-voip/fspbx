@@ -105,13 +105,75 @@
                                         <FormTabs>
                                             <FormTab name="page0" label="Transcript" :elements="[
                                                 'transcribeButton',
+                                                'transcript'
                                             ]" />
                                             <FormTab name="page1" label="Recap" :elements="[]" />
                                         </FormTabs>
 
                                         <FormElements>
-                                            <ButtonElement name="transcribeButton" button-label="Transcribe" :loading="isRequestingTranscription" @click="requestTranscription"
+                                            <ButtonElement name="transcribeButton" button-label="Transcribe"
+                                                :loading="isRequestingTranscription" @click="requestTranscription"
                                                 :secondary="true" />
+
+                                            <StaticElement name=transcript>
+                                                <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 ring-1"
+                                                    :class="{
+                                                        'bg-yellow-50 text-yellow-800 ring-yellow-200': status === 'pending' || status === 'queued',
+                                                        'bg-sky-50 text-sky-800 ring-sky-200': status === 'processing',
+                                                        'bg-emerald-50 text-emerald-800 ring-emerald-200': status === 'completed',
+                                                        'bg-rose-50 text-rose-800 ring-rose-200': status === 'failed'
+                                                    }">
+                                                    <span class="h-2 w-2 rounded-full" :class="{
+                                                        'bg-yellow-500': status === 'pending' || status === 'queued',
+                                                        'bg-sky-500': status === 'processing',
+                                                        'bg-emerald-500': status === 'completed',
+                                                        'bg-rose-500': status === 'failed'
+                                                    }"></span>
+                                                    <span class="font-medium capitalize">{{ status }}</span>
+                                                </div>
+
+
+                                                <!-- TRANSCRIPT -->
+                                                <div v-if="hasTranscript" class="mt-4">
+                                                    <h2 class="text-sm font-semibold text-gray-500 mb-2">Conversation
+                                                    </h2>
+
+                                                    <div class="space-y-6">
+                                                        <div v-for="(g, i) in grouped" :key="i"
+                                                            class="flex items-start gap-4">
+
+                                                            <!-- Avatar / Icon -->
+                                                            <div class="shrink-0 h-8 w-8 grid place-items-center rounded-full"
+                                                                :class="getSpeakerAvatarClasses(g.speaker)">
+
+                                                                <!-- The initial is the speaker label itself, e.g., 'A' -->
+                                                                <span class="text-sm font-semibold">
+                                                                    {{ g.speaker }}
+                                                                </span>
+                                                            </div>
+
+                                                            <!-- Speaker and Text Content -->
+                                                            <div class="flex-1">
+                                                                <div class="flex items-baseline gap-2">
+                                                                    <!-- The label is "Speaker " + the speaker label, e.g., "Speaker A" -->
+                                                                    <p class="font-bold text-gray-900">
+                                                                        Speaker {{ g.speaker }}
+                                                                    </p>
+                                                                    <!-- Timestamp -->
+                                                                    <span class="text-xs text-gray-400">
+                                                                        {{ msToClock(g.start) }}
+                                                                    </span>
+                                                                </div>
+                                                                <!-- The transcribed text -->
+                                                                <p class="mt-1 text-gray-700 leading-relaxed">
+                                                                    {{g.chunks.map(c => c.text).join(' ')}}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </StaticElement>
+
                                         </FormElements>
                                     </template>
                                 </Vueform>
@@ -136,7 +198,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
@@ -151,6 +213,12 @@ const props = defineProps({
     loading: Boolean,
 });
 
+const status = computed(() =>
+    props.options?.transcription?.status ?? null
+)
+const utterances = computed(() => props.options?.transcription?.utterances ?? [])
+const hasTranscript = computed(() => status.value === 'completed' && utterances.value.length > 0)
+
 
 const isRequestingTranscription = ref(null)
 
@@ -159,14 +227,15 @@ const requestTranscription = async () => {
     try {
         const { data } = await axios.post(
             props.options.routes.transcribe_route,
-      {
-        uuid: props.options?.item?.xml_cdr_uuid ?? null,
-        domain_uuid: props.options?.item?.domain_uuid ?? null, 
-        // options: overrides,                      // optional provider overrides
-      },
+            {
+                uuid: props.options?.item?.xml_cdr_uuid ?? null,
+                domain_uuid: props.options?.item?.domain_uuid ?? null,
+                // options: overrides,                      // optional provider overrides
+            },
         )
         // policy.value = data
         console.log(data);
+        emit('success', 'success', data.messages)
         return data
     } catch (err) {
         console.log(err);
@@ -182,6 +251,41 @@ function capitalizeFirstLetter(string) {
     if (!string) return '';
     return string.charAt(0).toUpperCase() + string.slice(1);
 }
+
+function msToClock(ms) {
+    const s = Math.max(0, Math.round(ms / 1000))
+    const m = Math.floor(s / 60), r = s % 60
+    return `${m}:${String(r).padStart(2, '0')}`
+}
+
+
+const getSpeakerAvatarClasses = (speakerLabel) => {
+    const colorMap = {
+        A: 'bg-indigo-100 text-indigo-800',
+        B: 'bg-emerald-100 text-emerald-800',
+        C: 'bg-amber-100 text-amber-800',
+        D: 'bg-fuchsia-100 text-fuchsia-800',
+        // Add more speakers as needed
+    };
+    // Return the specific color or a default slate color if the speaker is not in the map
+    return colorMap[speakerLabel] || 'bg-slate-100 text-slate-800';
+};
+
+// Group consecutive lines by speaker (cleaner bubbles)
+const grouped = computed(() => {
+    const out = []
+    let cur = null
+    for (const u of utterances.value) {
+        if (!cur || cur.speaker !== u.speaker) {
+            cur = { speaker: u.speaker, start: u.start, end: u.end, chunks: [u] }
+            out.push(cur)
+        } else {
+            cur.chunks.push(u)
+            cur.end = u.end
+        }
+    }
+    return out
+})
 
 </script>
 <style>

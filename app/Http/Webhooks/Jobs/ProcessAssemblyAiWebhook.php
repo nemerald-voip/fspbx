@@ -3,7 +3,6 @@ namespace App\Http\Webhooks\Jobs;
 
 use App\Models\CallTranscription;
 use App\Services\CallTranscription\CallTranscriptionService;
-use Illuminate\Support\Arr;
 use Spatie\WebhookClient\Models\WebhookCall;
 use Spatie\WebhookClient\Jobs\ProcessWebhookJob as SpatieProcessWebhookJob;
 
@@ -17,11 +16,14 @@ class ProcessAssemblyAiWebhook extends SpatieProcessWebhookJob
 
     public function handle(CallTranscriptionService $service): void
     {
+        logger('ProcessAssemblyAiWebhook');
 
         $payload = $this->webhookCall->payload;
 
         $transcriptId = data_get($payload, 'transcript_id');
         $status       = data_get($payload, 'status'); // completed|error
+
+        logger($status);
 
         if (!$transcriptId) {
             // nothing to do
@@ -30,7 +32,6 @@ class ProcessAssemblyAiWebhook extends SpatieProcessWebhookJob
 
         $row = CallTranscription::query()->where('external_id', $transcriptId)->first();
         if (!$row) {
-            // If you want, create a placeholder row—but usually it should exist from the time you queued it
             return;
         }
 
@@ -38,8 +39,6 @@ class ProcessAssemblyAiWebhook extends SpatieProcessWebhookJob
             // fetch final transcript JSON from provider
             $provider = $service->providerForScope($row->domain_uuid);
             $full     = $provider->fetchTranscript($transcriptId);
-
-            logger('completed');
 
             $row->update([
                 'status'          => 'completed',

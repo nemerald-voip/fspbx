@@ -330,6 +330,9 @@ class CdrsController extends Controller
                 ->with([
                     'extension:extension_uuid,extension,effective_caller_id_name',
                 ])
+                ->with([
+                    'callTranscription:uuid,xml_cdr_uuid,status,error_message,result_payload'
+                ])
                 ->first();
 
             // logger($item);
@@ -346,11 +349,44 @@ class CdrsController extends Controller
                 'transcribe_route' => route('cdrs.recording.transcribe'),
             ];
 
+            // Build a lean transcription payload
+            $transcription = null;
+            if ($item->callTranscription) {
+                $rp = $item->callTranscription->result_payload ?? [];
+
+                $removeWords = function ($node) use (&$removeWords) {
+                    if (is_array($node)) {
+                        // drop this level's 'words'
+                        if (array_key_exists('words', $node)) {
+                            unset($node['words']);
+                        }
+                        // recurse
+                        foreach ($node as $k => $v) {
+                            $node[$k] = $removeWords($v);
+                        }
+                    }
+                    return $node;
+                };
+                $lean = $removeWords($rp);
+
+                $transcription = [
+                    'uuid'         => $item->callTranscription->uuid,
+                    'status'       => $item->callTranscription->status,
+                    'error_message' => $item->callTranscription->error_message,
+                    'text'         => data_get($lean, 'text'),
+                    'utterances'   => data_get($lean, 'utterances', []), 
+                ];
+
+                // keep big blob out of the response entirely
+                unset($item->callTranscription->result_payload);
+            }
+
             // Construct the itemOptions object
             return response()->json([
-                'item'        => $item,          
+                'item'        => $item,
                 'audio_url'   => $urls['audio_url'],
-                'download_url'=> $urls['download_url'],
+                'download_url' => $urls['download_url'],
+                'transcription' => $transcription,
                 'filename'    => $urls['filename'],
                 'routes' => $routes,
             ]);
