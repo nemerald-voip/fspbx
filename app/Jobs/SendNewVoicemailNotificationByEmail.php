@@ -38,7 +38,7 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
      *
      * @var int
      */
-    public $maxExceptions = 1;
+    public $maxExceptions = 3;
 
     /**
      * The number of seconds the job can run before timing out.

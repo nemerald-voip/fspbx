@@ -427,6 +427,15 @@ return [
             'process_webhook_job' => \App\Http\Webhooks\Jobs\ProcessStripeWebhookJob::class,
         ],
 
+        [
+            'name' => 'assemblyai',
+            'signature_header_name' => config('services.assemblyai.webhook_header_name'),
+            'signature_validator'   => \App\Http\Webhooks\SignatureValidators\AssemblyAiSignatureValidator::class,
+            'webhook_profile'       => \Spatie\WebhookClient\WebhookProfile\ProcessEverythingWebhookProfile::class,
+            'webhook_model'         => \App\Models\WhCall::class,
+            'process_webhook_job'   => App\Http\Webhooks\Jobs\ProcessAssemblyAiWebhook::class,
+        ],
+
 
     ],
 

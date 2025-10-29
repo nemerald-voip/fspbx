@@ -6,6 +6,7 @@ use App\Models\HotelRoom;
 use App\Models\Extensions;
 use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
+use App\Jobs\TranscribeCdrJob;
 use Illuminate\Support\Facades\DB;
 use Spatie\QueryBuilder\QueryBuilder;
 use App\Models\CallTranscriptionPolicy;
@@ -255,38 +256,33 @@ class CallTranscriptionController extends Controller
      * - domain_uuid: uuid|null  (scope to a domain, otherwise system)
      * - options: array           (provider-specific overrides, forwarded as-is)
      */
-    public function transcribe(Request $request, CallTranscriptionService $transcriptionService)
+    public function transcribe(Request $request)
     {
-        // Validate optional inputs
         $data = $request->validate([
             'uuid'        => ['required', 'uuid'],
             'domain_uuid' => ['nullable', 'uuid'],
             'options'     => ['nullable', 'array'],
         ]);
-
-        $uuid       = $data['uuid'];
-        $domainUuid = $data['domain_uuid'] ?? null;
-        $overrides  = $data['options'] ?? [];
-
+    
         try {
-            // Kick off transcription
-            $result = $transcriptionService->transcribeCdr($uuid, $domainUuid, $overrides);
-
-            logger($result);
-
-            // Example $result: ['id' => 'transcript_xxx', 'status' => 'queued', ...]
+            TranscribeCdrJob::dispatch(
+                $data['uuid'],
+                $data['domain_uuid'] ?? null,
+                $data['options'] ?? []
+            );
+    
             return response()->json([
-                'messages' => ['success' => ['Transcription request created.']],
-                'data'     => $result,
-            ], 201);
-        } catch (\Exception $e) {
-            logger("CallTranscriptionController@transcribe error: ".  $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
-
+                'messages' => ['success' => ['Transcription request queued.']],
+            ], 202);
+        } catch (\Throwable $e) {
+            logger("CallTranscriptionController@transcribe error: ".$e->getMessage()." at ".$e->getFile().":".$e->getLine());
+    
             return response()->json([
                 'errors' => ['error' => [$e->getMessage()]],
             ], 500);
         }
     }
+    
 
 
     public function getItemOptions()

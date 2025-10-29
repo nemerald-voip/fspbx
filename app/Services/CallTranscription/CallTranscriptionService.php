@@ -10,6 +10,8 @@ use App\Services\CallTranscription\TranscriptionProviderRegistry;
 
 class CallTranscriptionService
 {
+    public array $payload;
+
     public function __construct(
         private TranscriptionProviderRegistry $registry,
         private CallRecordingUrlService $recordingUrlService,
@@ -22,8 +24,6 @@ class CallTranscriptionService
     public function transcribeCdr(string $xmlCdrUuid, ?string $domainUuid = null, array $overrides = []): array
     {
         try {
-
-            logger('transcribeCdr');
 
             $config = $this->transcriptionConfigCached($domainUuid);
 
@@ -46,16 +46,18 @@ class CallTranscriptionService
                 throw new RuntimeException("Recording URL not available for CDR {$xmlCdrUuid}");
             }
 
-            return $provider->transcribe($audioUrl, $overrides);
+            $response =  $provider->transcribe($audioUrl, $overrides);
+            $this->payload = $provider->payload;
+
+            return $response;
         } catch (\Exception $e) {
             logger($e->getMessage());
             throw new \Exception($e->getMessage());
         }
     }
 
-
-    /** Build provider instance for read paths (policy.enabled not required) */
-    private function providerForScope(?string $domainUuid)
+    /** Build provider instance for read paths */
+    public function providerForScope(?string $domainUuid)
     {
         $config = $this->transcriptionConfigCached($domainUuid);
         $providerKey = $config['provider_key'] ?? null;
@@ -73,9 +75,15 @@ class CallTranscriptionService
 
         return Cache::tags('ct-config')
             ->remember($cacheKey, now()->addHours(24), function () use ($domainUuid) {
-            // Service should return:
-            // ['enabled'=>bool,'provider_key'=>'assemblyai','provider_uuid'=>'...','provider_config'=>array]
-            return $this->configService->effective($domainUuid);
-        });
+                // Service should return:
+                // ['enabled'=>bool,'provider_key'=>'assemblyai','provider_uuid'=>'...','provider_config'=>array]
+                return $this->configService->effective($domainUuid);
+            });
+    }
+
+    public function currentProviderKey(?string $domainUuid): ?string
+    {
+        $cfg = $this->transcriptionConfigCached($domainUuid);
+        return $cfg['provider_key'] ?? null;
     }
 }

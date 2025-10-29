@@ -33,11 +33,11 @@ use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\ProvisioningController;
 use App\Http\Controllers\BusinessHoursController;
+use App\Http\Controllers\CallRecordingController;
 use App\Http\Controllers\RegistrationsController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\AppsCredentialsController;
-use App\Http\Controllers\InboundWebhooksController;
 use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\SansayActiveCallsController;
 use App\Http\Controllers\VoicemailMessagesController;
@@ -77,6 +77,7 @@ Route::webhooks('webhook/bandwidth/sms', 'bandwidth_messaging');
 Route::webhooks('/sms/ringotelwebhook', 'ringotel_messaging');
 Route::webhooks('/webhook/freeswitch', 'freeswitch');
 Route::webhooks('/webhook/stripe', 'stripe');
+Route::webhooks('/webhook/assemblyai', 'assemblyai');
 
 // Routes for 2FA email challenge. Used as a backup when 2FA is not enabled.
 Route::get('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeController::class, 'create'])->name('email-challenge.login');
@@ -96,6 +97,10 @@ Route::match(['GET', 'HEAD'], '/prov/{path}', [ProvisioningController::class, 's
     ->where('path', '.*')
     ->middleware(['throttle:provision', 'provision.digest'])
     ->name('provision.serve');
+
+// Call Recordings
+Route::get('/call-detail-records/recordings/{uuid}/stream', [CallRecordingController::class, 'stream'])->name('cdrs.recording.stream');
+Route::get('/call-detail-records/recordings/{uuid}/download', [CallRecordingController::class, 'download'])->name('cdrs.recording.download');
 
 Route::group(['middleware' => 'auth'], function () {
 

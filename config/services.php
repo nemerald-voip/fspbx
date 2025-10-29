@@ -68,6 +68,8 @@ return [
         'api_key' => env('ASSEMBLYAI_API_KEY', ''),
         'region' => env('ASSEMBLYAI_REGION', 'US'), 
         'base_url' => env('ASSEMBLYAI_BASE_URL', 'api.assemblyai.com'),
+        'webhook_header_name'  => env('ASSEMBLYAI_WEBHOOK_HEADER', 'X-FSPBX-Webhook'),
+        'webhook_header_value' => env('ASSEMBLYAI_WEBHOOK_SECRET', ''),
     ],
 
     'keygen' => [

@@ -6,21 +6,16 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\Models\CDR;
 
-class CallRecordingStreamController extends Controller
+class CallRecordingController extends Controller
 {
     /**
      * STREAM (playback) a local recording by CDR UUID.
      * Signed route; validates access; supports HTTP Range.
      */
-    public function __invoke(Request $request, string $uuid): StreamedResponse
+    public function stream(Request $request, string $uuid)
     {
         if (!$request->hasValidSignature()) {
             abort(403, 'Invalid or expired link.');
-        }
-
-        // Permission to PLAY (not download)
-        if (!userCheckPermission('call_recording_play')) {
-            abort(403, 'You do not have permission to play recordings.');
         }
 
         $cdr = CDR::query()
