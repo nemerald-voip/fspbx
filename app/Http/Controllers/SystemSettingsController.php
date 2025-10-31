@@ -215,7 +215,7 @@ class SystemSettingsController extends Controller
     {
         $permissions = [];
         $permissions['payment_gateways_view'] = userCheckPermission('payment_gateways_view');
-        $permissions['call_transcription_view'] = userCheckPermission('call_transcription_view');
+        $permissions['call_transcription_settings_view'] = userCheckPermission('call_transcription_settings_view');
 
         return $permissions;
     }

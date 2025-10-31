@@ -46,13 +46,14 @@
                                 <div>
                                     <div class="space-y-1">
                                         <!-- Title -->
-                                        <h1 class="text-2xl font-bold text-gray-900">
-                                            {{ capitalizeFirstLetter(options.item?.direction) }} Call
+                                        <h1 class="text-2xl font-bold text-gray-600">
+                                            {{ capitalizeFirstLetter(recordingOptions.item?.direction) }} Call
                                         </h1>
 
                                         <!-- When -->
                                         <p class="text-sm text-gray-500">
-                                            On {{ options.item?.start_date }} at {{ options.item?.start_time }}
+                                            On {{ recordingOptions.item?.start_date }} at {{
+                                                recordingOptions.item?.start_time }}
                                         </p>
 
                                         <!-- Parties -->
@@ -60,20 +61,20 @@
                                             <div class="flex gap-2">
                                                 <dt class="font-medium text-gray-500 w-12">From:</dt>
                                                 <dd class="flex-1">
-                                                    <span v-if="options?.item?.direction === 'outbound'">
+                                                    <span v-if="recordingOptions?.item?.direction === 'outbound'">
                                                         <!-- extension name if present, else caller name -->
-                                                        {{ options.item?.extension?.name_formatted ||
-                                                            options.item?.caller_id_name }}
-                                                        <span v-if="options.item?.caller_id_number_formatted"
+                                                        {{ recordingOptions.item?.extension?.name_formatted ||
+                                                            recordingOptions.item?.caller_id_name }}
+                                                        <span v-if="recordingOptions.item?.caller_id_number_formatted"
                                                             class="text-gray-500">
-                                                            - {{ options.item?.caller_id_number_formatted }}
+                                                            - {{ recordingOptions.item?.caller_id_number_formatted }}
                                                         </span>
                                                     </span>
                                                     <span v-else>
-                                                        {{ options.item?.caller_id_name }}
-                                                        <span v-if="options.item?.caller_id_number_formatted"
+                                                        {{ recordingOptions.item?.caller_id_name }}
+                                                        <span v-if="recordingOptions.item?.caller_id_number_formatted"
                                                             class="text-gray-500">
-                                                            - {{ options.item?.caller_id_number_formatted }}
+                                                            - {{ recordingOptions.item?.caller_id_number_formatted }}
                                                         </span>
                                                     </span>
                                                 </dd>
@@ -82,13 +83,13 @@
                                             <div class="flex gap-2">
                                                 <dt class="font-medium text-gray-500 w-12">To:</dt>
                                                 <dd class="flex-1">
-                                                    <span v-if="options?.item?.direction === 'outbound'">
-                                                        {{ options.item?.caller_destination_formatted }}
+                                                    <span v-if="recordingOptions?.item?.direction === 'outbound'">
+                                                        {{ recordingOptions.item?.caller_destination_formatted }}
                                                     </span>
                                                     <span v-else>
                                                         <!-- inbound destination is usually the extension (callee) -->
-                                                        {{ options.item?.extension?.name_formatted ||
-                                                            options.item?.caller_destination_formatted }}
+                                                        {{ recordingOptions.item?.extension?.name_formatted ||
+                                                            recordingOptions.item?.caller_destination_formatted }}
                                                     </span>
                                                 </dd>
                                             </div>
@@ -97,86 +98,206 @@
                                 </div>
 
 
-                                <AudioPlayer v-if="!loading" :url="props.options?.audio_url"
-                                    :download-url="props.options?.download_url" :file-name="props.options?.filename" />
+                                <AudioPlayer v-if="!loading" :url="recordingOptions?.audio_url"
+                                    :download-url="recordingOptions?.download_url"
+                                    :file-name="recordingOptions?.filename" />
 
-                                <Vueform>
-                                    <template #empty>
-                                        <FormTabs>
-                                            <FormTab name="page0" label="Transcript" :elements="[
-                                                'transcribeButton',
-                                                'transcript'
-                                            ]" />
-                                            <FormTab name="page1" label="Recap" :elements="[]" />
-                                        </FormTabs>
+                                <div v-if="recordingOptions?.permissions?.transcription_view" class="mt-6 rounded-lg border bg-slate-50 p-4">
+                                    <div class="flex flex-wrap items-center justify-between gap-4">
+                                        <!-- Left Side: Title and Description -->
+                                        <div class="flex items-start gap-4">
+                                            <div
+                                                class="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-indigo-200 bg-indigo-100">
+                                                <SparklesIcon class="h-6 w-6 text-indigo-600" />
+                                            </div>
+                                            <div>
+                                                <h3 class="text-base font-semibold text-gray-800">AI Voice Transcription
+                                                </h3>
+                                                <p class="text-sm text-gray-500">Generate a searchable text version of
+                                                    this audio.</p>
+                                            </div>
+                                        </div>
 
-                                        <FormElements>
-                                            <ButtonElement name="transcribeButton" button-label="Transcribe"
-                                                :loading="isRequestingTranscription" @click="requestTranscription"
-                                                :secondary="true" />
+                                        <!-- Right Side: Action Button and Status Pills -->
+                                        <div class="flex items-center gap-4 pl-14 sm:pl-0">
+                                            <!-- Transcribe Button -->
+                                            <button v-if="showTranscribeBtn" type="button" @click="requestTranscription"
+                                                :disabled="isRequestingTranscription"
+                                                class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50">
+                                                <svg v-if="isRequestingTranscription" class="mr-2 h-5 w-5 animate-spin"
+                                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                        stroke="currentColor" stroke-width="4"></circle>
+                                                    <path class="opacity-75" fill="currentColor"
+                                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                                    </path>
+                                                </svg>
+                                                <span>{{ isRequestingTranscription ? 'Requesting...' : 'Transcribe'
+                                                }}</span>
+                                            </button>
 
-                                            <StaticElement name=transcript>
-                                                <div class="inline-flex items-center gap-2 rounded-full px-3 py-1 ring-1"
-                                                    :class="{
-                                                        'bg-yellow-50 text-yellow-800 ring-yellow-200': status === 'pending' || status === 'queued',
-                                                        'bg-sky-50 text-sky-800 ring-sky-200': status === 'processing',
-                                                        'bg-emerald-50 text-emerald-800 ring-emerald-200': status === 'completed',
-                                                        'bg-rose-50 text-rose-800 ring-rose-200': status === 'failed'
-                                                    }">
-                                                    <span class="h-2 w-2 rounded-full" :class="{
-                                                        'bg-yellow-500': status === 'pending' || status === 'queued',
-                                                        'bg-sky-500': status === 'processing',
-                                                        'bg-emerald-500': status === 'completed',
-                                                        'bg-rose-500': status === 'failed'
-                                                    }"></span>
-                                                    <span class="font-medium capitalize">{{ status }}</span>
+                                            <!-- Status pill shows after request OR if API already returns a status -->
+                                            <div v-else-if="displayStatus"
+                                                class="inline-flex items-center gap-2 rounded-full px-3 ring-1" :class="{
+                                                    'bg-yellow-50 text-yellow-600 ring-yellow-200': displayStatus === 'pending' || displayStatus === 'queued',
+                                                    'bg-sky-50 text-sky-600 ring-sky-200': displayStatus === 'processing',
+                                                    'bg-emerald-50 text-emerald-600 ring-emerald-200': displayStatus === 'completed',
+                                                    'bg-rose-50 text-rose-600 ring-rose-200': displayStatus === 'failed'
+                                                }">
+                                                <span class="h-2 w-2 rounded-full" :class="{
+                                                    'bg-yellow-500': displayStatus === 'pending' || displayStatus === 'queued',
+                                                    'bg-sky-500': displayStatus === 'processing',
+                                                    'bg-emerald-500': displayStatus === 'completed',
+                                                    'bg-rose-500': displayStatus === 'failed'
+                                                }"></span>
+                                                <span class="font-medium capitalize">{{ displayStatus }}</span>
+                                            </div>
+
+                                            <!-- Manual refresh (throttled to every 10s) -->
+
+
+                                            <!-- Regenerate (only when failed) -->
+
+                                            <button v-if="showRegenerateBtn" type="button"
+                                                @click="regenerateTranscription" :disabled="isRegenerating"
+                                                class="inline-flex items-center text-sm/6 font-medium text-indigo-600 hover:text-indigo-500">
+                                                <ArrowPathIcon
+                                                    :class="['h-4 w-4', isRegenerating ? 'animate-spin' : '']" />
+                                                <span class="ml-1">{{ isRegenerating ? 'Regenerating…' : 'Regenerate'
+                                                }}</span>
+
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div v-if="recordingOptions?.permissions?.transcription_view">
+
+                                    <!-- State 1: Initial Placeholder (Before transcription is requested) -->
+                                    <div v-if="!hasTranscript && !transcriptRequested"
+                                        class="mt-6 rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
+                                        <ClipboardDocumentListIcon class="mx-auto h-12 w-12 text-gray-400" />
+                                        <h3 class="mt-2 text-sm font-semibold text-gray-900">Transcript not yet
+                                            generated</h3>
+                                        <p class="mt-1 text-sm text-gray-500">
+                                            Click the "Transcribe" button above to generate the transcript.
+                                        </p>
+                                    </div>
+
+                                    <div v-else-if="!hasTranscript && transcriptRequested"
+                                        class="mt-6 flex flex-col items-center justify-center rounded-lg border border-gray-200 bg-gray-50 p-12 text-center">
+
+                                        <!-- Spinner -->
+                                        <svg class="h-10 w-10 animate-spin text-indigo-600"
+                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                                stroke-width="4"></circle>
+                                            <path class="opacity-75" fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                            </path>
+                                        </svg>
+                                        <p class="mt-4 text-sm font-semibold text-indigo-600">Transcription in progress. Click Refresh to check status.</p>
+
+                                        <!-- START: REFRESH BUTTON -->
+                                        <button type="button" @click="refreshStatus" :disabled="!canRefresh"
+                                            class="mt-6 inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50">
+                                            <ArrowPathIcon class="-ml-0.5 mr-1.5 h-5 w-5 text-gray-400"
+                                                :class="{ 'animate-spin': !canRefresh }" />
+                                            <span v-if="canRefresh">Refresh Status</span>
+                                            <span v-else>Refresh in {{ cooldownSeconds }}s</span>
+                                        </button>
+                                        <!-- END: REFRESH BUTTON -->
+
+                                    </div>
+
+                                    <!-- State 3: Completed Tabs (Transcript is ready) -->
+                                    <div v-else-if="hasTranscript" class="mt-6 text-sm">
+                                        <TabGroup :selectedIndex="selectedTabIndex" @change="selectedTabIndex = $event">
+
+                                            <!-- Mobile-friendly Select Menu -->
+                                            <div class="sm:hidden">
+                                                <div class="relative">
+                                                    <select v-model="selectedTabIndex" aria-label="Select a tab"
+                                                        class="block w-full appearance-none rounded-md border border-gray-300 bg-white py-2 pl-3 pr-10 text-base text-gray-900 focus:border-indigo-500 focus:outline-none focus:ring-indigo-500">
+                                                        <option v-for="(tab, index) in TABS" :key="tab.key"
+                                                            :value="index">
+                                                            {{ tab.label }}
+                                                        </option>
+                                                    </select>
+                                                    <div
+                                                        class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                                                        <ChevronDownIcon class="h-5 w-5 text-gray-400"
+                                                            aria-hidden="true" />
+                                                    </div>
                                                 </div>
+                                            </div>
 
+                                            <!-- Desktop Tab Pills -->
+                                            <div class="hidden sm:block">
+                                                <TabList as="nav" class="flex space-x-4 border-b-2 pb-1" aria-label="Tabs">
+                                                    <Tab v-for="tab in TABS" :key="tab.key" v-slot="{ selected }"
+                                                        as="template">
+                                                        <button :class="[
+                                                            'rounded-md px-3 py-2 text-sm font-medium transition-all duration-200',
+                                                            'focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
+                                                            selected
+                                                                ? 'bg-indigo-100 text-indigo-700'
+                                                                : 'text-gray-500 hover:bg-gray-100 hover:text-gray-700',
+                                                        ]">
+                                                            {{ tab.label }}
+                                                        </button>
+                                                    </Tab>
+                                                </TabList>
+                                            </div>
 
-                                                <!-- TRANSCRIPT -->
-                                                <div v-if="hasTranscript" class="mt-4">
-                                                    <h2 class="text-sm font-semibold text-gray-500 mb-2">Conversation
-                                                    </h2>
-
+                                            <!-- The Tab Panels (the content) -->
+                                            <TabPanels class="mt-4 p-4">
+                                                <!-- Transcript Panel -->
+                                                <TabPanel :key="TABS[0].key"
+                                                    class="rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                                                    <!-- Paste your existing transcript rendering logic here -->
                                                     <div class="space-y-6">
                                                         <div v-for="(g, i) in grouped" :key="i"
                                                             class="flex items-start gap-4">
-
-                                                            <!-- Avatar / Icon -->
-                                                            <div class="shrink-0 h-8 w-8 grid place-items-center rounded-full"
-                                                                :class="getSpeakerAvatarClasses(g.speaker)">
-
-                                                                <!-- The initial is the speaker label itself, e.g., 'A' -->
-                                                                <span class="text-sm font-semibold">
-                                                                    {{ g.speaker }}
-                                                                </span>
+                                                            <div class="shrink-0 rounded-md px-2 py-0.5 text-sm font-medium"
+                                                                :class="speakerClasses(g.speaker).timeChip">
+                                                                {{ msToClock(g.start) }}
                                                             </div>
-
-                                                            <!-- Speaker and Text Content -->
                                                             <div class="flex-1">
-                                                                <div class="flex items-baseline gap-2">
-                                                                    <!-- The label is "Speaker " + the speaker label, e.g., "Speaker A" -->
-                                                                    <p class="font-bold text-gray-900">
+                                                                <div class="flex items-center gap-2">
+                                                                    <p class="font-semibold"
+                                                                        :class="speakerClasses(g.speaker).name">
                                                                         Speaker {{ g.speaker }}
                                                                     </p>
-                                                                    <!-- Timestamp -->
-                                                                    <span class="text-xs text-gray-400">
-                                                                        {{ msToClock(g.start) }}
-                                                                    </span>
                                                                 </div>
-                                                                <!-- The transcribed text -->
-                                                                <p class="mt-1 text-gray-700 leading-relaxed">
+                                                                <p class="mt-1 leading-relaxed text-gray-700">
                                                                     {{g.chunks.map(c => c.text).join(' ')}}
                                                                 </p>
                                                             </div>
                                                         </div>
                                                     </div>
-                                                </div>
-                                            </StaticElement>
+                                                </TabPanel>
 
-                                        </FormElements>
-                                    </template>
-                                </Vueform>
+                                                <!-- Recap Panel -->
+                                                <TabPanel :key="TABS[1].key"
+                                                    class="rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                                                    <!-- Paste your existing "Coming Soon" placeholder here -->
+                                                    <div class="mt-2 rounded-lg bg-slate-100 p-12 text-center">
+                                                        <WrenchScrewdriverIcon
+                                                            class="mx-auto h-12 w-12 text-slate-500" />
+                                                        <h3 class="mt-2 text-base font-semibold text-slate-800">AI Recap
+                                                            Coming Soon</h3>
+                                                        <p class="mt-1 text-sm text-slate-600">
+                                                            This feature will automatically summarize the key points,
+                                                            decisions, and action items from the conversation.
+                                                        </p>
+                                                    </div>
+                                                </TabPanel>
+                                            </TabPanels>
+                                        </TabGroup>
+                                    </div>
+
+                                </div>
 
 
                             </div>
@@ -200,42 +321,80 @@
 <script setup>
 import { ref, computed, watch, onUnmounted } from 'vue'
 
-import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
-import { XMarkIcon } from "@heroicons/vue/24/solid";
+import { Dialog, DialogPanel, TransitionChild, TransitionRoot, TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue'
+import { XMarkIcon, SparklesIcon, ClipboardDocumentListIcon, WrenchScrewdriverIcon, ChevronDownIcon } from "@heroicons/vue/24/solid";
 import AudioPlayer from "@generalComponents/AudioPlayer.vue"
+import { ArrowPathIcon } from '@heroicons/vue/24/outline'
 
 
 const emit = defineEmits(['close', 'confirm', 'success', 'error', 'refresh-data'])
 
 const props = defineProps({
-    options: Object,
+    cdr_uuid: String,
+    routes: Object,
     show: Boolean,
-    loading: Boolean,
 });
 
+const loading = ref(false)
+const transcriptRequested = ref(false)
+const isRequestingTranscription = ref(null)
+const isRegenerating = ref(false)
+const recordingOptions = ref(null)
+const currentStatus = ref(null)
+const selectedTabIndex = ref(0)
 const status = computed(() =>
-    props.options?.transcription?.status ?? null
+    recordingOptions.value?.transcription?.status ?? null
 )
-const utterances = computed(() => props.options?.transcription?.utterances ?? [])
+const utterances = computed(() => recordingOptions.value?.transcription?.utterances ?? [])
 const hasTranscript = computed(() => status.value === 'completed' && utterances.value.length > 0)
 
+const showTranscribeBtn = computed(() =>
+    !hasTranscript.value && !transcriptRequested.value && !status.value
+)
 
-const isRequestingTranscription = ref(null)
+const showRegenerateBtn = computed(() =>
+    !hasTranscript.value && !transcriptRequested.value && status.value == "failed"
+)
+
+const displayStatus = computed(() =>
+    currentStatus.value ?? status.value ?? null
+)
+
+const getCallRecordingOptions = () => {
+    if (!props.cdr_uuid) return
+    axios
+        .get(props.routes.call_recording_route, { params: { item_uuid: props.cdr_uuid } })
+        .then((response) => {
+            recordingOptions.value = response.data
+            // console.log(recordingOptions.value)
+            if (response.data?.transcription?.status == 'failed') {
+                console.log("AI transcription error : " + response.data?.transcription?.error_message)
+            }
+        })
+        .catch((error) => {
+            handleErrorResponse(error)
+        })
+        .finally(() => {
+            loading.value = false
+        })
+}
 
 const requestTranscription = async () => {
     isRequestingTranscription.value = true
     try {
         const { data } = await axios.post(
-            props.options.routes.transcribe_route,
+            recordingOptions.value.routes.transcribe_route,
             {
-                uuid: props.options?.item?.xml_cdr_uuid ?? null,
-                domain_uuid: props.options?.item?.domain_uuid ?? null,
+                uuid: recordingOptions.value?.item?.xml_cdr_uuid ?? null,
+                domain_uuid: recordingOptions.value?.item?.domain_uuid ?? null,
                 // options: overrides,                      // optional provider overrides
             },
         )
         // policy.value = data
-        console.log(data);
         emit('success', 'success', data.messages)
+        transcriptRequested.value = true
+        currentStatus.value = 'queued'
+        getCallRecordingOptions()
         return data
     } catch (err) {
         console.log(err);
@@ -243,6 +402,29 @@ const requestTranscription = async () => {
         return []
     } finally {
         isRequestingTranscription.value = false
+    }
+}
+
+async function regenerateTranscription() {
+    if (isRegenerating.value) return
+    isRegenerating.value = true
+    try {
+        const { data } = await axios.post(
+            recordingOptions.value.routes.transcribe_route,
+            {
+                uuid: recordingOptions.value?.item?.xml_cdr_uuid ?? null,
+                domain_uuid: recordingOptions.value?.item?.domain_uuid ?? null,
+            }
+        )
+        emit('success', 'success', data.messages)
+        // show queued immediately; user can hit Refresh (manual) to check progress
+        transcriptRequested.value = true
+        currentStatus.value = 'queued'
+        getCallRecordingOptions()
+    } catch (err) {
+        emit('error', err)
+    } finally {
+        isRegenerating.value = false
     }
 }
 
@@ -258,18 +440,117 @@ function msToClock(ms) {
     return `${m}:${String(r).padStart(2, '0')}`
 }
 
+// ---- 10s cooldown for manual refresh ----
+const cooldownSeconds = ref(0)
+const canRefresh = computed(() => cooldownSeconds.value === 0)
+let cooldownTimer = null
 
-const getSpeakerAvatarClasses = (speakerLabel) => {
-    const colorMap = {
-        A: 'bg-indigo-100 text-indigo-800',
-        B: 'bg-emerald-100 text-emerald-800',
-        C: 'bg-amber-100 text-amber-800',
-        D: 'bg-fuchsia-100 text-fuchsia-800',
-        // Add more speakers as needed
-    };
-    // Return the specific color or a default slate color if the speaker is not in the map
-    return colorMap[speakerLabel] || 'bg-slate-100 text-slate-800';
-};
+function startCooldown() {
+    cooldownSeconds.value = 10
+    if (cooldownTimer) clearInterval(cooldownTimer)
+    cooldownTimer = setInterval(() => {
+        if (cooldownSeconds.value > 0) cooldownSeconds.value -= 1
+        if (cooldownSeconds.value <= 0) {
+            clearInterval(cooldownTimer)
+            cooldownTimer = null
+        }
+    }, 1000)
+}
+
+async function refreshStatus() {
+    if (!canRefresh.value) return
+    await getCallRecordingOptions()
+    currentStatus.value = null
+    // IMPORTANT: allow the button to re-appear if we’re still failed
+    if (status.value === 'failed') {
+        transcriptRequested.value = false
+    }
+    startCooldown()
+}
+
+onUnmounted(() => {
+    if (cooldownTimer) clearInterval(cooldownTimer)
+})
+
+const SPEAKER_PALETTES = [
+    { // A
+        timeChip: 'bg-indigo-50 text-indigo-600',
+        avatar: 'bg-indigo-100 text-indigo-600',
+        name: 'text-indigo-600',
+    },
+    { // B
+        timeChip: 'bg-emerald-50 text-emerald-600',
+        avatar: 'bg-emerald-100 text-emerald-600',
+        name: 'text-emerald-600',
+    },
+    { // C
+        timeChip: 'bg-amber-50 text-amber-700',
+        avatar: 'bg-amber-100 text-amber-600',
+        name: 'text-amber-600',
+    },
+    { // D
+        timeChip: 'bg-fuchsia-50 text-fuchsia-600',
+        avatar: 'bg-fuchsia-100 text-fuchsia-600',
+        name: 'text-fuchsia-600',
+    },
+    { // E
+        timeChip: 'bg-sky-50 text-sky-600',
+        avatar: 'bg-sky-100 text-sky-600',
+        name: 'text-sky-600',
+    },
+    { // F
+        timeChip: 'bg-rose-50 text-rose-600',
+        avatar: 'bg-rose-100 text-rose-600',
+        name: 'text-rose-600',
+    },
+    { // G
+        timeChip: 'bg-violet-50 text-violet-600',
+        avatar: 'bg-violet-100 text-violet-600',
+        name: 'text-violet-600',
+    },
+    { // H
+        timeChip: 'bg-lime-50 text-lime-700',
+        avatar: 'bg-lime-100 text-lime-600',
+        name: 'text-lime-600',
+    },
+    { // I
+        timeChip: 'bg-cyan-50 text-cyan-600',
+        avatar: 'bg-cyan-100 text-cyan-600',
+        name: 'text-cyan-600',
+    },
+    { // J
+        timeChip: 'bg-orange-50 text-orange-700',
+        avatar: 'bg-orange-100 text-orange-600',
+        name: 'text-orange-600',
+    },
+]
+
+const DEFAULT_PALETTE = {
+    timeChip: 'bg-slate-100 text-slate-700',
+    avatar: 'bg-slate-100 text-slate-600',
+    name: 'text-slate-600',
+}
+
+const TABS = [
+    { key: 'transcript', label: 'Transcript' },
+    { key: 'recap', label: 'Recap' },
+]
+
+
+function speakerIndex(label) {
+    if (!label) return 0
+    const s = String(label).trim().toUpperCase()
+    const code = s.charCodeAt(0)
+    if (code >= 65 && code <= 90) return (code - 65) % SPEAKER_PALETTES.length // A–Z
+    // small hash for non-letters
+    let h = 0
+    for (const ch of s) h = (h * 31 + ch.charCodeAt(0)) >>> 0
+    return h % SPEAKER_PALETTES.length
+}
+
+function speakerClasses(label) {
+    return SPEAKER_PALETTES[speakerIndex(label)] || DEFAULT_PALETTE
+}
 
 // Group consecutive lines by speaker (cleaner bubbles)
 const grouped = computed(() => {
@@ -286,6 +567,19 @@ const grouped = computed(() => {
     }
     return out
 })
+
+watch(
+    () => props.show,
+    (isOpen) => {
+        if (isOpen) {
+            loading.value = true
+            transcriptRequested.value = false
+            currentStatus.value = null
+            getCallRecordingOptions()
+        }
+
+    }
+)
 
 </script>
 <style>

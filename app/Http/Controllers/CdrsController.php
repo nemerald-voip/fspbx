@@ -389,6 +389,7 @@ class CdrsController extends Controller
                 'transcription' => $transcription,
                 'filename'    => $urls['filename'],
                 'routes' => $routes,
+                'permissions' => $this->getUserPermissions(),
             ]);
 
             return $itemOptions;
@@ -1029,14 +1030,15 @@ class CdrsController extends Controller
         //
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\CDR  $cDR
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(CDR $cDR)
+    public function getUserPermissions()
     {
-        //
+        $permissions = [];
+        $permissions['transcription_view'] = userCheckPermission('transcription_view');
+        $permissions['transcription_read'] = userCheckPermission('transcription_read');
+        $permissions['transcription_create'] = userCheckPermission('transcription_create');
+        $permissions['transcription_summary'] = userCheckPermission('transcription_summary');
+
+
+        return $permissions;
     }
 }

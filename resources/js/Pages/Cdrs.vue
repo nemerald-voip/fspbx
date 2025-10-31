@@ -248,7 +248,7 @@
         :customClass="'sm:max-w-4xl'" @close="handleModalClose">
     </CallDetailsModal>
 
-    <CallRecordingModal :show="showCallRecordingModal" :options="recordingOptions" :loading="loadingModal" @close="showCallRecordingModal = false"
+    <CallRecordingModal :show="showCallRecordingModal" :cdr_uuid="selectedUuid" :routes="routes" @close="showCallRecordingModal = false"
         @error="handleErrorResponse" @success="showNotification" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
@@ -350,6 +350,7 @@ const filterData = ref({
 
 const showGlobal = ref(props.showGlobal);
 const itemOptions = ref({});
+const selectedUuid = ref(null)
 
 const callDirections = [
     { value: 'outbound', name: 'Outbound' },
@@ -368,28 +369,29 @@ const statusOptions = [
 
 const handleCallRecordingButtonClick = (uuid) => {
     showCallRecordingModal.value = true
-    getCallRecordingOptions(uuid);
+    // getCallRecordingOptions(uuid);
+    selectedUuid.value = uuid
 };
 
-const getCallRecordingOptions = (uuid) => {
-    loadingModal.value = true
-    axios.get(props.routes.call_recording_route, {
-        params: {
-            item_uuid: uuid
-        }
-    })
-        .then((response) => {
-            recordingOptions.value = response.data;
-            console.log(recordingOptions.value);
+// const getCallRecordingOptions = (uuid) => {
+//     loadingModal.value = true
+//     axios.get(props.routes.call_recording_route, {
+//         params: {
+//             item_uuid: uuid
+//         }
+//     })
+//         .then((response) => {
+//             recordingOptions.value = response.data;
+//             console.log(recordingOptions.value);
 
-        }).catch((error) => {
+//         }).catch((error) => {
 
-            handleErrorResponse(error);
-        }).finally(() => {
-            loadingModal.value = false
-        })
+//             handleErrorResponse(error);
+//         }).finally(() => {
+//             loadingModal.value = false
+//         })
 
-}
+// }
 
 const getData = (page = 1) => {
     loading.value = true;

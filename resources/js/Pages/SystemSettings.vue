@@ -128,7 +128,7 @@ onMounted(() => {
         navigation.value.push({ key: 'payment_gateways', name: 'Payment Gateways', icon: CreditCardIcon })
     }
 
-    if (props.permissions?.call_transcription_view) {
+    if (props.permissions?.call_transcription_settings_view) {
         navigation.value.push({
             key: 'call_transcription',
             name: 'Call Transcription',

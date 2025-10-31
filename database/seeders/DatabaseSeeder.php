@@ -140,7 +140,11 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Devices', 'permission_name' => 'device_key_advanced'],
             ['application_name' => 'Logs', 'permission_name' => 'logs_list_view'],
             ['application_name' => 'System Settings', 'permission_name' => 'payment_gateways_view'],
-            ['application_name' => 'System Settings', 'permission_name' => 'call_transcription_view'],
+            ['application_name' => 'System Settings', 'permission_name' => 'call_transcription_settings_view'],
+            ['application_name' => 'Call Transcriptions', 'permission_name' => 'transcription_view'],
+            ['application_name' => 'Call Transcriptions', 'permission_name' => 'transcription_create'],
+            ['application_name' => 'Call Transcriptions', 'permission_name' => 'transcription_read'],
+            ['application_name' => 'Call Transcriptions', 'permission_name' => 'transcription_summary'],
         ];
         $timestamp = date("Y-m-d H:i:s");
 
@@ -228,7 +232,11 @@ class DatabaseSeeder extends Seeder
                 'device_line_outbound_proxy_primary',
                 'device_line_outbound_proxy_secondary',
                 'logs_list_view',
-                'call_transcription_view',
+                'call_transcription_settings_view',
+                'transcription_view',
+                'transcription_read',
+                'transcription_create',
+                'transcription_summary',
             ],
             'admin' => [
                 'wakeup_calls_list_view',
