@@ -150,7 +150,9 @@
                                         <!-- Right Side: Action Button and Status Pills -->
                                         <div class="flex items-center gap-4 pl-14 sm:pl-0">
                                             <!-- Transcribe Button -->
-                                            <button v-if="showTranscribeBtn" type="button" @click="requestTranscription"
+                                            <button
+                                                v-if="showTranscribeBtn && recordingOptions?.permissions?.transcription_create"
+                                                type="button" @click="requestTranscription"
                                                 :disabled="isRequestingTranscription"
                                                 class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50">
                                                 <svg v-if="isRequestingTranscription" class="mr-2 h-5 w-5 animate-spin"
@@ -187,8 +189,10 @@
 
                                             <!-- Regenerate (only when failed) -->
 
-                                            <button v-if="showRegenerateBtn" type="button"
-                                                @click="regenerateTranscription" :disabled="isRegenerating"
+                                            <button
+                                                v-if="showRegenerateBtn && recordingOptions?.permissions?.transcription_create"
+                                                type="button" @click="regenerateTranscription"
+                                                :disabled="isRegenerating"
                                                 class="inline-flex items-center text-sm/6 font-medium text-indigo-600 hover:text-indigo-500">
                                                 <ArrowPathIcon
                                                     :class="['h-4 w-4', isRegenerating ? 'animate-spin' : '']" />
@@ -208,7 +212,8 @@
                                         <ClipboardDocumentListIcon class="mx-auto h-12 w-12 text-gray-400" />
                                         <h3 class="mt-2 text-sm font-semibold text-gray-900">Transcript not yet
                                             generated</h3>
-                                        <p class="mt-1 text-sm text-gray-500">
+                                        <p v-if="recordingOptions?.permissions?.transcription_create"
+                                            class="mt-1 text-sm text-gray-500">
                                             Click the "Transcribe" button above to generate the transcript.
                                         </p>
                                     </div>
@@ -241,7 +246,8 @@
                                     </div>
 
                                     <!-- State 3: Completed Tabs (Transcript is ready) -->
-                                    <div v-else-if="hasTranscript" class="mt-6 text-sm">
+                                    <div v-else-if="hasTranscript && recordingOptions?.permissions?.transcription_read"
+                                        class="mt-6 text-sm">
                                         <TabGroup :selectedIndex="selectedTabIndex" @change="selectedTabIndex = $event">
 
                                             <!-- Mobile-friendly Select Menu -->
@@ -309,14 +315,14 @@
                                                     </div>
                                                 </TabPanel>
 
-                                                <!-- Recap Panel -->
+                                                <!-- Summary Panel -->
                                                 <TabPanel :key="TABS[1].key"
                                                     class="rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                                                     <!-- Paste your existing "Coming Soon" placeholder here -->
                                                     <div class="mt-2 rounded-lg bg-slate-100 p-12 text-center">
                                                         <WrenchScrewdriverIcon
                                                             class="mx-auto h-12 w-12 text-slate-500" />
-                                                        <h3 class="mt-2 text-base font-semibold text-slate-800">AI Recap
+                                                        <h3 class="mt-2 text-base font-semibold text-slate-800">AI Summary
                                                             Coming Soon</h3>
                                                         <p class="mt-1 text-sm text-slate-600">
                                                             This feature will automatically summarize the key points,
@@ -327,9 +333,13 @@
                                             </TabPanels>
                                         </TabGroup>
                                     </div>
+                                    <div v-else-if="recordingOptions?.isCallTranscriptionServiceEnabled && !recordingOptions?.permissions?.transcription_read"
+                                        class="mt-6 rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
+                                        <p class="text-sm font-medium text-gray-700">You do not have permission to view
+                                            transcript content.</p>
+                                    </div>
 
                                 </div>
-
 
                             </div>
 
@@ -565,7 +575,7 @@ const DEFAULT_PALETTE = {
 
 const TABS = [
     { key: 'transcript', label: 'Transcript' },
-    { key: 'recap', label: 'Recap' },
+    { key: 'summary', label: 'Summary' },
 ]
 
 
