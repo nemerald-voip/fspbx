@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use App\Services\CallRecordingUrlService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use App\Services\CallTranscription\CallTranscriptionService;
 
 class CdrsController extends Controller
 {
@@ -349,9 +350,14 @@ class CdrsController extends Controller
                 'transcribe_route' => route('cdrs.recording.transcribe'),
             ];
 
+            // Is call transcription service enabled for this account
+            $transcriptionService = app(CallTranscriptionService::class);
+            $config = $transcriptionService->getCachedConfig($item->domain_uuid ?? null);
+            $isCallTranscriptionServiceEnabled = (bool) ($config['enabled'] ?? false);
+
             // Build a lean transcription payload
             $transcription = null;
-            if ($item->callTranscription) {
+            if ($isCallTranscriptionServiceEnabled && $item->callTranscription) {
                 $rp = $item->callTranscription->result_payload ?? [];
 
                 $removeWords = function ($node) use (&$removeWords) {
@@ -386,6 +392,7 @@ class CdrsController extends Controller
                 'item'        => $item,
                 'audio_url'   => $urls['audio_url'],
                 'download_url' => $urls['download_url'],
+                'isCallTranscriptionServiceEnabled'       => $isCallTranscriptionServiceEnabled,
                 'transcription' => $transcription,
                 'filename'    => $urls['filename'],
                 'routes' => $routes,

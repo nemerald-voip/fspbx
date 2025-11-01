@@ -249,7 +249,7 @@
     </CallDetailsModal>
 
     <CallRecordingModal :show="showCallRecordingModal" :cdr_uuid="selectedUuid" :routes="routes" @close="showCallRecordingModal = false"
-        @error="handleErrorResponse" @success="showNotification" />
+        @error="handleErrorResponse" @success="showNotification"/>
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />

@@ -81,6 +81,11 @@ class CallTranscriptionService
             });
     }
 
+    public function getCachedConfig(?string $domainUuid = null): array
+    {
+        return $this->transcriptionConfigCached($domainUuid);
+    }
+
     public function currentProviderKey(?string $domainUuid): ?string
     {
         $cfg = $this->transcriptionConfigCached($domainUuid);

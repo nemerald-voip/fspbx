@@ -47,13 +47,13 @@
                                     <div class="space-y-1">
                                         <!-- Title -->
                                         <h1 class="text-2xl font-bold text-gray-600">
-                                            {{ capitalizeFirstLetter(recordingOptions.item?.direction) }} Call
+                                            {{ capitalizeFirstLetter(recordingOptions?.item?.direction) }} Call
                                         </h1>
 
                                         <!-- When -->
                                         <p class="text-sm text-gray-500">
-                                            On {{ recordingOptions.item?.start_date }} at {{
-                                                recordingOptions.item?.start_time }}
+                                            On {{ recordingOptions?.item?.start_date }} at {{
+                                                recordingOptions?.item?.start_time }}
                                         </p>
 
                                         <!-- Parties -->
@@ -63,18 +63,18 @@
                                                 <dd class="flex-1">
                                                     <span v-if="recordingOptions?.item?.direction === 'outbound'">
                                                         <!-- extension name if present, else caller name -->
-                                                        {{ recordingOptions.item?.extension?.name_formatted ||
-                                                            recordingOptions.item?.caller_id_name }}
+                                                        {{ recordingOptions?.item?.extension?.name_formatted ||
+                                                            recordingOptions?.item?.caller_id_name }}
                                                         <span v-if="recordingOptions.item?.caller_id_number_formatted"
                                                             class="text-gray-500">
-                                                            - {{ recordingOptions.item?.caller_id_number_formatted }}
+                                                            - {{ recordingOptions?.item?.caller_id_number_formatted }}
                                                         </span>
                                                     </span>
                                                     <span v-else>
-                                                        {{ recordingOptions.item?.caller_id_name }}
-                                                        <span v-if="recordingOptions.item?.caller_id_number_formatted"
+                                                        {{ recordingOptions?.item?.caller_id_name }}
+                                                        <span v-if="recordingOptions?.item?.caller_id_number_formatted"
                                                             class="text-gray-500">
-                                                            - {{ recordingOptions.item?.caller_id_number_formatted }}
+                                                            - {{ recordingOptions?.item?.caller_id_number_formatted }}
                                                         </span>
                                                     </span>
                                                 </dd>
@@ -88,8 +88,8 @@
                                                     </span>
                                                     <span v-else>
                                                         <!-- inbound destination is usually the extension (callee) -->
-                                                        {{ recordingOptions.item?.extension?.name_formatted ||
-                                                            recordingOptions.item?.caller_destination_formatted }}
+                                                        {{ recordingOptions?.item?.extension?.name_formatted ||
+                                                            recordingOptions?.item?.caller_destination_formatted }}
                                                     </span>
                                                 </dd>
                                             </div>
@@ -98,11 +98,40 @@
                                 </div>
 
 
-                                <AudioPlayer v-if="!loading" :url="recordingOptions?.audio_url"
-                                    :download-url="recordingOptions?.download_url"
-                                    :file-name="recordingOptions?.filename" />
+                                <AudioPlayer v-if="!loading" :url="recordingOptions?.audio_url ?? ''"
+                                    :download-url="recordingOptions?.download_url ?? ''"
+                                    :file-name="recordingOptions?.filename ?? ''" />
 
-                                <div v-if="recordingOptions?.permissions?.transcription_view" class="mt-6 rounded-lg border bg-slate-50 p-4">
+                                <!-- State 1: Feature is NOT ENABLED for the account -->
+                                <div v-if="!recordingOptions?.isCallTranscriptionServiceEnabled"
+                                    class="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-6">
+                                    <div class="flex items-start gap-4">
+                                        <div class="shrink-0">
+                                            <svg class="h-6 w-6 text-blue-600" xmlns="http://www.w3.org/2000/svg"
+                                                fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                                            </svg>
+                                        </div>
+                                        <div class="flex-1">
+                                            <h3 class="text-base font-semibold text-blue-800">Unlock AI-Powered Insights
+                                            </h3>
+                                            <p class="mt-1 text-sm text-blue-700">
+                                                Enhance your call analysis with automated transcripts and summaries.
+                                                This feature is not currently active for your account.
+                                            </p>
+                                            <p class="mt-3 text-sm">
+                                                <span class="font-medium">Want to activate it?</span> Please contact
+                                                your account administrator or support.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- State 2: Feature IS ENABLED and user HAS PERMISSION to view it -->
+                                <div v-else-if="recordingOptions?.isCallTranscriptionServiceEnabled && recordingOptions?.permissions?.transcription_view"
+                                    class="mt-6 rounded-lg border bg-slate-50 p-4">
                                     <div class="flex flex-wrap items-center justify-between gap-4">
                                         <!-- Left Side: Title and Description -->
                                         <div class="flex items-start gap-4">
@@ -133,7 +162,7 @@
                                                     </path>
                                                 </svg>
                                                 <span>{{ isRequestingTranscription ? 'Requesting...' : 'Transcribe'
-                                                }}</span>
+                                                    }}</span>
                                             </button>
 
                                             <!-- Status pill shows after request OR if API already returns a status -->
@@ -164,7 +193,7 @@
                                                 <ArrowPathIcon
                                                     :class="['h-4 w-4', isRegenerating ? 'animate-spin' : '']" />
                                                 <span class="ml-1">{{ isRegenerating ? 'Regenerating…' : 'Regenerate'
-                                                }}</span>
+                                                    }}</span>
 
                                             </button>
                                         </div>
@@ -174,7 +203,7 @@
                                 <div v-if="recordingOptions?.permissions?.transcription_view">
 
                                     <!-- State 1: Initial Placeholder (Before transcription is requested) -->
-                                    <div v-if="!hasTranscript && !transcriptRequested"
+                                    <div v-if="recordingOptions?.isCallTranscriptionServiceEnabled && !hasTranscript && !transcriptRequested"
                                         class="mt-6 rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
                                         <ClipboardDocumentListIcon class="mx-auto h-12 w-12 text-gray-400" />
                                         <h3 class="mt-2 text-sm font-semibold text-gray-900">Transcript not yet
@@ -196,7 +225,8 @@
                                                 d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
                                             </path>
                                         </svg>
-                                        <p class="mt-4 text-sm font-semibold text-indigo-600">Transcription in progress. Click Refresh to check status.</p>
+                                        <p class="mt-4 text-sm font-semibold text-indigo-600">Transcription in progress.
+                                            Click Refresh to check status.</p>
 
                                         <!-- START: REFRESH BUTTON -->
                                         <button type="button" @click="refreshStatus" :disabled="!canRefresh"
@@ -234,7 +264,8 @@
 
                                             <!-- Desktop Tab Pills -->
                                             <div class="hidden sm:block">
-                                                <TabList as="nav" class="flex space-x-4 border-b-2 pb-1" aria-label="Tabs">
+                                                <TabList as="nav" class="flex space-x-4 border-b-2 pb-1"
+                                                    aria-label="Tabs">
                                                     <Tab v-for="tab in TABS" :key="tab.key" v-slot="{ selected }"
                                                         as="template">
                                                         <button :class="[
@@ -372,7 +403,8 @@ const getCallRecordingOptions = () => {
             }
         })
         .catch((error) => {
-            handleErrorResponse(error)
+            emit('error', error);
+            emit('close');
         })
         .finally(() => {
             loading.value = false
