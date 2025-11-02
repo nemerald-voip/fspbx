@@ -15,6 +15,7 @@
         'ring_groups' => 'ring_group_extension',
         'ivrs' => 'ivr_menu_extension',
         'time_conditions' => 'dialplan_number',
+        'business_hours' => 'extension',
         'contact_centers' => 'queue_extension',
         'faxes' => 'fax_extension',
         'call_flows' => 'call_flow_extension',
@@ -287,7 +288,7 @@
 
                 // pick the correct extension off the morph target
                 $extField = $fieldMap[$first->action] ?? null;
-                $extValue = $extField ? $first->target->{$extField} : $businessHour->extension;
+                $extValue = $extField ? $first->target->{$extField} : null;
 
                 // build the FS action via your helper
                 $dest = buildDestinationAction([
