@@ -366,6 +366,36 @@ else
     exit 1
 fi
 
+# FS PBX internal vhost (new in 1.0.2)
+cp install/nginx_fspbx_internal.conf /etc/nginx/sites-available/fspbx_internal.conf
+if [ $? -eq 0 ]; then
+    print_success "Copied internal Nginx site config to sites-available."
+else
+    print_error "Error occurred while copying internal Nginx site config."
+    exit 1
+fi
+
+# Check if symbolic link already exists and remove it if necessary
+if [ -L /etc/nginx/sites-enabled/fspbx_internal.conf ]; then
+    rm /etc/nginx/sites-enabled/fspbx_internal.conf
+    if [ $? -eq 0 ]; then
+        print_success "Existing symbolic link for fspbx_internal.conf removed."
+    else
+        print_error "Error occurred while removing existing symbolic link for fspbx_internal.conf."
+        exit 1
+    fi
+fi
+
+# Create symbolic link for fspbx_internal.conf
+ln -s /etc/nginx/sites-available/fspbx_internal.conf /etc/nginx/sites-enabled/fspbx_internal.conf
+if [ $? -eq 0 ]; then
+    print_success "Linked internal Nginx site config to sites-enabled."
+else
+    print_error "Error occurred while linking internal Nginx site config."
+    exit 1
+fi
+
+
 # Create directories for SSL certificates if they don't exist
 sudo mkdir -p /etc/nginx/ssl/private
 if [ $? -eq 0 ]; then
