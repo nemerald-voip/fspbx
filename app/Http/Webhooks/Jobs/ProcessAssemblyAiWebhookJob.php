@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Webhooks\Jobs;
 
 use App\Models\CallTranscription;
@@ -6,17 +7,19 @@ use App\Services\CallTranscription\CallTranscriptionService;
 use Spatie\WebhookClient\Models\WebhookCall;
 use Spatie\WebhookClient\Jobs\ProcessWebhookJob as SpatieProcessWebhookJob;
 
-class ProcessAssemblyAiWebhook extends SpatieProcessWebhookJob
+class ProcessAssemblyAiWebhookJob extends SpatieProcessWebhookJob
 {
 
     public $tries   = 10;
     public $backoff = [10, 30, 60, 120, 300];
+    public $timeout = 300;
+    public $maxExceptions = 5;
 
     public function __construct(public WebhookCall $webhookCall) {}
 
     public function handle(CallTranscriptionService $service): void
     {
-        logger('ProcessAssemblyAiWebhook');
+        logger('ProcessAssemblyAiWebhookjob');
 
         $payload = $this->webhookCall->payload;
 
@@ -45,7 +48,15 @@ class ProcessAssemblyAiWebhook extends SpatieProcessWebhookJob
                 'result_payload'  => $full ?: null,
                 'completed_at'    => now(),
                 'error_message'   => null,
+                'summary_status'       => 'pending',
+                'summary_error'        => null,
+                'summary_requested_at' => now(),
             ]);
+
+            // Dispatch the job for summaries
+            dispatch(new \App\Jobs\SummarizeCallTranscription($row->uuid))->onQueue('transcriptions');
+
+
         } elseif ($status === 'error') {
             // Pull the current transcript for error details if useful
             $provider = $service->providerForScope($row->domain_uuid);

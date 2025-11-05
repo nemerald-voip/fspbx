@@ -433,7 +433,7 @@ return [
             'signature_validator'   => \App\Http\Webhooks\SignatureValidators\AssemblyAiSignatureValidator::class,
             'webhook_profile'       => \Spatie\WebhookClient\WebhookProfile\ProcessEverythingWebhookProfile::class,
             'webhook_model'         => \App\Models\WhCall::class,
-            'process_webhook_job'   => App\Http\Webhooks\Jobs\ProcessAssemblyAiWebhook::class,
+            'process_webhook_job'   => App\Http\Webhooks\Jobs\ProcessAssemblyAiWebhookJob::class,
         ],
 
 
