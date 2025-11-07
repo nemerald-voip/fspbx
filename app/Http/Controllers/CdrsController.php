@@ -332,7 +332,7 @@ class CdrsController extends Controller
                     'extension:extension_uuid,extension,effective_caller_id_name',
                 ])
                 ->with([
-                    'callTranscription:uuid,xml_cdr_uuid,status,error_message,result_payload'
+                    'callTranscription:uuid,xml_cdr_uuid,status,error_message,result_payload,summary_status,summary_error,summary_payload'
                 ])
                 ->first();
 
@@ -348,6 +348,7 @@ class CdrsController extends Controller
 
             $routes = [
                 'transcribe_route' => route('cdrs.recording.transcribe'),
+                'summarize_route' => route('cdrs.recording.summarize'),
             ];
 
             // Is call transcription service enabled for this account
@@ -358,29 +359,20 @@ class CdrsController extends Controller
             // Build a lean transcription payload
             $transcription = null;
             if ($isCallTranscriptionServiceEnabled && $item->callTranscription) {
-                $rp = $item->callTranscription->result_payload ?? [];
-
-                $removeWords = function ($node) use (&$removeWords) {
-                    if (is_array($node)) {
-                        // drop this level's 'words'
-                        if (array_key_exists('words', $node)) {
-                            unset($node['words']);
-                        }
-                        // recurse
-                        foreach ($node as $k => $v) {
-                            $node[$k] = $removeWords($v);
-                        }
-                    }
-                    return $node;
-                };
-                $lean = $removeWords($rp);
-
                 $transcription = [
                     'uuid'         => $item->callTranscription->uuid,
                     'status'       => $item->callTranscription->status,
                     'error_message' => $item->callTranscription->error_message,
-                    'text'         => data_get($lean, 'text'),
-                    'utterances'   => data_get($lean, 'utterances', []), 
+                    'text'         => data_get($item->callTranscription->result_payload, 'text'),
+                    'utterances'   => data_get($item->callTranscription->result_payload, 'utterances', []), 
+                    'summary_status'       => $item->callTranscription->summary_status,
+                    'summary'         => data_get($item->callTranscription->summary_payload, 'summary'),
+                    'key_points'         => data_get($item->callTranscription->summary_payload, 'key_points'),
+                    'action_items'         => data_get($item->callTranscription->summary_payload, 'action_items'),
+                    'decisions_made'         => data_get($item->callTranscription->summary_payload, 'decisions_made'),
+                    'compliance_flags'         => data_get($item->callTranscription->summary_payload, 'compliance_flags'),
+                    'sentiment_overall'         => data_get($item->callTranscription->summary_payload, 'sentiment_overall'),
+
                 ];
 
                 // keep big blob out of the response entirely

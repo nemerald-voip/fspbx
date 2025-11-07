@@ -164,7 +164,7 @@
                                                     </path>
                                                 </svg>
                                                 <span>{{ isRequestingTranscription ? 'Requesting...' : 'Transcribe'
-                                                    }}</span>
+                                                }}</span>
                                             </button>
 
                                             <!-- Status pill shows after request OR if API already returns a status -->
@@ -197,7 +197,7 @@
                                                 <ArrowPathIcon
                                                     :class="['h-4 w-4', isRegenerating ? 'animate-spin' : '']" />
                                                 <span class="ml-1">{{ isRegenerating ? 'Regenerating…' : 'Regenerate'
-                                                    }}</span>
+                                                }}</span>
 
                                             </button>
                                         </div>
@@ -315,21 +315,154 @@
                                                     </div>
                                                 </TabPanel>
 
+
                                                 <!-- Summary Panel -->
                                                 <TabPanel :key="TABS[1].key"
-                                                    class="rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                                                    <!-- Paste your existing "Coming Soon" placeholder here -->
-                                                    <div class="mt-2 rounded-lg bg-slate-100 p-12 text-center">
-                                                        <WrenchScrewdriverIcon
-                                                            class="mx-auto h-12 w-12 text-slate-500" />
-                                                        <h3 class="mt-2 text-base font-semibold text-slate-800">AI Summary
-                                                            Coming Soon</h3>
-                                                        <p class="mt-1 text-sm text-slate-600">
-                                                            This feature will automatically summarize the key points,
-                                                            decisions, and action items from the conversation.
+                                                    class="rounded-lg p-0.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:p-2">
+                                                    <!-- Summary State: Completed -->
+                                                    <div v-if="hasSummary" class="space-y-8">
+                                                        <!-- Overall Summary -->
+                                                        <div class="space-y-3">
+                                                            <h3
+                                                                class="flex items-center gap-2 text-base font-semibold text-gray-800">
+                                                                <DocumentTextIcon class="h-6 w-6 text-gray-500" />
+                                                                <span>Call Summary</span>
+                                                            </h3>
+                                                            <p class="text-gray-700 leading-relaxed">
+                                                                {{ recordingOptions?.transcription?.summary }}
+                                                            </p>
+                                                        </div>
+
+                                                        <!-- Key Points -->
+                                                        <div class="space-y-3">
+                                                            <h3
+                                                                class="flex items-center gap-2 text-base font-semibold text-gray-800">
+                                                                <LightBulbIcon class="h-6 w-6 text-yellow-500" />
+                                                                <span>Key Points</span>
+                                                            </h3>
+                                                            <ul
+                                                                class="list-disc space-y-2 pl-6 text-gray-700 marker:text-gray-400">
+                                                                <li v-for="(point, i) in recordingOptions?.transcription?.key_points"
+                                                                    :key="`kp-${i}`">{{ point }}</li>
+                                                            </ul>
+                                                        </div>
+
+                                                        <!-- Action Items -->
+                                                        <div class="space-y-3">
+                                                            <h3
+                                                                class="flex items-center gap-2 text-base font-semibold text-gray-800">
+                                                                <CheckCircleIcon class="h-6 w-6 text-green-500" />
+                                                                <span>Action Items</span>
+                                                            </h3>
+                                                            <ul class="space-y-2 text-gray-700">
+                                                                <li v-for="(item, i) in recordingOptions?.transcription?.action_items"
+                                                                    :key="`ai-${i}`"
+                                                                    class="rounded-md border border-gray-200 bg-gray-50 p-3">
+                                                                    <p class="font-medium text-gray-800">{{
+                                                                        item.description }}</p>
+                                                                    <p v-if="item.owner" class="text-xs text-gray-500">
+                                                                        Owner: {{
+                                                                            item.owner }}</p>
+                                                                </li>
+                                                            </ul>
+                                                        </div>
+
+                                                        <!-- Decisions Made -->
+                                                        <div class="space-y-3">
+                                                            <h3
+                                                                class="flex items-center gap-2 text-base font-semibold text-gray-800">
+                                                                <ScaleIcon class="h-6 w-6 text-blue-500" />
+                                                                <span>Decisions Made</span>
+                                                            </h3>
+                                                            <ul
+                                                                class="list-disc space-y-2 pl-6 text-gray-700 marker:text-gray-400">
+                                                                <li v-for="(decision, i) in recordingOptions?.transcription?.decisions_made"
+                                                                    :key="`dm-${i}`">{{ decision }}</li>
+                                                            </ul>
+                                                        </div>
+
+                                                        <!-- Sentiment -->
+                                                        <div class="space-y-3">
+                                                            <h3
+                                                                class="flex items-center gap-2 text-base font-semibold text-gray-800">
+                                                                <ChatBubbleBottomCenterTextIcon
+                                                                    class="h-6 w-6 text-sky-500" />
+                                                                <span>Overall Sentiment</span>
+                                                            </h3>
+                                                            <p
+                                                                class="inline-flex items-center rounded-full bg-sky-100 px-3 py-1 text-sm font-medium capitalize text-sky-800">
+                                                                {{ recordingOptions?.transcription?.sentiment_overall }}
+                                                            </p>
+                                                        </div>
+
+                                                    </div>
+
+                                                    <!-- Summary State: In Progress -->
+                                                    <div v-else-if="(displaySummaryStatus === 'queued' || displaySummaryStatus === 'processing') || (summaryRequested && displaySummaryStatus !== 'completed' && displaySummaryStatus !== 'failed')"
+                                                        class="flex flex-col items-center justify-center rounded-lg border border-gray-200 bg-gray-50 p-12 text-center">
+                                                        <svg class="h-10 w-10 animate-spin text-indigo-600"
+                                                            xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                            viewBox="0 0 24 24">
+                                                            <circle class="opacity-25" cx="12" cy="12" r="10"
+                                                                stroke="currentColor" stroke-width="4"></circle>
+                                                            <path class="opacity-75" fill="currentColor"
+                                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                                            </path>
+                                                        </svg>
+                                                        <p class="mt-4 text-sm font-semibold text-indigo-600">
+                                                            Generating AI summary...
+                                                        </p>
+                                                        <p class="mt-1 text-sm text-gray-500">
+                                                            You can check the progress by clicking Refresh.
+                                                        </p>
+
+                                                        <!-- START: REFRESH BUTTON -->
+                                                        <button type="button" @click="refreshStatus"
+                                                            :disabled="!canRefresh"
+                                                            class="mt-6 inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50">
+                                                            <ArrowPathIcon
+                                                                class="-ml-0.5 mr-1.5 h-5 w-5 text-gray-400"
+                                                                :class="{ 'animate-spin': !canRefresh }" />
+                                                            <span v-if="canRefresh">Refresh Status</span>
+                                                            <span v-else>Refresh in {{ cooldownSeconds }}s</span>
+                                                        </button>
+                                                        <!-- END: REFRESH BUTTON -->
+                                                    </div>
+
+                                                    <!-- Summary State: Failed -->
+                                                    <div v-else-if="displaySummaryStatus === 'failed' && !summaryRequested"
+                                                        class="rounded-lg border-2 border-dashed border-rose-300 bg-rose-50 p-12 text-center">
+                                                        <ExclamationTriangleIcon
+                                                            class="mx-auto h-12 w-12 text-rose-400" />
+                                                        <h3 class="mt-2 text-sm font-semibold text-rose-900">
+                                                            Summary Generation Failed
+                                                        </h3>
+                                                        <p class="mt-1 text-sm text-rose-700">
+                                                            We were unable to generate a summary for this call.
+                                                        </p>
+                                                        <button type="button" @click="regenerateSummary"
+                                                            :disabled="isRegeneratingSummary"
+                                                            class="mt-4 inline-flex items-center rounded-md bg-rose-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-rose-500 disabled:opacity-50">
+                                                            <ArrowPathIcon class="-ml-0.5 mr-1.5 h-5 w-5"
+                                                                :class="{ 'animate-spin': isRegeneratingSummary }" />
+                                                            {{ isRegeneratingSummary ? 'Retrying...' : 'Retry' }}
+                                                        </button>
+                                                    </div>
+
+                                                    <!-- Summary State: Not Yet Generated -->
+                                                    <div v-else
+                                                        class="rounded-lg border-2 border-dashed border-gray-300 p-12 text-center">
+                                                        <SparklesIcon class="mx-auto h-12 w-12 text-gray-400" />
+                                                        <h3 class="mt-2 text-sm font-semibold text-gray-900">
+                                                            AI Summary is available
+                                                        </h3>
+                                                        <p class="mt-1 text-sm text-gray-500">
+                                                            Summary generation is part of the transcription process.
                                                         </p>
                                                     </div>
                                                 </TabPanel>
+
+
                                             </TabPanels>
                                         </TabGroup>
                                     </div>
@@ -363,8 +496,11 @@
 import { ref, computed, watch, onUnmounted } from 'vue'
 
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot, TabGroup, TabList, Tab, TabPanels, TabPanel } from '@headlessui/vue'
-import { XMarkIcon, SparklesIcon, ClipboardDocumentListIcon, WrenchScrewdriverIcon, ChevronDownIcon } from "@heroicons/vue/24/solid";
 import AudioPlayer from "@generalComponents/AudioPlayer.vue"
+import {
+    XMarkIcon, SparklesIcon, ClipboardDocumentListIcon, ChevronDownIcon, DocumentTextIcon, LightBulbIcon,
+    CheckCircleIcon, ScaleIcon, ExclamationTriangleIcon, ChatBubbleBottomCenterTextIcon
+} from "@heroicons/vue/24/outline";
 import { ArrowPathIcon } from '@heroicons/vue/24/outline'
 
 
@@ -380,6 +516,7 @@ const loading = ref(false)
 const transcriptRequested = ref(false)
 const isRequestingTranscription = ref(null)
 const isRegenerating = ref(false)
+const isRegeneratingSummary = ref(false)
 const recordingOptions = ref(null)
 const currentStatus = ref(null)
 const selectedTabIndex = ref(0)
@@ -388,6 +525,13 @@ const status = computed(() =>
 )
 const utterances = computed(() => recordingOptions.value?.transcription?.utterances ?? [])
 const hasTranscript = computed(() => status.value === 'completed' && utterances.value.length > 0)
+
+// --- STATE MANAGEMENT FOR SUMMARY ---
+const summaryRequested = ref(false)
+const currentSummaryStatus = ref(null)
+const summaryStatus = computed(() => recordingOptions.value?.transcription?.summary_status ?? null)
+const hasSummary = computed(() => summaryStatus.value === 'completed' && recordingOptions.value?.transcription?.summary)
+const displaySummaryStatus = computed(() => currentSummaryStatus.value ?? summaryStatus.value ?? null)
 
 const showTranscribeBtn = computed(() =>
     !hasTranscript.value && !transcriptRequested.value && !status.value
@@ -470,6 +614,31 @@ async function regenerateTranscription() {
     }
 }
 
+async function regenerateSummary() {
+    if (isRegeneratingSummary.value) return;
+    isRegeneratingSummary.value = true;
+    summaryRequested.value = true;
+    currentSummaryStatus.value = 'queued'; // Provide immediate UI feedback
+
+    try {
+        const { data } = await axios.post(
+            recordingOptions.value.routes.summarize_route,
+            {
+                uuid: recordingOptions.value?.transcription?.uuid ?? null,
+            }
+        );
+        emit('success', 'success', data.messages);
+        // Do NOT await a refresh here. Let the user do it manually.
+    } catch (err) {
+        emit('error', err);
+        // If the request fails, reset the state so the user can try again
+        summaryRequested.value = false;
+        currentSummaryStatus.value = null;
+    } finally {
+        isRegeneratingSummary.value = false;
+    }
+}
+
 
 function capitalizeFirstLetter(string) {
     if (!string) return '';
@@ -512,6 +681,7 @@ async function refreshStatus() {
 
 onUnmounted(() => {
     if (cooldownTimer) clearInterval(cooldownTimer)
+    selectedTabIndex.value = 0
 })
 
 const SPEAKER_PALETTES = [

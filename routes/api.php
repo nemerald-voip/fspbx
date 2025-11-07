@@ -218,6 +218,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/call-detail-records/item-options', [CdrsController::class, 'getItemOptions'])->name('cdrs.item.options');
     Route::get('/call-detail-records/recording-options', [CdrsController::class, 'getRecordingOptions'])->name('cdrs.recording.options');
     Route::post('/call-detail-records/recordings/transcribe', [CallTranscriptionController::class, 'transcribe'])->name('cdrs.recording.transcribe');
+    Route::post('/call-detail-records/recordings/summarize', [CallTranscriptionController::class, 'summarize'])->name('cdrs.recording.summarize');
 
     // Account Settings
     Route::put('account-settings/update', [AccountSettingsController::class, 'update'])->name('account-settings.update');

@@ -171,9 +171,9 @@ class OpenAIService
         $payload = [
             'model'        => $model,
             'background'   => true,
-            'instructions' => $systemText,  
-            'input'        => $userText,     
-            'store' => false,  
+            'instructions' => $systemText,
+            'input'        => $userText,
+            'store' => false,
         ];
 
         $resp = Http::withToken($this->apiKey)
@@ -203,13 +203,30 @@ class OpenAIService
             ->throw()
             ->json();
 
-        // If you want the unified text:
-        $outputText = (string) data_get($resp, 'output_text', '');
+        // Prefer the top-level output_text when present
+        $text = (string) data_get($resp, 'output_text', '');
+
+        if ($text === '') {
+            // Fallback 1: first assistant message text
+            $text = (string) data_get($resp, 'output.0.content.0.text', '');
+            if ($text === '') {
+                // Fallback 2: scan for any message item with output_text
+                foreach ((array) data_get($resp, 'output', []) as $item) {
+                    if (($item['type'] ?? null) === 'message') {
+                        $candidate = (string) data_get($item, 'content.0.text', '');
+                        if ($candidate !== '') {
+                            $text = $candidate;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
 
         return [
-            'raw'    => $resp,                   // entire response for auditing
-            'status' => data_get($resp, 'status'), // queued | in_progress | completed | failed
-            'text'   => $outputText,
+            'raw'    => $resp,
+            'status' => data_get($resp, 'status'),
+            'text'   => $text, // may be '', caller should handle
         ];
     }
 }

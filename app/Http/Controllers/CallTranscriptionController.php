@@ -250,7 +250,6 @@ class CallTranscriptionController extends Controller
 
     /**
      * Start a transcription for a CDR recording.
-     * Route: POST /call-detail-records/recordings/{uuid}/transcribe
      *
      * Query/body params (optional):
      * - domain_uuid: uuid|null  (scope to a domain, otherwise system)
@@ -276,6 +275,35 @@ class CallTranscriptionController extends Controller
             ], 202);
         } catch (\Throwable $e) {
             logger("CallTranscriptionController@transcribe error: ".$e->getMessage()." at ".$e->getFile().":".$e->getLine());
+    
+            return response()->json([
+                'errors' => ['error' => [$e->getMessage()]],
+            ], 500);
+        }
+    }
+
+        /**
+     * Start a summarization for an existing transcription
+     *
+     * Query/body params (optional):
+     * - domain_uuid: uuid|null  (scope to a domain, otherwise system)
+     * - options: array           (provider-specific overrides, forwarded as-is)
+     */
+    public function summarize(Request $request)
+    {
+        $data = $request->validate([
+            'uuid'        => ['required', 'uuid'],
+        ]);
+    
+        try {
+            // Dispatch the job for summaries
+            dispatch(new \App\Jobs\SummarizeCallTranscription($data['uuid']))->onQueue('transcriptions');
+    
+            return response()->json([
+                'messages' => ['success' => ['Summarization request queued.']],
+            ], 202);
+        } catch (\Throwable $e) {
+            logger("CallTranscriptionController@summarize error: ".$e->getMessage()." at ".$e->getFile().":".$e->getLine());
     
             return response()->json([
                 'errors' => ['error' => [$e->getMessage()]],

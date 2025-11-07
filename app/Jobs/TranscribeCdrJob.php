@@ -100,8 +100,6 @@ class TranscribeCdrJob implements ShouldQueue
             // 2) Kick off provider
             $result = $service->transcribeCdr($this->xmlCdrUuid, $this->domainUuid, $this->overrides);
 
-            logger("submitted");
-
             CallTranscription::where('xml_cdr_uuid', $this->xmlCdrUuid)->update([
                 'external_id'      => data_get($result, 'id'),
                 'status'           => data_get($result, 'status'),
