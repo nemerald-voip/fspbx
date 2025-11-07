@@ -45,7 +45,7 @@ class AssemblyAiService implements TranscriptionProviderInterface
     public function requestCallSummary(array $utterancesLines): array
     {
         $model = config('services.assemblyai.llm_model', 'gpt-5-nano');
-    
+
         $systemText = implode("\n", [
             'You are a precise call-summary assistant for a VoIP platform.',
             'Transform call transcripts into a concise summary and structured insights.',
@@ -76,7 +76,7 @@ class AssemblyAiService implements TranscriptionProviderInterface
             '  "confidence": 0.0',
             '}',
         ]);
-    
+
         $userText = implode("\n", array_merge(
             [
                 'Using the utterances below (speaker-labeled, no timestamps), produce the Output JSON.',
@@ -86,27 +86,27 @@ class AssemblyAiService implements TranscriptionProviderInterface
             ],
             $utterancesLines
         ));
-    
+
         $payload = [
             'model' => $model,
             'temperature' => 0.2,
             'messages' => [
-                [ 'role' => 'system', 'content' => $systemText ],
-                [ 'role' => 'user',   'content' => $userText   ],
+                ['role' => 'system', 'content' => $systemText],
+                ['role' => 'user',   'content' => $userText],
             ],
         ];
-    
+
         $resp = $this->httpLlm()->post('v1/chat/completions', $payload)->throw();
-    
+
         $content = data_get($resp->json(), 'choices.0.message.content', '{}');
         $decoded = json_decode($content, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
             throw new \RuntimeException('Invalid JSON from LLM: ' . json_last_error_msg());
         }
-    
+
         return $decoded;
     }
-    
+
 
 
     // ---- internals ----
@@ -212,4 +212,5 @@ class AssemblyAiService implements TranscriptionProviderInterface
         }
         return $a;
     }
+
 }

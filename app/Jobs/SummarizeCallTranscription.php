@@ -7,9 +7,9 @@ use App\Models\CallTranscription;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
+use App\Jobs\PollOpenAIBackgroundSummary;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use App\Services\CallTranscription\CallTranscriptionService;
 
 class SummarizeCallTranscription implements ShouldQueue
 {
@@ -22,11 +22,11 @@ class SummarizeCallTranscription implements ShouldQueue
 
     public function __construct(public string $uuid) {}
 
-    public function handle(CallTranscriptionService $service): void
+    public function handle(): void
     {
         logger('SummarizeCallTranscription');
         // Allow only 2 tasks every 1 second
-        Redis::throttle('summaries')->allow(2)->every(1)->then(function () use ($service) {
+        Redis::throttle('summaries')->allow(2)->every(1)->then(function () {
 
             $row = CallTranscription::find($this->uuid);
             if (!$row) return;
@@ -54,17 +54,34 @@ class SummarizeCallTranscription implements ShouldQueue
             }
 
             // try {
-                $provider = $service->providerForScope($row->domain_uuid);
-                $summary  = $provider->requestCallSummary($lines);
 
-                logger($summary);
+            // Kick off OpenAI background task
+            $openAiService = app(\App\Services\OpenAIService::class);
+            $start  = $openAiService->createBackgroundSummary($lines, 'gpt-5-nano');
 
+            $responseId = $start['id'] ?? null;
+            $status     = $start['status'] ?? 'queued';
+
+            if (!$responseId) {
                 $row->update([
-                    'summary_status'        => 'completed',
-                    'summary_error'         => null,
-                    'summary_payload'       => $summary, 
-                    'summary_completed_at'  => now(),
+                    'summary_status' => 'failed',
+                    'summary_error'  => 'OpenAI did not return response id.',
                 ]);
+                return;
+            }
+
+            logger($start);
+
+            $row->update([
+                'summary_provider'   => 'openai',
+                'summary_external_id'=> $responseId,
+                'summary_status'     => in_array($status, ['queued','in_progress']) ? $status : 'queued',
+                'summary_error'      => null,
+            ]);
+
+
+            // Schedule the polling job
+            PollOpenAIBackgroundSummary::dispatch($row->uuid, $responseId)->delay(now()->addMinutes(1))->onQueue('transcriptions');;
 
             // } catch (\Throwable $e) {
             //     report($e);

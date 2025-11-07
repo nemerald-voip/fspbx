@@ -31,6 +31,7 @@ return new class extends Migration {
             $table->timestamp('requested_at')->nullable();
             $table->timestamp('completed_at')->nullable();
 
+            $table->string('summary_external_id')->nullable(); 
             $table->string('summary_status', 32)->nullable()->index(); // pending|processing|completed|failed
             $table->text('summary_error')->nullable();
             $table->jsonb('summary_payload')->nullable(); // your final structured JSON (summary, participants, ...)

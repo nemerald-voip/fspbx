@@ -29,7 +29,7 @@ class CallTranscription extends Model
     protected $fillable = [
         'uuid','xml_cdr_uuid','domain_uuid','provider_key','external_id','status',
         'error_message','request_payload','response_payload','result_payload',
-        'summary_status', 'summary_error', 'summary_payload', 'summary_requested_at', 'summary_completed_at',
+        'summary_external_id', 'summary_status', 'summary_error', 'summary_payload', 'summary_requested_at', 'summary_completed_at',
         'requested_at','completed_at',
     ];
 }

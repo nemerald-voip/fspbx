@@ -12,6 +12,4 @@ interface TranscriptionProviderInterface
 
     public function fetchTranscript(string $transcriptId): array;
 
-    public function requestCallSummary(array $utterancesLines): array;
-
 }
