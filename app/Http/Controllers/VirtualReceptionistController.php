@@ -181,6 +181,7 @@ class VirtualReceptionistController extends Controller
                 'ivr_menu_max_failures' => '3',
                 'ivr_menu_max_timeouts' => '3',
                 'ivr_menu_cid_prefix' => $inputs['caller_id_prefix'],
+                'ivr_menu_exit_sound' => 'silence_stream://100',
             ]);
 
             // Save the model to the database
@@ -240,6 +241,11 @@ class VirtualReceptionistController extends Controller
                 'ivr_menu_exit_data' => $exit_data['data'],
                 'ivr_menu_cid_prefix' => $inputs['caller_id_prefix'],
             ]);
+
+            if (empty($instance->ivr_menu_exit_sound)) {
+            $instance->ivr_menu_exit_sound = 'silence_stream://100';
+            }
+
 
             // Save the updated IVR menu
             $instance->save();
