@@ -165,6 +165,26 @@ class VoicemailController extends Controller
     {
         $inputs = $request->validated();
 
+        // If blank, generate
+if (empty($inputs['voicemail_password'])) {
+    if (get_domain_setting('password_complexity') == 'true') {
+        $inputs['voicemail_password'] = str_pad(mt_rand(0, 9999), 4, '0', STR_PAD_LEFT);
+    } else {
+        $inputs['voicemail_password'] = $inputs['voicemail_id'] ?? '0000';
+    }
+}
+
+// If it was prefilled to mailbox number, override to random when complexity is on
+if (
+    get_domain_setting('password_complexity') == 'true'
+    && !empty($inputs['voicemail_id'])
+    && isset($inputs['voicemail_password'])
+    && (string)$inputs['voicemail_password'] === (string)$inputs['voicemail_id']
+) {
+    $inputs['voicemail_password'] = str_pad(mt_rand(0, 9999), 4, '0', STR_PAD_LEFT);
+}
+
+    
         try {
             $this->model->fill($inputs);
 
@@ -603,7 +623,9 @@ class VoicemailController extends Controller
                 // Create a new voicemail if item_uuid is not provided
                 $voicemail = $this->model;
                 $voicemail->voicemail_id = $voicemail->generateUniqueSequenceNumber();
-                $voicemail->voicemail_password = $voicemail->voicemail_id;
+                $voicemail->voicemail_password = (get_domain_setting('password_complexity') == 'true')
+                    ? str_pad(mt_rand(0, 9999), 4, '0', STR_PAD_LEFT)
+                    : $voicemail->voicemail_id;
                 $voicemail->voicemail_file = get_domain_setting('voicemail_file');
                 $voicemail->voicemail_local_after_email = get_domain_setting('keep_local');
                 $voicemail->voicemail_transcription_enabled = get_domain_setting('transcription_enabled_default');
