@@ -62,6 +62,11 @@ class FreeswitchEslService
             // Send the command and get the response in ESLevent Format
             $eslEvent = $this->conn->api($cmd);
 
+    $body = trim($eslEvent->getBody());
+        if (preg_match('/^\+?OK\b/i', $body) || preg_match('/^-ERR\b/i', $body)) {
+        return $body; // short-circuit plain OK/ERR responses
+    }
+
             if (!$eslEvent) {
                 return null;
             }
