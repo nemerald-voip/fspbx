@@ -103,7 +103,7 @@ class RingGroupsController extends Controller
         $domainUuid = session('domain_uuid');
         $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
         $data->with(['destinations' => function ($query) {
-            $query->select('ring_group_destination_uuid', 'ring_group_uuid', 'destination_number');
+            $query->select('ring_group_destination_uuid', 'ring_group_uuid', 'destination_number', 'destination_enabled');
         }]);
 
         $data->select(
