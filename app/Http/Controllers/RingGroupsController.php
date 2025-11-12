@@ -103,7 +103,7 @@ class RingGroupsController extends Controller
         $domainUuid = session('domain_uuid');
         $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
         $data->with(['destinations' => function ($query) {
-            $query->select('ring_group_destination_uuid', 'ring_group_uuid', 'destination_number');
+            $query->select('ring_group_destination_uuid', 'ring_group_uuid', 'destination_number', 'destination_enabled');
         }]);
 
         $data->select(
@@ -195,10 +195,17 @@ class RingGroupsController extends Controller
                 ->get();
 
 
-            $ringGroups = RingGroups::where('domain_uuid', $domain_uuid)
-                ->select('ring_group_uuid', 'ring_group_extension', 'ring_group_name')
-                ->orderBy('ring_group_extension', 'asc')
-                ->get();
+        $ringGroupsQuery = RingGroups::where('domain_uuid', $domain_uuid)
+            ->select('ring_group_uuid', 'ring_group_extension', 'ring_group_name')
+            ->orderBy('ring_group_extension', 'asc');
+
+        if (!empty($item_uuid)) {
+        // Exclude the ring group currently being edited
+        $ringGroupsQuery->where('ring_group_uuid', '!=', $item_uuid);
+        }
+
+        $ringGroups = $ringGroupsQuery->get();
+
 
             $memberOptions = [
                 [

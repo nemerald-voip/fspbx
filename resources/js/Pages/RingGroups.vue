@@ -94,9 +94,21 @@
                         :text="row.ring_group_extension" />
 
                     <TableField class="px-2 py-2 text-sm text-gray-500">
-                        <Badge v-for="destination in row.destinations" :key="destination.ring_group_destination_uuid"
-                            :text="destination.destination_number" backgroundColor="bg-gray-100" textColor="text-gray-700"
-                            ringColor="ring-gray-400/20" class="px-2 py-1 text-xs font-semibold" />
+                        <Badge
+                           v-for="destination in row.destinations"
+                           :key="destination.ring_group_destination_uuid"
+                           :text="destination.destination_number"
+                           :backgroundColor="destination.destination_enabled === false
+                               ? 'bg-gray-200'
+                               : 'bg-gray-100'"
+                           :textColor="destination.destination_enabled === false
+                              ? 'text-gray-400'
+                              : 'text-gray-700'"
+                           :ringColor="destination.destination_enabled === false
+                               ? 'ring-gray-300/20'
+                               : 'ring-gray-400/20'"
+                           class="px-2 py-1 text-xs font-semibold"
+                        />
                     </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
