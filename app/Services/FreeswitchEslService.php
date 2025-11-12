@@ -121,6 +121,26 @@ class FreeswitchEslService
                     $contact = (string)$registration->contact;
                     $contactData = [];
 
+        // Extract transport first
+        if (preg_match('/;transport=([a-zA-Z]+)/i', $contact, $tMatch)) {
+            $contactData['transport'] = strtoupper($tMatch[1]);
+        }
+
+        // Extract the actual SIP URI (user, ip, port)
+        if (preg_match('/<([^>]+)>/', $contact, $bracketMatch)) {
+            $contact = $bracketMatch[1];
+                } else {
+            $contact = trim($contact);
+        }
+
+            $sipUri = strtok($contact, ';');
+
+        if (preg_match('/^(?:sips?):([^@]+)@([0-9a-zA-Z\.\-]+)(?::(\d+))?$/', $sipUri, $matches)) {
+            $contactData['user'] = $matches[1];
+            $contactData['ip'] = $matches[2];
+            $contactData['port'] = $matches[3] ?? null;
+        }
+                    
                     // Example of using regular expressions to extract information
                     // if (preg_match('/sips?:([^@]+)@([^;]+);transport=([^;]+);/', $contact, $matches)) {
                     //     $contactData['user'] = $matches[1];
