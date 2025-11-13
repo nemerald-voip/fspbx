@@ -788,25 +788,34 @@ if (!function_exists('generate_password')) {
     }
 }
 
-
 if (!function_exists('formatPhoneNumber')) {
     function formatPhoneNumber($phoneNumber, $countryCode = 'US', $format = PhoneNumberFormat::NATIONAL)
     {
-        // If the user dialed internationally (+ or 011), don't touch it
-        if (preg_match('/^\s*(\+|011)/', $phoneNumber)) {
+        // If it starts with +1 (US E.164), normalize to national format
+        if (preg_match('/^\+1\d{10}$/', $phoneNumber)) {
+            $phoneNumberUtil = PhoneNumberUtil::getInstance();
+            try {
+                $phoneNumberObject = $phoneNumberUtil->parse($phoneNumber, 'US');
+                return $phoneNumberUtil->format($phoneNumberObject, $format);
+            } catch (NumberParseException $e) {
+                return $phoneNumber; // fallback
+            }
+        }
+
+        // If truly international (+ but not +1) or 011-prefixed, keep as-is
+        if (preg_match('/^\s*(\+|011)/', $phoneNumber) && !preg_match('/^\+1\d{10}$/', $phoneNumber)) {
             return $phoneNumber;
         }
 
+        // Default: parse and format
         $phoneNumberUtil = PhoneNumberUtil::getInstance();
-
         try {
             $phoneNumberObject = $phoneNumberUtil->parse($phoneNumber, $countryCode);
-
             if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
                 return $phoneNumberUtil->format($phoneNumberObject, $format);
             }
         } catch (NumberParseException $e) {
-            // If parsing fails, return the original number
+            // ignore and fallback
         }
 
         return $phoneNumber;
