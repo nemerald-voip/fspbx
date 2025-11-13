@@ -18,9 +18,11 @@ use Illuminate\Support\Facades\Schema;
 use Spatie\QueryBuilder\AllowedFilter;
 use App\Http\Requests\StoreUserRequest;
 use App\Http\Requests\UpdateUserRequest;
+use App\Traits\ChecksLimits;
 
 class UsersController extends Controller
 {
+    use ChecksLimits;
 
     public $model;
     public $filters = [];
@@ -198,6 +200,17 @@ class UsersController extends Controller
             // logger($userDto);
             $updateRoute = route('users.update', ['user' => $itemUuid]);
         } else {
+
+          // Check for limits
+                if ($resp = $this->enforceLimit(
+                    'users',
+                    \App\Models\User::class,
+                    'domain_uuid',
+                    'user_limit_error'
+                )) {
+                    return $resp;
+                }
+
             // “New user” defaults
             $userDto     = new UserData(
                 user_uuid: '',
