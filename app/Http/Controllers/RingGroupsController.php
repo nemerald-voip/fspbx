@@ -189,22 +189,28 @@ class RingGroupsController extends Controller
 
             ];
 
-            $extensions = Extensions::where('domain_uuid', $domain_uuid)
-                ->select('extension_uuid', 'extension', 'effective_caller_id_name')
-                ->orderBy('extension', 'asc')
-                ->get();
-
+        $extensionsQuery = Extensions::where('domain_uuid', $domain_uuid)
+            ->select('extension_uuid', 'extension', 'effective_caller_id_name')
+            ->orderBy('extension', 'asc');
 
         $ringGroupsQuery = RingGroups::where('domain_uuid', $domain_uuid)
             ->select('ring_group_uuid', 'ring_group_extension', 'ring_group_name')
             ->orderBy('ring_group_extension', 'asc');
 
-        if (!empty($item_uuid)) {
-        // Exclude the ring group currently being edited
-        $ringGroupsQuery->where('ring_group_uuid', '!=', $item_uuid);
-        }
+        // when editing, exclude the ring group’s own UUID + extension from selectable members
+            if (!empty($item_uuid)) {
+                $self = RingGroups::select('ring_group_extension')
+                ->where('ring_group_uuid', $item_uuid)
+                ->first();
 
-        $ringGroups = $ringGroupsQuery->get();
+            if ($self) {
+                $extensionsQuery->where('extension', '!=', $self->ring_group_extension);
+                $ringGroupsQuery->where('ring_group_uuid', '!=', $item_uuid);
+                }
+            }
+
+$extensions = $extensionsQuery->get();
+$ringGroups = $ringGroupsQuery->get();
 
 
             $memberOptions = [
