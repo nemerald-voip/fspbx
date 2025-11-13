@@ -94,23 +94,55 @@
                         :text="row.ring_group_extension" />
 
                     <TableField class="px-2 py-2 text-sm text-gray-500">
-                        <Badge
-                           v-for="destination in row.destinations"
-                           :key="destination.ring_group_destination_uuid"
-                           :text="destination.destination_number"
-                           :backgroundColor="destination.destination_enabled === false
-                               ? 'bg-gray-200'
-                               : 'bg-gray-100'"
-                           :textColor="destination.destination_enabled === false
-                              ? 'text-gray-400'
-                              : 'text-gray-700'"
-                           :ringColor="destination.destination_enabled === false
-                               ? 'ring-gray-300/20'
-                               : 'ring-gray-400/20'"
-                           class="px-2 py-1 text-xs font-semibold"
-                        />
-                    </TableField>
+                        <div class="flex flex-wrap gap-1">
+                            <ejs-tooltip
+                                v-for="destination in row.destinations"
+                                :key="destination.ring_group_destination_uuid"
+                                :content="
+                                    destination.suspended
+                                        ? 'Suspended Extension'
+                                        : destination.destination_enabled === false
+                                            ? 'Disabled Extension'
+                                            : 'Active Extension'
+                                "
+                                position="TopCenter"
+                            >
+                                <Badge
+                                    :text="destination.destination_number"
 
+                                    :backgroundColor="
+                                        destination.suspended
+                                            ? 'bg-red-50'                  // Use the palest red
+                                            : destination.destination_enabled === false
+                                                ? 'bg-gray-50'              // Use the palest gray
+                                                : 'bg-blue-100'               // Soft blue for active
+                                    "
+
+                                    :textColor="
+                                        destination.suspended
+                                            ? 'text-red-500'               // Softer red text
+                                            : destination.destination_enabled === false
+                                                ? 'text-gray-500'           // Lighter gray text
+                                                : 'text-blue-800'             // Darker blue for contrast
+                                    "
+
+                                    :ringColor="
+                                        destination.suspended
+                                            ? 'ring-red-200/20'
+                                            : destination.destination_enabled === false
+                                                ? 'ring-gray-300/20'
+                                                : 'ring-blue-200/20'
+                                    "
+
+                                    :class="[
+                                        'px-2 py-1 text-xs font-semibold',
+                                        { 'opacity-75': destination.suspended || destination.destination_enabled === false }
+                                    ]"
+                                />
+                            </ejs-tooltip>
+                        </div>
+                    </TableField>
+                    
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.ring_group_description" />
 

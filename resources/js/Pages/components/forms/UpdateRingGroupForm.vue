@@ -281,12 +281,32 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                     <ObjectElement :name="index">
                                         <HiddenElement name="uuid" :meta="true" />
                                         <HiddenElement name="destination" :meta="true" />
-                                        <StaticElement name="p_1" tag="p" :content="(el$) => {
-                                            // Retrieve the extension value (stored in a hidden field or member object)
-                                            const num = el$.parent.value.destination;
-                                            return getMemberLabel(num);
-                                        }" :columns="{ default: { container: 8, }, sm: { container: 4, }, }"
-                                            label="Member" :attrs="{ class: 'text-base font-semibold' }" />
+                                        <StaticElement
+                                            name="p_1"
+                                            tag="div"
+                                            :columns="{ default: { container: 8 }, sm: { container: 4 } }"
+                                            :label="(el$) => {
+                                                const isSusp = el$.parent.value.suspended;
+
+                                                let html = `Member`;
+
+                                                if (isSusp) {
+                                                    html += `
+                                                        <span class='ml-2 px-2 py-0.5 text-xs rounded font-semibold
+                                                                    bg-red-50 text-red-400 ring-1 ring-red-200/20'>
+                                                            Suspended
+                                                        </span>`;
+                                                }
+
+                                                return html;
+                                            }"
+
+                                            :content="(el$) => {
+                                                const label = getMemberLabel(el$.parent.value.destination);
+
+                                                return `<span class='text-base font-semibold'>${label}</span>`;
+                                            }"
+                                        />
 
                                         <SelectElement name="delay" :items="delayOptions" :search="true" :native="false"
                                             label="Delay" input-type="search" allow-absent autocomplete="off" :columns="{
@@ -345,15 +365,14 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                             info="Enable answer confirmation to prevent voicemails and automated systems from answering a call." 
                                             :disabled="() => { return !localOptions.permissions.destination_update}"/>
 
-                                        <ToggleElement name="enabled" :columns="{
-                                            default: {
-                                                container: 5,
-                                            },
-                                            sm: {
-                                                container: 4,
-                                            },
-                                        }" size="sm" label="Active" 
-                                        :disabled="() => { return !localOptions.permissions.destination_update}"/>
+                                        <ToggleElement
+                                            name="enabled"
+                                            :columns="{ default: { container: 5 }, sm: { container: 4 } }"
+                                            size="sm"
+                                            label="Active"
+                                            :disabled="(el$) => el$.parent.value.suspended || !localOptions.permissions.destination_update"
+                                            :default="(el$) => el$.parent.value.suspended ? false : el$.value"
+                                        />
                                         <!-- <StaticElement name="divider_1" tag="hr" /> -->
                                     </ObjectElement>
                                 </template>
@@ -630,6 +649,11 @@ const greetingTranscription = computed(() => {
 
 const allMemberOptions = props.options.member_options.flatMap(group => group.groupOptions);
 
+function isSuspended(extension) {
+    // Look up from props.options.member_options
+    const match = allMemberOptions.find(opt => opt.destination === extension);
+    return match?.suspended === true;
+}
 
 // Prepare an array of member objects based on ring_group.destinations:
 const memberItems = props.options.ring_group.destinations?.map(dest => {
@@ -641,12 +665,12 @@ const memberItems = props.options.ring_group.destinations?.map(dest => {
         delay: dest.destination_delay,                   // Delay (must match a Select option value)
         timeout: dest.destination_timeout,               // Timeout (must match a Select option value)
         prompt: !!dest.destination_prompt,               // Convert to boolean for Toggle
-        enabled: !!dest.destination_enabled,              // Convert to boolean for Toggle
+        enabled: dest.suspended ? false : !!dest.destination_enabled,
         type: match?.type || null,
+        suspended: dest.suspended === true, 
 
     }
 })
-
 onMounted(() => {
     form$.value.update({ // updates form data
         ring_group_uuid: props.options.ring_group.ring_group_uuid ?? null,
@@ -796,12 +820,21 @@ const formatTarget = (name, value) => {
 const emits = defineEmits(['close', 'error', 'success', 'refresh-data']);
 
 const submitForm = async (FormData, form$) => {
-    // Using form$.requestData will EXCLUDE conditional elements and it 
-    // will submit the form as Content-Type: application/json . 
-    const requestData = form$.requestData
+    const requestData = form$.requestData;
 
-    // console.log(requestData);
-    return await form$.$vueform.services.axios.put(localOptions.routes.update_route, requestData)
+    // --- FORCE DISABLED FOR SUSPENDED MEMBERS ---
+    if (Array.isArray(requestData.members)) {
+        requestData.members = requestData.members.map(m => ({
+            ...m,
+            enabled: m.suspended ? false : m.enabled
+        }));
+    }
+    // --------------------------------------------
+
+    return await form$.$vueform.services.axios.put(
+        localOptions.routes.update_route,
+        requestData
+    );
 };
 
 function clearErrorsRecursive(el$) {
