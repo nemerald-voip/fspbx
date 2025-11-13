@@ -97,67 +97,66 @@ class RingGroupsController extends Controller
      * @param  array  $filters
      * @return Builder
      */
-    public function builder(array $filters = [])
-    {
-        $data =  $this->model::query();
-        $domainUuid = session('domain_uuid');
-        $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
-        $data->with(['destinations' => function ($query) {
-            $query->select('ring_group_destination_uuid', 'ring_group_uuid', 'destination_number', 'destination_enabled');
-        }]);
+public function builder(array $filters = [])
+{
+    $data =  $this->model::query();
+    $domainUuid = session('domain_uuid');
 
-        $data->select(
-            'ring_group_uuid',
-            'ring_group_name',
-            'ring_group_extension',
-            'ring_group_enabled',
-            'ring_group_description',
-            'ring_group_forward_enabled',
-        );
+    // Scope ring groups to the current domain
+    $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
 
+    // Eager-load destinations, but hide suspended extensions
+    $data->with(['destinations' => function ($query) use ($domainUuid) {
+        $query
+            ->select(
+                'v_ring_group_destinations.ring_group_destination_uuid',
+                'v_ring_group_destinations.ring_group_uuid',
+                'v_ring_group_destinations.destination_number'
+            )
+            // Join to extensions on extension + domain
+            ->leftJoin('v_extensions', function ($join) use ($domainUuid) {
+                $join->on('v_extensions.extension', '=', 'v_ring_group_destinations.destination_number')
+                     ->on('v_extensions.domain_uuid', '=', 'v_ring_group_destinations.domain_uuid');
+            })
+            // Join to advanced settings by extension_uuid
+            ->leftJoin(
+                'extension_advanced_settings',
+                'v_extensions.extension_uuid',
+                '=',
+                'extension_advanced_settings.extension_uuid'
+            )
+            // Keep:
+            //  - destinations that are NOT extensions (v_extensions.extension_uuid is null), OR
+            //  - extensions where suspended is NOT 't' (or is null)
+            ->where(function ($q) {
+                $q->whereNull('v_extensions.extension_uuid')
+                  ->orWhereNull('extension_advanced_settings.suspended')
+                  ->orWhere('extension_advanced_settings.suspended', '!=', 't');
+            });
+    }]);
 
-        if (is_array($filters)) {
-            foreach ($filters as $field => $value) {
-                if (method_exists($this, $method = "filter" . ucfirst($field))) {
-                    $this->$method($data, $value);
-                }
+    $data->select(
+        'ring_group_uuid',
+        'ring_group_name',
+        'ring_group_extension',
+        'ring_group_enabled',
+        'ring_group_description',
+        'ring_group_forward_enabled',
+    );
+
+    if (is_array($filters)) {
+        foreach ($filters as $field => $value) {
+            if (method_exists($this, $method = "filter" . ucfirst($field))) {
+                $this->$method($data, $value);
             }
         }
-
-        // Apply sorting
-        $data->orderBy($this->sortField, $this->sortOrder);
-
-        return $data;
     }
 
+    // Apply sorting
+    $data->orderBy($this->sortField, $this->sortOrder);
 
-    /**
-     * @param $query
-     * @param $value
-     * @return void
-     */
-    protected function filterSearch($query, $value)
-    {
-        $searchable = $this->searchable;
-
-        // Case-insensitive partial string search in the specified fields
-        $query->where(function ($query) use ($value, $searchable) {
-            foreach ($searchable as $field) {
-                if (strpos($field, '.') !== false) {
-                    // Nested field (e.g., 'extension.name_formatted')
-                    [$relation, $nestedField] = explode('.', $field, 2);
-
-                    $query->orWhereHas($relation, function ($query) use ($nestedField, $value) {
-                        $query->where($nestedField, 'ilike', '%' . $value . '%');
-                    });
-                } else {
-                    // Direct field
-                    $query->orWhere($field, 'ilike', '%' . $value . '%');
-                }
-            }
-        });
-    }
-
+    return $data;
+}
     public function getItemOptions()
     {
         try {
@@ -189,23 +188,27 @@ class RingGroupsController extends Controller
 
             ];
 
-            $extensions = Extensions::where('domain_uuid', $domain_uuid)
-                ->select('extension_uuid', 'extension', 'effective_caller_id_name')
-                ->orderBy('extension', 'asc')
-                ->get();
+ $extensions = Extensions::query()
+    ->leftJoin('extension_advanced_settings', 'v_extensions.extension_uuid', '=', 'extension_advanced_settings.extension_uuid')
+    ->where('v_extensions.domain_uuid', $domain_uuid)
+    ->select(
+        'v_extensions.extension_uuid',
+        'v_extensions.extension',
+        'v_extensions.effective_caller_id_name',
+        DB::raw("COALESCE(extension_advanced_settings.suspended, 'f') as suspended")
+    )
+    ->orderBy('v_extensions.extension', 'asc')
+    ->get();
 
+    $ringGroupsQuery = RingGroups::where('domain_uuid', $domain_uuid)
+    ->select('ring_group_uuid', 'ring_group_extension', 'ring_group_name')
+    ->orderBy('ring_group_extension', 'asc');
 
-        $ringGroupsQuery = RingGroups::where('domain_uuid', $domain_uuid)
-            ->select('ring_group_uuid', 'ring_group_extension', 'ring_group_name')
-            ->orderBy('ring_group_extension', 'asc');
+if (!empty($item_uuid)) {
+    $ringGroupsQuery->where('ring_group_uuid', '!=', $item_uuid);
+}
 
-        if (!empty($item_uuid)) {
-        // Exclude the ring group currently being edited
-        $ringGroupsQuery->where('ring_group_uuid', '!=', $item_uuid);
-        }
-
-        $ringGroups = $ringGroupsQuery->get();
-
+$ringGroups = $ringGroupsQuery->get();
 
             $memberOptions = [
                 [
