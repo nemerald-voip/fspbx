@@ -47,6 +47,7 @@ class CallTranscriptionConfigService
 
         // Effective: domain overrides if set; else system
         $enabled       = $domain?->enabled ?? ($system?->enabled ?? false);
+        $auto_transcribe = $domain?->auto_transcribe ?? ($system?->auto_transcribe ?? false);
         $providerUuid  = $domain?->provider_uuid ?? ($system?->provider_uuid ?? null);
 
 
@@ -62,7 +63,7 @@ class CallTranscriptionConfigService
         }
 
         // 3) Provider config: use DOMAIN config if exists, otherwise SYSTEM config. 
-        $providerConfig = null;
+        $config = null;
 
         if ($providerUuid) {
             // Domain-specific config takes precedence if present
@@ -76,17 +77,19 @@ class CallTranscriptionConfigService
                 $providerConfig = CallTranscriptionProviderConfig::query()
                     ->where('provider_uuid', $providerUuid)
                     ->whereNull('domain_uuid')
-                    ->first()
-                    ->toArray();
+                    ->first();
             }
+
+            if ($providerConfig) $config = $providerConfig->toArray();
         }
 
         return [
             'enabled'          => $enabled,
+            'auto_transcribe'  => $auto_transcribe,
             'provider_uuid'    => $providerUuid,
             'provider_key'     => $providerKey,
             'provider_active'  => $providerActive,
-            'provider_config'  => $providerConfig,
+            'provider_config'  => $config,
         ];
     }
 

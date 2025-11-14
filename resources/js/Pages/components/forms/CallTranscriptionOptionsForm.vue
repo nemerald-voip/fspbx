@@ -38,6 +38,10 @@
                             <ToggleElement name="enabled" text="Enable call transcriptions" :true-value="true"
                                 :false-value="false" :disabled="disableOptions" />
 
+                            <!-- Auto-transcribe -->
+                            <ToggleElement name="auto_transcribe" text="Automatically transcribe new calls"
+                                :true-value="true" :false-value="false" :disabled="disableOptions" />
+
                             <!-- Provider -->
                             <SelectElement v-if="!domain_uuid" name="provider_uuid" label="Provider" :search="true"
                                 :items="providers" :floating="false" placeholder="Select Provider"

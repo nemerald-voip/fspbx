@@ -13,6 +13,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\Middleware\WithoutOverlapping;
 use App\Services\CallTranscription\CallTranscriptionService;
+use Exception;
 
 class TranscribeCdrJob implements ShouldQueue
 {
@@ -81,6 +82,10 @@ class TranscribeCdrJob implements ShouldQueue
     
             $providerKey = $service->currentProviderKey($this->domainUuid);
 
+            if (!$providerKey) {
+                throw new Exception("No transcription provider defined");
+            }
+
             $row = \App\Models\CallTranscription::updateOrCreate(
                 ['xml_cdr_uuid' => $this->xmlCdrUuid],               // lookup by unique key
                 [
@@ -108,7 +113,7 @@ class TranscribeCdrJob implements ShouldQueue
             ]);
     
         }, function () {
-            $this->release(1);
+            $this->release(30);
         });
     }
 }

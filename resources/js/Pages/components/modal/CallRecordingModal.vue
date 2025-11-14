@@ -293,7 +293,7 @@
                                                 <TabPanel :key="TABS[0].key"
                                                     class="rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                                                     <!-- Paste your existing transcript rendering logic here -->
-                                                    <div class="space-y-6">
+                                                    <div class="space-y-6" v-if="Array.isArray(grouped) && grouped.length">
                                                         <div v-for="(g, i) in grouped" :key="i"
                                                             class="flex items-start gap-4">
                                                             <div class="shrink-0 rounded-md px-2 py-0.5 text-sm font-medium"
@@ -312,6 +312,10 @@
                                                                 </p>
                                                             </div>
                                                         </div>
+                                                    </div>
+
+                                                    <div class="space-y-6" v-else>
+                                                        {{ recordingOptions?.transcription?.text }}
                                                     </div>
                                                 </TabPanel>
 
@@ -524,7 +528,8 @@ const status = computed(() =>
     recordingOptions.value?.transcription?.status ?? null
 )
 const utterances = computed(() => recordingOptions.value?.transcription?.utterances ?? [])
-const hasTranscript = computed(() => status.value === 'completed' && utterances.value.length > 0)
+// const hasTranscript = computed(() => status.value === 'completed' && utterances.value.length > 0)
+const hasTranscript = computed(() => status.value === 'completed')
 
 // --- STATE MANAGEMENT FOR SUMMARY ---
 const summaryRequested = ref(false)

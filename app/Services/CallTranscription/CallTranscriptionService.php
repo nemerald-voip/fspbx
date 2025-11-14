@@ -91,4 +91,13 @@ class CallTranscriptionService
         $cfg = $this->transcriptionConfigCached($domainUuid);
         return $cfg['provider_key'] ?? null;
     }
+
+    public function shouldAutoTranscribe(?string $domainUuid): bool
+    {
+        $cfg = $this->transcriptionConfigCached($domainUuid);
+        return array_key_exists('auto_transcribe', $cfg)
+            ? (bool) $cfg['auto_transcribe']
+            : false;
+
+    }
 }

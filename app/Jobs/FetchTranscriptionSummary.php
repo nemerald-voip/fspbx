@@ -10,9 +10,8 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use App\Services\CallTranscription\CallTranscriptionService;
 
-class PollOpenAIBackgroundSummary implements ShouldQueue
+class FetchTranscriptionSummary implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -30,8 +29,6 @@ class PollOpenAIBackgroundSummary implements ShouldQueue
     {
         // Allow only 2 tasks every 1 second
         Redis::throttle('summaries')->allow(2)->every(1)->then(function () {
-
-            logger('transcription uuid: ' . $this->uuid);
 
             $row = CallTranscription::find($this->uuid);
             if (!$row) return;

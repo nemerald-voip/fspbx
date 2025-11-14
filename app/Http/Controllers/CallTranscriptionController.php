@@ -64,12 +64,14 @@ class CallTranscriptionController extends Controller
 
         // Effective: domain overrides if set; else system
         $enabled       = $domain?->enabled ?? ($system?->enabled ?? false);
+        $auto_transcribe       = $domain?->auto_transcribe ?? ($system?->auto_transcribe ?? false);
         $providerUuid  = $domain?->provider_uuid ?? ($system?->provider_uuid ?? null);
 
         return response()->json([
             'scope'         => $domain ? 'domain' : 'system',
             'domain_uuid'   => $domainUuid,
             'enabled'       => (bool) $enabled,
+            'auto_transcribe' => (bool) $auto_transcribe,
             'provider_uuid' => $providerUuid,
         ]);
     }
@@ -88,6 +90,7 @@ class CallTranscriptionController extends Controller
                 ['domain_uuid' => $domainUuid],
                 [
                     'enabled'       => (bool) $data['enabled'],
+                    'auto_transcribe'       => (bool) $data['auto_transcribe'],
                     // In domain scope this may be null to inherit system provider
                     'provider_uuid' => $data['provider_uuid'] ?? null,
                 ]
@@ -237,15 +240,19 @@ class CallTranscriptionController extends Controller
         }
 
         // Fall back to system row (domain_uuid = NULL)
-        $systemCfg = CallTranscriptionProviderConfig::where('provider_uuid', $provider->uuid)
+        $systemRow = CallTranscriptionProviderConfig::where('provider_uuid', $provider->uuid)
             ->whereNull('domain_uuid')
-            ->first()
-            ->toArray();
+            ->first();
+
+        $rawConfig = data_get($systemRow, 'config'); // may be array|null|string(JSON)
+        $config    = is_array($rawConfig)
+            ? $rawConfig
+            : (is_string($rawConfig) ? (json_decode($rawConfig, true) ?: []) : []);
 
         return response()->json(array_merge([
             'scope'       => 'system',
             'domain_uuid' => $domainUuid,
-        ], $systemCfg['config'] ?? []));
+        ], $config));
     }
 
     /**
@@ -262,27 +269,27 @@ class CallTranscriptionController extends Controller
             'domain_uuid' => ['nullable', 'uuid'],
             'options'     => ['nullable', 'array'],
         ]);
-    
+
         try {
             TranscribeCdrJob::dispatch(
                 $data['uuid'],
                 $data['domain_uuid'] ?? null,
                 $data['options'] ?? []
             );
-    
+
             return response()->json([
                 'messages' => ['success' => ['Transcription request queued.']],
             ], 202);
         } catch (\Throwable $e) {
-            logger("CallTranscriptionController@transcribe error: ".$e->getMessage()." at ".$e->getFile().":".$e->getLine());
-    
+            logger("CallTranscriptionController@transcribe error: " . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
             return response()->json([
                 'errors' => ['error' => [$e->getMessage()]],
             ], 500);
         }
     }
 
-        /**
+    /**
      * Start a summarization for an existing transcription
      *
      * Query/body params (optional):
@@ -294,23 +301,23 @@ class CallTranscriptionController extends Controller
         $data = $request->validate([
             'uuid'        => ['required', 'uuid'],
         ]);
-    
+
         try {
             // Dispatch the job for summaries
             dispatch(new \App\Jobs\SummarizeCallTranscription($data['uuid']))->onQueue('transcriptions');
-    
+
             return response()->json([
                 'messages' => ['success' => ['Summarization request queued.']],
             ], 202);
         } catch (\Throwable $e) {
-            logger("CallTranscriptionController@summarize error: ".$e->getMessage()." at ".$e->getFile().":".$e->getLine());
-    
+            logger("CallTranscriptionController@summarize error: " . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
             return response()->json([
                 'errors' => ['error' => [$e->getMessage()]],
             ], 500);
         }
     }
-    
+
 
 
     public function getItemOptions()

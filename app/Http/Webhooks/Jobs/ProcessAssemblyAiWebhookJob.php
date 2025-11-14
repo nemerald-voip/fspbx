@@ -19,14 +19,11 @@ class ProcessAssemblyAiWebhookJob extends SpatieProcessWebhookJob
 
     public function handle(CallTranscriptionService $service): void
     {
-        logger('ProcessAssemblyAiWebhookjob');
 
         $payload = $this->webhookCall->payload;
 
         $transcriptId = data_get($payload, 'transcript_id');
         $status       = data_get($payload, 'status'); // completed|error
-
-        logger($status);
 
         if (!$transcriptId) {
             // nothing to do

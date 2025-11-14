@@ -12,7 +12,8 @@ return new class extends Migration {
             Schema::create('call_transcription_policy', function (Blueprint $table) {
                 $table->uuid('uuid')->primary()->default(DB::raw('uuid_generate_v4()'));
                 $table->uuid('domain_uuid')->nullable();
-                $table->boolean('enabled')->default(false); 
+                $table->boolean('enabled')->default(false);
+                $table->boolean('auto_transcribe')->default(false);
                 $table->uuid('provider_uuid')->nullable(); 
                 $table->timestamps();
 

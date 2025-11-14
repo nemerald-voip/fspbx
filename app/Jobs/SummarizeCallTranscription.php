@@ -8,7 +8,7 @@ use App\Models\CallTranscription;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
-use App\Jobs\PollOpenAIBackgroundSummary;
+use App\Jobs\FetchTranscriptionSummary;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 
@@ -77,7 +77,7 @@ class SummarizeCallTranscription implements ShouldQueue
 
 
             // Schedule the polling job
-            PollOpenAIBackgroundSummary::dispatch($row->uuid, $responseId)->delay(now()->addMinutes(1))->onQueue('transcriptions');;
+            FetchTranscriptionSummary::dispatch($row->uuid, $responseId)->delay(now()->addMinutes(1))->onQueue('transcriptions');;
 
         }, function () {
             return $this->release(30); // If locked, retry in 30 seconds

@@ -20,6 +20,7 @@ class StoreTranscriptionOptionsRequest extends FormRequest
 
         return [
             'enabled' => ['required', 'boolean'],
+            'auto_transcribe'  => ['required','boolean'],
 
             // For system scope: provider is required if enabled
             // For domain scope: provider is optional (inherit system if null)
