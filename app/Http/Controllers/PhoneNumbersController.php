@@ -32,9 +32,12 @@ use Illuminate\Contracts\Foundation\Application;
 use App\Http\Requests\BulkUpdatePhoneNumberRequest;
 use App\Services\DialplanBuilderService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use App\Traits\ChecksLimits;
 
 class PhoneNumbersController extends Controller
 {
+        use ChecksLimits;
+
     public $model;
     public $filters = [];
     public $sortField;
@@ -148,6 +151,14 @@ class PhoneNumbersController extends Controller
         try {
 
             $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
+
+
+              // Check for limits
+            if (!$item_uuid) {
+                if ($resp = $this->enforceLimit('destinations', \App\Models\Destinations::class)) {
+                    return $resp;
+                }
+            }
 
             $routingOptionsService = new CallRoutingOptionsService;
             $routingTypes = $routingOptionsService->routingTypes;
@@ -432,6 +443,12 @@ class PhoneNumbersController extends Controller
      */
     public function store(StorePhoneNumberRequest $request): JsonResponse
     {
+
+            // Enforce limit BEFORE creating new phone number
+            if ($resp = $this->enforceLimit('destinations', \App\Models\Destinations::class)) {
+                return $resp;
+            }
+
         try {
             $inputs = array_map(function ($value) {
                 return $value === 'NULL' ? null : $value;
