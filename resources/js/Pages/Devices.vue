@@ -375,31 +375,53 @@ const bulkActions = computed(() => {
 });
 
 const handleEditButtonClick = (itemUuid) => {
-    showUpdateModal.value = true
+ //Removed to make way for checking limits:
+ //    showUpdateModal.value = true
     getItemOptions(itemUuid);
 }
 
-const getItemOptions = (itemUuid = null) => {
-    itemOptions.value = {}
-    const payload = itemUuid ? { itemUuid: itemUuid } : {}; // Conditionally add itemUuid to payload
-    isModalLoading.value = true
-    axios.post(props.routes.item_options, payload)
-        .then((response) => {
-            itemOptions.value = response.data;
-            // console.log(itemOptions.value);
+const getItemOptions = async (itemUuid = null) => {
+    itemOptions.value = {};
+    isModalLoading.value = true;
 
-        }).catch((error) => {
-            handleModalClose();
-            handleErrorResponse(error);
-        }).finally(() => {
-            isModalLoading.value = false
-        })
+    try {
+        const payload = itemUuid ? { itemUuid } : {};
+        const response = await axios.post(props.routes.item_options, payload);
+        itemOptions.value = response.data;
+
+        if (itemUuid) {
+            showUpdateModal.value = true; 
+        }
+
+    } catch (error) {
+        handleModalClose();
+        handleErrorResponse(error);
+    } finally {
+        isModalLoading.value = false;
+    }
 }
 
-const handleCreateButtonClick = () => {
-    showCreateModal.value = true
-    isModalLoading.value = true
-    getItemOptions();
+
+const handleCreateButtonClick = async () => {
+    isModalLoading.value = true;
+
+    try {
+        const response = await axios.post(props.routes.item_options, {
+            itemUuid: null,
+        });
+
+        // Only open modal if no limit error
+        itemOptions.value = response.data;
+        showCreateModal.value = true;
+
+    } catch (error) {
+        // Limit reached → show toast, do NOT open modal
+        handleErrorResponse(error);
+        return;
+
+    } finally {
+        isModalLoading.value = false;
+    }
 }
 
 

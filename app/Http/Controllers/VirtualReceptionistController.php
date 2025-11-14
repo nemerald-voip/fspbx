@@ -16,9 +16,12 @@ use App\Http\Requests\StoreVirtualReceptionistRequest;
 use App\Http\Requests\UpdateVirtualReceptionistRequest;
 use App\Http\Requests\CreateVirtualReceptionistKeyRequest;
 use App\Http\Requests\UpdateVirtualReceptionistKeyRequest;
+use App\Traits\ChecksLimits;
 
 class VirtualReceptionistController extends Controller
 {
+        use ChecksLimits;
+
     public $model;
     public $filters = [];
     public $sortField;
@@ -517,6 +520,17 @@ class VirtualReceptionistController extends Controller
 
                 ]);
             } else {
+
+                // Check for limits
+                if ($resp = $this->enforceLimit(
+                    'ivr_menus',
+                    \App\Models\IvrMenus::class,
+                    'domain_uuid',
+                    'ivr_limit_error'
+                )) {
+                    return $resp;
+                }
+
                 // Create a new voicemail if item_uuid is not provided
                 $ivr = $this->model;
                 $ivr->ivr_menu_extension = $ivr->generateUniqueSequenceNumber();

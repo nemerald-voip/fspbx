@@ -20,6 +20,7 @@ use App\Http\Requests\StoreDeviceRequest;
 use App\Http\Requests\UpdateDeviceRequest;
 use App\Http\Requests\BulkUpdateDeviceRequest;
 use App\Services\DeviceCloudProvisioningService;
+use App\Traits\ChecksLimits;
 
 /**
  * The DeviceController class is responsible for handling device-related operations, such as listing, creating, and storing devices.
@@ -28,6 +29,7 @@ use App\Services\DeviceCloudProvisioningService;
  */
 class DeviceController extends Controller
 {
+    use ChecksLimits;
 
     public $model;
     public $filters = [];
@@ -557,6 +559,16 @@ class DeviceController extends Controller
         try {
 
             $itemUuid = request('itemUuid');
+
+        // Check for limits
+        if (!$itemUuid) {
+            if ($resp = $this->enforceLimit(
+                'devices',
+                \App\Models\Devices::class
+            )) {
+                return $resp;
+            }
+        }
 
             $routes = [];
 

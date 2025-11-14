@@ -15,9 +15,11 @@ use Illuminate\Support\Facades\Session;
 use App\Services\CallRoutingOptionsService;
 use App\Http\Requests\StoreRingGroupRequest;
 use App\Http\Requests\UpdateRingGroupRequest;
+use App\Traits\ChecksLimits;
 
 class RingGroupsController extends Controller
 {
+    use ChecksLimits;
 
     public $model;
     public $filters = [];
@@ -309,6 +311,18 @@ class RingGroupsController extends Controller
                 // Define the update route
                 $updateRoute = route('ring-groups.update', ['ring_group' => $item_uuid]);
             } else {
+
+               // Check for limits
+                if ($resp = $this->enforceLimit(
+                    'ring_groups',
+                    \App\Models\RingGroups::class,
+                    'domain_uuid',
+                    'ring_group_limit_error'
+                )) {
+                    return $resp;
+                }
+
+
                 // Create a new model if item_uuid is not provided
                 $item = $this->model;
                 $item->ring_group_extension = $item->generateUniqueSequenceNumber();

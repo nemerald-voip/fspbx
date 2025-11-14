@@ -50,10 +50,12 @@ use App\Http\Requests\UpdateExtensionRequest;
 use extension;
 use Spatie\Activitylog\Facades\CauserResolver;
 use Propaganistas\LaravelPhone\Exceptions\NumberParseException;
+use App\Traits\ChecksLimits;
 
 
 class ExtensionsController extends Controller
 {
+    use ChecksLimits;
 
     public $model;
     public $filters = [];
@@ -210,6 +212,17 @@ class ExtensionsController extends Controller
     public function getItemOptions(Request $request)
     {
         $itemUuid = $request->input('item_uuid');
+
+        //Check for limits
+                if (!$itemUuid) {
+            if ($resp = $this->enforceLimit(
+                'extensions',
+                \App\Models\Extensions::class
+            )) {
+                return $resp;
+            }
+        }
+
 
         $currentDomain = session('domain_uuid');
 
@@ -599,20 +612,6 @@ class ExtensionsController extends Controller
                 }
             }
         } else {
-
-            // Check limits
-            $limit = get_limit_setting('extensions', $currentDomain);
-            if ($limit !== null) {
-                $limit_error = get_domain_setting('extension_limit_error', $currentDomain) ?? 'You have reached the maximum number of extensions allowed (%d).';
-                $currentCount = \App\Models\Extensions::where('domain_uuid', $currentDomain)->count();
-                if ($currentCount >= $limit) {
-                    return response()->json([
-                        'errors' => [
-                            'extension' => [sprintf($limit_error, $limit)]
-                        ]
-                    ], 403);
-                }
-            }
 
             // New extension defaults
             $extensionDto = ExtensionDetailData::from([
