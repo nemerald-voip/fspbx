@@ -146,18 +146,21 @@ class CdrDataService
             ->defaultSort('-start_epoch');
 
         if ($params['paginate']) {
-            $cdrs = $cdrs->paginate($params['paginate']);
-        } else {
-            $cdrs = $cdrs->cursor();
-        }
-        // logger($cdrs);
-
-        // Apply caller ID formatting if phone number appears on name display
-        $cdrs->getCollection()->transform(function ($cdr) {
+            $cdrs = $cdrs->paginate($params['paginate']);  
+            $cdrs->getCollection()->transform(function ($cdr) {
             $cdr->caller_id_name   = formatCallerIdName($cdr->caller_id_name);
+        return $cdr;
+        });
 
-        return $cdrs;
-    }
+        } else {
+     // logger($cdrs);
+        $cdrs = $cdrs->cursor()->map(function ($cdr) {
+        $cdr->caller_id_name   = formatCallerIdName($cdr->caller_id_name);
+        return $cdr;
+    });
+}
+
+return $cdrs;
 
 
     public function getFormattedDuration($value)
