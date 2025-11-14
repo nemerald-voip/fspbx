@@ -152,6 +152,10 @@ class CdrDataService
         }
         // logger($cdrs);
 
+        // Apply caller ID formatting if phone number appears on name display
+        $cdrs->getCollection()->transform(function ($cdr) {
+            $cdr->caller_id_name   = formatCallerIdName($cdr->caller_id_name);
+
         return $cdrs;
     }
 

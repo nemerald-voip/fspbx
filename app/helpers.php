@@ -788,6 +788,24 @@ if (!function_exists('generate_password')) {
     }
 }
 
+if (!function_exists('formatCallerIdName')) {
+    function formatCallerIdName($name)
+    {
+        // If the "name" looks like a US +1 number, normalize it
+        if (preg_match('/^\+1\d{10}$/', $name)) {
+            return formatPhoneNumber($name, 'US', \libphonenumber\PhoneNumberFormat::NATIONAL);
+        }
+
+        // If it looks like a 10-digit US number, also normalize
+        if (preg_match('/^\d{10}$/', $name)) {
+            return formatPhoneNumber($name, 'US', \libphonenumber\PhoneNumberFormat::NATIONAL);
+        }
+
+        // Otherwise return as-is (because it's likely a real name)
+        return $name;
+    }
+}
+
 if (!function_exists('formatPhoneNumber')) {
     function formatPhoneNumber($phoneNumber, $countryCode = 'US', $format = PhoneNumberFormat::NATIONAL)
     {
