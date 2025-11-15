@@ -4,12 +4,13 @@ namespace App\Console\Commands\Updates;
 
 use Illuminate\Support\Facades\File;
 use Symfony\Component\Process\Process;
+use Illuminate\Support\Facades\Artisan;
 
 class Update110
 {
     protected string $source = 'install/fs-cdr-service.conf';
     protected string $target = '/etc/supervisor/conf.d/fs-cdr-service.conf';
-    protected string $program = 'cdr-ingest-daemon'; // must match [program:...] in your conf
+    protected string $program = 'fs-cdr-service'; // must match [program:...] in your conf
 
     // Regex to match the legacy cron lines (spaces normalized)
     // Matches any token after xml_cdr_import.php (e.g., 100 abcdef), and any redirection.
@@ -19,6 +20,7 @@ class Update110
 
     public function apply()
     {
+        // /var/www/fspbx/public/app/switch/resources/scripts/app/ring_groups/index.lua
         echo "[Update110] Starting...\n";
 
         // Preflight: root check (most failures are permissions)
@@ -74,11 +76,34 @@ class Update110
             echo "[Update110] Restarting Horizon queue workers...\n";
             $this->restartHorizon();
 
+            $result = $this->runMenuUpdate();
+
             return true;
         } catch (\Exception $e) {
             echo "Error applying the update: " . $e->getMessage() . "\n";
             return false;
         }
+    }
+
+    /**
+     * Run the artisan command to update the FS PBX menu.
+     *
+     * @return int Exit code of the Artisan call
+     */
+    protected function runMenuUpdate(): int
+    {
+        echo "Running menu:update (menu:create-fspbx --update)...\n";
+        $exitCode = Artisan::call('menu:create-fspbx', ['--update' => true]);
+        $output   = Artisan::output();
+        echo $output;
+
+        if ($exitCode !== 0) {
+            echo "Error: Menu update command failed with exit code $exitCode.\n";
+        } else {
+            echo "Menu update completed successfully.\n";
+        }
+
+        return $exitCode;
     }
 
     /**
