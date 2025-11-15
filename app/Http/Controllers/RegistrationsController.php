@@ -172,25 +172,72 @@ class RegistrationsController extends Controller
     }
 
 
-    public function handleAction(DeviceActionService $deviceActionService)
-    {
-        try {
-            foreach (request('regs') as $reg) {
-                $deviceActionService->handleDeviceAction($reg, request('action'));
-            }
+ public function handleAction(DeviceActionService $deviceActionService, FreeswitchEslService $eslService)
+{
+    try {
+        $action = request('action');
+//        logger("handleAction triggered: action={$action}");
 
-            // Return a JSON response indicating success
-            return response()->json([
-                'messages' => ['success' => ['Request has been succesfully processed']]
-            ], 201);
-        } catch (\Exception $e) {
-            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
-            return response()->json([
-                'success' => false,
-                'errors' => ['server' => [$e->getMessage()]]
-            ], 500); // 500 Internal Server Error for any other errors
+        foreach (request('regs') as $reg) {
+            $profile = (string)($reg['sip_profile_name'] ?? '');
+            $user    = (string)($reg['sip_auth_user'] ?? '');
+            $realm   = (string)($reg['sip_auth_realm'] ?? '');
+            $target  = ($user && $realm) ? "{$user}@{$realm}" : '';
+
+//            logger("Processing: profile={$profile}, user={$user}, realm={$realm}, target={$target}");
+
+            if ($action === 'unregister' && $target && $profile) {
+                // Use native FreeSWITCH unregister always (no vendor check)
+                $commandsToTry = [
+                    "sofia profile {$profile} flush_inbound_reg {$target} reboot",
+                    "sofia profile {$profile} flush_inbound_reg {$target} all reboot",
+                    "sofia profile {$profile} unregister {$user} {$realm}"
+                ];
+
+                $success = false;
+                foreach ($commandsToTry as $cmd) {
+                    try {
+//                        logger("Executing FS command: {$cmd}");
+                        $result = $eslService->executeCommand($cmd, false); // use executeCommand()
+//                        logger("Result: " . (is_scalar($result) ? $result : json_encode($result)));
+
+                        // Detect success by '+OK' pattern or non-error XML
+                        if (is_string($result) && preg_match('/\+?OK/i', $result)) {
+//                            logger("Command succeeded: {$cmd}");
+                            $success = true;
+                            break;
+                        }
+                    } catch (\Throwable $t) {
+//                        logger("Command failed: {$cmd} => " . $t->getMessage());
+                    }
+                }
+
+                if (!$success) {
+//                    logger("All native FS commands failed, falling back to DeviceActionService");
+                    $deviceActionService->handleDeviceAction($reg, $action);
+                }
+            } else {
+                // Everything else uses existing logic
+                $deviceActionService->handleDeviceAction($reg, $action);
+            }
         }
+
+        // Disconnect once at the end (cleanup)
+        $eslService->disconnect();
+
+        return response()->json([
+            'messages' => ['success' => ['Request successfully processed']]
+        ], 201);
+
+    } catch (\Exception $e) {
+        logger("handleAction Exception: " . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+        return response()->json([
+            'success' => false,
+            'errors'  => ['server' => [$e->getMessage()]]
+        ], 500);
     }
+}
+
 
     /**
      * Get all items

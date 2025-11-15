@@ -12,11 +12,17 @@ Getting started with FS PBX is a breeze.
 
 Before you begin, ensure you have met the following requirements:
 
-- Debian 11 or 12
+- Debian 12 or 13
 - 4GB of RAM (for production, more RAM is recommended)
 - 30 GB Hard drive ( for production, an NVME hard drive with more space is recommended)
 
 ## Installation
+
+:::tip
+
+If you’re installing on **Debian 13**, a **SignalWire Personal Access Token** is required. Follow the guide here to create or update your token: [How To Create a SignalWire Personal Access Token](additional-information/signalwire-token.md)
+
+:::
 
 1. **Download and run the installation script**
 
@@ -28,11 +34,11 @@ Before you begin, ensure you have met the following requirements:
 
     Follow the steps in this article to configure your custom domain.
    
-    [How to Secure FS PBX with a Let’s Encrypt SSL Certificate](https://github.com/nemerald-voip/fspbx/wiki/How-to-Secure-FS-PBX-with-a-Let%E2%80%99s-Encrypt-SSL-Certificate)
+    [How to Secure FS PBX with a Let’s Encrypt SSL Certificate](configuration/web-server/lets-encrypt-certificate.md)
 
 3. **Troubleshooting Error 419 (Page Expired)**
 
-    Read [this article](https://github.com/nemerald-voip/fspbx/wiki/Troubleshooting-Error-419-(Page-Expired)) to learn how CSRF tokens protect your app and how to configure your server to prevent 419 responses.
+    Read [this article](troubleshooting/error-419.md) to learn how CSRF tokens protect your app and how to configure your server to prevent 419 responses.
    
 ### Usage
 After completing the installation steps, you can access the application at your domain.

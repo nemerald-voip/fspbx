@@ -731,6 +731,14 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "Enable voicemail transcriptions",
             ],
+            [
+                'default_setting_category'      => 'voicemail',
+                'default_setting_subcategory'   => 'voicemail_queue_strategy',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "modern",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "modern: enables the new, optimized queue handling with improved performance and stability. legacy: uses the original queue behavior for backward compatibility.",
+            ],
             
             // Add more settings here...
         ];
@@ -739,13 +747,10 @@ class RecommendedSettingsSeeder extends Seeder
             // Check for existing setting
             $existing_item = DefaultSettings::where('default_setting_category', $setting['default_setting_category'])
                 ->where('default_setting_subcategory', $setting['default_setting_subcategory'])
-                ->where('default_setting_value', $setting['default_setting_value'])
-                ->first();
+                ->get();
 
-            if ($existing_item) {
-                // Delete the existing item
-                $existing_item->delete();
-            }
+            // Delete the existing items
+            $existing_item->each->delete();
 
             // Recreate the setting
             DefaultSettings::create([
@@ -755,6 +760,7 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_value'         => $setting['default_setting_value'],
                 'default_setting_enabled'       => $setting['default_setting_enabled'],
                 'default_setting_description'   => $setting['default_setting_description'],
+                'insert_date'                   => now(),
             ]);
         }
     }

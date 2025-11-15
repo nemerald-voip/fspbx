@@ -13,6 +13,12 @@ print_error() {
     echo -e "\e[31m$1 \e[0m"  # Red text
 }
 
+# Detect OS codename
+
+OS_CODENAME=$(lsb_release -sc 2>/dev/null || echo "")
+
+echo "Detected OS_CODENAME=$OS_CODENAME"
+
 # Ensure Git is installed
 if ! command -v git &> /dev/null; then
     apt update && apt install -y git

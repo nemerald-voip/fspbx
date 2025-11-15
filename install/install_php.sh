@@ -32,7 +32,7 @@ fi
 
 # Install required dependencies
 apt-get update
-apt-get install -y apt-transport-https lsb-release ca-certificates curl wget gnupg2 software-properties-common
+apt-get install -y apt-transport-https lsb-release ca-certificates curl wget gnupg2
 
 # Add PHP repository from packages.sury.org
 print_success "Adding PHP Repository..."
@@ -64,9 +64,13 @@ if [[ "$CPU_ARCHITECTURE" == "x86_64" ]]; then
     bash ./ioncube.sh
 fi
 
+sleep 2
+
 # Restart PHP-FPM
 print_success "Restarting PHP-FPM..."
 systemctl daemon-reload
 systemctl restart php$PHP_VERSION-fpm
+
+sleep 6
 
 print_success "PHP $PHP_VERSION installation completed successfully!"

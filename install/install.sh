@@ -10,6 +10,9 @@ print_error() {
     echo -e "\e[31m$1 \e[0m"  # Red text
 }
 
+# Detect OS codename
+OS_CODENAME=$(lsb_release -sc 2>/dev/null || echo "")
+echo "Detected OS_CODENAME=$OS_CODENAME"
 
 print_success  "Welcome to FS PBX installation script"
 
@@ -63,8 +66,12 @@ apt-get install -y \
     libreoffice-java-common \
     supervisor \
     redis-server \
-    software-properties-common \
     apt-transport-https
+
+if [[ "$OS_CODENAME" == "bookworm" ]]; then
+    apt-get install -y software-properties-common
+fi
+
 if [ $? -eq 0 ]; then
     print_success "Essential dependencies installed successfully."
 else
@@ -72,6 +79,7 @@ else
     exit 1
 fi
 
+    if [[ "$OS_CODENAME" == "bookworm" ]]; then
 # Install SNMP and configure it
 print_success "Installing and configuring SNMP..."
 apt-get install -y snmpd
@@ -92,6 +100,7 @@ else
     print_error "Error occurred while installing SNMP."
     exit 1
 fi
+    fi
 
 print_success "Configuring IPTables firewall rules..."
 bash /var/www/fspbx/install/configure_iptables.sh
@@ -238,41 +247,54 @@ else
 fi
 
 # Install Node.js
-if [ $? -eq 0 ]; then
-    if [ $? -eq 0 ]; then
-        sudo mkdir -p /etc/apt/keyrings
-        curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor --batch --yes -o /etc/apt/keyrings/nodesource.gpg
-        if [ $? -eq 0 ]; then
-            NODE_MAJOR=20
-            echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list > /dev/null
-            sudo apt-get update
-            if [ $? -eq 0 ]; then
-                sudo apt-get install -y nodejs
-                if [ $? -eq 0 ]; then
-                    print_success "Node.js installed successfully."
-                else
-                    print_error "Error occurred during Node.js installation."
-                    exit 1
-                fi
-            else
-                print_error "Error occurred during APT update after adding Node.js repository."
-                exit 1
-            fi
-        else
-            print_error "Error occurred while setting up Node.js GPG key."
-            exit 1
-        fi
-    else
-        print_error "Error occurred during installation of CA certificates, curl, or gnupg."
-        exit 1
-    fi
-else
+sudo apt-get update -y
+if [ $? -ne 0 ]; then
     print_error "Error occurred during APT update."
     exit 1
 fi
 
+sudo mkdir -p /etc/apt/keyrings
+if [ $? -ne 0 ]; then
+    print_error "Failed to create /etc/apt/keyrings."
+    exit 1
+fi
 
-# Change to the Freeswitch PBX directory
+if [[ "$OS_CODENAME" == "bookworm" ]]; then
+    curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key \
+        | sudo gpg --dearmor --batch --yes -o /etc/apt/keyrings/nodesource.gpg
+    if [ $? -ne 0 ]; then
+        print_error "Error occurred while setting up Node.js GPG key."
+        exit 1
+    fi
+
+    NODE_MAJOR=20
+    echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" \
+        | sudo tee /etc/apt/sources.list.d/nodesource.list > /dev/null
+fi
+
+if [[ "$OS_CODENAME" == "trixie" ]]; then
+    curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+    if [ $? -ne 0 ]; then
+        print_error "Error occurred while running NodeSource setup script."
+        exit 1
+    fi
+fi
+
+sudo apt-get update -y
+if [ $? -ne 0 ]; then
+    print_error "Error occurred during APT update after adding Node.js repository."
+    exit 1
+fi
+
+sudo apt-get install -y nodejs
+if [ $? -eq 0 ]; then
+    print_success "Node.js installed successfully."
+else
+    print_error "Error occurred during Node.js installation."
+    exit 1
+fi
+
+# Change to the FS PBX directory
 cd /var/www/fspbx/
 if [ $? -eq 0 ]; then
     print_success "Changed to /var/www/fspbx/ directory."
@@ -343,6 +365,36 @@ else
     print_error "Error occurred while linking new Nginx site config."
     exit 1
 fi
+
+# FS PBX internal vhost (new in 1.0.2)
+cp install/nginx_fspbx_internal.conf /etc/nginx/sites-available/fspbx_internal.conf
+if [ $? -eq 0 ]; then
+    print_success "Copied internal Nginx site config to sites-available."
+else
+    print_error "Error occurred while copying internal Nginx site config."
+    exit 1
+fi
+
+# Check if symbolic link already exists and remove it if necessary
+if [ -L /etc/nginx/sites-enabled/fspbx_internal.conf ]; then
+    rm /etc/nginx/sites-enabled/fspbx_internal.conf
+    if [ $? -eq 0 ]; then
+        print_success "Existing symbolic link for fspbx_internal.conf removed."
+    else
+        print_error "Error occurred while removing existing symbolic link for fspbx_internal.conf."
+        exit 1
+    fi
+fi
+
+# Create symbolic link for fspbx_internal.conf
+ln -s /etc/nginx/sites-available/fspbx_internal.conf /etc/nginx/sites-enabled/fspbx_internal.conf
+if [ $? -eq 0 ]; then
+    print_success "Linked internal Nginx site config to sites-enabled."
+else
+    print_error "Error occurred while linking internal Nginx site config."
+    exit 1
+fi
+
 
 # Create directories for SSL certificates if they don't exist
 sudo mkdir -p /etc/nginx/ssl/private

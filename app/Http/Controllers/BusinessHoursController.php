@@ -394,6 +394,7 @@ class BusinessHoursController extends Controller
      */
     public function generateDialPlanXML(BusinessHour $businessHour): void
     {
+        logger($businessHour);
         // Data to pass to the Blade template
         $data = [
             'businessHour' => $businessHour,
