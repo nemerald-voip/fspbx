@@ -20,9 +20,6 @@ fi
 
 # Define the cron job entries as a string
 CRON_JOBS="
-* * * * * cd /var/www/fspbx; /usr/bin/php /var/www/fspbx/public/app/xml_cdr/xml_cdr_import.php 100 abcdef >/dev/null 2>&1
-* * * * * cd /var/www/fspbx; /usr/bin/php /var/www/fspbx/public/app/xml_cdr/xml_cdr_import.php 100 01234 >/dev/null 2>&1
-* * * * * cd /var/www/fspbx; /usr/bin/php /var/www/fspbx/public/app/xml_cdr/xml_cdr_import.php 100 56789 >/dev/null 2>&1
 * * * * * cd /var/www/fspbx && php artisan schedule:run >> /dev/null 2>&1
 "
 

@@ -64,6 +64,14 @@ return [
         'url' => env('WATSON_SPEECH_URL'),
     ],
 
+    'assemblyai' => [
+        'api_key' => env('ASSEMBLYAI_API_KEY', ''),
+        'region' => env('ASSEMBLYAI_REGION', 'US'), 
+        'base_url' => env('ASSEMBLYAI_BASE_URL', 'api.assemblyai.com'),
+        'webhook_header_name'  => env('ASSEMBLYAI_WEBHOOK_HEADER', 'X-FSPBX-Webhook'),
+        'webhook_header_value' => env('ASSEMBLYAI_WEBHOOK_SECRET', ''),
+    ],
+
     'keygen' => [
         'api_url' => env('KEYGEN_API_URL', 'https://api.keygen.sh'),
         'account_id' => env('KEYGEN_ACCOUNT_ID', 'f2ca6242-a55c-4949-9529-d7d591d3271a'),

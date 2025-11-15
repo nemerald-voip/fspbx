@@ -646,96 +646,6 @@ else
     exit 1
 fi
 
-# Download and replace the groups.php file
-# sudo curl -o /var/www/fspbx/public/resources/classes/groups.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/resources/classes/groups.php
-# if [ $? -eq 0 ]; then
-#     print_success "groups.php file downloaded and replaced successfully."
-# else
-#     print_error "Error occurred while downloading and replacing groups.php file."
-#     exit 1
-# fi
-
-# Download and replace the xml_cdr.php file
-# sudo curl -o /var/www/fspbx/public/app/xml_cdr/resources/classes/xml_cdr.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/xml_cdr/resources/classes/xml_cdr.php
-# if [ $? -eq 0 ]; then
-#     print_success "xml_cdr.php file downloaded and replaced successfully."
-# else
-#     print_error "Error occurred while downloading and replacing xml_cdr.php file."
-#     exit 1
-# fi
-
-# Download and replace the functions.php file
-# sudo curl -o /var/www/fspbx/public/resources/functions.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/resources/functions.php
-# if [ $? -eq 0 ]; then
-#     print_success "functions.php file downloaded and replaced successfully."
-# else
-#     print_error "Error occurred while downloading and replacing functions.php file."
-#     exit 1
-# fi
-
-# Download and replace the permissions.php file
-# sudo curl -o /var/www/fspbx/public/resources/classes/permissions.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/resources/classes/permissions.php
-# if [ $? -eq 0 ]; then
-#     print_success "permissions.php file downloaded and replaced successfully."
-# else
-#     print_error "Error occurred while downloading and replacing permissions.php file."
-#     exit 1
-# fi
-
-# Download and replace the dialplan.php file
-# sudo curl -o /var/www/fspbx/public/app/dialplans/resources/classes/dialplan.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/dialplans/resources/classes/dialplan.php
-# if [ $? -eq 0 ]; then
-#     print_success "dialplan.php file downloaded and replaced successfully."
-# else
-#     print_error "Error occurred while downloading and replacing dialplan.php file."
-#     exit 1
-# fi
-
-# Download and replace the fax_send.php file
-# sudo curl -o /var/www/fspbx/public/app/fax_queue/resources/job/fax_send.php https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/fax_queue/resources/job/fax_send.php
-# if [ $? -eq 0 ]; then
-#     print_success "fax_send.php file downloaded and replaced successfully."
-# else
-#     print_error "Error occurred while downloading and replacing fax_send.php file."
-#     exit 1
-# fi
-
-# Download and replace the ivr.conf.lua file
-# sudo curl -o /var/www/fspbx/public/app/switch/resources/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua
-# if [ $? -eq 0 ]; then
-#     print_success "ivr.conf.lua file downloaded and replaced successfully."
-# else
-#     print_error "Error occurred while downloading and replacing ivr.conf.lua file."
-#     exit 1
-# fi
-
-# Download and replace the ivr.conf.lua file
-# sudo curl -o /usr/share/freeswitch/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/xml_handler/resources/scripts/configuration/ivr.conf.lua
-# if [ $? -eq 0 ]; then
-#     print_success "ivr.conf.lua file downloaded and replaced successfully."
-# else
-#     print_error "Error occurred while downloading and replacing ivr.conf.lua file."
-#     exit 1
-# fi
-
-# Download and replace the hangup_tx.lua file
-# sudo curl -o /var/www/fspbx/public/app/switch/resources/scripts/app/fax/resources/scripts/hangup_tx.lua https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/fax/resources/scripts/hangup_tx.lua
-# if [ $? -eq 0 ]; then
-#     print_success "hangup_tx.lua file downloaded and replaced successfully."
-# else
-#     print_error "Error occurred while downloading and replacing hangup_tx.lua file."
-#     exit 1
-# fi
-
-# Download and replace the hangup_tx.lua file
-# sudo curl -o /usr/share/freeswitch/scripts/app/fax/resources/scripts/hangup_tx.lua https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/fax/resources/scripts/hangup_tx.lua
-# if [ $? -eq 0 ]; then
-#     print_success "hangup_tx.lua file downloaded and replaced successfully."
-# else
-#     print_error "Error occurred while downloading and replacing hangup_tx.lua file."
-#     exit 1
-# fi
-
 
 # Change ownership of the entire fspbx directory to www-data
 sudo chown -R www-data:www-data /var/www/fspbx
@@ -959,24 +869,6 @@ else
     exit 1
 fi
 
-# Install Supervisor
-# sudo apt-get -y install supervisor
-# if [ $? -eq 0 ]; then
-#     print_success "Supervisor installed successfully."
-# else
-#     print_error "Error occurred while installing Supervisor."
-#     exit 1
-# fi
-
-# Install Redis Server
-# sudo apt-get -y install redis-server
-# if [ $? -eq 0 ]; then
-#     print_success "Redis Server installed successfully."
-# else
-#     print_error "Error occurred while installing Redis Server."
-#     exit 1
-# fi
-
 # Copy Redis configuration
 sudo cp install/redis.conf /etc/redis/redis.conf
 if [ $? -eq 0 ]; then
@@ -1011,6 +903,15 @@ if [ $? -eq 0 ]; then
     print_success "Laravel Horizon assets published successfully."
 else
     print_error "Error occurred while publishing Laravel Horizon assets."
+    exit 1
+fi
+
+# Copy FS PBX CDR Service configuration to Supervisor
+sudo cp install/fs-cdr-service.conf /etc/supervisor/conf.d/
+if [ $? -eq 0 ]; then
+    print_success "FS PBX CDR Service configuration file copied to Supervisor successfully."
+else
+    print_error "Error occurred while copying FS PBX CDR Service configuration file to Supervisor."
     exit 1
 fi
 
@@ -1073,6 +974,16 @@ else
     exit 1
 fi
 
+# Restart FS ELS Emergency process under Supervisor
+sudo supervisorctl restart fs-cdr-service
+if [ $? -eq 0 ]; then
+    sleep 6
+    print_success "FS PBX CDR Service process restarted successfully."
+else
+    print_error "Error occurred while restarting FS PBX CDR Service process."
+    exit 1
+fi
+
 print_success "Seeding the database and configuring FS PBX..."
 # Navigate to Laravel project directory
 cd /var/www/fspbx
@@ -1086,28 +997,6 @@ else
     print_error "Error occurred during database seeding and FS PBX configuration."
     exit 1
 fi
-
-
-
-# # Terminal graphic for FS PBX
-# echo ""
-# echo " ███████████  █████████     ███████████  ███████████  █████ █████"
-# echo "░░███░░░░░░█ ███░░░░░███   ░░███░░░░░███░░███░░░░░███░░███ ░░███ "
-# echo " ░███   █ ░ ░███    ░░░     ░███    ░███ ░███    ░███ ░░███ ███  "
-# echo " ░███████   ░░█████████     ░██████████  ░██████████   ░░█████   "
-# echo " ░███░░░█    ░░░░░░░░███    ░███░░░░░░   ░███░░░░░███   ███░███  "
-# echo " ░███  ░     ███    ░███    ░███         ░███    ░███  ███ ░░███ "
-# echo " █████      ░░█████████     █████        ███████████  █████ █████"
-# echo "░░░░░        ░░░░░░░░░     ░░░░░        ░░░░░░░░░░░  ░░░░░ ░░░░░ "
-# echo ""
-# echo "Welcome to FS PBX!"
-# echo ""
-
-# # Congratulations message
-# echo "=============================================================="
-# echo "Congratulations! FS PBX has been installed successfully."
-# echo "You can now access your PBX at https://your_server_ip or https://your_domain."
-# echo "=============================================================="
 
 
 

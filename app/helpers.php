@@ -1114,7 +1114,7 @@ if (! function_exists('getRingBackTonesCollectionGrouped')) {
                 ->orWhereNull('domain_uuid');
         })
             ->with(['domain' => function ($query) {
-                $query->select('domain_uuid', 'domain_name'); 
+                $query->select('domain_uuid', 'domain_name');
             }])
             ->orderBy('music_on_hold_name')
             ->get()
@@ -1122,7 +1122,7 @@ if (! function_exists('getRingBackTonesCollectionGrouped')) {
             ->values()
             ->map(fn($m) => [
                 'label' => $m->music_on_hold_name,
-                'value' => $m->domain_uuid ? 'local_stream://' . $m->domain->domain_name . '/' .$m->music_on_hold_name : 'local_stream://' . $m->music_on_hold_name,
+                'value' => $m->domain_uuid ? 'local_stream://' . $m->domain->domain_name . '/' . $m->music_on_hold_name : 'local_stream://' . $m->music_on_hold_name,
             ])
             ->toArray();
 

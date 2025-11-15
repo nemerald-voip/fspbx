@@ -17,6 +17,7 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Vite;
 use App\Services\PolycomCloudProvider;
+use App\Models\CallTranscriptionPolicy;
 use Illuminate\Support\ServiceProvider;
 use App\Observers\EmergencyCallObserver;
 use Illuminate\Database\Eloquent\Builder;
@@ -25,6 +26,9 @@ use App\Models\Sanctum\PersonalAccessToken;
 use App\Observers\EmergencyCallEmailObserver;
 use App\Observers\BusinessHourHolidayObserver;
 use App\Observers\EmergencyCallMemberObserver;
+use App\Models\CallTranscriptionProviderConfig;
+use App\Observers\CallTranscriptionPolicyObserver;
+use App\Observers\CallTranscriptionProviderConfigObserver;
 
 
 class AppServiceProvider extends ServiceProvider
@@ -70,7 +74,7 @@ class AppServiceProvider extends ServiceProvider
             $service = app(RingotelApiService::class);
             return Http::withHeaders([
                 'Authorization' => 'Bearer ' . $service->getRingotelApiToken(),
-            ])->baseUrl(config('ringotel.api_url','https://shell.ringotel.co/api'));
+            ])->baseUrl(config('ringotel.api_url', 'https://shell.ringotel.co/api'));
         });
 
         Http::macro('polycom', function () {
@@ -93,6 +97,8 @@ class AppServiceProvider extends ServiceProvider
         EmergencyCallEmail::observe(EmergencyCallEmailObserver::class);
         BusinessHourHoliday::observe(BusinessHourHolidayObserver::class);
         Devices::observe(DeviceObserver::class);
+        CallTranscriptionPolicy::observe(CallTranscriptionPolicyObserver::class);
+        CallTranscriptionProviderConfig::observe(CallTranscriptionProviderConfigObserver::class);
 
         Builder::macro('orWhereLike', function (string $column, string $search) {
             return $this->orWhere($column, 'ILIKE', '%' . trim($search) . '%');
