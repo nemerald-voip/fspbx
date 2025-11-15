@@ -244,10 +244,12 @@ class CallTranscriptionController extends Controller
             ->whereNull('domain_uuid')
             ->first();
 
-        $rawConfig = data_get($systemRow, 'config'); // may be array|null|string(JSON)
-        $config    = is_array($rawConfig)
-            ? $rawConfig
-            : (is_string($rawConfig) ? (json_decode($rawConfig, true) ?: []) : []);
+        // Get config and normalize it to a plain array
+        $config = data_get($systemRow, 'config', []);
+
+        if ($config instanceof \Illuminate\Database\Eloquent\Casts\ArrayObject) {
+            $config = $config->toArray();
+        }
 
         return response()->json(array_merge([
             'scope'       => 'system',
