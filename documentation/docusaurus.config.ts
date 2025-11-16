@@ -155,6 +155,42 @@ const config: Config = {
       theme: prismThemes.github,
       darkTheme: prismThemes.dracula,
     },
+    algolia: {
+        // The application ID provided by Algolia
+        appId: 'YQ5EHUW4KL',
+  
+        // Public API key: it is safe to commit it
+        apiKey: 'e1a4e92ec4048f2297c96d7cf229d6fa',
+  
+        indexName: 'FS PBX Docs',
+  
+        // Optional: see doc section below
+        contextualSearch: true,
+  
+        // Optional: Specify domains where the navigation should occur through window.location instead on history.push. Useful when our Algolia config crawls multiple documentation sites and we want to navigate with window.location.href to them.
+        externalUrlRegex: 'external\\.com|domain\\.com',
+  
+        // Optional: Replace parts of the item URLs from Algolia. Useful when using the same search index for multiple deployments using a different baseUrl. You can use regexp or string in the `from` param. For example: localhost:3000 vs myCompany.com/docs
+        // replaceSearchResultPathname: {
+        //   from: '/docs/', // or as RegExp: /\/docs\//
+        //   to: '/',
+        // },
+  
+        // Optional: Algolia search parameters
+        searchParameters: {},
+  
+        // Optional: path for search page that enabled by default (`false` to disable it)
+        searchPagePath: 'search',
+  
+        // Optional: whether the insights feature is enabled or not on Docsearch (`false` by default)
+        insights: false,
+  
+        // Optional: whether you want to use the new Ask AI feature (undefined by default)
+        // askAi: 'YOUR_ALGOLIA_ASK_AI_ASSISTANT_ID',
+  
+        //... other Algolia params
+      },
+
   } satisfies Preset.ThemeConfig,
   plugins: ["./src/plugins/tailwind-config.js"],
 };

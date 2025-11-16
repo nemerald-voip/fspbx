@@ -186,16 +186,16 @@
                             <template v-if="(row.record_name && row.record_path) || row.record_path === 'S3'
                                 " #action-buttons>
                                 <div class="flex items-center space-x-2 whitespace-nowrap">
-                                    <PlayCircleIcon v-if="page.props.auth.can.call_recording_play && (currentAudioUuid !== row.xml_cdr_uuid || !isAudioPlaying)
-                                    " @click="fetchAndPlayAudio(row.xml_cdr_uuid)"
-                                        class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" />
-                                    <PauseCircleIcon v-if="currentAudioUuid === row.xml_cdr_uuid && isAudioPlaying"
+                                    <PlayCircleIcon v-if="permissions.call_recording_play" @click="handleCallRecordingButtonClick(row.xml_cdr_uuid)"
+                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                        <!-- class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" /> -->
+                                    <!-- <PauseCircleIcon v-if="currentAudioUuid === row.xml_cdr_uuid && isAudioPlaying"
                                         @click="pauseAudio"
-                                        class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" />
+                                        class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" /> -->
 
-                                    <CloudArrowDownIcon v-if="page.props.auth.can.call_recording_download"
+                                    <!-- <CloudArrowDownIcon v-if="page.props.auth.can.call_recording_download"
                                         @click="downloadAudio(row.xml_cdr_uuid)"
-                                        class="h-6 w-6 text-gray-500 hover:text-gray-700 active:h-5 active:w-5 cursor-pointer" />
+                                        class="h-6 w-6 text-gray-500 hover:text-gray-700 active:h-5 active:w-5 cursor-pointer" /> -->
                                 </div>
                             </template>
                         </TableField>
@@ -244,9 +244,12 @@
     </MainLayout>
 
 
-    <CallDetailsModal :show="viewModalTrigger" :item="itemOptions?.item" :loading="loadingModal"
+    <CallDetailsModal :show="showDetailsModal" :item="itemOptions?.item" :loading="loadingModal"
         :customClass="'sm:max-w-4xl'" @close="handleModalClose">
     </CallDetailsModal>
+
+    <CallRecordingModal :show="showCallRecordingModal" :cdr_uuid="selectedUuid" :routes="routes" @close="showCallRecordingModal = false"
+        @error="handleErrorResponse" @success="showNotification"/>
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -270,6 +273,7 @@ import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import { registerLicense } from '@syncfusion/ej2-base';
 import DatePicker from "./components/general/DatePicker.vue";
 import CallDetailsModal from "./components/modal/CallDetailsModal.vue"
+import CallRecordingModal from "./components/modal/CallRecordingModal.vue"
 import Notification from "./components/notifications/Notification.vue";
 import {
     PlayCircleIcon,
@@ -285,15 +289,15 @@ import Loading from "./components/general/Loading.vue";
 import Spinner from "./components/general/Spinner.vue";
 
 const page = usePage()
-const today = new Date();
 const loading = ref(false)
-const viewModalTrigger = ref(false);
+const showDetailsModal = ref(false);
+const showCallRecordingModal = ref(false);
 const loadingModal = ref(false)
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
 const isExporting = ref(null);
-const selectedStatuses = ref([]);
+const recordingOptions = ref(null)
 
 const data = ref({
     data: [],
@@ -346,6 +350,7 @@ const filterData = ref({
 
 const showGlobal = ref(props.showGlobal);
 const itemOptions = ref({});
+const selectedUuid = ref(null)
 
 const callDirections = [
     { value: 'outbound', name: 'Outbound' },
@@ -362,9 +367,31 @@ const statusOptions = [
     { name: 'Abandoned', value: 'abandoned' },
 ];
 
-const handleSelectedStatusUpdate = (updatedStatuses) => {
-    filterData.value.statuses = updatedStatuses;
+const handleCallRecordingButtonClick = (uuid) => {
+    showCallRecordingModal.value = true
+    // getCallRecordingOptions(uuid);
+    selectedUuid.value = uuid
 };
+
+// const getCallRecordingOptions = (uuid) => {
+//     loadingModal.value = true
+//     axios.get(props.routes.call_recording_route, {
+//         params: {
+//             item_uuid: uuid
+//         }
+//     })
+//         .then((response) => {
+//             recordingOptions.value = response.data;
+//             console.log(recordingOptions.value);
+
+//         }).catch((error) => {
+
+//             handleErrorResponse(error);
+//         }).finally(() => {
+//             loadingModal.value = false
+//         })
+
+// }
 
 const getData = (page = 1) => {
     loading.value = true;
@@ -408,7 +435,7 @@ const getEntities = () => {
 }
 
 const handleViewRequest = (itemUuid) => {
-    viewModalTrigger.value = true
+    showDetailsModal.value = true
     loadingModal.value = true
     getItemOptions(itemUuid);
 
@@ -429,18 +456,6 @@ const getItemOptions = (itemUuid = null) => {
         });
 }
 
-const handleUpdateCallDirectionFilter = (newSelectedItem) => {
-    if (newSelectedItem.value == "NULL") {
-        filterData.value.direction = null;
-    } else {
-        filterData.value.direction = newSelectedItem.value;
-    }
-}
-
-const handleUpdateUserOrGroupFilter = (newSelectedItem) => {
-    filterData.value.entity = newSelectedItem.value;
-    filterData.value.entityType = newSelectedItem.type;
-}
 
 const handleSearchButtonClick = () => {
     getData();
@@ -470,83 +485,6 @@ const renderRequestedPage = (url) => {
 
     // Now call getData with the page number
     getData(pageParam);
-};
-
-const currentAudio = ref(null);
-const currentAudioUuid = ref(null);
-const isAudioPlaying = ref(false);
-
-const fetchAndPlayAudio = (uuid) => {
-    router.visit("/call-detail-records", {
-        data: {
-            callUuid: uuid,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["recordingUrl"],
-        onSuccess: (page) => {
-            // Stop the currently playing audio (if any)
-            if (currentAudio.value) {
-                currentAudio.value.pause();
-                currentAudio.value.currentTime = 0; // Reset the playback position
-            }
-
-            currentAudioUuid.value = uuid;
-            isAudioPlaying.value = true;
-
-            currentAudio.value = new Audio(props.recordingUrl);
-            currentAudio.value.play();
-
-            // Add an event listener for when the audio ends
-            currentAudio.value.addEventListener("ended", () => {
-                isAudioPlaying.value = false;
-                currentAudioUuid.value = null;
-            });
-        },
-    });
-};
-
-const downloadAudio = (uuid) => {
-    router.visit("/call-detail-records", {
-        data: {
-            filterData: filterData._rawValue,
-            callUuid: uuid,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["recordingUrl"],
-        onSuccess: (page) => {
-            let fileName;
-
-            if (props.recordingUrl.includes("call-detail-records/file")) {
-                // Shorten the name
-                fileName = uuid;
-            } else {
-                // If the substring is not present, use the original URL
-                fileName = props.recordingUrl;
-            }
-
-            // Create an anchor element and set the attributes for downloading
-            const anchor = document.createElement("a");
-            anchor.href = props.recordingUrl;
-            anchor.download = fileName; // You can set a specific filename here if desired
-            document.body.appendChild(anchor);
-
-            // Trigger the download
-            anchor.click();
-
-            // Clean up by removing the anchor element
-            document.body.removeChild(anchor);
-        },
-    });
-};
-
-const pauseAudio = () => {
-    // Check if currentAudio has an Audio object before calling pause
-    if (currentAudio.value) {
-        currentAudio.value.pause();
-        isAudioPlaying.value = false;
-    }
 };
 
 const handleUpdateDateRange = (newDateRange) => {
@@ -585,7 +523,7 @@ const handleShowLocal = () => {
 }
 
 const handleModalClose = () => {
-    viewModalTrigger.value = false;
+    showDetailsModal.value = false;
 }
 
 const hideNotification = () => {

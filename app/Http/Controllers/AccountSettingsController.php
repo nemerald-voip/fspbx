@@ -49,6 +49,7 @@ class AccountSettingsController extends Controller
                     return getGroupedTimezones();
                 },
                 'routes' => [
+                    'dashboard_route' => route('dashboard'),
                     'settings_update' => route('account-settings.update'),
                     'emergency_calls' => route('emergency-calls.index'),
                     'emergency_calls_store' => route('emergency-calls.store'),
@@ -69,6 +70,10 @@ class AccountSettingsController extends Controller
                     'hotel_room_status_item_options' =>route('hotel-room-status.item.options'),
                     'hotel_room_status_bulk_delete' =>route('hotel-room-status.bulk.delete'),
                     'housekeeping_item_options' =>route('housekeeping.item.options'),
+                    'transcription_providers_route' => route('call-transcription.providers'),
+                    'transcription_policy_route' => route('call-transcription.policy'),
+                    'transcription_policy_store_route' => route('call-transcription.policy.store'),
+                    'transcription_policy_destroy_route' => route('call-transcription.policy.destroy'),
 
                     //'bulk_update' => route('devices.bulk.update'),
                 ],

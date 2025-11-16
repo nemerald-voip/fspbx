@@ -248,6 +248,8 @@ const filterData = ref({
 const servers = [
     { value: 'server1', name: 'SBC1' },
     { value: 'server2', name: 'SBC2' },
+    { value: 'server3', name: 'SBC3' },
+    { value: 'server4', name: 'SBC4' },
 ]
 
 const showGlobal = ref(false);

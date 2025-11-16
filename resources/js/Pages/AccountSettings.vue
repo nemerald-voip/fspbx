@@ -1,290 +1,163 @@
 <template>
-    <MainLayout>
+    <PageWithSideMenu title="Account Settings" :navigation="navigation" :pages="pages" :header-icon="Cog6ToothIcon"
+        :initial-menu-option="initialMenuOption" @update-selected-menu-option="handleUpdateSelectedMenuOption">
 
-        <div class="mt-3 px-4 sm:px-6 lg:px-8">
-            <div class="sm:flex sm:items-center">
-                <div class="sm:flex-auto">
-                    <div>
-                        <div class="mt-3 text-lg font-semibold leading-6 text-gray-600">
-                            Account Settings
-                        </div>
-                    </div>
+        <template #default="{ selectedMenuOption }">
 
-                </div>
-            </div>
+            <!-- GENERAL -->
+            <section v-show="selectedMenuOption === 'general'">
+                <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
+                    @response="handleResponse" :display-errors="false">
+                    <template #empty>
 
+                        <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
 
-        </div>
+                            <div class="lg:col-span-12">
+                                <FormElements>
 
-        <main class="mx-auto max-w-full pb-10 sm:px-6 md:py-12 flex gap-2 md:gap-8 relative">
-            <aside :class="isNavCollapsed ? 'w-15' : 'w-64'"
-                class="flex flex-col flex-none transition-all duration-300">
-                <div class="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-4">
-                    <nav class="flex flex-1 flex-col mt-12">
-                        <ul role="list" class="flex flex-1 flex-col gap-y-7">
-                            <li>
-                                <ul role="list" class="-mx-2 space-y-1">
-                                    <li v-for="item in navigation" :key="item.key">
-                                        <div v-if="!item.children" class="relative">
-                                            <button type="button" @click="navigateTo(item.key)"
-                                                :class="[isActive(item.key) ? 'bg-gray-100' : 'hover:bg-gray-100', 'group flex items-center gap-x-3 w-full text-left rounded-md p-2 text-sm/6 font-semibold text-gray-700']">
-                                                <component :is="item.icon" class="size-6 shrink-0"
-                                                    :class="isActive(item.key) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
-                                                <span class="truncate" v-show="!isNavCollapsed">{{ item.name }}</span>
-                                            </button>
-                                            <span v-if="isNavCollapsed"
-                                                class="absolute left-full top-1/2 -translate-y-1/2 ml-4 w-auto min-w-max scale-0 rounded bg-gray-900 p-2 text-xs font-bold text-white transition-all group-hover:scale-100 origin-left z-10">
-                                                {{ item.name }}
-                                            </span>
-                                        </div>
+                                    <!-- General Tab -->
 
-                                        <Disclosure as="div" v-else v-slot="{ open }"
-                                            :default-open="parentHasActiveChild(item)">
-                                            <div class="relative">
-                                                <DisclosureButton
-                                                    :class="[parentHasActiveChild(item) ? 'bg-gray-100' : 'hover:bg-gray-100', 'group flex w-full items-center gap-x-3 rounded-md p-2 text-left text-sm/6 font-semibold text-gray-700']">
-                                                    <component :is="item.icon" class="size-6 shrink-0"
-                                                        :class="parentHasActiveChild(item) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
-                                                    <span class="truncate" v-show="!isNavCollapsed">{{ item.name
-                                                    }}</span>
-                                                    <ChevronRightIcon v-show="!isNavCollapsed"
-                                                        :class="[open ? 'rotate-90 text-gray-500' : 'text-gray-400', 'ml-auto size-5 shrink-0']" />
-                                                </DisclosureButton>
-                                                <span v-if="isNavCollapsed"
-                                                    class="absolute left-full top-1/2 -translate-y-1/2 ml-4 w-auto min-w-max scale-0 rounded bg-gray-900 p-2 text-xs font-bold text-white transition-all group-hover:scale-100 origin-left z-10">
-                                                    {{ item.name }}
-                                                </span>
-                                            </div>
-                                            <DisclosurePanel as="ul" class="mt-1"
-                                                :class="isNavCollapsed ? 'pl-0' : 'pl-6'">
-                                    <li v-for="subItem in item.children" :key="subItem.key" class="relative">
-                                        <button type="button" @click="navigateTo(subItem.key)" :class="[
-                                            isActive(subItem.key) ? 'bg-gray-100' : 'hover:bg-gray-100',
-                                            'group flex w-full items-center gap-x-3 rounded-md py-2 pr-2 text-sm/6 text-gray-700',
-                                            isNavCollapsed ? 'justify-center' : 'pl-1'
-                                        ]">
-
-                                            <component v-if="subItem.icon" :is="subItem.icon" class="size-5 shrink-0"
-                                                :class="isActive(subItem.key) ? 'text-indigo-600' : 'text-gray-400 group-hover:text-indigo-600'" />
-
-                                            <!-- label (hidden when collapsed) -->
-                                            <span v-show="!isNavCollapsed" class="truncate">{{ subItem.name }}</span>
-
-                                            <!-- fallback initial only if no icon and collapsed -->
-                                            <span v-if="isNavCollapsed && !subItem.icon" class="font-bold">
-                                                {{ subItem.name.charAt(0) }}
-                                            </span>
-                                        </button>
-
-                                        <!-- tooltip when collapsed -->
-                                        <span v-if="isNavCollapsed"
-                                            class="absolute left-full top-1/2 -translate-y-1/2 ml-4 w-auto min-w-max scale-0 rounded bg-gray-900 p-2 text-xs font-bold text-white transition-all group-hover:scale-100 origin-left z-10">
-                                            {{ subItem.name }}
-                                        </span>
-                                    </li>
-                                    </DisclosurePanel>
-                                    </Disclosure>
-                            </li>
-                        </ul>
-                        </li>
-                        </ul>
-                    </nav>
-
-                </div>
-            </aside>
-
-            <button @click="toggleNav" :class="isNavCollapsed ? 'left-10 sm:left-14' : 'left-64'"
-                class="absolute top-1 md:top-14 -translate-x-1/2 bg-white rounded-full p-1.5 border shadow-md text-gray-500 hover:text-indigo-600 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all duration-300 z-10">
-                <ChevronDoubleLeftIcon class="size-5 transition-transform duration-300"
-                    :class="{ 'rotate-180': isNavCollapsed }" />
-            </button>
-
-            <!-- MAIN content -->
-            <div class="flex-1 shadow md:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 md:p-6">
-
-                <!-- GENERAL -->
-                <section v-show="activeSection === 'general'">
-                    <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
-                        @response="handleResponse" :display-errors="false">
-                        <template #empty>
-
-                            <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
-                                <!-- <div class="px-2 py-6 sm:px-6 lg:col-span-2 lg:px-0 lg:py-0">
-                                <FormTabs view="vertical" @select="handleTabSelected">
-                                    <FormTab name="page0" label="General" :elements="[
-                                        'general_tab_label',
-                                        'domain_enabled',
-                                        'domain_description',
-                                        'domain_name',
-                                        'time_zone',
-                                        'general_submit',
-
-                                    ]" :conditions="[() => true]" />
-
-                                    <FormTab name="locations" label="Locations" :elements="[
-                                        'locations_title',
-                                        'add_location',
-                                        'locations_table',
-
-                                    ]" :conditions="[() => permissions?.location_view]" />
-
-                                    <FormTab name="auto_provisioning" label="Auto Provisioning" :elements="[
-                                        'auto_provisioning',
-                                        // 'add_location',
-                                        // 'locations_table',
-
-                                    ]" :conditions="[() => permissions?.location_view]" />
-
-                                    <FormTab name="page2" label="Emergency Calls" :elements="[
-                                        'emergency_calls',
-                                        'container_1',
-                                        'container_2',
-                                        'divider',
-                                        'emergency_calls_service_status'
-                                    ]" :conditions="[() => true]" />
-
-                                </FormTabs>
-                            </div> -->
-
-                                <div class="lg:col-span-12">
-                                    <FormElements>
-
-                                        <!-- General Tab -->
-
-                                        <StaticElement name="general_tab_label" tag="h4" content="General" />
-                                        <HiddenElement name="domain_uuid" :meta="true" />
-                                        <ToggleElement name="domain_enabled" text="Account Status" />
-                                        <TextElement name="domain_description" label="Account Name"
-                                            placeholder="Enter Account Name" :floating="false" :columns="{
-                                                sm: {
-                                                    container: 6,
-                                                },
-                                            }" />
-                                        <TextElement name="domain_name" label="Domain" :readonly="true" :columns="{
+                                    <StaticElement name="general_tab_label" tag="h4" content="General" />
+                                    <HiddenElement name="domain_uuid" :meta="true" />
+                                    <ToggleElement name="domain_enabled" text="Account Status" />
+                                    <TextElement name="domain_description" label="Account Name"
+                                        placeholder="Enter Account Name" :floating="false" :columns="{
                                             sm: {
                                                 container: 6,
                                             },
                                         }" />
-                                        <SelectElement name="time_zone" :groups="true" :items="timezones" :search="true"
-                                            :native="false" label="Time Zone" input-type="search" autocomplete="off"
-                                            placeholder="Select Time Zone" :floating="false" :strict="false" :columns="{
-                                                sm: {
-                                                    container: 6,
-                                                },
-                                            }" />
+                                    <TextElement name="domain_name" label="Domain" :readonly="true" :columns="{
+                                        sm: {
+                                            container: 6,
+                                        },
+                                    }" />
+                                    <SelectElement name="time_zone" :groups="true" :items="timezones" :search="true"
+                                        :native="false" label="Time Zone" input-type="search" autocomplete="off"
+                                        placeholder="Select Time Zone" :floating="false" :strict="false" :columns="{
+                                            sm: {
+                                                container: 6,
+                                            },
+                                        }" />
 
-                                        <ButtonElement name="general_submit" button-label="Save" :submits="true"
-                                            align="right" />
+                                    <ButtonElement name="general_submit" button-label="Save" :submits="true"
+                                        align="right" />
 
 
 
-                                    </FormElements>
-                                </div>
+                                </FormElements>
                             </div>
-                        </template>
-                    </Vueform>
-                </section>
+                        </div>
+                    </template>
+                </Vueform>
+            </section>
 
-                <!-- LOCATIONS -->
-                <section v-show="activeSection === 'locations'">
-                    <Vueform>
-                        <StaticElement name="locations_title" tag="h4" content="Locations"
-                            description="Locations help you group your users and resources within your organization. When you assign users to specific locations, they will only be able to see the resources that belong to those locations." />
+            <!-- LOCATIONS -->
+            <section v-show="selectedMenuOption === 'locations'">
+                <Vueform>
+                    <StaticElement name="locations_title" tag="h4" content="Locations"
+                        description="Locations help you group your users and resources within your organization. When you assign users to specific locations, they will only be able to see the resources that belong to those locations." />
 
-                        <ButtonElement name="add_location" button-label="Add Location" align="right"
-                            @click="handleAddLocationButtonClick" :loading="addLocationButtonLoading"
-                            :conditions="[() => permissions?.location_create]" />
-                        <GroupElement name="container_1" />
-                    </Vueform>
+                    <ButtonElement name="add_location" button-label="Add Location" align="right"
+                        @click="handleAddLocationButtonClick" :loading="addLocationButtonLoading"
+                        :conditions="[() => permissions?.location_create]" />
+                    <GroupElement name="container_1" />
+                </Vueform>
 
-                    <Locations :locations="locations" :loading="isLocationsLoading" :permissions="permissions"
-                        @edit-item="handleUpdateLocationButtonClick" @delete-item="handleDeleteLocationButtonClick" />
-                </section>
+                <Locations :locations="locations" :loading="isLocationsLoading" :permissions="permissions"
+                    @edit-item="handleUpdateLocationButtonClick" @delete-item="handleDeleteLocationButtonClick" />
+            </section>
 
-                <!-- AUTO PROVISIONING -->
-                <section v-show="activeSection === 'auto_provisioning'">
-                    <Vueform>
-                        <StaticElement name="locations_title" tag="h4" content="Auto Provisioning"
-                            description="Manage your auto provisioning templates." />
+            <!-- AUTO PROVISIONING -->
+            <section v-show="selectedMenuOption === 'auto_provisioning'">
+                <Vueform>
+                    <StaticElement name="locations_title" tag="h4" content="Auto Provisioning"
+                        description="Manage your auto provisioning templates." />
 
-                        <GroupElement name="container_1" />
-                    </Vueform>
+                    <GroupElement name="container_1" />
+                </Vueform>
 
-                    <AutoProvisioning :trigger="autoProvisioningTrigger" :routes="routes" :permissions="permissions"
-                        :domain_uuid="data.domain_uuid" />
-                </section>
+                <AutoProvisioning :trigger="autoProvisioningTrigger" :routes="routes" :permissions="permissions"
+                    :domain_uuid="data.domain_uuid" />
+            </section>
 
-                <!-- ROOM MANAGEMENT -->
-                <section v-show="activeSection === 'room_management'">
-                    <Vueform>
-                        <StaticElement name="room_management_title" tag="h4" content="Room Management" description="" />
-                        <GroupElement name="container_1" />
-                    </Vueform>
+            <!--  Transcription - General Settings -->
+            <section v-if="selectedMenuOption === 'transcription_options'">
+                <CallTranscriptionOptionsForm :domain_uuid="data?.domain_uuid" :routes="routes" @error="handleErrorResponse"
+                    @success="showNotification" />
+            </section>
 
-                    <RoomManagement :trigger="roomManagementTrigger" :routes="routes" :permissions="permissions"
-                        :domain_uuid="data.domain_uuid" />
-                </section>
+            <!-- ROOM MANAGEMENT -->
+            <section v-show="selectedMenuOption === 'room_management'">
+                <Vueform>
+                    <StaticElement name="room_management_title" tag="h4" content="Room Management" description="" />
+                    <GroupElement name="container_1" />
+                </Vueform>
 
-                <!-- ROOM STATUS -->
-                <section v-show="activeSection === 'room_status'">
-                    <Vueform>
-                        <StaticElement name="room_management_title" tag="h4" content="Room Status" description="" />
-                        <GroupElement name="container_1" />
-                    </Vueform>
+                <RoomManagement :trigger="roomManagementTrigger" :routes="routes" :permissions="permissions"
+                    :domain_uuid="data.domain_uuid" />
+            </section>
 
-                    <RoomStatus :trigger="roomStatusTrigger" :routes="routes" :permissions="permissions"
-                        :domain_uuid="data.domain_uuid" />
-                </section>
+            <!-- ROOM STATUS -->
+            <section v-show="selectedMenuOption === 'room_status'">
+                <Vueform>
+                    <StaticElement name="room_management_title" tag="h4" content="Room Status" description="" />
+                    <GroupElement name="container_1" />
+                </Vueform>
 
-                <!-- EMERGENCY CALLS -->
-                <section v-show="activeSection === 'emergency_calls'">
+                <RoomStatus :trigger="roomStatusTrigger" :routes="routes" :permissions="permissions"
+                    :domain_uuid="data.domain_uuid" />
+            </section>
 
-                    <Vueform>
-                        <StaticElement name="locations_title" tag="h4" content="Emergency Calls" description="" />
+            <!-- EMERGENCY CALLS -->
+            <section v-show="selectedMenuOption === 'emergency_calls'">
 
-
-                        <GroupElement name="container_1" />
-                    </Vueform>
-
-                    <EmergencyCalls :routes="routes" />
-                    <div class="flex p-5 items-center">
-                        <div class="w-full border-t border-gray-300" aria-hidden="true" />
-
-                        <div class="w-full border-t border-gray-300" aria-hidden="true" />
-                    </div>
-
-                    <EmergencyServiceStatus :routes="routes" />
-                </section>
-
-            </div>
-        </main>
+                <Vueform>
+                    <StaticElement name="locations_title" tag="h4" content="Emergency Calls" description="" />
 
 
+                    <GroupElement name="container_1" />
+                </Vueform>
 
-        <!-- </main> -->
+                <EmergencyCalls :routes="routes" />
+                <div class="flex p-5 items-center">
+                    <div class="w-full border-t border-gray-300" aria-hidden="true" />
 
-        <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
-            @update:show="hideNotification" />
+                    <div class="w-full border-t border-gray-300" aria-hidden="true" />
+                </div>
 
-        <CreateLocationModal :show="showCreateLocationModal" :route="routes.locations_store"
-            @close="showCreateLocationModal = false" @success="val => showNotification('success', val)"
-            @error="handleErrorResponse" @refresh-data="getLocations" />
+                <EmergencyServiceStatus :routes="routes" />
+            </section>
+        </template>
 
-        <UpdateLocationModal :show="showUpdateLocationModal" :route="locationUpdateRoute" :location="selectedLocation"
-            @close="showUpdateLocationModal = false" @success="val => showNotification('success', val)"
-            @error="handleErrorResponse" @refresh-data="getLocations" />
+        <template #overlays>
 
-        <ConfirmationModal :show="showDeleteLocationConfirmationModal"
-            @close="showDeleteLocationConfirmationModal = false" @confirm="confirmDeleteLocationAction"
-            :header="'Confirm Deletion'" :loading="isDeleteLocationLoading"
-            :text="'This action will permanently delete the selected location. Are you sure you want to proceed?'"
-            confirm-button-label="Delete" cancel-button-label="Cancel" />
-    </MainLayout>
+            <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
+                @update:show="hideNotification" />
+
+            <CreateLocationModal :show="showCreateLocationModal" :route="routes.locations_store"
+                @close="showCreateLocationModal = false" @success="val => showNotification('success', val)"
+                @error="handleErrorResponse" @refresh-data="getLocations" />
+
+            <UpdateLocationModal :show="showUpdateLocationModal" :route="locationUpdateRoute"
+                :location="selectedLocation" @close="showUpdateLocationModal = false"
+                @success="val => showNotification('success', val)" @error="handleErrorResponse"
+                @refresh-data="getLocations" />
+
+            <ConfirmationModal :show="showDeleteLocationConfirmationModal"
+                @close="showDeleteLocationConfirmationModal = false" @confirm="confirmDeleteLocationAction"
+                :header="'Confirm Deletion'" :loading="isDeleteLocationLoading"
+                :text="'This action will permanently delete the selected location. Are you sure you want to proceed?'"
+                confirm-button-label="Delete" cancel-button-label="Cancel" />
+
+        </template>
+
+    </PageWithSideMenu>
+
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
-import MainLayout from '../Layouts/MainLayout.vue'
+import { ref, onMounted, markRaw } from 'vue'
+import PageWithSideMenu from '../Layouts/PageWithSideMenu.vue'
 import Notification from "./components/notifications/Notification.vue";
 import EmergencyCalls from "./components/EmergencyCalls.vue";
 import AutoProvisioning from "./components/AutoProvisioning.vue";
@@ -295,18 +168,17 @@ import Locations from "./components/Locations.vue";
 import CreateLocationModal from "./components/modal/CreateLocationModal.vue"
 import UpdateLocationModal from "./components/modal/UpdateLocationModal.vue"
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
-import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/vue'
-import { ChevronRightIcon } from '@heroicons/vue/20/solid'
+import GraphicEqIcon from "@icons/GraphicEqIcon.vue"
+import CallTranscriptionOptionsForm from "./components/forms/CallTranscriptionOptionsForm.vue"
 import {
     Cog6ToothIcon,
     MapPinIcon,
     WrenchScrewdriverIcon,
     BuildingOffice2Icon,
-    ChevronDoubleLeftIcon,
     KeyIcon,
     BellAlertIcon,
     ClipboardDocumentCheckIcon,
-    CreditCardIcon
+    AdjustmentsVerticalIcon,
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -320,10 +192,13 @@ const props = defineProps({
 
 })
 
-// State for collapsible navigation
-const isNavCollapsed = ref(false)
-const toggleNav = () => isNavCollapsed.value = !isNavCollapsed.value
+const pages = [
+    { name: 'Dashboard', href: props.routes.dashboard_route, current: true },
+    { name: 'Account Settings', href: '#', current: true },
+]
 
+// State for collapsible navigation
+const initialMenuOption = ref(null)
 const form$ = ref(null)
 const isLocationsLoading = ref(false)
 const isDeleteLocationLoading = ref(false)
@@ -338,25 +213,28 @@ const confirmDeleteLocationAction = ref(null);
 const autoProvisioningTrigger = ref(false)
 const roomManagementTrigger = ref(false)
 const roomStatusTrigger = ref(false)
-const activeSection = ref('general')
-const isActive = (key) => activeSection.value === key
 
-const navOpen = ref(false)
-const parentHasActiveChild = (item) =>
-    Array.isArray(item.children) && item.children.some((c) => isActive(c.key))
-
-watch(activeSection, (key) => {
+const handleUpdateSelectedMenuOption = (key) => {
     if (key === 'locations') getLocations()
     if (key === 'auto_provisioning') autoProvisioningTrigger.value = !autoProvisioningTrigger.value
     if (key === 'room_management') roomManagementTrigger.value = !roomManagementTrigger.value
     if (key === 'room_status') roomStatusTrigger.value = !roomStatusTrigger.value
-})
+}
 
 const navigation = [
     { key: 'general', name: 'General', icon: Cog6ToothIcon },
     { key: 'locations', name: 'Locations', icon: MapPinIcon },
     { key: 'auto_provisioning', name: 'Auto Provisioning', icon: WrenchScrewdriverIcon },
-    { key: 'billing', name: 'Billing', icon: CreditCardIcon },
+    // { key: 'billing', name: 'Billing', icon: CreditCardIcon },
+    {
+        key: 'call_transcription',
+        name: 'Call Transcription',
+        icon: markRaw(GraphicEqIcon),
+        children: [
+            { key: 'transcription_options', name: 'Options', icon: markRaw(AdjustmentsVerticalIcon) },
+            // { key: 'assemblyai', name: 'AssemblyAI', icon: markRaw(GraphicEqIcon) }
+        ],
+    },
     {
         key: 'hotel',
         name: 'Hotel Management',
@@ -370,23 +248,12 @@ const navigation = [
     },
 ]
 
-const navigateTo = (key) => {
-    activeSection.value = key
-    navOpen.value = false // close mobile drawer if open
-}
-
-// --- Responsive Collapse Logic ---
-const checkScreenSize = () => {
-    // Tailwind's `md` breakpoint is 768px.
-    // If the window is smaller, collapse the navigation.
-    isNavCollapsed.value = window.innerWidth < 768;
-};
 
 onMounted(() => {
-    // Check screen size on initial load
-    checkScreenSize();
-    // Add event listener for window resize
-    window.addEventListener('resize', checkScreenSize);
+    if (navigation.length) {
+        initialMenuOption.value = navigation[0].key
+        // handleUpdateSelectedMenuOption(navigation.value[0].key)
+    }
 
     form$.value.update({ // updates form data
         domain_uuid: props.data.domain_uuid ?? null,
@@ -401,27 +268,9 @@ onMounted(() => {
     // console.log(form$.value.data);
 })
 
-onUnmounted(() => {
-    // Clean up the event listener when the component is destroyed
-    window.removeEventListener('resize', checkScreenSize);
-});
-
-// console.log(props.data)
-
-
 const notificationType = ref(null);
 const notificationShow = ref(null);
 const notificationMessages = ref(null);
-
-// const handleTabSelected = (activeTab, previousTab) => {
-//     if (activeTab.name == 'locations') {
-//         getLocations()
-//     }
-//     if (activeTab.name == 'auto_provisioning') {
-//         autoProvisioningTrigger.value = !autoProvisioningTrigger.value
-//     }
-
-// }
 
 const getLocations = async () => {
     isLocationsLoading.value = true

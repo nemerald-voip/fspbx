@@ -39,7 +39,7 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
      *
      * @var int
      */
-    public $maxExceptions = 1;
+    public $maxExceptions = 3;
 
     /**
      * The number of seconds the job can run before timing out.
@@ -95,7 +95,7 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
         Redis::throttle('email')->allow(2)->every(1)->then(function () {
 
             $message = VoicemailMessages::select('voicemail_message_uuid', 'domain_uuid', 'voicemail_uuid', 'created_epoch', 'caller_id_name', 'caller_id_number', 'message_length', 'message_transcription')
-                ->with('voicemail:voicemail_uuid,voicemail_id,voicemail_mail_to,voicemail_transcription_enabled,voicemail_local_after_email,voicemail_description')
+                ->with('voicemail:voicemail_uuid,voicemail_id,voicemail_mail_to,voicemail_transcription_enabled,voicemail_local_after_email,voicemail_description,voicemail_file')
                 ->with('domain:domain_uuid,domain_name')
                 ->find($this->params['message_uuid']);
 
@@ -189,12 +189,13 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
                 if ($text !== '') {
 
                     // Persist without clobbering an existing value (idempotent on retries)
-                    VoicemailMessages::where('voicemail_message_uuid', $message->voicemail_message_uuid)
+                    $updated = VoicemailMessages::where('voicemail_message_uuid', $message->voicemail_message_uuid)
                         ->whereNull('message_transcription')
                         ->update(['message_transcription' => $text]);
 
-                    // Ensure in-memory instance is current for template variables below
-                    $message->refresh();
+                    if ($updated) {
+                        $message->message_transcription = $text; // keep in-memory model in sync
+                    }
                 }
             }
 
@@ -233,10 +234,18 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
 
             if (strpos($bodyTpl, '${origination_callee_id_name}') !== false) {
                 $extension = Extensions::where('extension', $message->voicemail?->voicemail_id ?? null)
-                ->where('domain_uuid', $domain_uuid)
-                ->select('extension_uuid', 'extension', 'effective_caller_id_name')
-                ->first();
+                    ->where('domain_uuid', $domain_uuid)
+                    ->select('extension_uuid', 'extension', 'effective_caller_id_name')
+                    ->first();
                 $vars['origination_callee_id_name'] = $extension->name_formatted ?? null;
+            }
+
+            if (strpos($subjectTpl, '${new_messages}') !== false) {
+                $voicemail_id = $message->voicemail?->voicemail_id ?? null;
+                $newMessagesCount = VoicemailMessages::where('voicemail_uuid', $message->voicemail->voicemail_uuid)
+                    ->whereNull('message_status')
+                    ->count();
+                $vars['new_messages'] = $newMessagesCount;
             }
 
             $replacements = [];
@@ -255,11 +264,18 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
             $uuid    = (string) $message->voicemail_message_uuid;
             $sentKey = "vm:sent:$uuid";
 
+            // Single recipient guard
+            $to = trim((string) ($message->voicemail?->voicemail_mail_to ?? ''));
+
+            if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
+                Cache::put($sentKey, 1, now()->addDays(1));
+                return; // bail out before attempting to send
+            }
+
             if (!Cache::has($sentKey)) {
                 try {
                     // send; if it throws, the job RETRIES
-                    Mail::to($message->voicemail?->voicemail_mail_to ?? null)
-                        ->send(new VoicemailNotification($attributes));
+                    Mail::to($to)->send(new VoicemailNotification($attributes));
 
                     // mark as sent so future retries won't resend
                     Cache::put($sentKey, 1, now()->addDays(1));
@@ -328,11 +344,11 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
                 }
             }
             $message->delete();
-
+            
             // Best-effort MWI; never throw
             try {
                 $esl = app(FreeswitchEslService::class);
-                $esl->executeCommand(sprintf("bgapi luarun app.lua voicemail mwi '%s'@'%s'", $voicemailId, $domainName));
+                $esl->executeCommand(sprintf("bgapi luarun app/voicemail/resources/scripts/mwi_notify.lua %s %s", $voicemailId, $domainName));
             } catch (\Throwable $e) {
                 logger()->warning('MWI update failed after voicemail delete', ['v' => $voicemailId, 'd' => $domainName, 'e' => $e->getMessage()]);
             }

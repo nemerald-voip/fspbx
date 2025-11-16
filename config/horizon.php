@@ -167,7 +167,7 @@ return [
     'defaults' => [
         'supervisor-1' => [
             'connection' => 'redis',
-            'queue' => ['default', 'emails', 'faxes', 'slack', 'messages', 'ztp', 'stripe'],
+            'queue' => ['default', 'emails', 'faxes', 'slack', 'messages', 'ztp', 'stripe', 'transcriptions'],
             'balance' => 'auto',
             'minProcesses' => 1,
             'maxProcesses' => 100,

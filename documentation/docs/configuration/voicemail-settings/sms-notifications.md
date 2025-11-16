@@ -1,4 +1,8 @@
-# SMS Notifications for Voicemails
+---
+sidebar_position: 2
+---
+
+# SMS Notifications
 
 What's New
 ----------

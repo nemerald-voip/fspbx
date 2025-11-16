@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\CallTranscriptionProvider;
 use App\Models\Groups;
 use App\Models\Permissions;
 use App\Models\ProFeatures;
@@ -39,6 +40,8 @@ class DatabaseSeeder extends Seeder
         $this->createProFeatures();
 
         $this->createPaymentGateways();
+
+        $this->createCallTranscriptionProviders();
 
         Model::reguard();
     }
@@ -136,6 +139,12 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Locations', 'permission_name' => 'location_delete'],
             ['application_name' => 'Devices', 'permission_name' => 'device_key_advanced'],
             ['application_name' => 'Logs', 'permission_name' => 'logs_list_view'],
+            ['application_name' => 'System Settings', 'permission_name' => 'payment_gateways_view'],
+            ['application_name' => 'System Settings', 'permission_name' => 'call_transcription_settings_view'],
+            ['application_name' => 'Call Transcriptions', 'permission_name' => 'transcription_view'],
+            ['application_name' => 'Call Transcriptions', 'permission_name' => 'transcription_create'],
+            ['application_name' => 'Call Transcriptions', 'permission_name' => 'transcription_read'],
+            ['application_name' => 'Call Transcriptions', 'permission_name' => 'transcription_summary'],
         ];
         $timestamp = date("Y-m-d H:i:s");
 
@@ -223,6 +232,11 @@ class DatabaseSeeder extends Seeder
                 'device_line_outbound_proxy_primary',
                 'device_line_outbound_proxy_secondary',
                 'logs_list_view',
+                'call_transcription_settings_view',
+                'transcription_view',
+                'transcription_read',
+                'transcription_create',
+                'transcription_summary',
             ],
             'admin' => [
                 'wakeup_calls_list_view',
@@ -1052,6 +1066,46 @@ class DatabaseSeeder extends Seeder
             logger("Error seeding ProFeatures");
         }
     }
+
+    private function createCallTranscriptionProviders(): void
+    {
+        if (! Schema::hasTable('call_transcription_providers')) {
+            return;
+        }
+
+        // Define the providers you want available by default
+        $providers = [
+            ['key' => 'assemblyai', 'name' => 'AssemblyAI', 'is_active' => true],
+            // add more here later, e.g. ['key' => 'whisper', 'name' => 'OpenAI Whisper', 'is_active' => true],
+        ];
+
+        // Find existing keys so we only insert missing ones
+        $keys      = array_column($providers, 'key');
+        $existing  = CallTranscriptionProvider::whereIn('key', $keys)
+            ->pluck('key')
+            ->all();
+
+        $now       = now();
+        $toInsert  = [];
+
+        foreach ($providers as $p) {
+            if (!in_array($p['key'], $existing, true)) {
+                $toInsert[] = [
+                    'uuid'       => (string) \Illuminate\Support\Str::uuid(),
+                    'key'        => $p['key'],
+                    'name'       => $p['name'],
+                    'is_active'  => $p['is_active'] ?? true,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
+            }
+        }
+
+        if (!empty($toInsert)) {
+            CallTranscriptionProvider::insert($toInsert);
+        }
+    }
+
 
 
     private function createPaymentGateways()

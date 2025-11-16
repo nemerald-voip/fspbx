@@ -15,9 +15,11 @@ use Illuminate\Support\Facades\Session;
 use App\Services\CallRoutingOptionsService;
 use App\Http\Requests\StoreRingGroupRequest;
 use App\Http\Requests\UpdateRingGroupRequest;
+use App\Traits\ChecksLimits;
 
 class RingGroupsController extends Controller
 {
+    use ChecksLimits;
 
     public $model;
     public $filters = [];
@@ -103,7 +105,27 @@ class RingGroupsController extends Controller
         $domainUuid = session('domain_uuid');
         $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
         $data->with(['destinations' => function ($query) {
-            $query->select('ring_group_destination_uuid', 'ring_group_uuid', 'destination_number');
+
+            $query->leftJoin('v_extensions', function ($join) {
+                    $join->on('v_ring_group_destinations.destination_number', '=', 'v_extensions.extension')
+                        ->on('v_ring_group_destinations.domain_uuid', '=', 'v_extensions.domain_uuid');
+                })
+                ->leftJoin('extension_advanced_settings', 'v_extensions.extension_uuid', '=', 'extension_advanced_settings.extension_uuid');
+
+            $query->selectRaw("
+                v_ring_group_destinations.ring_group_destination_uuid,
+                v_ring_group_destinations.ring_group_uuid,
+                v_ring_group_destinations.domain_uuid,
+                v_ring_group_destinations.destination_delay,
+                v_ring_group_destinations.destination_enabled,
+                v_ring_group_destinations.destination_number,
+                v_ring_group_destinations.destination_prompt,
+                v_ring_group_destinations.destination_timeout,
+                CASE 
+                    WHEN extension_advanced_settings.suspended = 'true' THEN true
+                    ELSE false
+                END AS suspended
+            ");
         }]);
 
         $data->select(
@@ -189,16 +211,30 @@ class RingGroupsController extends Controller
 
             ];
 
-            $extensions = Extensions::where('domain_uuid', $domain_uuid)
-                ->select('extension_uuid', 'extension', 'effective_caller_id_name')
-                ->orderBy('extension', 'asc')
-                ->get();
+            $extensionsQuery = Extensions::where('v_extensions.domain_uuid', $domain_uuid)
+                ->leftJoin('extension_advanced_settings', 'v_extensions.extension_uuid', '=', 'extension_advanced_settings.extension_uuid')
+                ->select(
+                    'v_extensions.extension_uuid',
+                    'v_extensions.extension',
+                    'v_extensions.effective_caller_id_name',
+                    'extension_advanced_settings.suspended'
+                )
+                ->orderBy('v_extensions.extension', 'asc');
+                //
 
-
-            $ringGroups = RingGroups::where('domain_uuid', $domain_uuid)
+            // IMPORTANT — THIS MUST STILL EXIST
+            $ringGroupsQuery = RingGroups::where('domain_uuid', $domain_uuid)
                 ->select('ring_group_uuid', 'ring_group_extension', 'ring_group_name')
-                ->orderBy('ring_group_extension', 'asc')
-                ->get();
+                ->orderBy('ring_group_extension', 'asc');
+
+
+                    if (!empty($item_uuid)) {
+                    // Exclude the ring group currently being edited
+                    $ringGroupsQuery->where('ring_group_uuid', '!=', $item_uuid);
+                    }
+
+            $extensions = $extensionsQuery->get();
+            $ringGroups = $ringGroupsQuery->get();
 
             $memberOptions = [
                 [
@@ -209,6 +245,7 @@ class RingGroupsController extends Controller
                             'label' => $extension->name_formatted,
                             'destination' => $extension->extension,
                             'type' => 'extension',
+                            'suspended' => $extension->suspended === 'true',
                         ];
                     })->toArray(),
                 ],
@@ -230,7 +267,25 @@ class RingGroupsController extends Controller
                 // Find existing item by item_uuid
                 $item = $this->model::where($this->model->getKeyName(), $item_uuid)
                     ->with(['destinations' => function ($query) {
-                        $query->select('ring_group_destination_uuid', 'ring_group_uuid', 'destination_delay', 'destination_enabled', 'destination_number', 'destination_prompt', 'destination_timeout');
+                $query->leftJoin('v_extensions', function ($join) {
+                        $join->on('v_ring_group_destinations.destination_number', '=', 'v_extensions.extension')
+                            ->on('v_ring_group_destinations.domain_uuid', '=', 'v_extensions.domain_uuid');
+                    })
+                    ->leftJoin('extension_advanced_settings', 'v_extensions.extension_uuid', '=', 'extension_advanced_settings.extension_uuid')
+                    ->select(
+                        'v_ring_group_destinations.ring_group_destination_uuid',
+                        'v_ring_group_destinations.ring_group_uuid',
+                        'v_ring_group_destinations.domain_uuid',            // <-- THIS WAS MISSING
+                        'v_ring_group_destinations.destination_delay',
+                        'v_ring_group_destinations.destination_enabled',
+                        'v_ring_group_destinations.destination_number',
+                        'v_ring_group_destinations.destination_prompt',
+                        'v_ring_group_destinations.destination_timeout',
+                        DB::raw("CASE 
+                            WHEN extension_advanced_settings.suspended = 'true' THEN true
+                            ELSE false
+                        END AS suspended")
+                    );
                     }])
                     ->first();
 
@@ -256,6 +311,18 @@ class RingGroupsController extends Controller
                 // Define the update route
                 $updateRoute = route('ring-groups.update', ['ring_group' => $item_uuid]);
             } else {
+
+               // Check for limits
+                if ($resp = $this->enforceLimit(
+                    'ring_groups',
+                    \App\Models\RingGroups::class,
+                    'domain_uuid',
+                    'ring_group_limit_error'
+                )) {
+                    return $resp;
+                }
+
+
                 // Create a new model if item_uuid is not provided
                 $item = $this->model;
                 $item->ring_group_extension = $item->generateUniqueSequenceNumber();

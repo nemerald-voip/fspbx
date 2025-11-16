@@ -10,7 +10,7 @@ function debug_log(level, message)
 end
 
 local payload = argv[1] or ""
-local url = "https://127.0.0.1/webhook/freeswitch"
+local url = "http://127.0.0.1/webhook/freeswitch"
 local secret = "tH0FXyxfG6Kh36*VHYdE4G!gwfE3Pf"
 
 if payload == "" then

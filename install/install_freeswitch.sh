@@ -17,24 +17,35 @@ print_error() {
 OS_CODENAME=$(lsb_release -sc 2>/dev/null || echo "")
 echo "Detected OS_CODENAME=$OS_CODENAME"
 
+# SW Token Handling
 if [[ "$OS_CODENAME" == "trixie" ]]; then
-# Signalwire Token Handling
-SW_TOKEN_FILE="$HOME/.signalwire_token"
-fi
 
-if [[ "$OS_CODENAME" == "trixie" ]]; then
-# Signalwire Token Handling
-SW_TOKEN_FILE="$HOME/.signalwire_token"
-# Load from file if exists
-if [[ -f "$SW_TOKEN_FILE" ]]; then
-    SW_TOKEN=$(<"$SW_TOKEN_FILE")
-    echo "Using saved Signalwire token from $SW_TOKEN_FILE."
-fi
+  ENCODED_SW_TOKEN="cGF0X2V0MW1MckRhR2hiV0NOYTI4TWJMYXp4Yw=="
 
-if [[ -z "$SW_TOKEN" ]]; then
-    echo "Error: Signalwire TOKEN not set and no saved token found."
+  _b64_decode() {
+
+    # read from stdin and decode
+    if base64 --help >/dev/null 2>&1; then
+      base64 --decode
+    else
+      base64 -d
+    fi
+  }
+
+if [[ -n "$ENCODED_SW_TOKEN" ]]; then
+  SW_TOKEN="$(printf '%s' "$ENCODED_SW_TOKEN" | _b64_decode)"
+else
+  printf "Enter your Signalwire token: " >/dev/tty
+  read -rs SW_TOKEN </dev/tty
+  printf "\n" >/dev/tty
+  if [[ -z "$SW_TOKEN" ]]; then
+    echo "No token provided. Exiting." >&2
     exit 1
+  fi
 fi
+
+export SW_TOKEN
+
 fi
 
 print_success "Starting FreeSWITCH Installation (Version 1.10)..."
@@ -51,7 +62,7 @@ apt update
 apt install -y autoconf automake devscripts g++ git-core libncurses5-dev libtool make libjpeg-dev \
                pkg-config flac libgdbm-dev libdb-dev gettext sudo equivs git dpkg-dev \
                libpq-dev liblua5.2-dev libtiff5-dev libperl-dev libcurl4-openssl-dev libsqlite3-dev \
-               libpcre3-dev devscripts libspeexdsp-dev libspeex-dev libldns-dev libedit-dev libopus-dev \
+               devscripts libspeexdsp-dev libspeex-dev libldns-dev libedit-dev libopus-dev \
                libmemcached-dev libshout3-dev libmpg123-dev libmp3lame-dev yasm nasm libsndfile1-dev \
                libuv1-dev libvpx-dev libavformat-dev libswscale-dev libvlc-dev \
                sox libsox-fmt-all sqlite3 unzip cmake uuid-dev libssl-dev
@@ -224,3 +235,5 @@ if [ -d "/proc/vz" ] || [ -e "/proc/user_beancounters" ]; then
     sed -i -e "s/CPUSchedulingPolicy=rr/;CPUSchedulingPolicy=rr/g" /lib/systemd/system/freeswitch.service
 fi
 
+#Remove SW Token
+  unset SW_TOKEN

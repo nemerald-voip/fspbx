@@ -35,6 +35,7 @@ class CDR extends Model
         'caller_id_number_formatted',
         'caller_destination_formatted',
         'destination_number_formatted',
+        'caller_id_name_formatted',
         'start_date',
         'start_time',
         'duration_formatted',
@@ -55,6 +56,17 @@ class CDR extends Model
     public function getCallerIdNumberFormattedAttribute()
     {
         return $this->caller_id_number ? formatPhoneNumber($this->caller_id_number) : null;
+    }
+
+    public function getCallerIdNameFormattedAttribute()
+    {
+        // If the "name" looks like a US +1 number, normalize it
+        if (preg_match('/^(?:\+?1)?[2-9]\d{9}$/', $this->caller_id_name)) {
+            return formatPhoneNumber($this->caller_id_name);
+        }
+
+        // Otherwise return as-is (because it's likely a real name)
+        return $this->caller_id_name;
     }
 
     public function getCallerDestinationFormattedAttribute()
@@ -219,6 +231,11 @@ class CDR extends Model
     public function extension()
     {
         return $this->belongsTo(Extensions::class, 'extension_uuid', 'extension_uuid');
+    }
+
+    public function callTranscription()
+    {
+        return $this->hasOne(CallTranscription::class, 'xml_cdr_uuid', 'xml_cdr_uuid');
     }
 
     public function formatPhoneNumber($value)

@@ -49,7 +49,7 @@ class LogsController extends Controller
                     return get_local_time_zone($domain_uuid);
                 },
                 'routes' => [
-
+                    'dashboard_route' => route('dashboard'),
                     'email_logs' => route('email-logs.index'),
                     'inbound_webhooks' => route('inbound-webhooks.index'),
 
