@@ -12,7 +12,7 @@ We're excited to announce that FS PBX now officially supports Debian 13 (Trixie
 
 ================================
 
-🚀 FS PBX --- Debian 13 ("Trixie") Support
+🚀 Debian 13 ("Trixie") Support
 ------------------------------------------
 
 ### 🎉 Highlights
@@ -23,11 +23,11 @@ This release ensures seamless installation and operation on the latest Debian pl
 
 ### 🧩 What's New
 
-✅ Full compatibility with Debian 13 (Trixie)
-✅ Updated install and update scripts to detect and configure the new OS codename
-✅ Improved dependency handling and package checks for `systemd`, `iptables`, `snmpd`, and related services
-✅ SignalWire token is now required for installation --- you will be prompted to enter it during setup. The token is stored at `~/.signalwire_token` for future runs.
-✅ Refined logging and environment detection
+- Full compatibility with Debian 13 (Trixie)
+- Updated install and update scripts to detect and configure the new OS codename
+- Improved dependency handling and package checks for `systemd`, `iptables`, `snmpd`, and related services
+- SignalWire token is now required for installation --- you will be prompted to enter it during setup. The token is stored at `~/.signalwire_token` for future runs.
+- Refined logging and environment detection
 
 ### 🔧 Fixes & Improvements
 
