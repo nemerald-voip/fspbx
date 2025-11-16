@@ -86,8 +86,6 @@ class HandleInertiaRequests extends Middleware
         $permissions['cdrs_export'] = userCheckPermission('xml_cdr_export');
         $permissions['cdr_view_details'] = userCheckPermission('xml_cdr_details');
 
-        $permissions['call_recording_play'] = userCheckPermission('call_recording_play');
-        $permissions['call_recording_download'] = userCheckPermission('call_recording_download');
 
         $permissions['voicemail_create'] = userCheckPermission('voicemail_add');
         $permissions['voicemail_update'] = userCheckPermission('voicemail_edit');

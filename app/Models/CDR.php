@@ -233,6 +233,11 @@ class CDR extends Model
         return $this->belongsTo(Extensions::class, 'extension_uuid', 'extension_uuid');
     }
 
+    public function callTranscription()
+    {
+        return $this->hasOne(CallTranscription::class, 'xml_cdr_uuid', 'xml_cdr_uuid');
+    }
+
     public function formatPhoneNumber($value)
     {
         //Get libphonenumber object

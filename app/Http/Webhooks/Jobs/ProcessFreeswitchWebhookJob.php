@@ -4,16 +4,16 @@ namespace App\Http\Webhooks\Jobs;
 
 use App\Models\Messages;
 use App\Models\Voicemails;
+use App\Jobs\TranscribeCdrJob;
 use App\Models\SmsDestinations;
-use App\Models\VoicemailMessages;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use App\Services\SinchMessageProvider;
 use App\Services\CommioMessageProvider;
-use App\Jobs\SendSmsNotificationToSlack;
 use App\Services\BandwidthMessageProvider;
 use Spatie\WebhookClient\Models\WebhookCall;
 use App\Jobs\SendNewVoicemailNotificationByEmail;
+use App\Services\CallTranscription\CallTranscriptionService;
 use Spatie\WebhookClient\Jobs\ProcessWebhookJob as SpatieProcessWebhookJob;
 
 class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
@@ -24,7 +24,7 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
      *
      * @var int
      */
-    public $tries = 10;
+    public $tries = 2;
 
     /**
      * The maximum number of unhandled exceptions to allow before failing.
@@ -82,6 +82,7 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
         $this->queue = match ($event) {
             'send_vm_sms_notification'   => 'messages',
             'send_vm_email_notification' => 'emails',
+            // 'transcribe_call'            => 'transcriptions',
             default                      => 'default',
         };
     }
@@ -91,7 +92,7 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
         // $this->webhookCall // contains an instance of `WebhookCall`
 
         // Allow only 2 tasks every 1 second
-        Redis::throttle('messages')->allow(2)->every(1)->then(function () {
+        Redis::throttle('freeswitch-webhooks')->allow(2)->every(1)->then(function () {
 
             try {
                 $payload = $this->webhookCall->payload;
@@ -108,6 +109,11 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
                     case 'send_vm_email_notification':
                         SendNewVoicemailNotificationByEmail::dispatch($data);
                         break;
+
+                    case 'transcribe_call':
+                        $response = $this->transcribeCall($data);
+
+                        break;
                     // Add more event types as needed
 
                     default:
@@ -123,6 +129,26 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
             // Could not obtain lock; this job will be re-queued
             return $this->release(15);
         });
+    }
+
+    private function transcribeCall($data)
+    {
+        // Is call transcription service enabled for this account
+        $transcriptionService = app(CallTranscriptionService::class);
+        $config = $transcriptionService->getCachedConfig($data['domain_uuid'] ?? null);
+        $isCallTranscriptionServiceEnabled = (bool) ($config['enabled'] ?? false);
+
+        if (!$isCallTranscriptionServiceEnabled) return;
+
+        $shouldTranscribe = $transcriptionService->shouldAutoTranscribe($data['domain_uuid'] ?? null);
+
+        if ($shouldTranscribe) {
+            TranscribeCdrJob::dispatch(
+                $data['uuid'],
+                $data['domain_uuid'] ?? null,
+                $data['options'] ?? []
+            );
+        }
     }
 
     private function sendSystemSms($data)
@@ -207,14 +233,9 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
     private function handleError(\Exception $e)
     {
 
-        logger($e->getMessage());
-        $this->storeMessage($e->getMessage());
-        // Log the error or send it to Slack
-        $error = "*Voicemail SMS notification Failed*: From: " . $this->source . " To: " . $this->destination . "\n" . $e->getMessage();
+        logger('ProcessFreeswitchWebhookJob@handle error:' . $e->getMessage());
 
-        SendSmsNotificationToSlack::dispatch($error)->onQueue('messages');
-
-        return response()->json(['error' => $e->getMessage()], 400);
+        return $this->release(15);
     }
 
     private function storeMessage($payload)
