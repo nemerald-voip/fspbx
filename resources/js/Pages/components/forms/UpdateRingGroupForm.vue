@@ -371,7 +371,7 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                             size="sm"
                                             label="Active"
                                             :disabled="(el$) => el$.parent.value.suspended || !localOptions.permissions.destination_update"
-                                            :default="(el$) => el$.parent.value.suspended ? false : el$.value"
+                                            
                                         />
                                         <!-- <StaticElement name="divider_1" tag="hr" /> -->
                                     </ObjectElement>

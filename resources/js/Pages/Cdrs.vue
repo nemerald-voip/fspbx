@@ -151,7 +151,7 @@
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                             <div v-if="row.extension && row.direction == 'outbound'">{{ row.extension?.name_formatted }}
                             </div>
-                            <div v-else>{{ row.caller_id_name }}</div>
+                            <div v-else>{{ row.caller_id_name_formatted }}</div>
                         </TableField>
 
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
