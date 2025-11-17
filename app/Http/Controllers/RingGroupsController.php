@@ -121,12 +121,12 @@ class RingGroupsController extends Controller
                 v_ring_group_destinations.destination_number,
                 v_ring_group_destinations.destination_prompt,
                 v_ring_group_destinations.destination_timeout,
-                CASE WHEN extension_advanced_settings.suspended = 'true' THEN true ELSE false END AS suspended
-            ")
-        // enforce deterministic order for UI & XML
-            ->orderBy('v_ring_group_destinations.destination_delay', 'asc')
-            ->orderBy('v_ring_group_destinations.ring_group_destination_uuid', 'asc');
-    }]);
+                CASE 
+                    WHEN extension_advanced_settings.suspended = 'true' THEN true
+                    ELSE false
+                END AS suspended
+            ");
+        }]);
 
         $data->select(
             'ring_group_uuid',
@@ -266,9 +266,8 @@ class RingGroupsController extends Controller
             if ($item_uuid) {
                 // Find existing item by item_uuid
                 $item = $this->model::where($this->model->getKeyName(), $item_uuid)
-            ->with(['destinations' => function ($query) {
-                $query
-                    ->leftJoin('v_extensions', function ($join) {
+                    ->with(['destinations' => function ($query) {
+                $query->leftJoin('v_extensions', function ($join) {
                         $join->on('v_ring_group_destinations.destination_number', '=', 'v_extensions.extension')
                             ->on('v_ring_group_destinations.domain_uuid', '=', 'v_extensions.domain_uuid');
                     })
@@ -276,7 +275,7 @@ class RingGroupsController extends Controller
                     ->select(
                         'v_ring_group_destinations.ring_group_destination_uuid',
                         'v_ring_group_destinations.ring_group_uuid',
-                        'v_ring_group_destinations.domain_uuid',
+                        'v_ring_group_destinations.domain_uuid',            // <-- THIS WAS MISSING
                         'v_ring_group_destinations.destination_delay',
                         'v_ring_group_destinations.destination_enabled',
                         'v_ring_group_destinations.destination_number',
@@ -286,12 +285,8 @@ class RingGroupsController extends Controller
                             WHEN extension_advanced_settings.suspended = 'true' THEN true
                             ELSE false
                         END AS suspended")
-                    )
-                    // same deterministic order here
-                    ->orderBy('v_ring_group_destinations.destination_delay', 'asc')
-                    ->orderBy('v_ring_group_destinations.ring_group_destination_uuid', 'asc');
-            }])
-
+                    );
+                    }])
                     ->first();
 
                 // If a model exists, use it; otherwise, create a new one
@@ -607,28 +602,17 @@ class RingGroupsController extends Controller
             if (!empty($validated['members']) && is_array($validated['members'])) {
                 $ringGroup->destinations()->delete();
 
-                $members = $validated['members'];
-
-                // For Sequential Ring, normalize delay to reflect the drag-and-drop order (0,5,10,...)
-                if (in_array($validated['ring_group_strategy'] ?? '', ['sequence'])) {
-                    foreach ($members as $i => &$m) {
-                        $m['delay'] = (string)($i * 5); // keep timeout as chosen; only set delay to encode order
-                    }
-                    unset($m);
-                }
-
-                foreach ($members as $member) {
+                foreach ($validated['members'] as $member) {
                     $ringGroup->destinations()->create([
                         'domain_uuid'         => $domain_uuid,
                         'destination_number'  => $member['destination'] ?? null,
-                        'destination_delay'   => $member['delay'] ?? '0',
+                        'destination_delay'   => $member['delay'] ?? null,
                         'destination_timeout' => $member['timeout'] ?? null,
-                        'destination_prompt'  => !empty($member['prompt']) ? 1 : null,
+                        'destination_prompt'  => $member['prompt'] ? 1 : null,
                         'destination_enabled' => !empty($member['enabled']) ? 'true' : 'false',
                     ]);
                 }
             }
-
 
             $this->generateDialPlanXML($ringGroup);
 
