@@ -5,7 +5,7 @@ namespace App\Jobs;
 
 use Illuminate\Support\Str;
 use Illuminate\Bus\Queueable;
-use App\Services\CdrDataService;
+//use App\Services\CdrDataService;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
@@ -70,8 +70,9 @@ class ExportCdrs implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($params, protected CdrDataService $cdrDataService)
-    {
+//    public function __construct($params, protected CdrDataService $cdrDataService)
+    public function __construct($params)
+{
 
         $this->params = $params;
     }
@@ -93,10 +94,19 @@ class ExportCdrs implements ShouldQueue
      */
     public function handle()
     {
-        // Allow only 1 job every 60 second
+        // Allow only 1 job every 30 seconds
         Redis::throttle('default')->allow(1)->every(30)->then(function () {
 
-            $cdrs = $this->cdrDataService->getData($this->params);
+            // Resolve the service inside the job (do NOT inject via constructor)
+            /** @var \App\Services\CdrDataService $cdrDataService */
+            $cdrDataService = app(\App\Services\CdrDataService::class);
+
+            // Belt & suspenders: ensure exports do NOT paginate
+            $params = $this->params;
+            $params['paginate'] = 0;
+
+            // Stream results (LazyCollection) – this will include ALL rows matching filters
+            $cdrs = $cdrDataService->getData($params);
 
             // Generate a unique filename
             $uniqueFilename = Str::uuid() . '.csv';
@@ -110,33 +120,34 @@ class ExportCdrs implements ShouldQueue
 
             foreach ($cdrs as $cdr) {
                 $writer->addRow([
-                    'ID' => $cdr['xml_cdr_uuid'],
-                    'Direction' => $cdr['direction'],
-                    'Caller ID Name' => $cdr['caller_id_name'],
-                    'Caller ID Number' => $cdr['caller_id_number_formatted'],
-                    'Dialed Number' => $cdr['caller_destination_formatted'],
-                    'Recipient' => $cdr['destination_number_formatted'],
-                    'Date' => $cdr['start_date'],
-                    'Time' => $cdr['start_time'],
-                    'Duration' => $cdr['duration_formatted'],
-                    'Status' => $cdr['status'],
+                    'ID'                 => $cdr['xml_cdr_uuid'],
+                    'Direction'          => $cdr['direction'],
+                    'Caller ID Name'     => $cdr['caller_id_name'],
+                    'Caller ID Number'   => $cdr['caller_id_number_formatted'],
+                    'Dialed Number'      => $cdr['caller_destination_formatted'],
+                    'Recipient'          => $cdr['destination_number_formatted'],
+                    'Date'               => $cdr['start_date'],
+                    'Time'               => $cdr['start_time'],
+                    'Duration'           => $cdr['duration_formatted'],
+                    'Status'             => $cdr['status'],
                 ]);
 
-                $count++;
-
-                if ($count % 1000 === 0) {
-                    flush(); // Flush the buffer every 1000 rows
+                // optional; not necessary for CLI workers
+                if (++$count % 1000 === 0) {
+                    // noop in most queue contexts; safe to keep or remove
                 }
             }
 
-            // Generate a public URL for the file
+            $writer->close();
+
+            // Generate a public URL for the file and notify
             $this->params['fileUrl'] = Storage::disk('export')->url($uniqueFilename);
             $this->params['email_subject'] = 'Call history report';
 
             SendExportCompletedNotification::dispatch($this->params)->onQueue('emails');
 
         }, function () {
-            // Could not obtain lock; this job will be re-queued
+            // Could not obtain lock; re-queue
             return $this->release(60);
         });
     }
