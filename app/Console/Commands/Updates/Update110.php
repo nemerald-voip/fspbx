@@ -143,66 +143,69 @@ class Update110
      * Disable legacy xml_cdr_import.php crontab lines by commenting them out.
      * Idempotent: won’t double-comment.
      */
-    protected function disableLegacyCron(): void
-    {
-        echo "[Update110] Checking crontab for legacy xml_cdr_import entries...\n";
+/**
+ * Disable any cron lines containing xml_cdr_import.php by commenting them out.
+ * This version is safe, simple, and avoids regex fragility or bash -lc hangs.
+ */
+protected function disableLegacyCron(): void
+{
+    echo "[Update110] Checking crontab for xml_cdr_import.php entries...\n";
 
-        // Grab current crontab (if any). If none, crontab -l returns non-zero.
-        $list = $this->runCapture(['bash', '-lc', 'crontab -l'], true);
-        $original = $list['success'] ? $list['stdout'] : '';
+    // 1) Read existing crontab (ignore failure if none)
+    $list = $this->runCapture(['crontab', '-l'], true);
+    $original = trim($list['stdout'] ?? '');
 
-        if ($original === '') {
-            echo "[Update110] No existing crontab found for this user.\n";
-            return;
-        }
-
-        $lines = preg_split('/\R/', $original);
-        $changed = false;
-        $out = [];
-
-        foreach ($lines as $line) {
-            $trim = ltrim($line);
-
-            // Already commented or blank – keep as-is
-            if ($trim === '' || str_starts_with($trim, '#')) {
-                $out[] = $line;
-                continue;
-            }
-
-            // Match our legacy cron pattern
-            if (preg_match($this->xmlCdrCronPattern, $line)) {
-                $commented = '# DISABLED BY FS PBX UPDATE 1.10 — ' . $line;
-                $out[] = $commented;
-                $changed = true;
-                continue;
-            }
-
-            // Not a match; keep original
-            $out[] = $line;
-        }
-
-        if (!$changed) {
-            echo "[Update110] No legacy xml_cdr_import lines found (or already disabled).\n";
-            return;
-        }
-
-        // Backup current crontab to a dated file
-        $backupPath = '/var/backups/cron-fspbx-before-update110-' . date('Ymd-His') . '.txt';
-        try {
-            if (!File::isDirectory(dirname($backupPath))) {
-                $this->run(['mkdir', '-p', dirname($backupPath)]);
-            }
-            File::put($backupPath, $original);
-            echo "[Update110] Saved crontab backup: {$backupPath}\n";
-        } catch (\Throwable $e) {
-            echo "[Update110] WARNING: Failed to write crontab backup: {$e->getMessage()}\n";
-        }
-
-        // Write the new crontab
-        $newCrontab = implode(PHP_EOL, $out) . PHP_EOL;
-        $this->runShellWithInput('crontab -', $newCrontab);
-        echo "[Update110] Legacy xml_cdr_import lines have been commented out.\n";
+    if ($original === '') {
+        echo "[Update110] No crontab for this user.\n";
+        return;
     }
+
+    $lines   = preg_split('/\R/', $original);
+    $changed = false;
+    $out     = [];
+
+    foreach ($lines as $line) {
+        $trim = ltrim($line);
+
+        // Skip empty lines or already-commented lines
+        if ($trim === '' || str_starts_with($trim, '#')) {
+            $out[] = $line;
+            continue;
+        }
+
+        // Comment out any line containing xml_cdr_import.php
+        if (stripos($line, 'xml_cdr_import.php') !== false) {
+            $out[] = '# DISABLED BY FS PBX UPDATE 1.10 — ' . $line;
+            $changed = true;
+            continue;
+        }
+
+        // Keep all other lines intact
+        $out[] = $line;
+    }
+
+    if (!$changed) {
+        echo "[Update110] No xml_cdr_import.php lines found (or already disabled).\n";
+        return;
+    }
+
+    // 2) Backup existing crontab
+    $backupDir = '/var/backups';
+    if (!is_dir($backupDir)) {
+        mkdir($backupDir, 0755, true);
+    }
+
+    $backupPath = $backupDir . '/cron-before-update110-' . date('Ymd-His') . '.txt';
+    file_put_contents($backupPath, $original);
+
+    echo "[Update110] Saved crontab backup: {$backupPath}\n";
+
+    // 3) Write updated crontab
+    $newCrontab = implode(PHP_EOL, $out) . PHP_EOL;
+    $this->runShellWithInput('crontab -', $newCrontab);
+
+    echo "[Update110] Successfully disabled xml_cdr_import.php cron lines.\n";
+}
 
     /**
      * Run a shell command; return ['success'=>bool,'stdout'=>string,'stderr'=>string].
