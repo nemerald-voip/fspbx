@@ -922,7 +922,8 @@ class CdrsController extends Controller
     {
         try {
             $params = request()->all();
-            $params['paginate'] = 50;
+ //           $params['paginate'] = 50;
+            $params['paginate'] = 0;
             $domain_uuid = session('domain_uuid');
             $params['domain_uuid'] = $domain_uuid;
 
@@ -942,7 +943,8 @@ class CdrsController extends Controller
 
             // $cdrs = $this->getData(false); // returns lazy collection
 
-            ExportCdrs::dispatch($params, $this->cdrDataService);
+//            ExportCdrs::dispatch($params, $this->cdrDataService);
+            ExportCdrs::dispatch($params);
 
             // Return a JSON response indicating success
             return response()->json([

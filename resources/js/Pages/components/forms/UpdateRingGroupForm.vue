@@ -625,6 +625,9 @@ import NewGreetingForm from './NewGreetingForm.vue';
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
 
+function toBool(v) {
+  return v === true || v === 'true' || v === 1 || v === '1';
+}
 
 const props = defineProps({
     options: Object,
@@ -665,7 +668,8 @@ const memberItems = props.options.ring_group.destinations?.map(dest => {
         delay: dest.destination_delay,                   // Delay (must match a Select option value)
         timeout: dest.destination_timeout,               // Timeout (must match a Select option value)
         prompt: !!dest.destination_prompt,               // Convert to boolean for Toggle
-        enabled: dest.suspended ? false : !!dest.destination_enabled,
+ //       enabled: dest.suspended ? false : !!dest.destination_enabled, //force to disable suspended member
+        enabled: toBool(dest.destination_enabled),
         type: match?.type || null,
         suspended: dest.suspended === true, 
 
@@ -822,13 +826,13 @@ const emits = defineEmits(['close', 'error', 'success', 'refresh-data']);
 const submitForm = async (FormData, form$) => {
     const requestData = form$.requestData;
 
-    // --- FORCE DISABLED FOR SUSPENDED MEMBERS ---
-    if (Array.isArray(requestData.members)) {
-        requestData.members = requestData.members.map(m => ({
-            ...m,
-            enabled: m.suspended ? false : m.enabled
-        }));
-    }
+    // --- FORCE DISABLED FOR SUSPENDED MEMBERS --- commented out. also see line 668
+//    if (Array.isArray(requestData.members)) {
+//        requestData.members = requestData.members.map(m => ({
+//            ...m,
+//            enabled: m.suspended ? false : m.enabled
+//        }));
+//    }
     // --------------------------------------------
 
     return await form$.$vueform.services.axios.put(
