@@ -217,16 +217,16 @@ fs_cli -x "sofia status profile external"
 
 ### What's Working
 
--   ✅ Call routing and dialplan matching
--   ✅ Gateway resolution
--   ✅ Codec negotiation (G722)
--   ✅ SIP signaling to provider
--   ✅ Local billing checks
+-   Call routing and dialplan matching
+-   Gateway resolution
+-   Codec negotiation (G722)
+-   SIP signaling to provider
+-   Local billing checks
 
 ### What's Failing
 
--   ❌ **Caller ID format missing `+` prefix** (ROOT CAUSE)
--   ❌ Provider rejected due to invalid E.164 format
+-   **Caller ID format missing `+` prefix** (ROOT CAUSE)
+-   Provider rejected due to invalid E.164 format
 
 Technical Summary
 -----------------
@@ -235,23 +235,23 @@ The FreeSWITCH system was functioning correctly for routing, but the **outbound 
 
 The call successfully:
 
--   ✅ Matched the dialplan
--   ✅ Routed through the correct gateway
--   ✅ Negotiated codecs
--   ✅ Reached the upstream provider
+-   Matched the dialplan
+-   Routed through the correct gateway
+-   Negotiated codecs
+-   Reached the upstream provider
 
 The failure was caused by:
 
--   ❌ **Missing `+` prefix on `effective_caller_id_number`**
--   ❌ Provider (85.134.34.186) requires strict E.164 format
--   ❌ Malformed caller ID triggered 403 Forbidden response
+-   **Missing `+` prefix on `effective_caller_id_number`**
+-   Provider (85.134.34.186) requires strict E.164 format
+-   Malformed caller ID triggered 403 Forbidden response
 
 **Solution:** Update outbound route to set `effective_caller_id_number=+358678984xx` with the `+` prefix included.
 
 Next Steps
 ----------
 
-1.  ✅ **Issue Identified:** Caller ID format missing `+` prefix
+1.  **Issue Identified:** Caller ID format missing `+` prefix
 2.  ✅ **Solution:** Update outbound route configuration to include `+` in `effective_caller_id_number`
 3.  🔧 **Implement:** Add caller ID validation to prevent future occurrences
 4.  🧪 **Test:** Place test call to verify 403 error is resolved
