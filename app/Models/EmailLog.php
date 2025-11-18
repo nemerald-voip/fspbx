@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Prunable;
+//use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
 
@@ -25,7 +25,7 @@ use Illuminate\Support\Carbon;
 class EmailLog extends Model
 {
     use HasFactory;
-    use Prunable;
+ //   use Prunable;
     use \App\Models\Traits\TraitUuid;
 
     protected $table = 'email_log';
@@ -59,10 +59,10 @@ class EmailLog extends Model
 
 
 
-    public function prunable()
-    {
-        return static::where('created_at', '<=', now()->subDays(config('email-log.keep_email_for_days', 90)));
-    }
+//    public function prunable()
+//    {
+//        return static::where('created_at', '<=', now()->subDays(config('email-log.keep_email_for_days', 90)));
+//    }
 
 
 }
