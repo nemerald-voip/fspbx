@@ -106,6 +106,18 @@ class Kernel extends ConsoleKernel
             $daysKeepVoicemails = $jobSettings['days_keep_voicemails'] ?? 90;
             $schedule->job(new DeleteOldVoicemails((int)$daysKeepVoicemails))->daily();
         }
+    
+        if (isset($jobSettings['delete_old_email_logs']) && $jobSettings['delete_old_email_logs'] === "true") {
+            // Retrieve the retention days for email logs or default to 90 days.
+            $daysKeepEmailLogs = $jobSettings['days_keep_email_logs'] ?? 90;
+            $schedule->job(new DeleteOldEmailLogs((int)$daysKeepEmailLogs))->daily();
+        }
+
+        if (isset($jobSettings['delete_old_transcriptions']) && $jobSettings['delete_old_transcriptions'] === "true") {
+            // Retrieve the retention days for transcriptions or default to 90 days.
+            $daysKeepTranscriptions = $jobSettings['days_keep_transcriptions'] ?? 90;
+            $schedule->job(new DeleteOldTranscriptions((int)$daysKeepTranscriptions))->daily();
+        }
 
     }
 
