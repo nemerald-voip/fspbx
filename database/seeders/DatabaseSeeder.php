@@ -839,7 +839,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "90",
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => "Specifies the number of days to retain transcriptions before they are automatically deleted.",
+                'default_setting_description'   => "Specifies the number of days to retain call transcriptions before they are automatically deleted.",
             ],
             [
                 'default_setting_category'      => 'scheduled_jobs',
@@ -847,7 +847,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_name'          => 'boolean',
                 'default_setting_value'         => "true",
                 'default_setting_enabled'       => false,
-                'default_setting_description'   => "Enables automatic deletion of voicemail messages (msg_*.wav and msg_*.mp3) older than the configured retention period.",
+                'default_setting_description'   => "Enables automatic deletion of call transcriptions older than the configured retention period.",
             ],
             [
                 'default_setting_category'      => 'scheduled_jobs',

@@ -4,9 +4,11 @@ namespace App\Console;
 
 use App\Jobs\DeleteOldFaxes;
 use App\Models\DefaultSettings;
+use App\Jobs\DeleteOldEmailLogs;
 use App\Jobs\ProcessWakeupCalls;
 use App\Jobs\DeleteOldVoicemails;
 use App\Jobs\DeleteOldCallRecordings;
+use App\Jobs\DeleteOldTranscriptions;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Console\Scheduling\Schedule;
