@@ -1,7 +1,7 @@
 <template>
     <div>
-        <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError" @response="handleResponse"
-            :display-errors="false">
+        <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
+            @response="handleResponse" :display-errors="false">
             <template #empty>
 
                 <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
@@ -43,7 +43,7 @@
                                 'ring_group_cid_number_prefix',
                                 'ring_group_description',
                                 'settings_submit'
-                            ]" :conditions="[() => localOptions.permissions.manage_settings]"/>
+                            ]" :conditions="[() => localOptions.permissions.manage_settings]" />
                             <FormTab name="page1" label="Call Forwarding" :elements="[
                                 'h4_1',
                                 'ring_group_forward_enabled',
@@ -51,7 +51,7 @@
                                 'forward_target',
                                 'forward_external_target',
                                 'call_forward_submit',
-                            ]" :conditions="[() => localOptions.permissions.manage_forwarding]"/>
+                            ]" :conditions="[() => localOptions.permissions.manage_forwarding]" />
                             <FormTab name="page2" label="Advanced" :elements="[
                                 'h4_3',
                                 'ring_group_caller_id_name',
@@ -68,7 +68,7 @@
                                 'container',
                                 'ring_group_context',
                                 'advanced_submit'
-                            ]" :conditions="[() => localOptions.permissions.manage_advanced]"/>
+                            ]" :conditions="[() => localOptions.permissions.manage_advanced]" />
                         </FormTabs>
                     </div>
 
@@ -100,7 +100,8 @@
 
                             <SelectElement name="ring_group_greeting" :search="true" :native="false" label="Greeting"
                                 :items="localOptions.greetings" input-type="search" autocomplete="off"
-                                placeholder="Select Greeting" :floating="false" :object="true" :format-data="formatGreeting"
+                                placeholder="Select Greeting" :floating="false" :object="true"
+                                :format-data="formatGreeting"
                                 info="Enable this option so that callers hear a recorded greeting before they are connected to a group member."
                                 :strict="false" :columns="{
                                     sm: {
@@ -119,8 +120,8 @@
                                 </template>
                             </SelectElement>
 
-                            <ButtonElement v-if="!isAudioPlaying" @click="playGreeting" name="play_button" label="&nbsp;"
-                                :secondary="true" :columns="{
+                            <ButtonElement v-if="!isAudioPlaying" @click="playGreeting" name="play_button"
+                                label="&nbsp;" :secondary="true" :columns="{
                                     sm: {
                                         container: 1,
                                     },
@@ -138,8 +139,8 @@
                             </ButtonElement>
 
 
-                            <ButtonElement v-if="isAudioPlaying" @click="pauseGreeting" name="pause_button" label="&nbsp;"
-                                :secondary="true" :columns="{
+                            <ButtonElement v-if="isAudioPlaying" @click="pauseGreeting" name="pause_button"
+                                label="&nbsp;" :secondary="true" :columns="{
                                     container: 1,
                                 }"
                                 :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
@@ -252,40 +253,44 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
 
 
 
-                            <GroupElement name="container_3" :conditions="[() => localOptions.permissions.destination_view]"/>
-                            <StaticElement name="divider1" tag="hr" :conditions="[() => localOptions.permissions.destination_view]"/>
-                            <GroupElement name="container_4" :conditions="[() => localOptions.permissions.destination_view]"/>
+                            <GroupElement name="container_3"
+                                :conditions="[() => localOptions.permissions.destination_view]" />
+                            <StaticElement name="divider1" tag="hr"
+                                :conditions="[() => localOptions.permissions.destination_view]" />
+                            <GroupElement name="container_4"
+                                :conditions="[() => localOptions.permissions.destination_view]" />
 
                             <StaticElement name="h3_1" tag="h4" content="Members"
-                                description="Manage members of this ring group" :conditions="[() => localOptions.permissions.destination_view]"/>
+                                description="Manage members of this ring group"
+                                :conditions="[() => localOptions.permissions.destination_view]" />
 
                             <TagsElement name="selectedMembers" :close-on-select="false" :items="availableMembers"
                                 :create="true" :search="true" :groups="true" :native="false" label="Add Member(s)"
                                 input-type="search" autocomplete="off" placeholder="Search by name or extension"
                                 :floating="false" :hide-selected="false" :object="true" :group-hide-empty="true"
                                 :append-new-option="false" :submit="false"
-                                description="Choose from the list of available options or enter an external number manually." 
-                                :conditions="[() => localOptions.permissions.destination_create, () => localOptions.permissions.destination_view]"/>
+                                description="Choose from the list of available options or enter an external number manually."
+                                :conditions="[() => localOptions.permissions.destination_create, () => localOptions.permissions.destination_view]" />
 
                             <ButtonElement @click="addSelectedMembers" name="secondaryButton_1"
-                                button-label="Add Selected Members" :secondary="true" align="center" :full="false" 
-                                :conditions="[() => localOptions.permissions.destination_create, () => localOptions.permissions.destination_view]"/>
+                                button-label="Add Selected Members" :secondary="true" align="center" :full="false"
+                                :conditions="[() => localOptions.permissions.destination_create, () => localOptions.permissions.destination_view]" />
 
-                            <GroupElement name="container_1" :conditions="[() => localOptions.permissions.destination_view]"/>
-                            <GroupElement name="container_2" :conditions="[() => localOptions.permissions.destination_view]"/>
+                            <GroupElement name="container_1"
+                                :conditions="[() => localOptions.permissions.destination_view]" />
+                            <GroupElement name="container_2"
+                                :conditions="[() => localOptions.permissions.destination_view]" />
 
-                            <ListElement name="members" :sort="true" :controls="{ add: false, remove: localOptions.permissions.destination_delete, sort: localOptions.permissions.destination_update}"
+                            <ListElement name="members" :sort="true"
+                                :controls="{ add: false, remove: localOptions.permissions.destination_delete, sort: localOptions.permissions.destination_update }"
                                 :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }"
-                                :conditions="[() => localOptions.permissions.destination_view]" >
+                                :conditions="[() => localOptions.permissions.destination_view]">
                                 <template #default="{ index }">
                                     <ObjectElement :name="index">
                                         <HiddenElement name="uuid" :meta="true" />
                                         <HiddenElement name="destination" :meta="true" />
-                                        <StaticElement
-                                            name="p_1"
-                                            tag="div"
-                                            :columns="{ default: { container: 8 }, sm: { container: 4 } }"
-                                            :label="(el$) => {
+                                        <StaticElement name="p_1" tag="div"
+                                            :columns="{ default: { container: 8 }, sm: { container: 4 } }" :label="(el$) => {
                                                 const isSusp = el$.parent.value.suspended;
 
                                                 let html = `Member`;
@@ -299,14 +304,11 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                                 }
 
                                                 return html;
-                                            }"
-
-                                            :content="(el$) => {
+                                            }" :content="(el$) => {
                                                 const label = getMemberLabel(el$.parent.value.destination);
 
                                                 return `<span class='text-base font-semibold'>${label}</span>`;
-                                            }"
-                                        />
+                                            }" />
 
                                         <SelectElement name="delay" :items="delayOptions" :search="true" :native="false"
                                             label="Delay" input-type="search" allow-absent autocomplete="off" :columns="{
@@ -319,12 +321,13 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                             }" size="sm"
                                             :conditions="[['ring_group_strategy', 'not_in', ['sequence', 'rollover', 'random']]]"
                                             info="How many seconds to wait before starting to ring this member."
-                                            placeholder="Select option" :floating="false" 
-                                            :disabled="() => { return !localOptions.permissions.destination_update}"/>
+                                            placeholder="Select option" :floating="false"
+                                            :disabled="() => { return !localOptions.permissions.destination_update }" />
 
 
-                                        <SelectElement name="timeout" :items="timeoutOptions" :search="true" :native="false"
-                                            label="Ring for" input-type="search" allow-absent autocomplete="off" :columns="{
+                                        <SelectElement name="timeout" :items="timeoutOptions" :search="true"
+                                            :native="false" label="Ring for" input-type="search" allow-absent
+                                            autocomplete="off" :columns="{
                                                 default: {
                                                     container: 6,
                                                 },
@@ -333,8 +336,8 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                                 },
                                             }" size="sm"
                                             info="How many seconds to keep ringing this member before giving up."
-                                            placeholder="Select option" :floating="false" 
-                                            :disabled="() => { return !localOptions.permissions.destination_update}"/>
+                                            placeholder="Select option" :floating="false"
+                                            :disabled="() => { return !localOptions.permissions.destination_update }" />
 
                                         <GroupElement name="container" :columns="{
                                             default: {
@@ -362,17 +365,13 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                                 container: 4,
                                             },
                                         }" align="left" label="Confirm Answer" size="sm"
-                                            info="Enable answer confirmation to prevent voicemails and automated systems from answering a call." 
-                                            :disabled="() => { return !localOptions.permissions.destination_update}"/>
+                                            info="Enable answer confirmation to prevent voicemails and automated systems from answering a call."
+                                            :disabled="() => { return !localOptions.permissions.destination_update }" />
 
-                                        <ToggleElement
-                                            name="enabled"
-                                            :columns="{ default: { container: 5 }, sm: { container: 4 } }"
-                                            size="sm"
+                                        <ToggleElement name="enabled"
+                                            :columns="{ default: { container: 5 }, sm: { container: 4 } }" size="sm"
                                             label="Active"
-                                            :disabled="(el$) => el$.parent.value.suspended || !localOptions.permissions.destination_update"
-                                            
-                                        />
+                                            :disabled="(el$) => el$.parent.value.suspended || !localOptions.permissions.destination_update" />
                                         <!-- <StaticElement name="divider_1" tag="hr" /> -->
                                     </ObjectElement>
                                 </template>
@@ -384,22 +383,23 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                             <StaticElement name="h3_2" tag="h4" content="When no one in ring group answers"
                                 description="Forward calls to" />
                             <SelectElement name="fallback_action" :items="localOptions.routing_types" label-prop="name"
-                                :search="true" :native="false" label="Choose Action" input-type="search" autocomplete="off"
-                                placeholder="Choose Action" :floating="false" :strict="false" :columns="{
+                                :search="true" :native="false" label="Choose Action" input-type="search"
+                                autocomplete="off" placeholder="Choose Action" :floating="false" :strict="false"
+                                :columns="{
                                     sm: {
                                         container: 6,
                                     },
                                 }" @change="(newValue, oldValue, el$) => {
-    let fallback_target = el$.form$.el$('fallback_target')
+                                    let fallback_target = el$.form$.el$('fallback_target')
 
-    // only clear when this isn’t the very first time (i.e. oldValue was set)
-    if (oldValue !== null && oldValue !== undefined) {
-        fallback_target.clear();
-    }
+                                    // only clear when this isn’t the very first time (i.e. oldValue was set)
+                                    if (oldValue !== null && oldValue !== undefined) {
+                                        fallback_target.clear();
+                                    }
 
-    // fallback_target.clear()
-    fallback_target.updateItems()
-}" />
+                                    // fallback_target.clear()
+                                    fallback_target.updateItems()
+                                }" />
                             <SelectElement name="fallback_target" :items="async (query, input) => {
                                 let fallback_action = input.$parent.el$.form$.el$('fallback_action');
 
@@ -421,9 +421,9 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                         container: 6,
                                     },
                                 }" :conditions="[
-    ['fallback_action', 'not_empty'],
-    ['fallback_action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
-]" />
+                                    ['fallback_action', 'not_empty'],
+                                    ['fallback_action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
+                                ]" />
 
 
                             <GroupElement name="container_7" />
@@ -465,15 +465,15 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                         container: 6,
                                     },
                                 }" @change="(newValue, oldValue, el$) => {
-    let forward_target = el$.form$.el$('forward_target')
+                                    let forward_target = el$.form$.el$('forward_target')
 
-    // only clear when this isn’t the very first time (i.e. oldValue was set)
-    if (oldValue !== null && oldValue !== undefined) {
-        forward_target.clear();
-    }
+                                    // only clear when this isn’t the very first time (i.e. oldValue was set)
+                                    if (oldValue !== null && oldValue !== undefined) {
+                                        forward_target.clear();
+                                    }
 
-    forward_target.updateItems()
-}" />
+                                    forward_target.updateItems()
+                                }" />
                             <SelectElement name="forward_target" :items="async (query, input) => {
                                 let forward_action = input.$parent.el$.form$.el$('forward_action');
 
@@ -495,23 +495,24 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                         container: 6,
                                     },
                                 }" :conditions="[
-    ['ring_group_forward_enabled', '==', true],
-    ['forward_action', 'not_empty'],
-    ['forward_action', 'not_in', ['external']]
-]" />
+                                    ['ring_group_forward_enabled', '==', true],
+                                    ['forward_action', 'not_empty'],
+                                    ['forward_action', 'not_in', ['external']]
+                                ]" />
 
-                            <TextElement name="forward_external_target" label="Target" placeholder="Enter External Number"
-                                :floating="false" :columns="{
+                            <TextElement name="forward_external_target" label="Target"
+                                placeholder="Enter External Number" :floating="false" :columns="{
                                     sm: {
                                         container: 6,
                                     },
                                 }" :conditions="[
-    ['ring_group_forward_enabled', '==', true],
-    ['forward_action', 'not_empty'],
-    ['forward_action', 'in', ['external']]
-]" />
+                                    ['ring_group_forward_enabled', '==', true],
+                                    ['forward_action', 'not_empty'],
+                                    ['forward_action', 'in', ['external']]
+                                ]" />
 
-                            <ButtonElement name="call_forward_submit" button-label="Save" :submits="true" align="right" />
+                            <ButtonElement name="call_forward_submit" button-label="Save" :submits="true"
+                                align="right" />
 
                             <!-- </GroupElement> -->
 
@@ -524,21 +525,21 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                     sm: {
                                         container: 6,
                                     },
-                                }" :conditions="[() => localOptions.permissions.manage_cid_name]"/>
+                                }" :conditions="[() => localOptions.permissions.manage_cid_name]" />
                             <TextElement name="ring_group_caller_id_number" label="Outbound Caller ID Number"
                                 description="Set the caller ID number for outbound external calls." :columns="{
                                     sm: {
                                         container: 6,
                                     },
-                                }" :conditions="[() => localOptions.permissions.manage_cid_number]"/>
+                                }" :conditions="[() => localOptions.permissions.manage_cid_number]" />
                             <TextElement name="ring_group_distinctive_ring" label="Distinctive Ring" :columns="{
                                 sm: {
                                     container: 6,
                                 },
                             }" />
                             <GroupElement name="container5" size="sm" />
-                            <SelectElement name="ring_group_ringback" :items="localOptions.ring_back_tones" :groups="true"
-                                default="${us-ring}" :search="true" :native="false" label="Ringback Tone"
+                            <SelectElement name="ring_group_ringback" :items="localOptions.ring_back_tones"
+                                :groups="true" default="${us-ring}" :search="true" :native="false" label="Ringback Tone"
                                 input-type="search" autocomplete="off" :strict="false"
                                 description="Specify the sound or tone the caller hears while waiting for the destination to answer the call."
                                 :columns="{
@@ -565,25 +566,26 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                     default: {
                                         container: 6,
                                     },
-                                }" :conditions="[() => localOptions.permissions.manage_missed_call]"/>
+                                }" :conditions="[() => localOptions.permissions.manage_missed_call]" />
                             <TextElement name="ring_group_missed_call_data" label="Notification Email" :columns="{
                                 sm: {
                                     container: 6,
                                 },
-                            }" :conditions="[['missed_call_notifications','==',true,],() => localOptions.permissions.manage_missed_call]" />
+                            }"
+                                :conditions="[['missed_call_notifications', '==', true,], () => localOptions.permissions.manage_missed_call]" />
 
                             <GroupElement name="container6" size="sm" />
                             <TextElement name="forward_toll_allow" label="Forward Toll Allow" :columns="{
                                 sm: {
                                     container: 6,
                                 },
-                            }" :conditions="[() => localOptions.permissions.manage_forwarding_toll_allow]"/>
+                            }" :conditions="[() => localOptions.permissions.manage_forwarding_toll_allow]" />
                             <GroupElement name="container" />
                             <TextElement name="ring_group_context" label="Context" :columns="{
                                 sm: {
                                     container: 6,
                                 },
-                            }" :conditions="[() => localOptions.permissions.manage_context]"/>
+                            }" :conditions="[() => localOptions.permissions.manage_context]" />
 
                             <ButtonElement name="advanced_submit" button-label="Save" :submits="true" align="right" />
 
@@ -604,7 +606,8 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
     <AddEditItemModal :customClass="'sm:max-w-xl'" :show="showNewGreetingModal" :header="''" :loading="loadingModal"
         @close="handleModalClose">
         <template #modal-body>
-            <NewGreetingForm :title="'New Greeting Message'" :voices="localOptions.voices" :speeds="localOptions.speeds" :default_voice="localOptions.default_voice"
+            <NewGreetingForm :title="'New Greeting Message'" :voices="localOptions.voices" :speeds="localOptions.speeds"
+                :default_voice="localOptions.default_voice"
                 :phone_call_instructions="localOptions.phone_call_instructions"
                 :sample_message="localOptions.sample_message" :routes="getRoutesForGreetingForm"
                 @greeting-saved="handleGreetingSaved" />
@@ -625,6 +628,9 @@ import NewGreetingForm from './NewGreetingForm.vue';
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
 
+function toBool(v) {
+    return v === true || v === 'true' || v === 1 || v === '1';
+}
 
 const props = defineProps({
     options: Object,
@@ -665,9 +671,10 @@ const memberItems = props.options.ring_group.destinations?.map(dest => {
         delay: dest.destination_delay,                   // Delay (must match a Select option value)
         timeout: dest.destination_timeout,               // Timeout (must match a Select option value)
         prompt: !!dest.destination_prompt,               // Convert to boolean for Toggle
-        enabled: dest.suspended ? false : !!dest.destination_enabled,
+        //       enabled: dest.suspended ? false : !!dest.destination_enabled, //force to disable suspended member
+        enabled: toBool(dest.destination_enabled),
         type: match?.type || null,
-        suspended: dest.suspended === true, 
+        suspended: dest.suspended === true,
 
     }
 })
@@ -822,13 +829,13 @@ const emits = defineEmits(['close', 'error', 'success', 'refresh-data']);
 const submitForm = async (FormData, form$) => {
     const requestData = form$.requestData;
 
-    // --- FORCE DISABLED FOR SUSPENDED MEMBERS ---
-    if (Array.isArray(requestData.members)) {
-        requestData.members = requestData.members.map(m => ({
-            ...m,
-            enabled: m.suspended ? false : m.enabled
-        }));
-    }
+    // --- FORCE DISABLED FOR SUSPENDED MEMBERS --- commented out. also see line 668
+    //    if (Array.isArray(requestData.members)) {
+    //        requestData.members = requestData.members.map(m => ({
+    //            ...m,
+    //            enabled: m.suspended ? false : m.enabled
+    //        }));
+    //    }
     // --------------------------------------------
 
     return await form$.$vueform.services.axios.put(
@@ -1144,4 +1151,5 @@ const handleModalClose = () => {
     /* For Chrome and Safari */
     -moz-text-security: disc;
     /* For Firefox */
-}</style>
+}
+</style>
