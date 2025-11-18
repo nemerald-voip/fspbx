@@ -18,10 +18,10 @@ class DeleteOldTranscriptions implements ShouldQueue
     protected int $daysKeepTranscriptions;
 
     public $tries = 10;
-    public $maxExceptions = 3;
+    public $maxExceptions = 10;
     public $timeout = 300;
     public $failOnTimeout = true;
-    public $backoff = 60;
+    public $backoff = 300;
     public $deleteWhenMissingModels = true;
 
     public function __construct(int $daysKeepTranscriptions = 90)
@@ -32,17 +32,28 @@ class DeleteOldTranscriptions implements ShouldQueue
     public function handle()
     {
         Redis::throttle('delete-transcriptions')
-            ->allow(2)->every(60)
+            ->allow(30)->every(60)
             ->then(function () {
 
                 try {
                     $days   = $this->daysKeepTranscriptions;
                     $cutoff = Carbon::now()->subDays($days);
 
-                    CallTranscription::where('created_at', '<', $cutoff)->delete();
+                    // Use COALESCE to determine age based on most meaningful timestamp
+                    CallTranscription::whereRaw(
+                        "COALESCE(completed_at, requested_at, created_at) < ?",
+                        [$cutoff]
+                    )
+                    ->chunkById(1000, function ($rows) {
+                        foreach ($rows as $row) {
+                            $row->delete();
+                        }
+                    });
+
                 } catch (\Exception $e) {
-                    logger('DeleteOldTranscriptions@handle error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+                    logger("Error pruning call transcriptions: " . $e->getMessage());
                 }
+
             }, function () {
                 return $this->release(60);
             });
