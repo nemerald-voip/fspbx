@@ -92,33 +92,63 @@ class Kernel extends ConsoleKernel
         }
 
         if (isset($jobSettings['delete_old_faxes']) && $jobSettings['delete_old_faxes'] === "true") {
-            // Optionally retrieve the days to keep faxes from settings or use default 90 days.
+            // Retrieve the days to keep faxes from settings or default to 90 days.
             $daysKeepFax = $jobSettings['days_keep_fax'] ?? 90;
-            $schedule->job(new DeleteOldFaxes((int)$daysKeepFax))->daily();
+
+            $schedule->job(
+                (new DeleteOldFaxes((int)$daysKeepFax))
+                    ->delay(now()->addSeconds(random_int(60, 600)))
+            )
+            ->daily()
+            ->onQueue('default');
         }
 
         if (isset($jobSettings['delete_old_call_recordings']) && $jobSettings['delete_old_call_recordings'] === "true") {
-            // Retrieve the retention days for recordings or default to 90 days.
+            // Retrieve the retention days for call recordings or default to 90 days.
             $daysKeepRecordings = $jobSettings['days_keep_call_recordings'] ?? 90;
-            $schedule->job(new DeleteOldCallRecordings((int)$daysKeepRecordings))->daily();
+
+            $schedule->job(
+                (new DeleteOldCallRecordings((int)$daysKeepRecordings))
+                    ->delay(now()->addSeconds(random_int(60, 600)))
+            )
+            ->daily()
+            ->onQueue('default');
         }
 
         if (isset($jobSettings['delete_old_voicemails']) && $jobSettings['delete_old_voicemails'] === "true") {
             // Retrieve the retention days for voicemails or default to 90 days.
             $daysKeepVoicemails = $jobSettings['days_keep_voicemails'] ?? 90;
-            $schedule->job(new DeleteOldVoicemails((int)$daysKeepVoicemails))->daily();
+
+            $schedule->job(
+                (new DeleteOldVoicemails((int)$daysKeepVoicemails))
+                    ->delay(now()->addSeconds(random_int(60, 600)))
+            )
+            ->daily()
+            ->onQueue('default');
         }
     
         if (isset($jobSettings['delete_old_email_logs']) && $jobSettings['delete_old_email_logs'] === "true") {
             // Retrieve the retention days for email logs or default to 90 days.
             $daysKeepEmailLogs = $jobSettings['days_keep_email_logs'] ?? 90;
-            $schedule->job(new DeleteOldEmailLogs((int)$daysKeepEmailLogs))->daily();
+
+            $schedule->job(
+                (new DeleteOldEmailLogs((int)$daysKeepEmailLogs))
+                    ->delay(now()->addSeconds(random_int(60, 3600)))
+            )
+            ->daily()
+            ->onQueue('default');
         }
 
         if (isset($jobSettings['delete_old_transcriptions']) && $jobSettings['delete_old_transcriptions'] === "true") {
             // Retrieve the retention days for transcriptions or default to 90 days.
             $daysKeepTranscriptions = $jobSettings['days_keep_transcriptions'] ?? 90;
-            $schedule->job(new DeleteOldTranscriptions((int)$daysKeepTranscriptions))->daily();
+
+            $schedule->job(
+                (new DeleteOldTranscriptions((int)$daysKeepTranscriptions))
+                    ->delay(now()->addSeconds(random_int(60, 3600)))
+            )
+            ->daily()
+            ->onQueue('default');
         }
 
     }
