@@ -4,9 +4,11 @@ namespace App\Console;
 
 use App\Jobs\DeleteOldFaxes;
 use App\Models\DefaultSettings;
+use App\Jobs\DeleteOldEmailLogs;
 use App\Jobs\ProcessWakeupCalls;
 use App\Jobs\DeleteOldVoicemails;
 use App\Jobs\DeleteOldCallRecordings;
+use App\Jobs\DeleteOldTranscriptions;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Console\Scheduling\Schedule;
@@ -105,6 +107,18 @@ class Kernel extends ConsoleKernel
             // Retrieve the retention days for voicemails or default to 90 days.
             $daysKeepVoicemails = $jobSettings['days_keep_voicemails'] ?? 90;
             $schedule->job(new DeleteOldVoicemails((int)$daysKeepVoicemails))->daily();
+        }
+    
+        if (isset($jobSettings['delete_old_email_logs']) && $jobSettings['delete_old_email_logs'] === "true") {
+            // Retrieve the retention days for email logs or default to 90 days.
+            $daysKeepEmailLogs = $jobSettings['days_keep_email_logs'] ?? 90;
+            $schedule->job(new DeleteOldEmailLogs((int)$daysKeepEmailLogs))->daily();
+        }
+
+        if (isset($jobSettings['delete_old_transcriptions']) && $jobSettings['delete_old_transcriptions'] === "true") {
+            // Retrieve the retention days for transcriptions or default to 90 days.
+            $daysKeepTranscriptions = $jobSettings['days_keep_transcriptions'] ?? 90;
+            $schedule->job(new DeleteOldTranscriptions((int)$daysKeepTranscriptions))->daily();
         }
 
     }
