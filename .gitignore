@@ -22,3 +22,4 @@ public/envinfo.ini
 .stignore
 modules_statuses.json
 app/provision/
+/app/provision/
