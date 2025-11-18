@@ -30,7 +30,7 @@ class DeleteOldEmailLogs implements ShouldQueue
      *
      * @var int
      */
-    public $maxExceptions = 3;
+    public $maxExceptions = 10;
 
     /**
      * The number of seconds the job can run before timing out.
@@ -51,7 +51,7 @@ class DeleteOldEmailLogs implements ShouldQueue
      *
      * @var int
      */
-    public $backoff = 60;
+    public $backoff = 300;
 
     /**
      * Delete the job if its models no longer exist.
@@ -81,9 +81,11 @@ class DeleteOldEmailLogs implements ShouldQueue
             try {
                 $days = $this->daysKeepEmailLogs;
                 EmailLog::where('created_at', '<', Carbon::now()->subDays($days))->delete();
+
             } catch (\Exception $e) {
-                logger('DeleteOldEmailLogs@handle error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+                logger("Error deleting email logs: " . $e->getMessage());
             }
+
         }, function () {
             return $this->release(60); // If locked, retry in 30 seconds
         });
