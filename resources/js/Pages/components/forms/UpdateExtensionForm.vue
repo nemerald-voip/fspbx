@@ -586,7 +586,10 @@
                                                         ['forward_all_action', 'not_in', ['external']]
                                                     ]" />
 
-                                                <TextElement name="forward_all_external_target" label="Target"
+                                                    <TextElement 
+                                                        name="forward_all_external_target"
+                                                        label="Target"
+                                                        @input="form$.el$('forward_all_external_target').setValue(normalizeExternalNumber($event))"
                                                     placeholder="Enter External Number" :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
@@ -659,7 +662,10 @@
                                                         ['forward_busy_action', 'not_in', ['external']]
                                                     ]" />
 
-                                                <TextElement name="forward_busy_external_target" label="Target"
+                                                    <TextElement 
+                                                        name="forward_busy_external_target"
+                                                        label="Target"
+                                                        @input="form$.el$('forward_busy_external_target').setValue(normalizeExternalNumber($event))"
                                                     placeholder="Enter External Number" :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
@@ -731,7 +737,10 @@
                                                         ['forward_no_answer_action', 'not_in', ['external']]
                                                     ]" />
 
-                                                <TextElement name="forward_no_answer_external_target" label="Target"
+                                                    <TextElement 
+                                                        name="forward_no_answer_external_target"
+                                                        label="Target"
+                                                        @input="form$.el$('forward_no_answer_external_target').setValue(normalizeExternalNumber($event))"
                                                     placeholder="Enter External Number" :floating="false" :columns="{
                                                         sm: {
                                                             container: 6,
@@ -805,17 +814,23 @@
                                                         ['forward_user_not_registered_action', 'not_in', ['external']]
                                                     ]" />
 
-                                                <TextElement name="forward_user_not_registered_external_target"
-                                                    label="Target" placeholder="Enter External Number" :floating="false"
+                                                <TextElement 
+                                                    name="forward_user_not_registered_external_target"
+                                                    label="Target"
+                                                    placeholder="Enter External Number"
+                                                    :floating="false"
                                                     :columns="{
                                                         sm: {
                                                             container: 6,
                                                         },
-                                                    }" :conditions="[
+                                                    }"
+                                                    :conditions="[
                                                         ['forward_user_not_registered_enabled', '==', 'true'],
                                                         ['forward_user_not_registered_action', 'not_empty'],
                                                         ['forward_user_not_registered_action', 'in', ['external']]
-                                                    ]" />
+                                                    ]"
+                                                    @input="form$.el$('forward_user_not_registered_external_target').setValue(normalizeExternalNumber($event))"
+                                                />
 
                                                 <StaticElement name="divider8" tag="hr"
                                                     :conditions="[() => options.permissions.extension_forward_not_registered]" />
@@ -1860,6 +1875,12 @@ import AssignedDevices from "../AssignedDevices.vue";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
 
+function normalizeExternalNumber(v) {
+    if (!v) return v;
+
+    // Keep only + and digits
+    return v.replace(/[^+\d]/g, '');
+}
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
 
@@ -1988,16 +2009,24 @@ const formatGreeting = (name, value) => {
 
 const addSelectedDestinations = () => {
     // console.log(form$.value.el$('selectedDestinations').value);
-    const selectedItems = form$.value.el$('selectedDestinations').value.map(item => {
-        return {
-            uuid: item.destination ? item.value : null,              // if a destination exists, use the item.value as uuid; otherwise, uuid is null
-            destination: item.destination ? item.destination : item.label,  // if item.destination exists, use it; otherwise, use the label
-            type: item.type ? item.type : "other",                     // if type exists, use it; else default to "other"
-            delay: "0",
-            timeout: "30",
-            prompt: false,
-        }
-    });
+const selectedItems = form$.value.el$('selectedDestinations').value.map(item => {
+    // If user manually typed a number, item.destination is undefined
+    const rawValue = item.destination ? item.destination : item.label;
+
+    // Normalize ONLY manual entries
+    const normalizedValue = item.destination
+        ? rawValue              // directory items stay untouched
+        : normalizeExternalNumber(rawValue); // manually typed → sanitize
+
+    return {
+        uuid: item.destination ? item.value : null,
+        destination: normalizedValue,
+        type: item.type ? item.type : "other",
+        delay: "0",
+        timeout: "30",
+        prompt: false,
+    }
+});
 
     const currentMembers = form$.value.el$('follow_me_destinations').value
 
