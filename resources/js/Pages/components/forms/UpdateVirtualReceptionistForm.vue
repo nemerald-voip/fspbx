@@ -613,7 +613,7 @@ const form = reactive({
     digit_length: props.options.ivr.ivr_menu_digit_len,
     ring_back_tone: props.options.ivr.ivr_menu_ringback,
     invalid_input_message: props.options.ivr.ivr_menu_invalid_sound,
-    exit_message: props.options.ivr.ivr_menu_exit_sound,
+    exit_message: props.options.ivr.ivr_menu_exit_sound ?? 'silence_stream://100',
     exit_action: props.options.ivr.exit_action,
     exit_target_uuid: props.options.ivr.exit_target_uuid,
     exit_target_extension: props.options.ivr.exit_target_extension,

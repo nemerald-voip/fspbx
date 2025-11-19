@@ -1250,12 +1250,14 @@ if (!function_exists('getSoundsCollection')) {
             ->values()
             ->all();
 
+        
+
         unset($musicOnHoldCollection, $recordingsCollection, $ringtonesCollection, $item);
         return [
             '' => [
                 [
                     'name' => 'None',
-                    'value' => null,
+                    'value' => 'silence_stream://100',
                 ],
             ],
             'Recordings' => $recordings,
