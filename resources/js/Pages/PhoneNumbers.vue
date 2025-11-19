@@ -343,6 +343,26 @@ const uploadFile = (file) => {
         });
 }
 
+function normalizeSearchQuery(query) {
+    if (!query) return query;
+
+    const hasLetters = /[a-zA-Z]/.test(query);
+    if (hasLetters) {
+        // If letters exist, do not reformat
+        return query;
+    }
+
+    // Strip everything except digits
+    let digits = query.replace(/\D+/g, '');
+
+    // Strip leading 1 ONLY if NANPA 11-digit format
+    if (digits.length === 11 && digits.startsWith('1')) {
+        digits = digits.substring(1);
+    }
+
+    return digits;
+}
+
 function downloadTemplateFile() {
     // Make a GET request to your Laravel route
     axios.get(props.routes.download_template, {
@@ -447,7 +467,11 @@ const handleShowLocal = () => {
 }
 
 const handleSearchButtonClick = () => {
+    // Normalize phone-number-style searches only if no letters present
+    filterData.value.search = normalizeSearchQuery(filterData.value.search);
+
     loading.value = true;
+
     router.visit(props.routes.current_page, {
         data: {
             filter: filterData._rawValue,
@@ -456,9 +480,9 @@ const handleSearchButtonClick = () => {
         preserveState: true,
         only: [
             "data",
-            'showGlobal',
+            "showGlobal",
         ],
-        onSuccess: (page) => {
+        onSuccess: () => {
             loading.value = false;
             handleClearSelection();
         }

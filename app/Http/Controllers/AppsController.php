@@ -864,6 +864,7 @@ class AppsController extends Controller
         $this->ringotelApiService = $ringotelApiService;
 
         try {
+            $currentDomain = session('domain_uuid');
             
        // Check for limits
         if (request('status') == 1) {
