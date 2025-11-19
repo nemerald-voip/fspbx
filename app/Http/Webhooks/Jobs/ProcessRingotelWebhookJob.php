@@ -4,19 +4,18 @@ namespace App\Http\Webhooks\Jobs;
 
 use App\Models\Messages;
 use App\Models\Extensions;
-use App\Jobs\ProcessCommioSMS;
 use App\Models\DomainSettings;
 use App\Models\SmsDestinations;
-use Illuminate\Support\Facades\Log;
 use libphonenumber\PhoneNumberUtil;
-use App\Jobs\ProcessCommioSMSToEmail;
 use Illuminate\Support\Facades\Redis;
 use libphonenumber\PhoneNumberFormat;
 use App\Services\SinchMessageProvider;
 use App\Services\CommioMessageProvider;
+use App\Services\TelnyxMessageProvider;
 use App\Jobs\SendSmsNotificationToSlack;
 use libphonenumber\NumberParseException;
 use App\Services\BandwidthMessageProvider;
+use App\Services\ClickSendMessageProvider;
 use Spatie\WebhookClient\Models\WebhookCall;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 use Spatie\WebhookClient\Jobs\ProcessWebhookJob as SpatieProcessWebhookJob;
@@ -246,6 +245,10 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
                 return new SinchMessageProvider();
             case 'bandwidth':
                 return new BandwidthMessageProvider();
+            case 'telnyx':
+                return new TelnyxMessageProvider();
+            case 'clicksend':
+                return new ClickSendMessageProvider();
                 // Add cases for other carriers
             default:
                 throw new \Exception("Unsupported carrier");

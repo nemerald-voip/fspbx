@@ -23,6 +23,7 @@ use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\HotelRoomStatusController;
 use App\Http\Controllers\InboundWebhooksController;
+use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\EmergencyCallController;
 use App\Http\Controllers\CallTranscriptionController;
@@ -241,4 +242,14 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // CHAR PMS
     Route::post('/pms/char', CharPmsWebhookController::class)->name('pms.char');
+
+    // Message Settings
+    Route::get('/message-settings/data', [MessageSettingsController::class, 'getData'])->name('messages.settings.data');
+    Route::put('/message-settings/{setting}', [MessageSettingsController::class, 'update'])->name('messages.settings.update');
+    Route::post('/message-settings', [MessageSettingsController::class, 'store'])->name('messages.settings.store');
+    Route::delete('/message-settings/{setting}', [MessageSettingsController::class, 'destroy'])->name('messages.settings.destroy');
+    Route::post('/message-settings/item-options', [MessageSettingsController::class, 'getItemOptions'])->name('messages.settings.item.options');
+    Route::post('/message-settings/select-all', [MessageSettingsController::class, 'selectAll'])->name('messages.settings.select.all');
+    Route::post('/message-settings/bulk-delete', [MessageSettingsController::class, 'bulkDelete'])->name('messages.settings.bulk.delete');
+    Route::post('/message-settings/bulk-update', [MessageSettingsController::class, 'bulkUpdate'])->name('messages.settings.bulk.update');
 });
