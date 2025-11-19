@@ -628,6 +628,11 @@ import NewGreetingForm from './NewGreetingForm.vue';
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
 
+function normalizeExternalNumber(v) {
+    if (!v) return v;
+    return v.replace(/[^+\d]/g, '');
+}
+
 function toBool(v) {
     return v === true || v === 'true' || v === 1 || v === '1';
 }
@@ -762,17 +767,25 @@ const availableMembers = computed(() => {
 
 const addSelectedMembers = () => {
     // console.log(form$.value.el$('selectedMembers').value);
-    const selectedItems = form$.value.el$('selectedMembers').value.map(item => {
-        return {
-            uuid: item.destination ? item.value : null,              // if a destination exists, use the item.value as uuid; otherwise, uuid is null
-            destination: item.destination ? item.destination : item.label,  // if item.destination exists, use it; otherwise, use the label
-            type: item.type ? item.type : "other",                     // if type exists, use it; else default to "other"
-            delay: "0",
-            timeout: "25",
-            prompt: false,
-            enabled: true
-        }
-    });
+const selectedItems = form$.value.el$('selectedMembers').value.map(item => {
+    // Determine raw value (directory entry OR manual text)
+    const rawValue = item.destination ? item.destination : item.label;
+
+    // Normalize ONLY manually-entered values
+    const normalizedValue = item.destination
+        ? rawValue                                       // directory selection, untouched
+        : normalizeExternalNumber(rawValue);             // manual entry → clean it
+
+    return {
+        uuid: item.destination ? item.value : null,
+        destination: normalizedValue,
+        type: item.type ? item.type : "other",
+        delay: "0",
+        timeout: "25",
+        prompt: false,
+        enabled: true
+    }
+});
 
     const currentMembers = form$.value.el$('members').value
 
