@@ -99,8 +99,7 @@ class Kernel extends ConsoleKernel
                 (new DeleteOldFaxes((int)$daysKeepFax))
                     ->delay(now()->addSeconds(random_int(60, 600)))
             )
-            ->daily()
-            ->onQueue('default');
+            ->daily();
         }
 
         if (isset($jobSettings['delete_old_call_recordings']) && $jobSettings['delete_old_call_recordings'] === "true") {
@@ -111,8 +110,7 @@ class Kernel extends ConsoleKernel
                 (new DeleteOldCallRecordings((int)$daysKeepRecordings))
                     ->delay(now()->addSeconds(random_int(60, 600)))
             )
-            ->daily()
-            ->onQueue('default');
+            ->daily();
         }
 
         if (isset($jobSettings['delete_old_voicemails']) && $jobSettings['delete_old_voicemails'] === "true") {
@@ -123,8 +121,7 @@ class Kernel extends ConsoleKernel
                 (new DeleteOldVoicemails((int)$daysKeepVoicemails))
                     ->delay(now()->addSeconds(random_int(60, 600)))
             )
-            ->daily()
-            ->onQueue('default');
+            ->daily();
         }
     
         if (isset($jobSettings['delete_old_email_logs']) && $jobSettings['delete_old_email_logs'] === "true") {
@@ -135,8 +132,7 @@ class Kernel extends ConsoleKernel
                 (new DeleteOldEmailLogs((int)$daysKeepEmailLogs))
                     ->delay(now()->addSeconds(random_int(60, 3600)))
             )
-            ->daily()
-            ->onQueue('default');
+            ->daily();
         }
 
         if (isset($jobSettings['delete_old_transcriptions']) && $jobSettings['delete_old_transcriptions'] === "true") {
@@ -147,8 +143,7 @@ class Kernel extends ConsoleKernel
                 (new DeleteOldTranscriptions((int)$daysKeepTranscriptions))
                     ->delay(now()->addSeconds(random_int(60, 3600)))
             )
-            ->daily()
-            ->onQueue('default');
+            ->daily();
         }
 
     }
