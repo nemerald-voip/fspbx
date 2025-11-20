@@ -278,9 +278,8 @@ class UpdateExtensionRequest extends FormRequest
             $value = $this->input($key);
 
             if (!empty($value)) {
-                // Convert to E.164 format
-                $formatted = formatPhoneNumber($value, 'US', \libphonenumber\PhoneNumberFormat::E164);
-                $this->merge([$key => $formatted]);
+                // Keep sanitized manual entry exactly as front-end sends it
+                $this->merge([$key => preg_replace('/[^+\d]/', '', $value)]);
             }
         }
 
@@ -290,7 +289,7 @@ class UpdateExtensionRequest extends FormRequest
             foreach ($followMe as $i => $destination) {
                 if (!empty($destination['destination'])) {
                     $formatted = formatPhoneNumber($destination['destination'], 'US', \libphonenumber\PhoneNumberFormat::E164);
-                    $followMe[$i]['destination'] = $formatted;
+                    $followMe[$i]['destination'] = preg_replace('/[^+\d]/', '', $destination['destination']);
                 }
             }
             // Update the merged input with formatted destinations
