@@ -1026,6 +1026,14 @@ class DatabaseSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "New provision server base URL",
             ],
+            [
+                'default_setting_category'      => 'fax',
+                'default_setting_subcategory'   => 'notify_in_transit',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => 'true',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Send a notification to the sender that the fax has been accepted and is being processed",
+            ],
 
 
         ];
