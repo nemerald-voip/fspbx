@@ -20,7 +20,7 @@ use App\Traits\ChecksLimits;
 
 class VirtualReceptionistController extends Controller
 {
-        use ChecksLimits;
+    use ChecksLimits;
 
     public $model;
     public $filters = [];
@@ -58,7 +58,9 @@ class VirtualReceptionistController extends Controller
                     'store' => route('virtual-receptionists.store'),
                     'item_options' => route('virtual-receptionists.item.options'),
                     'select_all' => route('virtual-receptionists.select.all'),
-                    'bulk_delete' => route('virtual-receptionists.bulk.delete')
+                    'bulk_delete' => route('virtual-receptionists.bulk.delete'),
+                    'duplicate_virtual_receptionist' => route('virtual-receptionists.duplicate'),
+
                 ]
             ]
         );
@@ -359,6 +361,79 @@ class VirtualReceptionistController extends Controller
         }
     }
 
+    /**
+     * Duplicate the specified Virtual Receptionist and its options.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function duplicate(Request $request)
+    {
+        $request->validate([
+            'ivr_menu_uuid' => 'required|uuid|exists:v_ivr_menus,ivr_menu_uuid',
+        ]);
+
+        // 1. Check Limits
+        if ($resp = $this->enforceLimit(
+            'ivr_menus',
+            \App\Models\IvrMenus::class,
+            'domain_uuid',
+            'ivr_limit_error'
+        )) {
+            return $resp;
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // 2. Fetch the Original
+            $original = $this->model::where('ivr_menu_uuid', $request->ivr_menu_uuid)
+                ->where('domain_uuid', session('domain_uuid')) // Security check
+                ->with('options')
+                ->firstOrFail();
+
+            // 3. Replicate the Parent (IVR Menu)
+            $newIvr = $original->replicate();
+            $newIvr->ivr_menu_uuid = Str::uuid();
+            $newIvr->dialplan_uuid = Str::uuid(); // Important: decouple from original dialplan
+            $newIvr->ivr_menu_name = $original->ivr_menu_name . ' (Copy)';
+
+            // Generate a new unique extension number
+            $newIvr->ivr_menu_extension = $this->model->generateUniqueSequenceNumber();
+
+            $newIvr->save();
+
+            // 4. Replicate the Children (IVR Options/Keys)
+            foreach ($original->options as $option) {
+                $newOption = $option->replicate();
+                $newOption->ivr_menu_option_uuid = Str::uuid();
+                $newOption->ivr_menu_uuid = $newIvr->ivr_menu_uuid; // Link to new parent
+                $newOption->save();
+            }
+
+            // 5. Generate Dialplan XML and FusionPBX configuration
+            // This reuses your existing private method to handle the XML logic
+            $this->generateDialPlanXML($newIvr);
+
+            DB::commit();
+
+            return response()->json([
+                'messages' => ['success' => ['Virtual Receptionist duplicated successfully', 'New Extension: ' . $newIvr->ivr_menu_extension]],
+                'ivr_menu_uuid' => $newIvr->ivr_menu_uuid
+            ], 201);
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to duplicate the virtual receptionist.']]
+            ], 500);
+        }
+    }
+
+
     private function generateDialPlanXML(IvrMenus $ivr): void
     {
 
@@ -570,7 +645,7 @@ class VirtualReceptionistController extends Controller
             $sounds = getSoundsCollection(session('domain_uuid'));
 
             $openAiService = app(\App\Services\OpenAIService::class);
-            
+
             // Construct the itemOptions object
             $itemOptions = [
                 'navigation' => $navigation,

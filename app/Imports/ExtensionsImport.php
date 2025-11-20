@@ -7,7 +7,6 @@ use App\Models\Extensions;
 use App\Models\Voicemails;
 use App\Models\DeviceLines;
 use App\Models\FusionCache;
-use Illuminate\Support\Str;
 use App\Rules\UniqueExtension;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Collection;
@@ -43,7 +42,9 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
                 'string'
             ],
             '*.outbound_caller_id_number' => [
-                'phone:US',
+                'nullable'
+            ],
+            '*.outbound_caller_id_number' => [
                 'nullable'
             ],
             '*.description' => [
@@ -101,6 +102,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
         $data['device_template'] = trim($data['device_template']);
         $data['email'] = strtolower(trim($data['email']));
         $data['outbound_caller_id_number'] = trim($data['outbound_caller_id_number']);
+        $data['emergency_caller_id_number'] = trim($data['emergency_caller_id_number'] ?? null);
         return $data;
     }
 
@@ -138,6 +140,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
                 'effective_caller_id_name' => trim($row['first_name'] . ' ' . $row['last_name']),
                 'effective_caller_id_number' => $row['extension'],
                 'outbound_caller_id_number' => $row['outbound_caller_id_number'],
+                'emergency_caller_id_number' => $row['emergency_caller_id_number'],
                 'description' => $row['description'],
                 'directory_visible' => 'true',
                 'directory_exten_visible' => 'true',
@@ -221,7 +224,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
 
             //clear fusionpbx cache
             FusionCache::clear("directory:" . $extension->extension . "@" . $extension->user_context);
-            
+
             //clear the destinations session array
             if (isset($_SESSION['destinations']['array'])) {
                 unset($_SESSION['destinations']['array']);

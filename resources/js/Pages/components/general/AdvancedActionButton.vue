@@ -59,6 +59,8 @@ const PencilSquareIcon = defineAsyncComponent(() => import('@heroicons/vue/20/so
 const UserPlusIcon = defineAsyncComponent(() => import('@heroicons/vue/24/outline/UserPlusIcon'));
 const KeyIcon = defineAsyncComponent(() => import('@heroicons/vue/24/outline/KeyIcon'));
 const TrashIcon = defineAsyncComponent(() => import('@heroicons/vue/20/solid/TrashIcon'));
+const DocumentDuplicateIcon = defineAsyncComponent(() => import('@heroicons/vue/24/outline/DocumentDuplicateIcon'));
+
 
 const props = defineProps({
     actions: Array, // array of {category, actions:[...]}
@@ -73,7 +75,8 @@ const iconMap = {
   SyncIcon,
   UserPlusIcon,
   KeyIcon,
-  SupportAgent
+  SupportAgent,
+  DocumentDuplicateIcon
 };
 
 const getIconComponent = (iconKey) => {

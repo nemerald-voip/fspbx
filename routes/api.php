@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\EmergencyCallController;
 use App\Http\Controllers\CallTranscriptionController;
 use App\Http\Controllers\ExtensionStatisticsController;
+use App\Http\Controllers\VirtualReceptionistController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\Api\ProvisioningTemplateController;
 use App\Http\Controllers\HotelHousekeepingDefinitionController;
@@ -104,7 +105,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('business-hours/item-options', [BusinessHoursController::class, 'getItemOptions'])->name('business-hours.item.options');
     Route::post('business-hours/bulk-delete', [BusinessHoursController::class, 'bulkDelete'])->name('business-hours.bulk.delete');
     Route::post('business-hours/select-all', [BusinessHoursController::class, 'selectAll'])->name('business-hours.select.all');
-
+    Route::post('business-hours/duplicate', [BusinessHoursController::class, 'duplicate'])->name('business-hours.duplicate');
 
     // Holiday Hours
     Route::resource('/holiday-hours', HolidayHoursController::class);
@@ -241,4 +242,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     // CHAR PMS
     Route::post('/pms/char', CharPmsWebhookController::class)->name('pms.char');
+
+    // Virtual Receptionist
+    Route::post('virtual-receptionists/duplicate', [VirtualReceptionistController::class, 'duplicate'])->name('virtual-receptionists.duplicate');
 });

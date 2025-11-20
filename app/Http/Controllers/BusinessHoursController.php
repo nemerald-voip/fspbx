@@ -58,6 +58,8 @@ class BusinessHoursController extends Controller
                     'item_options' => route('business-hours.item.options'),
                     'bulk_delete' => route('business-hours.bulk.delete'),
                     'select_all' => route('business-hours.select.all'),
+                    'duplicate_business_hours' => route('business-hours.duplicate'),
+
                 ]
             ]
         );
@@ -394,7 +396,7 @@ class BusinessHoursController extends Controller
      */
     public function generateDialPlanXML(BusinessHour $businessHour): void
     {
-        logger($businessHour);
+        // logger($businessHour);
         // Data to pass to the Blade template
         $data = [
             'businessHour' => $businessHour,
@@ -499,7 +501,6 @@ class BusinessHoursController extends Controller
                 'after_hours_target_type'   => $action ? $callRoutingService->mapActionToModel($action) : null,
                 'after_hours_target_id'     => $targetId,
             ]);
-
 
             // 2) delete old periods
             $businessHour->periods()->delete();
@@ -688,6 +689,84 @@ class BusinessHoursController extends Controller
                 'success' => false,
                 'errors' => ['server' => ['Failed to select all items']]
             ], 500); // 500 Internal Server Error for any other errors
+        }
+    }
+
+    /**
+     * Duplicate the specified Business Hour.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function duplicate(Request $request)
+    {
+        // 1. Validate Input
+        $request->validate([
+            'uuid' => 'required|uuid|exists:business_hours,uuid',
+        ]);
+
+        // 2. Permission Check
+        if (!userCheckPermission('business_hours_create')) {
+            return response()->json([
+                'messages' => ['error' => ['Access denied.']]
+            ], 403);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // 4. Fetch Original with relationships
+            $original = $this->model::where('uuid', $request->uuid)
+                ->where('domain_uuid', session('domain_uuid'))
+                ->with(['periods', 'holidays'])
+                ->firstOrFail();
+
+            // 5. Replicate Parent
+            $newBusinessHour = $original->replicate();
+            $newBusinessHour->uuid = Str::uuid();
+            $newBusinessHour->name = $original->name . ' (Copy)';
+
+            // Generate unique extension
+            $newBusinessHour->extension = $this->model->generateUniqueSequenceNumber();
+
+            // Reset Dialplan UUID so generateDialPlanXML creates a new one
+            $newBusinessHour->dialplan_uuid = null;
+
+            $newBusinessHour->save();
+
+            // 6. Replicate Periods (Time Slots)
+            foreach ($original->periods as $period) {
+                $newPeriod = $period->replicate();
+                $newPeriod->uuid = Str::uuid();
+                $newPeriod->business_hour_uuid = $newBusinessHour->uuid;
+                $newPeriod->save();
+            }
+
+            // 7. Replicate Holidays (if any exist)
+            foreach ($original->holidays as $holiday) {
+                $newHoliday = $holiday->replicate();
+                $newHoliday->uuid = Str::uuid(); 
+                $newHoliday->business_hour_uuid = $newBusinessHour->uuid;
+                $newHoliday->save();
+            }
+
+            // 8. Generate Dialplan XML
+            $this->generateDialPlanXML($newBusinessHour);
+
+            DB::commit();
+
+            return response()->json([
+                'messages' => ['success' => ['Business Hours duplicated successfully', 'New Extension: ' . $newBusinessHour->extension]],
+                'business_hour_uuid' => $newBusinessHour->business_hour_uuid
+            ], 201);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to duplicate business hours.']]
+            ], 500);
         }
     }
 }

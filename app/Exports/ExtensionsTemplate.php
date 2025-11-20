@@ -18,6 +18,7 @@ class ExtensionsTemplate implements FromCollection, WithHeadings
             'first_name',
             'last_name',
             'outbound_caller_id_number',
+            'emergency_caller_id_number',
             'description',
             'email',
             'device_address',      // as MAC xx:xx:xx:xx:xx:xx
@@ -38,6 +39,7 @@ class ExtensionsTemplate implements FromCollection, WithHeadings
                 'Alice',                // first_name (required)
                 'Johnson',              // last_name (optional)
                 '+13105552020',           // outbound_caller_id_number (optional, US phone)
+                '+13105552020',           // emergency_caller_id_number (optional, US phone)
                 'Sample user',          // description (optional)
                 'alice@example.com',    // email (optional)
                 '00259ccf1cac',    // device_address (optional, MAC address)
