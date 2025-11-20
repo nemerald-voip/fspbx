@@ -319,13 +319,6 @@ const notificationMessages = ref(null);
 const notificationShow = ref(null);
 let tooltipCopyContent = ref('Copy to Clipboard');
 
-function normalizeMacSearch(query) {
-    if (!query) return query;
-
-    // Remove only ":" and "-"
-    return query.replace(/[:\-]/g, '');
-}
-
 const data = ref({
     data: [],
     prev_page_url: null,
@@ -566,12 +559,9 @@ const getData = (page = 1) => {
 }
 
 const handleSearchButtonClick = () => {
-    // Normalize by removing ":" and "-"
-    filterData.value.search = normalizeMacSearch(filterData.value.search);
-
-    getData();
-};
-
+        getData()
+    };
+    
 
 const handleFiltersReset = () => {
     filterData.value.search = null;
