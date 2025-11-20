@@ -501,6 +501,7 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                 ]" />
 
                             <TextElement name="forward_external_target" label="Target"
+                                :format="cleanPhoneNumber"
                                 placeholder="Enter External Number" :floating="false" :columns="{
                                     sm: {
                                         container: 6,
@@ -628,6 +629,23 @@ import NewGreetingForm from './NewGreetingForm.vue';
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
 
+function cleanPhoneNumber(value) {
+  if (value == null) return '';
+  const raw = String(value);
+
+  // If the user typed any "+", honor it by keeping ONE leading "+".
+  const userWantsPlus = raw.includes('+');
+
+  // Keep only digits
+  const digits = raw.replace(/\D/g, '');
+
+  // Preserve a single leading "+" only if the user typed one
+  return userWantsPlus ? `+${digits}` : digits;
+}
+
+// (optional) keep this name if other files call it:
+const normalizeExternalNumber = cleanPhoneNumber;
+    
 function toBool(v) {
     return v === true || v === 'true' || v === 1 || v === '1';
 }
@@ -698,7 +716,7 @@ onMounted(() => {
         forward_action: props.options.ring_group.forward_action ?? null,
         // only set forward_external_target when forwarding_action==='external'
         forward_external_target: props.options.ring_group.forward_action === 'external'
-            ? props.options.ring_group.forward_target_extension ?? null
+            ? cleanPhoneNumber(props.options.ring_group.forward_target_extension ?? '')
             : null,
 
         // for any other action, set forward_target
@@ -763,10 +781,17 @@ const availableMembers = computed(() => {
 const addSelectedMembers = () => {
     // console.log(form$.value.el$('selectedMembers').value);
     const selectedItems = form$.value.el$('selectedMembers').value.map(item => {
+            // Determine raw value (directory entry OR manual text)
+    const rawValue = item.destination ? item.destination : item.label;
+
+    // Normalize ONLY manually-entered values
+   const normalizedValue = item.destination
+        ? rawValue                         // directory selection, untouched
+        : cleanPhoneNumber(rawValue);      // manual entry → strip, keep leading "+"
         return {
-            uuid: item.destination ? item.value : null,              // if a destination exists, use the item.value as uuid; otherwise, uuid is null
-            destination: item.destination ? item.destination : item.label,  // if item.destination exists, use it; otherwise, use the label
-            type: item.type ? item.type : "other",                     // if type exists, use it; else default to "other"
+            uuid: item.destination ? item.value : null,
+            destination: normalizedValue,
+            type: item.type ? item.type : "other",
             delay: "0",
             timeout: "25",
             prompt: false,
