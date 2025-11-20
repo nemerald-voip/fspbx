@@ -288,6 +288,25 @@ import 'vue-multiselect/dist/vue-multiselect.css'
 import Loading from "./components/general/Loading.vue";
 import Spinner from "./components/general/Spinner.vue";
 
+function normalizeCallHistorySearch(input) {
+    if (!input) return input;
+
+    // If text contains letters → do not normalize
+    if (/[A-Za-z]/.test(input)) {
+        return input;
+    }
+
+    // Digits only (strip +, spaces, symbols, etc.)
+    let normalized = input.replace(/\D+/g, "");
+
+    // If NANP number (11 digits starting with 1), strip the leading 1
+    if (normalized.length === 11 && normalized.startsWith("1")) {
+        normalized = normalized.substring(1);
+    }
+
+    return normalized;
+}
+    
 const page = usePage()
 const loading = ref(false)
 const showDetailsModal = ref(false);
@@ -458,6 +477,7 @@ const getItemOptions = (itemUuid = null) => {
 
 
 const handleSearchButtonClick = () => {
+        filterData.value.search = normalizeCallHistorySearch(filterData.value.search);
     getData();
 };
 
