@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\Bandwidth;
+namespace App\Models\ClickSend;
 
 use App\Mail\SmsToEmail;
 use App\Models\Messages;
@@ -16,7 +16,7 @@ use App\Services\RingotelApiService;
  * @property string|null $email
  * @property string|null $extension
  */
-class BandwidthInboundSMS extends Model
+class ClickSendInboundSMS extends Model
 {
     public $org_id;
     public $message_uuid;

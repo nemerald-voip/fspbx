@@ -21,8 +21,6 @@ class ClickSendOutboundSMS extends Model
      */
     public function send()
     {
-
-        logger('ClickSendOutboundSMS');
         $message = Messages::find($this->message_uuid);
 
         if (!$message) {
@@ -55,7 +53,7 @@ class ClickSendOutboundSMS extends Model
 
         $result = $response->json() ?? [];
 
-        logger($result);
+        // logger($result);
 
         if (
             $response->successful()
