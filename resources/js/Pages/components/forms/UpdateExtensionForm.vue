@@ -595,7 +595,7 @@
                                                         ['forward_all_enabled', '==', 'true'],
                                                         ['forward_all_action', 'not_empty'],
                                                         ['forward_all_action', 'in', ['external']]
-                                                    ]" />
+                                                    ]" :format="cleanPhoneNumber" />
                                                 <StaticElement name="divider5" tag="hr"
                                                     :conditions="[() => options.permissions.extension_forward_all]" />
 
@@ -668,7 +668,7 @@
                                                         ['forward_busy_enabled', '==', 'true'],
                                                         ['forward_busy_action', 'not_empty'],
                                                         ['forward_busy_action', 'in', ['external']]
-                                                    ]" />
+                                                    ]" :format="cleanPhoneNumber" />
                                                 <StaticElement name="divider6" tag="hr"
                                                     :conditions="[() => options.permissions.extension_forward_busy]" />
 
@@ -740,7 +740,7 @@
                                                         ['forward_no_answer_enabled', '==', 'true'],
                                                         ['forward_no_answer_action', 'not_empty'],
                                                         ['forward_no_answer_action', 'in', ['external']]
-                                                    ]" />
+                                                    ]" :format="cleanPhoneNumber" />
 
                                                 <StaticElement name="divider7" tag="hr"
                                                     :conditions="[() => options.permissions.extension_forward_no_answer]" />
@@ -815,7 +815,7 @@
                                                         ['forward_user_not_registered_enabled', '==', 'true'],
                                                         ['forward_user_not_registered_action', 'not_empty'],
                                                         ['forward_user_not_registered_action', 'in', ['external']]
-                                                    ]" />
+                                                    ]" :format="cleanPhoneNumber" />
 
                                                 <StaticElement name="divider8" tag="hr"
                                                     :conditions="[() => options.permissions.extension_forward_not_registered]" />
@@ -1860,6 +1860,19 @@ import AssignedDevices from "../AssignedDevices.vue";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
 
+function cleanPhoneNumber(value) {
+  if (value == null) return '';
+  const raw = String(value);
+
+  // Did the user include a "+" anywhere? If so, keep a single leading "+".
+  const userWantsPlus = raw.includes('+');
+
+  // Keep only digits
+  const digits = raw.replace(/\D/g, '');
+
+  // If user typed a "+", honor it; otherwise return just digits
+  return userWantsPlus ? `+${digits}` : digits;
+}
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
 
@@ -1991,7 +2004,7 @@ const addSelectedDestinations = () => {
     const selectedItems = form$.value.el$('selectedDestinations').value.map(item => {
         return {
             uuid: item.destination ? item.value : null,              // if a destination exists, use the item.value as uuid; otherwise, uuid is null
-            destination: item.destination ? item.destination : item.label,  // if item.destination exists, use it; otherwise, use the label
+            destination: item.destination ? item.destination : cleanPhoneNumber(item.label),
             type: item.type ? item.type : "other",                     // if type exists, use it; else default to "other"
             delay: "0",
             timeout: "30",
