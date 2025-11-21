@@ -247,43 +247,6 @@ class UpdateExtensionRequest extends FormRequest
         ];
     }
 
-    public function prepareForValidation()
-    {
-        $first = $this->input('directory_first_name', '');
-        $last = $this->input('directory_last_name', '');
-
-        $fullName = trim($first . ' ' . $last); // Will work even if $last is empty
-
-        $this->merge([
-            'effective_caller_id_name' => $fullName,
-        ]);
-
-        $this->merge([
-            'effective_caller_id_number' => $this->extension,
-        ]);
-
-        $this->merge([
-            'voicemail_mail_to' => $this->voicemail_mail_to ? strtolower($this->voicemail_mail_to) : null,
-        ]);        
-
-        // List of all forwarding external target keys
-        $forwardingTargets = [
-            'forward_all_external_target',
-            'forward_busy_external_target',
-            'forward_no_answer_external_target',
-            'forward_user_not_registered_external_target',
-        ];
-
-        foreach ($forwardingTargets as $key) {
-            $value = $this->input($key);
-
-            if (!empty($value)) {
-                // Convert to E.164 format
-                $formatted = formatPhoneNumber($value, 'US', \libphonenumber\PhoneNumberFormat::E164);
-                $this->merge([$key => $formatted]);
-            }
-        }
-
 public function prepareForValidation()
 {
     $first = $this->input('directory_first_name', '');
