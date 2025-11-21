@@ -66,7 +66,8 @@ apt-get install -y \
     libreoffice-java-common \
     supervisor \
     redis-server \
-    apt-transport-https
+    apt-transport-https \
+    npm
 
 if [[ "$OS_CODENAME" == "bookworm" ]]; then
     apt-get install -y software-properties-common
@@ -204,7 +205,7 @@ else
 fi
 
 # Include the install_esl_extension.sh script
-sh /var/www/fspbx/install/install_esl_extension.sh 
+sh /var/www/fspbx/install/install_esl_extension.sh
 if [ $? -eq 0 ]; then
     print_success "ESL extension installation script executed successfully."
 else
@@ -213,7 +214,7 @@ else
 fi
 
 # Include the install_cron_jobs.sh script
-sh /var/www/fspbx/install/install_cron_jobs.sh 
+sh /var/www/fspbx/install/install_cron_jobs.sh
 if [ $? -eq 0 ]; then
     print_success "Cron bob installation script executed successfully."
 else
@@ -222,7 +223,7 @@ else
 fi
 
 # Include the add_web_server_to_sudoers.sh script
-sh /var/www/fspbx/install/add_web_server_to_sudoers.sh 
+sh /var/www/fspbx/install/add_web_server_to_sudoers.sh
 if [ $? -eq 0 ]; then
     print_success "add_web_server_to_sudoers.sh script executed successfully."
 else
@@ -997,7 +998,3 @@ else
     print_error "Error occurred during database seeding and FS PBX configuration."
     exit 1
 fi
-
-
-
-
