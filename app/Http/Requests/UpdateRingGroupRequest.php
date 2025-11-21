@@ -53,7 +53,7 @@ class UpdateRingGroupRequest extends FormRequest
 
             // only validate each sub‑field if members was provided
             'members.*.uuid'        => ['present'],
-            'members.*.destination' => ['required_with:members', 'numeric'],
+            'members.*.destination' => ['required_with:members', 'regex:/^\+?\d+$/'],
             'members.*.delay'       => ['required_with:members', 'numeric', 'min:0'],
             'members.*.timeout'     => ['required_with:members', 'numeric', 'min:0'],
             'members.*.prompt'      => ['required_with:members', 'boolean'],
@@ -102,7 +102,7 @@ class UpdateRingGroupRequest extends FormRequest
             // if you also want to validate the targets:
             'forward_external_target' => [
                 'required_if:forward_action,external',
-                'string', // or 'uuid' if it must be a UUID
+                'regex:/^\+?\d+$/', // or 'uuid' if it must be a UUID
             ],
 
             'forward_target' => [
@@ -179,13 +179,42 @@ class UpdateRingGroupRequest extends FormRequest
 
     public function prepareForValidation()
     {
-        $input = $this->all();
+        // --- Normalize free-typed numbers before rules run ---
+        // Normalize members.*.destination: keep digits, allow a single leading '+'
+        $members = $this->input('members', []);
+        if (is_array($members) && count($members)) {
+            foreach ($members as $i => $m) {
+                if (isset($m['destination']) && $m['destination'] !== '') {
+                    $v = preg_replace('/[^\d+]+/', '', (string) $m['destination']);
+                    if ($v !== '') {
+                        $hadPlus = strpos($v, '+') !== false;
+                        $v = str_replace('+', '', $v);
+                        if ($hadPlus) $v = '+' . $v;
+                    }
+                    $members[$i]['destination'] = $v;
+                }
+            }
+            $this->merge(['members' => $members]);
+        }
 
+        // If this request includes a forward external target, normalize it too
+        if ($this->has('forward_external_target')) {
+            $v = preg_replace('/[^\d+]+/', '', (string) $this->input('forward_external_target'));
+            if ($v !== '') {
+                $hadPlus = strpos($v, '+') !== false;
+                $v = str_replace('+', '', $v);
+                if ($hadPlus) $v = '+' . $v;
+            }
+            $this->merge(['forward_external_target' => $v]);
+        }
+        // --- End normalization ---
+
+        // Keep your existing delay-defaulting logic
+        $input = $this->all();
         $callDistribution = $input['ring_group_strategy'] ?? null;
 
         if (isset($input['members']) && is_array($input['members'])) {
             foreach ($input['members'] as $index => $member) {
-                // If delay is missing AND strategy is sequence/random/rollover, calculate it
                 if (
                     in_array($callDistribution, ['sequence', 'random', 'rollover'], true)
                     && (!isset($member['delay']) || $member['delay'] === null)
@@ -193,7 +222,6 @@ class UpdateRingGroupRequest extends FormRequest
                     $input['members'][$index]['delay'] = $index * 5;
                 }
 
-                // fallback delay default
                 if (!isset($input['members'][$index]['delay'])) {
                     $input['members'][$index]['delay'] = 0;
                 }
@@ -202,4 +230,4 @@ class UpdateRingGroupRequest extends FormRequest
 
         $this->replace($input);
     }
-}
+    }
