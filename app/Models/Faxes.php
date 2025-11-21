@@ -51,6 +51,7 @@ class Faxes extends Model
 
     protected $appends = [
         'fax_caller_id_number_formatted',
+        'fax_destination_formatted',
     ];
 
     /**
@@ -73,6 +74,11 @@ class Faxes extends Model
     public function getFaxCallerIdNumberFormattedAttribute()
     {
         return formatPhoneNumber($this->fax_caller_id_number, 'US', PhoneNumberFormat::NATIONAL);
+    }
+
+    public function getFaxDestinationFormattedAttribute()
+    {
+        return formatPhoneNumber($this->fax_destination, 'US', PhoneNumberFormat::NATIONAL);
     }
 
     // private $domain
@@ -219,6 +225,8 @@ class Faxes extends Model
                 'default_setting_value',
             ]);
 
+        $notify_in_transit = false;
+
         $this->dialplan_variables = array();
         foreach ($settings as $setting) {
             if ($setting->default_setting_subcategory == 'page_size') {
@@ -278,6 +286,12 @@ class Faxes extends Model
             if ($setting->default_setting_subcategory == 'variable') {
                 $this->dialplan_variables = array_merge($this->dialplan_variables, [$setting->default_setting_value]);
             }
+
+            if ($setting->default_setting_subcategory == 'notify_in_transit') {
+                if ($setting->default_setting_value == 'true') {
+                    $notify_in_transit = true;
+                }
+            }
         }
 
         // If email has attachents convert them to TIF files for faxing
@@ -300,8 +314,10 @@ class Faxes extends Model
             return "No attachments";
         }
 
-        // Send notification to user that fax is in transit
-        SendFaxInTransitNotification::dispatch($payload)->onQueue('emails');
+        if ($notify_in_transit) {
+            // Send notification to user that fax is in transit
+            SendFaxInTransitNotification::dispatch($payload)->onQueue('emails');
+        }
 
         // Set fax subject
         $this->fax_subject = $payload['Subject'];
