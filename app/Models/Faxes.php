@@ -51,6 +51,7 @@ class Faxes extends Model
 
     protected $appends = [
         'fax_caller_id_number_formatted',
+        'fax_destination_formatted',
     ];
 
     /**
@@ -73,6 +74,11 @@ class Faxes extends Model
     public function getFaxCallerIdNumberFormattedAttribute()
     {
         return formatPhoneNumber($this->fax_caller_id_number, 'US', PhoneNumberFormat::NATIONAL);
+    }
+
+    public function getFaxDestinationFormattedAttribute()
+    {
+        return formatPhoneNumber($this->fax_destination, 'US', PhoneNumberFormat::NATIONAL);
     }
 
     // private $domain
