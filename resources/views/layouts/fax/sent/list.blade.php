@@ -88,7 +88,7 @@
                     @endif
                 </td>
                 <td>
-                    {{ phone($file->fax_number, "US", $national_phone_number_format) }}
+                    {{ $file->fax_number_formatted }}
                 </td>
                 {{-- <td>
                     {{ $file->fax_file_type }}
