@@ -14,7 +14,7 @@ class Update112
 
     public function __construct()
     {
-        $this->filePath = base_path('/usr/share/freeswitch/scripts/app/ring_groups/index.lua');
+        $this->filePath = '/usr/share/freeswitch/scripts/app/ring_groups/index.lua';
     }
 
     /**
