@@ -17,7 +17,6 @@ class Update111
     }
 
     /**
-     * Apply the 0.9.7 update steps.
      *
      * @return bool
      */
