@@ -127,7 +127,7 @@ class BusinessHourHoliday extends Model
 
             case 'Recordings':
                 // “Recording: promo.mp3”
-                logger($this->target);
+                // logger($this->target);
                 return 'Play Greeting: ' . $this->target->recording_name;
 
             case 'Dialplans':

@@ -164,26 +164,46 @@ class FirewallController extends Controller
 
             // Check if the line contains a DROP or REJECT action
             if (strpos($line, 'DROP') !== false || strpos($line, 'REJECT') !== false) {
-                // Extract the source IP address 
+                // Split by whitespace
                 $parts = preg_split('/\s+/', $line);
-                if (isset($parts[4]) && filter_var($parts[4], FILTER_VALIDATE_IP)) {
-                    $blockedIps[] = [
-                        'uuid' => Str::uuid()->toString(),
-                        'hostname' => $hostname,
-                        'ip' => $parts[4],
-                        'extension' => null,
-                        'user_agent' => null,
-                        'filter' => $currentChain,
-                        'status' => 'blocked',
-                    ];
+
+                // We expect index 4 because getIptablesRules uses --line-numbers
+                // 0:num, 1:target, 2:prot, 3:opt, 4:source
+                if (isset($parts[4])) {
+                    $source = $parts[4];
+
+                    // --- FIX START: Ignore generic 0.0.0.0/0 (Anywhere) rules ---
+                    if ($source === '0.0.0.0/0') {
+                        continue;
+                    }
+                    // --- FIX END ---
+
+                    // Check if it is a valid IP OR a valid CIDR subnet
+                    $isIp = filter_var($source, FILTER_VALIDATE_IP);
+                    $isCidr = false;
+
+                    if (!$isIp && strpos($source, '/') !== false) {
+                        $cidrParts = explode('/', $source);
+                        if (filter_var($cidrParts[0], FILTER_VALIDATE_IP)) {
+                            $isCidr = true;
+                        }
+                    }
+
+                    if ($isIp || $isCidr) {
+                        $blockedIps[] = [
+                            'uuid' => Str::uuid()->toString(),
+                            'hostname' => $hostname,
+                            'ip' => $source,
+                            'extension' => null,
+                            'user_agent' => null,
+                            'filter' => $currentChain,
+                            'status' => 'blocked',
+                        ];
+                    }
                 }
             }
         }
 
-        // Return the list of blocked IPs, ensuring uniqueness
-        // return array_unique($blockedIps, SORT_REGULAR);
-
-        // Convert the array to a Laravel collection and return it
         return collect($blockedIps)->unique();
     }
 
@@ -360,13 +380,14 @@ class FirewallController extends Controller
         try {
             $inputs = $request->validated();
 
-            $ip = $inputs['ip_address'];
+            // Can be "192.168.1.50" OR "192.168.1.0/24"
+            $ipOrSubnet = $inputs['ip_address'];
 
             // Ensure the chain exists
             $this->ensureChainExists('fs_pbx_deny_access');
 
             // Add the IP to the fs_pbx_deny_access chain
-            $blockProcess = new Process(['sudo', 'iptables', '-A', 'fs_pbx_deny_access', '-s', $ip, '-j', 'DROP']);
+            $blockProcess = new Process(['sudo', 'iptables', '-A', 'fs_pbx_deny_access', '-s', $ipOrSubnet, '-j', 'DROP']);
             $blockProcess->run();
 
             if (!$blockProcess->isSuccessful()) {
@@ -438,7 +459,8 @@ class FirewallController extends Controller
         try {
             $ips = [];
 
-            // Get the full iptables output including all chains
+            // Note: This command usually does NOT include --line-numbers based on your previous snippet
+            // So source is usually index 3 (Target, Prot, Opt, Source)
             $process = new Process(['sudo', 'iptables', '-L', '-n']);
             $process->run();
 
@@ -450,36 +472,39 @@ class FirewallController extends Controller
             $lines = explode("\n", $output);
 
             foreach ($lines as $line) {
-                // Check if the line contains a DROP or REJECT action
                 if (strpos($line, 'DROP') !== false || strpos($line, 'REJECT') !== false) {
-                    // Extract the source IP address (typically the 4th or 5th column)
                     $parts = preg_split('/\s+/', $line);
-                    if (isset($parts[3]) && filter_var($parts[3], FILTER_VALIDATE_IP)) {
-                        $ips[] = $parts[3];
+
+                    // Index 3 is Source in standard `iptables -L -n` output
+                    if (isset($parts[3])) {
+                        $source = $parts[3];
+
+                        // --- FIX: Ignore 0.0.0.0/0 ---
+                        if ($source === '0.0.0.0/0') {
+                            continue;
+                        }
+
+                        // Validate IP or CIDR
+                        $isIp = filter_var($source, FILTER_VALIDATE_IP);
+                        $isCidr = (!$isIp && strpos($source, '/') !== false && filter_var(explode('/', $source)[0], FILTER_VALIDATE_IP));
+
+                        if ($isIp || $isCidr) {
+                            $ips[] = $source;
+                        }
                     }
                 }
             }
 
-            // Ensure uniqueness in case an IP is blocked in multiple chains
-            $ips = array_unique($ips);
-
-            // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['All items selected']],
-                'items' => $ips,
+                'items' => array_unique($ips),
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage());
-            // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => ['Failed to select all items']]
-            ], 500); // 500 Internal Server Error for any other errors
+            ], 500);
         }
-
-        return response()->json([
-            'success' => false,
-            'errors' => ['server' => ['Failed to select all items']]
-        ], 500); // 500 Internal Server Error for any other errors
     }
 }

@@ -559,9 +559,9 @@ const getData = (page = 1) => {
 }
 
 const handleSearchButtonClick = () => {
-    getData()
-};
-
+        getData()
+    };
+    
 
 const handleFiltersReset = () => {
     filterData.value.search = null;

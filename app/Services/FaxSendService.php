@@ -90,6 +90,8 @@ class FaxSendService
             $payload['gs_g'] = ((int)(8.5 * 204)) . 'x' . ((int)(11 * 98));
             $payload['dialplan_variables'] = [];
 
+            $notify_in_transit = false;
+
             foreach ($settings as $setting) {
                 switch ($setting->default_setting_subcategory) {
                     case 'page_size':
@@ -151,6 +153,12 @@ class FaxSendService
                     case 'variable':
                         $payload['dialplan_variables'][] = $setting->default_setting_value;
                         break;
+
+                    case 'notify_in_transit':
+                        if ($setting->default_setting_value == 'true') {
+                            $notify_in_transit = true;
+                        }
+                        
                 }
             }
 
@@ -185,6 +193,11 @@ class FaxSendService
                 $dial_string
             );
 
+            if ($notify_in_transit) {
+                // Send notification to user that fax is in transit
+                SendFaxInTransitNotification::dispatch($payload)->onQueue('emails');
+            }
+
             return $result;
         } catch (\Throwable $e) {
             logger('FaxSendService@send error : ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -216,9 +229,6 @@ class FaxSendService
         $fax_queue->fax_command        = 'originate ' . $dial_string;
 
         $fax_queue->save();
-
-        // Send notification to user that fax is in transit
-        SendFaxInTransitNotification::dispatch($payload)->onQueue('emails');
 
         return $fax_queue->fax_queue_uuid;
     }

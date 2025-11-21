@@ -37,11 +37,11 @@
                         <input type="search" v-model="filterData.search" name="mobile-search-candidate"
                             id="mobile-search-candidate"
                             class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                            placeholder="Search" />
+                            placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                         <input type="search" v-model="filterData.search" name="desktop-search-candidate"
                             id="desktop-search-candidate"
                             class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                            placeholder="Search" />
+                            placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                     </div>
 
 
@@ -287,7 +287,7 @@ import 'vue-multiselect/dist/vue-multiselect.css'
 
 import Loading from "./components/general/Loading.vue";
 import Spinner from "./components/general/Spinner.vue";
-
+    
 const page = usePage()
 const loading = ref(false)
 const showDetailsModal = ref(false);

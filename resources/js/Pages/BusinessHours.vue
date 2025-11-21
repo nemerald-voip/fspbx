@@ -22,7 +22,8 @@
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.ring_group_create" type="button" @click.prevent="handleCreateButtonClick()"
+                <button v-if="page.props.auth.can.ring_group_create" type="button"
+                    @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
@@ -33,22 +34,24 @@
             <template #navigation>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    @pagination-change-page="renderRequestedPage" :bulk-actions="bulkActions"
+                    @bulk-action="handleBulkActionRequest" :has-selected-items="selectedItems.length > 0" />
             </template>
             <template #table-header>
 
                 <TableColumnHeader
-                    class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
-                        :has-selected-items="selectedItems.length > 0" />
+
                     <span class="pl-4">Name</span>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Extension" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Extension"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Description"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
@@ -76,7 +79,7 @@
                         <div class="flex items-center">
                             <input v-if="row.uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
                                 :value="row.uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="ml-9"
+                            <div class="ml-4"
                                 :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.business_hours_update, }"
                                 @click="page.props.auth.can.business_hours_update && handleEditButtonClick(row.uuid)">
                                 <span class="flex items-center">
@@ -86,11 +89,9 @@
                         </div>
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.extension" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.extension" />
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.description" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.description" />
 
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
@@ -112,6 +113,9 @@
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
+
+                                <AdvancedActionButton :actions="advancedActions"
+                                    @advanced-action="(action) => handleAdvancedActionRequest(action, row.uuid)" />
                             </div>
                         </template>
                     </TableField>
@@ -144,15 +148,18 @@
     <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showCreateModal" :header="'Create New Business Hours'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateBusinessHoursForm :options="itemOptions" @close="handleModalClose" @error="handleErrorResponse"  @success="showNotification" @refresh-data="handleSearchButtonClick" @open-edit-form="handleEditButtonClick"/>
+            <CreateBusinessHoursForm :options="itemOptions" @close="handleModalClose" @error="handleErrorResponse"
+                @success="showNotification" @refresh-data="handleSearchButtonClick"
+                @open-edit-form="handleEditButtonClick" />
         </template>
     </AddEditItemModal>
 
     <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showEditModal"
-        :header="'Update Business Hours - ' + itemOptions?.item?.name"
-        :loading="loadingModal" @close="handleModalClose">
+        :header="'Update Business Hours - ' + itemOptions?.item?.name" :loading="loadingModal"
+        @close="handleModalClose">
         <template #modal-body>
-            <UpdateBusinessHoursForm :options="itemOptions" @close="handleModalClose" @error="handleErrorResponse" @success="showNotification" @refresh-data="handleSearchButtonClick"/>
+            <UpdateBusinessHoursForm :options="itemOptions" @close="handleModalClose" @error="handleErrorResponse"
+                @success="showNotification" @refresh-data="handleSearchButtonClick" />
         </template>
     </AddEditItemModal>
 
@@ -190,11 +197,11 @@ import { registerLicense } from '@syncfusion/ej2-base';
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
-import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import CreateBusinessHoursForm from "./components/forms/CreateBusinessHoursForm.vue";
 import UpdateBusinessHoursForm from "./components/forms/UpdateBusinessHoursForm.vue";
 import Notification from "./components/notifications/Notification.vue";
+import AdvancedActionButton from "./components/general/AdvancedActionButton.vue";
 
 
 
@@ -207,9 +214,6 @@ const selectPageItems = ref(false);
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
-const confirmationModalDestroyPath = ref(null);
-const createFormSubmiting = ref(null);
-const updateFormSubmiting = ref(null);
 const confirmDeleteAction = ref(null);
 const bulkUpdateFormSubmiting = ref(null);
 const formErrors = ref(null);
@@ -253,8 +257,14 @@ const bulkActions = computed(() => {
     return actions;
 });
 
-onMounted(() => {
-});
+const advancedActions = computed(() => [
+    {
+        category: "Advanced",
+        actions: [
+            { id: 'duplicate', label: 'Duplicate', icon: 'DocumentDuplicateIcon' },
+        ],
+    },
+]);
 
 const handleEditButtonClick = (itemUuid) => {
     showEditModal.value = true
@@ -388,6 +398,49 @@ const getItemOptions = (itemUuid = null) => {
             handleErrorResponse(error);
         });
 }
+
+const handleAdvancedActionRequest = async (action, uuid) => {
+    // 1. specific validation
+    if (!uuid) {
+        console.error('Missing UUID');
+        return;
+    }
+
+    // 2. Strategy Pattern: easy to add 'delete', 'archive', etc.
+    const actionUrls = {
+        duplicate: props.routes.duplicate_business_hours,
+    };
+
+    const url = actionUrls[action];
+
+    if (!url) {
+        console.warn(`Action "${action}" is not supported.`);
+        return;
+    }
+
+    // 3. Manage loading state explicitly (assuming setIsLoading exists in scope)
+    // setIsLoading(true); 
+
+    try {
+        const payload = { uuid };
+
+        // 4. Async/Await is cleaner than .then chains
+        const response = await axios.post(url, payload);
+
+        showNotification('success', response.data.messages);
+
+        handleSearchButtonClick();
+
+        // 5. Return data in case the caller needs it
+        return response.data;
+
+    } catch (error) {
+        handleErrorResponse(error);
+    } finally {
+        // setIsLoading(false);
+        // reset loading state, close modal, etc.
+    }
+};
 
 const handleFormErrorResponse = (error) => {
     if (error.request?.status == 419) {
