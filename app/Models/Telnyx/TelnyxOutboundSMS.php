@@ -36,6 +36,7 @@ class TelnyxOutboundSMS extends Model
             'from' => $message->source,
             'to'   => $message->destination,
             'text' => $message->message,
+            // 'messaging_profile_id' => '40019981-fb97-4a66-a7f3-4396dd1721db',
         ];
 
         // 3. Handle Media (MMS)
@@ -79,7 +80,7 @@ class TelnyxOutboundSMS extends Model
         // 5. Handle Response
         $result = $response->json();
 
-        // logger($result);
+        logger($result);
 
         if ($response->successful()) {
             // Telnyx returns a 'data' object wrapper
