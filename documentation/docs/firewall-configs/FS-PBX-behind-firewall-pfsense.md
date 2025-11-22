@@ -51,7 +51,7 @@ This guide walks you through configuring **port forwarding** on pfSense for a FS
 |------------------------------|---------|-----------|
 | SIP (UDP)                    | UDP     | 5060      |
 | SIP TLS (optional)           | TCP     | 5061      |
-| RTP (Audio)                  | UDP     | 10000-20000 |
+| RTP (Audio)                  | UDP     | 16384-32768 |
 | HTTP (Admin GUI, optional)   | TCP     | 80        |
 | HTTPS (Admin GUI, recommended)| TCP     | 443       |
 
@@ -115,4 +115,4 @@ This guide walks you through configuring **port forwarding** on pfSense for a FS
 - Only open ports you need.
 - Consider using TLS (5061) for SIP and HTTPS (443) for GUI.
 - Use strong passwords for extensions and admin accounts.
-- Optionally, use a VPN for remote SIP traffic instead of opening UDP 5060/10000-20000 to the internet.
+- Optionally, use a VPN for remote SIP traffic instead of opening UDP 5060/16384-32768 to the internet.

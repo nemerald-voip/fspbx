@@ -52,7 +52,7 @@ For more granular control, you can adjust the SIP profiles in FS PBX.
 |------------------------------|---------|---------------|
 | SIP                          | UDP     | 5060          |
 | SIP TLS (optional)           | TCP     | 5061          |
-| RTP (Audio)                  | UDP     | 10000-20000   |
+| RTP (Audio)                  | UDP     | 16384-32768   |
 | HTTP (Admin GUI, optional)   | TCP     | 80            |
 | HTTPS (Admin GUI, recommended)| TCP    | 443           |
 | IAX2 (if used)               | UDP     | 4569          |
@@ -116,4 +116,4 @@ For more granular control, you can adjust the SIP profiles in FS PBX.
 - Only forward ports that are necessary.  
 - Use SIP TLS (5061) and HTTPS (443) for secure connections.  
 - Use strong extension passwords.  
-- Consider VPN for remote SIP instead of exposing 5060/10000-20000 to the internet.  
+- Consider VPN for remote SIP instead of exposing 5060/16384-32768 to the internet.  

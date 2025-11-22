@@ -65,7 +65,7 @@ Continuing through configuring **port forwarding** on a MikroTik router for a FS
 |------------------------------|---------|---------------|
 | SIP                          | UDP     | 5060          |
 | SIP TLS (optional)           | TCP     | 5061          |
-| RTP (Audio)                  | UDP     | 10000-20000   |
+| RTP (Audio)                  | UDP     | 16384-32768   |
 | HTTP (Admin GUI, optional)   | TCP     | 80            |
 | HTTPS (Admin GUI, recommended)| TCP    | 443           |
 | IAX2 (if used)               | UDP     | 4569          |
@@ -102,7 +102,7 @@ Continuing through configuring **port forwarding** on a MikroTik router for a FS
 /ip firewall nat add chain=dstnat dst-port=5060 protocol=udp action=dst-nat to-addresses=192.168.88.100 to-ports=5060 comment="SIP UDP 5060 to FSPBX"
 ```
 
-Repeat for other ports (5061 TCP, RTP 10000-20000 UDP, etc.).
+Repeat for other ports (5061 TCP, RTP 16384-32768 UDP, etc.).
 
 ---
 
@@ -130,4 +130,4 @@ Repeat for other ports (5061 TCP, RTP 10000-20000 UDP, etc.).
 - Only forward required ports.
 - Prefer SIP TLS (5061) and HTTPS (443) for security.
 - Use strong passwords for all extensions and admin accounts.
-- Consider VPN for remote SIP access instead of exposing ports 5060/10000-20000 directly to the internet.
+- Consider VPN for remote SIP access instead of exposing ports 5060/16384-32768 directly to the internet.
