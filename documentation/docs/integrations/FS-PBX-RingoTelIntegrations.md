@@ -37,7 +37,7 @@ Ensure you're running FS PBX version 0.9.21 or later to access full Ringotel int
 ### Step 2: Access Ringotel Integration Settings in FS PBX
 
 1. Log in to your FS PBX admin interface
-2. Navigate to **Default Settings → Mobile apps** category
+2. Navigate to **Advanced → Mobile apps** category
 3. This is where you'll configure the Ringotel API integration
 
 ### Step 3: Configure Ringotel API Integration in FS PBX
