@@ -16,7 +16,7 @@ This guide walks you through provisioning Ringotel mobile and desktop softphone 
 
 ## Prerequisites
 
-- **FS PBX Version**: 0.9.21 or later (requires FusionPBX 5.1 baseline)
+- **FS PBX Version**: 0.9.21 or later
 - **Ringotel Account**: Sign up at [ringotel.co](https://ringotel.co)
 - **Extension Credentials**: Have your extension passwords ready
 - **Firewall Access**: Ability to configure firewall rules
@@ -196,8 +196,8 @@ Ringotel servers connect to your PBX on behalf of users, so you must allow incom
    - Allow incoming traffic from Ringotel IPs to your SIP ports (TCP/UDP)
    - Allow incoming traffic to RTP ports (UDP)
 
-3. **Important for FusionPBX/FS PBX**:
-   - **Do NOT** add Ringotel IP addresses to FusionPBX ACL
+3. **Important for FS PBX/FS PBX**:
+   - **Do NOT** add Ringotel IP addresses to FS PBX ACL
    - This may cause outbound calls to fail
    - Ringotel works like any other SIP endpoint (IP phone/softphone)
 
@@ -248,7 +248,7 @@ Ringotel supports various PBX export formats. Your CSV should contain:
 **Import Process:**
 
 1. Click **Import Users**
-2. **Select Format**: Choose your PBX format (FS PBX/FusionPBX supported)
+2. **Select Format**: Choose your PBX format (FS PBX/FS PBX supported)
 3. **Choose File**: Select your CSV file
 4. Review the import preview showing number of users
 5. Click **Next**
@@ -460,7 +460,7 @@ Add custom SIP headers for advanced routing or tracking:
 ### Outbound Calls Fail
 
 **Check:**
-- Ringotel IPs NOT added to FusionPBX ACL
+- Ringotel IPs NOT added to FS PBX ACL
 - Outbound routes configured correctly in FS PBX
 - User has correct dial permissions
 - Outbound SIP proxy configured if needed
