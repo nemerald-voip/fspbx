@@ -39,7 +39,7 @@ class FSPBXInitialDBSeed extends Command
         $this->runUpgradeDomains();
 
         // Step 4: Create or Update Superadmin User
-        $username = "admin@fspbx.net";
+        $username = "fspbx@fspbx.com";
         $password = Str::random(25);
 
         $user = User::where('user_email', $username)->first();
