@@ -29,5 +29,11 @@ In this step-by-step video, we’ll show you how to:
 
 At launch, FS PBX integrates AssemblyAI for accurate, HIPAA-compliant speech-to-text and OpenAI for concise AI-generated call summaries.
 
-
-
+<iframe
+      width="560"
+      height="315"
+      src="https://www.youtube.com/embed/OEshZIH5qAs"
+      frameborder="0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowfullscreen
+    ></iframe>
