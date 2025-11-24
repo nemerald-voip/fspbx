@@ -3,15 +3,14 @@
 namespace App\Http\Webhooks\Jobs;
 
 use App\Models\Messages;
-use App\Models\Voicemails;
 use App\Jobs\TranscribeCdrJob;
-use App\Models\SmsDestinations;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use App\Services\SinchMessageProvider;
 use App\Services\CommioMessageProvider;
 use App\Services\BandwidthMessageProvider;
 use Spatie\WebhookClient\Models\WebhookCall;
+use App\Jobs\SendNewVoicemailNotificationBySms;
 use App\Jobs\SendNewVoicemailNotificationByEmail;
 use App\Services\CallTranscription\CallTranscriptionService;
 use Spatie\WebhookClient\Jobs\ProcessWebhookJob as SpatieProcessWebhookJob;
@@ -103,7 +102,8 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
 
                 switch ($event) {
                     case 'send_vm_sms_notification':
-                        $response = $this->sendSystemSms($data);
+                        // $response = $this->sendSystemSms($data);
+                        SendNewVoicemailNotificationBySms::dispatch($data);
                         break;
 
                     case 'send_vm_email_notification':
@@ -151,108 +151,11 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
         }
     }
 
-    private function sendSystemSms($data)
-    {
-        // logger($data);
-
-        $voicemail = Voicemails::where('domain_uuid', $data['domain_uuid'])
-            ->where('voicemail_id', $data['voicemail_id'])
-            ->select([
-                'voicemail_uuid',
-                'voicemail_sms_to',
-            ])
-            ->firstOrFail();
-
-        if (empty($voicemail->voicemail_sms_to)) {
-            return response();
-        }
-
-        $payload['source'] = get_domain_setting('sms_notification_from_number');
-        $payload['destination'] = $voicemail->voicemail_sms_to;
-        $payload['domain_uuid'] = $data['domain_uuid'];
-
-        $data['message_date'] = \Carbon\Carbon::createFromTimestamp($data['message_date'])
-            ->setTimezone(get_local_time_zone($data['domain_uuid']))
-            ->format('Y-m-d H:i');
-
-        //Get message config
-        $phoneNumberSmsConfig = $this->getPhoneNumberSmsConfig($payload['source']);
-
-        $payload['domain_uuid'] = $phoneNumberSmsConfig->domain_uuid;
-        $payload['carrier'] = $phoneNumberSmsConfig->carrier;
-        //Determine message provider
-        $this->messageProvider = $this->getMessageProvider($payload['carrier']);
-
-        $text = get_domain_setting('sms_notification_text');
-        // $payload['destination'] =  $phoneNumberSmsConfig->destination;
-
-        $payload['message'] = preg_replace_callback('/\$\{([a-zA-Z0-9_]+)\}/', function ($matches) use ($data) {
-            return $data[$matches[1]] ?? '';
-        }, $text);
-
-        $payload['status'] = "queued";
-
-        // logger($payload);
-        //Store message in the log database
-        $message = $this->storeMessage($payload);
-
-        // Send message
-        $this->messageProvider->send($message->message_uuid);
-
-        return response()->json(['status' => 'Message sent']);
-    }
-
-
-    private function getPhoneNumberSmsConfig($from)
-    {
-        $phoneNumberSmsConfig = SmsDestinations::where('destination', $from)
-            ->first();
-
-        if (!$phoneNumberSmsConfig) {
-            throw new \Exception("SMS configuration not found for phone number " . $from);
-        }
-
-        return $phoneNumberSmsConfig;
-    }
-
-    private function getMessageProvider($carrier)
-    {
-        switch ($carrier) {
-            case 'thinq':
-                return new CommioMessageProvider();
-            case 'sinch':
-                return new SinchMessageProvider();
-            case 'bandwidth':
-                return new BandwidthMessageProvider();
-                // Add cases for other carriers
-            default:
-                throw new \Exception("Unsupported carrier");
-        }
-    }
-
     private function handleError(\Exception $e)
     {
 
         logger('ProcessFreeswitchWebhookJob@handle error:' . $e->getMessage());
 
         return $this->release(15);
-    }
-
-    private function storeMessage($payload)
-    {
-        $messageModel = new Messages;
-        $messageModel->extension_uuid = null;
-        $messageModel->domain_uuid = $payload['domain_uuid'] ?? null;
-        $messageModel->source =  $payload['source'] ?? null;
-        $messageModel->destination =  $payload['destination'] ?? null;
-        $messageModel->message = $payload['message'] ?? null;
-        $messageModel->direction = "out";
-        $messageModel->type = 'sms';
-        $messageModel->status = $payload['status'] ?? null;
-
-        // logger($messageModel);
-        $messageModel->save();
-
-        return $messageModel;
     }
 }

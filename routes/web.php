@@ -74,6 +74,8 @@ Route::webhooks('webhook/mailgun', 'mailgun');
 Route::webhooks('webhook/commio/sms', 'commio_messaging');
 Route::webhooks('webhook/sinch/sms', 'sinch_messaging');
 Route::webhooks('webhook/bandwidth/sms', 'bandwidth_messaging');
+Route::webhooks('webhook/telnyx/sms', 'telnyx_messaging');
+Route::webhooks('webhook/clicksend/sms', 'clicksend_messaging');
 Route::webhooks('/sms/ringotelwebhook', 'ringotel_messaging');
 Route::webhooks('/webhook/freeswitch', 'freeswitch');
 Route::webhooks('/webhook/stripe', 'stripe');
@@ -308,12 +310,6 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Message Settings
     Route::get('/message-settings', [MessageSettingsController::class, 'index'])->name('messages.settings');
-    Route::put('/message-settings/{setting}', [MessageSettingsController::class, 'update'])->name('messages.settings.update');
-    Route::post('/message-settings', [MessageSettingsController::class, 'store'])->name('messages.settings.store');
-    Route::delete('/message-settings/{setting}', [MessageSettingsController::class, 'destroy'])->name('messages.settings.destroy');
-    Route::post('/message-settings/select-all', [MessageSettingsController::class, 'selectAll'])->name('messages.settings.select.all');
-    Route::post('/message-settings/bulk-delete', [MessageSettingsController::class, 'bulkDelete'])->name('messages.settings.bulk.delete');
-    Route::post('/message-settings/bulk-update', [MessageSettingsController::class, 'bulkUpdate'])->name('messages.settings.bulk.update');
 
 
     // Firewall

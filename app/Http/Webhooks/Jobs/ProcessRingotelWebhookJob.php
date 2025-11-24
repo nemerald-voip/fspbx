@@ -4,19 +4,14 @@ namespace App\Http\Webhooks\Jobs;
 
 use App\Models\Messages;
 use App\Models\Extensions;
-use App\Jobs\ProcessCommioSMS;
 use App\Models\DomainSettings;
 use App\Models\SmsDestinations;
-use Illuminate\Support\Facades\Log;
 use libphonenumber\PhoneNumberUtil;
-use App\Jobs\ProcessCommioSMSToEmail;
 use Illuminate\Support\Facades\Redis;
 use libphonenumber\PhoneNumberFormat;
-use App\Services\SinchMessageProvider;
-use App\Services\CommioMessageProvider;
 use App\Jobs\SendSmsNotificationToSlack;
 use libphonenumber\NumberParseException;
-use App\Services\BandwidthMessageProvider;
+use App\Factories\MessageProviderFactory;
 use Spatie\WebhookClient\Models\WebhookCall;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 use Spatie\WebhookClient\Jobs\ProcessWebhookJob as SpatieProcessWebhookJob;
@@ -134,7 +129,7 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
         $this->carrier =  $phoneNumberSmsConfig->carrier;
 
         //Determine message provider
-        $this->messageProvider = $this->getMessageProvider($this->carrier);
+        $this->messageProvider= MessageProviderFactory::make($this->carrier);
 
         $phoneNumberUtil = PhoneNumberUtil::getInstance();
         try {
@@ -235,21 +230,6 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
         }
 
         return $extension_uuid;
-    }
-
-    private function getMessageProvider($carrier)
-    {
-        switch ($carrier) {
-            case 'thinq':
-                return new CommioMessageProvider();
-            case 'sinch':
-                return new SinchMessageProvider();
-            case 'bandwidth':
-                return new BandwidthMessageProvider();
-                // Add cases for other carriers
-            default:
-                throw new \Exception("Unsupported carrier");
-        }
     }
 
     private function handleError(\Exception $e)

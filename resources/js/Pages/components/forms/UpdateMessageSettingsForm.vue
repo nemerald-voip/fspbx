@@ -1,120 +1,234 @@
 <template>
-    <form @submit.prevent="submitForm">
-        <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-            <div class="sm:col-span-12">
-                <LabelInputRequired :target="'destination'" :label="'Phone Number'" />
-                <div class="mt-2">
-                    <InputField v-model="form.destination" type="text" name="destination"
-                        placeholder="Enter Phone Number"
-                        :error="errors?.destination && errors.destination.length > 0"/>
-                </div>
-                <div v-if="errors?.destination" class="mt-2 text-sm text-red-600">
-                    {{ errors.destination[0] }}
-                </div>
-            </div>
+    <TransitionRoot as="div" :show="show">
+        <Dialog as="div" class="relative z-10">
+            <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
+                leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+            </TransitionChild>
+            <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+                <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                    <TransitionChild as="template" enter="ease-out duration-300"
+                        enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                        enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200"
+                        leave-from="opacity-100 translate-y-0 sm:scale-100"
+                        leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
 
-            <div class="sm:col-span-12">
-                <LabelInputOptional :target="'carrier'" :label="'Message Provider'" />
-                <div class="mt-2">
-                    <ComboBox :options="options.carrier" :selectedItem="item.carrier"
-                        :search="true" :placeholder="'Choose carrier'" @update:model-value="handleUpdateCarrier" />
-                </div>
-                <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
-                    forwarded.</p>
-            </div>
+                        <DialogPanel
+                            class="relative transform  rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
 
-            <div class="sm:col-span-12">
-                <LabelInputOptional :target="'extension'" :label="'Extension'" />
-                <div class="mt-2">
-                    <ComboBox :options="options.chatplan_detail_data" :selectedItem="item.chatplan_detail_data"
-                        :search="true" :placeholder="'Choose extension'" @update:model-value="handleUpdateExtension" />
-                </div>
-                <p class="mt-3 text-sm leading-6 text-gray-600">Assign the extension to which the messages should be
-                    forwarded.</p>
-            </div>
+                            <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
+                                <button type="button"
+                                    class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                    @click="emit('close')">
+                                    <span class="sr-only">Close</span>
+                                    <XMarkIcon class="h-6 w-6" aria-hidden="true" />
+                                </button>
+                            </div>
 
-            <div class="sm:col-span-12">
-                <LabelInputOptional :target="'email'" :label="'Email'" />
-                <div class="mt-2">
-                    <InputField v-model="form.email" type="text" name="email" placeholder="Optional"
-                        :error="errors?.email && errors.email.length > 0"/>
-                </div>
-                <div v-if="errors?.email" class="mt-2 text-sm text-red-600">
-                    {{ errors.email[0] }}
-                </div>
-                <p class="mt-3 text-sm leading-6 text-gray-600">You can choose to use email instead of the extension if
-                    you'd like.</p>
-            </div>
-
-            <div class="sm:col-span-12">
-                <LabelInputOptional :target="'description'" :label="'Description'" />
-                <div class="mt-2">
-                    <Textarea v-model="form.description" name="description" rows="2" />
-                </div>
-            </div>
-        </div>
-        <div class="border-t mt-4 sm:mt-4 ">
-            <div class="mt-4 sm:mt-4 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-                <button type="submit"
-                    class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                    ref="saveButtonRef" :disabled="isSubmitting">
-                    <Spinner :show="isSubmitting" />
-                    Save
-                </button>
-                <button type="button"
-                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                    @click="emits('cancel')" ref="cancelButtonRef">Cancel
-                </button>
-            </div>
-        </div>
+                            <div v-if="loading" class="w-full h-full">
+                                <div class="flex justify-center items-center space-x-3">
+                                    <div>
+                                        <svg class="animate-spin  h-10 w-10 text-blue-600"
+                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                                stroke-width="4">
+                                            </circle>
+                                            <path class="opacity-75" fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                    <div class="text-lg text-blue-600 m-auto">Loading...</div>
+                                </div>
+                            </div>
 
 
-    </form>
+                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                                @error="handleError" @response="handleResponse" :display-errors="false" :default="{
+                                    destination: options.item.destination,
+                                    carrier: options.item.carrier,
+                                    chatplan_detail_data: options.item.chatplan_detail_data,
+                                    email: options.item.email,
+                                    description: options.item.description,
+
+                                }">
+
+                                <template #empty>
+
+                                    <FormElements>
+
+                                        <StaticElement name="h4" tag="h4" content="Create new" />
+
+                                        <TextElement name="destination" label="Phone Number"
+                                            placeholder="Enter Phone Number" :floating="false" :columns="{
+                                                sm: {
+                                                    container: 6,
+                                                },
+                                            }" />
+
+
+                                        <SelectElement name="carrier" :items="options.carrier"
+                                            :search="true" :native="false" label="Message Provider" input-type="search"
+                                            autocomplete="off" :floating="false" :strict="false"
+                                            placeholder="Choose Provider" :columns="{
+                                                sm: {
+                                                    container: 6,
+                                                },
+                                            }" />
+
+                                        <SelectElement name="chatplan_detail_data" :items="options.chatplan_detail_data"
+                                            :search="true" :native="false" label="Extension" input-type="search"
+                                            autocomplete="off" :floating="false" description="Assign the extension
+                                                        to which the messages should be
+                                                        forwarded." :strict="false" placeholder="Choose extension"
+                                            :columns="{
+                                                sm: {
+                                                    container: 6,
+                                                },
+                                            }" />
+
+                                        <TextElement name="email" label="Email" placeholder="Optional" :floating="false"
+                                            :columns="{
+                                                sm: {
+                                                    container: 6,
+                                                },
+                                            }" />
+
+                                        <TextareaElement label="Description" name="description" :rows="2" />
+
+                                        <GroupElement name="container_3" />
+
+                                        <ButtonElement name="submit" button-label="Save" :submits="true"
+                                            align="right" />
+
+                                    </FormElements>
+                                </template>
+                            </Vueform>
+
+                        </DialogPanel>
+
+
+                    </TransitionChild>
+                </div>
+            </div>
+        </Dialog>
+    </TransitionRoot>
 </template>
 
 <script setup>
-import { reactive } from "vue";
-import { usePage } from '@inertiajs/vue3';
+import { ref } from "vue";
+import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
+import { XMarkIcon } from "@heroicons/vue/24/solid";
 
 
-import SelectBox from "../general/SelectBox.vue";
-import ComboBox from "../general/ComboBox.vue";
-import Textarea from "../general/Textarea.vue";
-import InputField from "../general/InputField.vue";
-import LabelInputOptional from "../general/LabelInputOptional.vue";
-import LabelInputRequired from "../general/LabelInputRequired.vue";
-import Spinner from "../general/Spinner.vue";
+const emit = defineEmits(['close', 'error', 'success', 'refresh-data', 'open-edit-form'])
 
 const props = defineProps({
-    item: Object,
+    show: Boolean,
     options: Object,
-    isSubmitting: Boolean,
-    errors: Object,
+    header: String,
+    loading: Boolean,
 });
 
-const page = usePage();
+const form$ = ref(null)
 
-const form = reactive({
-    destination: props.item.destination,
-    carrier: props.item.carrier,
-    chatplan_detail_data: props.item.chatplan_detail_data,
-    email: props.item.email,
-    description: props.item.description,
-    _token: page.props.csrf_token,
-})
+const submitForm = async (FormData, form$) => {
+    // Using form$.requestData will EXCLUDE conditional elements and it 
+    // will submit the form as Content-Type: application/json . 
+    const requestData = form$.requestData
+    // console.log(requestData);
 
-const emits = defineEmits(['submit', 'cancel']);
+    return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
+};
 
-const submitForm = () => {
-    emits('submit', form); // Emit the event with the form data
+function clearErrorsRecursive(el$) {
+    // clear this element’s errors
+    el$.messageBag?.clear()
+
+    // if it has child elements, recurse into each
+    if (el$.children$) {
+        Object.values(el$.children$).forEach(childEl$ => {
+            clearErrorsRecursive(childEl$)
+        })
+    }
 }
 
-const handleUpdateExtension = (newSelectedItem) => {
-    form.chatplan_detail_data = newSelectedItem.value
+const handleResponse = (response, form$) => {
+    // Clear form including nested elements 
+    Object.values(form$.elements$).forEach(el$ => {
+        clearErrorsRecursive(el$)
+    })
+
+    // Display custom errors for elements
+    if (response.data.errors) {
+        Object.keys(response.data.errors).forEach((elName) => {
+            if (form$.el$(elName)) {
+                form$.el$(elName).messageBag.append(response.data.errors[elName][0])
+            }
+        })
+    }
 }
 
-const handleUpdateCarrier = (newSelectedItem) => {
-    form.carrier = newSelectedItem.value
+const handleSuccess = (response, form$) => {
+    // console.log(response) // axios response
+    // console.log(response.status) // HTTP status code
+    // console.log(response.data) // response data
+
+    emit('close');
+    emit('refresh-data');
+    emit('success', 'success', response.data.messages);
 }
+
+const handleError = (error, details, form$) => {
+    form$.messageBag.clear() // clear message bag
+
+    switch (details.type) {
+        // Error occured while preparing elements (no submit happened)
+        case 'prepare':
+            console.log(error) // Error object
+
+            form$.messageBag.append('Could not prepare form')
+            break
+
+        // Error occured because response status is outside of 2xx
+        case 'submit':
+            emit('error', error);
+            console.log(error) // AxiosError object
+            // console.log(error.response) // axios response
+            // console.log(error.response.status) // HTTP status code
+            // console.log(error.response.data) // response data
+
+            // console.log(error.response.data.errors)
+
+
+            break
+
+        // Request cancelled (no response object)
+        case 'cancel':
+            console.log(error) // Error object
+
+            form$.messageBag.append('Request cancelled')
+            break
+
+        // Some other errors happened (no response object)
+        case 'other':
+            console.log(error) // Error object
+
+            form$.messageBag.append('Couldn\'t submit form')
+            break
+    }
+}
+
+
+
 
 </script>
+
+<style scoped>
+:global(div[data-lastpass-icon-root]),
+:global(div[data-lastpass-root]) {
+    overflow: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+</style>

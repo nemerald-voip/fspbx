@@ -13,10 +13,9 @@ use App\Models\MessageSetting;
 use App\Models\SmsDestinations;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
-use App\Services\SinchMessageProvider;
-use App\Services\CommioMessageProvider;
 use Illuminate\Support\Facades\Session;
 use App\Jobs\SendSmsNotificationToSlack;
+use App\Factories\MessageProviderFactory;
 
 class MessagesController extends Controller
 {
@@ -212,7 +211,7 @@ class MessagesController extends Controller
                     // logger($carrier);
 
                     //Determine message provider
-                    $messageProvider = $this->getMessageProvider($carrier);
+                    $messageProvider = MessageProviderFactory::make($carrier);
 
                     //Store message in the log database
                     $item->status = "Queued";
@@ -304,20 +303,6 @@ class MessagesController extends Controller
 
         return $phoneNumberSmsConfig;
     }
-
-    private function getMessageProvider($carrier)
-    {
-        switch ($carrier) {
-            case 'thinq':
-                return new CommioMessageProvider();
-            case 'sinch':
-                return new SinchMessageProvider();
-                // Add cases for other carriers
-            default:
-                throw new \Exception("Unsupported carrier");
-        }
-    }
-
 
     private function updateMessageStatus($message, $response)
     {
