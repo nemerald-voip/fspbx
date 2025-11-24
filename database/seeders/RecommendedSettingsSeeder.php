@@ -482,7 +482,7 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_value'         => '.csv',
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "",
-            ],            
+            ],
             [
                 'default_setting_category'      => 'fax',
                 'default_setting_subcategory'   => 'allowed_extension',
@@ -549,6 +549,14 @@ class RecommendedSettingsSeeder extends Seeder
             ],
             [
                 'default_setting_category'      => 'fax',
+                'default_setting_subcategory'   => 'allowed_extension',
+                'default_setting_name'          => 'array',
+                'default_setting_value'         => '.pdf',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 'fax',
                 'default_setting_subcategory'   => 'fax_slack_notification',
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => 'errors',
@@ -560,7 +568,7 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_subcategory'   => 'variable',
                 'default_setting_name'          => 'array',
                 'default_setting_value'         => 'fax_enable_t38_request=true',
-                'default_setting_enabled'       => false,
+                'default_setting_enabled'       => true,
                 'default_setting_description'   => "Send a T38 reinvite when a fax tone is detected.",
             ],
             [
@@ -569,7 +577,7 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_name'          => 'array',
                 'default_setting_value'         => 'rtp_secure_media_outbound=forbidden',
                 'default_setting_enabled'       => true,
-                'default_setting_description'   => "Send a T38 reinvite when a fax tone is detected.",
+                'default_setting_description'   => "Dissallow strp for outbound calls",
             ],
             [
                 'default_setting_category'      => 'scheduled_jobs',
@@ -655,7 +663,7 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_category'      => 'scheduled_jobs',
                 'default_setting_subcategory'   => 'fax_wait_time_threshold',
                 'default_setting_name'          => 'text',
-                'default_setting_value'         => "60", 
+                'default_setting_value'         => "60",
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "Specifies the number of minutes a fax can remain in waiting status before being counted against the threshold.",
             ],
@@ -739,7 +747,7 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "modern: enables the new, optimized queue handling with improved performance and stability. legacy: uses the original queue behavior for backward compatibility.",
             ],
-            
+
             // Add more settings here...
         ];
 
@@ -747,6 +755,7 @@ class RecommendedSettingsSeeder extends Seeder
             // Check for existing setting
             $existing_item = DefaultSettings::where('default_setting_category', $setting['default_setting_category'])
                 ->where('default_setting_subcategory', $setting['default_setting_subcategory'])
+                ->where('default_setting_name', '!=', 'array')
                 ->get();
 
             // Delete the existing items

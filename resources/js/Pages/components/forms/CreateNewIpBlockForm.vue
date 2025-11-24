@@ -5,7 +5,7 @@
                 <LabelInputRequired :target="'ip_address'" :label="'IP Address'" />
                 <div class="mt-2">
                     <InputField v-model="form.ip_address" type="text" name="ip_address"
-                        placeholder="Enter IP Address"
+                        placeholder="e.g. 192.168.1.50 or 10.0.0.0/24"
                         :error="errors?.ip_address && errors.ip_address.length > 0" />
                 </div>
                 <div v-if="errors?.ip_address" class="mt-2 text-sm text-red-600">

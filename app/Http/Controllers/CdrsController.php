@@ -887,6 +887,33 @@ class CdrsController extends Controller
     public function getData()
     {
         $params = request()->all();
+
+            // --- Normalize search term (numbers-only cases) ---
+            foreach (['filter.search', 'filter.searchTerm', 'filterData.search'] as $sk) {
+                $raw = data_get($params, $sk);
+                if ($raw === null || $raw === '') continue;
+
+                $s = trim((string) $raw);
+
+                // If it contains any letters, take no action
+                if (preg_match('/[A-Za-z]/', $s)) {
+                    break; // leave as-is
+                }
+
+                // Only numbers/spaces/specials: strip all non-digits
+                $digits = preg_replace('/\D+/', '', $s);
+
+                // If 11 digits and starts with 1 (covers +1xxx after stripping), drop the leading 1
+                if (strlen($digits) === 11 && str_starts_with($digits, '1')) {
+                    $digits = substr($digits, 1);
+                }
+
+                // Write back normalized value
+                data_set($params, $sk, $digits);
+                break; // only handle the first populated key
+            }
+            // --- end normalize search ---
+
         $params['paginate'] = 50;
         $domain_uuid = session('domain_uuid');
         $params['domain_uuid'] = $domain_uuid;
@@ -923,6 +950,33 @@ class CdrsController extends Controller
         try {
             $params = request()->all();
  //           $params['paginate'] = 50;
+
+            // --- Normalize search term (numbers-only cases) ---
+            foreach (['filter.search', 'filter.searchTerm', 'filterData.search'] as $sk) {
+                $raw = data_get($params, $sk);
+                if ($raw === null || $raw === '') continue;
+
+                $s = trim((string) $raw);
+
+                // If it contains any letters, take no action
+                if (preg_match('/[A-Za-z]/', $s)) {
+                    break; // leave as-is
+                }
+
+                // Only numbers/spaces/specials: strip all non-digits
+                $digits = preg_replace('/\D+/', '', $s);
+
+                // If 11 digits and starts with 1 (covers +1xxx after stripping), drop the leading 1
+                if (strlen($digits) === 11 && str_starts_with($digits, '1')) {
+                    $digits = substr($digits, 1);
+                }
+
+                // Write back normalized value
+                data_set($params, $sk, $digits);
+                break; // only handle the first populated key
+            }
+            // --- end normalize search ---
+
             $params['paginate'] = 0;
             $domain_uuid = session('domain_uuid');
             $params['domain_uuid'] = $domain_uuid;

@@ -1678,7 +1678,7 @@ class ExtensionsController extends Controller
     public function downloadTemplate()
     {
         // Download as CSV (third parameter sets the writer type)
-        return Excel::download(new ExtensionsTemplate, 'template.csv', ExcelWriter::CSV);
+        return Excel::download(new ExtensionsTemplate, 'extensions_template.csv', ExcelWriter::CSV);
     }
 
     public function updatePassword()

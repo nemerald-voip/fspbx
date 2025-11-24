@@ -17,12 +17,13 @@
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" @keydown.enter="handleSearchButtonClick"/>
+                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.virtual_receptionist_create" type="button" @click.prevent="handleCreateButtonClick()"
+                <button v-if="page.props.auth.can.virtual_receptionist_create" type="button"
+                    @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
@@ -33,20 +34,21 @@
             <template #navigation>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    @pagination-change-page="renderRequestedPage" :bulk-actions="bulkActions"
+                    @bulk-action="handleBulkActionRequest" :has-selected-items="selectedItems.length > 0"/>
             </template>
             <template #table-header>
 
-                <TableColumnHeader 
-                    class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                <TableColumnHeader
+                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
-                        :has-selected-items="selectedItems.length > 0" />
                     <span class="pl-4">Virtual Receptionist</span>
                 </TableColumnHeader>
-                <TableColumnHeader header="Extension" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Extension"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Description"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
@@ -71,37 +73,36 @@
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.ivr_menu_uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500"
-                        :text="row.voicemail_id">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.voicemail_id">
                         <div class="flex items-center">
                             <input v-if="row.ivr_menu_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
                                 :value="row.ivr_menu_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="ml-9"
+                            <div class="ml-4"
                                 :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.virtual_receptionist_update, }"
                                 @click="page.props.auth.can.virtual_receptionist_update && handleEditRequest(row.ivr_menu_uuid)">
-                                    {{ row.ivr_menu_name }}
+                                {{ row.ivr_menu_name }}
                             </div>
                         </div>
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ivr_menu_extension" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ivr_menu_description" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ivr_menu_enabled" >
-                        <Badge v-if="row.ivr_menu_enabled=='true'" text="Enabled" backgroundColor="bg-green-50"
-                            textColor="text-green-700"
-                            ringColor="ring-green-600/20" />
-                        <Badge v-else text="Disabled" backgroundColor="bg-rose-50"
-                            textColor="text-rose-700"
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        :text="row.ivr_menu_extension" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        :text="row.ivr_menu_description" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.ivr_menu_enabled">
+                        <Badge v-if="row.ivr_menu_enabled == 'true'" text="Enabled" backgroundColor="bg-green-50"
+                            textColor="text-green-700" ringColor="ring-green-600/20" />
+                        <Badge v-else text="Disabled" backgroundColor="bg-rose-50" textColor="text-rose-700"
                             ringColor="ring-rose-600/20" />
 
-                        </TableField>
+                    </TableField>
 
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="page.props.auth.can.virtual_receptionist_update" :content="'Edit'" position='TopCenter'
-                                    target="#destination_tooltip_target">
+                                <ejs-tooltip v-if="page.props.auth.can.virtual_receptionist_update" :content="'Edit'"
+                                    position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditRequest(row.ivr_menu_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
@@ -117,6 +118,10 @@
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
+
+                                <AdvancedActionButton :actions="advancedActions"
+                                    @advanced-action="(action) => handleAdvancedActionRequest(action, row.ivr_menu_uuid)" />
+
                             </div>
                         </template>
                     </TableField>
@@ -146,21 +151,24 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showCreateModal" :header="'Create New Virtual Receptionist'" :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showCreateModal" :header="'Create New Virtual Receptionist'"
+        :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <CreateVirtualReceptionistForm :options="itemOptions" :errors="formErrors" @refresh-data="getItemOptions"
-                :is-submitting="createFormSubmiting" @submit="handleCreateRequest" @cancel="handleModalClose"  @error="handleFormErrorResponse"
-                @success="showNotification('success', $event)" @clear-errors="handleClearErrors"/>
+                :is-submitting="createFormSubmiting" @submit="handleCreateRequest" @cancel="handleModalClose"
+                @error="handleFormErrorResponse" @success="showNotification('success', $event)"
+                @clear-errors="handleClearErrors" />
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showEditModal" 
-        :header="'Edit Virtual Receptionist Settings - ' + itemOptions?.ivr?.ivr_menu_name" 
-        :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showEditModal"
+        :header="'Edit Virtual Receptionist Settings - ' + itemOptions?.ivr?.ivr_menu_name" :loading="loadingModal"
+        @close="handleModalClose">
         <template #modal-body>
             <UpdateVirtualReceptionistForm :options="itemOptions" :errors="formErrors" @refresh-data="getItemOptions"
-                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"  @error="handleFormErrorResponse"
-                @success="showNotification('success', $event)" @clear-errors="handleClearErrors"/>
+                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"
+                @error="handleFormErrorResponse" @success="showNotification('success', $event)"
+                @clear-errors="handleClearErrors" />
         </template>
     </AddEditItemModal>
 
@@ -202,7 +210,7 @@ import UpdateVirtualReceptionistForm from "./components/forms/UpdateVirtualRecep
 import CreateVirtualReceptionistForm from "./components/forms/CreateVirtualReceptionistForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
-
+import AdvancedActionButton from "./components/general/AdvancedActionButton.vue";
 
 
 const page = usePage()
@@ -272,7 +280,7 @@ const handleEditRequest = (itemUuid) => {
 const handleCreateRequest = (form) => {
     createFormSubmiting.value = true;
     formErrors.value = null;
-    
+
     axios.post(props.routes.store, form)
         .then((response) => {
             createFormSubmiting.value = false;
@@ -461,6 +469,59 @@ const getItemOptions = (itemUuid = null) => {
         });
 }
 
+const advancedActions = computed(() => [
+    {
+        category: "Advanced",
+        actions: [
+            { id: 'duplicate', label: 'Duplicate', icon: 'DocumentDuplicateIcon' },
+        ],
+    },
+]);
+
+const handleAdvancedActionRequest = async (action, ivr_menu_uuid) => {
+    // 1. specific validation
+    if (!ivr_menu_uuid) {
+        console.error('Missing IVR Menu UUID');
+        return;
+    }
+
+    // 2. Strategy Pattern: easy to add 'delete', 'archive', etc.
+    const actionUrls = {
+        duplicate: props.routes.duplicate_virtual_receptionist,
+        // delete: props.routes.delete_virtual_receptionist, 
+    };
+
+    const url = actionUrls[action];
+
+    if (!url) {
+        console.warn(`Action "${action}" is not supported.`);
+        return;
+    }
+
+    // 3. Manage loading state explicitly (assuming setIsLoading exists in scope)
+    // setIsLoading(true); 
+
+    try {
+        const payload = { ivr_menu_uuid };
+
+        // 4. Async/Await is cleaner than .then chains
+        const response = await axios.post(url, payload);
+
+        showNotification('success', response.data.messages);
+
+        handleSearchButtonClick();
+
+        // 5. Return data in case the caller needs it
+        return response.data;
+
+    } catch (error) {
+        handleErrorResponse(error);
+    } finally {
+        // setIsLoading(false);
+        // reset loading state, close modal, etc.
+    }
+};
+
 const handleFormErrorResponse = (error) => {
     if (error.request?.status == 419) {
         showNotification('error', { request: ["Session expired. Reload the page"] });
@@ -546,5 +607,7 @@ registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHV
 
 </script>
 
-<style>@import "@syncfusion/ej2-base/styles/tailwind.css";
-@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";</style>
+<style>
+@import "@syncfusion/ej2-base/styles/tailwind.css";
+@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";
+</style>

@@ -107,30 +107,33 @@ class DeviceController extends Controller
             ->allowedFilters([
                 AllowedFilter::callback('search', function ($query, $value) {
                     $needle = trim((string) $value);
-                
-                    // normalize MAC like "00:04:F2:3A:5B:C7" -> "0004f23a5bc7"
+
+                    // Normalize MAC like "00:04:F2-3A:5B:C7" -> "0004f23a5bc7"
+                    // This strips ':' and '-' (and any non-hex) and lowercases.
                     $norm = strtolower(preg_replace('/[^0-9a-f]/i', '', $needle));
-                
+
                     $query->where(function ($q) use ($needle, $norm) {
-                        // device_address: match raw input OR normalized version
+                        // 1) device_address (DB stores normalized 12-hex)
                         $q->where(function ($q2) use ($needle, $norm) {
-                            // in case someone pasted the DB-format already or a partial
-                            $q2->orWhereRaw('lower(device_address) LIKE ?', ["%{$norm}%"]);
-                
-                            // exact match if a full 12-hex MAC was provided
-                            if (strlen($norm) === 12) {
-                                $q2->orWhereRaw('lower(device_address) = ?', [$norm]);
+                            // partial match on normalized MAC
+                            if ($norm !== '') {
+                                $q2->orWhereRaw('lower(device_address) LIKE ?', ["%{$norm}%"]);
+
+                                // exact match when a full 12-hex MAC was provided
+                                if (strlen($norm) === 12) {
+                                    $q2->orWhereRaw('lower(device_address) = ?', [$norm]);
+                                }
                             }
                         })
-                
-                        // the rest of free-text search 
+
+                        // 2) free-text on other columns (keep raw needle to preserve text searches)
                         ->orWhere('device_template', 'ilike', "%{$needle}%")
                         ->orWhereHas('profile', function ($q2) use ($needle) {
                             $q2->where('device_profile_name', 'ilike', "%{$needle}%");
                         })
                         ->orWhereHas('lines.extension', function ($q3) use ($needle) {
                             $q3->where('extension', 'ilike', "%{$needle}%")
-                               ->orWhere('effective_caller_id_name', 'ilike', "%{$needle}%");
+                            ->orWhere('effective_caller_id_name', 'ilike', "%{$needle}%");
                         });
                     });
                 }),

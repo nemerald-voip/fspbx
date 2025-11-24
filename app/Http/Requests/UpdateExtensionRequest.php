@@ -88,7 +88,7 @@ class UpdateExtensionRequest extends FormRequest
 
             'forward_all_external_target' => [
                 'sometimes',
-                'numeric',
+                'regex:/^\+?\d+$/',
                 function ($attribute, $value, $fail) {
                     $enabled = $this->boolean('forward_all_enabled');
                     $action = $this->input('forward_all_action');
@@ -120,7 +120,7 @@ class UpdateExtensionRequest extends FormRequest
             ],
             'forward_busy_external_target' => [
                 'sometimes',
-                'numeric',
+                'regex:/^\+?\d+$/',
                 function ($attribute, $value, $fail) {
                     $enabled = $this->boolean('forward_busy_enabled');
                     $action = $this->input('forward_busy_action');
@@ -151,7 +151,7 @@ class UpdateExtensionRequest extends FormRequest
             ],
             'forward_no_answer_external_target' => [
                 'sometimes',
-                'numeric',
+                'regex:/^\+?\d+$/',
                 function ($attribute, $value, $fail) {
                     $enabled = $this->boolean('forward_no_answer_enabled');
                     $action = $this->input('forward_no_answer_action');
@@ -182,7 +182,7 @@ class UpdateExtensionRequest extends FormRequest
             ],
             'forward_user_not_registered_external_target' => [
                 'sometimes',
-                'numeric',
+                'regex:/^\+?\d+$/',
                 function ($attribute, $value, $fail) {
                     $enabled = $this->boolean('forward_user_not_registered_enabled');
                     $action = $this->input('forward_user_not_registered_action');
@@ -198,7 +198,7 @@ class UpdateExtensionRequest extends FormRequest
             'follow_me_destinations' => ['array'],
 
             // only validate each sub‑field if members was provided
-            'follow_me_destinations.*.destination' => ['required_with:follow_me_destinations', 'numeric'],
+            'follow_me_destinations.*.destination' => ['required_with:follow_me_destinations', 'regex:/^\+?\d+$/'],
             'follow_me_destinations.*.delay'       => ['required_with:follow_me_destinations', 'numeric', 'min:0'],
             'follow_me_destinations.*.timeout'     => ['required_with:follow_me_destinations', 'numeric', 'min:0'],
             'follow_me_destinations.*.prompt'      => ['required_with:follow_me_destinations', 'string'],
@@ -247,54 +247,53 @@ class UpdateExtensionRequest extends FormRequest
         ];
     }
 
-    public function prepareForValidation()
-    {
-        $first = $this->input('directory_first_name', '');
-        $last = $this->input('directory_last_name', '');
+public function prepareForValidation()
+{
+    $first = $this->input('directory_first_name', '');
+    $last  = $this->input('directory_last_name', '');
+    $fullName = trim($first . ' ' . $last);
 
-        $fullName = trim($first . ' ' . $last); // Will work even if $last is empty
+    $this->merge([
+        'effective_caller_id_name'   => $fullName,
+        'effective_caller_id_number' => $this->extension,
+        'voicemail_mail_to'          => $this->voicemail_mail_to ? strtolower($this->voicemail_mail_to) : null,
+    ]);
 
-        $this->merge([
-            'effective_caller_id_name' => $fullName,
-        ]);
+    // Helper: keep digits, allow a single leading +
+    $normalizePhoneLoose = function (?string $v): ?string {
+        if ($v === null) return null;
+        $v = preg_replace('/[^\d+]+/', '', $v ?? '');
+        if ($v === '') return $v;
+        $hadPlus = str_contains($v, '+');
+        $v = str_replace('+', '', $v);
+        if ($hadPlus) $v = '+' . $v;
+        return $v;
+    };
 
-        $this->merge([
-            'effective_caller_id_number' => $this->extension,
-        ]);
-
-        $this->merge([
-            'voicemail_mail_to' => $this->voicemail_mail_to ? strtolower($this->voicemail_mail_to) : null,
-        ]);        
-
-        // List of all forwarding external target keys
-        $forwardingTargets = [
-            'forward_all_external_target',
-            'forward_busy_external_target',
-            'forward_no_answer_external_target',
-            'forward_user_not_registered_external_target',
-        ];
-
-        foreach ($forwardingTargets as $key) {
-            $value = $this->input($key);
-
-            if (!empty($value)) {
-                // Convert to E.164 format
-                $formatted = formatPhoneNumber($value, 'US', \libphonenumber\PhoneNumberFormat::E164);
-                $this->merge([$key => $formatted]);
-            }
-        }
-
-        // Format each follow_me_destinations[n][destination] to E.164
-        $followMe = $this->input('follow_me_destinations', []);
-        if (is_array($followMe) && count($followMe)) {
-            foreach ($followMe as $i => $destination) {
-                if (!empty($destination['destination'])) {
-                    $formatted = formatPhoneNumber($destination['destination'], 'US', \libphonenumber\PhoneNumberFormat::E164);
-                    $followMe[$i]['destination'] = $formatted;
-                }
-            }
-            // Update the merged input with formatted destinations
-            $this->merge(['follow_me_destinations' => $followMe]);
+    // Normalize external forward targets
+    foreach ([
+        'forward_all_external_target',
+        'forward_busy_external_target',
+        'forward_no_answer_external_target',
+        'forward_user_not_registered_external_target',
+    ] as $key) {
+        $val = $this->input($key);
+        if ($val !== null && $val !== '') {
+            $this->merge([$key => $normalizePhoneLoose($val)]);
         }
     }
+
+    // Normalize follow_me_destinations[*][destination]
+    $followMe = $this->input('follow_me_destinations', []);
+    if (is_array($followMe) && count($followMe)) {
+        foreach ($followMe as $i => $dest) {
+            if (!empty($dest['destination'])) {
+                $followMe[$i]['destination'] = $normalizePhoneLoose($dest['destination']);
+            }
+        }
+        $this->merge(['follow_me_destinations' => $followMe]);
+    }
+}
+
+
 }
