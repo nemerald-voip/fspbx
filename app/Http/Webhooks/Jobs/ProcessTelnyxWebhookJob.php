@@ -86,9 +86,9 @@ class ProcessTelnyxWebhookJob extends SpatieProcessWebhookJob
 
             try {
 
-                logger('ProcessTelnyxWebhookJob Processing ID: ' . $this->webhookCall->id);
+                // logger('ProcessTelnyxWebhookJob Processing ID: ' . $this->webhookCall->id);
 
-                logger($this->webhookCall->payload['data']);
+                // logger($this->webhookCall->payload['data']);
 
                 // Telnyx payloads are wrapped in a 'data' object.
                 // We verify structure before proceeding.
@@ -257,6 +257,7 @@ class ProcessTelnyxWebhookJob extends SpatieProcessWebhookJob
 
     private function processFailedMessage($payload, $status)
     {
+
         $referenceId = $payload['id'] ?? null;
 
         // Extract error details if available

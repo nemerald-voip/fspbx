@@ -80,8 +80,6 @@ class TelnyxOutboundSMS extends Model
         // 5. Handle Response
         $result = $response->json();
 
-        logger($result);
-
         if ($response->successful()) {
             // Telnyx returns a 'data' object wrapper
             $responseData = $result['data'];
@@ -95,16 +93,15 @@ class TelnyxOutboundSMS extends Model
             
             $message->status =  $status;
             
-        } else {
-            // Handle Errors
-            $message->status = 'failed';
-            
+        } else {            
             // Extract error details from Telnyx 'errors' array
             $errorMsg = "Unknown Error";
             if (isset($result['errors']) && is_array($result['errors']) && count($result['errors']) > 0) {
                 $firstError = $result['errors'][0];
                 $errorMsg = $firstError['detail'] ?? $firstError['title'] ?? "Code: " . ($firstError['code'] ?? 'N/A');
             }
+
+            logger($errorMsg);
             
             logger()->error("Telnyx API error: " . json_encode($result));
             
@@ -112,6 +109,8 @@ class TelnyxOutboundSMS extends Model
             if (isset($result['data']['id'])) {
                 $message->reference_id = $result['data']['id'];
             }
+
+            $message->status = $errorMsg ?? 'failed';
 
             // Pass specific error message to handler
             $this->handleError($message, $errorMsg);

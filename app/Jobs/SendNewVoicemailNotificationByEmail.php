@@ -289,6 +289,39 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
             if (($message->voicemail?->voicemail_local_after_email ?? 'true') !== 'true') {
                 $this->deleteVoicemailSilently($message);
             }
+
+            // Send SMS notification
+
+            // local timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ") -- UTC ISO 8601
+            // local message_date = os.date("%A, %d %b %Y %I:%M %p", start_epoch)
+            // local message_length_formatted = format_seconds(message_length)
+
+
+            // local payload = string.format(
+            //     '{"event":"%s","timestamp":"%s","data":{"domain_uuid":"%s","voicemail_id":"%s","message_length":"%s","message_date":"%s","caller_id_name":"%s","caller_id_number":"%s"}}',
+            //     event_name, timestamp, domain_uuid, voicemail_id, message_length_formatted, start_epoch, caller_id_name, caller_id_number
+            // )
+
+            // --- Send SMS notification (if transcription is required to be included) -------------------------
+
+            // Global/domain toggle to enable SMS notifications
+            $includeTranscription = (bool) data_get($settings, 'sms_notification_include_transcription', false);
+
+            if ($includeTranscription) {
+                // Base data for the SMS job
+                $smsData = [
+                    'domain_uuid'      => $domain_uuid,
+                    'voicemail_id'     => (string) ($message->voicemail?->voicemail_id ?? ''),
+                    'message_length'   => gmdate('H:i:s', (int) $message->message_length),
+                    'message_date'     => (int) $message->created_epoch,
+                    'caller_id_name'   => (string) $message->caller_id_name,
+                    'caller_id_number' => (string) $message->caller_id_number,
+                    'transcription'    => (string) $message->message_transcription ?? null,
+                ];
+
+                // Dispatch SMS job
+                SendNewVoicemailNotificationBySms::dispatch($smsData);
+            }
         }, function () {
             // Could not obtain lock; this job will be re-queued
             return $this->release(15);
@@ -344,7 +377,7 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
                 }
             }
             $message->delete();
-            
+
             // Best-effort MWI; never throw
             try {
                 $esl = app(FreeswitchEslService::class);

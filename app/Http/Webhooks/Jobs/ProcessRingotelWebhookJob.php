@@ -9,13 +9,9 @@ use App\Models\SmsDestinations;
 use libphonenumber\PhoneNumberUtil;
 use Illuminate\Support\Facades\Redis;
 use libphonenumber\PhoneNumberFormat;
-use App\Services\SinchMessageProvider;
-use App\Services\CommioMessageProvider;
-use App\Services\TelnyxMessageProvider;
 use App\Jobs\SendSmsNotificationToSlack;
 use libphonenumber\NumberParseException;
-use App\Services\BandwidthMessageProvider;
-use App\Services\ClickSendMessageProvider;
+use App\Factories\MessageProviderFactory;
 use Spatie\WebhookClient\Models\WebhookCall;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 use Spatie\WebhookClient\Jobs\ProcessWebhookJob as SpatieProcessWebhookJob;
@@ -133,7 +129,7 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
         $this->carrier =  $phoneNumberSmsConfig->carrier;
 
         //Determine message provider
-        $this->messageProvider = $this->getMessageProvider($this->carrier);
+        $this->messageProvider= MessageProviderFactory::make($this->carrier);
 
         $phoneNumberUtil = PhoneNumberUtil::getInstance();
         try {
@@ -234,25 +230,6 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
         }
 
         return $extension_uuid;
-    }
-
-    private function getMessageProvider($carrier)
-    {
-        switch ($carrier) {
-            case 'thinq':
-                return new CommioMessageProvider();
-            case 'sinch':
-                return new SinchMessageProvider();
-            case 'bandwidth':
-                return new BandwidthMessageProvider();
-            case 'telnyx':
-                return new TelnyxMessageProvider();
-            case 'clicksend':
-                return new ClickSendMessageProvider();
-                // Add cases for other carriers
-            default:
-                throw new \Exception("Unsupported carrier");
-        }
     }
 
     private function handleError(\Exception $e)
