@@ -73,4 +73,13 @@ systemctl restart php$PHP_VERSION-fpm
 
 sleep 6
 
+mkdir -p /etc/systemd/system/php8.1-fpm.service.d
+cat > /etc/systemd/system/php8.1-fpm.service.d/override.conf << 'EOF'
+[Service]
+RuntimeDirectory=php
+RuntimeDirectoryMode=0755
+EOF
+
+systemctl daemon-reload
+
 print_success "PHP $PHP_VERSION installation completed successfully!"
