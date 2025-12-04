@@ -85,7 +85,8 @@
                                     :add-classes="{ StaticElement: { container: 'pointer-events-none absolute left-0 top-0 h-full w-1 rounded-l-lg bg-indigo-500' } }" />
 
                                 <TextElement name="min_speakers_expected" label="Minimum Speakers Expected"
-                                    description="Default: 1" :floating="false" placeholder="Optional" :columns="{ lg: { wrapper: 5 } }" />
+                                    description="Default: 1" :floating="false" placeholder="Optional"
+                                    :columns="{ lg: { wrapper: 5 } }" />
                                 <TextElement name="max_speakers_expected" label="Maximum Speakers Expected"
                                     description="Default: 10. Setting too high may reduce accuracy."
                                     placeholder="Optional" :floating="false" :columns="{ lg: { wrapper: 5 } }" />
@@ -151,11 +152,57 @@
                             <!-- 7) PII Redaction -->
                             <StaticElement name="h_pii" tag="h4" content="PII Redaction" />
                             <ToggleElement name="redact_pii" text="Redact PII in transcribed text" />
-                            <TextElement name="redact_pii_policies" label="PII Redaction Policies"
-                                description="List of policies to enable." placeholder="Optional. List of strings"
-                                :floating="false" :columns="{ lg: { wrapper: 5 } }" />
+
+                            <TagsElement name="redact_pii_policies" :close-on-select="false" :search="true" :items="[
+                                { value: 'account_number', label: 'Account Number' },
+                                { value: 'banking_information', label: 'Banking Information' },
+                                { value: 'blood_type', label: 'Blood Type' },
+                                { value: 'credit_card_cvv', label: 'Credit Card CVV' },
+                                { value: 'credit_card_expiration', label: 'Credit Card Expiration' },
+                                { value: 'credit_card_number', label: 'Credit Card Number' },
+                                { value: 'date', label: 'Date' },
+                                { value: 'date_interval', label: 'Date Interval' },
+                                { value: 'date_of_birth', label: 'Date of Birth' },
+                                { value: 'drivers_license', label: 'Drivers License' },
+                                { value: 'drug', label: 'Drug' },
+                                { value: 'duration', label: 'Duration' },
+                                { value: 'email_address', label: 'Email Address' },
+                                { value: 'event', label: 'Event' },
+                                { value: 'filename', label: 'Filename' },
+                                { value: 'gender_sexuality', label: 'Gender / Sexuality' },
+                                { value: 'healthcare_number', label: 'Healthcare Number' },
+                                { value: 'injury', label: 'Injury' },
+                                { value: 'ip_address', label: 'IP Address' },
+                                { value: 'language', label: 'Language' },
+                                { value: 'location', label: 'Location' },
+                                { value: 'marital_status', label: 'Marital Status' },
+                                { value: 'medical_condition', label: 'Medical Condition' },
+                                { value: 'medical_process', label: 'Medical Process' },
+                                { value: 'money_amount', label: 'Money Amount' },
+                                { value: 'nationality', label: 'Nationality' },
+                                { value: 'number_sequence', label: 'Number Sequence' },
+                                { value: 'occupation', label: 'Occupation' },
+                                { value: 'organization', label: 'Organization' },
+                                { value: 'passport_number', label: 'Passport Number' },
+                                { value: 'password', label: 'Password' },
+                                { value: 'person_age', label: 'Person Age' },
+                                { value: 'person_name', label: 'Person Name' },
+                                { value: 'phone_number', label: 'Phone Number' },
+                                { value: 'physical_attribute', label: 'Physical Attribute' },
+                                { value: 'political_affiliation', label: 'Political Affiliation' },
+                                { value: 'religion', label: 'Religion' },
+                                { value: 'statistics', label: 'Statistics' },
+                                { value: 'time', label: 'Time' },
+                                { value: 'url', label: 'URL' },
+                                { value: 'us_social_security_number', label: 'US Social Security Number' },
+                                { value: 'username', label: 'Username' },
+                                { value: 'vehicle_id', label: 'Vehicle ID' },
+                                { value: 'zodiac_sign', label: 'Zodiac Sign' },
+                            ]" label="PII Redaction Policies" input-type="search" autocomplete="off" :floating="false"
+                                description="List of policies to enable." :columns="{ lg: { wrapper: 5 } }" />
+
                             <SelectElement name="redact_pii_sub" :items="[
-                                { value: 'entity_type', label: 'Entity Type' },
+                                { value: 'entity_name', label: 'Entity Name' },
                                 { value: 'hash', label: 'Hash' },
                             ]" :search="true" :native="false" label="Replacement Logic for Detected PII"
                                 input-type="search" autocomplete="off" :columns="{ lg: { wrapper: 5 } }"

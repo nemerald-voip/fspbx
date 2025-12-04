@@ -74,6 +74,35 @@ class StoreAssemblyAiConfigRequest extends FormRequest
             $payload['custom_spelling'] = [];
         }
 
+        // Normalize integer fields (convert numeric strings to actual integers)
+        $intFields = [
+            'speaker_options.min_speakers_expected',
+            'speaker_options.max_speakers_expected',
+            'speakers_expected',
+        ];
+
+        foreach ($intFields as $path) {
+            $segments = explode('.', $path);
+            $lastIdx  = array_key_last($segments);
+
+            $ref = &$payload;
+            foreach ($segments as $i => $seg) {
+                if (!array_key_exists($seg, $ref)) {
+                    $ref[$seg] = null;
+                }
+
+                if ($i === $lastIdx) {
+                    // Convert to int when numeric, otherwise leave null
+                    $ref[$seg] = is_numeric($ref[$seg]) ? (int)$ref[$seg] : null;
+                } else {
+                    if (!is_array($ref[$seg])) {
+                        $ref[$seg] = [];
+                    }
+                    $ref = &$ref[$seg];
+                }
+            }
+        }
+
         $this->replace($payload);
     }
 
@@ -123,8 +152,8 @@ class StoreAssemblyAiConfigRequest extends FormRequest
 
             // 6) PII Redaction
             'redact_pii'            => ['nullable', 'boolean'],
-            'redact_pii_policies'   => ['nullable', 'string', 'max:2000'],
-            'redact_pii_sub'        => ['nullable', Rule::in(['entity_type', 'hash'])],
+            'redact_pii_policies'   => ['nullable', 'array'],
+            'redact_pii_sub'        => ['nullable', Rule::in(['entity_name', 'hash'])],
             'redact_pii_audio'      => ['nullable', 'boolean'],
             'redact_pii_audio_quality' => ['nullable', Rule::in(['mp3', 'wav'])],
             'redact_pii_audio_options' => ['nullable', 'array'],
