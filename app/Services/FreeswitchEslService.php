@@ -62,10 +62,10 @@ class FreeswitchEslService
             // Send the command and get the response in ESLevent Format
             $eslEvent = $this->conn->api($cmd);
 
-    $body = trim($eslEvent->getBody());
-        if (preg_match('/^\+?OK\b/i', $body) || preg_match('/^-ERR\b/i', $body)) {
-        return $body; // short-circuit plain OK/ERR responses
-    }
+            $body = trim($eslEvent->getBody());
+            if (preg_match('/^\+?OK\b/i', $body) || preg_match('/^-ERR\b/i', $body)) {
+                return $body; // short-circuit plain OK/ERR responses
+            }
 
             if (!$eslEvent) {
                 return null;
@@ -121,26 +121,26 @@ class FreeswitchEslService
                     $contact = (string)$registration->contact;
                     $contactData = [];
 
-        // Extract transport first
-        if (preg_match('/;transport=([a-zA-Z]+)/i', $contact, $tMatch)) {
-            $contactData['transport'] = strtoupper($tMatch[1]);
-        }
+                    // Extract transport first
+                    if (preg_match('/;transport=([a-zA-Z]+)/i', $contact, $tMatch)) {
+                        $contactData['transport'] = strtoupper($tMatch[1]);
+                    }
 
-        // Extract the actual SIP URI (user, ip, port)
-        if (preg_match('/<([^>]+)>/', $contact, $bracketMatch)) {
-            $contact = $bracketMatch[1];
-                } else {
-            $contact = trim($contact);
-        }
+                    // Extract the actual SIP URI (user, ip, port)
+                    if (preg_match('/<([^>]+)>/', $contact, $bracketMatch)) {
+                        $contact = $bracketMatch[1];
+                    } else {
+                        $contact = trim($contact);
+                    }
 
-            $sipUri = strtok($contact, ';');
+                    $sipUri = strtok($contact, ';');
 
-        if (preg_match('/^(?:sips?):([^@]+)@([0-9a-zA-Z\.\-]+)(?::(\d+))?$/', $sipUri, $matches)) {
-            $contactData['user'] = $matches[1];
-            $contactData['ip'] = $matches[2];
-            $contactData['port'] = $matches[3] ?? null;
-        }
-                    
+                    if (preg_match('/^(?:sips?):([^@]+)@([0-9a-zA-Z\.\-]+)(?::(\d+))?$/', $sipUri, $matches)) {
+                        $contactData['user'] = $matches[1];
+                        $contactData['ip'] = $matches[2];
+                        $contactData['port'] = $matches[3] ?? null;
+                    }
+
                     // Example of using regular expressions to extract information
                     // if (preg_match('/sips?:([^@]+)@([^;]+);transport=([^;]+);/', $contact, $matches)) {
                     //     $contactData['user'] = $matches[1];
@@ -160,7 +160,7 @@ class FreeswitchEslService
                         $contact = trim($contact);
                     }
                     $sipUri = strtok($contact, ';'); // get everything before first ';'
-                    
+
                     if (preg_match('/^(?:sips?):([^@]+)@([0-9a-zA-Z\.\-]+)(?::(\d+))?$/', $sipUri, $matches)) {
                         $contactData['user'] = $matches[1];
                         $contactData['ip'] = $matches[2];
@@ -212,7 +212,7 @@ class FreeswitchEslService
                         'expsecs' => (string)$expsecs,
                     ];
                 }
-                 // logger($registrations);
+                // logger($registrations);
             }
         }
 
@@ -312,30 +312,30 @@ class FreeswitchEslService
     public function listen(callable $callback)
     {
         $nullCount = 0;
-    
+
         while (true) {
             try {
                 if (!$this->isConnected()) {
                     throw new \Exception('ESL disconnected');
                 }
-    
+
                 $event = $this->conn->recvEvent();
-    
+
                 if (!$event) {
                     $nullCount++;
-    
+
                     // After 100 nulls (~10 seconds), assume we're stuck
                     if ($nullCount >= 100) {
                         throw new \Exception('ESL stuck or disconnected (too many null events)');
                     }
-    
+
                     usleep(100000); // 100ms
                     continue;
                 }
-    
+
                 // Reset null counter after valid event
                 $nullCount = 0;
-    
+
                 $callback($event);
             } catch (\Throwable $e) {
                 logger()->error("ESL listen error: " . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -344,7 +344,7 @@ class FreeswitchEslService
             }
         }
     }
-    
+
 
 
     function convertEslResponse($eslEvent)
