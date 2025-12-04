@@ -986,6 +986,14 @@ class DatabaseSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "enter number in e164 format",
             ],
+                        [
+                'default_setting_category'      => 'voicemail',
+                'default_setting_subcategory'   => 'sms_notification_include_transcription',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => 'true',
+                'default_setting_enabled'       => false,
+                'default_setting_description'   => "Include voicemail transcription text in SMS notifications",
+            ],
             [
                 'default_setting_category'      => 'voicemail',
                 'default_setting_subcategory'   => 'sms_notification_text',

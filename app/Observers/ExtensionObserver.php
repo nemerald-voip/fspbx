@@ -7,6 +7,7 @@ use Illuminate\Support\Arr;
 use App\Events\ExtensionCreated;
 use App\Events\ExtensionDeleted;
 use App\Events\ExtensionUpdated;
+use App\Jobs\FireFollowMePresenceJob;
 
 class ExtensionObserver
 {
@@ -48,6 +49,11 @@ class ExtensionObserver
         }
 
         ExtensionUpdated::dispatch($extensionAttributes, $originalAttributes, $vmOriginalAttributes);
+
+        // Fire a job if follow_me_enabled changed
+        if ($extension->wasChanged('follow_me_enabled')) {
+            FireFollowMePresenceJob::dispatch($extension->extension_uuid);
+        }
     }
 
     /**

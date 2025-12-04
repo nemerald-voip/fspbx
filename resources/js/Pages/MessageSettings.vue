@@ -13,11 +13,11 @@
                     <input type="text" v-model="filterData.search" name="mobile-search-candidate"
                         id="mobile-search-candidate"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" />
+                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                     <input type="text" v-model="filterData.search" name="desktop-search-candidate"
                         id="desktop-search-candidate"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" />
+                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
@@ -41,16 +41,16 @@
             <template #navigation>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    @pagination-change-page="renderRequestedPage" :bulk-actions="bulkActions"
+                    @bulk-action="handleBulkActionRequest" :has-selected-items="selectedItems.length > 0" />
             </template>
 
 
             <template #table-header>
                 <TableColumnHeader header="Phone Number"
-                    class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest" :has-selected-items="selectedItems.length > 0"/>
                     <span class="pl-4">Phone Number</span>
                 </TableColumnHeader>
                 <TableColumnHeader v-if="showGlobal" header="Domain"
@@ -67,7 +67,7 @@
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
-                <td colspan="6">
+                <td colspan="9">
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
                         <button v-if="!selectAll && selectedItems.length != data.total"
@@ -90,8 +90,8 @@
                         :text="row.destination_formatted">
                         <input v-if="row.destination" v-model="selectedItems" type="checkbox" name="action_box[]"
                             :value="row.sms_destination_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                        <div class="ml-9 cursor-pointer hover:text-gray-900"
-                            @click="handleEditRequest(row.sms_destination_uuid)">
+                        <div class="ml-4 cursor-pointer hover:text-gray-900"
+                            @click="handleEditButtonClick(row.sms_destination_uuid)">
                             {{ row.destination_formatted }}
                         </div>
                         <ejs-tooltip :content="tooltipCopyContent" position='TopLeft' class="ml-2"
@@ -130,7 +130,7 @@
                                 <ejs-tooltip :content="'Edit'" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
-                                        <PencilSquareIcon @click="handleEditRequest(row.sms_destination_uuid)"
+                                        <PencilSquareIcon @click="handleEditButtonClick(row.sms_destination_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
 
                                     </div>
@@ -139,7 +139,7 @@
                                 <ejs-tooltip :content="'Delete'" position='TopCenter'
                                     target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
-                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
+                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.sms_destination_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
@@ -172,22 +172,15 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <AddEditItemModal :show="createModalTrigger" :header="'Add New'" :loading="loadingModal" @close="handleModalClose">
-        <template #modal-body>
-            <CreateMessageSettingsForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
-                @submit="handleCreateRequest" @cancel="handleModalClose" />
-        </template>
-    </AddEditItemModal>
+ 
+    <CreateMessageSettingsForm :show="showCreateModal" :options="itemOptions" @close="showCreateModal = false" @refresh-data="handleSearchButtonClick"
+        @success="showNotification" :loading="isModalLoading" />
 
-    <AddEditItemModal :show="editModalTrigger" :header="'Edit Settings'" :loading="loadingModal"
-        @close="handleModalClose">
-        <template #modal-body>
-            <UpdateMessageSettingsForm :item="itemData" :options="itemOptions" :errors="formErrors"
-                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose" />
-        </template>
-    </AddEditItemModal>
+    <UpdateMessageSettingsForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"  @refresh-data="handleSearchButtonClick"
+        @success="showNotification" @close="showUpdateModal = false" />
 
-    <AddEditItemModal :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="loadingModal"
+
+    <AddEditItemModal :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="isModalLoading"
         @close="handleModalClose">
         <template #modal-body>
             <BulkUpdateMessageSettingsForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
@@ -195,8 +188,9 @@
         </template>
     </AddEditItemModal>
 
-    <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
+    <DeleteConfirmationModal :show="showConfirmationModal" @close="showConfirmationModal = false"
         @confirm="confirmDeleteAction" />
+        
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -204,12 +198,10 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import axios from 'axios';
-import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
-import BulkActionButton from "./components/general/BulkActionButton.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
 import Notification from "./components/notifications/Notification.vue";
@@ -231,46 +223,56 @@ import Warning from "./components/icons/Warning.vue"
 // const page = usePage()
 
 const loading = ref(false)
-const loadingModal = ref(false)
+const isModalLoading = ref(false)
 const selectPageItems = ref(false);
 const selectAll = ref(false);
 const selectedItems = ref([]);
-const createModalTrigger = ref(false);
-const editModalTrigger = ref(false);
+const showCreateModal = ref(false);
+const showUpdateModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
-const confirmationModalTrigger = ref(false);
-const confirmationModalDestroyPath = ref(null);
+const showConfirmationModal = ref(false);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
 const notificationType = ref(null);
-const updateFormSubmiting = ref(null);
-const createFormSubmiting = ref(null);
 const bulkUpdateFormSubmiting = ref(null);
 const formErrors = ref(null);
 const confirmDeleteAction = ref(null);
+const itemOptions = ref([])
 let tooltipCopyContent = ref('Copy to Clipboard');
+const data = ref({
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: 0,
+    to: 0,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
+});
 
 
 const props = defineProps({
-    data: Object,
-    showGlobal: Boolean,
     routes: Object,
-    itemData: Object,
-    itemOptions: Object,
 });
+
+onMounted(() => {
+    handleSearchButtonClick();
+})
 
 const filterData = ref({
     search: null,
-    showGlobal: props.showGlobal,
+    showGlobal: false,
 });
-const showGlobal = ref(props.showGlobal);
+
+const showGlobal = ref(false);
 
 const bulkActions = ref([
-    {
-        id: 'bulk_update',
-        label: 'Edit',
-        icon: 'PencilSquareIcon'
-    },
+    // {
+    //     id: 'bulk_update',
+    //     label: 'Edit',
+    //     icon: 'PencilSquareIcon'
+    // },
     {
         id: 'bulk_delete',
         label: 'Delete',
@@ -280,7 +282,7 @@ const bulkActions = ref([
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.sms_destination_uuid);
+        selectedItems.value = data.value.data.map(item => item.sms_destination_uuid);
     } else {
         selectedItems.value = [];
     }
@@ -324,13 +326,13 @@ const handleCopyToClipboard = (value) => {
 
 const handleBulkActionRequest = (action) => {
     if (action === 'bulk_delete') {
-        confirmationModalTrigger.value = true;
+        showConfirmationModal.value = true;
         confirmDeleteAction.value = () => executeBulkDelete();
     }
     if (action === 'bulk_update') {
         formErrors.value = [];
         getItemOptions();
-        loadingModal.value = true
+        isModalLoading.value = true
         bulkUpdateModalTrigger.value = true;
     }
 }
@@ -346,12 +348,11 @@ const handleBulkUpdateRequest = (form) => {
         })
         .catch((error) => {
             bulkUpdateFormSubmiting.value = false;
-            handleFormErrorResponse(error);
         });
 }
 
-const executeBulkDelete = () => {
-    axios.post(`${props.routes.bulk_delete}`, { items: selectedItems.value })
+const executeBulkDelete = (items = selectedItems.value) => {
+    axios.post(props.routes.bulk_delete, { items })
         .then((response) => {
             handleModalClose();
             showNotification('success', response.data.messages);
@@ -364,33 +365,9 @@ const executeBulkDelete = () => {
         });
 }
 
-const handleSingleItemDeleteRequest = (url) => {
-    confirmationModalTrigger.value = true;
-    confirmDeleteAction.value = () => executeSingleDelete(url);
-}
-
-const executeSingleDelete = (url) => {
-    router.delete(url, {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: (page) => {
-            if (page.props.flash.error) {
-                showNotification('error', page.props.flash.error);
-            }
-            if (page.props.flash.message) {
-                showNotification('success', page.props.flash.message);
-            }
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onFinish: () => {
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onError: (errors) => {
-            console.log(errors);
-        },
-    });
+const handleSingleItemDeleteRequest = (uuid) => {
+    showConfirmationModal.value = true;
+    confirmDeleteAction.value = () => executeBulkDelete([uuid]);
 }
 
 const handleShowGlobal = () => {
@@ -408,126 +385,54 @@ const handleShowLocal = () => {
 }
 
 
-const handleCreateButtonClick = () => {
-    createModalTrigger.value = true
-    formErrors.value = null;
-    loadingModal.value = true
-    getItemOptions();
-}
+const handleCreateButtonClick = async () => {
+    isModalLoading.value = true;
 
-const getItemOptions = () => {
-    router.get(props.routes.current_page,
-        {},
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: [
-                'itemOptions',
-            ],
-            onSuccess: (page) => {
-                // console.log(props.itemOptions);
-                loadingModal.value = false;
-            },
-            onFinish: () => {
-                loadingModal.value = false;
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
-
-        });
-}
-
-const handleEditRequest = (itemUuid) => {
-    editModalTrigger.value = true
-    formErrors.value = null;
-    loadingModal.value = true
-
-    router.get(props.routes.current_page,
-        {
-            itemUuid: itemUuid,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: [
-                'itemData',
-                'itemOptions',
-            ],
-            onSuccess: (page) => {
-                // console.log(props.itemOptions);
-                loadingModal.value = false;
-            },
-            onFinish: () => {
-                loadingModal.value = false;
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
-
-        });
-}
-
-const handleCreateRequest = (form) => {
-    createFormSubmiting.value = true;
-    formErrors.value = null;
-
-    axios.post(props.routes.store, form)
-        .then((response) => {
-            createFormSubmiting.value = false;
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-            handleModalClose();
-            handleClearSelection();
-        }).catch((error) => {
-            createFormSubmiting.value = false;
-            handleClearSelection();
-            handleFormErrorResponse(error);
+    try {
+        const response = await axios.post(props.routes.item_options, {
+            itemUuid: null,
         });
 
-};
+        itemOptions.value = response.data;
 
-const handleUpdateRequest = (form) => {
-    updateFormSubmiting.value = true;
-    formErrors.value = null;
+        // console.log(itemOptions.value)
+        showCreateModal.value = true;
 
-    axios.put(props.itemData.update_url, form)
-        .then((response) => {
-            updateFormSubmiting.value = false;
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-            handleModalClose();
-            handleClearSelection();
-        }).catch((error) => {
-            updateFormSubmiting.value = false;
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        });
+    } catch (error) {
+        // Limit reached → show toast, do NOT open modal
+        handleErrorResponse(error);
+        return;
 
-};
-
-const handleFormErrorResponse = (error) => {
-    if (error.request?.status == 419) {
-        showNotification('error', { request: ["Session expired. Reload the page"] });
-    } else if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        // console.log(error.response.data);
-        showNotification('error', error.response.data.errors || { request: [error.message] });
-        formErrors.value = error.response.data.errors;
-    } else if (error.request) {
-        // The request was made but no response was received
-        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-        // http.ClientRequest in node.js
-        showNotification('error', { request: [error.request] });
-        console.log(error.request);
-    } else {
-        // Something happened in setting up the request that triggered an Error
-        showNotification('error', { request: [error.message] });
-        console.log(error.message);
+    } finally {
+        isModalLoading.value = false;
     }
-
 }
+const getItemOptions = async (itemUuid = null) => {
+    itemOptions.value = {};
+    isModalLoading.value = true;
+
+    try {
+        const payload = itemUuid ? { itemUuid } : {};
+        const response = await axios.post(props.routes.item_options, payload);
+        itemOptions.value = response.data;
+        // console.log(itemOptions.value)
+
+        if (itemUuid) {
+            showUpdateModal.value = true; 
+        }
+
+    } catch (error) {
+        handleModalClose();
+        handleErrorResponse(error);
+    } finally {
+        isModalLoading.value = false;
+    }
+}
+
+const handleEditButtonClick = (itemUuid) => {
+    getItemOptions(itemUuid);
+}
+
 
 const handleErrorResponse = (error) => {
     if (error.response) {
@@ -548,24 +453,29 @@ const handleErrorResponse = (error) => {
     }
 }
 
+const getData = (page = 1) => {
+    loading.value = true;
+
+    axios.get(props.routes.data_route, {
+        params: {
+            filter: filterData.value,
+            page,
+        }
+    })
+        .then((response) => {
+            data.value = response.data;
+            // console.log(data.value);
+
+        }).catch((error) => {
+
+            handleErrorResponse(error);
+        }).finally(() => {
+            loading.value = false
+        })
+}
 
 const handleSearchButtonClick = () => {
-    loading.value = true;
-    router.visit(props.routes.current_page, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-            'showGlobal',
-        ],
-        onSuccess: (page) => {
-            loading.value = false;
-            handleClearSelection();
-        }
-    });
+    getData()
 };
 
 const handleFiltersReset = () => {
@@ -590,24 +500,19 @@ const showNotification = (type, messages = null) => {
 
 const renderRequestedPage = (url) => {
     loading.value = true;
-    router.visit(url, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
-    });
+    // Extract the page number from the url, e.g. "?page=3"
+    const urlObj = new URL(url, window.location.origin);
+    const pageParam = urlObj.searchParams.get("page") ?? 1;
+
+    // Now call getData with the page number
+    getData(pageParam);
 };
 
 
 const handleModalClose = () => {
-    createModalTrigger.value = false;
-    editModalTrigger.value = false;
-    confirmationModalTrigger.value = false;
+    showCreateModal.value = false;
+    showUpdateModal.value = false;
+    showConfirmationModal.value = false;
     bulkUpdateModalTrigger.value = false;
 }
 

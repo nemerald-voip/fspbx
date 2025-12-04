@@ -821,7 +821,7 @@
                                                     :conditions="[() => options.permissions.extension_forward_not_registered]" />
 
 
-                                                <StaticElement name="follow_me_title" tag="h4" content="Call Sequence"
+                                                <StaticElement name="follow_me_title" tag="h4" content="Call Sequence (Follow Me)"
                                                     description="Calls ring all your devices first, then your backup destinations one at a time until someone answers"
                                                     :conditions="[() => options.permissions.extension_call_sequence]" />
 

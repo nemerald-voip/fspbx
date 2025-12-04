@@ -7,6 +7,9 @@ use Inertia\Inertia;
 use App\Models\Extensions;
 use Illuminate\Http\Request;
 use App\Models\MessageSetting;
+use Illuminate\Support\Facades\DB;
+use Spatie\QueryBuilder\QueryBuilder;
+use Spatie\QueryBuilder\AllowedFilter;
 use Illuminate\Support\Facades\Session;
 use App\Http\Requests\CreateMessageSettingRequest;
 use App\Http\Requests\UpdateMessageSettingRequest;
@@ -41,22 +44,10 @@ class MessageSettingsController extends Controller
         return Inertia::render(
             $this->viewName,
             [
-                'data' => function () {
-                    return $this->getData();
-                },
-                'showGlobal' => function () {
-                    return request('filterData.showGlobal') === 'true';
-                },
-                'itemData' => Inertia::lazy(
-                    fn () =>
-                    $this->getItemData()
-                ),
-                'itemOptions' => Inertia::lazy(
-                    fn () =>
-                    $this->getItemOptions()
-                ),
                 'routes' => [
                     'current_page' => route('messages.settings'),
+                    'data_route' => route('messages.settings.data'),
+                    'item_options' => route('messages.settings.item.options'),
                     'store' => route('messages.settings.store'),
                     'select_all' => route('messages.settings.select.all'),
                     'bulk_delete' => route('messages.settings.bulk.delete'),
@@ -66,162 +57,172 @@ class MessageSettingsController extends Controller
         );
     }
 
-    public function getItemData()
-    {
-        // Get item data
-        $itemData = $this->model::findOrFail(request('itemUuid'));
-
-        // Add update url route info
-        $itemData->update_url = route('messages.settings.update', $itemData);
-        return $itemData;
-    }
-
     public function getItemOptions()
     {
-        // Define the options for the 'carrier' field
-        $carrierOptions = [
-            ['value' => 'thinq', 'name' => 'ThinQ'],
-            ['value' => 'sinch', 'name' => 'Sinch'],
-            ['value' => 'bandwidth', 'name' => 'Bandwidth'],
-        ];
+        try {
+            $itemUuid = request('itemUuid');
 
-        // Define the options for the 'chatplan_detail_data' field
-        $extensions = Extensions::where('domain_uuid', session('domain_uuid'))
-            ->get([
-                'extension_uuid',
-                'extension',
-                'effective_caller_id_name',
+            $routes = [];
+
+            if ($itemUuid) {
+
+                $item = QueryBuilder::for(MessageSetting::class)
+                    ->select([
+                        'sms_destination_uuid',
+                        'domain_uuid',
+                        'destination',
+                        'carrier',
+                        'description',
+                        'chatplan_detail_data',
+                        'email',
+                    ])
+                    ->whereKey($itemUuid)
+                    ->firstOrFail();
+
+
+                $routes = array_merge($routes, [
+                    'update_route' => route('messages.settings.update', ['setting' => $itemUuid]),
+                ]);
+            }
+
+            // Define the options for the 'carrier' field
+            $carrierOptions = [
+                ['value' => 'bandwidth', 'label' => 'Bandwidth'],
+                ['value' => 'clicksend', 'label' => 'ClickSend'],
+                ['value' => 'thinq', 'label' => 'Commio (ThinQ)'],
+                ['value' => 'sinch', 'label' => 'Sinch'],
+                ['value' => 'telnyx', 'label' => 'Telnyx'],
+            ];
+
+            // Define the options for the 'chatplan_detail_data' field
+            $extensions = Extensions::where('domain_uuid', session('domain_uuid'))
+                ->get([
+                    'extension_uuid',
+                    'extension',
+                    'effective_caller_id_name',
+                ]);
+
+            $chatplanDetailDataOptions = [];
+            // Loop through each extension and create an option
+            foreach ($extensions as $extension) {
+                $chatplanDetailDataOptions[] = [
+                    'value' => $extension->extension,
+                    'label' => $extension->name_formatted,
+                ];
+            }
+
+            $routes = array_merge($routes, [
+                'store_route' => route('messages.settings.store'),
+                'bulk_delete' => route('messages.settings.bulk.delete'),
             ]);
 
-        $chatplanDetailDataOptions = [];
-        // Loop through each extension and create an option
-        foreach ($extensions as $extension) {
-            $chatplanDetailDataOptions[] = [
-                'value' => $extension->extension,
-                'name' => $extension->name_formatted,
+            // Construct the itemOptions object
+            $itemOptions = [
+                'item' => $item ?? null,
+                'carrier' => $carrierOptions,
+                'chatplan_detail_data' => $chatplanDetailDataOptions,
+                'routes' => $routes,
+                // Define options for other fields as needed
             ];
+
+            return $itemOptions;
+        } catch (\Exception $e) {
+            logger('MessageSettingsController@getItemOptions error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to get item details']]
+            ], 500); // 500 Internal Server Error for any other errors
         }
-
-        // Construct the itemOptions object
-        $itemOptions = [
-            'carrier' => $carrierOptions,
-            'chatplan_detail_data' => $chatplanDetailDataOptions,
-            // Define options for other fields as needed
-        ];
-
-        return $itemOptions;
     }
 
-    public function getData($paginate = 50)
+    public function getData()
     {
-        // Check if search parameter is present and not empty
-        if (!empty(request('filterData.search'))) {
-            $this->filters['search'] = request('filterData.search');
+
+        $perPage = 50;
+        $currentDomain = session('domain_uuid');
+
+        // If the filter is not present, assign default value before QueryBuilder
+        if (!request()->has('filter.showGlobal')) {
+            request()->merge([
+                'filter' => array_merge(
+                    request()->input('filter', []),
+                    ['showGlobal' => false]
+                ),
+            ]);
         }
 
-        // Check if search parameter is present and not empty
-        if (!empty(request('filterData.showGlobal'))) {
-            $this->filters['showGlobal'] = request('filterData.showGlobal') === 'true';
-        } else {
-            $this->filters['showGlobal'] = null;
-        }
+        $data = QueryBuilder::for(MessageSetting::class)
+            ->select([
+                'sms_destination_uuid',
+                'destination',
+                'carrier',
+                'enabled',
+                'description',
+                'chatplan_detail_data',
+                'email',
+                'domain_uuid',
 
-        // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'destination'); // Default to 'destination'
-        $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to ascending
+            ])
+            ->with('domain:domain_uuid,domain_name,domain_description')
+            ->allowedFilters([
+                AllowedFilter::callback('search', function ($query, $value) {
+                    if ($value === null || $value === '') return;
 
-        $data = $this->builder($this->filters);
+                    $term = '%' . $value . '%';
 
-        // Apply pagination if requested
-        if ($paginate) {
-            $data = $data->paginate($paginate);
-        } else {
-            $data = $data->get(); // This will return a collection
-        }
+                    // Use ILIKE for Postgres; if MySQL, change to 'like'
+                    $query->where(function ($q) use ($term) {
+                        $q->where('destination', 'ILIKE', $term)
+                            ->orWhere('carrier', 'ILIKE', $term)
+                            ->orWhere('email', 'ILIKE', $term)
+                            ->orWhere('chatplan_detail_data', 'ILIKE', $term);
+                    });
+                }),
 
-        if (isset($this->filters['showGlobal']) and $this->filters['showGlobal']) {
-            // Access domains through the session and filter extensions by those domains
+                AllowedFilter::callback('showGlobal', function ($query, $value) use ($currentDomain) {
+                    if (!$value || $value === '0' || $value === 0 || $value === false) {
+                        $query->where('domain_uuid', $currentDomain);
+                    }
+                }),
+            ])
+
+            ->allowedSorts(['destination'])
+            ->defaultSort('destination')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        $rows = $data->getCollection();
+
+        if (request('filter.showGlobal')) {
             $domainUuids = Session::get('domains')->pluck('domain_uuid');
             $extensions = Extensions::whereIn('domain_uuid', $domainUuids)
                 ->get(['domain_uuid', 'extension', 'effective_caller_id_name']);
         } else {
-            // get extensions for session domain
-            $extensions = Extensions::where('domain_uuid',session('domain_uuid'))
+            $extensions = Extensions::where('domain_uuid', session('domain_uuid'))
                 ->get(['domain_uuid', 'extension', 'effective_caller_id_name']);
         }
-        // Iterate over each SMS destination to find the first matching extension
-        foreach ($data as $destination) {
-            // Initialize a variable to hold the first match
-            $firstMatch = null;
 
-            // Loop through extensions to find the first match
-            foreach ($extensions as $extension) {
-                if ($extension->domain_uuid === $destination->domain_uuid && $extension->extension === $destination->chatplan_detail_data) {
-                    $firstMatch = $extension;
-                    break; // Stop the loop after finding the first match
-                }
-            }
-
-            // Assign the first match to the destination object
-            $destination->extension = $firstMatch;
-        }
-
-        return $data;
-    }
-
-
-    public function builder($filters = [])
-    {
-        $data =  $this->model::query();
-
-        if (isset($filters['showGlobal']) and $filters['showGlobal']) {
-            $data->with(['domain' => function ($query) {
-                $query->select('domain_uuid', 'domain_name', 'domain_description'); // Specify the fields you need
-            }]);
-            // Access domains through the session and filter devices by those domains
-            $domainUuids = Session::get('domains')->pluck('domain_uuid');
-            $data->whereHas('domain', function ($query) use ($domainUuids) {
-                $query->whereIn('v_sms_destinations.domain_uuid', $domainUuids);
+        foreach ($rows as $destination) {
+            $match = $extensions->first(function ($ext) use ($destination) {
+                return $ext->domain_uuid === $destination->domain_uuid
+                    && $ext->extension === $destination->chatplan_detail_data;
             });
-        } else {
-            // Directly filter devices by the session's domain_uuid
-            $domainUuid = Session::get('domain_uuid');
-            $data = $data->where('v_sms_destinations.domain_uuid', $domainUuid);
-        }
-        $data->select(
-            'sms_destination_uuid',
-            'destination',
-            'carrier',
-            'enabled',
-            'description',
-            'chatplan_detail_data',
-            'email',
-            'domain_uuid',
-        );
-        // logger($filters);
 
-        foreach ($filters as $field => $value) {
-            if (method_exists($this, $method = "filter" . ucfirst($field))) {
-                $this->$method($data, $value);
-            }
+            $destination->extension = $match;
         }
 
-        // Apply sorting
-        $data->orderBy($this->sortField, $this->sortOrder);
+        // Set modified collection back into paginator
+        $data->setCollection($rows);
+
+        // logger($data);
 
         return $data;
     }
 
-    protected function filterSearch($query, $value)
-    {
-        $searchable = $this->searchable;
-        // Case-insensitive partial string search in the specified fields
-        $query->where(function ($query) use ($value, $searchable) {
-            foreach ($searchable as $field) {
-                $query->orWhere($field, 'ilike', '%' . $value . '%');
-            }
-        });
-    }
+
+
+
 
 
     /**
@@ -233,38 +234,33 @@ class MessageSettingsController extends Controller
      */
     public function update(UpdateMessageSettingRequest $request, MessageSetting $setting)
     {
+        $inputs = $request->validated();
+
         if (!$setting) {
-            // If the model is not found, return an error response
             return response()->json([
                 'success' => false,
-                'errors' => ['model' => ['Model not found']]
-            ], 404); // 404 Not Found if the model does not exist
+                'errors' => ['model' => ['Item not found']]
+            ], 404);
         }
 
         try {
-            $inputs = array_map(function ($value) {
-                return $value === 'NULL' ? null : $value;
-            }, $request->validated());
+            DB::beginTransaction();
 
             $setting->update($inputs);
 
-            // Return a JSON response indicating success
+            DB::commit();
+
             return response()->json([
-                'messages' => ['success' => ['Item updated.']]
+                'messages' => ['success' => ['Settings updated succesfully.']]
             ], 200);
         } catch (\Exception $e) {
-            logger($e->getMessage());
-            // Handle any other exception that may occur
+            DB::rollBack();
+            logger('MesssageSettingsController@update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to update this item']]
-            ], 500); // 500 Internal Server Error for any other errors
+                'errors' => ['server' => ['Failed to update this device']]
+            ], 500);
         }
-
-        return response()->json([
-            'success' => false,
-            'errors' => ['server' => ['Failed to update this item']]
-        ], 500); // 500 Internal Server Error for any other errors
     }
 
     /**
@@ -275,47 +271,29 @@ class MessageSettingsController extends Controller
      */
     public function store(CreateMessageSettingRequest $request)
     {
-        try {
-            // Validate the request data and create a new MessageSetting
-            $newSetting = new MessageSetting($request->validated());
-            $newSetting->save();  // Save the new model instance to the database
+        $data = $request->validated();
 
-            // Return a JSON response indicating success
+        try {
+            DB::beginTransaction();
+
+            $newSetting = new MessageSetting($data);
+            $newSetting->save();
+
+            DB::commit();
+
             return response()->json([
-                'messages' => ['success' => ['New item created']]
+                'messages' => ['success' => ['Request processed successfully.']]
             ], 201);
         } catch (\Exception $e) {
-            // Log the error message
-            logger($e->getMessage());
-
-            // Handle any other exception that may occur
+            DB::rollBack();
+            logger('DeviceController@store error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to create new item']]
-            ], 500);  // 500 Internal Server Error for any other errors
+                'errors' => ['server' => ['Failed to create device']]
+            ], 500);
         }
     }
 
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  MessageSetting $setting
-     * @return Response
-     */
-    public function destroy(MessageSetting $setting)
-    {
-        try {
-            // throw new \Exception;
-            $setting->delete();
-
-            return redirect()->back()->with('message', ['server' => ['Item deleted']]);
-        } catch (\Exception $e) {
-            // Log the error message
-            logger($e->getMessage());
-            return redirect()->back()->with('error', ['server' => ['Server returned an error while deleting this item']]);
-        }
-    }
 
     /**
      * Get all items
@@ -358,29 +336,38 @@ class MessageSettingsController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function bulkDelete()
+    public function BulkDelete()
     {
         try {
-            $deleted = MessageSetting::whereIn('sms_destination_uuid', request()->items)
-                ->delete();
+            // Begin Transaction
+            DB::beginTransaction();
 
-            // Return a JSON response indicating success
+            // Retrieve all items
+            $items = $this->model::whereIn('sms_destination_uuid', request('items'))->get();
+
+            foreach ($items as $item) {
+
+                // Delete the item itself
+                $item->delete();
+            }
+
+            // Commit Transaction
+            DB::commit();
+
             return response()->json([
-                'messages' => ['success' => ['Selected items deleted']],
+                'messages' => ['server' => ['All selected items have been deleted successfully.']],
             ], 200);
         } catch (\Exception $e) {
-            logger($e->getMessage());
-            // Handle any other exception that may occur
+            // Rollback Transaction if any error occurs
+            DB::rollBack();
+
+            logger('MessageSettingsControler@bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
             return response()->json([
                 'success' => false,
-                'errors' => ['server' => ['Failed to delete selected items']]
+                'errors' => ['server' => ['Server returned an error while deleting the selected items.']]
             ], 500); // 500 Internal Server Error for any other errors
         }
-
-        return response()->json([
-            'success' => false,
-            'errors' => ['server' => ['Failed to delete selected items']]
-        ], 500); // 500 Internal Server Error for any other errors
     }
 
     /**
@@ -395,7 +382,10 @@ class MessageSettingsController extends Controller
         try {
             // Prepare the data for updating
             $updateData = collect(request()->all())->only([
-                'carrier', 'chatplan_detail_data', 'email', 'description'
+                'carrier',
+                'chatplan_detail_data',
+                'email',
+                'description'
             ])->filter(function ($value) {
                 return $value !== null;
             })->toArray();

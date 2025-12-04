@@ -20,6 +20,7 @@ class Dialplans extends Model
 
     protected $fillable = [
         'domain_uuid',
+        'dialplan_uuid',
         'app_uuid',
         'dialplan_name',
         'dialplan_destination',
