@@ -33,6 +33,7 @@ use App\Http\Requests\BulkUpdatePhoneNumberRequest;
 use App\Services\DialplanBuilderService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use App\Traits\ChecksLimits;
+use App\Exports\PhoneNumbersExport;
 
 class PhoneNumbersController extends Controller
 {
@@ -44,6 +45,15 @@ class PhoneNumbersController extends Controller
     public $sortOrder;
     protected $viewName = 'PhoneNumbers';
     protected $searchable = ['destination_number', 'destination_data', 'destination_description'];
+
+    public function export()
+    {
+        if (! userCheckPermission('destination_view')) {
+            abort(403);
+        }
+        return Excel::download(new PhoneNumbersExport, 'phone_numbers.csv', ExcelWriter::CSV);
+    }
+
 
     public function __construct()
     {
@@ -131,6 +141,7 @@ class PhoneNumbersController extends Controller
                     'item_options' => route('phone-numbers.item.options'),
                     'download_template' => route('phone-numbers.template.download'),
                     'import' => route('phone-numbers.import'),
+                    'export' => route('phone-numbers.export'),
                 ],
                 'permissions' => [
                     'view_global' => userCheckPermission('destination_all'),

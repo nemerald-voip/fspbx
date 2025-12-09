@@ -32,6 +32,13 @@
                     <DocumentArrowUpIcon class="h-5 w-5" aria-hidden="true" />
                     Import CSV
                 </button>
+                <button
+                  type="button"
+                  @click.prevent="exportExtensionsCsv()"
+                  class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                  <DocumentArrowDownIcon class="h-5 w-5" aria-hidden="true" />
+                  Export CSV
+                </button>
             </template>
 
             <template #navigation>
@@ -289,7 +296,7 @@ import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { MicrophoneIcon } from "@heroicons/vue/24/outline";
 import UploadModal from "./components/modal/UploadModal.vue";
-import { DocumentArrowUpIcon, DevicePhoneMobileIcon } from "@heroicons/vue/24/outline";
+import { DocumentArrowUpIcon, DocumentArrowDownIcon, DevicePhoneMobileIcon } from "@heroicons/vue/24/outline";
 
 
 const page = usePage()
@@ -437,6 +444,28 @@ function downloadTemplateFile() {
             console.error('Error downloading template:', error)
         })
 }
+
+const exportExtensionsCsv = () => {
+  axios.get(props.routes.export, {
+    params: {
+      // mirrors your search filter (and leaves room for future filters)
+      filter: { search: filterData.value.search },
+    },
+    responseType: 'blob',
+  })
+  .then((response) => {
+    const blob = new Blob([response.data], { type: 'text/csv' });
+    const url  = window.URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url;
+    a.download = 'extensions.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  })
+  .catch(handleErrorResponse);
+};
 
 const handleEditButtonClick = (itemUuid) => {
     showUpdateModal.value = true

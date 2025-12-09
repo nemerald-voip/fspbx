@@ -51,6 +51,7 @@ use extension;
 use Spatie\Activitylog\Facades\CauserResolver;
 use Propaganistas\LaravelPhone\Exceptions\NumberParseException;
 use App\Traits\ChecksLimits;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 
 class ExtensionsController extends Controller
@@ -62,6 +63,124 @@ class ExtensionsController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'Extensions';
+
+    public function export(Request $request): StreamedResponse
+{
+    if (!userCheckPermission("extension_view")) {
+        abort(403);
+    }
+
+    $currentDomain = session('domain_uuid');
+
+    $builder = QueryBuilder::for(Extensions::class)
+        ->from('v_extensions as ve')
+        ->where('ve.domain_uuid', $currentDomain)
+        ->select([
+            've.extension_uuid',
+            've.domain_uuid',
+            've.extension',
+            've.directory_first_name',
+            've.directory_last_name',
+            've.outbound_caller_id_number',
+            've.description',
+        ])
+        ->allowedFilters([
+            AllowedFilter::callback('search', function ($query, $value) use ($currentDomain) {
+                $query->where(function ($q) use ($value, $currentDomain) {
+                    $q->where('ve.extension', 'ilike', "%{$value}%")
+                      ->orWhere('ve.effective_caller_id_name', 'ilike', "%{$value}%")
+                      ->orWhere('ve.outbound_caller_id_number', 'ilike', "%{$value}%")
+                      ->orWhere('ve.directory_first_name', 'ilike', "%{$value}%")
+                      ->orWhere('ve.directory_last_name', 'ilike', "%{$value}%")
+                      ->orWhere('ve.description', 'ilike', "%{$value}%")
+                      // Email search, no raw: whereExists + whereColumn
+                      ->orWhereExists(function ($sq) use ($value, $currentDomain) {
+                          $sq->from('v_voicemails as vv')
+                            ->whereColumn('vv.domain_uuid', 've.domain_uuid')
+                             ->whereColumn('vv.voicemail_id', 've.extension')
+                             ->where('vv.voicemail_mail_to', 'ilike', "%{$value}%");
+                      });
+                });
+            }),
+            AllowedFilter::exact('enabled'),
+        ])
+        ->defaultSort('ve.extension');
+
+    // If you want to respect `filter[...]` coming from Vue (same as Phone Numbers)
+    $filter = $request->input('filter', []);
+
+    // Stream CSV
+    $headers = [
+        'Content-Type'        => 'text/csv',
+        'Content-Disposition' => 'attachment; filename="extensions.csv"',
+        'Cache-Control'       => 'no-store, no-cache, must-revalidate',
+        'Pragma'              => 'no-cache',
+    ];
+
+    $columns = [
+        'Extension',
+        'First Name',
+        'Last Name',
+        'Email',
+        'Outbound CID',
+        'Description',
+    ];
+
+    return response()->stream(function () use ($builder, $columns, $currentDomain) {
+        $out = fopen('php://output', 'w');
+        // Header row
+        fputcsv($out, $columns);
+
+        // Chunk to keep memory low on big tenants
+        $builder->chunk(1000, function ($rows) use ($out, $currentDomain) {
+            // Build a map of extension → email for this chunk (no joins, no raw)
+            $exts = $rows->pluck('extension')->filter()->values();
+            $emailMap = collect();
+            if ($exts->isNotEmpty()) {
+                $emailMap = \DB::table('v_voicemails')
+                    ->select('voicemail_id', 'voicemail_mail_to')
+                    ->where('domain_uuid', $currentDomain)
+                    ->whereIn('voicemail_id', $exts)
+                    ->pluck('voicemail_mail_to', 'voicemail_id'); // [voicemail_id => email]
+            }
+//            foreach ($rows as $r) {
+//                $email = $emailMap->get($r->extension, '');
+//                fputcsv($out, [
+//                    $r->extension,
+//                    $r->directory_first_name,
+//                    $r->directory_last_name,
+//                    $email,
+//                    $r->outbound_caller_id_number,
+//                    $r->description,
+//                ]);
+//            }
+            foreach ($rows as $r) {
+                $email = $emailMap->get($r->extension, '');
+
+                // Format outbound CID as (xxx) xxx-xxxx only if it is +1XXXXXXXXXX
+                $cid = $r->outbound_caller_id_number ?? '';
+                if (is_string($cid) && preg_match('/^\+1\d{10}$/', $cid)) {
+                    // PHP substr is 0-based: "+1" occupies [0..1], digits start at index 2
+                    $area = substr($cid, 2, 3);  // digits 1-3
+                    $pref = substr($cid, 5, 3);  // digits 4-6
+                    $line = substr($cid, 8, 4);  // digits 7-10
+                    $cid = "($area) $pref-$line";
+                }
+
+                fputcsv($out, [
+                    $r->extension,
+                    $r->directory_first_name,
+                    $r->directory_last_name,
+                    $email,
+                    $cid,
+                    $r->description,
+                ]);
+            }
+});
+
+        fclose($out);
+    }, 200, $headers);
+}
 
     public function __construct()
     {
@@ -162,7 +281,8 @@ class ExtensionsController extends Controller
                     'import' => route('extensions.import'),
                     'create_user' => route('extensions.make.user'),
                     'create_contact_center_user' => (Module::has('ContactCenter') && Module::collections()->has('ContactCenter') && Route::has('contact-center.user.store')) ? route('contact-center.user.store') : null,
-                ]
+                    'export' => route('extensions.export'),
+                    ]
             ]
         );
     }
