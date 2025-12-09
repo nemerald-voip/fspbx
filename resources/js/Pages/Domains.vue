@@ -51,6 +51,8 @@
                 <TableColumnHeader header="Domain Name"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
+                <TableColumnHeader />
+
                 <!-- Enabled -->
                 <TableColumnHeader header="Enabled" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
@@ -94,6 +96,19 @@
 
                     <!-- Domain Name (fqdn) -->
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.domain_name" />
+
+                    <TableField class="px-2 py-2 text-sm flex-col sm:flex-row gap-2">
+
+                        <template v-if="page.props.auth.can.fax_sent_view">
+                            <a :href="`/core/domain_settings/domain_settings.php?id=${row.domain_uuid}`"
+                                class="inline-flex items-center px-2 py-1 rounded text-gray-700 hover:bg-gray-100 transition text-xs font-medium"
+                                title="Settings">
+                                <SettingsApplications class="w-4 h-4 mr-1" />
+                                Settings
+                            </a>
+                        </template>
+
+                    </TableField>
 
                     <!-- Enabled flag -->
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
@@ -196,6 +211,7 @@ import MainLayout from "../Layouts/MainLayout.vue";
 import CreateDomainForm from "./components/forms/CreateDomainForm.vue";
 import UpdateDomainForm from "./components/forms/UpdateDomainForm.vue";
 import Notification from "./components/notifications/Notification.vue";
+import SettingsApplications from "@icons/SettingsApplications.vue"
 
 const page = usePage()
 const itemOptions = ref({})

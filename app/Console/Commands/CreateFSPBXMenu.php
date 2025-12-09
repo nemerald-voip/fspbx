@@ -161,7 +161,7 @@ class CreateFSPBXMenu extends Command
                 'subcategories' => [
                     ['title' => 'Access Control', 'link' => '/app/access_controls/access_controls.php', 'groups' => ['superadmin']],
                     ['title' => 'Default Settings', 'link' => '/core/default_settings/default_settings.php', 'groups' => ['superadmin']],
-                    ['title' => 'Domains', 'link' => '/core/domains/domains.php', 'groups' => ['superadmin']],
+                    ['title' => 'Domains', 'link' => '/domains', 'groups' => ['superadmin']],
                     ['title' => 'Email templates', 'link' => '/app/email_templates/email_templates.php', 'groups' => ['superadmin']],
                     ['title' => 'Group Manager', 'link' => '/groups', 'groups' => ['superadmin']],
                     ['title' => 'Menu Manager', 'link' => '/core/menu/menu.php', 'groups' => ['superadmin']],
