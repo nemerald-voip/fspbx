@@ -2,12 +2,14 @@
 
 namespace App\Providers;
 
+use App\Models\Domain;
 use App\Models\Devices;
 use App\Models\Extensions;
 use Laravel\Horizon\Horizon;
 use Laravel\Sanctum\Sanctum;
 use App\Models\EmergencyCall;
 use App\Observers\DeviceObserver;
+use App\Observers\DomainObserver;
 use App\Models\EmergencyCallEmail;
 use App\Models\BusinessHourHoliday;
 use App\Models\EmergencyCallMember;
@@ -99,6 +101,7 @@ class AppServiceProvider extends ServiceProvider
         Devices::observe(DeviceObserver::class);
         CallTranscriptionPolicy::observe(CallTranscriptionPolicyObserver::class);
         CallTranscriptionProviderConfig::observe(CallTranscriptionProviderConfigObserver::class);
+        Domain::observe(DomainObserver::class);
 
         Builder::macro('orWhereLike', function (string $column, string $search) {
             return $this->orWhere($column, 'ILIKE', '%' . trim($search) . '%');

@@ -14,7 +14,7 @@
                         leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
 
                         <DialogPanel
-                            class="relative transform  rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
+                            class="relative transform  rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl sm:p-6">
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
@@ -45,56 +45,58 @@
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
-                                    destination: options.item.destination,
-                                    carrier: options.item.carrier,
-                                    chatplan_detail_data: options.item.chatplan_detail_data,
-                                    email: options.item.email,
-                                    description: options.item.description,
-
+                                    domain_description: options.item.domain_description,
+                                    domain_name: options.item.domain_name,
+                                    domain_enabled: options.item.domain_enabled,
                                 }">
 
                                 <template #empty>
 
                                     <FormElements>
 
-                                        <StaticElement name="h4" tag="h4" content="Update Settings" />
+                                        <StaticElement name="h4" tag="h4" :content="header" />
 
-                                        <TextElement name="destination" label="Phone Number"
-                                            placeholder="Enter Phone Number" :floating="false" :columns="{
-                                                sm: {
-                                                    container: 6,
-                                                },
-                                            }" />
+                                        <StaticElement name="uuid_clean">
+                                            <!-- Container with some vertical spacing -->
+                                            <div class="mb-1">
+
+                                                <!-- The Label -->
+                                                <div class="text-sm font-medium text-gray-600 mb-1">
+                                                    Unique ID
+                                                </div>
+
+                                                <!-- The Value & Copy Button Row -->
+                                                <div class="flex items-center group">
+                                                    <!-- The ID Text -->
+                                                    <span class="text-sm text-gray-900 select-all font-normal">
+                                                        {{ options.item.domain_uuid }}
+                                                    </span>
+
+                                                    <!-- Subtle Copy Button -->
+                                                    <button type="button"
+                                                        @click="handleCopyToClipboard(options.item.domain_uuid)"
+                                                        class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                                        title="Copy to clipboard">
+                                                        <!-- Small Copy Icon -->
+                                                        <ClipboardDocumentIcon
+                                                            class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
+                                                    </button>
+                                                </div>
+
+                                            </div>
+                                        </StaticElement>
 
 
-                                        <SelectElement name="carrier" :items="options.carrier"
-                                            :search="true" :native="false" label="Message Provider" input-type="search"
-                                            autocomplete="off" :floating="false" :strict="false"
-                                            placeholder="Choose Provider" :columns="{
-                                                sm: {
-                                                    container: 6,
-                                                },
-                                            }" />
 
-                                        <SelectElement name="chatplan_detail_data" :items="options.chatplan_detail_data"
-                                            :search="true" :native="false" label="Extension" input-type="search"
-                                            autocomplete="off" :floating="false" description="Assign the extension
-                                                        to which the messages should be
-                                                        forwarded." :strict="false" placeholder="Choose extension"
-                                            :columns="{
-                                                sm: {
-                                                    container: 6,
-                                                },
-                                            }" />
 
-                                        <TextElement name="email" label="Email" placeholder="Optional" :floating="false"
-                                            :columns="{
-                                                sm: {
-                                                    container: 6,
-                                                },
-                                            }" />
+                                        <TextElement name="domain_description" label="Domain Label"
+                                            placeholder="Enter Domain Label" :floating="false" />
 
-                                        <TextareaElement label="Description" name="description" :rows="2" />
+                                        <TextElement name="domain_name" label="Domain Name"
+                                            placeholder="Enter Domain Name" :floating="false" :disabled="true" />
+
+
+                                        <ToggleElement name="domain_enabled" text="Status" />
 
                                         <GroupElement name="container_3" />
 
@@ -119,6 +121,8 @@
 import { ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
+import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
+
 
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data', 'open-edit-form'])
@@ -219,6 +223,14 @@ const handleError = (error, details, form$) => {
     }
 }
 
+const handleCopyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        emit('success', 'success', { message: ['Copied to clipboard.'] });
+    }).catch((error) => {
+        // Handle the error case
+        emit('error', { response: { data: { errors: { request: ['Failed to copy to clipboard.'] } } } });
+    });
+}
 
 
 

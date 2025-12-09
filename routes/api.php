@@ -6,6 +6,7 @@ use App\Http\Controllers\FaxesController;
 use App\Http\Controllers\TokenController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\DeviceController;
+use App\Http\Controllers\DomainController;
 use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\FaxInboxController;
 use App\Http\Controllers\UserLogsController;
@@ -256,4 +257,11 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::post('/message-settings/select-all', [MessageSettingsController::class, 'selectAll'])->name('messages.settings.select.all');
     Route::post('/message-settings/bulk-delete', [MessageSettingsController::class, 'bulkDelete'])->name('messages.settings.bulk.delete');
     Route::post('/message-settings/bulk-update', [MessageSettingsController::class, 'bulkUpdate'])->name('messages.settings.bulk.update');
+
+    // Domains 
+    Route::post('domains', [DomainController::class, 'store'])->name('domains.store');
+    Route::put('domains/{domain}', [DomainController::class, 'update'])->name('domains.update');
+    Route::get('domains/data', [DomainController::class, 'getData'])->name('domains.data');
+    Route::post('domains/item-options', [DomainController::class, 'getItemOptions'])->name('domains.item.options');
+    Route::post('domains/bulk-delete', [DomainController::class, 'bulkDelete'])->name('domains.bulk.delete');
 });

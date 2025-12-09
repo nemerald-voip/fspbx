@@ -1,7 +1,7 @@
 <template>
     <div class="flex items-center justify-between border-b border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
         <div class="mr-4">
-             <BulkActions v-if="hasSelectedItems" :actions="bulkActions" @bulk-action="$emit('bulk-action', $event)"
+             <BulkActions v-if="hasSelectedItems && hasBulkActions" :actions="bulkActions" @bulk-action="$emit('bulk-action', $event)"
                         :has-selected-items="hasSelectedItems" />
         </div>
        
@@ -68,6 +68,7 @@ const props = defineProps({
     hasSelectedItems: Boolean,
 });
 
+const hasBulkActions = computed(() => props.bulkActions && props.bulkActions.length > 0);
 
 const getVisibleLinks = (links) => {
     const visiblePages = 5;

@@ -13,7 +13,7 @@ class HotelReservation extends Model {
 
     protected $table = "hotel_reservations";
 
-    protected $primaryKey = 'uuid';
+    protected $primaryKey = 'id';
     public $incrementing = false;
     protected $keyType = 'string';
 

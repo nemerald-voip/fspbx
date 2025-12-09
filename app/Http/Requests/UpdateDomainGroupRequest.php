@@ -8,7 +8,6 @@ class UpdateDomainGroupRequest extends FormRequest
 {
     public function authorize()
     {
-        // adjust permission key as needed
         return userCheckPermission('group_edit');
     }
 

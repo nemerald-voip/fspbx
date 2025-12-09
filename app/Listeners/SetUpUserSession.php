@@ -9,18 +9,19 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Support\Facades\DB;
 use App\Providers\RouteServiceProvider;
 use Illuminate\Support\Facades\Session;
+use App\Services\SessionDomainService;
 
 
 class SetUpUserSession
 {
+    protected SessionDomainService $sessionDomainService;
+
     /**
      * Create the event listener.
-     *
-     * @return void
      */
-    public function __construct()
+    public function __construct(SessionDomainService $sessionDomainService)
     {
-        //
+        $this->sessionDomainService = $sessionDomainService;
     }
 
     /**
@@ -199,124 +200,8 @@ class SetUpUserSession
             }
         }
 
-        // Build domains.
-        // get the domains that the user is allowed to see and save in $_SESSION['domains']
-
-        if (userCheckPermission("domain_select")) {
-            Session::put('domain_select', true);
-
-            // Get domains
-            if (in_array('superadmin', $group_names)) {
-                $domains = DB::table('v_domains')
-                    ->where('domain_enabled', '=', 't')
-                    ->orderBy('domain_name', 'asc')
-                    ->orderBy('domain_description', 'asc')
-                    ->selectRaw('coalesce(domain_description, domain_name) as domain_description')
-                    ->addSelect([
-                        'domain_uuid',
-                        'domain_parent_uuid',
-                        'domain_name',
-                        'domain_enabled',
-                    ])
-                    ->get();
-
-            } elseif (userCheckPermission("domain_select")) {
-                $domains = Domain::where('v_domains.domain_enabled', '=', 't')
-                    ->whereHas('user_permissions', function ($query) use ($event) {
-                        $query->where('user_uuid', '=', $event->user->user_uuid);
-                    })
-                    ->selectRaw('coalesce(domain_description, domain_name) as domain_description')
-                    ->addSelect([
-                        'v_domains.domain_uuid',
-                        'v_domains.domain_parent_uuid',
-                        'v_domains.domain_name',
-                        'v_domains.domain_enabled',
-                    ])
-                    ->get();
-
-                $domains_from_groups = Domain::join('domain_group_relations', 'v_domains.domain_uuid', '=', 'domain_group_relations.domain_uuid')
-                    ->join('domain_groups', 'domain_group_relations.domain_group_uuid', '=', 'domain_groups.domain_group_uuid')
-                    ->join('user_domain_group_permissions', 'user_domain_group_permissions.domain_group_uuid', '=', 'domain_groups.domain_group_uuid')
-                    ->where('v_domains.domain_enabled', '=', 't')
-                    ->where('user_uuid', '=', $event->user->user_uuid)
-                    ->select([
-                        'v_domains.domain_uuid',
-                        'v_domains.domain_parent_uuid',
-                        'v_domains.domain_name',
-                        'v_domains.domain_enabled',
-                        DB::Raw('coalesce(v_domains.domain_description , v_domains.domain_name) as domain_description')
-                    ])
-                    ->get();
-                        
-                // Merge the two collections together
-                $combinedDomains = $domains->merge($domains_from_groups);
-
-                // Ensure uniqueness based on 'domain_uuid'
-                $uniqueDomains = $combinedDomains->unique('domain_uuid');
-
-                // Optionally, if you want to re-index the collection keys after making it unique
-                $domains = $uniqueDomains->values();
-
-                // Sort returned collection
-                $domains = $domains->sortBy('domain_description');
-                $domains = $domains->values();
-
-            }
-            // logger($domains);
-
-            Session::put('domains', $domains);
-
-            // Pass domains array to FusionPBX
-            foreach (json_decode(json_encode($domains), true) as $row) {
-                $_SESSION['domains'][$row['domain_uuid']] = $row;
-            }
-        }
-
-        // Assign additional variables
-        if (userCheckPermission("domain_select")) {
-            //if user is a multi-domain admin check if he is allowed to see his own domain
-            $self_domain = false;
-            if (Session::get('domains')) {
-                foreach (Session::get('domains') as $session_domain) {
-                    if ($session_domain->domain_uuid == $domain->domain_uuid) {
-                        $self_domain = true;
-                        break;
-                    }
-                }
-            }
-
-            if ($self_domain) {
-                Session::put('domain_uuid', $session_domain->domain_uuid);
-                Session::put('domain_name', $session_domain->domain_name);
-                Session::put('domain_description', !empty($session_domain->domain_description) ? $session_domain->domain_description : $session_domain->domain_name);
-                $_SESSION["domain_name"] = $session_domain->domain_name;
-                $_SESSION["user"]["domain_name"] = $session_domain->domain_name;
-                $_SESSION["domain_uuid"] = $session_domain->domain_uuid;
-                $_SESSION["context"] = $session_domain->domain_name;
-                $_SESSION["user"]["domain_uuid"] = $session_domain->domain_uuid;
-            } else {
-                // if not then grab first domain from the list of allowed domains
-                if (Session::get('domains')->isNotEmpty()) {
-                    $first_domain = reset($_SESSION['domains']);
-                    Session::put('domain_uuid', $first_domain['domain_uuid']);
-                    Session::put('domain_name', $first_domain['domain_name']);
-                    Session::put('domain_description', !empty($first_domain['domain_description']) ? $first_domain['domain_description'] : $first_domain['domain_name']);
-                    $_SESSION["domain_name"] = $first_domain['domain_name'];
-                    $_SESSION["user"]["domain_name"] = $first_domain['domain_name'];
-                    $_SESSION["domain_uuid"] = $first_domain['domain_uuid'];
-                    $_SESSION["context"] = $first_domain['domain_name'];
-                }
-            }
-        } else {
-            Session::put('domain_uuid', $domain->domain_uuid);
-            Session::put('domain_name', $domain->domain_name);
-            Session::put('domain_description', $domain->domain_description);
-            $_SESSION["domain_name"] = $domain->domain_name;
-            $_SESSION["user"]["domain_name"] = $domain->domain_name;
-            $_SESSION["domain_uuid"] = $domain->domain_uuid;
-            $_SESSION["context"] = $domain->domain_name;
-            $_SESSION["user"]["domain_uuid"] = $domain->domain_uuid;
-        }
+        // Domains and current domain selection
+        $this->sessionDomainService->refreshForUser($event->user);
 
         // Redirect FusionPBX to an intended URL if it's not a logout page
         if (

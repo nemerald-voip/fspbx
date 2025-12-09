@@ -13,7 +13,7 @@ class UpdateDomainRequest extends FormRequest
      */
     public function authorize()
     {
-        return false;
+        return userCheckPermission('domain_edit');
     }
 
     /**
@@ -21,10 +21,46 @@ class UpdateDomainRequest extends FormRequest
      *
      * @return array
      */
-    public function rules()
+    public function rules(): array
     {
         return [
-            //
+            'domain_description' => ['required', 'string', 'max:255'],
+
+            'domain_name' => [
+                'required',
+                'string',
+                'max:255',
+            ],
+
+            'domain_enabled' => ['required', 'boolean'],
         ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'domain_description.required' => 'Please enter a domain label.',
+            'domain_description.max'      => 'The domain label may not be greater than 255 characters.',
+
+            'domain_name.required'        => 'Please enter a domain name.',
+            'domain_name.max'             => 'The domain name may not be greater than 255 characters.',
+
+            'domain_enabled.required'     => 'Please specify whether the domain is enabled.',
+            'domain_enabled.boolean'      => 'Invalid value for the domain status.',
+        ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $name = $this->input('domain_name');
+
+        $this->merge([
+            'domain_name'    => $name !== null ? strtolower(trim($name)) : null,
+            'domain_enabled' => filter_var(
+                $this->input('domain_enabled', true),
+                FILTER_VALIDATE_BOOLEAN,
+                FILTER_NULL_ON_FAILURE
+            ),
+        ]);
     }
 }

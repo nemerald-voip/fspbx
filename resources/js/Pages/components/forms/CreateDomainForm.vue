@@ -14,7 +14,7 @@
                         leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
 
                         <DialogPanel
-                            class="relative transform  rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
+                            class="relative transform  rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl sm:p-6">
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
@@ -45,56 +45,24 @@
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
-                                    destination: options.item.destination,
-                                    carrier: options.item.carrier,
-                                    chatplan_detail_data: options.item.chatplan_detail_data,
-                                    email: options.item.email,
-                                    description: options.item.description,
-
+                                    domain_description: options.item.domain_description,
+                                    domain_name: options.item.domain_name,
+                                    domain_enabled: options.item.domain_enabled,
                                 }">
 
                                 <template #empty>
 
                                     <FormElements>
 
-                                        <StaticElement name="h4" tag="h4" content="Update Settings" />
+                                        <StaticElement name="h4" tag="h4" :content="header" />
 
-                                        <TextElement name="destination" label="Phone Number"
-                                            placeholder="Enter Phone Number" :floating="false" :columns="{
-                                                sm: {
-                                                    container: 6,
-                                                },
-                                            }" />
+                                        <TextElement name="domain_description" label="Domain Label"
+                                            placeholder="Enter Domain Label" :floating="false" />
 
+                                        <TextElement name="domain_name" label="Domain Name"
+                                            placeholder="Enter Domain Name" :floating="false" />
 
-                                        <SelectElement name="carrier" :items="options.carrier"
-                                            :search="true" :native="false" label="Message Provider" input-type="search"
-                                            autocomplete="off" :floating="false" :strict="false"
-                                            placeholder="Choose Provider" :columns="{
-                                                sm: {
-                                                    container: 6,
-                                                },
-                                            }" />
-
-                                        <SelectElement name="chatplan_detail_data" :items="options.chatplan_detail_data"
-                                            :search="true" :native="false" label="Extension" input-type="search"
-                                            autocomplete="off" :floating="false" description="Assign the extension
-                                                        to which the messages should be
-                                                        forwarded." :strict="false" placeholder="Choose extension"
-                                            :columns="{
-                                                sm: {
-                                                    container: 6,
-                                                },
-                                            }" />
-
-                                        <TextElement name="email" label="Email" placeholder="Optional" :floating="false"
-                                            :columns="{
-                                                sm: {
-                                                    container: 6,
-                                                },
-                                            }" />
-
-                                        <TextareaElement label="Description" name="description" :rows="2" />
+                                        <ToggleElement name="domain_enabled" text="Status" />
 
                                         <GroupElement name="container_3" />
 
@@ -138,7 +106,7 @@ const submitForm = async (FormData, form$) => {
     const requestData = form$.requestData
     // console.log(requestData);
 
-    return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
+    return await form$.$vueform.services.axios.post(props.options.routes.store_route, requestData)
 };
 
 function clearErrorsRecursive(el$) {
