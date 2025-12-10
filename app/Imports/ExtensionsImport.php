@@ -96,13 +96,17 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
         $data['device_address'] = strtolower(trim(implode(":", str_split($data['device_address'], 2))));
         $data['extension'] = trim($data['extension']);
         $data['first_name'] = trim($data['first_name']);
-        $data['last_name'] = trim($data['last_name']);
-        $data['description'] = trim($data['description']);
-        $data['device_vendor'] = trim($data['device_vendor']);
-        $data['device_template'] = trim($data['device_template']);
-        $data['email'] = strtolower(trim($data['email']));
-        $data['outbound_caller_id_number'] = trim($data['outbound_caller_id_number']);
-        $data['emergency_caller_id_number'] = trim($data['emergency_caller_id_number'] ?? null);
+        $data['last_name'] = trim($data['last_name'] ?? '');
+        $data['description'] = trim($data['description'] ?? '');
+        $data['device_vendor'] = trim($data['device_vendor'] ?? '');
+        $data['device_template'] = trim($data['device_template'] ?? '');
+        $data['email' ] = strtolower(trim($data['email'] ?? ''));
+        if (isset($data['outbound_caller_id_number'])) {
+            $data['outbound_caller_id_number'] = preg_replace('/[^0-9+]/', '', (string) $data['outbound_caller_id_number']);
+        }
+        if (isset($data['emergency_caller_id_number'])) {
+            $data['emergency_caller_id_number'] = preg_replace('/[^0-9+]/', '', (string) $data['emergency_caller_id_number']);
+        }
         return $data;
     }
 
@@ -136,12 +140,12 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
                 'extension' => $row['extension'],
                 'password' => generate_password(),
                 'directory_first_name' => $row['first_name'],
-                'directory_last_name' => $row['last_name'],
+                'directory_last_name' => $row['last_name'] ?? null,
                 'effective_caller_id_name' => trim($row['first_name'] . ' ' . $row['last_name']),
-                'effective_caller_id_number' => $row['extension'],
-                'outbound_caller_id_number' => $row['outbound_caller_id_number'],
-                'emergency_caller_id_number' => $row['emergency_caller_id_number'],
-                'description' => $row['description'],
+                'effective_caller_id_number' => $row['extension'] ?? null,
+                'outbound_caller_id_number' => $row['outbound_caller_id_number'] ?? null,
+                'emergency_caller_id_number' => $row['emergency_caller_id_number'] ?? null,
+                'description' => $row['description'] ?? null,
                 'directory_visible' => 'true',
                 'directory_exten_visible' => 'true',
                 'limit_max' => '5',

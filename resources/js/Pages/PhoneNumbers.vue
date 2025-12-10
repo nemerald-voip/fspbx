@@ -33,6 +33,13 @@
                     <DocumentArrowUpIcon class="h-5 w-5" aria-hidden="true" />
                     Import CSV
                 </button>
+                <button
+                  type="button"
+                  @click.prevent="exportPhoneNumbersCsv()"
+                  class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                  <DocumentArrowDownIcon class="h-5 w-5" aria-hidden="true" />
+                  Export CSV
+                </button>
                 <button v-if="permissions.view_global && !showGlobal" type="button"
                     @click.prevent="handleShowGlobal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
@@ -241,7 +248,7 @@ import Notification from "./components/notifications/Notification.vue";
 import { PencilSquareIcon } from "@heroicons/vue/24/solid/index.js";
 import BulkUpdatePhoneNumberForm from "./components/forms/BulkUpdatePhoneNumberForm.vue";
 import Badge from "@generalComponents/Badge.vue";
-import { DocumentArrowUpIcon } from "@heroicons/vue/24/outline";
+import { DocumentArrowUpIcon, DocumentArrowDownIcon } from "@heroicons/vue/24/outline";
 import UploadModal from "./components/modal/UploadModal.vue";
 
 const page = usePage()
@@ -281,6 +288,31 @@ const filterData = ref({
 const itemOptions = ref({})
 
 const showGlobal = ref(props.showGlobal);
+
+// --- Export CSV (respects current filters/sort on server if your Export uses request()) ---
+// --- Export CSV (GET to match Route::get('/phone-numbers-export', ...)) ---
+const exportPhoneNumbersCsv = () => {
+  axios.get(props.routes.export, {
+    params: {
+      // only needed if your export() reads filters from the request
+      filter: filterData.value,
+      // items: selectedItems.value, // enable later if you support "export selected"
+    },
+    responseType: 'blob',
+  })
+  .then((response) => {
+    const blob = new Blob([response.data], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'phone_numbers.csv';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  })
+  .catch(handleErrorResponse);
+};
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {

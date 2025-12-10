@@ -51,7 +51,8 @@ use extension;
 use Spatie\Activitylog\Facades\CauserResolver;
 use Propaganistas\LaravelPhone\Exceptions\NumberParseException;
 use App\Traits\ChecksLimits;
-
+use Symfony\Component\HttpFoundation\StreamedResponse;
+use App\Exports\ExtensionsExport;
 
 class ExtensionsController extends Controller
 {
@@ -62,6 +63,18 @@ class ExtensionsController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'Extensions';
+
+public function export(Request $request)
+{
+    if (!userCheckPermission("extension_export")) {
+        abort(403);
+    }
+    return \Maatwebsite\Excel\Facades\Excel::download(
+        new ExtensionsExport,
+        'extensions.csv',
+        \Maatwebsite\Excel\Excel::CSV
+    );
+}
 
     public function __construct()
     {
@@ -162,6 +175,7 @@ class ExtensionsController extends Controller
                     'import' => route('extensions.import'),
                     'create_user' => route('extensions.make.user'),
                     'create_contact_center_user' => (Module::has('ContactCenter') && Module::collections()->has('ContactCenter') && Route::has('contact-center.user.store')) ? route('contact-center.user.store') : null,
+                    'export' => route('extensions.export'),
                 ]
             ]
         );
@@ -1206,6 +1220,9 @@ class ExtensionsController extends Controller
      */
     public function import()
     {
+        if (! userCheckPermission('extension_import')) {
+        abort(403);
+    }
         try {
 
             $file = request()->file('file');
