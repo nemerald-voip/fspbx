@@ -69,6 +69,7 @@
                                                 <FormTab name="page0" label="Device Settings" :elements="[
                                                     'h4',
                                                     'device_address',
+                                                    'device_uuid',
                                                     'device_template',
                                                     'device_profile_uuid',
                                                     'domain_uuid',
@@ -123,7 +124,30 @@
                                             <FormElements>
 
                                                 <StaticElement name="h4" tag="h4" content="Device Settings" />
-
+                                        <StaticElement name="device_uuid"
+                                            :conditions="[() => options.permissions.is_superadmin]" >
+                                            
+                                            <div class="mb-1">
+                                                                <div class="text-sm font-medium text-gray-600 mb-1">
+                                                    Unique ID
+                                                </div>
+                                
+                                                                <div class="flex items-center group">
+                                                    <span class="text-sm text-gray-900 select-all font-normal">
+                                                        {{ options.item.device_uuid }}
+                                                    </span>
+                                
+                                                                        <button
+                                                        type="button"
+                                                        class="ml-2 inline-flex items-center rounded p-1 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                                        :title="copied.uuid ? 'Copied' : 'Copy to clipboard'"
+                                                        @click="copy(options.item.device_uuid, 'uuid')">
+                                                        <component :is="copied.uuid ? CheckIcon : DocumentDuplicateIcon" class="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            
+                                        </StaticElement>
                                                 <TextElement name="device_address" label="MAC Address"
                                                     placeholder="Enter MAC address" :floating="false"
                                                     :disabled="[() => !options?.permissions?.device_address_update]"
@@ -579,9 +603,9 @@
 import { ref, reactive, computed } from "vue";
 
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
-import { XMarkIcon } from "@heroicons/vue/24/solid";
+import { XMarkIcon, CheckIcon } from "@heroicons/vue/24/solid";
 import FormChildModal from "../FormChildModal.vue"
-import { Cog8ToothIcon } from "@heroicons/vue/24/outline";
+import { Cog8ToothIcon, DocumentDuplicateIcon } from "@heroicons/vue/24/outline";
 import Badge from "@generalComponents/Badge.vue";
 import { XCircleIcon } from '@heroicons/vue/20/solid'
 
@@ -607,6 +631,29 @@ const isCloudProvisioningLoading = reactive({
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
 
 const provisioning = ref(null);
+
+const copied = ref({ uuid: false })
+ 
+ async function copy(value, key) {
+   try {
+     if (navigator?.clipboard?.writeText) {
+       await navigator.clipboard.writeText(value ?? '')
+     } else {
+       const ta = document.createElement('textarea')
+       ta.value = value ?? ''
+       ta.style.position = 'fixed'
+       ta.style.opacity = '0'
+       document.body.appendChild(ta)
+       ta.select()
+       document.execCommand('copy')
+       document.body.removeChild(ta)
+     }
+     copied.value[key] = true
+     setTimeout(() => (copied.value[key] = false), 800)
+   } catch (e) {
+     console.error('Failed to copy:', e)
+   }
+ }
 
 function showLineAdvSettings(index) {
     advModalIndex.value = index

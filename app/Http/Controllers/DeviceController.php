@@ -1014,6 +1014,7 @@ class DeviceController extends Controller
         $permissions['manage_device_line_secondary_server'] = userCheckPermission('device_line_server_address_secondary');
         $permissions['manage_device_line_primary_proxy'] = userCheckPermission('device_line_outbound_proxy_primary');
         $permissions['manage_device_line_secondary_proxy'] = userCheckPermission('device_line_outbound_proxy_secondary');
+        $permissions['is_superadmin'] = isSuperAdmin();
 
         return $permissions;
     }
