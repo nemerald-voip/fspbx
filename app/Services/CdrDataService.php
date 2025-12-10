@@ -72,7 +72,8 @@ class CdrDataService
                         $q->where('caller_id_name', 'ilike', "%{$value}%")
                             ->orWhere('caller_id_number', 'ilike', "%{$value}%")
                             ->orWhere('caller_destination', 'ilike', "%{$value}%")
-                            ->orWhere('destination_number', 'ilike', "%{$value}%");
+                            ->orWhere('destination_number', 'ilike', "%{$value}%")
+                            ->orWhere('xml_cdr_uuid', 'ilike', "%{$value}%");
 
                         // Search inside related extension fields
                         $q->orWhereHas('extension', function ($extQuery) use ($value) {

@@ -80,6 +80,30 @@
                             <HiddenElement name="ring_group_uuid" :meta="true" />
                             <StaticElement name="h4" tag="h4" content="Settings"
                                 description="Provide basic information about the ring group" />
+                            <StaticElement name="ring_group_uuid"
+                                :conditions="[() => localOptions.permissions.is_superadmin]" >
+                                
+                                <div class="mb-1">
+                                    <div class="text-sm font-medium text-gray-600 mb-1">
+                                        Unique ID
+                                    </div>
+
+                                    <div class="flex items-center group">
+                                        <span class="text-sm text-gray-900 select-all font-normal">
+                                            {{ options.ring_group.ring_group_uuid }}
+                                        </span>
+
+                                        <button
+                                            type="button"
+                                            class="ml-2 inline-flex items-center rounded p-1 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                            :title="copied.uuid ? 'Copied' : 'Copy to clipboard'"
+                                            @click="copy(options.ring_group.ring_group_uuid, 'uuid')">
+                                            <component :is="copied.uuid ? CheckIcon : DocumentDuplicateIcon" class="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                            </StaticElement>
                             <TextElement name="ring_group_name" label="Name" :columns="{
                                 sm: {
                                     container: 6,
@@ -622,14 +646,38 @@ import { onMounted, reactive, ref, watch, computed } from "vue";
 import DeleteConfirmationModal from "../modal/DeleteConfirmationModal.vue";
 import Spinner from "@generalComponents/Spinner.vue";
 import { PlusIcon, TrashIcon, PencilSquareIcon } from '@heroicons/vue/20/solid'
-import { PlayCircleIcon, CloudArrowDownIcon, PauseCircleIcon } from '@heroicons/vue/24/solid';
+import { PlayCircleIcon, CloudArrowDownIcon, PauseCircleIcon, CheckIcon } from '@heroicons/vue/24/solid';
 import UpdateGreetingModal from "../modal/UpdateGreetingModal.vue";
 import NewGreetingForm from './NewGreetingForm.vue';
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
-import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
+import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon, DocumentDuplicateIcon } from '@heroicons/vue/24/outline';
 
 function toBool(v) {
     return v === true || v === 'true' || v === 1 || v === '1';
+}
+
+const copied = ref({ uuid: false })
+
+async function copy(value, key) {
+  try {
+    if (navigator?.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value ?? '')
+    } else {
+      // Fallback for older browsers
+      const ta = document.createElement('textarea')
+      ta.value = value ?? ''
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    copied.value[key] = true
+    setTimeout(() => (copied.value[key] = false), 800)
+  } catch (e) {
+    console.error('Failed to copy:', e)
+  }
 }
 
 const props = defineProps({
