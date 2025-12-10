@@ -29,6 +29,7 @@ class ExtensionsExport implements FromCollection, WithHeadings
                 've.directory_first_name',
                 've.directory_last_name',
                 've.outbound_caller_id_number',
+                've.emergency_caller_id_number',
                 've.description',
             ])
             ->orderBy($sortField, $sortOrder);
@@ -40,6 +41,7 @@ class ExtensionsExport implements FromCollection, WithHeadings
                 $q->where('ve.extension', 'ilike', "%{$value}%")
                   ->orWhere('ve.effective_caller_id_name', 'ilike', "%{$value}%")
                   ->orWhere('ve.outbound_caller_id_number', 'ilike', "%{$value}%")
+                  ->orWhere('ve.emergency_caller_id_number', 'ilike', "%{$value}%")
                   ->orWhere('ve.directory_first_name', 'ilike', "%{$value}%")
                   ->orWhere('ve.directory_last_name', 'ilike', "%{$value}%")
                   ->orWhere('ve.description', 'ilike', "%{$value}%")
@@ -65,24 +67,34 @@ class ExtensionsExport implements FromCollection, WithHeadings
                 ->pluck('voicemail_mail_to', 'voicemail_id'); // [ext => email]
         }
 
-        $this->rows = $rows->map(function ($r) use ($emailMap) {
-            $email = (string) ($emailMap->get($r->extension) ?? '');
-            $cid   = $this->formatNanpa($r->outbound_caller_id_number);
+$this->rows = $rows->map(function ($r) use ($emailMap) {
+    $email = (string) ($emailMap->get($r->extension) ?? '');
+    $cid   = formatPhoneNumber($r->outbound_caller_id_number);
+    $emergencycid   = formatPhoneNumber($r->emergency_caller_id_number);
 
-            return [
-                'Extension'     => $r->extension,
-                'First Name'    => $r->directory_first_name,
-                'Last Name'     => $r->directory_last_name,
-                'Email'         => $email,
-                'Outbound CID'  => $cid,
-                'Description'   => $r->description,
-            ];
-        });
+    return [
+        'extension'           => $r->extension,
+        'first_name'          => $r->directory_first_name,
+        'last_name'           => $r->directory_last_name,
+        'email'               => $email,
+        'outbound_caller_id_number' => $cid,
+        'emergency_caller_id_number' => $emergencycid,
+        'description'         => $r->description,
+    ];
+});
     }
 
     public function headings(): array
     {
-        return ['Extension', 'First Name', 'Last Name', 'Email', 'Outbound CID', 'Description'];
+    return [
+        'extension',
+        'first_name',
+        'last_name',
+        'email',
+        'outbound_caller_id_number',
+        'emergency_caller_id_number',
+        'description',
+    ];
     }
 
     public function collection(): Collection
@@ -93,15 +105,17 @@ class ExtensionsExport implements FromCollection, WithHeadings
     /**
      * Format +1XXXXXXXXXX → (xxx) xxx-xxxx; otherwise return as-is.
      */
-    private function formatNanpa(?string $cid): string
-    {
-        $cid = (string) $cid;
-        if (preg_match('/^\+1\d{10}$/', $cid)) {
-            $area = substr($cid, 2, 3);
-            $pref = substr($cid, 5, 3);
-            $line = substr($cid, 8, 4);
-            return "({$area}) {$pref}-{$line}";
-        }
-        return $cid;
-        }
+private function formatNanpa(?string $cid): string
+{
+    $cid = (string) $cid;
+    if (preg_match('/^\+1\d{10}$/', $cid)) {
+        $area = substr($cid, 2, 3);
+        $pref = substr($cid, 5, 3);
+        $line = substr($cid, 8, 4);
+        return "({$area}) {$pref}-{$line}";
+    }
+
+    return $cid;
+}
+
 }

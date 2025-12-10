@@ -56,8 +56,8 @@ class PhoneNumbersImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
 
     public function prepareForValidation($data, $index)
     {
-        $data['country_code'] = trim(str_replace(':', '', $data['country_code']));
-        $data['phone_number'] = trim(str_replace('-', '', $data['phone_number']));
+        $data['country_code'] = preg_replace('/\D+/', '', $data['country_code']);
+        $data['phone_number'] = preg_replace('/\D+/', '', $data['phone_number']);
         return $data;
     }
 

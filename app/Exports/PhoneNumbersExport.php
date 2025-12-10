@@ -39,38 +39,25 @@ class PhoneNumbersExport implements FromCollection, WithHeadings
             });
         }
 
-        $this->rows = $q->get()->map(function ($r) {
-            // Parse destination_actions JSON → "app:data | app:data"
-            $dest = '';
-            if (!empty($r->destination_actions)) {
-                $arr = json_decode($r->destination_actions, true);
-                if (is_array($arr)) {
-                    $parts = [];
-                    foreach ($arr as $a) {
-                        $app  = $a['destination_app']  ?? '';
-                        $data = $a['destination_data'] ?? '';
-                        $parts[] = trim($app . ($data !== '' ? ':' . $data : ''));
-                    }
-                    $dest = implode(' | ', array_filter($parts));
-                }
-            }
+  //      logger($q->get());
 
-            return [
-                'prefix'       => $r->destination_prefix,
-               // Normalize per rule:
-                // - If prefix is "1" or "+1" → (xxx) xxx-xxxx
-                // - OR if prefix is empty AND number starts with "+1" → (xxx) xxx-xxxx
-                // - Else leave as-is
-                'phone_number' => $this->formatForExport($r->destination_prefix, $r->destination_number),                'destination'  => $dest,
-                'description'  => $r->destination_description,
-            ];
-        });
+    $this->rows = $q->get()->map(function ($r) {
+        return [
+            'country_code' => $r->destination_prefix,
+            // 'phone_number' => $this->formatForExport($r->destination_prefix, $r->destination_number),
+
+            'phone_number'  => formatPhoneNumber($r->destination_number),
+            'destination'  => $this->buildDestinationLabel($r),
+            'description'  => $r->destination_description,
+        ];
+    });
+
     }
 
     public function headings(): array
     {
         // Match the spec (prefix, phone number, destination, description)
-        return ['prefix', 'phone_number', 'destination', 'description'];
+        return ['country_code', 'phone_number', 'destination', 'description'];
     }
 
     public function collection(): Collection
@@ -78,41 +65,35 @@ class PhoneNumbersExport implements FromCollection, WithHeadings
         return $this->rows;
     }
 
+private function buildDestinationLabel($r): string
+{
+    $parts = [];
+    $options = $r->routing_options ?? null;
 
-    /**
-     * Normalize NANPA display for +1/1 cases only.
-     * - If prefix is "1" or "+1" → format (xxx) xxx-xxxx
-     * - If prefix is empty and number starts with "+1" → format (xxx) xxx-xxxx
-     * - Otherwise, return the original number unchanged
-     */
-    private function formatForExport(?string $prefix, ?string $number): string
-    {
-        $p = trim((string) $prefix);
-        $n = trim((string) $number);
+    if (is_array($options) && !empty($options)) {
+        foreach ($options as $opt) {
+            $type = $opt['type']      ?? null;
+            $ext  = $opt['extension'] ?? null;
 
-        $shouldFormat =
-            ($p === '1' || $p === '+1') ||
-            ($p === '' && preg_match('/^\+1\d{10}$/', $n));
-
-        if (!$shouldFormat) {
-            return $n;
+            if ($type || $ext) {
+                $labelBits = [];
+                if (!empty($type)) {
+                    $labelBits[] = "Type: {$type}";
+                }
+                if (!empty($ext)) {
+                    $labelBits[] = "Extension: {$ext}";
+                }
+                // Add the formatted string to the main parts array
+                $parts[] = implode(', ', $labelBits);
+            }
         }
-
-        // Keep digits only; drop leading country code if present
-        $digits = preg_replace('/\D+/', '', $n);
-        if (strlen($digits) === 11 && $digits[0] === '1') {
-            $digits = substr($digits, 1);
-        }
-
-        if (strlen($digits) !== 10) {
-            // Bad shape; don't mangle
-            return $n;
-        }
-
-        $area = substr($digits, 0, 3);
-        $pref = substr($digits, 3, 3);
-        $line = substr($digits, 6, 4);
-        return "({$area}) {$pref}-{$line}";
     }
+
+    // Returns the joined string, or an empty string "" if $parts is empty
+    return implode(' | ', $parts);
+}
+
+
+
 }
 
