@@ -102,20 +102,4 @@ $this->rows = $rows->map(function ($r) use ($emailMap) {
         return $this->rows;
     }
 
-    /**
-     * Format +1XXXXXXXXXX → (xxx) xxx-xxxx; otherwise return as-is.
-     */
-private function formatNanpa(?string $cid): string
-{
-    $cid = (string) $cid;
-    if (preg_match('/^\+1\d{10}$/', $cid)) {
-        $area = substr($cid, 2, 3);
-        $pref = substr($cid, 5, 3);
-        $line = substr($cid, 8, 4);
-        return "({$area}) {$pref}-{$line}";
-    }
-
-    return $cid;
-}
-
 }
