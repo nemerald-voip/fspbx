@@ -712,6 +712,7 @@ if (
         $permissions['manage_voicemail_auto_delete'] = userCheckPermission('voicemail_local_after_email');
         $permissions['manage_voicemail_recording_instructions'] = userCheckPermission('voicemail_recording_instructions');
         $permissions['manage_voicemail_mobile_notifications'] = userCheckPermission('voicemail_sms_edit');
+        $permissions['is_superadmin'] = isSuperAdmin();
 
         return $permissions;
     }

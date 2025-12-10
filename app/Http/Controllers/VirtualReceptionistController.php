@@ -682,6 +682,8 @@ class VirtualReceptionistController extends Controller
     public function getUserPermissions()
     {
         $permissions = [];
+        $permissions['is_superadmin'] = isSuperAdmin();
+
         return $permissions;
     }
 

@@ -294,6 +294,7 @@ class BusinessHoursController extends Controller
         $permissions['holidays_create'] = userCheckPermission('business_hours_holidays_create');
         $permissions['holidays_update'] = userCheckPermission('business_hours_holidays_update');
         $permissions['holidays_delete'] = userCheckPermission('business_hours_holidays_delete');
+        $permissions['is_superadmin'] = isSuperAdmin();
 
         return $permissions;
     }

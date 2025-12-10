@@ -83,6 +83,7 @@
                                                     'h4',
                                                     'first_name',
                                                     'last_name',
+                                                    'user_uuid',
                                                     'user_email',
                                                     'groups',
                                                     'time_zone',
@@ -126,7 +127,30 @@
                                             <FormElements>
 
                                                 <StaticElement name="h4" tag="h4" content="Basic Info" />
-
+                                                <StaticElement name="user_uuid"
+                                                    :conditions="[() => options.permissions.is_superadmin]" >
+                                                    
+                                                    <div class="mb-1">
+                                                                        <div class="text-sm font-medium text-gray-600 mb-1">
+                                                            Unique ID
+                                                        </div>
+                                        
+                                                                        <div class="flex items-center group">
+                                                            <span class="text-sm text-gray-900 select-all font-normal">
+                                                                {{ options.item.user_uuid }}
+                                                            </span>
+                                        
+                                                                                <button
+                                                                type="button"
+                                                                class="ml-2 inline-flex items-center rounded p-1 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                                                :title="copied.uuid ? 'Copied' : 'Copy to clipboard'"
+                                                                @click="copy(options.item.user_uuid, 'uuid')">
+                                                                <component :is="copied.uuid ? CheckIcon : DocumentDuplicateIcon" class="h-4 w-4" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                </StaticElement>
                                                 <TextElement name="first_name" label="First Name"
                                                     placeholder="Enter First Name" :floating="false" :columns="{
                                                         sm: {
@@ -300,7 +324,8 @@
 <script setup>
 import { ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
-import { XMarkIcon } from "@heroicons/vue/24/solid";
+import { XMarkIcon, CheckIcon } from "@heroicons/vue/24/solid";
+import { DocumentDuplicateIcon } from "@heroicons/vue/24/outline";
 import ConfirmationModal from "./../modal/ConfirmationModal.vue";
 import ApiTokens from "./../ApiTokens.vue";
 import CreateApiTokenModal from "./../modal/CreateApiTokenModal.vue"
@@ -327,6 +352,28 @@ const confirmDeleteAction = ref(null);
 const locations = ref([])
 const isLocationsLoading = ref(false)
 
+const copied = ref({ uuid: false })
+ 
+ async function copy(value, key) {
+   try {
+     if (navigator?.clipboard?.writeText) {
+       await navigator.clipboard.writeText(value ?? '')
+     } else {
+       const ta = document.createElement('textarea')
+       ta.value = value ?? ''
+       ta.style.position = 'fixed'
+       ta.style.opacity = '0'
+       document.body.appendChild(ta)
+       ta.select()
+       document.execCommand('copy')
+       document.body.removeChild(ta)
+     }
+     copied.value[key] = true
+     setTimeout(() => (copied.value[key] = false), 800)
+   } catch (e) {
+     console.error('Failed to copy:', e)
+   }
+ }
 
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
