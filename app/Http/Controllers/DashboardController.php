@@ -24,6 +24,7 @@ use Nwidart\Modules\Facades\Module;
 use Illuminate\Support\Facades\Session;
 use Laravel\Horizon\Contracts\MasterSupervisorRepository;
 use App\Services\FreeswitchEslService;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
@@ -146,6 +147,21 @@ class DashboardController extends Controller
             $counts['voicemails'] = Voicemails::where('domain_uuid', $domain_uuid)
                 ->where('voicemail_enabled', 'true')
                 ->count();
+        }
+
+        if (userCheckPermission("voicemail_view") && !userCheckPermission("voicemail_domain")) {
+            // My VM count
+            $user = Auth::user();
+            $extension = $user->extension;
+
+            if ($extension) {
+                $voicemail = Voicemails::where('domain_uuid', $extension->domain_uuid)
+                    ->where('voicemail_id', $extension->extension)
+                    ->withCount('messages')
+                    ->first();
+                $counts['my_voicemails'] = $voicemail?->messages_count ?? 0;
+                
+            }
         }
 
         if (userCheckPermission("call_flow_view")) {
@@ -325,12 +341,21 @@ class DashboardController extends Controller
     public function getApps()
     {
         $apps = [];
+        $user = Auth::user();
+        $extension = $user->extension;
+
+        if ($extension) {
+            $voicemail = Voicemails::where('domain_uuid',$extension->domain_uuid)->where('voicemail_id',$extension->extension)->first();
+        }
 
         if (userCheckPermission("extension_view")) {
             $apps[] = ['name' => 'Extensions', 'href' => route('extensions.index'), 'icon' => 'ContactPhoneIcon', 'slug' => 'extensions'];
         }
-        if (userCheckPermission("voicemail_view")) {
+        if (userCheckPermission("voicemail_view") && userCheckPermission("voicemail_domain")) {
             $apps[] = ['name' => 'Voicemails', 'href' => route('voicemails.index'), 'icon' => 'VoicemailIcon', 'slug' => 'voicemails'];
+        }
+        if (userCheckPermission("voicemail_view") && !userCheckPermission("voicemail_domain") && $voicemail) {
+            $apps[] = ['name' => 'My VMs', 'href' => $voicemail->messages_route, 'icon' => 'VoicemailIcon', 'slug' => 'my_voicemails'];
         }
         if (userCheckPermission("device_view")) {
             $apps[] = ['name' => 'Devices', 'href' => route('devices.index'), 'icon' => 'DevicesIcon', 'slug' => 'devices'];
