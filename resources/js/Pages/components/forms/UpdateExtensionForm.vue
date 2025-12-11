@@ -197,6 +197,7 @@
                                             <FormTabs view="vertical" @select="handleTabSelected">
                                                 <FormTab name="page0" label="Basic Info" :elements="[
                                                     'basic_info_title',
+                                                    'extension_clean',
                                                     'directory_first_name',
                                                     'directory_last_name',
                                                     'extension',
@@ -385,7 +386,7 @@
                                             <FormElements>
 
                                                 <HiddenElement name="extension_uuid" :meta="true" />
-                                                <StaticElement name="extension_uuid"
+                                                <StaticElement name="uuid_clean"
                                                     :conditions="[() => options.permissions.is_superadmin]">
 
                                                     <div class="mb-1">

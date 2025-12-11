@@ -9,6 +9,7 @@
                         <FormTabs view="vertical">
                             <FormTab name="page0" label="Settings" :elements="[
                                 'ring_group_uuid',
+                                'ring_group_uuid_clean',
                                 'h4',
                                 'ring_group_name',
                                 'ring_group_extension',
@@ -80,7 +81,7 @@
                             <HiddenElement name="ring_group_uuid" :meta="true" />
                             <StaticElement name="h4" tag="h4" content="Settings"
                                 description="Provide basic information about the ring group" />
-                            <StaticElement name="ring_group_uuid"
+                            <StaticElement name="ring_group_uuid_clean"
                                 :conditions="[() => localOptions.permissions.is_superadmin]" >
                                 
                                 <div class="mb-1">

@@ -86,6 +86,7 @@
                                                     'h4',
                                                     'fax_name',
                                                     'fax_uuid',
+                                                    'fax_uuid_clean',
                                                     'fax_extension',
                                                     'fax_caller_id_name',
                                                     'fax_caller_id_number',
@@ -126,7 +127,7 @@
 
                                                 <HiddenElement name="fax_uuid" :meta="true" />
                                                 <HiddenElement name="fax_email" :meta="true" />
-                                                <StaticElement name="fax_uuid"
+                                                <StaticElement name="fax_uuid_clean"
                                                     :conditions="[() => options.permissions.is_superadmin]">
 
                                                     <div class="mb-1">

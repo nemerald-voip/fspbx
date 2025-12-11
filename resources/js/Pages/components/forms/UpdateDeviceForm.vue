@@ -69,7 +69,7 @@
                                                 <FormTab name="page0" label="Device Settings" :elements="[
                                                     'h4',
                                                     'device_address',
-                                                    'device_uuid',
+                                                    'device_clean',
                                                     'device_template',
                                                     'device_profile_uuid',
                                                     'domain_uuid',
@@ -124,7 +124,7 @@
                                             <FormElements>
 
                                                 <StaticElement name="h4" tag="h4" content="Device Settings" />
-                                                 <StaticElement name="device_uuid"
+                                                 <StaticElement name="uuid_clean"
                                                     :conditions="[() => options.permissions.is_superadmin]">
 
                                                     <div class="mb-1">

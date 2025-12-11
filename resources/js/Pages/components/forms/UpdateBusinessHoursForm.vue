@@ -20,6 +20,7 @@
                         <FormTabs view="vertical" @select="handleTabSelected">
                             <FormTab name="business_hours" label="Business Hours" :elements="[
                                 'business_hours_header',
+                                'uuid_clean',
                                 'name',
                                 'extension',
                                 'uuid',
@@ -60,7 +61,7 @@
 
                             <StaticElement name="business_hours_header" tag="h4" content="Business Hours" />
 
-                            <StaticElement name="uuid"
+                            <StaticElement name="uuid_clean"
                                 :conditions="[() => options.permissions.is_superadmin]">
 
                                 <div class="mb-1">

@@ -80,6 +80,7 @@
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical" @select="handleTabSelected">
                                                 <FormTab name="page0" label="Basic Info" :elements="[
+                                                    'user_uuid_clean',
                                                     'h4',
                                                     'first_name',
                                                     'last_name',
@@ -127,7 +128,7 @@
                                             <FormElements>
 
                                                 <StaticElement name="h4" tag="h4" content="Basic Info" />
-                                                <StaticElement name="user_uuid"
+                                                <StaticElement name="user_uuid_clean"
                                                     :conditions="[() => options.permissions.is_superadmin]">
 
                                                     <div class="mb-1">
