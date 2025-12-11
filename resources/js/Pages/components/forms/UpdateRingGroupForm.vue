@@ -90,16 +90,17 @@
 
                                     <div class="flex items-center group">
                                         <span class="text-sm text-gray-900 select-all font-normal">
-                                            {{ options.ring_group.ring_group_uuid }}
+                                            {{ localOptions.ring_group.ring_group_uuid  }}
                                         </span>
 
-                                        <button
-                                            type="button"
-                                            class="ml-2 inline-flex items-center rounded p-1 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                                            :title="copied.uuid ? 'Copied' : 'Copy to clipboard'"
-                                            @click="copy(options.ring_group.ring_group_uuid, 'uuid')">
-                                            <component :is="copied.uuid ? CheckIcon : DocumentDuplicateIcon" class="h-4 w-4" />
-                                        </button>
+                                                    <button type="button"
+                                                        @click="handleCopyToClipboard(localOptions.ring_group.ring_group_uuid )"
+                                                        class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                                        title="Copy to clipboard">
+                                                        <!-- Small Copy Icon -->
+                                                        <ClipboardDocumentIcon
+                                                            class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
+                                                    </button>
                                     </div>
                                 </div>
                                 
@@ -646,38 +647,24 @@ import { onMounted, reactive, ref, watch, computed } from "vue";
 import DeleteConfirmationModal from "../modal/DeleteConfirmationModal.vue";
 import Spinner from "@generalComponents/Spinner.vue";
 import { PlusIcon, TrashIcon, PencilSquareIcon } from '@heroicons/vue/20/solid'
-import { PlayCircleIcon, CloudArrowDownIcon, PauseCircleIcon, CheckIcon } from '@heroicons/vue/24/solid';
+import { PlayCircleIcon, CloudArrowDownIcon, PauseCircleIcon } from '@heroicons/vue/24/solid';
 import UpdateGreetingModal from "../modal/UpdateGreetingModal.vue";
 import NewGreetingForm from './NewGreetingForm.vue';
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
-import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon, DocumentDuplicateIcon } from '@heroicons/vue/24/outline';
+import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
+import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 
 function toBool(v) {
     return v === true || v === 'true' || v === 1 || v === '1';
 }
 
-const copied = ref({ uuid: false })
-
-async function copy(value, key) {
-  try {
-    if (navigator?.clipboard?.writeText) {
-      await navigator.clipboard.writeText(value ?? '')
-    } else {
-      // Fallback for older browsers
-      const ta = document.createElement('textarea')
-      ta.value = value ?? ''
-      ta.style.position = 'fixed'
-      ta.style.opacity = '0'
-      document.body.appendChild(ta)
-      ta.select()
-      document.execCommand('copy')
-      document.body.removeChild(ta)
-    }
-    copied.value[key] = true
-    setTimeout(() => (copied.value[key] = false), 800)
-  } catch (e) {
-    console.error('Failed to copy:', e)
-  }
+const handleCopyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        emits('success', 'success', { message: ['Copied to clipboard.'] });
+    }).catch((error) => {
+        // Handle the error case
+        emits('error', { response: { data: { errors: { request: ['Failed to copy to clipboard.'] } } } });
+    });
 }
 
 const props = defineProps({

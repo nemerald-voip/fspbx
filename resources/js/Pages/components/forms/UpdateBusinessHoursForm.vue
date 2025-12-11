@@ -22,7 +22,7 @@
                                 'business_hours_header',
                                 'name',
                                 'extension',
-                                'business_hours_uuid',
+                                'uuid',
                                 'timezone',
                                 'description',
                                 'container',
@@ -57,11 +57,12 @@
                         <FormElements>
 
                             <HiddenElement name="uuid" :meta="true" />
+
                             <StaticElement name="business_hours_header" tag="h4" content="Business Hours" />
 
-                            <StaticElement name="business_hours_uuid"
-                                :conditions="[() => options.permissions.is_superadmin]" >
-                                
+                            <StaticElement name="uuid"
+                                :conditions="[() => options.permissions.is_superadmin]">
+
                                 <div class="mb-1">
                                     <div class="text-sm font-medium text-gray-600 mb-1">
                                         Unique ID
@@ -72,17 +73,18 @@
                                             {{ options.item.uuid }}
                                         </span>
 
-                                        <button
-                                            type="button"
-                                            class="ml-2 inline-flex items-center rounded p-1 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                                            :title="copied.uuid ? 'Copied' : 'Copy to clipboard'"
-                                            @click="copy(options.item.uuid, 'uuid')">
-                                            <component :is="copied.uuid ? CheckIcon : DocumentDuplicateIcon" class="h-4 w-4" />
+                                        <button type="button" @click="handleCopyToClipboard(options.item.uuid)"
+                                            class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                            title="Copy to clipboard">
+                                            <!-- Small Copy Icon -->
+                                            <ClipboardDocumentIcon
+                                                class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
                                         </button>
                                     </div>
                                 </div>
-                                
+
                             </StaticElement>
+
                             <StaticElement name="business_hours_header" tag="h4" content="Business Hours" />
                             <TextElement name="name" label="Name" :columns="{
                                 sm: {
@@ -342,8 +344,7 @@ import HolidayTable from "./../HolidayTable.vue";
 import CreateHolidayHourModal from "./../modal/CreateHolidayHourModal.vue"
 import UpdateHolidayHourModal from "./../modal/UpdateHolidayHourModal.vue"
 import ConfirmationModal from "./../modal/ConfirmationModal.vue";
-import { CheckIcon } from '@heroicons/vue/24/solid';
-import { DocumentDuplicateIcon } from '@heroicons/vue/24/outline';
+import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 
 const props = defineProps({
     options: Object,
@@ -363,27 +364,13 @@ const confirmDeleteAction = ref(null);
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data']);
 
-const copied = ref({ uuid: false })
-
-async function copy(value, key) {
-  try {
-    if (navigator?.clipboard?.writeText) {
-      await navigator.clipboard.writeText(value ?? '')
-    } else {
-      const ta = document.createElement('textarea')
-      ta.value = value ?? ''
-      ta.style.position = 'fixed'
-      ta.style.opacity = '0'
-      document.body.appendChild(ta)
-      ta.select()
-      document.execCommand('copy')
-      document.body.removeChild(ta)
-    }
-    copied.value[key] = true
-    setTimeout(() => (copied.value[key] = false), 800)
-  } catch (e) {
-    console.error('Failed to copy:', e)
-  }
+const handleCopyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        emit('success', 'success', { message: ['Copied to clipboard.'] });
+    }).catch((error) => {
+        // Handle the error case
+        emit('error', { response: { data: { errors: { request: ['Failed to copy to clipboard.'] } } } });
+    });
 }
 
 const getHolidayItemOptions = (itemUuid = null) => {

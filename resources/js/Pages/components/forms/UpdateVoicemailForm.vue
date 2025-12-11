@@ -30,22 +30,25 @@
                         </div>
 
                         <div class="grid grid-cols-6 gap-6">
-                        <div class="col-span-6" v-if="localOptions.permissions.is_superadmin">
-                     <div class="block text-sm font-medium leading-6 text-gray-900">
-                         Unique ID
-                     </div>
-                     <div class="mt-1 flex items-center group">
-                         <span class="text-sm text-gray-900 select-all font-normal">
-                             {{ options.voicemail.voicemail_uuid }}
-                         </span>
-                         <button type="button"
-                             class="ml-2 inline-flex items-center rounded p-1 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                             :title="copied.uuid ? 'Copied' : 'Copy to clipboard'"
-                             @click="copy(options.voicemail.voicemail_uuid, 'uuid')">
-                             <component :is="copied.uuid ? CheckIcon : DocumentDuplicateIcon" class="h-4 w-4" />
-                         </button>
-                     </div>
-                 </div>                            <div class="col-span-3 sm:col-span-2">
+                            <div class="col-span-6" v-if="localOptions.permissions.is_superadmin">
+                                <div class="block text-sm font-medium leading-6 text-gray-900">
+                                    Unique ID
+                                </div>
+                                <div class="mt-1 flex items-center group">
+                                    <span class="text-sm text-gray-900 select-all font-normal">
+                                        {{ options.voicemail.voicemail_uuid }}
+                                    </span>
+                                    <button type="button"
+                                        @click="handleCopyToClipboard(options.voicemail.voicemail_uuid)"
+                                        class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                        title="Copy to clipboard">
+                                        <!-- Small Copy Icon -->
+                                        <ClipboardDocumentIcon
+                                            class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
+                                    </button>
+                                </div>
+                            </div>
+                       <div class="col-span-3 sm:col-span-2">
                                 <LabelInputRequired target="voicemail_id" label="Voicemail Extension"
                                     class="truncate" />
                                 <InputField v-model="form.voicemail_id" type="text" name="voicemail_id"
@@ -379,9 +382,10 @@ import Spinner from "@generalComponents/Spinner.vue";
 import { InformationCircleIcon } from "@heroicons/vue/24/outline";
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import { PlusIcon, TrashIcon } from '@heroicons/vue/20/solid'
-import { PlayCircleIcon, CloudArrowDownIcon, PauseCircleIcon, CheckIcon } from '@heroicons/vue/24/solid';
+import { PlayCircleIcon, CloudArrowDownIcon, PauseCircleIcon } from '@heroicons/vue/24/solid';
 import NewGreetingForm from './NewGreetingForm.vue';
-import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon, DocumentDuplicateIcon } from '@heroicons/vue/24/outline';
+import { Cog6ToothIcon, MusicalNoteIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
+import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 
 
 const props = defineProps({
@@ -400,28 +404,14 @@ const isDownloading = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationModalTriggerForName = ref(false);
 
-const copied = ref({ uuid: false })
- 
- async function copy(value, key) {
-   try {
-     if (navigator?.clipboard?.writeText) {
-       await navigator.clipboard.writeText(value ?? '')
-     } else {
-       const ta = document.createElement('textarea')
-       ta.value = value ?? ''
-       ta.style.position = 'fixed'
-       ta.style.opacity = '0'
-       document.body.appendChild(ta)
-       ta.select()
-       document.execCommand('copy')
-       document.body.removeChild(ta)
-     }
-    copied.value[key] = true
-     setTimeout(() => (copied.value[key] = false), 800)
-   } catch (e) {
-     console.error('Failed to copy:', e)
-   }
- }
+const handleCopyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        emits('success', 'success', { message: ['Copied to clipboard.'] });
+    }).catch((error) => {
+        // Handle the error case
+        emits('error', { response: { data: { errors: { request: ['Failed to copy to clipboard.'] } } } });
+    });
+}
 
 const setActiveTab = (tabSlug) => {
     activeTab.value = tabSlug;

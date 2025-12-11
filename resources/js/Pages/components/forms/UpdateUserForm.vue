@@ -128,28 +128,28 @@
 
                                                 <StaticElement name="h4" tag="h4" content="Basic Info" />
                                                 <StaticElement name="user_uuid"
-                                                    :conditions="[() => options.permissions.is_superadmin]" >
-                                                    
+                                                    :conditions="[() => options.permissions.is_superadmin]">
+
                                                     <div class="mb-1">
-                                                                        <div class="text-sm font-medium text-gray-600 mb-1">
+                                                        <div class="text-sm font-medium text-gray-600 mb-1">
                                                             Unique ID
                                                         </div>
-                                        
-                                                                        <div class="flex items-center group">
+
+                                                        <div class="flex items-center group">
                                                             <span class="text-sm text-gray-900 select-all font-normal">
                                                                 {{ options.item.user_uuid }}
                                                             </span>
-                                        
-                                                                                <button
-                                                                type="button"
-                                                                class="ml-2 inline-flex items-center rounded p-1 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                                                                :title="copied.uuid ? 'Copied' : 'Copy to clipboard'"
-                                                                @click="copy(options.item.user_uuid, 'uuid')">
-                                                                <component :is="copied.uuid ? CheckIcon : DocumentDuplicateIcon" class="h-4 w-4" />
+                                                            <button type="button"
+                                                                @click="handleCopyToClipboard(options.item.user_uuid)"
+                                                                class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                                                title="Copy to clipboard">
+                                                                <!-- Small Copy Icon -->
+                                                                <ClipboardDocumentIcon
+                                                                    class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
                                                             </button>
                                                         </div>
                                                     </div>
-                                                    
+
                                                 </StaticElement>
                                                 <TextElement name="first_name" label="First Name"
                                                     placeholder="Enter First Name" :floating="false" :columns="{
@@ -324,11 +324,11 @@
 <script setup>
 import { ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
-import { XMarkIcon, CheckIcon } from "@heroicons/vue/24/solid";
-import { DocumentDuplicateIcon } from "@heroicons/vue/24/outline";
+import { XMarkIcon } from "@heroicons/vue/24/solid";
 import ConfirmationModal from "./../modal/ConfirmationModal.vue";
 import ApiTokens from "./../ApiTokens.vue";
 import CreateApiTokenModal from "./../modal/CreateApiTokenModal.vue"
+import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
@@ -352,28 +352,14 @@ const confirmDeleteAction = ref(null);
 const locations = ref([])
 const isLocationsLoading = ref(false)
 
-const copied = ref({ uuid: false })
- 
- async function copy(value, key) {
-   try {
-     if (navigator?.clipboard?.writeText) {
-       await navigator.clipboard.writeText(value ?? '')
-     } else {
-       const ta = document.createElement('textarea')
-       ta.value = value ?? ''
-       ta.style.position = 'fixed'
-       ta.style.opacity = '0'
-       document.body.appendChild(ta)
-       ta.select()
-       document.execCommand('copy')
-       document.body.removeChild(ta)
-     }
-     copied.value[key] = true
-     setTimeout(() => (copied.value[key] = false), 800)
-   } catch (e) {
-     console.error('Failed to copy:', e)
-   }
- }
+const handleCopyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        emit('success', 'success', { message: ['Copied to clipboard.'] });
+    }).catch((error) => {
+        // Handle the error case
+        emit('error', { response: { data: { errors: { request: ['Failed to copy to clipboard.'] } } } });
+    });
+}
 
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 

@@ -385,10 +385,9 @@
                                             <FormElements>
 
                                                 <HiddenElement name="extension_uuid" :meta="true" />
-
                                                 <StaticElement name="extension_uuid"
-                                                    :conditions="[() => options.permissions.is_superadmin]" >
-                                                    
+                                                    :conditions="[() => options.permissions.is_superadmin]">
+
                                                     <div class="mb-1">
                                                         <div class="text-sm font-medium text-gray-600 mb-1">
                                                             Unique ID
@@ -398,19 +397,17 @@
                                                             <span class="text-sm text-gray-900 select-all font-normal">
                                                                 {{ options.item.extension_uuid }}
                                                             </span>
-
-                                                            <button
-                                                                type="button"
-                                                                class="ml-2 inline-flex items-center rounded p-1 text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                                                                :title="copied.uuid ? 'Copied' : 'Copy to clipboard'"
-                                                                @click="copy(options.item.extension_uuid, 'uuid')">
-                                                                <component :is="copied.uuid ? CheckIcon : DocumentDuplicateIcon" class="h-4 w-4" />
+                                                            <button type="button"
+                                                                @click="handleCopyToClipboard(options.item.extension_uuid)"
+                                                                class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                                                title="Copy to clipboard">
+                                                                <!-- Small Copy Icon -->
+                                                                <ClipboardDocumentIcon
+                                                                    class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
                                                             </button>
                                                         </div>
                                                     </div>
-                                                    
                                                 </StaticElement>
-
                                                 <StaticElement name="basic_info_title" tag="h4" content="Basic Info"
                                                     description="Fill in basic details to identify and describe this extension." />
                                                 <TextElement name="directory_first_name" label="First Name"
@@ -1872,7 +1869,7 @@ import { ref, computed, watch, reactive } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import { PlusIcon, TrashIcon, PencilSquareIcon } from '@heroicons/vue/20/solid'
-import { PlayCircleIcon, CloudArrowDownIcon, PauseCircleIcon, CheckIcon } from '@heroicons/vue/24/solid';
+import { PlayCircleIcon, CloudArrowDownIcon, PauseCircleIcon } from '@heroicons/vue/24/solid';
 import Spinner from "@generalComponents/Spinner.vue";
 import NewGreetingForm from './NewGreetingForm.vue';
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
@@ -1883,7 +1880,7 @@ import AssignExtensionDeviceForm from "../forms/AssignExtensionDeviceForm.vue";
 import UpdateSipPasswordModal from "../modal/UpdateSipPasswordModal.vue";
 import Badge from "@generalComponents/Badge.vue";
 import AssignedDevices from "../AssignedDevices.vue";
-import { ClipboardDocumentIcon, DocumentDuplicateIcon } from "@heroicons/vue/24/outline";
+import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
 
 
