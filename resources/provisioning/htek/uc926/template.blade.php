@@ -1,4 +1,4 @@
-{{-- version: 1.0.1 --}}
+{{-- version: 1.0.2 --}}
 
 @switch($flavor)
 
@@ -1241,7 +1241,7 @@
         <P23172 para="Features.Popups.TextMessage">0</P23172>
         <P24053 para="Network.Advanced.Vlan.WANVlan">{{ $settings['htek_network_advanced_vlan_wanvlan'] ?? '' }}</P24053>
         <P24054 para="Network.Advanced.Vlan.PCVlan">1</P24054>
-        <P24064 para="Setting.Date&Time.DHCPOPTION100">0</P24064>
+        <P24064 para="Setting.DateTime.DHCPOPTION100">0</P24064>
         <P24065 para="Account1.Basic.DHCPSIPServer">0</P24065>
         <P24744 para="Setting.Preference.DisplayDefaultAid">0</P24744>
     </config>
