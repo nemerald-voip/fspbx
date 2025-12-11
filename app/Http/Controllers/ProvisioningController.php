@@ -57,6 +57,7 @@ class ProvisioningController extends Controller
         // Compute flavor + MIME
         $flv = $this->computeFlavor($request, $device, $id, $ext);
 
+
         // Add provisioning context
         $vars += [
             'flavor'        => $flv['flavor'],           // 'serial.xml' | 'mac.cfg' | 'poly-index.cfg' | 'yealink-model.cfg'
@@ -254,6 +255,7 @@ class ProvisioningController extends Controller
 
     private function computeFlavor(Request $request, Devices $device, string $id, string $ext): array
     {
+        $debug = false;
         // Raw tail after /prov/
         $raw = ltrim((string)($request->route('path') ?? $request->path()), '/');
         if (str_starts_with($raw, 'prov/')) $raw = substr($raw, 5);
@@ -261,6 +263,10 @@ class ProvisioningController extends Controller
         $vendor = strtolower((string) $device->device_vendor);
         $idLower = strtolower($id);
         $extLower = strtolower($ext);
+
+        if ($debug) {
+            logger('Vendor: ' . $vendor . '. ID: ' . $idLower . '. Ext: ' . $extLower);
+        }
 
         // Detect Dinstar serial index: "{productId}/{serial}.xml"
         if ($vendor === 'dinstar' && $extLower === 'xml' && preg_match('#^(?<pid>\d{2})/[A-Za-z0-9-]+\.xml$#', $raw, $m)) {
@@ -303,6 +309,18 @@ class ProvisioningController extends Controller
             return [
                 'flavor' => 'yealink-model.cfg',
                 'mime'   => 'text/plain',
+            ];
+        }
+
+        // Htek per-device: cfg<MAC>.xml (e.g., cfg200a0d30064a.xml)
+        if (
+            $vendor === 'htek' &&
+            $extLower === 'xml' &&
+            preg_match('/^cfg[0-9a-f]{12}$/', $idLower)
+        ) {
+            return [
+                'flavor' => 'mac.xml',
+                'mime'   => 'application/xml',
             ];
         }
 

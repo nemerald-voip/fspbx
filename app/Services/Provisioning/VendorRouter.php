@@ -6,7 +6,7 @@ namespace App\Services\Provisioning;
 use App\Models\Devices;
 
 class VendorRouter
-    {
+{
     /**
      * Extract a lookup token from a filename/path or stem.
      * Accepts:
@@ -25,6 +25,11 @@ class VendorRouter
 
         // 2) Polycom model-MAC (e.g., vvx600-0004f27a9446, spip321-<mac>, ssip7000-<mac>, ssduo-<mac>)
         if (preg_match('/^(?:spip|vvx|ssip|edgee)\d{3,4}-([0-9a-f]{12})$/', $stem, $m) || preg_match('/^ssduo-([0-9a-f]{12})$/', $stem, $m)) {
+            return $m[1];
+        }
+
+        // 2b) Generic cfg<MAC> (e.g., "cfg200a0d30064a")
+        if (preg_match('/^cfg([0-9a-f]{12})$/', $stem, $m)) {
             return $m[1];
         }
 
