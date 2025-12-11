@@ -167,7 +167,7 @@
         <template #modal-body>
             <UpdateVirtualReceptionistForm :options="itemOptions" :errors="formErrors" @refresh-data="getItemOptions"
                 :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"
-                @error="handleFormErrorResponse" @success="showNotification('success', $event)"
+                @error="handleFormErrorResponse" @success="showNotification"
                 @clear-errors="handleClearErrors" />
         </template>
     </AddEditItemModal>
