@@ -37,7 +37,7 @@ use App\Exports\PhoneNumbersExport;
 
 class PhoneNumbersController extends Controller
 {
-        use ChecksLimits;
+    use ChecksLimits;
 
     public $model;
     public $filters = [];
@@ -47,12 +47,12 @@ class PhoneNumbersController extends Controller
     protected $searchable = ['destination_number', 'destination_data', 'destination_description'];
 
     public function export()
-        {
-            if (! userCheckPermission('destination_export')) {
-                abort(403);
-            }
-            return Excel::download(new PhoneNumbersExport, 'phone_numbers.csv', ExcelWriter::CSV);
+    {
+        if (! userCheckPermission('destination_export')) {
+            abort(403);
         }
+        return Excel::download(new PhoneNumbersExport, 'phone_numbers.csv', ExcelWriter::CSV);
+    }
 
     public function __construct()
     {
@@ -163,7 +163,7 @@ class PhoneNumbersController extends Controller
             $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
 
 
-              // Check for limits
+            // Check for limits
             if (!$item_uuid) {
                 if ($resp = $this->enforceLimit('destinations', \App\Models\Destinations::class)) {
                     return $resp;
@@ -381,70 +381,71 @@ class PhoneNumbersController extends Controller
      */
     public function import()
     {
-    if (! userCheckPermission('destination_import')) {
-        abort(403);
-    
-        try {
+        if (! userCheckPermission('destination_import')) {
+            abort(403);
 
-            $file = request()->file('file');
-            // $domain_uuid = session('domain_uuid');
+            try {
 
-            // 1. Count how many rows will be imported
-            // $rows = Excel::toCollection(new PhoneNumbersImport, $file)->first(); // Get first sheet
-            // $importCount = $rows->count();
+                $file = request()->file('file');
+                // $domain_uuid = session('domain_uuid');
 
-            // 2. Check current count and limit
-            // $currentCount = \App\Models\Extensions::where('domain_uuid', $domain_uuid)->count();
-            // $maxLimit = get_limit_setting('extensions', $domain_uuid);
+                // 1. Count how many rows will be imported
+                // $rows = Excel::toCollection(new PhoneNumbersImport, $file)->first(); // Get first sheet
+                // $importCount = $rows->count();
 
-            // if ($maxLimit !== null && ($currentCount + $importCount) > $maxLimit) {
-            //     return response()->json([
-            //         'success' => false,
-            //         'errors' => [
-            //             'extension' => [
-            //                 "Importing this file would exceed your extension limit of $maxLimit. " .
-            //                     "You currently have $currentCount extensions and are trying to import $importCount."
-            //             ]
-            //         ]
-            //     ], 422);
-            // }
+                // 2. Check current count and limit
+                // $currentCount = \App\Models\Extensions::where('domain_uuid', $domain_uuid)->count();
+                // $maxLimit = get_limit_setting('extensions', $domain_uuid);
 
-            $headings = (new HeadingRowImport)->toArray(request()->file('file'));
+                // if ($maxLimit !== null && ($currentCount + $importCount) > $maxLimit) {
+                //     return response()->json([
+                //         'success' => false,
+                //         'errors' => [
+                //             'extension' => [
+                //                 "Importing this file would exceed your extension limit of $maxLimit. " .
+                //                     "You currently have $currentCount extensions and are trying to import $importCount."
+                //             ]
+                //         ]
+                //     ], 422);
+                // }
 
-            $import = new PhoneNumbersImport;
-            $import->import($file);
+                $headings = (new HeadingRowImport)->toArray(request()->file('file'));
 
-            if ($import->failures()->isNotEmpty()) {
+                $import = new PhoneNumbersImport;
+                $import->import($file);
 
-                // Transform each failure into a readable error message
-                $errors = [];
-                foreach ($import->failures() as $failure) {
-                    $row = $failure->row(); // Row number
-                    $attr = $failure->attribute(); // Column/field name
-                    $errList = $failure->errors(); // Array of error messages
+                if ($import->failures()->isNotEmpty()) {
 
-                    foreach ($errList as $errMsg) {
-                        $errors[] = "Row {$row}, '{$attr}': {$errMsg}";
+                    // Transform each failure into a readable error message
+                    $errors = [];
+                    foreach ($import->failures() as $failure) {
+                        $row = $failure->row(); // Row number
+                        $attr = $failure->attribute(); // Column/field name
+                        $errList = $failure->errors(); // Array of error messages
+
+                        foreach ($errList as $errMsg) {
+                            $errors[] = "Row {$row}, '{$attr}': {$errMsg}";
+                        }
                     }
+
+                    return response()->json([
+                        'success' => false,
+                        'errors' => ['server' => $errors]
+                    ], 500);
                 }
 
                 return response()->json([
+                    'success' => true,
+                    'messages' => ['success' => ['Phone numbers have been successfully imported.']]
+                ], 200);
+            } catch (Throwable $e) {
+                logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+                // Send response in format that Dropzone understands
+                return response()->json([
                     'success' => false,
-                    'errors' => ['server' => $errors]
+                    'errors' => ['server' => [$e->getMessage()]]
                 ], 500);
             }
-
-            return response()->json([
-                'success' => true,
-                'messages' => ['success' => ['Phone numbers have been successfully imported.']]
-            ], 200);
-        } catch (Throwable $e) {
-            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
-            // Send response in format that Dropzone understands
-            return response()->json([
-                'success' => false,
-                'errors' => ['server' => [$e->getMessage()]]
-            ], 500);
         }
     }
 
@@ -457,10 +458,10 @@ class PhoneNumbersController extends Controller
     public function store(StorePhoneNumberRequest $request): JsonResponse
     {
 
-            // Enforce limit BEFORE creating new phone number
-            if ($resp = $this->enforceLimit('destinations', \App\Models\Destinations::class)) {
-                return $resp;
-            }
+        // Enforce limit BEFORE creating new phone number
+        if ($resp = $this->enforceLimit('destinations', \App\Models\Destinations::class)) {
+            return $resp;
+        }
 
         try {
             $inputs = array_map(function ($value) {
