@@ -85,6 +85,7 @@
                                                 <FormTab name="page0" label="Settings" :elements="[
                                                     'h4',
                                                     'fax_name',
+                                                    'fax_uuid',
                                                     'fax_extension',
                                                     'fax_caller_id_name',
                                                     'fax_caller_id_number',
@@ -125,7 +126,30 @@
 
                                                 <HiddenElement name="fax_uuid" :meta="true" />
                                                 <HiddenElement name="fax_email" :meta="true" />
+                                                <StaticElement name="fax_uuid"
+                                                    :conditions="[() => options.permissions.is_superadmin]">
 
+                                                    <div class="mb-1">
+                                                        <div class="text-sm font-medium text-gray-600 mb-1">
+                                                            Unique ID
+                                                        </div>
+
+                                                        <div class="flex items-center group">
+                                                            <span class="text-sm text-gray-900 select-all font-normal">
+                                                                {{ options.item.fax_uuid }}
+                                                            </span>
+                                                            <button type="button"
+                                                                @click="handleCopyToClipboard(options.item.fax_uuid)"
+                                                                class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                                                title="Copy to clipboard">
+                                                                <!-- Small Copy Icon -->
+                                                                <ClipboardDocumentIcon
+                                                                    class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                </StaticElement>
                                                 <StaticElement name="h4" tag="h4" content="Settings" />
 
 
@@ -291,7 +315,7 @@
 import { ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
-
+import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
 
@@ -305,6 +329,15 @@ const props = defineProps({
 const form$ = ref(null)
 const locations = ref([])
 const isLocationsLoading = ref(false)
+
+const handleCopyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        emit('success', 'success', { message: ['Copied to clipboard.'] });
+    }).catch((error) => {
+        // Handle the error case
+        emit('error', { response: { data: { errors: { request: ['Failed to copy to clipboard.'] } } } });
+    });
+}
 
 const handleEmailListChange = (newValue, oldValue, el$) => {
     // Basic email regex pattern

@@ -438,6 +438,7 @@ class RingGroupsController extends Controller
         $permissions['manage_advanced'] = userCheckPermission('ring_group_view_advanced');
         $permissions['manage_missed_call'] = userCheckPermission('ring_group_missed_call');
         $permissions['manage_greeting'] = userCheckPermission('ring_group_prompt');
+        $permissions['is_superadmin'] = isSuperAdmin();
 
         return $permissions;
     }

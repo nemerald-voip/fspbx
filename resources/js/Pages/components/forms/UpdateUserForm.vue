@@ -83,6 +83,7 @@
                                                     'h4',
                                                     'first_name',
                                                     'last_name',
+                                                    'user_uuid',
                                                     'user_email',
                                                     'groups',
                                                     'time_zone',
@@ -126,7 +127,30 @@
                                             <FormElements>
 
                                                 <StaticElement name="h4" tag="h4" content="Basic Info" />
+                                                <StaticElement name="user_uuid"
+                                                    :conditions="[() => options.permissions.is_superadmin]">
 
+                                                    <div class="mb-1">
+                                                        <div class="text-sm font-medium text-gray-600 mb-1">
+                                                            Unique ID
+                                                        </div>
+
+                                                        <div class="flex items-center group">
+                                                            <span class="text-sm text-gray-900 select-all font-normal">
+                                                                {{ options.item.user_uuid }}
+                                                            </span>
+                                                            <button type="button"
+                                                                @click="handleCopyToClipboard(options.item.user_uuid)"
+                                                                class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                                                title="Copy to clipboard">
+                                                                <!-- Small Copy Icon -->
+                                                                <ClipboardDocumentIcon
+                                                                    class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                </StaticElement>
                                                 <TextElement name="first_name" label="First Name"
                                                     placeholder="Enter First Name" :floating="false" :columns="{
                                                         sm: {
@@ -304,6 +328,7 @@ import { XMarkIcon } from "@heroicons/vue/24/solid";
 import ConfirmationModal from "./../modal/ConfirmationModal.vue";
 import ApiTokens from "./../ApiTokens.vue";
 import CreateApiTokenModal from "./../modal/CreateApiTokenModal.vue"
+import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
@@ -327,6 +352,14 @@ const confirmDeleteAction = ref(null);
 const locations = ref([])
 const isLocationsLoading = ref(false)
 
+const handleCopyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        emit('success', 'success', { message: ['Copied to clipboard.'] });
+    }).catch((error) => {
+        // Handle the error case
+        emit('error', { response: { data: { errors: { request: ['Failed to copy to clipboard.'] } } } });
+    });
+}
 
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 

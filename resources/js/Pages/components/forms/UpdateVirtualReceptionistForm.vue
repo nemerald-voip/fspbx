@@ -31,6 +31,23 @@
                         </div>
 
                         <div class="grid grid-cols-6 gap-6">
+                            <div class="col-span-6" v-if="localOptions.permissions.is_superadmin">
+                                <div class="block text-sm font-medium leading-6 text-gray-900">
+                                    Unique ID
+                                </div>
+                                <div class="mt-1 flex items-center group">
+                                    <span class="text-sm text-gray-900 select-all font-normal">
+                                        {{ form.ivr_menu_uuid }}
+                                    </span>
+                                    <button type="button" @click="handleCopyToClipboard(form.ivr_menu_uuid)"
+                                        class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                        title="Copy to clipboard">
+                                        <!-- Small Copy Icon -->
+                                        <ClipboardDocumentIcon
+                                            class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
+                                    </button>
+                                </div>
+                            </div>
                             <div class="col-span-4 sm:col-span-3">
                                 <LabelInputRequired target="ivr_menu_name" label="Name" class="truncate" />
                                 <InputField v-model="form.ivr_menu_name" type="text" name="ivr_menu_name" id="ivr_menu_name"
@@ -528,7 +545,7 @@ import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import CreateVirtualReceptionistKeyForm from "../forms/CreateVirtualReceptionistKeyForm.vue";
 import UpdateVirtualReceptionistKeyForm from "../forms/UpdateVirtualReceptionistKeyForm.vue";
 import ListboxGroup from "../general/ListboxGroup.vue";
-
+import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 
 const props = defineProps({
     options: Object,
@@ -554,6 +571,14 @@ const loadingModal = ref(false);
 const submittingKeyUpdate = ref(false);
 const submittingKeyCreate = ref(false);
 
+const handleCopyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        emits('success', ['Copied to clipboard.']);
+    }).catch((error) => {
+        // Handle the error case
+        emits('error', { response: { data: { errors: { request: ['Failed to copy to clipboard.'] } } } });
+    });
+}
 
 const greetingDescription = computed(() => {
     // Find the greeting object in the array whose value matches the selected greeting

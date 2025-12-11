@@ -200,6 +200,7 @@
                                                     'directory_first_name',
                                                     'directory_last_name',
                                                     'extension',
+                                                    'extension_uuid',
                                                     'voicemail_mail_to',
                                                     'description',
                                                     'user_enabled',
@@ -384,7 +385,29 @@
                                             <FormElements>
 
                                                 <HiddenElement name="extension_uuid" :meta="true" />
+                                                <StaticElement name="extension_uuid"
+                                                    :conditions="[() => options.permissions.is_superadmin]">
 
+                                                    <div class="mb-1">
+                                                        <div class="text-sm font-medium text-gray-600 mb-1">
+                                                            Unique ID
+                                                        </div>
+
+                                                        <div class="flex items-center group">
+                                                            <span class="text-sm text-gray-900 select-all font-normal">
+                                                                {{ options.item.extension_uuid }}
+                                                            </span>
+                                                            <button type="button"
+                                                                @click="handleCopyToClipboard(options.item.extension_uuid)"
+                                                                class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                                                title="Copy to clipboard">
+                                                                <!-- Small Copy Icon -->
+                                                                <ClipboardDocumentIcon
+                                                                    class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </StaticElement>
                                                 <StaticElement name="basic_info_title" tag="h4" content="Basic Info"
                                                     description="Fill in basic details to identify and describe this extension." />
                                                 <TextElement name="directory_first_name" label="First Name"
@@ -1869,6 +1892,29 @@ const props = defineProps({
     header: String,
     loading: Boolean,
 });
+
+const copied = ref({ uuid: false })
+
+async function copy(value, key) {
+  try {
+    if (navigator?.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value ?? '')
+    } else {
+      const ta = document.createElement('textarea')
+      ta.value = value ?? ''
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    copied.value[key] = true
+    setTimeout(() => (copied.value[key] = false), 800)
+  } catch (e) {
+    console.error('Failed to copy:', e)
+  }
+}
 
 const form$ = ref(null)
 const showResetConfirmationModal = ref(false);

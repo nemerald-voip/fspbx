@@ -1779,6 +1779,8 @@ public function export(Request $request)
 
         $permissions['manage_mobile_app'] = userCheckPermission('extension_mobile_app_settings');
 
+        $permissions['is_superadmin'] = isSuperAdmin();
+
         return $permissions;
     }
 }

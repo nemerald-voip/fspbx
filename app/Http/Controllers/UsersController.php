@@ -591,6 +591,7 @@ class UsersController extends Controller
         $permissions['api_key_create'] = userCheckPermission('api_key_create');
         $permissions['api_key_update'] = userCheckPermission('api_key_update');
         $permissions['api_key_delete'] = userCheckPermission('api_key_delete');
+        $permissions['is_superadmin'] = isSuperAdmin();
 
         return $permissions;
     }

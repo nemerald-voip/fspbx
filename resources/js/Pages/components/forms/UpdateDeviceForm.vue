@@ -69,6 +69,7 @@
                                                 <FormTab name="page0" label="Device Settings" :elements="[
                                                     'h4',
                                                     'device_address',
+                                                    'device_uuid',
                                                     'device_template',
                                                     'device_profile_uuid',
                                                     'domain_uuid',
@@ -123,7 +124,31 @@
                                             <FormElements>
 
                                                 <StaticElement name="h4" tag="h4" content="Device Settings" />
+                                                 <StaticElement name="device_uuid"
+                                                    :conditions="[() => options.permissions.is_superadmin]">
 
+                                                    <div class="mb-1">
+                                                        <div class="text-sm font-medium text-gray-600 mb-1">
+                                                            Unique ID
+                                                        </div>
+
+                                                        <div class="flex items-center group">
+                                                            <span class="text-sm text-gray-900 select-all font-normal">
+                                                                {{ options.item.device_uuid }}
+                                                            </span>
+
+                                                    <button type="button"
+                                                        @click="handleCopyToClipboard(options.item.device_uuid)"
+                                                        class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                                        title="Copy to clipboard">
+                                                        <!-- Small Copy Icon -->
+                                                        <ClipboardDocumentIcon
+                                                            class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
+                                                    </button>
+                                                        </div>
+                                                    </div>
+
+                                                </StaticElement>
                                                 <TextElement name="device_address" label="MAC Address"
                                                     placeholder="Enter MAC address" :floating="false"
                                                     :disabled="[() => !options?.permissions?.device_address_update]"
@@ -584,6 +609,7 @@ import FormChildModal from "../FormChildModal.vue"
 import { Cog8ToothIcon } from "@heroicons/vue/24/outline";
 import Badge from "@generalComponents/Badge.vue";
 import { XCircleIcon } from '@heroicons/vue/20/solid'
+import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 
 
 const props = defineProps({
@@ -607,6 +633,24 @@ const isCloudProvisioningLoading = reactive({
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
 
 const provisioning = ref(null);
+
+const handleCopyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        emit('success', 'success', { message: ['Copied to clipboard.'] });
+    }).catch((error) => {
+        // Handle the error case
+        emit('error', { response: { data: { errors: { request: ['Failed to copy to clipboard.'] } } } });
+    });
+}
+
+const handleCopyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        emit('success', 'success', { message: ['Copied to clipboard.'] });
+    }).catch((error) => {
+        // Handle the error case
+        emit('error', { response: { data: { errors: { request: ['Failed to copy to clipboard.'] } } } });
+    });
+}
 
 function showLineAdvSettings(index) {
     advModalIndex.value = index

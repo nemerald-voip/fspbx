@@ -1203,6 +1203,7 @@ class FaxesController extends Controller
     {
         $permissions = [];
         // $permissions['user_group_view'] = userCheckPermission('user_group_view');
+        $permissions['is_superadmin'] = isSuperAdmin();
 
         return $permissions;
     }

@@ -69,8 +69,32 @@
                                                             <h2 id="applicant-information-title"
                                                                 class="text-lg font-medium leading-6 text-gray-900">
                                                                 Call Information</h2>
-                                                            <p class="mt-1 max-w-2xl text-sm text-gray-500">Call ID: {{
-                                                                item.sip_call_id }}</p>
+                                                            <div class="mt-1 max-w-2xl text-sm text-gray-500 space-y-1">
+                                                                <div class="flex items-start gap-2">
+                                                                    <span class="text-gray-500">SIP Call-ID:</span>
+                                                                    <span class="text-gray-900 break-all">{{ item?.sip_call_id || '-' }}</span>
+                                                                    <button
+                                                                        v-if="item?.sip_call_id"
+                                                                        type="button"
+                                                                        class="ml-2 inline-flex items-center rounded p-1 text-gray-400 hover:text-gray-600"
+                                                                        :title="copied.sip ? 'Copied' : 'Copy to clipboard'"
+                                                                        @click="copy(item.sip_call_id, 'sip')">
+                                                                        <component :is="copied.sip ? CheckIcon : DocumentDuplicateIcon" class="h-4 w-4" />
+                                                                    </button>
+                                                                </div>
+                                                                <div class="flex items-start gap-2">
+                                                                    <span class="text-gray-500">Unique ID:</span>
+                                                                    <span class="text-gray-900 break-all">{{ item?.xml_cdr_uuid || '-' }}</span>
+                                                                    <button
+                                                                        v-if="item?.xml_cdr_uuid"
+                                                                        type="button"
+                                                                        class="ml-2 inline-flex items-center rounded p-1 text-gray-400 hover:text-gray-600"
+                                                                        :title="copied.uuid ? 'Copied' : 'Copy to clipboard'"
+                                                                        @click="copy(item.xml_cdr_uuid, 'uuid')">
+                                                                        <component :is="copied.uuid ? CheckIcon : DocumentDuplicateIcon" class="h-4 w-4" />
+                                                                    </button>
+                                                                </div>
+                                                            </div>
                                                         </div>
                                                         <div class="border-t border-gray-200 px-4 py-5 sm:px-6">
                                                             <dl class="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2">
@@ -764,6 +788,9 @@
 
 <script setup>
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
+import { ref } from 'vue'
+import { DocumentDuplicateIcon } from "@heroicons/vue/24/outline";
+import { CheckIcon } from "@heroicons/vue/24/solid";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import Loading from "../general/Loading.vue";
 
@@ -799,6 +826,30 @@ const props = defineProps({
         default: 'sm:max-w-lg'
     },
 });
+
+// copy-to-clipboard state + handler
+const copied = ref({ sip: false, uuid: false })
+async function copy(value, key) {
+  try {
+    if (navigator?.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value ?? '')
+    } else {
+      // Fallback for rare cases where clipboard API is unavailable
+      const ta = document.createElement('textarea')
+      ta.value = value ?? ''
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    copied.value[key] = true
+    setTimeout(() => (copied.value[key] = false), 800)
+  } catch (e) {
+    console.error('Failed to copy:', e)
+  }
+}
 
 function capitalizeFirstLetter(string) {
     if (!string) return '';
