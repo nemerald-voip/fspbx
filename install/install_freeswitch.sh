@@ -83,7 +83,7 @@ print_success "Installing required external libraries..."
 # Install libks
 cd /usr/src
 rm -rf libks
-git clone https://github.com/signalwire/libks.git
+git clone --depth 1 https://github.com/signalwire/libks.git
 cd libks
 cmake .
 make -j $(getconf _NPROCESSORS_ONLN)
@@ -95,8 +95,9 @@ print_success "libks installed successfully."
     if [[ "$OS_CODENAME" == "bookworm" ]]; then
 cd /usr/src
 rm -rf sofia-sip
-git clone https://github.com/freeswitch/sofia-sip.git
+git clone --no-checkout --depth 1 https://github.com/freeswitch/sofia-sip.git
 cd sofia-sip
+git fetch --depth 1 origin v1.13.17
 git checkout v1.13.17
 sh autogen.sh
 ./configure --enable-debug
@@ -115,9 +116,10 @@ print_success "sofia-sip installed successfully."
     if [[ "$OS_CODENAME" == "bookworm" ]]; then
 cd /usr/src
 rm -rf spandsp
-git clone https://github.com/freeswitch/spandsp.git
+git clone --no-checkout --depth 1 https://github.com/freeswitch/spandsp.git
 cd spandsp
-git reset --hard 0d2e6ac65e0e8f53d652665a743015a88bf048d4  # Stable version
+git fetch --depth 1 origin 0d2e6ac65e0e8f53d652665a743015a88bf048d4 # Stable version
+git checkout 0d2e6ac65e0e8f53d652665a743015a88bf048d4
 sh autogen.sh
 ./configure --enable-debug
 make -j $(getconf _NPROCESSORS_ONLN)
