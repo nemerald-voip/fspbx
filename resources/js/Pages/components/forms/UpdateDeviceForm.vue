@@ -643,15 +643,6 @@ const handleCopyToClipboard = (text) => {
     });
 }
 
-const handleCopyToClipboard = (text) => {
-    navigator.clipboard.writeText(text).then(() => {
-        emit('success', 'success', { message: ['Copied to clipboard.'] });
-    }).catch((error) => {
-        // Handle the error case
-        emit('error', { response: { data: { errors: { request: ['Failed to copy to clipboard.'] } } } });
-    });
-}
-
 function showLineAdvSettings(index) {
     advModalIndex.value = index
 }
