@@ -83,9 +83,8 @@ print_success "Installing required external libraries..."
 # Install libks
 cd /usr/src
 rm -rf libks
-git clone --depth 1 https://github.com/signalwire/libks.git
+git clone https://github.com/signalwire/libks.gitcd libks
 cd libks
-rm -rf .git
 cmake .
 make -j $(getconf _NPROCESSORS_ONLN)
 make install
