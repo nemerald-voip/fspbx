@@ -365,6 +365,10 @@ class FreeswitchEslService
             return null;
         }
 
+        if ($response === 'Invalid Profile!') {
+            return null;
+        }
+
         if ($response) {
             // Check if the response is a valid JSON string
             if ($this->isValidJson($response)) {
