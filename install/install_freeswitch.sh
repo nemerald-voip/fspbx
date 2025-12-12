@@ -85,6 +85,7 @@ cd /usr/src
 rm -rf libks
 git clone --depth 1 https://github.com/signalwire/libks.git
 cd libks
+rm -rf .git
 cmake .
 make -j $(getconf _NPROCESSORS_ONLN)
 make install
