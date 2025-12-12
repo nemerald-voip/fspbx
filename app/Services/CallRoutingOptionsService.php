@@ -629,6 +629,7 @@ class CallRoutingOptionsService
             'business_hours' => 'Business Hours',
             'time_conditions' => 'Schedules',
             'call_flows' => 'Call Flow',
+            'conferences' => 'Conference',
             'recordings' => 'Play recording',
             'company_directory' => 'Company Directory',
             'check_voicemail' => 'Check Voicemail',

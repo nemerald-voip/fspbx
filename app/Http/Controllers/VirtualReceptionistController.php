@@ -524,6 +524,7 @@ class VirtualReceptionistController extends Controller
             $routingOptionsService = new CallRoutingOptionsService;
             $routingTypes = $routingOptionsService->routingTypes;
 
+
             // Only add the Keys tab if item_uuid exists and insert it in the second position
             if ($item_uuid) {
                 $greetingsTab = [
@@ -567,7 +568,6 @@ class VirtualReceptionistController extends Controller
                     },
                 ])->where('ivr_menu_uuid', $item_uuid)->first();
 
-                // If a voicemail exists, use it; otherwise, create a new one
                 if (!$ivr) {
                     throw new \Exception("Failed to fetch item details. Item not found");
                 }
@@ -606,7 +606,7 @@ class VirtualReceptionistController extends Controller
                     return $resp;
                 }
 
-                // Create a new voicemail if item_uuid is not provided
+                // Create a new ivr if item_uuid is not provided
                 $ivr = $this->model;
                 $ivr->ivr_menu_extension = $ivr->generateUniqueSequenceNumber();
                 $ivr->ivr_menu_invalid_sound = 'ivr/ivr-that_was_an_invalid_entry.wav';
@@ -740,7 +740,7 @@ class VirtualReceptionistController extends Controller
                 'data' => $ivrMenuOption, // Return the created option for confirmation or further use
             ], 201);
         } catch (\Exception $e) {
-            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            logger('VirtualReceptioninstController@createKey error: ' .$e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             // Handle any exception that may occur
             return response()->json([
                 'success' => false,
@@ -856,6 +856,7 @@ class VirtualReceptionistController extends Controller
             case 'business_hours':
             case 'time_conditions':
             case 'contact_centers':
+            case 'conferences':
             case 'faxes':
             case 'call_flows':
                 return 'transfer ' . $key['extension'] . ' XML ' . session('domain_name');

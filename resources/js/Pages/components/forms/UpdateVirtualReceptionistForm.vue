@@ -702,7 +702,7 @@ const handleCreateKeyRequest = (form) => {
     axios.post(props.options.routes.create_key_route, form)
         .then((response) => {
             submittingKeyCreate.value = false;
-            emits('success', response.data.messages);
+            emits('success','success', response.data.messages);
             emits('refresh-data', props.options.ivr.ivr_menu_uuid);
 
             handleModalClose();
@@ -720,7 +720,7 @@ const handleUpdateKeyRequest = (form) => {
     axios.put(props.options.routes.update_key_route, form)
         .then((response) => {
             submittingKeyUpdate.value = false;
-            emits('success', response.data.messages);
+            emits('success','success', response.data.messages);
             emits('refresh-data', props.options.ivr.ivr_menu_uuid);
 
             handleModalClose();
@@ -738,7 +738,7 @@ const handleDeleteKeyRequest = (key) => {
     axios.post(props.options.routes.delete_key_route, key)
         .then((response) => {
             showKeyDeletingStatus.value = false;
-            emits('success', response.data.messages);
+            emits('success','success', response.data.messages);
             emits('refresh-data', props.options.ivr.ivr_menu_uuid);
 
         }).catch((error) => {

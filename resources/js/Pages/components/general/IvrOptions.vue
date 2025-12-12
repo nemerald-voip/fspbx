@@ -121,12 +121,9 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { PlusIcon } from "@heroicons/vue/24/solid";
-import Toggle from "@generalComponents/Toggle.vue";
 import Badge from "@generalComponents/Badge.vue";
-import ComboBox from "../general/ComboBox.vue";
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { EllipsisVerticalIcon } from '@heroicons/vue/24/outline';
-import InputField from "../general/InputField.vue";
 import Spinner from "../general/Spinner.vue";
 
 
@@ -160,81 +157,6 @@ const handleDelete = (option) => {
     emit('delete-key', option); // Emit the delete event
 };
 
-// Initialize keys and fetch typeOptions
-// if (props.selectedItems) {
-//     props.selectedItems.forEach((item, index) => {
-//         keys.value.push({
-//             type: item.type || null,
-//             typeOptions: [],  // Initially empty
-//             option: item.option || null,
-//             extension: item.extension || null,
-//         });
 
-//         // If type is available, fetch the options for that type
-//         if (item.type) {
-//             fetchTypeOptionsForItem(item.type, index);
-//         }
-//     });
-// }
-
-
-// Emit updates to the parent whenever routingOptions changes
-const updateParent = () => {
-    emit('update:modelValue', routingOptions.value);
-};
-
-// Function to modify routing options
-const addRoutingOption = () => {
-    routingOptions.value.push({ type: null, typeOptions: [], option: null });
-    updateParent(); // Notify the parent about the changes
-};
-
-const removeRoutingOption = (index) => {
-    routingOptions.value.splice(index, 1);
-    updateParent();
-};
-
-const updateRoutingOption = (value, index) => {
-    routingOptions.value[index] = value;
-    updateParent();
-};
-
-
-// // Update keys and emit updated model value
-// function updatekeys(newValue, index) {
-//     keys.value[index].option = newValue.value;
-//     keys.value[index].extension = newValue.extension;
-
-//     // Prepare the updated options
-//     const updatedOptions = keys.value.map(({ type, option, extension }) => {
-//         return { type, option, extension };
-//     });
-
-//     emit('update:model-value', updatedOptions);
-// }
-
-
-// // Add a new routing option
-// const addRoutingOption = () => {
-//     keys.value.push({
-//         type: null,
-//         typeOptions: [],
-//         option: null,
-//     });
-// };
-
-// const removeRoutingOption = (index) => {
-//     // console.log(keys.value);
-//     keys.value.splice(index, 1);
-
-//     // Reassign the array to force Vue to track reactivity properly
-//     keys.value = [...keys.value];
-
-//     const updatedOptions = keys.value.map(({ type, option }) => {
-//         return { type, option };
-//     });
-//     // console.log(updatedOptions);
-//     emit('update:model-value', updatedOptions);
-// }
 
 </script>
