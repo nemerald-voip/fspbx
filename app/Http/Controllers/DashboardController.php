@@ -344,6 +344,8 @@ class DashboardController extends Controller
         $user = Auth::user();
         $extension = $user->extension;
 
+        $voicemail = null;
+        
         if ($extension) {
             $voicemail = Voicemails::where('domain_uuid',$extension->domain_uuid)->where('voicemail_id',$extension->extension)->first();
         }
