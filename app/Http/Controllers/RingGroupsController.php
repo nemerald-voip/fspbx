@@ -28,6 +28,75 @@ class RingGroupsController extends Controller
     protected $viewName = 'RingGroups';
     protected $searchable = ['ring_group_name', 'ring_group_extension', 'destinations.destination_number'];
 
+/**
+     * Duplicate the specified Ring Group.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function duplicate(Request $request)
+    {
+        // 1. Validate Input
+        $request->validate([
+            'uuid' => 'required|uuid|exists:v_ring_groups,ring_group_uuid', // Assuming table name is v_ring_groups based on standard FusionPBX structure, adjust if your model uses a different table
+        ]);
+
+        // 2. Permission Check
+        if (!userCheckPermission('ring_group_add')) { // Using 'ring_group_add' or 'ring_group_create' depending on your permission seeder
+            return response()->json([
+                'messages' => ['error' => ['Access denied.']]
+            ], 403);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // 3. Fetch Original with destinations
+            $original = $this->model::where('ring_group_uuid', $request->uuid)
+                ->where('domain_uuid', session('domain_uuid'))
+                ->with(['destinations'])
+                ->firstOrFail();
+
+            // 4. Replicate Parent
+            $newRingGroup = $original->replicate();
+            $newRingGroup->ring_group_uuid = Str::uuid();
+            $newRingGroup->ring_group_name = $original->ring_group_name . ' (Copy)';
+            $newRingGroup->dialplan_uuid = Str::uuid(); // Ensure a new dialplan UUID is generated
+            
+            // Generate unique extension (Increment based on settings)
+            $newRingGroup->ring_group_extension = $this->model->generateUniqueSequenceNumber();
+
+            $newRingGroup->save();
+
+            // 5. Replicate Destinations
+            foreach ($original->destinations as $destination) {
+                $newDestination = $destination->replicate();
+                $newDestination->ring_group_destination_uuid = Str::uuid();
+                $newDestination->ring_group_uuid = $newRingGroup->ring_group_uuid;
+                $newDestination->save();
+            }
+
+            // 6. Generate Dialplan XML
+            $this->generateDialPlanXML($newRingGroup);
+
+            DB::commit();
+
+            return response()->json([
+                'messages' => ['success' => ['Ring Group duplicated successfully', 'New Extension: ' . $newRingGroup->ring_group_extension]],
+                'ring_group_uuid' => $newRingGroup->ring_group_uuid
+            ], 201);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to duplicate ring group.']]
+            ], 500);
+        }
+    }
+
     public function __construct()
     {
         $this->model = new RingGroups();

@@ -150,12 +150,12 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
+
                                 <ejs-tooltip v-if="page.props.auth.can.ring_group_update" :content="'Edit'"
                                     position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditButtonClick(row.ring_group_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-
                                     </div>
                                 </ejs-tooltip>
 
@@ -166,6 +166,9 @@
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
+
+                                <AdvancedActionButton :actions="advancedActions"
+                                    @advanced-action="(action) => handleAdvancedActionRequest(action, row.ring_group_uuid)" />
                             </div>
                         </template>
                     </TableField>
@@ -250,7 +253,7 @@ import CreateRingGroupForm from "./components/forms/CreateRingGroupForm.vue";
 import UpdateRingGroupForm from "./components/forms/UpdateRingGroupForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
-
+import AdvancedActionButton from "./components/general/AdvancedActionButton.vue";
 
 
 const page = usePage()
@@ -282,6 +285,32 @@ const filterData = ref({
 
 const itemOptions = ref({})
 
+const advancedActions = computed(() => [
+    {
+        category: "Advanced",
+        actions: [
+            { id: 'duplicate', label: 'Duplicate', icon: 'DocumentDuplicateIcon' },
+        ],
+    },
+]);
+
+const handleAdvancedActionRequest = async (action, uuid) => {
+    if (action === 'duplicate') {
+        const url = props.routes.duplicate || '/ring-groups/duplicate'; // Fallback if route prop isn't passed immediately
+        
+        try {
+            loading.value = true;
+            const response = await axios.post(url, { uuid: uuid });
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick(); // Refresh table
+        } catch (error) {
+            handleErrorResponse(error);
+        } finally {
+            loading.value = false;
+        }
+    }
+};
+
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
     const actions = [
@@ -293,7 +322,7 @@ const bulkActions = computed(() => {
     ];
 
     // Conditionally add the delete action if permission is granted
-    if (page.props.auth.can.device_destroy) {
+    if (page.props.auth.can.ring_group_destroy) {
         actions.push({
             id: 'bulk_delete',
             label: 'Delete',

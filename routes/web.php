@@ -117,6 +117,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::delete('/extensions/{extension}/callforward/{type}', [ExtensionsController::class, 'clearCallforwardDestination'])->name('extensions.clear-callforward-destination');
     Route::post('/extensions/{extension}/send-event-notify', [ExtensionsController::class, 'sendEventNotify'])->name('extensions.send-event-notify');
     Route::post('/extensions/send-event-notify-all', [ExtensionsController::class, 'sendEventNotifyAll'])->name('extensions.send-event-notify-all');
+    Route::get('/extensions-export', [ExtensionsController::class, 'export'])->name('extensions.export');
 
     // Call Detail Records
     Route::get('/call-detail-records', [CdrsController::class, 'index'])->name('cdrs.index');
@@ -159,6 +160,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Ring Groups
     Route::get('ring-groups', [RingGroupsController::class, 'index'])->name('ring-groups.index');
+    Route::post('ring-groups/duplicate', [RingGroupsController::class, 'duplicate'])->name('ring-groups.duplicate');
 
     // User Logs
     Route::get('user-logs', [UserLogsController::class, 'index'])->name('user-logs.index');
@@ -235,6 +237,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     //Phone Numbers
     Route::get('phone-numbers', [PhoneNumbersController::class, 'index'])->name('phone-numbers.index');
+    Route::get('/phone-numbers-export', [PhoneNumbersController::class, 'export'])->name('phone-numbers.export');
 
     //Wakeup Calls
     Route::resource('wakeup-calls', WakeupCallsController::class);
