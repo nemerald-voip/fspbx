@@ -89,7 +89,7 @@
                 </div>
 
                 <div class="content-end col-span-2 text-sm font-medium leading-6 text-gray-900">
-                    <button @click.prevent="generateGreeting" :class="{ 'mb-6': errors?.voice || errors?.speed }"
+                    <button @click.stop.prevent="generateGreeting" :class="{ 'mb-6': errors?.voice || errors?.speed }"
                         class="inline-flex justify-center rounded-md bg-white px-5 py-2 gap-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-200">
                         Generate
                         <Spinner class="ml-1" :color="'text-gray-700'" :show="isFormSubmiting" />
@@ -102,7 +102,7 @@
                 </div>
 
                 <div v-if="audioUrl" class="content-center col-span-2 text-sm font-medium leading-6 text-gray-900">
-                    <button @click.prevent="saveGreeting"
+                    <button @click.stop.prevent="saveGreeting"
                         class="inline-flex justify-center rounded-md bg-indigo-600 px-5 py-2 gap-2 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-indigo-300 hover:bg-indigo-500">
                         Apply
                         <Spinner class="ml-1" :color="'text-gray-700'" :show="isSaving" />
