@@ -85,7 +85,7 @@ class DomainController extends Controller
 
             ])
 
-            ->allowedSorts(['domain_description'])
+            ->allowedSorts(['domain_name', 'domain_enabled', 'domain_description'])
             ->defaultSort('domain_description')
             ->paginate($perPage);
 

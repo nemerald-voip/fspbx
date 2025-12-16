@@ -40,7 +40,8 @@
 
             <template #table-header>
                 <!-- First column: checkbox + Domain (description) -->
-                <TableColumnHeader header="Domain"
+                <TableColumnHeader header="Domain" field="domain_description" :sortable="true" :sortedField="sortData.name" 
+                    :sortOrder="sortData.order" @sort="handleSortRequest"
                     class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600" />
@@ -48,14 +49,15 @@
                 </TableColumnHeader>
 
                 <!-- Domain Name -->
-                <TableColumnHeader header="Domain Name"
+                <TableColumnHeader header="Host" field="domain_name" :sortable="true" :sortedField="sortData.name"
+                    :sortOrder="sortData.order" @sort="handleSortRequest"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                 <TableColumnHeader />
-
                 <!-- Enabled -->
-                <TableColumnHeader header="Enabled" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-
+                <TableColumnHeader header="Status" field="domain_enabled" :sortable="true" :sortedField="sortData.name"
+                    :sortOrder="sortData.order" @sort="handleSortRequest"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <!-- Actions -->
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
@@ -203,7 +205,7 @@ import Paginator from "./components/general/Paginator.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon, CloudIcon } from "@heroicons/vue/24/solid";
+import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon, ChevronUpIcon, ChevronDownIcon } from "@heroicons/vue/24/solid";
 import Badge from "@generalComponents/Badge.vue";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 // import BulkUpdateDomainForm from "./components/forms/BulkUpdateDomainForm.vue";
@@ -258,6 +260,11 @@ onMounted(() => {
 
 const filterData = ref({
     search: null,
+});
+
+const sortData = ref({
+    name: 'domain_description',
+    order: 'asc'
 });
 
 // Computed property for bulk actions based on permissions
@@ -391,23 +398,31 @@ const handleCopyToClipboard = (macAddress) => {
     });
 }
 
+const handleSortRequest = (sort) => {
+    sortData.value.name = sort.field
+    sortData.value.order = sort.order
 
+    getData();
+};
 
 const getData = (page = 1) => {
     loading.value = true;
+
+    let sort = sortData.value.name;
+    if (sortData.value.order === 'desc') {
+        sort = `-${sort}`;
+    }
 
     axios.get(props.routes.data_route, {
         params: {
             filter: filterData.value,
             page,
+            sort: sort, 
         }
     })
         .then((response) => {
             data.value = response.data;
-            // console.log(data.value);
-
         }).catch((error) => {
-
             handleErrorResponse(error);
         }).finally(() => {
             loading.value = false
