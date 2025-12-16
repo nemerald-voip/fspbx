@@ -206,6 +206,10 @@
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
+                                    <div class="relative z-20 ml-2">
+                                        <AdvancedActionButton :actions="advancedActions"
+                                    @advanced-action="(action) => handleAdvancedActionRequest(action, row.device_uuid)" />
+                                </div>
                             </div>
                         </template>
                     </TableField>
@@ -268,6 +272,42 @@
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
+
+    <AddEditItemModal :show="showDuplicateModal" :header="'Duplicate Device'" :loading="isModalLoading"
+        @close="showDuplicateModal = false">
+        <template #modal-body>
+            <div class="p-6">
+                <div class="mb-4">
+                    <label for="new_mac" class="block text-sm font-medium leading-6 text-gray-900">
+                        New MAC Address
+                    </label>
+                    <div class="mt-2">
+                        <input type="text" id="new_mac" v-model="newMacAddress"
+                            placeholder="00:00:00:00:00:00"
+                            class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                            @keydown.enter="submitDuplicateRequest" 
+                        />
+                    </div>
+                    <div v-if="formErrors?.new_mac_address" class="mt-2 text-sm text-red-600">
+                        {{ formErrors.new_mac_address[0] }}
+                    </div>
+                    <div v-if="formErrors?.server" class="mt-2 text-sm text-red-600">
+                        {{ formErrors.server[0] }}
+                    </div>
+                </div>
+
+                <div class="mt-6 flex items-center justify-end gap-x-6">
+                    <button type="button" @click="showDuplicateModal = false"
+                        class="text-sm font-semibold leading-6 text-gray-900">Cancel</button>
+                    <button type="button" @click="submitDuplicateRequest"
+                        class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                        Duplicate
+                    </button>
+                </div>
+            </div>
+        </template>
+    </AddEditItemModal>
+    
 </template>
 
 <script setup>
@@ -294,6 +334,8 @@ import CreateDeviceForm from "./components/forms/CreateDeviceForm.vue";
 import UpdateDeviceForm from "./components/forms/UpdateDeviceForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import CloudProvisioningSettings from "./components/forms/CloudProvisioningSettings.vue";
+import AdvancedActionButton from "./components/general/AdvancedActionButton.vue";
+import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 
 const page = usePage()
 const itemOptions = ref({})
@@ -317,6 +359,9 @@ const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
+const showDuplicateModal = ref(false);
+const itemToDuplicate = ref(null);
+const newMacAddress = ref('');
 let tooltipCopyContent = ref('Copy to Clipboard');
 
 const data = ref({
@@ -346,6 +391,49 @@ const filterData = ref({
 });
 
 const showGlobal = ref(props.showGlobal);
+const advancedActions = computed(() => [
+    {
+        category: "Advanced",
+        actions: [
+            { id: 'duplicate', label: 'Duplicate', icon: 'DocumentDuplicateIcon' },
+        ],
+    },
+]);
+
+const handleAdvancedActionRequest = (action, uuid) => {
+    if (action === 'duplicate') {
+        itemToDuplicate.value = uuid;
+        newMacAddress.value = ''; 
+        formErrors.value = null;
+        showDuplicateModal.value = true; 
+    }
+};
+
+const submitDuplicateRequest = () => {
+    if (!newMacAddress.value) {
+        formErrors.value = { new_mac_address: ['MAC Address is required'] };
+        return;
+    }
+
+    const url = props.routes.duplicate || '/devices/duplicate';
+    isModalLoading.value = true;
+
+    axios.post(url, { 
+        uuid: itemToDuplicate.value,
+        new_mac_address: newMacAddress.value 
+    })
+    .then((response) => {
+        showDuplicateModal.value = false;
+        showNotification('success', response.data.messages);
+        handleSearchButtonClick(); 
+    })
+    .catch((error) => {
+        handleFormErrorResponse(error); 
+    })
+    .finally(() => {
+        isModalLoading.value = false;
+    });
+};
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
