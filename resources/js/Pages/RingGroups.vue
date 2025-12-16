@@ -150,12 +150,12 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
+
                                 <ejs-tooltip v-if="page.props.auth.can.ring_group_update" :content="'Edit'"
                                     position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditButtonClick(row.ring_group_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-
                                     </div>
                                 </ejs-tooltip>
 
@@ -164,10 +164,11 @@
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.ring_group_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-                                <AdvancedActionButton :actions="advancedActions"
-                                    @advanced-action="(action) => handleAdvancedActionRequest(action, row.ring_group_uuid)" />
                                     </div>
                                 </ejs-tooltip>
+
+                                <AdvancedActionButton :actions="advancedActions"
+                                    @advanced-action="(action) => handleAdvancedActionRequest(action, row.ring_group_uuid)" />
                             </div>
                         </template>
                     </TableField>
