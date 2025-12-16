@@ -40,21 +40,35 @@
 
             <template #table-header>
                 <!-- First column: checkbox + Domain (description) -->
-                <TableColumnHeader header="Domain"
+                <TableColumnHeader header=""                
                     class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600" />
-                    <span class="pl-4">Domain</span>
+                    <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('domain_description')">
+                        <span class="mr-2">Domain</span>
+                        <ChevronUpIcon v-if="sortData.name === 'domain_description' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'domain_description' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
                 </TableColumnHeader>
 
                 <!-- Domain Name -->
-                <TableColumnHeader header="Domain Name"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('domain_name')">
+                        <span class="mr-2">Domain Name</span>
+                        <ChevronUpIcon v-if="sortData.name === 'domain_name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'domain_name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
 
                 <TableColumnHeader />
-
                 <!-- Enabled -->
-                <TableColumnHeader header="Enabled" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('domain_enabled')">
+                        <span class="mr-2">Enabled</span>
+                        <ChevronUpIcon v-if="sortData.name === 'domain_enabled' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'domain_enabled' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
 
                 <!-- Actions -->
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
@@ -203,7 +217,7 @@ import Paginator from "./components/general/Paginator.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon, CloudIcon } from "@heroicons/vue/24/solid";
+import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon, CloudIcon, ChevronUpIcon, ChevronDownIcon } from "@heroicons/vue/24/solid";
 import Badge from "@generalComponents/Badge.vue";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 // import BulkUpdateDomainForm from "./components/forms/BulkUpdateDomainForm.vue";
@@ -258,6 +272,11 @@ onMounted(() => {
 
 const filterData = ref({
     search: null,
+});
+
+const sortData = ref({
+    name: 'domain_description',
+    order: 'asc'
 });
 
 // Computed property for bulk actions based on permissions
@@ -391,23 +410,34 @@ const handleCopyToClipboard = (macAddress) => {
     });
 }
 
-
+const handleSortRequest = (column) => {
+    if (sortData.value.name === column) {
+        sortData.value.order = sortData.value.order === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortData.value.name = column;
+        sortData.value.order = 'asc';
+    }
+    getData();
+};
 
 const getData = (page = 1) => {
     loading.value = true;
+
+    let sort = sortData.value.name;
+    if (sortData.value.order === 'desc') {
+        sort = `-${sort}`;
+    }
 
     axios.get(props.routes.data_route, {
         params: {
             filter: filterData.value,
             page,
+            sort: sort, 
         }
     })
         .then((response) => {
             data.value = response.data;
-            // console.log(data.value);
-
         }).catch((error) => {
-
             handleErrorResponse(error);
         }).finally(() => {
             loading.value = false
