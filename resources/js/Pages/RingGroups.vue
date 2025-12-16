@@ -164,6 +164,8 @@
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.ring_group_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                <AdvancedActionButton :actions="advancedActions"
+                                    @advanced-action="(action) => handleAdvancedActionRequest(action, row.ring_group_uuid)" />
                                     </div>
                                 </ejs-tooltip>
                             </div>
