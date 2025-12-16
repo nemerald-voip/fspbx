@@ -250,7 +250,7 @@ import CreateRingGroupForm from "./components/forms/CreateRingGroupForm.vue";
 import UpdateRingGroupForm from "./components/forms/UpdateRingGroupForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
-
+import AdvancedActionButton from "./components/general/AdvancedActionButton.vue";
 
 
 const page = usePage()
@@ -281,6 +281,32 @@ const filterData = ref({
 });
 
 const itemOptions = ref({})
+
+const advancedActions = computed(() => [
+    {
+        category: "Advanced",
+        actions: [
+            { id: 'duplicate', label: 'Duplicate', icon: 'DocumentDuplicateIcon' },
+        ],
+    },
+]);
+
+const handleAdvancedActionRequest = async (action, uuid) => {
+    if (action === 'duplicate') {
+        const url = props.routes.duplicate || '/ring-groups/duplicate';
+        
+        try {
+            loading.value = true;
+            const response = await axios.post(url, { uuid: uuid });
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick(); 
+        } catch (error) {
+            handleErrorResponse(error);
+        } finally {
+            loading.value = false;
+        }
+    }
+};
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {

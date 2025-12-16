@@ -157,6 +157,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Domain Groups
     Route::get('domain-groups', [DomainGroupsController::class, 'index'])->name('domain-groups.index');
+    Route::post('ring-groups/duplicate', [RingGroupsController::class, 'duplicate'])->name('ring-groups.duplicate');
 
     // Ring Groups
     Route::get('ring-groups', [RingGroupsController::class, 'index'])->name('ring-groups.index');
@@ -233,6 +234,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     //Devices
     Route::get('devices', [DeviceController::class, 'index'])->name('devices.index');
+    Route::post('devices/duplicate', [DeviceController::class, 'duplicate'])->name('devices.duplicate');
 
     //Phone Numbers
     Route::get('phone-numbers', [PhoneNumbersController::class, 'index'])->name('phone-numbers.index');

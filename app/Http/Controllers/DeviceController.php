@@ -68,10 +68,106 @@ class DeviceController extends Controller
                     'cloud_provisioning_item_options' => route('cloud-provisioning.item.options'),
                     'cloud_provisioning_get_token' => route('cloud-provisioning.token.get'),
                     'cloud_provisioning_update_api_token' => route('cloud-provisioning.token.update'),
+                    'duplicate' => route('devices.duplicate'),
 
                 ]
             ]
         );
+    }
+
+    /**
+     * Duplicate the specified Device.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function duplicate(Request $request)
+    {
+        // 1. Validate Input
+        $request->validate([
+            'uuid' => 'required|uuid|exists:v_devices,device_uuid',
+            'new_mac_address' => 'required|string', // Ensure we receive the new MAC
+        ]);
+
+        // 2. Permission Check
+        if (!userCheckPermission('device_add')) {
+            return response()->json([
+                'messages' => ['error' => ['Access denied.']]
+            ], 403);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // 3. Sanitize MAC Address
+            // Allow: 00-00, 00:00, 0000. Strip non-hex chars and lowercase.
+            $rawMac = $request->input('new_mac_address');
+            $cleanMac = strtolower(preg_replace('/[^0-9a-f]/i', '', $rawMac));
+
+            // Basic length check
+            if (strlen($cleanMac) !== 12) {
+                throw new \Exception("Invalid MAC Address format. It must contain 12 hexadecimal characters.");
+            }
+
+            // Check uniqueness
+            $exists = $this->model::where('device_address', $cleanMac)
+                ->where('domain_uuid', session('domain_uuid'))
+                ->exists();
+                
+            if ($exists) {
+                throw new \Exception("Device with this MAC address already exists.");
+            }
+
+            // 4. Fetch Original
+            $original = $this->model::where('device_uuid', $request->uuid)
+                ->with(['lines', 'settings'])
+                ->firstOrFail();
+
+            // 5. Replicate Parent
+            $newDevice = $original->replicate();
+            $newDevice->device_uuid = Str::uuid();
+            $newDevice->device_label = $original->device_label . ' (Copy)';
+            $newDevice->device_address = $cleanMac; // Set the new sanitized MAC
+            
+            $newDevice->save();
+
+            // 6. Replicate Lines
+            if ($original->lines) {
+                foreach ($original->lines as $line) {
+                    $newLine = $line->replicate();
+                    $newLine->device_line_uuid = Str::uuid();
+                    $newLine->device_uuid = $newDevice->device_uuid;
+                    $newLine->save();
+                }
+            }
+
+            // 7. Replicate Settings
+            if ($original->settings) {
+                foreach ($original->settings as $setting) {
+                    $newSetting = $setting->replicate();
+                    $newSetting->device_setting_uuid = Str::uuid();
+                    $newSetting->device_uuid = $newDevice->device_uuid;
+                    $newSetting->save();
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'messages' => ['success' => ['Device duplicated successfully.']],
+                'device_uuid' => $newDevice->device_uuid
+            ], 201);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            // logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            // Return the specific error message if it's one of our validations
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => [$e->getMessage()]]
+            ], 500);
+        }
     }
 
     public function getData()
