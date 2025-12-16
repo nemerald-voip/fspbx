@@ -3,17 +3,16 @@
         <div class="flex items-center">
             <slot>{{ header }}</slot>
             <!-- Sorting icons -->
-            <BarsArrowDownIcon v-if="isSorted && sortOrder === 'asc'" class="ml-2 h-5 w-5 text-indigo-500" />
-            <BarsArrowUpIcon v-if="isSorted && sortOrder === 'desc'" class="ml-2 h-5 w-5 text-indigo-500" />
+            <ChevronUpIcon v-if="isSorted && sortOrder === 'asc'" class="ml-2 h-5 w-5 text-indigo-500" />
+            <ChevronDownIcon v-if="isSorted && sortOrder === 'desc'" class="ml-2 h-5 w-5 text-indigo-500" />
         </div>
     </th>
 </template>
 
 
 <script setup>
-import { BarsArrowDownIcon, BarsArrowUpIcon } from "@heroicons/vue/24/solid";
 import { computed } from 'vue';
-
+import { ChevronUpIcon, ChevronDownIcon } from "@heroicons/vue/24/solid";
 
 // Define the props for the Column component
 const props = defineProps({

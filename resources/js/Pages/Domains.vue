@@ -40,36 +40,24 @@
 
             <template #table-header>
                 <!-- First column: checkbox + Domain (description) -->
-                <TableColumnHeader header=""                
+                <TableColumnHeader header="Domain" field="domain_description" :sortable="true" :sortedField="sortData.name" 
+                    :sortOrder="sortData.order" @sort="handleSortRequest"
                     class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600" />
-                    <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('domain_description')">
-                        <span class="mr-2">Domain</span>
-                        <ChevronUpIcon v-if="sortData.name === 'domain_description' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'domain_description' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
-                    </div>
+                    <span class="pl-4">Domain</span>
                 </TableColumnHeader>
 
                 <!-- Domain Name -->
-                <TableColumnHeader header="" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('domain_name')">
-                        <span class="mr-2">Domain Name</span>
-                        <ChevronUpIcon v-if="sortData.name === 'domain_name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'domain_name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
-                    </div>
-                </TableColumnHeader>
+                <TableColumnHeader header="Host" field="domain_name" :sortable="true" :sortedField="sortData.name"
+                    :sortOrder="sortData.order" @sort="handleSortRequest"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                 <TableColumnHeader />
                 <!-- Enabled -->
-                <TableColumnHeader header="" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('domain_enabled')">
-                        <span class="mr-2">Enabled</span>
-                        <ChevronUpIcon v-if="sortData.name === 'domain_enabled' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'domain_enabled' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
-                    </div>
-                </TableColumnHeader>
-
+                <TableColumnHeader header="Status" field="domain_enabled" :sortable="true" :sortedField="sortData.name"
+                    :sortOrder="sortData.order" @sort="handleSortRequest"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <!-- Actions -->
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
@@ -217,7 +205,7 @@ import Paginator from "./components/general/Paginator.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon, CloudIcon, ChevronUpIcon, ChevronDownIcon } from "@heroicons/vue/24/solid";
+import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon, ChevronUpIcon, ChevronDownIcon } from "@heroicons/vue/24/solid";
 import Badge from "@generalComponents/Badge.vue";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 // import BulkUpdateDomainForm from "./components/forms/BulkUpdateDomainForm.vue";
@@ -410,13 +398,10 @@ const handleCopyToClipboard = (macAddress) => {
     });
 }
 
-const handleSortRequest = (column) => {
-    if (sortData.value.name === column) {
-        sortData.value.order = sortData.value.order === 'asc' ? 'desc' : 'asc';
-    } else {
-        sortData.value.name = column;
-        sortData.value.order = 'asc';
-    }
+const handleSortRequest = (sort) => {
+    sortData.value.name = sort.field
+    sortData.value.order = sort.order
+
     getData();
 };
 
