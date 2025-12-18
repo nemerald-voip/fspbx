@@ -503,10 +503,9 @@ class ProvisioningController extends Controller
         // $keys = collect(array_values($map))->keyBy('id')->toArray();
 
         $keys = array_values($map);
-        // --- New: fill BLF labels from Extensions.effective_caller_id_name (domain-scoped)
+        // fill BLF labels from Extensions.effective_caller_id_name (domain-scoped)
         $blfTargets = collect($keys)
-            ->filter(fn($k) => strtolower($k['category'] ?? '') === 'blf'
-                && (empty($k['label']) || $k['label'] === null)
+            ->filter(fn($k) => (empty($k['label']) || $k['label'] === null)
                 && !empty($k['value']))
             ->map(fn($k) => (string) $k['value'])
             ->unique()
@@ -521,11 +520,8 @@ class ProvisioningController extends Controller
                 ->map(fn($r) => $r->effective_caller_id_name)
                 ->toArray();
 
-
             foreach ($keys as &$k) {
-                if (
-                    strtolower($k['category'] ?? '') === 'blf'
-                    && (empty($k['label']) || $k['label'] === null)
+                if ((empty($k['label']) || $k['label'] === null)
                 ) {
 
                     $val = (string) ($k['value'] ?? '');
