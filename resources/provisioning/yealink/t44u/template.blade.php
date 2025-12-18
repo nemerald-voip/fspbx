@@ -2,7 +2,7 @@
 
 @switch($flavor)
 
-{{-- ================= Yealink mac.cfg ================= --}}
+{{-- ================= Yealink T44U mac.cfg ================= --}}
 @case('mac.cfg')
 
 #!version:1.0.0.1
