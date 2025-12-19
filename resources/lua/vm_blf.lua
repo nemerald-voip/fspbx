@@ -1,15 +1,14 @@
 -- vm_blf.lua
--- Voicemail BLF presence daemon for FreeSWITCH + FusionPBX
+-- Voicemail BLF presence daemon for FreeSWITCH
 --
 -- Behavior:
 --   Phone SUBSCRIBEs to:  vm200@domain
 --   -> FreeSWITCH generates PRESENCE_PROBE
 --   -> This script looks up mailbox 200 on that domain
---      in v_voicemails / v_voicemail_messages.
---   -> If count(*) > 0  => BLF LED ON
---      If count(*) == 0 => BLF LED OFF
+--   -> If there are new messages  => BLF LED ON
+--      If not => BLF LED OFF
 --
--- BLF AoR format: vm<mailbox>@domain  (e.g. vm200@apolloapparel.pbx02.jcnt.net)
+-- BLF AoR format: vm<mailbox>@domain  (e.g. vm200@fspbx.domain.com)
 
 local VM_PREFIX = "vm"  -- user part starts with "vm"
 
@@ -198,12 +197,6 @@ local function handle_mwi_event(event)
     local blf_user = VM_PREFIX .. user  -- "vm" .. "200" -> "vm200"
     local key      = blf_user .. "@" .. domain
 
-    -- If nobody is subscribed to vmXXX@domain, do NOTHING.
-    if not subscriptions[key] then
-        -- comment this in if you want to see that it’s being skipped:
-        -- log("DEBUG", "Skipping MWI for " .. key .. " (no active subscription)")
-        return
-    end
 
     -- yes/no if there are any NEW messages
     local waiting = (event:getHeader("MWI-Messages-Waiting") or ""):lower()
@@ -223,52 +216,25 @@ end
 -- Handle PRESENCE_PROBE for vm<mailbox>@domain
 ---------------------------------------------------------
 local function handle_probe(event)
-    local to_hdr = event:getHeader("to") or ""
+    local to = event:getHeader("to") or ""
     local expires = tonumber(event:getHeader("expires") or "0")
 
-    local user, domain = normalize_to_uri(to_hdr)
+    local user, domain = to:match("^(.-)@(.-)$")
     if user == "" or domain == "" then
-        log("DEBUG", "Ignoring PRESENCE_PROBE with unexpected To=: " .. to_hdr)
+        log("DEBUG", "Ignoring PRESENCE_PROBE with unexpected To=: " .. to)
         return
     end
 
-    -- Only handle AoRs starting with "vm"
+    -- Only handle AoRs  "vm+<ext>@domain"
     if user:sub(1, #VM_PREFIX) ~= VM_PREFIX then
         return
     end
 
-    -- Track this subscription key: vmXXX@domain
-    local key = user .. "@" .. domain
+    local ext = user:sub(#VM_PREFIX + 1)
 
-    -- expires <= 0 => unsubscribe, drop from table
-    if not expires or expires <= 0 then
-        if subscriptions[key] then
-            subscriptions[key] = nil
-            log("NOTICE", "Unsubscribed from " .. key)
-        end
-        return
-    end
+    log("NOTICE", string.format("PRESENCE_PROBE Voicemail: to=%s ext=%s domain=%s", to, ext, domain))
 
-    -- Mark as actively subscribed
-    if not subscriptions[key] then
-        log("NOTICE", "New subscription for " .. key)
-    end
-    subscriptions[key] = true
-
-    -- Extract mailbox part after "vm"
-    local mailbox = user:sub(#VM_PREFIX + 1)
-
-    if mailbox == "" then
-        log("DEBUG", "PRESENCE_PROBE vm* without mailbox: " .. to_hdr)
-        return
-    end
-
-    log("NOTICE", string.format(
-        "PRESENCE_PROBE Voicemail: to=%s user=%s mailbox=%s domain=%s",
-        to_hdr, user, mailbox, domain
-    ))
-
-    local count = get_voicemail_message_count(mailbox, domain)
+    local count = get_voicemail_message_count(ext, domain)
     if count == nil then
         -- DB or lookup error already logged
         return
@@ -282,7 +248,7 @@ end
 -- Main loop
 ---------------------------------------------------------
 local function main()
-    log("NOTICE", "vm_blf.lua starting (prefix=" .. VM_PREFIX .. ")")
+    log("NOTICE", "vm_blf.lua starting")
 
     -- One consumer for SUBSCRIBE probes (phones asking "what's the state?")
     local consumer_probe = freeswitch.EventConsumer("PRESENCE_PROBE")
@@ -290,25 +256,27 @@ local function main()
     local consumer_mwi   = freeswitch.EventConsumer("MESSAGE_WAITING")
 
     while true do
-        -------------------------------------------------
-        -- 1) Handle PRESENCE_PROBE (SUBSCRIBE refresh)
-        -------------------------------------------------
-        local ev = consumer_probe:pop(10)  -- up to 10s wait
-        if ev then
-            local name = ev:getHeader("Event-Name") or ""
-            if name == "PRESENCE_PROBE" then
-                pcall(handle_probe, ev)
-            end
+        local did_something = false
+
+        -- handle all probes waiting
+        while true do
+            local ev = consumer_probe:pop(0)
+            if not ev then break end
+            pcall(handle_probe, ev)
+            did_something = true
         end
 
-        -------------------------------------------------
-        -- 2) Drain any pending MESSAGE_WAITING events
-        --    (voicemail left / deleted / saved)
-        -------------------------------------------------
+        -- handle all mwi waiting
         while true do
-            local mwi_ev = consumer_mwi:pop(0)  -- non-blocking
+            local mwi_ev = consumer_mwi:pop(0)
             if not mwi_ev then break end
+            -- log("INFO", "Serialized Event: " .. mwi_ev:serialize() .. "\n")
             pcall(handle_mwi_event, mwi_ev)
+            did_something = true
+        end
+
+        if not did_something then
+            freeswitch.msleep(50)
         end
     end
 end

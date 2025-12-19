@@ -1,4 +1,4 @@
-{{-- version: 1.0.2 --}}
+{{-- version: 1.0.3 --}}
 
 @switch($flavor)
 
@@ -93,7 +93,6 @@
       
     @elseif ($cat === 'unassigned')
       lineKey.{{ $slot }}.category="Unassigned"
-      lineKey.{{ $slot }}.index="null"
       @php $slot++; @endphp
 
     @elseif ($cat === 'blf')
@@ -208,9 +207,9 @@
 />
 
     <!-- Admin Password -->  
-    <device device.set="1" device.baseProfile.set="1" device.baseProfile="Generic"
-        device.eulaAccepted.set="1"
-        device.eulaAccepted="1"
+    <device device.set="1" 
+        device.baseProfile.set="1" 
+        device.baseProfile="Generic"
         device.sntp.serverName="{{ $settings['ntp_server_primary'] ?? 'null' }}"
     	device.sntp.gmtOffset="{{ $settings['polycom_gmt_offset'] ?? '0' }}"
         >
@@ -423,9 +422,6 @@
         @if (isset($settings['polycom_basic_call_management_redundant']))
     	    softkey.feature.basicCallManagement.redundant="{{ $settings['polycom_basic_call_management_redundant'] }}"
     	    efk.softkey.alignleft="1"
-        @endif
-        @if (isset($settings['polycom_softkey_recent_calls']))
-    	    softkey.feature.recentCalls="{{ $settings['polycom_softkey_recent_calls'] }}"
         @endif
     />
     

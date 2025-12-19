@@ -1,7 +1,7 @@
 -- flow_blf.lua
 -- Simple Call-Flow BLF presence daemon for FreeSWITCH
 -- Listens for PRESENCE_PROBE and answers with current Call-Flow state from DB.
--- BLF AoR format: flow*<feature_code>@domain  (e.g. flow*26@shapeint.pbx02.jcnt.net)
+-- BLF AoR format: flow*<feature_code>@domain  (e.g. flow*26@fspbx.domain.com)
 
 local CF_PREFIX = "flow"  -- user part starts with "flow"
 
