@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Models\ProvisioningTemplate;
+use App\Models\DeviceVendor;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\StoreProvisioningTemplateRequest;
-use App\Http\Requests\UpdateProvisioningTemplateRequest;
-use Illuminate\Http\Request;
+use App\Models\ProvisioningTemplate;
 use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
+use App\Http\Requests\StoreProvisioningTemplateRequest;
+use App\Http\Requests\UpdateProvisioningTemplateRequest;
 
 class ProvisioningTemplateController extends Controller
 {
@@ -33,7 +34,7 @@ class ProvisioningTemplateController extends Controller
                 AllowedFilter::callback('domain_uuid', function ($q, $value) {
                     $q->where(function ($qq) use ($value) {
                         $qq->where('domain_uuid', $value)
-                           ->orWhereNull('domain_uuid');
+                            ->orWhereNull('domain_uuid');
                     });
                 }),
                 AllowedFilter::exact('type'),
@@ -123,32 +124,48 @@ class ProvisioningTemplateController extends Controller
 
             if (request()->filled('item_uuid')) {
                 $item = ProvisioningTemplate::findOrFail(request('item_uuid'));
-
             }
 
             $defaultTemplates = QueryBuilder::for(ProvisioningTemplate::query())
                 ->select([
                     'template_uuid',
                     'name',
+                    'vendor',
                 ])
-                ->where('type','default')
-                ->defaultSort('name')
+                ->where('type', 'default')
+                ->defaultSort('vendor', 'name')   // vendor ASC, then name ASC
                 ->get()
                 ->map(function ($item) {
                     return [
                         'value' => $item->template_uuid,
+                        'name' => trim(ucfirst($item->vendor)  . ' ' . $item->name),
+                    ];
+                });
+
+            $routes = array_merge($routes, [
+                'template_content' => route('provisioning-templates.content'),
+            ]);
+
+            $vendors = QueryBuilder::for(DeviceVendor::query())
+                ->select([
+                    'device_vendor_uuid',
+                    'name',
+                ])
+                ->where('enabled', 'true')
+                ->defaultSort('name')  
+                ->get()
+                ->map(function ($item) {
+                    return [
+                        'value' => $item->name,
                         'name' => $item->name,
                     ];
                 });
 
-                $routes = array_merge($routes, [
-                    'template_content' => route('provisioning-templates.content'),    
-                ]);
-
-                // logger($defaultTemplates);
+            // logger($vendors);
             return response()->json([
                 'item' => $item,
                 'default_templates' => $defaultTemplates,
+                'vendors' => $vendors,
                 'routes' => $routes,
             ]);
         } catch (\Throwable $e) {
@@ -164,7 +181,7 @@ class ProvisioningTemplateController extends Controller
     public function getTemplateContent()
     {
         try {
-            $uuid = request('template_uuid'); // ✅ correct key
+            $uuid = request('template_uuid'); 
             $item = $uuid ? ProvisioningTemplate::findOrFail($uuid) : null;
 
             return response()->json([

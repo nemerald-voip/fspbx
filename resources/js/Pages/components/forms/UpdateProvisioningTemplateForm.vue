@@ -3,11 +3,12 @@
 
 
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3  gap-x-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-6">
             <div>
                 <LabelInputRequired target="name" label="Template Name" />
                 <div class="mt-2">
-                    <InputField v-model="form.name" type="text" name="name" placeholder="Enter template name" :disabled="readOnly"/>
+                    <InputField v-model="form.name" type="text" name="name" placeholder="Enter template name"
+                        :disabled="readOnly" />
                 </div>
                 <div v-if="errors?.name" class="mt-2 text-xs text-red-600">
                     {{ errors.name[0] }}
@@ -20,7 +21,7 @@
                     <Multiselect v-model="base_template" :options="options.default_templates" :multiple="false"
                         :close-on-select="true" :clear-on-select="false" :preserve-search="true"
                         placeholder="Choose Base Template" label="name" track-by="value" :searchable="true"
-                        @select="loadBaseTemplate"/>
+                        @select="loadBaseTemplate" />
                 </div>
 
                 <div v-if="errors?.members" class="mt-2 text-xs text-red-600">
@@ -28,12 +29,27 @@
                 </div>
             </div>
 
+            <div>
+                <LabelInputOptional target="vendors" label="Vendor" />
+                <div class="mt-2 relative">
+                    <Multiselect v-model="vendor" :options="options.vendors" :multiple="false"
+                        :close-on-select="true" :clear-on-select="false" :preserve-search="true"
+                        placeholder="Choose Vendor" label="name" track-by="value" :searchable="true"
+                        />
+                </div>
+            </div>
+
+            <div v-if="errors?.vendors" class="mt-2 text-xs text-red-600">
+                {{ errors.vendors[0] }}
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-6">
             <div v-if="form.global == false || form.type == 'custom'" class="mt-2">
                 <Toggle label="Share across accounts" description="Let other accounts view and use this template."
                     v-model="form.global" customClass="py-4" />
             </div>
         </div>
-
 
 
         <div class="mt-4">
@@ -69,7 +85,7 @@
                 </div>
 
                 <AceEditor v-model="form.content" :lang="editorLang" :theme="editorTheme"
-                    :options="{ fontSize: 16, tabSize: 4, readOnly: isLoadingTemplate || readOnly}" :height="'80vh'"
+                    :options="{ fontSize: 16, tabSize: 4, readOnly: isLoadingTemplate || readOnly }" :height="'80vh'"
                     class="editor_wrap" />
             </div>
         </div>
@@ -111,8 +127,11 @@ const props = defineProps({
     readOnly: { type: Boolean, default: false },
 });
 
+console.log(props.options)
+
 const isLoadingTemplate = ref(false)
 const base_template = ref(null);
+const vendor = ref(null);
 
 const defaults = {
     vendor: null,
@@ -127,14 +146,14 @@ const defaults = {
 const form = reactive({ ...defaults })
 
 function hydrate(item) {
-  // don't overwrite `global` from defaults loop
-  for (const k in defaults) {
-    if (k === 'global') continue
-    form[k] = item?.[k] ?? defaults[k]
-  }
+    // don't overwrite `global` from defaults loop
+    for (const k in defaults) {
+        if (k === 'global') continue
+        form[k] = item?.[k] ?? defaults[k]
+    }
 
-  // derive global from domain_uuid presence
-  form.global = !!item && item.domain_uuid === null
+    // derive global from domain_uuid presence
+    form.global = !!item && item.domain_uuid === null
 }
 
 // set once and whenever the selected item object changes
@@ -142,6 +161,9 @@ watch(() => props.options?.item, (item) => {
     hydrate(item)
     const opts = props.options?.default_templates ?? []
     base_template.value = opts.find(o => o.name === form.base_template) || null
+
+    const vendors = props.options?.vendors ?? []
+    vendor.value = vendors.find(o => o.name === form.vendor) || null
 }, { immediate: true })
 
 

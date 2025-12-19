@@ -1,13 +1,13 @@
-{{-- version: 1.0.0 --}}
+{{-- version: 1.0.1 --}}
 
 @switch($flavor)
 
-{{-- ================= Poly mac.cfg ================= --}}
+{{-- ================= Poly E220 mac.cfg ================= --}}
 @case('mac.cfg')
 
 <?xml version="1.0" standalone="yes"?>
 <APPLICATION
-    APP_FILE_PATH="{$poly_e220_firmware}"
+    APP_FILE_PATH="{{ $settings['poly_e220_firmware'] ?? ''}}"
     CONFIG_FILES="phone[PHONE_MAC_ADDRESS].cfg,  [PHONE_MODEL]-[PHONE_MAC_ADDRESS].cfg" 
     MISC_FILES="" 
     LOG_FILE_DIRECTORY="" 
@@ -245,6 +245,7 @@
         up.warningLevel="2"
         up.headsetMode="{{ $settings['polycom_headset_mode'] ?? 1 }}"
         se.stutterOnVoiceMail="0"
+        sec.srtp.simplifiedBestEffort="0"
     />
     
     <sec
@@ -465,7 +466,7 @@
 	
 	@if (isset($settings['polycom_display_language']))
     	<language
-    		lcl.ml.lang="{$polycom_display_language}"
+    		lcl.ml.lang="{{ $settings['polycom_display_language'] ?? ''}}"
     	/>
 	@endif
     

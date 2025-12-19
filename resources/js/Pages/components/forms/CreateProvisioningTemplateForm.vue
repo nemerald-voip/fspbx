@@ -3,7 +3,7 @@
 
 
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3  gap-x-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-x-6">
             <div>
                 <LabelInputRequired target="name" label="Template Name" />
                 <div class="mt-2">
@@ -28,7 +28,23 @@
                 </div>
             </div>
 
-            <div class="mt-2">
+            <div>
+                <LabelInputOptional target="vendors" label="Vendor" />
+                <div class="mt-2 relative">
+                    <Multiselect v-model="vendor" :options="options.vendors" :multiple="false"
+                        :close-on-select="true" :clear-on-select="false" :preserve-search="true"
+                        placeholder="Choose Vendor" label="name" track-by="value" :searchable="true" />
+                </div>
+            </div>
+
+            <div v-if="errors?.vendors" class="mt-2 text-xs text-red-600">
+                {{ errors.vendors[0] }}
+            </div>
+
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-x-6">
+            <div v-if="form.global == false || form.type == 'custom'" class="mt-2">
                 <Toggle label="Share across accounts" description="Let other accounts view and use this template."
                     v-model="form.global" customClass="py-4" />
             </div>
@@ -114,6 +130,7 @@ const props = defineProps({
 
 const isLoadingTemplate = ref(false)
 const base_template = ref(null);
+const vendor = ref(null);
 
 const form = reactive({
     vendor: null,
@@ -139,9 +156,11 @@ const loadBaseTemplate = (selectedOption, id) => {
     })
         .then((response) => {
             form.content = response.data?.item?.content ?? ''
-            form.vendor = response.data?.item?.vendor ?? ''
+            form.vendor = response.data?.item?.vendor ?? null
+            vendor.value =
+                props.options.vendors.find(v => v.value === form.vendor || v.name === form.vendor)
+                ?? null            
             form.base_version = response.data?.item?.version ?? ''
-            // console.log(response.data);
 
         }).catch((error) => {
             handleErrorResponse(error)

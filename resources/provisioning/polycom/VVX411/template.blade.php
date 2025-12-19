@@ -1,13 +1,13 @@
-{{-- version: 1.0.1 --}}
+{{-- version: 1.0.2 --}}
 
 @switch($flavor)
 
-{{-- ================= Poly mac.cfg ================= --}}
+{{-- ================= Poly VVX411 mac.cfg ================= --}}
 @case('mac.cfg')
 
 <?xml version="1.0" standalone="yes"?>
 <APPLICATION
-    APP_FILE_PATH="{$polycom_vvx_firmware_url}"
+    APP_FILE_PATH="{{ $setttings['polycom_vvx_firmware_url'] ?? '' }}"
     CONFIG_FILES="phone[PHONE_MAC_ADDRESS].cfg,  [PHONE_MODEL]-[PHONE_MAC_ADDRESS].cfg" 
     MISC_FILES="" 
     LOG_FILE_DIRECTORY="" 
@@ -99,6 +99,11 @@
     @elseif ($cat === 'blf')
       lineKey.{{ $slot }}.category="BLF"
       lineKey.{{ $slot }}.index="0"
+      @php $slot++; @endphp
+      
+    @elseif ($cat === 'speeddial')
+      lineKey.{{ $slot }}.category="SpeedDial"
+      lineKey.{{ $slot }}.index="{{ $ln }}"
       @php $slot++; @endphp
       
     @elseif ($cat === 'presence')
@@ -465,7 +470,7 @@
 	
 	@if (isset($settings['polycom_display_language']))
     	<language
-    		lcl.ml.lang="{$polycom_display_language}"
+    		lcl.ml.lang="{{ $settings['polycom_display_language'] ?? ''}}"
     	/>
 	@endif
     

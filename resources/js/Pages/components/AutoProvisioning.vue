@@ -188,7 +188,7 @@
         </div>
     </div>
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showCreateModal" :header="'Create New Provisioning Template'"
+    <AddEditItemModal :customClass="'sm:max-w-8xl'" :show="showCreateModal" :header="'Create New Provisioning Template'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <CreateProvisioningTemplateForm :options="itemOptions" :errors="formErrors"
@@ -198,7 +198,7 @@
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showEditModal" :header="'Edit Provisioning Template'"
+    <AddEditItemModal :customClass="'sm:max-w-8xl'" :show="showEditModal" :header="'Edit Provisioning Template'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <UpdateProvisioningTemplateForm :options="itemOptions" :errors="formErrors" :read-only="readOnly"
@@ -393,10 +393,10 @@ const handleCreateRequest = (form) => {
             handleModalClose();
             handleSearchButtonClick();
         }).catch((error) => {
+            console.log(error);
             createFormSubmiting.value = false;
             handleFormErrorResponse(error);
         });
-
 };
 
 const handleEditButtonClick = (uuid) => {
