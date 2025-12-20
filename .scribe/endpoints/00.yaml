@@ -1,0 +1,72 @@
+name: Domains
+description: ''
+endpoints:
+  -
+    httpMethods:
+      - GET
+    uri: api/v1/domains
+    metadata:
+      groupName: Domains
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: 'List domains'
+      description: |-
+        Returns only the domains the caller is allowed to access.
+
+        Access rules:
+        - If the user has the `domain_all` permission, all domains are returned.
+        - If the user has any assigned domain groups or individual domains, only those domains are returned
+          (even if the user's own domain is not included).
+        - If nothing is assigned, only the user's own domain is returned.
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters:
+      per_page:
+        name: per_page
+        description: 'Results per page (min 1, max 200).'
+        required: false
+        example: 50
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        custom: []
+      page:
+        name: page
+        description: 'Page number.'
+        required: false
+        example: 1
+        type: integer
+        enumValues: []
+        exampleWasSpecified: true
+        custom: []
+    cleanQueryParameters:
+      per_page: 50
+      page: 1
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 500
+        content: '{"success":false,"message":"Server Error."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer kvVDEd6h3cP1a5bZ84aeg6f'
+    controller: null
+    method: null
+    route: null
+    custom: []

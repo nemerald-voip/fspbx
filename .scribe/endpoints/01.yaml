@@ -1,0 +1,231 @@
+name: Endpoints
+description: ''
+endpoints:
+  -
+    httpMethods:
+      - POST
+    uri: api/v1/domains
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: |-
+        POST /api/v1/domains
+        Middleware should enforce domains_create permission (in user home-domain context).
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters: []
+    cleanUrlParameters: []
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      domain_name:
+        name: domain_name
+        description: 'Must not be greater than 255 characters.'
+        required: true
+        example: velaupehsmowbtgqmrle
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        custom: []
+      domain_enabled:
+        name: domain_enabled
+        description: ''
+        required: false
+        example: tempora
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        custom: []
+    cleanBodyParameters:
+      domain_name: velaupehsmowbtgqmrle
+      domain_enabled: tempora
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3afZhk54c8g6EvebPVd6aD1'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - GET
+    uri: 'api/v1/domains/{domain_uuid}'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: |-
+        GET /api/v1/domains/{domain_uuid}
+        Middleware should already enforce:
+         - domain access (if route has {domain_uuid})
+         - domains_view permission
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      domain_uuid:
+        name: domain_uuid
+        description: ''
+        required: true
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        custom: []
+    cleanUrlParameters:
+      domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses:
+      -
+        status: 500
+        content: '{"success":false,"message":"Server Error."}'
+        headers:
+          cache-control: 'no-cache, private'
+          content-type: application/json
+        description: null
+        custom: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 3Pvah1f4ZcEg5dkDb66aV8e'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - PUT
+    uri: 'api/v1/domains/{domain_uuid}'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: |-
+        PUT /api/v1/domains/{domain_uuid}
+        Middleware should enforce:
+         - domain access
+         - domains_update permission
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      domain_uuid:
+        name: domain_uuid
+        description: ''
+        required: true
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        custom: []
+    cleanUrlParameters:
+      domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters:
+      domain_name:
+        name: domain_name
+        description: 'Must not be greater than 255 characters.'
+        required: false
+        example: tblkfilgkpxsmdmampfnsq
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        custom: []
+      domain_enabled:
+        name: domain_enabled
+        description: ''
+        required: false
+        example: vel
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        custom: []
+    cleanBodyParameters:
+      domain_name: tblkfilgkpxsmdmampfnsq
+      domain_enabled: vel
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer Dhgfa53Pv8cdE6ZeV61bak4'
+    controller: null
+    method: null
+    route: null
+    custom: []
+  -
+    httpMethods:
+      - DELETE
+    uri: 'api/v1/domains/{domain_uuid}'
+    metadata:
+      groupName: Endpoints
+      groupDescription: ''
+      subgroup: ''
+      subgroupDescription: ''
+      title: |-
+        DELETE /api/v1/domains/{domain_uuid}
+        Middleware should enforce:
+         - domain access
+         - domains_delete permission
+      description: ''
+      authenticated: true
+      custom: []
+    headers:
+      Authorization: 'Bearer {YOUR_AUTH_KEY}'
+      Content-Type: application/json
+      Accept: application/json
+    urlParameters:
+      domain_uuid:
+        name: domain_uuid
+        description: ''
+        required: true
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        type: string
+        enumValues: []
+        exampleWasSpecified: false
+        custom: []
+    cleanUrlParameters:
+      domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+    queryParameters: []
+    cleanQueryParameters: []
+    bodyParameters: []
+    cleanBodyParameters: []
+    fileParameters: []
+    responses: []
+    responseFields: []
+    auth:
+      - headers
+      - Authorization
+      - 'Bearer 6EhZDVe4v6da8ag3cfP5k1b'
+    controller: null
+    method: null
+    route: null
+    custom: []

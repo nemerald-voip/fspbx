@@ -1,0 +1,134 @@
+---
+id: google-cloud
+title: Google Cloud
+slug: /configuration/transcription-providers/google-cloud/
+sidebar_position: 2
+---
+
+# Google Cloud
+
+This guide outlines the steps required to configure the Google Cloud Speech-to-Text v2 API for use with the application's voicemail transcription service.
+
+Unlike older API versions that could use a simple API Key, the v2 API requires secure **Service Account authentication (OAuth 2.0)** to access its advanced models and features.
+
+## Prerequisites
+
+*   A Google Cloud Platform (GCP) account.
+
+---
+
+## Step 1: Google Cloud Project Setup
+
+Before generating credentials, the project must be configured correctly in the Google Cloud Console.
+
+1.  **Create or Select a Project:**
+    Log in to the [Google Cloud Console](https://console.cloud.google.com/) and select an existing project or create a new one dedicated to this application.
+
+2.  **Enable Billing:**
+    **Crucial:** The Speech-to-Text API will not function (and may not even appear in the library) unless a valid billing account is linked to your project.
+    *   Go to the **Billing** section in the main menu.
+    *   Link an existing billing account or set up a new one.
+
+3.  **Enable the API:**
+    *   Navigate to **APIs & Services > Library**.
+    *   Search for **"Cloud Speech-to-Text API"**.
+    *   Click on the result and click the **Enable** button. (Note: Enabling this covers both v1 and v2 APIs).
+
+---
+
+## Step 2: Create a Service Account & Credentials
+
+We need to create a "robot account" with specific permissions to perform transcriptions.
+
+1.  Navigate to **IAM & Admin > Service Accounts** in the Cloud Console.
+2.  Click **+ CREATE SERVICE ACCOUNT**.
+3.  **Service account details:** Enter a name (e.g., `voicemail-transcriber`) and description. Click **CREATE AND CONTINUE**.
+4.  **Grant this service account access to project (Important):**
+    *   Click the "Select a role" dropdown.
+    *   Search for and select the **Cloud Speech Client** role.
+    *   Click **CONTINUE**, then click **DONE**.
+5.  **Generate the Key:**
+    *   Find your new service account in the list. Click the three dots (**Actions**) on the right and select **Manage keys**.
+    *   Click **ADD KEY** > **Create new key**.
+    *   Select **JSON** and click **CREATE**.
+    *   A `.json` file will automatically download to your computer.
+
+> **Security Warning:** This JSON file contains the private key required to access your Google Cloud resources. Keep it secure. Do not commit it to public version control. Open it in a text editor for the next step.
+
+---
+
+## Step 3: Configuration
+
+We will configure the FS PBX to use the credentials from the JSON file directly from the configuration, without storing the file on the server.
+
+### 1. Update Environment Variables (`.env`)
+
+Open the JSON key file you downloaded in Step 2. You need to copy specific values from this JSON into your `.env` file.
+
+Add the following section to your `.env` file and populate the values. If this section is missing simply add it.
+
+```dotenv
+# --- GOOGLE SPEECH-TO-TEXT V2 CREDENTIALS ---
+GOOGLE_SPEECH_REGION=us-central1 # Or your preferred region
+GOOGLE_SPEECH_MODEL=chirp
+# Copy these values directly from your JSON key file
+GOOGLE_PROJECT_ID="your-project-id-from-json"
+GOOGLE_PRIVATE_KEY_ID="your_private_key_id_from_json"
+GOOGLE_CLIENT_EMAIL="your-client-email@your-project-id.iam.gserviceaccount.com"
+GOOGLE_CLIENT_ID="your_client_id_from_json"
+GOOGLE_CLIENT_X509_CERT_URL="your_client_x509_cert_url_from_json"
+# For the private key, copy everything between the quotes, including the \n characters,
+# and wrap the entire thing in double quotes in your .env file.
+GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYourKeyHerePart1\nYourKeyHerePart2\n-----END PRIVATE KEY-----\n"
+```
+### 2. Clear Configuration Cache
+
+If you are using config caching, run the following command to apply the changes:
+
+```bash
+cd /var/www/fspbx
+php artisan config:cache
+php artisan queue:restart
+```
+
+## Step 4: Activate the Google Transcription Provider
+
+Once the credentials and configuration are in place, the final step is to instruct the application to use the Google provider for all new voicemail transcriptions.
+
+1.  In the FS PBX user interface, navigate to the **Default Settings** section and then select **Voicemail**.
+2.  Locate the setting named `voicemail_queue_strategy`. Update its value to `modern`.
+3.  Locate the setting named `transcribe_provider`. Update its value to `google`.
+4.  Save the changes.
+
+All new voicemails will now be sent to Google Cloud Speech-to-Text for transcription.
+
+---
+
+## Troubleshooting
+
+### Checking the Logs
+
+The first place to check for any transcription issues is the main FS PBX log file.
+
+The log is located at: `/var/www/fspbx/storage/logs/laravel.log`
+
+To watch the log file for new errors in real-time, open a terminal on your PBX server and run the following command. Leave this command running while you trigger a new voicemail transcription. Any errors generated by the process will appear in your terminal instantly.
+
+```bash
+tail -f /var/www/fspbx/storage/logs/laravel.log
+```
+
+### Error: 403 Permission Denied (`speech.recognizers.recognize`)
+
+This indicates the application authenticated successfully, but is not allowed to use the API.
+
+*   **Cause 1:** The **Cloud Speech Client** role was not granted to the Service Account. Go back to IAM in Google Cloud and ensure this role is assigned.
+*   **Cause 2:** Billing is not enabled for the project.
+*   **Cause 3:** The API is not enabled in the API Library.
+
+### Error: "Failed to fetch Google an access token" or Private Key Errors
+
+This usually indicates an issue with how the credentials were copied to the `.env` file.
+
+*   Ensure the `GOOGLE_PRIVATE_KEY` in the `.env` file is wrapped in double quotes (`"`).
+*   Ensure the entire key, including `-----BEGIN PRIVATE KEY-----`, `-----END PRIVATE KEY-----`, and all `\n` characters, was copied exactly from the JSON file.

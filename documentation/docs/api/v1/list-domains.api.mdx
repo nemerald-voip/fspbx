@@ -1,0 +1,78 @@
+---
+id: list-domains
+title: "List domains"
+description: "Returns only the domains the caller is allowed to access."
+sidebar_label: "List domains"
+hide_title: true
+hide_table_of_contents: true
+api: eJztVVtr20oQ/ivDvJwEFF8O9EWUQsvpJVBoqFtoSUy7ksbWNqvd7c7KiRH672VWjuwkbikUzlP9Ykm78803l2+mQ+cpqKidPa8wR6M5/ucapS1jhhVxGbSXU8zxPcU2WAZnzRZiTVANF9NzqYyhAJpBGeNuqILoQJUlMU+u7JV9nh4htIY4v7JncL5Kdi1TgFoNIF8HxC/KmK/gKTSaWTubCeboTQWCkKhQNTmGpOwWFLNeW6p2VrAOrvUMLoC2ld7oqlUjYnYXkWM66uXKApzQhizovat/GNyNvcPXDNZF0LY0bUXV6R0x62Kt7TrlZUcp2yfwKM4YG2boVVANRQqM+WWHWsrwvaWwxQytaghz9BS+eLWmI+Xi1kSWPIJcgJNGW5hn0Khb+Hc2OxUHdKsabwjzJ7MMA31vdaAK85UyTBlyWVOjMO8wbr040zbSmsIf++r77CfRHIvkQhBt2xQU7uHM/4TyT0H7fim47J1lYkF6MpvJ3317zLB0NpKNcqa8N7pMOpp+Y7nQPabiim9UxkNnHXKbhDHyb4hZcpDjgsKGArwMwYUJ9hn6IFqNeiA1Go7whXOGlD3ET6D9Aep4mWPQdn1496HD4ZdhVGvpPrwbC0uBi7WTcbGmmLo01pjjVHk93cyn1Tg/OCEOvdsGgznWMXrOp9Oudhz7R0V5tYCLF5/g+cU5DLaY4UYFrQozRC1mQy1WqjURc/z87uP7s1eLixefzt68W3x4BPnGcZTmgpuaAsHOg+istVakebLLQA4r9sXtZOvacDbEMLEUTyUTS4mlbIOO2xTM6P5yeXi2kIoPRMcbY8YldNw1aCoXqXCkLz+7FkplZQwETRsC4QPRXZOFYgsbzToK7fS5UlwXToUKlK2gNLq8lrOnxbPXZGWuU8plsn46LZ5JWTPUduUSMR1T4fdZf8RG8k+Bh5fNPLWh49io1OE70b7VHKE6vjW6vUr+LpD/f4Hsei/SbZx6o7SVCiYpdjvZXqLyWso8l9LtNT4o7RK7rlBMH4Ppe/k8zOukAc0iy/3o/UXdf2M7HGV6Tdv7K26jTCvXUBbI7zN4MOx/5euhn+V+AiW5Z1iTqiikHAw20po+Hlg92gb94dB8/fID9v0P3E1DKA==
+sidebar_class_name: "get api-method"
+info_path: docs/api/v1/fs-pbx-api
+custom_edit_url: null
+hide_send_button: true
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"List domains"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/api/v1/domains"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Returns only the domains the caller is allowed to access.
+
+Access rules:
+- If the user has the `domain_all` permission, all domains are returned.
+- If the user has any assigned domain groups or individual domains, only those domains are returned
+  (even if the user's own domain is not included).
+- If nothing is assigned, only the user's own domain is returned.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"in":"query","name":"per_page","description":"Results per page (min 1, max 200).","example":50,"required":false,"schema":{"type":"integer","description":"Results per page (min 1, max 200).","example":50}},{"in":"query","name":"page","description":"Page number.","example":1,"required":false,"schema":{"type":"integer","description":"Page number.","example":1}}]}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"500":{"description":"","content":{"application/json":{"schema":{"type":"object","example":{"success":false,"message":"Server Error."},"properties":{"success":{"type":"boolean","example":false},"message":{"type":"string","example":"Server Error."}}}}}}}}
+>
+  
+</StatusCodes>
+
+
+      

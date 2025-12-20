@@ -1,0 +1,165 @@
+openapi: 3.0.3
+info:
+  title: 'FS PBX API'
+  description: ''
+  version: v1
+servers:
+  -
+    url: 'https://{host}'
+    description: 'FS PBX API server'
+    variables:
+      host:
+        default: YOUR-FSPBX-HOST
+        description: 'Hostname where FS PBX is running (example: fspbx.your-domain.net)'
+paths:
+  /api/v1/domains:
+    get:
+      summary: 'List domains'
+      operationId: listDomains
+      description: "Returns only the domains the caller is allowed to access.\n\nAccess rules:\n- If the user has the `domain_all` permission, all domains are returned.\n- If the user has any assigned domain groups or individual domains, only those domains are returned\n  (even if the user's own domain is not included).\n- If nothing is assigned, only the user's own domain is returned."
+      parameters:
+        -
+          in: query
+          name: per_page
+          description: 'Results per page (min 1, max 200).'
+          example: 50
+          required: false
+          schema:
+            type: integer
+            description: 'Results per page (min 1, max 200).'
+            example: 50
+        -
+          in: query
+          name: page
+          description: 'Page number.'
+          example: 1
+          required: false
+          schema:
+            type: integer
+            description: 'Page number.'
+            example: 1
+      responses:
+        500:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: 'Server Error.'
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Server Error.'
+      tags:
+        - Domains
+    post:
+      summary: "POST /api/v1/domains\nMiddleware should enforce domains_create permission (in user home-domain context)."
+      operationId: pOSTapiv1domainsMiddlewareShouldEnforceDomainsCreatePermissioninUserHomeDomainContext
+      description: ''
+      parameters: []
+      responses: {  }
+      tags:
+        - Endpoints
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                domain_name:
+                  type: string
+                  description: 'Must not be greater than 255 characters.'
+                  example: velaupehsmowbtgqmrle
+                domain_enabled:
+                  type: string
+                  description: ''
+                  example: tempora
+              required:
+                - domain_name
+  '/api/v1/domains/{domain_uuid}':
+    get:
+      summary: "GET /api/v1/domains/{domain_uuid}\nMiddleware should already enforce:\n - domain access (if route has {domain_uuid})\n - domains_view permission"
+      operationId: gETapiv1domainsdomainUuidMiddlewareShouldAlreadyEnforceDomainAccessifRouteHasdomainUuidDomainsViewPermission
+      description: ''
+      parameters: []
+      responses:
+        500:
+          description: ''
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  success: false
+                  message: 'Server Error.'
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: 'Server Error.'
+      tags:
+        - Endpoints
+    put:
+      summary: "PUT /api/v1/domains/{domain_uuid}\nMiddleware should enforce:\n - domain access\n - domains_update permission"
+      operationId: pUTapiv1domainsdomainUuidMiddlewareShouldEnforceDomainAccessDomainsUpdatePermission
+      description: ''
+      parameters: []
+      responses: {  }
+      tags:
+        - Endpoints
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                domain_name:
+                  type: string
+                  description: 'Must not be greater than 255 characters.'
+                  example: tblkfilgkpxsmdmampfnsq
+                domain_enabled:
+                  type: string
+                  description: ''
+                  example: vel
+    delete:
+      summary: "DELETE /api/v1/domains/{domain_uuid}\nMiddleware should enforce:\n - domain access\n - domains_delete permission"
+      operationId: dELETEapiv1domainsdomainUuidMiddlewareShouldEnforceDomainAccessDomainsDeletePermission
+      description: ''
+      parameters: []
+      responses: {  }
+      tags:
+        - Endpoints
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: ''
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+tags:
+  -
+    name: Domains
+    description: ''
+  -
+    name: Endpoints
+    description: ''
+components:
+  securitySchemes:
+    default:
+      type: http
+      scheme: bearer
+      description: 'You can retrieve your token by visiting your dashboard and clicking <b>Generate API token</b>.'
+security:
+  -
+    default: []

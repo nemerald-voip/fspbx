@@ -1,0 +1,78 @@
+---
+id: p-u-tapiv-1-domainsdomain-uuid-middleware-should-enforce-domain-access-domains-update-permission
+title: "PUT /api/v1/domains/{domain_uuid}
+Middleware should enforce:
+ - domain access
+ - domains_update permission"
+description: ""
+sidebar_label: "PUT /api/v1/domains/{domain_uuid}
+Middleware should enforce:
+ - domain access
+ - domains_update permission"
+hide_title: true
+hide_table_of_contents: true
+api: eJyFVF1v2zoM/SsCnzbAqZu1w3aNYcC6dR8Pw4KmATZ0wUBbdKzFllRJThsY/u8XlJ2mbdbNL4lliuQ5PDwdGEsOgzL6i4QM7OISrdpMpWlQaT/8LFolvyopa7pBR/PKtLU816VxBX2IAe+Kgrwf/vuFlRhoRq5R3iujIQFJvnDKchXIABKw6LChQM5DdtWB4mOLoYIENDYEGQyVf7Wtkn9KQLfY2JoDT4+nr8tXeDJ5Tcc4OX2V55P/ytNycnyaT0+mJ3RM0xwScHTdKkcSsuBaSsAXFTUIWQdhazmPD07pFfT9koO9NdqTh6zrEwi44j7hXEtrlA4elkNC8uHMyC1n2ecvsfaUQGF0IB34G1pbqyKSnP72DKE7rG/y31QE5sbxSIKK1Xc8DKw8bvYxMV9bH4Q2QeQkVo4wkBOhQi1evHwpigodFsz50QMCQ16vS1Wv1vbWN7LBxpbaX0Of7GqTxrxmZP8q/yDthmro45NAQ6EyUV5tRMiTziBFq9LNNB21lnb3Zt5DAp7cZqeQ1tWQQRWC9VmadpXxoT+o/3EuZmffxbvZFzHchQQ26BS3H8nka5FUKrGtA2Tw49viYvJxPjv7Pvn8bX55kPKz8YG5FzcVORJjBeWFa7VWeiWejYgzUXqb3x5tTesmA5AjTeE5c7BkLEXrVNhGMHflr5b3v81ZEuPUdxF3lDN0GGXL7zmhiwAf9vvDtKJALRwFp2hDgvsRwaxJi3wrNsqrwG3HY4m+yg06KVBLUdSqWPO3N/nbT6TZFShyGW+/SfO3R8DDZAVf7MV/vpv4I60+patDWQ1SSUDp0kTEKkQF7cf5J6WxNIaXzZRvW+NDg3G3xgZmi0vxV4391HtXEz7amqDB17KfWkzEECww2tu9E/+rjSYn7JMu1+0NgLsdpxjoNqS2RqW55SjqblyHK0CrGNf0jiIPCWT3jXCZjBK+gq7L0dPC1X3Px9ctORbXcq/4QWrKjyyPtvRkk88uRgd7Lp7qdzxEvY2LVbc0gFvT9pFj98s+gYpQkottDBHvh2KTS86zz3Bgj7wUd5YxW/BW5qPNNkbyFYc37Ol4MzRgIp64OfGsgxr1qsUVxw4p+fkfU9BkfQ==
+sidebar_class_name: "put api-method"
+info_path: docs/api/v1/fs-pbx-api
+custom_edit_url: null
+hide_send_button: true
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"PUT /api/v1/domains/\\{domain_uuid\\}\nMiddleware should enforce:\n - domain access\n - domains_update permission"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"put"}
+  path={"/api/v1/domains/{domain_uuid}"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"in":"path","name":"domain_uuid","description":"","example":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","required":true,"schema":{"type":"string"}}]}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={{"required":false,"content":{"application/json":{"schema":{"type":"object","properties":{"domain_name":{"type":"string","description":"Must not be greater than 255 characters.","example":"tblkfilgkpxsmdmampfnsq"},"domain_enabled":{"type":"string","description":"","example":"vel"}}}}}}}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{}}
+>
+  
+</StatusCodes>
+
+
+      
