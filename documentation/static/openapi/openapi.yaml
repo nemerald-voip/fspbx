@@ -16,45 +16,107 @@ paths:
     get:
       summary: 'List domains'
       operationId: listDomains
-      description: "Returns only the domains the caller is allowed to access.\n\nAccess rules:\n- If the user has the `domain_all` permission, all domains are returned.\n- If the user has any assigned domain groups or individual domains, only those domains are returned\n  (even if the user's own domain is not included).\n- If nothing is assigned, only the user's own domain is returned."
+      description: "Returns only the domains the caller is allowed to access.\n\nAccess rules:\n- If the user has the `domain_all` permission, all domains are returned.\n- If the user has any assigned domain groups or individual domains, only those domains are returned\n  (even if the user's own domain is not included).\n- If nothing is assigned, only the user's own domain is returned.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 25.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `domain_uuid` from the previous response.\n\nExamples:\n- First page: `GET /api/v1/domains`\n- Next page:  `GET /api/v1/domains?starting_after={last_domain_uuid}`\n- Custom size: `GET /api/v1/domains?limit=50`"
       parameters:
         -
           in: query
-          name: per_page
-          description: 'Results per page (min 1, max 200).'
-          example: 50
+          name: limit
+          description: 'Optional. Number of results to return (min 1, max 100). Defaults to 25.'
+          example: 25
           required: false
           schema:
             type: integer
-            description: 'Results per page (min 1, max 200).'
-            example: 50
+            description: 'Optional. Number of results to return (min 1, max 100). Defaults to 25.'
+            example: 25
         -
           in: query
-          name: page
-          description: 'Page number.'
-          example: 1
+          name: starting_after
+          description: 'Optional. Return results after this domain UUID (cursor).'
+          example: 7d58342b-2b29-4dcf-92d6-e9a9e002a4e5
           required: false
           schema:
-            type: integer
-            description: 'Page number.'
-            example: 1
+            type: string
+            description: 'Optional. Return results after this domain UUID (cursor).'
+            example: 7d58342b-2b29-4dcf-92d6-e9a9e002a4e5
       responses:
-        500:
-          description: ''
+        200:
+          description: Success
           content:
             application/json:
               schema:
                 type: object
                 example:
-                  success: false
-                  message: 'Server Error.'
+                  object: list
+                  url: /api/v1/domains
+                  has_more: true
+                  data:
+                    -
+                      domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                      object: domain
+                      domain_name: 10001.fspbx.com
+                      domain_enabled: true
+                      domain_description: 'BluePeak Solutions'
                 properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
+                  object:
                     type: string
-                    example: 'Server Error.'
+                    example: list
+                  url:
+                    type: string
+                    example: /api/v1/domains
+                  has_more:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    example:
+                      -
+                        domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                        object: domain
+                        domain_name: 10001.fspbx.com
+                        domain_enabled: true
+                        domain_description: 'BluePeak Solutions'
+                    items:
+                      type: object
+                      properties:
+                        domain_uuid:
+                          type: string
+                          example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                        object:
+                          type: string
+                          example: domain
+                        domain_name:
+                          type: string
+                          example: 10001.fspbx.com
+                        domain_enabled:
+                          type: boolean
+                          example: true
+                        domain_description:
+                          type: string
+                          example: 'BluePeak Solutions'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
       tags:
         - Domains
     post:
@@ -75,11 +137,11 @@ paths:
                 domain_name:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: velaupehsmowbtgqmrle
+                  example: mxaxooabkmulerw
                 domain_enabled:
                   type: string
                   description: ''
-                  example: tempora
+                  example: aliquam
               required:
                 - domain_name
   '/api/v1/domains/{domain_uuid}':
@@ -125,7 +187,7 @@ paths:
                 domain_name:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: tblkfilgkpxsmdmampfnsq
+                  example: yemavcjposm
                 domain_enabled:
                   type: string
                   description: ''

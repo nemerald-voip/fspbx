@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "FS PBX",
-        "_postman_id": "72e888bb-f57c-4022-916c-aa894f295ba9",
+        "_postman_id": "fa21a185-1a59-469c-86f8-5c174fd36e74",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -27,19 +27,19 @@
                             "path": "api\/v1\/domains",
                             "query": [
                                 {
-                                    "key": "per_page",
-                                    "value": "50",
-                                    "description": "Results per page (min 1, max 200).",
+                                    "key": "limit",
+                                    "value": "25",
+                                    "description": "Optional. Number of results to return (min 1, max 100). Defaults to 25.",
                                     "disabled": false
                                 },
                                 {
-                                    "key": "page",
-                                    "value": "1",
-                                    "description": "Page number.",
+                                    "key": "starting_after",
+                                    "value": "7d58342b-2b29-4dcf-92d6-e9a9e002a4e5",
+                                    "description": "Optional. Return results after this domain UUID (cursor).",
                                     "disabled": false
                                 }
                             ],
-                            "raw": "{{baseUrl}}\/api\/v1\/domains?per_page=50&page=1"
+                            "raw": "{{baseUrl}}\/api\/v1\/domains?limit=25&starting_after=7d58342b-2b29-4dcf-92d6-e9a9e002a4e5"
                         },
                         "method": "GET",
                         "header": [
@@ -53,23 +53,20 @@
                             }
                         ],
                         "body": null,
-                        "description": "Returns only the domains the caller is allowed to access.\n\nAccess rules:\n- If the user has the `domain_all` permission, all domains are returned.\n- If the user has any assigned domain groups or individual domains, only those domains are returned\n  (even if the user's own domain is not included).\n- If nothing is assigned, only the user's own domain is returned."
+                        "description": "Returns only the domains the caller is allowed to access.\n\nAccess rules:\n- If the user has the `domain_all` permission, all domains are returned.\n- If the user has any assigned domain groups or individual domains, only those domains are returned\n  (even if the user's own domain is not included).\n- If nothing is assigned, only the user's own domain is returned.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 25.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `domain_uuid` from the previous response.\n\nExamples:\n- First page: `GET \/api\/v1\/domains`\n- Next page:  `GET \/api\/v1\/domains?starting_after={last_domain_uuid}`\n- Custom size: `GET \/api\/v1\/domains?limit=50`"
                     },
                     "response": [
                         {
-                            "header": [
-                                {
-                                    "key": "cache-control",
-                                    "value": "no-cache, private"
-                                },
-                                {
-                                    "key": "content-type",
-                                    "value": "application\/json"
-                                }
-                            ],
-                            "code": 500,
-                            "body": "{\"success\":false,\"message\":\"Server Error.\"}",
-                            "name": ""
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"object\": \"list\",\n  \"url\": \"\/api\/v1\/domains\",\n  \"has_more\": true,\n  \"data\": [\n    {\n      \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n      \"object\": \"domain\",\n      \"domain_name\": \"10001.fspbx.com\",\n      \"domain_enabled\": true,\n      \"domain_description\": \"BluePeak Solutions\"\n    }\n  ]\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\n  \"error\": {\n    \"type\": \"authentication_error\",\n    \"message\": \"Unauthenticated.\",\n    \"code\": \"unauthenticated\"\n  }\n}",
+                            "name": "Unauthenticated"
                         }
                     ]
                 }
@@ -101,7 +98,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"domain_name\":\"velaupehsmowbtgqmrle\",\"domain_enabled\":\"tempora\"}"
+                            "raw": "{\"domain_name\":\"mxaxooabkmulerw\",\"domain_enabled\":\"aliquam\"}"
                         },
                         "description": ""
                     },
@@ -186,7 +183,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"domain_name\":\"tblkfilgkpxsmdmampfnsq\",\"domain_enabled\":\"vel\"}"
+                            "raw": "{\"domain_name\":\"yemavcjposm\",\"domain_enabled\":\"vel\"}"
                         },
                         "description": ""
                     },

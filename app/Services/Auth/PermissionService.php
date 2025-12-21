@@ -108,10 +108,12 @@ class PermissionService
         return Cache::tags(['auth', "user:{$user->user_uuid}", 'domain_access'])
             ->remember('allowed_domains', now()->addMinutes(10), function () use ($user) {
 
-                $domainGroupUuids = $user->domainGroupPermissions()
+                $domainGroupUuids = $user->domain_group_permissions()
                     ->pluck('domain_group_uuid')
                     ->unique()
                     ->values();
+
+                    logger($domainGroupUuids);
 
                 $domainsFromGroups = $domainGroupUuids->isEmpty()
                     ? collect()
@@ -121,7 +123,9 @@ class PermissionService
                     ->unique()
                     ->values();
 
-                $domainsFromUser = $user->domainPermissions()
+                    logger($domainsFromGroups);
+
+                $domainsFromUser = $user->domain_permissions()
                     ->pluck('domain_uuid')
                     ->unique()
                     ->values();

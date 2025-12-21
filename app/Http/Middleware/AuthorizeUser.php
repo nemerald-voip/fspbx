@@ -26,7 +26,7 @@ public function handle(Request $request, Closure $next, string $permissionName)
     // Use target domain when present; otherwise fall back to user's own domain
     $domainUuid = $routeDomainUuid ?: (string) $user->domain_uuid;
 
-    // ✅ Only check "can access this domain" when a target domain is specified in the route
+    // Only check "can access this domain" when a target domain is specified in the route
     if ($routeDomainUuid) {
         if (! $this->authz->userCanAccessDomain($user, (string) $domainUuid)) {
             return response()->json([
@@ -39,10 +39,9 @@ public function handle(Request $request, Closure $next, string $permissionName)
             ], 403);
         }
     }
-    
-    logger($permissionName);
 
-    // ✅ Always check permission (use $domainUuid context)
+
+    // Always check permission (use $domainUuid context)
     if (! $this->authz->userHasPermission($user, $permissionName, (string) $domainUuid)) {
         return response()->json([
             'success' => false,

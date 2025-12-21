@@ -108,7 +108,7 @@ Middleware should enforce:
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: December 20, 2025</li>
+        <li>Last updated: December 21, 2025</li>
     </ul>
 </div>
 
@@ -146,6 +146,20 @@ You can switch the language used with the tabs at the top right (or from the nav
 (even if the user's own domain is not included).</li>
 <li>If nothing is assigned, only the user's own domain is returned.</li>
 </ul>
+<p>Pagination (cursor-based):</p>
+<ul>
+<li>Both <code>limit</code> and <code>starting_after</code> are optional.</li>
+<li>If <code>limit</code> is not provided, it defaults to 25.</li>
+<li>If <code>starting_after</code> is not provided, results start from the beginning.</li>
+<li>If <code>has_more</code> is true, request the next page by passing <code>starting_after</code>
+equal to the last item's <code>domain_uuid</code> from the previous response.</li>
+</ul>
+<p>Examples:</p>
+<ul>
+<li>First page: <code>GET /api/v1/domains</code></li>
+<li>Next page:  <code>GET /api/v1/domains?starting_after={last_domain_uuid}</code></li>
+<li>Custom size: <code>GET /api/v1/domains?limit=50</code></li>
+</ul>
 
 <span id="example-requests-GETapi-v1-domains">
 <blockquote>Example request:</blockquote>
@@ -153,7 +167,7 @@ You can switch the language used with the tabs at the top right (or from the nav
 
 <div class="bash-example">
     <pre><code class="language-bash">curl --request GET \
-    --get "/api/v1/domains?per_page=50&amp;page=1" \
+    --get "/api/v1/domains?limit=25&amp;starting_after=7d58342b-2b29-4dcf-92d6-e9a9e002a4e5" \
     --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
     --header "Content-Type: application/json" \
     --header "Accept: application/json"</code></pre></div>
@@ -165,8 +179,8 @@ You can switch the language used with the tabs at the top right (or from the nav
 );
 
 const params = {
-    "per_page": "50",
-    "page": "1",
+    "limit": "25",
+    "starting_after": "7d58342b-2b29-4dcf-92d6-e9a9e002a4e5",
 };
 Object.keys(params)
     .forEach(key =&gt; url.searchParams.append(key, params[key]));
@@ -186,19 +200,36 @@ fetch(url, {
 
 <span id="example-responses-GETapi-v1-domains">
             <blockquote>
-            <p>Example response (500):</p>
+            <p>Example response (200, Success):</p>
         </blockquote>
-                <details class="annotation">
-            <summary style="cursor: pointer;">
-                <small onclick="textContent = parentElement.parentElement.open ? 'Show headers' : 'Hide headers'">Show headers</small>
-            </summary>
-            <pre><code class="language-http">cache-control: no-cache, private
-content-type: application/json
- </code></pre></details>         <pre>
+                <pre>
 
 <code class="language-json" style="max-height: 300px;">{
-    &quot;success&quot;: false,
-    &quot;message&quot;: &quot;Server Error.&quot;
+    &quot;object&quot;: &quot;list&quot;,
+    &quot;url&quot;: &quot;/api/v1/domains&quot;,
+    &quot;has_more&quot;: true,
+    &quot;data&quot;: [
+        {
+            &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+            &quot;object&quot;: &quot;domain&quot;,
+            &quot;domain_name&quot;: &quot;10001.fspbx.com&quot;,
+            &quot;domain_enabled&quot;: true,
+            &quot;domain_description&quot;: &quot;BluePeak Solutions&quot;
+        }
+    ]
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
 }</code>
  </pre>
     </span>
@@ -267,26 +298,26 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                             <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
                                     <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>per_page</code></b>&nbsp;&nbsp;
+                <b style="line-height: 2;"><code>limit</code></b>&nbsp;&nbsp;
 <small>integer</small>&nbsp;
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
-               step="any"               name="per_page"                data-endpoint="GETapi-v1-domains"
-               value="50"
+               step="any"               name="limit"                data-endpoint="GETapi-v1-domains"
+               value="25"
                data-component="query">
     <br>
-<p>Results per page (min 1, max 200). Example: <code>50</code></p>
+<p>Optional. Number of results to return (min 1, max 100). Defaults to 25. Example: <code>25</code></p>
             </div>
                                     <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>page</code></b>&nbsp;&nbsp;
-<small>integer</small>&nbsp;
+                <b style="line-height: 2;"><code>starting_after</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
 <i>optional</i> &nbsp;
-                <input type="number" style="display: none"
-               step="any"               name="page"                data-endpoint="GETapi-v1-domains"
-               value="1"
+                <input type="text" style="display: none"
+                              name="starting_after"                data-endpoint="GETapi-v1-domains"
+               value="7d58342b-2b29-4dcf-92d6-e9a9e002a4e5"
                data-component="query">
     <br>
-<p>Page number. Example: <code>1</code></p>
+<p>Optional. Return results after this domain UUID (cursor). Example: <code>7d58342b-2b29-4dcf-92d6-e9a9e002a4e5</code></p>
             </div>
                 </form>
 
@@ -314,8 +345,8 @@ Middleware should enforce domains_create permission (in user home-domain context
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
-    \"domain_name\": \"velaupehsmowbtgqmrle\",
-    \"domain_enabled\": \"tempora\"
+    \"domain_name\": \"mxaxooabkmulerw\",
+    \"domain_enabled\": \"aliquam\"
 }"
 </code></pre></div>
 
@@ -332,8 +363,8 @@ const headers = {
 };
 
 let body = {
-    "domain_name": "velaupehsmowbtgqmrle",
-    "domain_enabled": "tempora"
+    "domain_name": "mxaxooabkmulerw",
+    "domain_enabled": "aliquam"
 };
 
 fetch(url, {
@@ -416,10 +447,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="domain_name"                data-endpoint="POSTapi-v1-domains"
-               value="velaupehsmowbtgqmrle"
+               value="mxaxooabkmulerw"
                data-component="body">
     <br>
-<p>Must not be greater than 255 characters. Example: <code>velaupehsmowbtgqmrle</code></p>
+<p>Must not be greater than 255 characters. Example: <code>mxaxooabkmulerw</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>domain_enabled</code></b>&nbsp;&nbsp;
@@ -427,10 +458,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="domain_enabled"                data-endpoint="POSTapi-v1-domains"
-               value="tempora"
+               value="aliquam"
                data-component="body">
     <br>
-<p>Example: <code>tempora</code></p>
+<p>Example: <code>aliquam</code></p>
         </div>
         </form>
 
@@ -592,7 +623,7 @@ Middleware should enforce:
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
-    \"domain_name\": \"tblkfilgkpxsmdmampfnsq\",
+    \"domain_name\": \"yemavcjposm\",
     \"domain_enabled\": \"vel\"
 }"
 </code></pre></div>
@@ -610,7 +641,7 @@ const headers = {
 };
 
 let body = {
-    "domain_name": "tblkfilgkpxsmdmampfnsq",
+    "domain_name": "yemavcjposm",
     "domain_enabled": "vel"
 };
 
@@ -706,10 +737,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="domain_name"                data-endpoint="PUTapi-v1-domains--domain_uuid-"
-               value="tblkfilgkpxsmdmampfnsq"
+               value="yemavcjposm"
                data-component="body">
     <br>
-<p>Must not be greater than 255 characters. Example: <code>tblkfilgkpxsmdmampfnsq</code></p>
+<p>Must not be greater than 255 characters. Example: <code>yemavcjposm</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>domain_enabled</code></b>&nbsp;&nbsp;

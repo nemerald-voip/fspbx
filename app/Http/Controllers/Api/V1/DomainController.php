@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Models\Domain;
 use Illuminate\Http\Request;
+use App\Data\Api\V1\DomainData;
+use App\Exceptions\ApiException;
 use App\Http\Responses\ApiResponse;
 use App\Http\Controllers\Controller;
 use Spatie\QueryBuilder\QueryBuilder;
 use App\Services\Auth\PermissionService;
+use App\Data\Api\V1\DomainListResponseData;
 
 class DomainController extends Controller
 {
@@ -26,40 +29,97 @@ class DomainController extends Controller
      *   (even if the user's own domain is not included).
      * - If nothing is assigned, only the user's own domain is returned.
      *
+     * Pagination (cursor-based):
+     * - Both `limit` and `starting_after` are optional.
+     * - If `limit` is not provided, it defaults to 25.
+     * - If `starting_after` is not provided, results start from the beginning.
+     * - If `has_more` is true, request the next page by passing `starting_after`
+     *   equal to the last item's `domain_uuid` from the previous response.
+     * 
+     * Examples:
+     * - First page: `GET /api/v1/domains`
+     * - Next page:  `GET /api/v1/domains?starting_after={last_domain_uuid}`
+     * - Custom size: `GET /api/v1/domains?limit=50`
+     *
      * @group Domains
      * @authenticated
-     * @queryParam per_page integer Results per page (min 1, max 200). Example: 50
-     * @queryParam page integer Page number. Example: 1
+     *
+     * @queryParam limit integer Optional. Number of results to return (min 1, max 100). Defaults to 25. Example: 25
+     * @queryParam starting_after string Optional. Return results after this domain UUID (cursor). Example: 7d58342b-2b29-4dcf-92d6-e9a9e002a4e5
+     *
+     * @response 200 scenario="Success" {
+     *   "object": "list",
+     *   "url": "/api/v1/domains",
+     *   "has_more": true,
+     *   "data": [
+     *     {
+     *       "domain_uuid": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+     *       "object": "domain",
+     *       "domain_name": "10001.fspbx.com",
+     *       "domain_enabled": true,
+     *       "domain_description": "BluePeak Solutions"
+     *     }
+     *   ]
+     * }
+     *
+     * @response 401 scenario="Unauthenticated" {
+     *   "error": {
+     *     "type": "authentication_error",
+     *     "message": "Unauthenticated.",
+     *     "code": "unauthenticated"
+     *   }
+     * }
      */
+
     public function index(Request $request)
     {
         $user = $request->user();
-
-        $allowedDomainUuids = $this->authz->allowedDomainUuids($user); // null => all domains
-
-        $query = QueryBuilder::for(Domain::class)
-            // add allowed filters/sorts as you like
-            ->allowedFilters([
-                'domain_name',
-                'domain_enabled',
-            ])
-            ->allowedSorts([
-                'domain_name',
-                'insert_date',
-                'update_date',
-            ]);
-
-        if ($allowedDomainUuids !== null) {
-            $query->whereIn('domain_uuid', $allowedDomainUuids);
+        if (! $user) {
+            throw new ApiException(401, 'authentication_error', 'Unauthenticated.', 'unauthenticated');
         }
 
-        $perPage = (int)($request->input('per_page', 50));
-        $perPage = max(1, min(200, $perPage));
+        $allowed = $this->authz->allowedDomainUuids($user); // null => all domains
 
-        return ApiResponse::ok(
-            $query->paginate($perPage),
-            'OK'
+        $limit = (int) $request->input('limit', 25);
+        $limit = max(1, min(100, $limit));
+
+        $startingAfter = (string) $request->input('starting_after', '');
+
+        $query = QueryBuilder::for(Domain::class)
+            ->allowedFilters(['domain_name', 'domain_enabled'])
+            ->defaultSort('domain_uuid')
+            ->reorder('domain_uuid')
+            ->limit($limit + 1);
+
+        if ($allowed !== null) {
+            $query->whereIn('domain_uuid', $allowed);
+        }
+
+        if ($startingAfter !== '') {
+            $query->where('domain_uuid', '>', $startingAfter);
+        }
+
+        $rows = $query->get();
+
+        $hasMore = $rows->count() > $limit;
+        $rows = $rows->take($limit);
+
+        $data = $rows->map(fn($d) => new DomainData(
+            domain_uuid: (string) $d->domain_uuid,
+            object: 'domain',
+            domain_name: (string) $d->domain_name,
+            domain_enabled: (bool) $d->domain_enabled,
+            domain_description: $d->domain_description,
+        ))->all();
+
+        $payload = new DomainListResponseData(
+            object: 'list',
+            url: '/api/v1/domains',
+            has_more: $hasMore,
+            data: $data,
         );
+
+        return response()->json($payload->toArray(), 200);
     }
 
     /**

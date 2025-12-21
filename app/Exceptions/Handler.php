@@ -6,6 +6,7 @@ use Throwable;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Illuminate\Http\Request;
 
 class Handler extends ExceptionHandler
 {
@@ -38,6 +39,22 @@ class Handler extends ExceptionHandler
     {
         $this->reportable(function (Throwable $e) {
             //
+        });
+
+        $this->renderable(function (ApiException $e, Request $request) {
+            if (! $request->is('api/v1/*')) {
+                return null;
+            }
+
+            return response()->json([
+                'error' => array_filter([
+                    'type'    => $e->type,
+                    'message' => $e->getMessage(),
+                    'code'    => $e->code,
+                    'param'   => $e->param,
+                    'doc_url' => 'https://www.fspbx.com/docs/api/errors/',
+                ], fn($v) => $v !== null && $v !== ''),
+            ], $e->status);
         });
     }
 

@@ -24,5 +24,13 @@ FS PBX uses conventional HTTP response codes to indicate the success or failure 
 In general: Codes in the 2xx range indicate success. Codes in the 4xx range indicate an error that failed given the information provided 
 (e.g., a required parameter was omitted, a charge failed, etc.). Codes in the 5xx range indicate an error with FS PBX server.
 
+## Pagination
+
+All top-level API resources have support for bulk fetches through “list” API methods. For example, you can **list domains**, **list extensions**, and **list voicemails**. 
+These list API methods share a common structure and accept, at a minimum, the following three parameters: `limit`, and `starting_after`.
+
+The list API methods use cursor-based pagination through the `starting_after` parameter. This parameter accepts an existing object UUID value and return objects in reverse chronological order. 
+It returns objects listed after the named object. 
+
 ## Support
 For issues, file a GitHub issue or contact support.

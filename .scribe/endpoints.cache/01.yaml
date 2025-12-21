@@ -31,7 +31,7 @@ endpoints:
         name: domain_name
         description: 'Must not be greater than 255 characters.'
         required: true
-        example: velaupehsmowbtgqmrle
+        example: mxaxooabkmulerw
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -40,21 +40,21 @@ endpoints:
         name: domain_enabled
         description: ''
         required: false
-        example: tempora
+        example: aliquam
         type: string
         enumValues: []
         exampleWasSpecified: false
         custom: []
     cleanBodyParameters:
-      domain_name: velaupehsmowbtgqmrle
-      domain_enabled: tempora
+      domain_name: mxaxooabkmulerw
+      domain_enabled: aliquam
     fileParameters: []
     responses: []
     responseFields: []
     auth:
       - headers
       - Authorization
-      - 'Bearer 3afZhk54c8g6EvebPVd6aD1'
+      - 'Bearer ebD86af6dE4aV1Zg3kch5vP'
     controller: null
     method: null
     route: null
@@ -110,7 +110,7 @@ endpoints:
     auth:
       - headers
       - Authorization
-      - 'Bearer 3Pvah1f4ZcEg5dkDb66aV8e'
+      - 'Bearer 635h1fdavgeD8k6VcZPa4bE'
     controller: null
     method: null
     route: null
@@ -155,7 +155,7 @@ endpoints:
         name: domain_name
         description: 'Must not be greater than 255 characters.'
         required: false
-        example: tblkfilgkpxsmdmampfnsq
+        example: yemavcjposm
         type: string
         enumValues: []
         exampleWasSpecified: false
@@ -170,7 +170,7 @@ endpoints:
         exampleWasSpecified: false
         custom: []
     cleanBodyParameters:
-      domain_name: tblkfilgkpxsmdmampfnsq
+      domain_name: yemavcjposm
       domain_enabled: vel
     fileParameters: []
     responses: []
@@ -178,7 +178,7 @@ endpoints:
     auth:
       - headers
       - Authorization
-      - 'Bearer Dhgfa53Pv8cdE6ZeV61bak4'
+      - 'Bearer V3a1f6b8kd645DPveaZcghE'
     controller: null
     method: null
     route: null
@@ -226,7 +226,7 @@ endpoints:
     auth:
       - headers
       - Authorization
-      - 'Bearer 6EhZDVe4v6da8ag3cfP5k1b'
+      - 'Bearer 35afc814e6PkEbaV6gdvhZD'
     controller: null
     method: null
     route: null
