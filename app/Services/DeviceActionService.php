@@ -52,7 +52,8 @@ class DeviceActionService
             return "panasonic";
         }
 
-        return "";
+        // Unknown hardphone vendors: treat like Yealink for event_notify templates
+        return "yealink";
     }
 
     protected function generateCommand($reg, $action, $vendor)
