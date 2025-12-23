@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "FS PBX",
-        "_postman_id": "fa21a185-1a59-469c-86f8-5c174fd36e74",
+        "_postman_id": "9a60dc6d-0814-423e-8294-151523da5337",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -69,15 +69,67 @@
                             "name": "Unauthenticated"
                         }
                     ]
-                }
-            ]
-        },
-        {
-            "name": "Endpoints",
-            "description": "",
-            "item": [
+                },
                 {
-                    "name": "POST \/api\/v1\/domains\nMiddleware should enforce domains_create permission (in user home-domain context).",
+                    "name": "Retrieve a domain",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns a single domain the caller is allowed to access.\n\nAccess rules:\n- If the user has the `domain_all` permission, any domain may be retrieved.\n- If the user has assigned domain groups or individual domains, the domain must be in those assignments\n  (even if the user's own domain is not included).\n- If nothing is assigned, the user may only retrieve their own domain.\n\nNotes:\n- If the domain does not exist, a `resource_missing` error is returned.\n- If the domain exists but is not accessible, a `forbidden_domain` error is returned."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"object\": \"domain\",\n  \"domain_name\": \"10001.fspbx.com\",\n  \"domain_enabled\": true,\n  \"domain_description\": \"BluePeak Solutions\"\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\n  \"error\": {\n    \"type\": \"authentication_error\",\n    \"message\": \"Unauthenticated.\",\n    \"code\": \"unauthenticated\"\n  }\n}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"You do not have access to this domain.\",\n    \"code\": \"forbidden_domain\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Forbidden (domain access)"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Domain not found.\",\n    \"code\": \"resource_missing\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Create a domain",
                     "request": {
                         "url": {
                             "host": "{{baseUrl}}",
@@ -98,61 +150,37 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"domain_name\":\"mxaxooabkmulerw\",\"domain_enabled\":\"aliquam\"}"
+                            "raw": "{\"domain_name\":\"10005.fspbx.com\",\"domain_description\":\"BluePeak Solutions\",\"domain_enabled\":true}"
                         },
-                        "description": ""
-                    },
-                    "response": []
-                },
-                {
-                    "name": "GET \/api\/v1\/domains\/{domain_uuid}\nMiddleware should already enforce:\n - domain access (if route has {domain_uuid})\n - domains_view permission",
-                    "request": {
-                        "url": {
-                            "host": "{{baseUrl}}",
-                            "path": "api\/v1\/domains\/:domain_uuid",
-                            "query": [],
-                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid",
-                            "variable": [
-                                {
-                                    "id": "domain_uuid",
-                                    "key": "domain_uuid",
-                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
-                                    "description": ""
-                                }
-                            ]
-                        },
-                        "method": "GET",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application\/json"
-                            },
-                            {
-                                "key": "Accept",
-                                "value": "application\/json"
-                            }
-                        ],
-                        "body": null,
-                        "description": ""
+                        "description": "Creates a new domain.\n\nNotes:\n- `domain_enabled` is optional and defaults to `true`.\n- `domain_name` is normalized to lowercase and trimmed."
                     },
                     "response": [
                         {
-                            "header": [
-                                {
-                                    "key": "cache-control",
-                                    "value": "no-cache, private"
-                                },
-                                {
-                                    "key": "content-type",
-                                    "value": "application\/json"
-                                }
-                            ],
-                            "code": 500,
-                            "body": "{\"success\":false,\"message\":\"Server Error.\"}",
-                            "name": ""
+                            "header": [],
+                            "code": 201,
+                            "body": "{\n  \"domain_uuid\": \"9b6a4aa2-2b4f-4c5a-b4bb-1f6b2a9b9b01\",\n  \"object\": \"domain\",\n  \"domain_name\": \"10005.fspbx.com\",\n  \"domain_enabled\": true,\n  \"domain_description\": \"BluePeak Solutions\"\n}",
+                            "name": "Created"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Domain name already exists.\",\n    \"code\": \"domain_name_exists\",\n    \"param\": \"domain_name\"\n  }\n}",
+                            "name": "Domain name already exists"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\n  \"error\": {\n    \"type\": \"authentication_error\",\n    \"message\": \"Unauthenticated.\",\n    \"code\": \"unauthenticated\"\n  }\n}",
+                            "name": "Unauthenticated"
                         }
                     ]
-                },
+                }
+            ]
+        },
+        {
+            "name": "Endpoints",
+            "description": "",
+            "item": [
                 {
                     "name": "PUT \/api\/v1\/domains\/{domain_uuid}\nMiddleware should enforce:\n - domain access\n - domains_update permission",
                     "request": {
@@ -183,7 +211,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"domain_name\":\"yemavcjposm\",\"domain_enabled\":\"vel\"}"
+                            "raw": "{\"domain_name\":\"qemlebmqzkisyyab\",\"domain_enabled\":\"adipisci\"}"
                         },
                         "description": ""
                     },

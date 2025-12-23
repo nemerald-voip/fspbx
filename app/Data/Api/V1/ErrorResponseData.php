@@ -11,7 +11,6 @@ class ErrorData extends Data
         public ?string $code = null,  // parameter_missing, forbidden, ...
         public ?string $param = null,
         public ?string $doc_url = null,
-        public ?string $request_id = null,
     ) {}
 }
 

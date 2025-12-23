@@ -10,7 +10,7 @@ class ApiException extends RuntimeException
         public int $status,
         public string $type,          // e.g. invalid_request_error, authentication_error
         string $message,
-        public ?string $code = null,  // e.g. parameter_missing, forbidden, resource_missing
+        public ?string $error_code = null,  // e.g. parameter_missing, forbidden, resource_missing
         public ?string $param = null, // e.g. "domain_name"
         public array $extra = [],     // optional extra fields if you want them
     ) {

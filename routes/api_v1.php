@@ -28,16 +28,16 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
         ->middleware('user.authorize:domain_select');
 
     Route::post('/domains', [DomainController::class, 'store'])
-        ->middleware('user.authorize:domains_create');
+        ->middleware('user.authorize:domain_add');
 
     Route::get('/domains/{domain_uuid}', [DomainController::class, 'show'])
-        ->middleware('user.authorize:domains_view');
+        ->middleware('user.authorize:domain_view');
 
     Route::put('/domains/{domain_uuid}', [DomainController::class, 'update'])
-        ->middleware('user.authorize:domains_update');
+        ->middleware('user.authorize:domain_edit');
 
     Route::delete('/domains/{domain_uuid}', [DomainController::class, 'destroy'])
-        ->middleware('user.authorize:domains_delete');
+        ->middleware('user.authorize:domain_delete');
 
 
     /*

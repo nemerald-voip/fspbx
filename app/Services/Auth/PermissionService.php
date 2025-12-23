@@ -113,8 +113,6 @@ class PermissionService
                     ->unique()
                     ->values();
 
-                    logger($domainGroupUuids);
-
                 $domainsFromGroups = $domainGroupUuids->isEmpty()
                     ? collect()
                     : DomainGroupRelations::query()
@@ -122,8 +120,6 @@ class PermissionService
                     ->pluck('domain_uuid')
                     ->unique()
                     ->values();
-
-                    logger($domainsFromGroups);
 
                 $domainsFromUser = $user->domain_permissions()
                     ->pluck('domain_uuid')

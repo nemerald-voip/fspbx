@@ -3,87 +3,121 @@
 namespace App\Exceptions;
 
 use Throwable;
+use Illuminate\Http\Request;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
-use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Auth\Access\AuthorizationException;
+
+use App\Data\Api\V1\ErrorData;
+use App\Data\Api\V1\ErrorResponseData;
 
 class Handler extends ExceptionHandler
 {
-    /**
-     * A list of the exception types that are not reported.
-     *
-     * @var array<int, class-string<Throwable>>
-     */
-    protected $dontReport = [
-        //
-    ];
-
-    /**
-     * A list of the inputs that are never flashed for validation exceptions.
-     *
-     * @var array<int, string>
-     */
-    protected $dontFlash = [
-        'current_password',
-        'password',
-        'password_confirmation',
-    ];
-
-    /**
-     * Register the exception handling callbacks for the application.
-     *
-     * @return void
-     */
-    public function register()
+    public function register(): void
     {
-        $this->reportable(function (Throwable $e) {
-            //
+        // 1) Validation (FormRequest / validator)
+        $this->renderable(function (ValidationException $e, Request $request) {
+            if (! $request->is('api/v1/*')) return null;
+
+            $errors = $e->errors();
+            $param = array_key_first($errors);
+            $message = $param ? ($errors[$param][0] ?? 'Invalid request.') : 'Invalid request.';
+
+            $payload = ErrorResponseData::from([
+                'error' => ErrorData::from([
+                    'type'    => 'invalid_request_error',
+                    'message' => $message,
+                    'code'    => 'invalid_parameter',
+                    'param'   => $param,
+                    'doc_url' => 'https://www.fspbx.com/docs/api/v1/errors/',
+                ]),
+            ]);
+
+            return response()->json($payload->toArray(), 400);
         });
 
-        $this->renderable(function (ApiException $e, Request $request) {
-            if (! $request->is('api/v1/*')) {
-                return null;
-            }
+        // 2) Authorization (policies/gates OR FormRequest->authorize() = false)
+        $this->renderable(function (AuthorizationException $e, Request $request) {
+            if (! $request->is('api/v1/*')) return null;
 
-            return response()->json([
-                'error' => array_filter([
+            $payload = ErrorResponseData::from([
+                'error' => ErrorData::from([
+                    'type'    => 'invalid_request_error',
+                    'message' => $e->getMessage() ?: 'Forbidden.',
+                    'code'    => 'forbidden',
+                    'doc_url' => 'https://www.fspbx.com/docs/api/v1/errors/',
+                ]),
+            ]);
+
+            return response()->json($payload->toArray(), 403);
+        });
+
+        // 3) Authentication (if something throws AuthenticationException)
+        $this->renderable(function (AuthenticationException $e, Request $request) {
+            if (! $request->is('api/v1/*')) return null;
+
+            $payload = ErrorResponseData::from([
+                'error' => ErrorData::from([
+                    'type'    => 'authentication_error',
+                    'message' => 'Unauthenticated.',
+                    'code'    => 'unauthenticated',
+                    'doc_url' => 'https://www.fspbx.com/docs/api/v1/errors/',
+                ]),
+            ]);
+
+            return response()->json($payload->toArray(), 401);
+        });
+
+        // 4) Your custom ApiException
+        $this->renderable(function (ApiException $e, Request $request) {
+            if (! $request->is('api/v1/*')) return null;
+
+            $payload = ErrorResponseData::from([
+                'error' => ErrorData::from([
                     'type'    => $e->type,
                     'message' => $e->getMessage(),
-                    'code'    => $e->code,
+                    'code'    => $e->error_code,
                     'param'   => $e->param,
-                    'doc_url' => 'https://www.fspbx.com/docs/api/errors/',
-                ], fn($v) => $v !== null && $v !== ''),
-            ], $e->status);
+                    'doc_url' => 'https://www.fspbx.com/docs/api/v1/errors/',
+                ]),
+            ]);
+
+            return response()->json($payload->toArray(), $e->status);
+        });
+
+        // 5) Catch-all MUST be last
+        $this->renderable(function (Throwable $e, Request $request) {
+            if (! $request->is('api/v1/*')) return null;
+
+            logger()->error('Unhandled API exception', ['exception' => $e]);
+
+            $payload = ErrorResponseData::from([
+                'error' => ErrorData::from([
+                    'type'    => 'api_error',
+                    'message' => 'An unexpected error occurred.',
+                    'doc_url' => 'https://www.fspbx.com/docs/api/v1/errors/',
+                ]),
+            ]);
+
+            return response()->json($payload->toArray(), 500);
         });
     }
 
+    // Optional: you can delete this override entirely once the AuthenticationException
+    // renderable is in place. If you keep it, make it Stripe-like for v1:
     protected function unauthenticated($request, AuthenticationException $exception)
     {
-        if ($request->is('api/*')) {
-            return response()->json(['message' => 'Unauthenticated.'], 401);
+        if ($request->is('api/v1/*')) {
+            return response()->json([
+                'error' => [
+                    'type' => 'authentication_error',
+                    'message' => 'Unauthenticated.',
+                    'code' => 'unauthenticated',
+                ],
+            ], 401);
         }
 
         return redirect()->guest(route('login'));
-    }
-
-
-    public function render($request, Throwable $e)
-    {
-        if ($request->is('api/*') || $request->expectsJson()) {
-
-            $status = $e instanceof HttpExceptionInterface
-                ? $e->getStatusCode()
-                : 500;
-
-            $payload = [
-                'success' => false,
-                'message' => $status === 500 ? 'Server Error.' : ($e->getMessage() ?: 'Request failed.'),
-            ];
-
-            return response()->json($payload, $status);
-        }
-
-        return parent::render($request, $e);
     }
 }

@@ -6,11 +6,14 @@ use App\Models\Domain;
 use Illuminate\Http\Request;
 use App\Data\Api\V1\DomainData;
 use App\Exceptions\ApiException;
+use Illuminate\Support\Facades\DB;
 use App\Http\Responses\ApiResponse;
 use App\Http\Controllers\Controller;
 use Spatie\QueryBuilder\QueryBuilder;
+use Illuminate\Database\QueryException;
 use App\Services\Auth\PermissionService;
 use App\Data\Api\V1\DomainListResponseData;
+use App\Http\Requests\Api\V1\StoreDomainRequest;
 
 class DomainController extends Controller
 {
@@ -123,50 +126,204 @@ class DomainController extends Controller
     }
 
     /**
-     * GET /api/v1/domains/{domain_uuid}
-     * Middleware should already enforce:
-     *  - domain access (if route has {domain_uuid})
-     *  - domains_view permission
+     * Retrieve a domain
+     *
+     * Returns a single domain the caller is allowed to access.
+     *
+     * Access rules:
+     * - If the user has the `domain_all` permission, any domain may be retrieved.
+     * - If the user has assigned domain groups or individual domains, the domain must be in those assignments
+     *   (even if the user's own domain is not included).
+     * - If nothing is assigned, the user may only retrieve their own domain.
+     *
+     * Notes:
+     * - If the domain does not exist, a `resource_missing` error is returned.
+     * - If the domain exists but is not accessible, a `forbidden_domain` error is returned.
+     *
+     * @group Domains
+     * @authenticated
+     *
+     * @urlParam domain_uuid string required The domain UUID. Example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+     *
+     * @response 200 scenario="Success" {
+     *   "domain_uuid": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+     *   "object": "domain",
+     *   "domain_name": "10001.fspbx.com",
+     *   "domain_enabled": true,
+     *   "domain_description": "BluePeak Solutions"
+     * }
+     *
+     * @response 401 scenario="Unauthenticated" {
+     *   "error": {
+     *     "type": "authentication_error",
+     *     "message": "Unauthenticated.",
+     *     "code": "unauthenticated"
+     *   }
+     * }
+     *
+     * @response 403 scenario="Forbidden (domain access)" {
+     *   "error": {
+     *     "type": "invalid_request_error",
+     *     "message": "You do not have access to this domain.",
+     *     "code": "forbidden_domain",
+     *     "param": "domain_uuid"
+     *   }
+     * }
+     *
+     * @response 404 scenario="Not found" {
+     *   "error": {
+     *     "type": "invalid_request_error",
+     *     "message": "Domain not found.",
+     *     "code": "resource_missing",
+     *     "param": "domain_uuid"
+     *   }
+     * }
      */
     public function show(Request $request, string $domain_uuid)
     {
-        $domain = Domain::query()
+        $user = $request->user();
+        if (! $user) {
+            throw new ApiException(401, 'authentication_error', 'Unauthenticated.', 'unauthenticated');
+        }
+
+        // (Optional) Validate UUID format early (nice for consumers + Scribe)
+        if (! preg_match('/^[0-9a-fA-F-]{36}$/', $domain_uuid)) {
+            throw new ApiException(
+                400,
+                'invalid_request_error',
+                'Invalid domain UUID.',
+                'invalid_request',
+                'domain_uuid'
+            );
+        }
+
+        $allowed = $this->authz->allowedDomainUuids($user); // null => all domains
+
+        // If user is not "all domains", enforce membership before hitting DB (cheap and clear)
+        if ($allowed !== null && ! $allowed->contains($domain_uuid)) {
+            throw new ApiException(
+                403,
+                'invalid_request_error',
+                'You do not have access to this domain.',
+                'forbidden_domain',
+                'domain_uuid'
+            );
+        }
+
+        $domain = QueryBuilder::for(Domain::class)
             ->where('domain_uuid', $domain_uuid)
             ->first();
 
         if (! $domain) {
-            return ApiResponse::error('Not found.', 'not_found', ['resource' => 'domain'], 404);
+            throw new ApiException(
+                404,
+                'invalid_request_error',
+                'Domain not found.',
+                'resource_missing',
+                'domain_uuid'
+            );
         }
 
-        return ApiResponse::ok($domain, 'OK');
+        $payload = new DomainData(
+            domain_uuid: (string) $domain->domain_uuid,
+            object: 'domain',
+            domain_name: (string) $domain->domain_name,
+            domain_enabled: (bool) $domain->domain_enabled,
+            domain_description: $domain->domain_description,
+        );
+
+        return response()->json($payload->toArray(), 200);
     }
 
+
     /**
-     * POST /api/v1/domains
-     * Middleware should enforce domains_create permission (in user home-domain context).
+     * Create a domain
+     *
+     * Creates a new domain.
+     *
+     * Notes:
+     * - `domain_enabled` is optional and defaults to `true`.
+     * - `domain_name` is normalized to lowercase and trimmed.
+     *
+     * @group Domains
+     * @authenticated
+     *
+     * @bodyParam domain_name string required The domain name (lowercased). Example: 10005.fspbx.com
+     * @bodyParam domain_description string required A human-friendly label/description. Example: BluePeak Solutions
+     * @bodyParam domain_enabled boolean Optional. Whether the domain is enabled. Defaults to true. Example: true
+     *
+     * @response 201 scenario="Created" {
+     *   "domain_uuid": "9b6a4aa2-2b4f-4c5a-b4bb-1f6b2a9b9b01",
+     *   "object": "domain",
+     *   "domain_name": "10005.fspbx.com",
+     *   "domain_enabled": true,
+     *   "domain_description": "BluePeak Solutions"
+     * }
+     *
+     * @response 400 scenario="Domain name already exists" {
+     *   "error": {
+     *     "type": "invalid_request_error",
+     *     "message": "Domain name already exists.",
+     *     "code": "domain_name_exists",
+     *     "param": "domain_name"
+     *   }
+     * }
+     *
+     * @response 401 scenario="Unauthenticated" {
+     *   "error": {
+     *     "type": "authentication_error",
+     *     "message": "Unauthenticated.",
+     *     "code": "unauthenticated"
+     *   }
+     * }
      */
-    public function store(Request $request)
+    public function store(StoreDomainRequest $request)
     {
-        $data = $request->validate([
-            'domain_name' => ['required', 'string', 'max:255'],
-            'domain_enabled' => ['nullable', 'string'], // Fusion-style "true"/"false" as text
-            // add other v_domains fields you want to allow externally
-        ]);
-
-        // NOTE: your Domain model likely uses uuid PK generation (TraitUuid).
-        // If not, set domain_uuid here.
-
-        $domain = new Domain();
-        $domain->fill($data);
-
-        // If you require defaults:
-        if (! isset($data['domain_enabled'])) {
-            $domain->domain_enabled = 'true';
+        $user = $request->user();
+        if (! $user) {
+            throw new ApiException(401, 'authentication_error', 'Unauthenticated.', 'unauthenticated');
         }
 
-        $domain->save();
+        $validated = $request->validated();
 
-        return ApiResponse::ok($domain, 'Domain created.', [], 201);
+        try {
+            $domain = DB::transaction(function () use ($validated) {
+                $domain = new Domain();
+                $domain->fill($validated);
+                $domain->save();
+
+                return $domain->fresh();
+            });
+
+            $payload = new DomainData(
+                domain_uuid: (string) $domain->domain_uuid,
+                object: 'domain',
+                domain_name: (string) $domain->domain_name,
+                domain_enabled: (bool) $domain->domain_enabled,
+                domain_description: $domain->domain_description,
+            );
+
+            return response()
+                ->json($payload->toArray(), 201)
+                ->header('Location', "/api/v1/domains/{$domain->domain_uuid}");
+        } catch (QueryException $e) {
+            // Postgres unique violation = 23505
+            if (($e->errorInfo[0] ?? null) === '23505') {
+                throw new ApiException(
+                    400,
+                    'invalid_request_error',
+                    'Domain name already exists.',
+                    'domain_name_exists',
+                    'domain_name'
+                );
+            }
+
+            logger('API Domain store QueryException: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            throw new ApiException(500, 'api_error', 'Internal server error.', 'internal_error');
+        } catch (\Throwable $e) {
+            logger('API Domain store error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            throw new ApiException(500, 'api_error', 'Internal server error.', 'internal_error');
+        }
     }
 
     /**

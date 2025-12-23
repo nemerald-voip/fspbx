@@ -2,17 +2,20 @@
 
 namespace App\Providers;
 
+use App\Models\User;
 use App\Models\Domain;
 use App\Models\Devices;
 use App\Models\Extensions;
 use Laravel\Horizon\Horizon;
 use Laravel\Sanctum\Sanctum;
 use App\Models\EmergencyCall;
+use App\Observers\UserObserver;
 use App\Observers\DeviceObserver;
 use App\Observers\DomainObserver;
 use App\Models\EmergencyCallEmail;
 use App\Models\BusinessHourHoliday;
 use App\Models\EmergencyCallMember;
+use App\Models\DomainGroupRelations;
 use App\Observers\ExtensionObserver;
 use App\Services\RingotelApiService;
 use Illuminate\Pagination\Paginator;
@@ -24,12 +27,15 @@ use Illuminate\Support\ServiceProvider;
 use App\Observers\EmergencyCallObserver;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\Rules\Password;
+use App\Models\UserDomainGroupPermissions;
 use App\Models\Sanctum\PersonalAccessToken;
 use App\Observers\EmergencyCallEmailObserver;
 use App\Observers\BusinessHourHolidayObserver;
 use App\Observers\EmergencyCallMemberObserver;
 use App\Models\CallTranscriptionProviderConfig;
+use App\Observers\DomainGroupRelationsObserver;
 use App\Observers\CallTranscriptionPolicyObserver;
+use App\Observers\UserDomainGroupPermissionsObserver;
 use App\Observers\CallTranscriptionProviderConfigObserver;
 
 
@@ -93,6 +99,8 @@ class AppServiceProvider extends ServiceProvider
             }
         });
 
+        User::observe(UserObserver::class);
+        UserDomainGroupPermissions::observe(UserDomainGroupPermissionsObserver::class);
         Extensions::observe(ExtensionObserver::class);
         EmergencyCall::observe(EmergencyCallObserver::class);
         EmergencyCallMember::observe(EmergencyCallMemberObserver::class);
@@ -101,7 +109,9 @@ class AppServiceProvider extends ServiceProvider
         Devices::observe(DeviceObserver::class);
         CallTranscriptionPolicy::observe(CallTranscriptionPolicyObserver::class);
         CallTranscriptionProviderConfig::observe(CallTranscriptionProviderConfigObserver::class);
-        Domain::observe(DomainObserver::class);
+        Domain::observe(DomainObserver::class);    
+        DomainGroupRelations::observe(DomainGroupRelationsObserver::class);
+
 
         Builder::macro('orWhereLike', function (string $column, string $search) {
             return $this->orWhere($column, 'ILIKE', '%' . trim($search) . '%');

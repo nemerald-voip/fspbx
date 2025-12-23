@@ -120,13 +120,93 @@ paths:
       tags:
         - Domains
     post:
-      summary: "POST /api/v1/domains\nMiddleware should enforce domains_create permission (in user home-domain context)."
-      operationId: pOSTapiv1domainsMiddlewareShouldEnforceDomainsCreatePermissioninUserHomeDomainContext
-      description: ''
+      summary: 'Create a domain'
+      operationId: createADomain
+      description: "Creates a new domain.\n\nNotes:\n- `domain_enabled` is optional and defaults to `true`.\n- `domain_name` is normalized to lowercase and trimmed."
       parameters: []
-      responses: {  }
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  domain_uuid: 9b6a4aa2-2b4f-4c5a-b4bb-1f6b2a9b9b01
+                  object: domain
+                  domain_name: 10005.fspbx.com
+                  domain_enabled: true
+                  domain_description: 'BluePeak Solutions'
+                properties:
+                  domain_uuid:
+                    type: string
+                    example: 9b6a4aa2-2b4f-4c5a-b4bb-1f6b2a9b9b01
+                  object:
+                    type: string
+                    example: domain
+                  domain_name:
+                    type: string
+                    example: 10005.fspbx.com
+                  domain_enabled:
+                    type: boolean
+                    example: true
+                  domain_description:
+                    type: string
+                    example: 'BluePeak Solutions'
+        400:
+          description: 'Domain name already exists'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Domain name already exists.'
+                    code: domain_name_exists
+                    param: domain_name
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Domain name already exists.'
+                      code:
+                        type: string
+                        example: domain_name_exists
+                      param:
+                        type: string
+                        example: domain_name
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
       tags:
-        - Endpoints
+        - Domains
       requestBody:
         required: true
         content:
@@ -136,39 +216,136 @@ paths:
               properties:
                 domain_name:
                   type: string
-                  description: 'Must not be greater than 255 characters.'
-                  example: mxaxooabkmulerw
-                domain_enabled:
+                  description: 'The domain name (lowercased).'
+                  example: 10005.fspbx.com
+                domain_description:
                   type: string
-                  description: ''
-                  example: aliquam
+                  description: 'A human-friendly label/description.'
+                  example: 'BluePeak Solutions'
+                domain_enabled:
+                  type: boolean
+                  description: 'Optional. Whether the domain is enabled. Defaults to true.'
+                  example: true
               required:
                 - domain_name
+                - domain_description
   '/api/v1/domains/{domain_uuid}':
     get:
-      summary: "GET /api/v1/domains/{domain_uuid}\nMiddleware should already enforce:\n - domain access (if route has {domain_uuid})\n - domains_view permission"
-      operationId: gETapiv1domainsdomainUuidMiddlewareShouldAlreadyEnforceDomainAccessifRouteHasdomainUuidDomainsViewPermission
-      description: ''
+      summary: 'Retrieve a domain'
+      operationId: retrieveADomain
+      description: "Returns a single domain the caller is allowed to access.\n\nAccess rules:\n- If the user has the `domain_all` permission, any domain may be retrieved.\n- If the user has assigned domain groups or individual domains, the domain must be in those assignments\n  (even if the user's own domain is not included).\n- If nothing is assigned, the user may only retrieve their own domain.\n\nNotes:\n- If the domain does not exist, a `resource_missing` error is returned.\n- If the domain exists but is not accessible, a `forbidden_domain` error is returned."
       parameters: []
       responses:
-        500:
-          description: ''
+        200:
+          description: Success
           content:
             application/json:
               schema:
                 type: object
                 example:
-                  success: false
-                  message: 'Server Error.'
+                  domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  object: domain
+                  domain_name: 10001.fspbx.com
+                  domain_enabled: true
+                  domain_description: 'BluePeak Solutions'
                 properties:
-                  success:
-                    type: boolean
-                    example: false
-                  message:
+                  domain_uuid:
                     type: string
-                    example: 'Server Error.'
+                    example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  object:
+                    type: string
+                    example: domain
+                  domain_name:
+                    type: string
+                    example: 10001.fspbx.com
+                  domain_enabled:
+                    type: boolean
+                    example: true
+                  domain_description:
+                    type: string
+                    example: 'BluePeak Solutions'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: 'Forbidden (domain access)'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'You do not have access to this domain.'
+                    code: forbidden_domain
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'You do not have access to this domain.'
+                      code:
+                        type: string
+                        example: forbidden_domain
+                      param:
+                        type: string
+                        example: domain_uuid
+        404:
+          description: 'Not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Domain not found.'
+                    code: resource_missing
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Domain not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: domain_uuid
       tags:
-        - Endpoints
+        - Domains
     put:
       summary: "PUT /api/v1/domains/{domain_uuid}\nMiddleware should enforce:\n - domain access\n - domains_update permission"
       operationId: pUTapiv1domainsdomainUuidMiddlewareShouldEnforceDomainAccessDomainsUpdatePermission
@@ -187,11 +364,11 @@ paths:
                 domain_name:
                   type: string
                   description: 'Must not be greater than 255 characters.'
-                  example: yemavcjposm
+                  example: qemlebmqzkisyyab
                 domain_enabled:
                   type: string
                   description: ''
-                  example: vel
+                  example: adipisci
     delete:
       summary: "DELETE /api/v1/domains/{domain_uuid}\nMiddleware should enforce:\n - domain access\n - domains_delete permission"
       operationId: dELETEapiv1domainsdomainUuidMiddlewareShouldEnforceDomainAccessDomainsDeletePermission
@@ -204,7 +381,7 @@ paths:
       -
         in: path
         name: domain_uuid
-        description: ''
+        description: 'The domain UUID.'
         example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
         required: true
         schema:

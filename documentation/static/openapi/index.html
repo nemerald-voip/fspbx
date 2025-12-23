@@ -68,6 +68,12 @@
                                                     <li class="tocify-item level-2" data-unique="domains-GETapi-v1-domains">
                                 <a href="#domains-GETapi-v1-domains">List domains</a>
                             </li>
+                                                                                <li class="tocify-item level-2" data-unique="domains-GETapi-v1-domains--domain_uuid-">
+                                <a href="#domains-GETapi-v1-domains--domain_uuid-">Retrieve a domain</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="domains-POSTapi-v1-domains">
+                                <a href="#domains-POSTapi-v1-domains">Create a domain</a>
+                            </li>
                                                                         </ul>
                             </ul>
                     <ul id="tocify-header-endpoints" class="tocify-header">
@@ -75,17 +81,7 @@
                     <a href="#endpoints">Endpoints</a>
                 </li>
                                     <ul id="tocify-subheader-endpoints" class="tocify-subheader">
-                                                    <li class="tocify-item level-2" data-unique="endpoints-POSTapi-v1-domains">
-                                <a href="#endpoints-POSTapi-v1-domains">POST /api/v1/domains
-Middleware should enforce domains_create permission (in user home-domain context).</a>
-                            </li>
-                                                                                <li class="tocify-item level-2" data-unique="endpoints-GETapi-v1-domains--domain_uuid-">
-                                <a href="#endpoints-GETapi-v1-domains--domain_uuid-">GET /api/v1/domains/{domain_uuid}
-Middleware should already enforce:
- - domain access (if route has {domain_uuid})
- - domains_view permission</a>
-                            </li>
-                                                                                <li class="tocify-item level-2" data-unique="endpoints-PUTapi-v1-domains--domain_uuid-">
+                                                    <li class="tocify-item level-2" data-unique="endpoints-PUTapi-v1-domains--domain_uuid-">
                                 <a href="#endpoints-PUTapi-v1-domains--domain_uuid-">PUT /api/v1/domains/{domain_uuid}
 Middleware should enforce:
  - domain access
@@ -108,7 +104,7 @@ Middleware should enforce:
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: December 21, 2025</li>
+        <li>Last updated: December 23, 2025</li>
     </ul>
 </div>
 
@@ -321,160 +317,25 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                 </form>
 
-                <h1 id="endpoints">Endpoints</h1>
-
-    
-
-                                <h2 id="endpoints-POSTapi-v1-domains">POST /api/v1/domains
-Middleware should enforce domains_create permission (in user home-domain context).</h2>
+                    <h2 id="domains-GETapi-v1-domains--domain_uuid-">Retrieve a domain</h2>
 
 <p>
 <small class="badge badge-darkred">requires authentication</small>
 </p>
 
-
-
-<span id="example-requests-POSTapi-v1-domains">
-<blockquote>Example request:</blockquote>
-
-
-<div class="bash-example">
-    <pre><code class="language-bash">curl --request POST \
-    "/api/v1/domains" \
-    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
-    --header "Content-Type: application/json" \
-    --header "Accept: application/json" \
-    --data "{
-    \"domain_name\": \"mxaxooabkmulerw\",
-    \"domain_enabled\": \"aliquam\"
-}"
-</code></pre></div>
-
-
-<div class="javascript-example">
-    <pre><code class="language-javascript">const url = new URL(
-    "/api/v1/domains"
-);
-
-const headers = {
-    "Authorization": "Bearer {YOUR_AUTH_KEY}",
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-};
-
-let body = {
-    "domain_name": "mxaxooabkmulerw",
-    "domain_enabled": "aliquam"
-};
-
-fetch(url, {
-    method: "POST",
-    headers,
-    body: JSON.stringify(body),
-}).then(response =&gt; response.json());</code></pre></div>
-
-</span>
-
-<span id="example-responses-POSTapi-v1-domains">
-</span>
-<span id="execution-results-POSTapi-v1-domains" hidden>
-    <blockquote>Received response<span
-                id="execution-response-status-POSTapi-v1-domains"></span>:
-    </blockquote>
-    <pre class="json"><code id="execution-response-content-POSTapi-v1-domains"
-      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
-</span>
-<span id="execution-error-POSTapi-v1-domains" hidden>
-    <blockquote>Request failed with error:</blockquote>
-    <pre><code id="execution-error-message-POSTapi-v1-domains">
-
-Tip: Check that you&#039;re properly connected to the network.
-If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
-You can check the Dev Tools console for debugging information.</code></pre>
-</span>
-<form id="form-POSTapi-v1-domains" data-method="POST"
-      data-path="api/v1/domains"
-      data-authed="1"
-      data-hasfiles="0"
-      data-isarraybody="0"
-      autocomplete="off"
-      onsubmit="event.preventDefault(); executeTryOut('POSTapi-v1-domains', this);">
-    <h3>
-        Request&nbsp;&nbsp;&nbsp;
-            </h3>
-            <p>
-            <small class="badge badge-black">POST</small>
-            <b><code>api/v1/domains</code></b>
-        </p>
-                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-domains"
-               value="Bearer {YOUR_AUTH_KEY}"
-               data-component="header">
-    <br>
-<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
-            </div>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Content-Type"                data-endpoint="POSTapi-v1-domains"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Accept"                data-endpoint="POSTapi-v1-domains"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                                <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
-        <div style=" padding-left: 28px;  clear: unset;">
-            <b style="line-height: 2;"><code>domain_name</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="domain_name"                data-endpoint="POSTapi-v1-domains"
-               value="mxaxooabkmulerw"
-               data-component="body">
-    <br>
-<p>Must not be greater than 255 characters. Example: <code>mxaxooabkmulerw</code></p>
-        </div>
-                <div style=" padding-left: 28px;  clear: unset;">
-            <b style="line-height: 2;"><code>domain_enabled</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
-<i>optional</i> &nbsp;
-                <input type="text" style="display: none"
-                              name="domain_enabled"                data-endpoint="POSTapi-v1-domains"
-               value="aliquam"
-               data-component="body">
-    <br>
-<p>Example: <code>aliquam</code></p>
-        </div>
-        </form>
-
-                    <h2 id="endpoints-GETapi-v1-domains--domain_uuid-">GET /api/v1/domains/{domain_uuid}
-Middleware should already enforce:
- - domain access (if route has {domain_uuid})
- - domains_view permission</h2>
-
-<p>
-<small class="badge badge-darkred">requires authentication</small>
-</p>
-
-
+<p>Returns a single domain the caller is allowed to access.</p>
+<p>Access rules:</p>
+<ul>
+<li>If the user has the <code>domain_all</code> permission, any domain may be retrieved.</li>
+<li>If the user has assigned domain groups or individual domains, the domain must be in those assignments
+(even if the user's own domain is not included).</li>
+<li>If nothing is assigned, the user may only retrieve their own domain.</li>
+</ul>
+<p>Notes:</p>
+<ul>
+<li>If the domain does not exist, a <code>resource_missing</code> error is returned.</li>
+<li>If the domain exists but is not accessible, a <code>forbidden_domain</code> error is returned.</li>
+</ul>
 
 <span id="example-requests-GETapi-v1-domains--domain_uuid-">
 <blockquote>Example request:</blockquote>
@@ -508,19 +369,57 @@ fetch(url, {
 
 <span id="example-responses-GETapi-v1-domains--domain_uuid-">
             <blockquote>
-            <p>Example response (500):</p>
+            <p>Example response (200, Success):</p>
         </blockquote>
-                <details class="annotation">
-            <summary style="cursor: pointer;">
-                <small onclick="textContent = parentElement.parentElement.open ? 'Show headers' : 'Hide headers'">Show headers</small>
-            </summary>
-            <pre><code class="language-http">cache-control: no-cache, private
-content-type: application/json
- </code></pre></details>         <pre>
+                <pre>
 
 <code class="language-json" style="max-height: 300px;">{
-    &quot;success&quot;: false,
-    &quot;message&quot;: &quot;Server Error.&quot;
+    &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;object&quot;: &quot;domain&quot;,
+    &quot;domain_name&quot;: &quot;10001.fspbx.com&quot;,
+    &quot;domain_enabled&quot;: true,
+    &quot;domain_description&quot;: &quot;BluePeak Solutions&quot;
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden (domain access)):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
+        &quot;code&quot;: &quot;forbidden_domain&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
 }</code>
  </pre>
     </span>
@@ -597,11 +496,222 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
                data-component="url">
     <br>
-<p>Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
             </div>
                     </form>
 
-                    <h2 id="endpoints-PUTapi-v1-domains--domain_uuid-">PUT /api/v1/domains/{domain_uuid}
+                    <h2 id="domains-POSTapi-v1-domains">Create a domain</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Creates a new domain.</p>
+<p>Notes:</p>
+<ul>
+<li><code>domain_enabled</code> is optional and defaults to <code>true</code>.</li>
+<li><code>domain_name</code> is normalized to lowercase and trimmed.</li>
+</ul>
+
+<span id="example-requests-POSTapi-v1-domains">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "/api/v1/domains" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"domain_name\": \"10005.fspbx.com\",
+    \"domain_description\": \"BluePeak Solutions\",
+    \"domain_enabled\": true
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "domain_name": "10005.fspbx.com",
+    "domain_description": "BluePeak Solutions",
+    "domain_enabled": true
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-v1-domains">
+            <blockquote>
+            <p>Example response (201, Created):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;domain_uuid&quot;: &quot;9b6a4aa2-2b4f-4c5a-b4bb-1f6b2a9b9b01&quot;,
+    &quot;object&quot;: &quot;domain&quot;,
+    &quot;domain_name&quot;: &quot;10005.fspbx.com&quot;,
+    &quot;domain_enabled&quot;: true,
+    &quot;domain_description&quot;: &quot;BluePeak Solutions&quot;
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Domain name already exists):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain name already exists.&quot;,
+        &quot;code&quot;: &quot;domain_name_exists&quot;,
+        &quot;param&quot;: &quot;domain_name&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-POSTapi-v1-domains" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-v1-domains"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-v1-domains"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-v1-domains" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-v1-domains">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-v1-domains" data-method="POST"
+      data-path="api/v1/domains"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-v1-domains', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/v1/domains</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-domains"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-v1-domains"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-v1-domains"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>domain_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_name"                data-endpoint="POSTapi-v1-domains"
+               value="10005.fspbx.com"
+               data-component="body">
+    <br>
+<p>The domain name (lowercased). Example: <code>10005.fspbx.com</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>domain_description</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_description"                data-endpoint="POSTapi-v1-domains"
+               value="BluePeak Solutions"
+               data-component="body">
+    <br>
+<p>A human-friendly label/description. Example: <code>BluePeak Solutions</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>domain_enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains" style="display: none">
+            <input type="radio" name="domain_enabled"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains" style="display: none">
+            <input type="radio" name="domain_enabled"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Optional. Whether the domain is enabled. Defaults to true. Example: <code>true</code></p>
+        </div>
+        </form>
+
+                <h1 id="endpoints">Endpoints</h1>
+
+    
+
+                                <h2 id="endpoints-PUTapi-v1-domains--domain_uuid-">PUT /api/v1/domains/{domain_uuid}
 Middleware should enforce:
  - domain access
  - domains_update permission</h2>
@@ -623,8 +733,8 @@ Middleware should enforce:
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
-    \"domain_name\": \"yemavcjposm\",
-    \"domain_enabled\": \"vel\"
+    \"domain_name\": \"qemlebmqzkisyyab\",
+    \"domain_enabled\": \"adipisci\"
 }"
 </code></pre></div>
 
@@ -641,8 +751,8 @@ const headers = {
 };
 
 let body = {
-    "domain_name": "yemavcjposm",
-    "domain_enabled": "vel"
+    "domain_name": "qemlebmqzkisyyab",
+    "domain_enabled": "adipisci"
 };
 
 fetch(url, {
@@ -737,10 +847,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="domain_name"                data-endpoint="PUTapi-v1-domains--domain_uuid-"
-               value="yemavcjposm"
+               value="qemlebmqzkisyyab"
                data-component="body">
     <br>
-<p>Must not be greater than 255 characters. Example: <code>yemavcjposm</code></p>
+<p>Must not be greater than 255 characters. Example: <code>qemlebmqzkisyyab</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>domain_enabled</code></b>&nbsp;&nbsp;
@@ -748,10 +858,10 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="domain_enabled"                data-endpoint="PUTapi-v1-domains--domain_uuid-"
-               value="vel"
+               value="adipisci"
                data-component="body">
     <br>
-<p>Example: <code>vel</code></p>
+<p>Example: <code>adipisci</code></p>
         </div>
         </form>
 
