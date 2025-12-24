@@ -23,7 +23,6 @@ class AuthorizeUser
             );
         }
 
-
         // Domain scope
         $routeDomainUuid = (string) ($request->route('domain_uuid') ?? '');
         $domainUuid = $routeDomainUuid !== '' ? $routeDomainUuid : (string) $user->domain_uuid;

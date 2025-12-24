@@ -214,21 +214,21 @@ paths:
             schema:
               type: object
               properties:
-                domain_name:
-                  type: string
-                  description: 'The domain name (lowercased).'
-                  example: 10005.fspbx.com
                 domain_description:
                   type: string
-                  description: 'A human-friendly label/description.'
+                  description: 'A human-friendly label for the domain. Must not be greater than 255 characters.'
                   example: 'BluePeak Solutions'
+                domain_name:
+                  type: string
+                  description: 'The domain name (lowercase). Must not be greater than 255 characters.'
+                  example: 10001.fspbx.com
                 domain_enabled:
                   type: boolean
-                  description: 'Optional. Whether the domain is enabled. Defaults to true.'
-                  example: true
+                  description: 'Whether the domain is enabled.'
+                  example: false
               required:
-                - domain_name
                 - domain_description
+                - domain_name
   '/api/v1/domains/{domain_uuid}':
     get:
       summary: 'Retrieve a domain'
@@ -346,37 +346,251 @@ paths:
                         example: domain_uuid
       tags:
         - Domains
-    put:
-      summary: "PUT /api/v1/domains/{domain_uuid}\nMiddleware should enforce:\n - domain access\n - domains_update permission"
-      operationId: pUTapiv1domainsdomainUuidMiddlewareShouldEnforceDomainAccessDomainsUpdatePermission
-      description: ''
+    delete:
+      summary: 'Delete a domain'
+      operationId: deleteADomain
+      description: 'Permanently deletes the specified domain.'
       parameters: []
-      responses: {  }
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  id: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  object: domain
+                  deleted: true
+                properties:
+                  id:
+                    type: string
+                    example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  object:
+                    type: string
+                    example: domain
+                  deleted:
+                    type: boolean
+                    example: true
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        404:
+          description: 'Not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Domain not found.'
+                    code: resource_missing
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Domain not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: domain_uuid
       tags:
-        - Endpoints
+        - Domains
+    patch:
+      summary: 'Update a domain'
+      operationId: updateADomain
+      description: "Updates an existing domain. Returns the updated domain object.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `domain_edit` permission."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  object: domain
+                  domain_name: 10001.fspbx.com
+                  domain_enabled: true
+                  domain_description: 'BluePeak Solutions'
+                properties:
+                  domain_uuid:
+                    type: string
+                    example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  object:
+                    type: string
+                    example: domain
+                  domain_name:
+                    type: string
+                    example: 10001.fspbx.com
+                  domain_enabled:
+                    type: boolean
+                    example: true
+                  domain_description:
+                    type: string
+                    example: 'BluePeak Solutions'
+        400:
+          description: 'Validation error'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Please enter a domain label.'
+                    code: invalid_parameter
+                    param: domain_description
+                    doc_url: 'https://www.fspbx.com/docs/api/v1/errors/'
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Please enter a domain label.'
+                      code:
+                        type: string
+                        example: invalid_parameter
+                      param:
+                        type: string
+                        example: domain_description
+                      doc_url:
+                        type: string
+                        example: 'https://www.fspbx.com/docs/api/v1/errors/'
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: Forbidden.
+                    code: forbidden
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: Forbidden.
+                      code:
+                        type: string
+                        example: forbidden
+        404:
+          description: 'Not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Domain not found.'
+                    code: resource_missing
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Domain not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: domain_uuid
+      tags:
+        - Domains
       requestBody:
-        required: false
+        required: true
         content:
           application/json:
             schema:
               type: object
               properties:
+                domain_description:
+                  type: string
+                  description: 'A human-friendly label for the domain. Must not be greater than 255 characters.'
+                  example: 'BluePeak Solutions'
                 domain_name:
                   type: string
-                  description: 'Must not be greater than 255 characters.'
-                  example: qemlebmqzkisyyab
+                  description: 'The domain name (lowercase). Must not be greater than 255 characters.'
+                  example: 10001.fspbx.com
                 domain_enabled:
-                  type: string
-                  description: ''
-                  example: adipisci
-    delete:
-      summary: "DELETE /api/v1/domains/{domain_uuid}\nMiddleware should enforce:\n - domain access\n - domains_delete permission"
-      operationId: dELETEapiv1domainsdomainUuidMiddlewareShouldEnforceDomainAccessDomainsDeletePermission
-      description: ''
-      parameters: []
-      responses: {  }
-      tags:
-        - Endpoints
+                  type: boolean
+                  description: 'Whether the domain is enabled.'
+                  example: false
+              required:
+                - domain_description
     parameters:
       -
         in: path
@@ -389,9 +603,6 @@ paths:
 tags:
   -
     name: Domains
-    description: ''
-  -
-    name: Endpoints
     description: ''
 components:
   securitySchemes:

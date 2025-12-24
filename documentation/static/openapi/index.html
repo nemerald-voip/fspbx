@@ -74,24 +74,11 @@
                                                                                 <li class="tocify-item level-2" data-unique="domains-POSTapi-v1-domains">
                                 <a href="#domains-POSTapi-v1-domains">Create a domain</a>
                             </li>
-                                                                        </ul>
-                            </ul>
-                    <ul id="tocify-header-endpoints" class="tocify-header">
-                <li class="tocify-item level-1" data-unique="endpoints">
-                    <a href="#endpoints">Endpoints</a>
-                </li>
-                                    <ul id="tocify-subheader-endpoints" class="tocify-subheader">
-                                                    <li class="tocify-item level-2" data-unique="endpoints-PUTapi-v1-domains--domain_uuid-">
-                                <a href="#endpoints-PUTapi-v1-domains--domain_uuid-">PUT /api/v1/domains/{domain_uuid}
-Middleware should enforce:
- - domain access
- - domains_update permission</a>
+                                                                                <li class="tocify-item level-2" data-unique="domains-DELETEapi-v1-domains--domain_uuid-">
+                                <a href="#domains-DELETEapi-v1-domains--domain_uuid-">Delete a domain</a>
                             </li>
-                                                                                <li class="tocify-item level-2" data-unique="endpoints-DELETEapi-v1-domains--domain_uuid-">
-                                <a href="#endpoints-DELETEapi-v1-domains--domain_uuid-">DELETE /api/v1/domains/{domain_uuid}
-Middleware should enforce:
- - domain access
- - domains_delete permission</a>
+                                                                                <li class="tocify-item level-2" data-unique="domains-PATCHapi-v1-domains--domain_uuid-">
+                                <a href="#domains-PATCHapi-v1-domains--domain_uuid-">Update a domain</a>
                             </li>
                                                                         </ul>
                             </ul>
@@ -104,7 +91,7 @@ Middleware should enforce:
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: December 23, 2025</li>
+        <li>Last updated: December 24, 2025</li>
     </ul>
 </div>
 
@@ -524,9 +511,9 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
-    \"domain_name\": \"10005.fspbx.com\",
     \"domain_description\": \"BluePeak Solutions\",
-    \"domain_enabled\": true
+    \"domain_name\": \"10001.fspbx.com\",
+    \"domain_enabled\": false
 }"
 </code></pre></div>
 
@@ -543,9 +530,9 @@ const headers = {
 };
 
 let body = {
-    "domain_name": "10005.fspbx.com",
     "domain_description": "BluePeak Solutions",
-    "domain_enabled": true
+    "domain_name": "10001.fspbx.com",
+    "domain_enabled": false
 };
 
 fetch(url, {
@@ -663,17 +650,6 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                                 <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
         <div style=" padding-left: 28px;  clear: unset;">
-            <b style="line-height: 2;"><code>domain_name</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="domain_name"                data-endpoint="POSTapi-v1-domains"
-               value="10005.fspbx.com"
-               data-component="body">
-    <br>
-<p>The domain name (lowercased). Example: <code>10005.fspbx.com</code></p>
-        </div>
-                <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>domain_description</code></b>&nbsp;&nbsp;
 <small>string</small>&nbsp;
  &nbsp;
@@ -682,7 +658,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="BluePeak Solutions"
                data-component="body">
     <br>
-<p>A human-friendly label/description. Example: <code>BluePeak Solutions</code></p>
+<p>A human-friendly label for the domain. Must not be greater than 255 characters. Example: <code>BluePeak Solutions</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>domain_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_name"                data-endpoint="POSTapi-v1-domains"
+               value="10001.fspbx.com"
+               data-component="body">
+    <br>
+<p>The domain name (lowercase). Must not be greater than 255 characters. Example: <code>10001.fspbx.com</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>domain_enabled</code></b>&nbsp;&nbsp;
@@ -703,178 +690,17 @@ You can check the Dev Tools console for debugging information.</code></pre>
             <code>false</code>
         </label>
     <br>
-<p>Optional. Whether the domain is enabled. Defaults to true. Example: <code>true</code></p>
+<p>Whether the domain is enabled. Example: <code>false</code></p>
         </div>
         </form>
 
-                <h1 id="endpoints">Endpoints</h1>
-
-    
-
-                                <h2 id="endpoints-PUTapi-v1-domains--domain_uuid-">PUT /api/v1/domains/{domain_uuid}
-Middleware should enforce:
- - domain access
- - domains_update permission</h2>
+                    <h2 id="domains-DELETEapi-v1-domains--domain_uuid-">Delete a domain</h2>
 
 <p>
 <small class="badge badge-darkred">requires authentication</small>
 </p>
 
-
-
-<span id="example-requests-PUTapi-v1-domains--domain_uuid-">
-<blockquote>Example request:</blockquote>
-
-
-<div class="bash-example">
-    <pre><code class="language-bash">curl --request PUT \
-    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b" \
-    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
-    --header "Content-Type: application/json" \
-    --header "Accept: application/json" \
-    --data "{
-    \"domain_name\": \"qemlebmqzkisyyab\",
-    \"domain_enabled\": \"adipisci\"
-}"
-</code></pre></div>
-
-
-<div class="javascript-example">
-    <pre><code class="language-javascript">const url = new URL(
-    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
-);
-
-const headers = {
-    "Authorization": "Bearer {YOUR_AUTH_KEY}",
-    "Content-Type": "application/json",
-    "Accept": "application/json",
-};
-
-let body = {
-    "domain_name": "qemlebmqzkisyyab",
-    "domain_enabled": "adipisci"
-};
-
-fetch(url, {
-    method: "PUT",
-    headers,
-    body: JSON.stringify(body),
-}).then(response =&gt; response.json());</code></pre></div>
-
-</span>
-
-<span id="example-responses-PUTapi-v1-domains--domain_uuid-">
-</span>
-<span id="execution-results-PUTapi-v1-domains--domain_uuid-" hidden>
-    <blockquote>Received response<span
-                id="execution-response-status-PUTapi-v1-domains--domain_uuid-"></span>:
-    </blockquote>
-    <pre class="json"><code id="execution-response-content-PUTapi-v1-domains--domain_uuid-"
-      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
-</span>
-<span id="execution-error-PUTapi-v1-domains--domain_uuid-" hidden>
-    <blockquote>Request failed with error:</blockquote>
-    <pre><code id="execution-error-message-PUTapi-v1-domains--domain_uuid-">
-
-Tip: Check that you&#039;re properly connected to the network.
-If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
-You can check the Dev Tools console for debugging information.</code></pre>
-</span>
-<form id="form-PUTapi-v1-domains--domain_uuid-" data-method="PUT"
-      data-path="api/v1/domains/{domain_uuid}"
-      data-authed="1"
-      data-hasfiles="0"
-      data-isarraybody="0"
-      autocomplete="off"
-      onsubmit="event.preventDefault(); executeTryOut('PUTapi-v1-domains--domain_uuid-', this);">
-    <h3>
-        Request&nbsp;&nbsp;&nbsp;
-            </h3>
-            <p>
-            <small class="badge badge-darkblue">PUT</small>
-            <b><code>api/v1/domains/{domain_uuid}</code></b>
-        </p>
-                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Authorization" class="auth-value"               data-endpoint="PUTapi-v1-domains--domain_uuid-"
-               value="Bearer {YOUR_AUTH_KEY}"
-               data-component="header">
-    <br>
-<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
-            </div>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Content-Type"                data-endpoint="PUTapi-v1-domains--domain_uuid-"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                                <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
-&nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="Accept"                data-endpoint="PUTapi-v1-domains--domain_uuid-"
-               value="application/json"
-               data-component="header">
-    <br>
-<p>Example: <code>application/json</code></p>
-            </div>
-                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
-                    <div style="padding-left: 28px; clear: unset;">
-                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="domain_uuid"                data-endpoint="PUTapi-v1-domains--domain_uuid-"
-               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
-               data-component="url">
-    <br>
-<p>Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
-            </div>
-                            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
-        <div style=" padding-left: 28px;  clear: unset;">
-            <b style="line-height: 2;"><code>domain_name</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
-<i>optional</i> &nbsp;
-                <input type="text" style="display: none"
-                              name="domain_name"                data-endpoint="PUTapi-v1-domains--domain_uuid-"
-               value="qemlebmqzkisyyab"
-               data-component="body">
-    <br>
-<p>Must not be greater than 255 characters. Example: <code>qemlebmqzkisyyab</code></p>
-        </div>
-                <div style=" padding-left: 28px;  clear: unset;">
-            <b style="line-height: 2;"><code>domain_enabled</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
-<i>optional</i> &nbsp;
-                <input type="text" style="display: none"
-                              name="domain_enabled"                data-endpoint="PUTapi-v1-domains--domain_uuid-"
-               value="adipisci"
-               data-component="body">
-    <br>
-<p>Example: <code>adipisci</code></p>
-        </div>
-        </form>
-
-                    <h2 id="endpoints-DELETEapi-v1-domains--domain_uuid-">DELETE /api/v1/domains/{domain_uuid}
-Middleware should enforce:
- - domain access
- - domains_delete permission</h2>
-
-<p>
-<small class="badge badge-darkred">requires authentication</small>
-</p>
-
-
+<p>Permanently deletes the specified domain.</p>
 
 <span id="example-requests-DELETEapi-v1-domains--domain_uuid-">
 <blockquote>Example request:</blockquote>
@@ -907,7 +733,45 @@ fetch(url, {
 </span>
 
 <span id="example-responses-DELETEapi-v1-domains--domain_uuid-">
-</span>
+            <blockquote>
+            <p>Example response (200, Deleted):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;id&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;object&quot;: &quot;domain&quot;,
+    &quot;deleted&quot;: true
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
 <span id="execution-results-DELETEapi-v1-domains--domain_uuid-" hidden>
     <blockquote>Received response<span
                 id="execution-response-status-DELETEapi-v1-domains--domain_uuid-"></span>:
@@ -981,9 +845,256 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
                data-component="url">
     <br>
-<p>Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
             </div>
                     </form>
+
+                    <h2 id="domains-PATCHapi-v1-domains--domain_uuid-">Update a domain</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Updates an existing domain. Returns the updated domain object.</p>
+<p>Access rules:</p>
+<ul>
+<li>Caller must have access to the target domain (domain scope).</li>
+<li>Caller must have the <code>domain_edit</code> permission.</li>
+</ul>
+
+<span id="example-requests-PATCHapi-v1-domains--domain_uuid-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request PATCH \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"domain_description\": \"BluePeak Solutions\",
+    \"domain_name\": \"10001.fspbx.com\",
+    \"domain_enabled\": false
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "domain_description": "BluePeak Solutions",
+    "domain_name": "10001.fspbx.com",
+    "domain_enabled": false
+};
+
+fetch(url, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-PATCHapi-v1-domains--domain_uuid-">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;object&quot;: &quot;domain&quot;,
+    &quot;domain_name&quot;: &quot;10001.fspbx.com&quot;,
+    &quot;domain_enabled&quot;: true,
+    &quot;domain_description&quot;: &quot;BluePeak Solutions&quot;
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Validation error):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Please enter a domain label.&quot;,
+        &quot;code&quot;: &quot;invalid_parameter&quot;,
+        &quot;param&quot;: &quot;domain_description&quot;,
+        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Forbidden.&quot;,
+        &quot;code&quot;: &quot;forbidden&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-PATCHapi-v1-domains--domain_uuid-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-PATCHapi-v1-domains--domain_uuid-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-PATCHapi-v1-domains--domain_uuid-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-PATCHapi-v1-domains--domain_uuid-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-PATCHapi-v1-domains--domain_uuid-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-PATCHapi-v1-domains--domain_uuid-" data-method="PATCH"
+      data-path="api/v1/domains/{domain_uuid}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('PATCHapi-v1-domains--domain_uuid-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-purple">PATCH</small>
+            <b><code>api/v1/domains/{domain_uuid}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="PATCHapi-v1-domains--domain_uuid-"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="PATCHapi-v1-domains--domain_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="PATCHapi-v1-domains--domain_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="PATCHapi-v1-domains--domain_uuid-"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>domain_description</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_description"                data-endpoint="PATCHapi-v1-domains--domain_uuid-"
+               value="BluePeak Solutions"
+               data-component="body">
+    <br>
+<p>A human-friendly label for the domain. Must not be greater than 255 characters. Example: <code>BluePeak Solutions</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>domain_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_name"                data-endpoint="PATCHapi-v1-domains--domain_uuid-"
+               value="10001.fspbx.com"
+               data-component="body">
+    <br>
+<p>The domain name (lowercase). Must not be greater than 255 characters. Example: <code>10001.fspbx.com</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>domain_enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="PATCHapi-v1-domains--domain_uuid-" style="display: none">
+            <input type="radio" name="domain_enabled"
+                   value="true"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid-"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="PATCHapi-v1-domains--domain_uuid-" style="display: none">
+            <input type="radio" name="domain_enabled"
+                   value="false"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid-"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether the domain is enabled. Example: <code>false</code></p>
+        </div>
+        </form>
 
             
 

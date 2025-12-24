@@ -33,7 +33,7 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
     Route::get('/domains/{domain_uuid}', [DomainController::class, 'show'])
         ->middleware('user.authorize:domain_view');
 
-    Route::put('/domains/{domain_uuid}', [DomainController::class, 'update'])
+    Route::patch('/domains/{domain_uuid}', [DomainController::class, 'update'])
         ->middleware('user.authorize:domain_edit');
 
     Route::delete('/domains/{domain_uuid}', [DomainController::class, 'destroy'])

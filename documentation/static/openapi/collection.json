@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "FS PBX",
-        "_postman_id": "9a60dc6d-0814-423e-8294-151523da5337",
+        "_postman_id": "2e628c30-4bb1-484e-a7bd-81df86257eb1",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -150,7 +150,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"domain_name\":\"10005.fspbx.com\",\"domain_description\":\"BluePeak Solutions\",\"domain_enabled\":true}"
+                            "raw": "{\"domain_description\":\"BluePeak Solutions\",\"domain_name\":\"10001.fspbx.com\",\"domain_enabled\":false}"
                         },
                         "description": "Creates a new domain.\n\nNotes:\n- `domain_enabled` is optional and defaults to `true`.\n- `domain_name` is normalized to lowercase and trimmed."
                     },
@@ -174,51 +174,9 @@
                             "name": "Unauthenticated"
                         }
                     ]
-                }
-            ]
-        },
-        {
-            "name": "Endpoints",
-            "description": "",
-            "item": [
-                {
-                    "name": "PUT \/api\/v1\/domains\/{domain_uuid}\nMiddleware should enforce:\n - domain access\n - domains_update permission",
-                    "request": {
-                        "url": {
-                            "host": "{{baseUrl}}",
-                            "path": "api\/v1\/domains\/:domain_uuid",
-                            "query": [],
-                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid",
-                            "variable": [
-                                {
-                                    "id": "domain_uuid",
-                                    "key": "domain_uuid",
-                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
-                                    "description": ""
-                                }
-                            ]
-                        },
-                        "method": "PUT",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application\/json"
-                            },
-                            {
-                                "key": "Accept",
-                                "value": "application\/json"
-                            }
-                        ],
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\"domain_name\":\"qemlebmqzkisyyab\",\"domain_enabled\":\"adipisci\"}"
-                        },
-                        "description": ""
-                    },
-                    "response": []
                 },
                 {
-                    "name": "DELETE \/api\/v1\/domains\/{domain_uuid}\nMiddleware should enforce:\n - domain access\n - domains_delete permission",
+                    "name": "Delete a domain",
                     "request": {
                         "url": {
                             "host": "{{baseUrl}}",
@@ -230,7 +188,7 @@
                                     "id": "domain_uuid",
                                     "key": "domain_uuid",
                                     "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
-                                    "description": ""
+                                    "description": "The domain UUID."
                                 }
                             ]
                         },
@@ -246,9 +204,95 @@
                             }
                         ],
                         "body": null,
-                        "description": ""
+                        "description": "Permanently deletes the specified domain."
                     },
-                    "response": []
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"id\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"object\": \"domain\",\n  \"deleted\": true\n}",
+                            "name": "Deleted"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\n  \"error\": {\n    \"type\": \"authentication_error\",\n    \"message\": \"Unauthenticated.\",\n    \"code\": \"unauthenticated\"\n  }\n}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Domain not found.\",\n    \"code\": \"resource_missing\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Update a domain",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                }
+                            ]
+                        },
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"domain_description\":\"BluePeak Solutions\",\"domain_name\":\"10001.fspbx.com\",\"domain_enabled\":false}"
+                        },
+                        "description": "Updates an existing domain. Returns the updated domain object.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `domain_edit` permission."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"object\": \"domain\",\n  \"domain_name\": \"10001.fspbx.com\",\n  \"domain_enabled\": true,\n  \"domain_description\": \"BluePeak Solutions\"\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Please enter a domain label.\",\n    \"code\": \"invalid_parameter\",\n    \"param\": \"domain_description\",\n    \"doc_url\": \"https:\/\/www.fspbx.com\/docs\/api\/v1\/errors\/\"\n  }\n}",
+                            "name": "Validation error"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\n  \"error\": {\n    \"type\": \"authentication_error\",\n    \"message\": \"Unauthenticated.\",\n    \"code\": \"unauthenticated\"\n  }\n}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Forbidden.\",\n    \"code\": \"forbidden\"\n  }\n}",
+                            "name": "Forbidden"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Domain not found.\",\n    \"code\": \"resource_missing\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Not found"
+                        }
+                    ]
                 }
             ]
         }

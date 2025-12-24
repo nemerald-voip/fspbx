@@ -11,9 +11,11 @@ use App\Http\Responses\ApiResponse;
 use App\Http\Controllers\Controller;
 use Spatie\QueryBuilder\QueryBuilder;
 use Illuminate\Database\QueryException;
+use App\Data\Api\V1\DeletedResponseData;
 use App\Services\Auth\PermissionService;
 use App\Data\Api\V1\DomainListResponseData;
 use App\Http\Requests\Api\V1\StoreDomainRequest;
+use App\Http\Requests\Api\V1\UpdateDomainRequest;
 
 class DomainController extends Controller
 {
@@ -248,10 +250,6 @@ class DomainController extends Controller
      * @group Domains
      * @authenticated
      *
-     * @bodyParam domain_name string required The domain name (lowercased). Example: 10005.fspbx.com
-     * @bodyParam domain_description string required A human-friendly label/description. Example: BluePeak Solutions
-     * @bodyParam domain_enabled boolean Optional. Whether the domain is enabled. Defaults to true. Example: true
-     *
      * @response 201 scenario="Created" {
      *   "domain_uuid": "9b6a4aa2-2b4f-4c5a-b4bb-1f6b2a9b9b01",
      *   "object": "domain",
@@ -327,50 +325,160 @@ class DomainController extends Controller
     }
 
     /**
-     * PUT /api/v1/domains/{domain_uuid}
-     * Middleware should enforce:
-     *  - domain access
-     *  - domains_update permission
+     * Update a domain
+     *
+     * Updates an existing domain. Returns the updated domain object.
+     *
+     * Access rules:
+     * - Caller must have access to the target domain (domain scope).
+     * - Caller must have the `domain_edit` permission.
+     *
+     * @group Domains
+     * @authenticated
+     * 
+     * @urlParam domain_uuid string required The domain UUID. Example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+     *
+     *
+     *
+     * @response 200 scenario="Success" {
+     *   "domain_uuid": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+     *   "object": "domain",
+     *   "domain_name": "10001.fspbx.com",
+     *   "domain_enabled": true,
+     *   "domain_description": "BluePeak Solutions"
+     * }
+     *
+     * @response 400 scenario="Validation error" {
+     *   "error": {
+     *     "type": "invalid_request_error",
+     *     "message": "Please enter a domain label.",
+     *     "code": "invalid_parameter",
+     *     "param": "domain_description",
+     *     "doc_url": "https://www.fspbx.com/docs/api/v1/errors/"
+     *   }
+     * }
+     *
+     * @response 401 scenario="Unauthenticated" {
+     *   "error": {
+     *     "type": "authentication_error",
+     *     "message": "Unauthenticated.",
+     *     "code": "unauthenticated"
+     *   }
+     * }
+     *
+     * @response 403 scenario="Forbidden" {
+     *   "error": {
+     *     "type": "invalid_request_error",
+     *     "message": "Forbidden.",
+     *     "code": "forbidden"
+     *   }
+     * }
+     *
+     * @response 404 scenario="Not found" {
+     *   "error": {
+     *     "type": "invalid_request_error",
+     *     "message": "Domain not found.",
+     *     "code": "resource_missing",
+     *     "param": "domain_uuid"
+     *   }
+     * }
      */
-    public function update(Request $request, string $domain_uuid)
+    public function update(UpdateDomainRequest $request, string $domain_uuid)
     {
-        $domain = Domain::query()
-            ->where('domain_uuid', $domain_uuid)
-            ->first();
 
-        if (! $domain) {
-            return ApiResponse::error('Not found.', 'not_found', ['resource' => 'domain'], 404);
+        $domain = Domain::where('domain_uuid', $domain_uuid)->firstOrFail();
+
+        $inputs = $request->validated();
+
+        try {
+            DB::transaction(function () use ($domain, $inputs) {
+                $domain->update($inputs);
+                $domain->save();
+            });
+        } catch (\Throwable $e) {
+            logger()->error('API domain update failed', ['exception' => $e]);
+
+            throw new ApiException(
+                500,
+                'api_error',
+                'An unexpected error occurred.',
+            );
         }
 
-        $data = $request->validate([
-            'domain_name' => ['sometimes', 'string', 'max:255'],
-            'domain_enabled' => ['sometimes', 'string'],
-        ]);
+        // return the updated resource object
+        $data = new DomainData(
+            domain_uuid: (string) $domain->domain_uuid,
+            object: 'domain',
+            domain_name: (string) $domain->domain_name,
+            domain_enabled: (bool) $domain->domain_enabled,
+            domain_description: $domain->domain_description,
+        );
 
-        $domain->fill($data);
-        $domain->save();
-
-        return ApiResponse::ok($domain, 'Domain updated.');
+        return response()->json($data->toArray(), 200);
     }
 
     /**
-     * DELETE /api/v1/domains/{domain_uuid}
-     * Middleware should enforce:
-     *  - domain access
-     *  - domains_delete permission
+     * Delete a domain
+     *
+     * Permanently deletes the specified domain.
+     *
+     * @group Domains
+     * @authenticated
+     *
+     * @urlParam domain_uuid string required The domain UUID. Example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+     *
+     * @response 200 scenario="Deleted" {
+     *   "id": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+     *   "object": "domain",
+     *   "deleted": true
+     * }
+     *
+     * @response 401 scenario="Unauthenticated" {
+     *   "error": {
+     *     "type": "authentication_error",
+     *     "message": "Unauthenticated.",
+     *     "code": "unauthenticated"
+     *   }
+     * }
+     *
+     * @response 404 scenario="Not found" {
+     *   "error": {
+     *     "type": "invalid_request_error",
+     *     "message": "Domain not found.",
+     *     "code": "resource_missing",
+     *     "param": "domain_uuid"
+     *   }
+     * }
      */
+
     public function destroy(Request $request, string $domain_uuid)
     {
-        $domain = Domain::query()
-            ->where('domain_uuid', $domain_uuid)
-            ->first();
-
-        if (! $domain) {
-            return ApiResponse::error('Not found.', 'not_found', ['resource' => 'domain'], 404);
+        $user = $request->user();
+        if (! $user) {
+            throw new ApiException(401, 'authentication_error', 'Unauthenticated.', 'unauthenticated');
         }
 
-        $domain->delete();
+        // Optional guard if you never want this deleted
+        // $protectedNames = ['admin.localhost'];
+        // if (Domain::where('domain_uuid', $domain_uuid)->whereIn('domain_name', $protectedNames)->exists()) {
+        //     throw new ApiException(403, 'invalid_request_error', 'This domain cannot be deleted.', 'forbidden', 'domain_uuid');
+        // }
 
-        return ApiResponse::ok(null, 'Domain deleted.');
+        // Let your Handler convert ModelNotFoundException -> Stripe-shaped 404
+        $domain = Domain::query()
+            ->where('domain_uuid', $domain_uuid)
+            ->firstOrFail();
+
+        DB::transaction(function () use ($domain) {
+            $domain->delete();
+        });
+
+        $payload = DeletedResponseData::from([
+            'uuid'      => (string) $domain_uuid, 
+            'object'  => 'domain',
+            'deleted' => true,
+        ]);
+
+        return response()->json($payload->toArray(), 200);
     }
 }

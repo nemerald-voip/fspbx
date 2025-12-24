@@ -29,7 +29,6 @@ class PermissionService
 
             $groupUuids = UserGroup::query()
                 ->where('user_uuid', $user->user_uuid)
-                ->where('domain_uuid', $domainUuid)
                 ->whereNotNull('group_uuid')
                 ->pluck('group_uuid')
                 ->unique()

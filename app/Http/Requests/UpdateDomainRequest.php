@@ -27,12 +27,12 @@ class UpdateDomainRequest extends FormRequest
             'domain_description' => ['required', 'string', 'max:255'],
 
             'domain_name' => [
-                'required',
+                'sometimes',
                 'string',
                 'max:255',
             ],
 
-            'domain_enabled' => ['required', 'boolean'],
+            'domain_enabled' => ['sometimes', 'boolean'],
         ];
     }
 
@@ -54,8 +54,13 @@ class UpdateDomainRequest extends FormRequest
     {
         $name = $this->input('domain_name');
 
+        if ($name !== null) {
+            $this->merge([
+                'domain_name'    => strtolower(trim($name))
+            ]);
+        }
+
         $this->merge([
-            'domain_name'    => $name !== null ? strtolower(trim($name)) : null,
             'domain_enabled' => filter_var(
                 $this->input('domain_enabled', true),
                 FILTER_VALIDATE_BOOLEAN,

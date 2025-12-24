@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests\Api\V1;
 
-use App\Http\Requests\StoreDomainRequest as InternalStoreDomainRequest;
+use App\Http\Requests\UpdateDomainRequest as InternalUpdateDomainRequest;
 
-class StoreDomainRequest extends InternalStoreDomainRequest
+class UpdateDomainRequest extends InternalUpdateDomainRequest
 {
     public function authorize(): bool
     {

@@ -4,13 +4,16 @@ namespace App\Exceptions;
 
 use Throwable;
 use Illuminate\Http\Request;
-use Illuminate\Auth\AuthenticationException;
-use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Auth\Access\AuthorizationException;
-
 use App\Data\Api\V1\ErrorData;
 use App\Data\Api\V1\ErrorResponseData;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Validation\ValidationException;
+
+use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 
 class Handler extends ExceptionHandler
 {
@@ -69,7 +72,62 @@ class Handler extends ExceptionHandler
             return response()->json($payload->toArray(), 401);
         });
 
-        // 4) Your custom ApiException
+        // 4) Method (if something throws MethodNotAllowedHttpException)
+        $this->renderable(function (MethodNotAllowedHttpException $e, Request $request) {
+            if (! $request->is('api/v1/*')) return null;
+
+            $payload = ErrorResponseData::from([
+                'error' => ErrorData::from([
+                    'type'    => 'forbidden_method',
+                    'message' => $e->getMessage(),
+                    'code'    => 'forbidden',
+                    'doc_url' => 'https://www.fspbx.com/docs/api/v1/errors/',
+                ]),
+            ]);
+
+            return response()->json($payload->toArray(), 401);
+        });
+
+        $this->renderable(function (ModelNotFoundException $e, Request $request) {
+            if (! $request->is('api/v1/*')) {
+                return null;
+            }
+
+            // Friendly resource name (optional)
+            $resource = class_basename($e->getModel() ?? '') ?: 'Resource';
+
+            $payload = ErrorResponseData::from([
+                'error' => ErrorData::from([
+                    'type'    => 'invalid_request_error',
+                    'message' => "{$resource} not found.",
+                    'code'    => 'resource_missing',
+                    'param'   => '',
+                    'doc_url' => 'https://www.fspbx.com/docs/api/v1/errors/',
+                ]),
+            ]);
+
+            return response()->json($payload->toArray(), 404);
+        });
+
+        $this->renderable(function (NotFoundHttpException $e, Request $request) {
+            if (! $request->is('api/v1/*')) {
+                return null;
+            }
+
+            $payload = ErrorResponseData::from([
+                'error' => ErrorData::from([
+                    'type'    => 'not_found',
+                    'message' => "Resource not found.",
+                    'code'    => 'resource_not_found',
+                    'param'   => '',
+                    'doc_url' => 'https://www.fspbx.com/docs/api/v1/errors/',
+                ]),
+            ]);
+
+            return response()->json($payload->toArray(), 404);
+        });
+
+        // 5) Your custom ApiException
         $this->renderable(function (ApiException $e, Request $request) {
             if (! $request->is('api/v1/*')) return null;
 
