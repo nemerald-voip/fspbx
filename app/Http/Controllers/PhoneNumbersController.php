@@ -148,6 +148,7 @@ class PhoneNumbersController extends Controller
                     'update' => userCheckPermission('destination_edit'),
                     'destroy' => userCheckPermission('destination_delete'),
                     'upload' => userCheckPermission('destination_upload'),
+                    'export' => userCheckPermission('destination_export'),
 
                 ],
 
@@ -1218,6 +1219,7 @@ class PhoneNumbersController extends Controller
         $permissions['manage_destination_prefix'] = userCheckPermission('destination_prefix');
         $permissions['manage_destination_domain'] = userCheckPermission('destination_domain');
         $permissions['destination_hold_music'] = userCheckPermission('destination_hold_music');
+        $permissions['destination_export'] = userCheckPermission('destination_export');
 
         return $permissions;
     }
