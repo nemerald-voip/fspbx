@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "FS PBX",
-        "_postman_id": "2e628c30-4bb1-484e-a7bd-81df86257eb1",
+        "_postman_id": "b6abf92c-339a-4382-9ade-8d7a23980380",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -176,58 +176,6 @@
                     ]
                 },
                 {
-                    "name": "Delete a domain",
-                    "request": {
-                        "url": {
-                            "host": "{{baseUrl}}",
-                            "path": "api\/v1\/domains\/:domain_uuid",
-                            "query": [],
-                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid",
-                            "variable": [
-                                {
-                                    "id": "domain_uuid",
-                                    "key": "domain_uuid",
-                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
-                                    "description": "The domain UUID."
-                                }
-                            ]
-                        },
-                        "method": "DELETE",
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application\/json"
-                            },
-                            {
-                                "key": "Accept",
-                                "value": "application\/json"
-                            }
-                        ],
-                        "body": null,
-                        "description": "Permanently deletes the specified domain."
-                    },
-                    "response": [
-                        {
-                            "header": [],
-                            "code": 200,
-                            "body": "{\n  \"id\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"object\": \"domain\",\n  \"deleted\": true\n}",
-                            "name": "Deleted"
-                        },
-                        {
-                            "header": [],
-                            "code": 401,
-                            "body": "{\n  \"error\": {\n    \"type\": \"authentication_error\",\n    \"message\": \"Unauthenticated.\",\n    \"code\": \"unauthenticated\"\n  }\n}",
-                            "name": "Unauthenticated"
-                        },
-                        {
-                            "header": [],
-                            "code": 404,
-                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Domain not found.\",\n    \"code\": \"resource_missing\",\n    \"param\": \"domain_uuid\"\n  }\n}",
-                            "name": "Not found"
-                        }
-                    ]
-                },
-                {
                     "name": "Update a domain",
                     "request": {
                         "url": {
@@ -291,6 +239,284 @@
                             "code": 404,
                             "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Domain not found.\",\n    \"code\": \"resource_missing\",\n    \"param\": \"domain_uuid\"\n  }\n}",
                             "name": "Not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Delete a domain",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Permanently deletes the specified domain."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"id\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"object\": \"domain\",\n  \"deleted\": true\n}",
+                            "name": "Deleted"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\n  \"error\": {\n    \"type\": \"authentication_error\",\n    \"message\": \"Unauthenticated.\",\n    \"code\": \"unauthenticated\"\n  }\n}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Domain not found.\",\n    \"code\": \"resource_missing\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Not found"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Extensions",
+            "description": "",
+            "item": [
+                {
+                    "name": "List extensions",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/extensions",
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "25",
+                                    "description": "Optional. Number of results to return (min 1, max 100). Defaults to 25.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "starting_after",
+                                    "value": "d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b",
+                                    "description": "Optional. Return results after this extension UUID (cursor).",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/extensions?limit=25&starting_after=d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns extensions for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `extension_domain` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 25.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `extension_uuid` from the previous response.\n\nExamples:\n- First page: `GET \/api\/v1\/domains\/{domain_uuid}\/extensions`\n- Next page:  `GET \/api\/v1\/domains\/{domain_uuid}\/extensions?starting_after={last_extension_uuid}`\n- Custom size: `GET \/api\/v1\/domains\/{domain_uuid}\/extensions?limit=50`"
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"object\": \"list\",\n  \"url\": \"\/api\/v1\/domains\/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\/extensions\",\n  \"has_more\": true,\n  \"data\": [\n    {\n      \"extension_uuid\": \"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\",\n      \"object\": \"extension\",\n      \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n      \"extension\": \"1001\",\n      \"enabled\": true,\n      \"effective_caller_id_name\": \"Front Desk\",\n      \"effective_caller_id_number\": \"1001\",\n      \"outbound_caller_id_number_e164\": \"+12135551212\",\n      \"outbound_caller_id_number_formatted\": \"(213) 555-1212\",\n      \"emergency_caller_id_number_e164\": \"+12135559876\",\n      \"directory_first_name\": \"Front\",\n      \"directory_last_name\": \"Desk\",\n      \"name_formatted\": \"Front Desk\",\n      \"directory_visible\": true,\n      \"directory_exten_visible\": true,\n      \"email\": \"frontdesk@example.com\",\n      \"do_not_disturb\": false,\n      \"user_record\": true,\n      \"suspended\": false,\n      \"description\": \"Main reception phone\",\n      \"forward_all_enabled\": false,\n      \"forward_busy_enabled\": false,\n      \"forward_no_answer_enabled\": false,\n      \"forward_user_not_registered_enabled\": false,\n      \"follow_me_enabled\": false\n    }\n  ]\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Invalid domain UUID.\",\n    \"code\": \"invalid_request\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\n  \"error\": {\n    \"type\": \"authentication_error\",\n    \"message\": \"Unauthenticated.\",\n    \"code\": \"unauthenticated\"\n  }\n}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"You do not have access to this domain.\",\n    \"code\": \"forbidden_domain\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Forbidden (domain access)"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Domain not found.\",\n    \"code\": \"resource_missing\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Retrieve an extension",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/extensions\/:extension_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/extensions\/:extension_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "extension_uuid",
+                                    "key": "extension_uuid",
+                                    "value": "d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b",
+                                    "description": "The extension UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns a single extension for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `extension_view` permission.\n\nNotes:\n- If the domain does not exist, a `resource_missing` error is returned.\n- If the extension does not exist in that domain, a `resource_missing` error is returned."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"extension_uuid\": \"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\",\n  \"object\": \"extension\",\n  \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"extension\": \"1001\",\n  \"enabled\": true,\n  \"effective_caller_id_name\": \"Front Desk\",\n  \"effective_caller_id_number\": \"1001\",\n  \"outbound_caller_id_number_e164\": \"+12135551212\",\n  \"outbound_caller_id_number_formatted\": \"(213) 555-1212\",\n  \"emergency_caller_id_number_e164\": \"+12135559876\",\n  \"directory_first_name\": \"Front\",\n  \"directory_last_name\": \"Desk\",\n  \"name_formatted\": \"Front Desk\",\n  \"directory_visible\": true,\n  \"directory_exten_visible\": true,\n  \"email\": \"frontdesk@example.com\",\n  \"do_not_disturb\": false,\n  \"user_record\": true,\n  \"suspended\": false,\n  \"description\": \"Main reception phone\",\n  \"forward_all_enabled\": false,\n  \"forward_busy_enabled\": false,\n  \"forward_no_answer_enabled\": false,\n  \"forward_user_not_registered_enabled\": false,\n  \"follow_me_enabled\": false\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Invalid domain UUID.\",\n    \"code\": \"invalid_request\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Invalid extension UUID.\",\n    \"code\": \"invalid_request\",\n    \"param\": \"extension_uuid\"\n  }\n}",
+                            "name": "Invalid extension UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\n  \"error\": {\n    \"type\": \"authentication_error\",\n    \"message\": \"Unauthenticated.\",\n    \"code\": \"unauthenticated\"\n  }\n}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"You do not have access to this domain.\",\n    \"code\": \"forbidden_domain\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Forbidden (domain access)"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Domain not found.\",\n    \"code\": \"resource_missing\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Extension not found.\",\n    \"code\": \"resource_missing\",\n    \"param\": \"extension_uuid\"\n  }\n}",
+                            "name": "Extension not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Create an extension",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/extensions",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/extensions",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"directory_first_name\":\"Front\",\"directory_last_name\":\"Desk\",\"extension\":1001,\"voicemail_mail_to\":\"frontdesk@example.com\",\"description\":\"Main reception phone\",\"user_context\":\"xpuqzwaoumglfmdwciw\",\"accountcode\":\"c\",\"domain_uuid\":\"e6228d9d-ed95-3b2d-9def-d30844a9bbce\",\"password\":\"i'}|.uY.~\",\"directory_visible\":\"true\",\"directory_exten_visible\":\"true\",\"voicemail_enabled\":\"true\",\"voicemail_transcription_enabled\":\"true\",\"voicemail_recording_instructions\":\"true\",\"voicemail_file\":\"attach\",\"voicemail_local_after_email\":\"true\",\"voicemail_tutorial\":\"true\",\"voicemail_id\":\"1001\",\"voicemail_password\":\"1001\"}"
+                        },
+                        "description": "Creates a new extension in the specified domain.\n\nNotes:\n- Some fields are defaulted server-side (e.g., effective caller-id, voicemail defaults) based on your internal request logic.\n- Returns the created extension object."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 201,
+                            "body": "{\n  \"extension_uuid\": \"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\",\n  \"object\": \"extension\",\n  \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"extension\": \"1001\",\n  \"enabled\": true,\n  \"effective_caller_id_name\": \"Front Desk\",\n  \"effective_caller_id_number\": \"1001\",\n  \"outbound_caller_id_number_e164\": null,\n  \"outbound_caller_id_number_formatted\": null,\n  \"emergency_caller_id_number_e164\": null,\n  \"directory_first_name\": \"Front\",\n  \"directory_last_name\": \"Desk\",\n  \"name_formatted\": \"Front Desk\",\n  \"directory_visible\": true,\n  \"directory_exten_visible\": true,\n  \"email\": null,\n  \"do_not_disturb\": null,\n  \"user_record\": null,\n  \"suspended\": null,\n  \"description\": \"Main reception phone\",\n  \"forward_all_enabled\": null,\n  \"forward_busy_enabled\": null,\n  \"forward_no_answer_enabled\": null,\n  \"forward_user_not_registered_enabled\": null,\n  \"follow_me_enabled\": null\n}",
+                            "name": "Created"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Invalid domain UUID.\",\n    \"code\": \"invalid_request\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\n  \"error\": {\n    \"type\": \"authentication_error\",\n    \"message\": \"Unauthenticated.\",\n    \"code\": \"unauthenticated\"\n  }\n}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Domain not found.\",\n    \"code\": \"resource_missing\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Domain not found"
                         }
                     ]
                 }

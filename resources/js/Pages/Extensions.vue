@@ -22,41 +22,41 @@
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.extension_create" type="button" @click.prevent="handleCreateButtonClick()"
+                <button v-if="page.props.auth.can.extension_create" type="button"
+                    @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
 
-                <button v-if="page.props.auth.can.extension_upload" type="button" @click.prevent="handleImportButtonClick()"
+                <button v-if="page.props.auth.can.extension_upload" type="button"
+                    @click.prevent="handleImportButtonClick()"
                     class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     <DocumentArrowUpIcon class="h-5 w-5" aria-hidden="true" />
                     Import CSV
                 </button>
-                <button
-                  type="button"
-                  @click.prevent="exportExtensionsCsv()"
-                  class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                  <DocumentArrowDownIcon class="h-5 w-5" aria-hidden="true" />
-                  Export CSV
+                <button type="button" @click.prevent="exportExtensionsCsv()"
+                    class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    <DocumentArrowDownIcon class="h-5 w-5" aria-hidden="true" />
+                    Export CSV
                 </button>
             </template>
 
             <template #navigation>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    @pagination-change-page="renderRequestedPage" :bulk-actions="bulkActions"
+                    @bulk-action="handleBulkActionRequest" :has-selected-items="selectedItems.length > 0" />
             </template>
 
 
             <template #table-header>
                 <!-- Checkbox + Extension column -->
                 <TableColumnHeader
-                    class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
-                        :has-selected-items="selectedItems.length > 0" />
-                    <span class="pl-10">Extension</span>
+
+                    <span class="pl-14">Extension</span>
                 </TableColumnHeader>
 
                 <TableColumnHeader header="Email"
@@ -97,8 +97,9 @@
                         <!-- Checkbox + Extension -->
                         <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500">
                             <div class="flex items-center gap-5">
-                                <input v-if="row.extension_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
-                                    :value="row.extension_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                                <input v-if="row.extension_uuid" v-model="selectedItems" type="checkbox"
+                                    name="action_box[]" :value="row.extension_uuid"
+                                    class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                                 <span
                                     v-if="!isRegsLoading && registrations && Array.isArray(registrations[String(row.extension)])"
                                     class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-green-500 text-white text-xs cursor-pointer focus:outline-none"
@@ -131,9 +132,10 @@
                                         <Badge v-if="row.forward_no_answer_enabled == 'true'" :text="'FWD no Ans'"
                                             :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
                                             ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
-                                        <Badge v-if="row.forward_user_not_registered_enabled == 'true'" :text="'FWD no Reg'"
-                                            :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
-                                            ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
+                                        <Badge v-if="row.forward_user_not_registered_enabled == 'true'"
+                                            :text="'FWD no Reg'" :backgroundColor="'bg-blue-100'"
+                                            :textColor="'text-blue-800'" ringColor="ring-blue-400/20"
+                                            class="px-2 py-1 text-xs" />
                                         <Badge v-if="row.follow_me_enabled == 'true'" :text="'Sequence'"
                                             :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
                                             ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
@@ -162,7 +164,7 @@
 
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap">
-                                    <DevicePhoneMobileIcon v-if="!!row.mobile_app && row.mobile_app.status!='-1'"
+                                    <DevicePhoneMobileIcon v-if="!!row.mobile_app && row.mobile_app.status != '-1'"
                                         class="h-5 w-5  text-blue-400 hover:text-blue-600 active:bg-blue-300" />
                                     <MicrophoneIcon v-if="!!row.user_record"
                                         class="h-5 w-5 text-rose-400 hover:text-rose-600 active:bg-rose-300" />
@@ -195,7 +197,8 @@
                                         </div>
                                     </ejs-tooltip>
 
-                                    <AdvancedActionButton :actions="advancedActions" @advanced-action="(action) => handleAdvancedActionRequest(action, row.extension_uuid)"/>
+                                    <AdvancedActionButton :actions="advancedActions"
+                                        @advanced-action="(action) => handleAdvancedActionRequest(action, row.extension_uuid)" />
 
                                 </div>
                             </template>
@@ -213,8 +216,10 @@
                                     <div v-for="(reg, idx) in registrations[String(row.extension)]" :key="idx"
                                         class="flex flex-col md:flex-row gap-4 border-b last:border-0 pb-2">
                                         <div><span class="font-semibold">Device:</span> {{ reg.agent }}</div>
-                                        <div><span class="font-semibold">Remote IP Address:</span> {{ reg.wan_ip }}</div>
-                                        <div><span class="font-semibold">Connection Type:</span> {{ reg.transport }}</div>
+                                        <div><span class="font-semibold">Remote IP Address:</span> {{ reg.wan_ip }}
+                                        </div>
+                                        <div><span class="font-semibold">Connection Type:</span> {{ reg.transport }}
+                                        </div>
                                         <div><span class="font-semibold">Expires in:</span> {{ reg.expsecs }}s</div>
                                     </div>
                                 </div>
@@ -253,12 +258,13 @@
     </div>
 
     <UpdateExtensionForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"
-        :header="'Update Extension - ' + (itemOptions?.item?.name_formatted ?? 'loading')" @close="showUpdateModal = false"
-        @error="handleErrorResponse" @success="showNotification" @refresh-data="handleSearchButtonClick" />
+        :header="'Update Extension - ' + (itemOptions?.item?.name_formatted ?? 'loading')"
+        @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
+        @refresh-data="handleSearchButtonClick" />
 
     <CreateExtensionForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading"
         :header="'Create Extension'" @close="showCreateModal = false" @error="handleErrorResponse"
-        @success="showNotification" @open-edit-form="handleEditButtonClick" @refresh-data="handleSearchButtonClick"/>
+        @success="showNotification" @open-edit-form="handleEditButtonClick" @refresh-data="handleSearchButtonClick" />
 
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
@@ -319,9 +325,24 @@ const isUploadingFile = ref(null);
 const uploadErrors = ref(null);
 
 const props = defineProps({
-    data: Object,
     routes: Object,
 });
+
+const data = ref({
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: 0,
+    to: 0,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
+});
+
+// onMounted(() => {
+//     handleSearchButtonClick();
+// })
 
 const filterData = ref({
     search: null,
@@ -378,6 +399,7 @@ const advancedActions = computed(() => [
 
 
 onMounted(async () => {
+    handleSearchButtonClick();
     isRegsLoading.value = true
     try {
         // Make your additional API call (example URL)
@@ -446,25 +468,25 @@ function downloadTemplateFile() {
 }
 
 const exportExtensionsCsv = () => {
-  axios.get(props.routes.export, {
-    params: {
-      // mirrors your search filter (and leaves room for future filters)
-      filter: { search: filterData.value.search },
-    },
-    responseType: 'blob',
-  })
-  .then((response) => {
-    const blob = new Blob([response.data], { type: 'text/csv' });
-    const url  = window.URL.createObjectURL(blob);
-    const a    = document.createElement('a');
-    a.href = url;
-    a.download = 'extensions.csv';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
-  })
-  .catch(handleErrorResponse);
+    axios.get(props.routes.export, {
+        params: {
+            // mirrors your search filter (and leaves room for future filters)
+            filter: { search: filterData.value.search },
+        },
+        responseType: 'blob',
+    })
+        .then((response) => {
+            const blob = new Blob([response.data], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'extensions.csv';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        })
+        .catch(handleErrorResponse);
 };
 
 const handleEditButtonClick = (itemUuid) => {
@@ -545,8 +567,6 @@ const handleAdvancedActionRequest = (action, extension_uuid) => {
 };
 
 
-
-
 const handleCreateButtonClick = () => {
     showCreateModal.value = true
     getItemOptions();
@@ -567,25 +587,29 @@ const handleSelectAll = () => {
 };
 
 
+const getData = (page = 1) => {
+    loading.value = true;
+
+    axios.get(props.routes.data_route, {
+        params: {
+            filter: filterData.value,
+            page,
+        }
+    })
+        .then((response) => {
+            data.value = response.data;
+            // console.log(data.value);
+
+        }).catch((error) => {
+
+            handleErrorResponse(error);
+        }).finally(() => {
+            loading.value = false
+        })
+}
 
 const handleSearchButtonClick = () => {
-    loading.value = true;
-    router.visit(props.routes.current_page, {
-        data: {
-            filter: {
-                search: filterData.value.search,
-            },
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-        ],
-        onSuccess: (page) => {
-            loading.value = false;
-            handleClearSelection();
-        }
-    });
+    getData()
 };
 
 const handleFiltersReset = () => {
@@ -597,19 +621,12 @@ const handleFiltersReset = () => {
 
 const renderRequestedPage = (url) => {
     loading.value = true;
-    router.visit(url, {
-        data: {
-            filter: {
-                search: filterData.value.search,
-            },
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
-    });
+    // Extract the page number from the url, e.g. "?page=3"
+    const urlObj = new URL(url, window.location.origin);
+    const pageParam = urlObj.searchParams.get("page") ?? 1;
+
+    // Now call getData with the page number
+    getData(pageParam);
 };
 
 
@@ -652,7 +669,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.extension_uuid);
+        selectedItems.value = data.value.data.map(item => item.extension_uuid);
     } else {
         selectedItems.value = [];
     }

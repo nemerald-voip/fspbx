@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 use App\Data\Api\V1\DomainData;
 use App\Exceptions\ApiException;
 use Illuminate\Support\Facades\DB;
-use App\Http\Responses\ApiResponse;
 use App\Http\Controllers\Controller;
 use Spatie\QueryBuilder\QueryBuilder;
 use Illuminate\Database\QueryException;
@@ -457,12 +456,6 @@ class DomainController extends Controller
         if (! $user) {
             throw new ApiException(401, 'authentication_error', 'Unauthenticated.', 'unauthenticated');
         }
-
-        // Optional guard if you never want this deleted
-        // $protectedNames = ['admin.localhost'];
-        // if (Domain::where('domain_uuid', $domain_uuid)->whereIn('domain_name', $protectedNames)->exists()) {
-        //     throw new ApiException(403, 'invalid_request_error', 'This domain cannot be deleted.', 'forbidden', 'domain_uuid');
-        // }
 
         // Let your Handler convert ModelNotFoundException -> Stripe-shaped 404
         $domain = Domain::query()

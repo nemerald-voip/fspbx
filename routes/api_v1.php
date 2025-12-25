@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\DomainController;
+use App\Http\Controllers\Api\V1\ExtensionController;
 
 
 
@@ -18,20 +19,16 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
     |--------------------------------------------------------------------------
     | Domains
     |--------------------------------------------------------------------------
-    | GET /domains must return ONLY domains the user can access:
-    |  - if user has "domain_all" => all domains
-    |  - else if assigned domains/groups exist => only those (even if own domain not included)
-    |  - else => only user's own domain
-    | That filtering happens in DomainController@index (not middleware).
     */
+
     Route::get('/domains', [DomainController::class, 'index'])
         ->middleware('user.authorize:domain_select');
 
-    Route::post('/domains', [DomainController::class, 'store'])
-        ->middleware('user.authorize:domain_add');
-
     Route::get('/domains/{domain_uuid}', [DomainController::class, 'show'])
         ->middleware('user.authorize:domain_view');
+
+    Route::post('/domains', [DomainController::class, 'store'])
+        ->middleware('user.authorize:domain_add');
 
     Route::patch('/domains/{domain_uuid}', [DomainController::class, 'update'])
         ->middleware('user.authorize:domain_edit');
@@ -39,23 +36,19 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
     Route::delete('/domains/{domain_uuid}', [DomainController::class, 'destroy'])
         ->middleware('user.authorize:domain_delete');
 
-
     /*
     |--------------------------------------------------------------------------
     | Extensions (domain-scoped)
     |--------------------------------------------------------------------------
-    | Middleware will:
-    |  - enforce domain access for {domain_uuid}
-    |  - enforce permission in that domain
     */
-    // Route::get('/domains/{domain_uuid}/extensions', [ExtensionController::class, 'index'])
-    //     ->middleware('user.authorize:extensions_list');
+    Route::get('/domains/{domain_uuid}/extensions', [ExtensionController::class, 'index'])
+        ->middleware('user.authorize:extension_domain');
 
-    // Route::post('/domains/{domain_uuid}/extensions', [ExtensionController::class, 'store'])
-    //     ->middleware('user.authorize:extensions_create');
+    Route::get('/domains/{domain_uuid}/extensions/{extension_uuid}', [ExtensionController::class, 'show'])
+        ->middleware('user.authorize:extension_view');
 
-    // Route::get('/domains/{domain_uuid}/extensions/{extension_uuid}', [ExtensionController::class, 'show'])
-    //     ->middleware('user.authorize:extensions_view');
+    Route::post('/domains/{domain_uuid}/extensions', [ExtensionController::class, 'store'])
+        ->middleware('user.authorize:extensions_create');
 
     // Route::put('/domains/{domain_uuid}/extensions/{extension_uuid}', [ExtensionController::class, 'update'])
     //     ->middleware('user.authorize:extensions_update');

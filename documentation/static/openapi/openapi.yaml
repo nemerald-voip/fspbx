@@ -346,86 +346,6 @@ paths:
                         example: domain_uuid
       tags:
         - Domains
-    delete:
-      summary: 'Delete a domain'
-      operationId: deleteADomain
-      description: 'Permanently deletes the specified domain.'
-      parameters: []
-      responses:
-        200:
-          description: Deleted
-          content:
-            application/json:
-              schema:
-                type: object
-                example:
-                  id: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
-                  object: domain
-                  deleted: true
-                properties:
-                  id:
-                    type: string
-                    example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
-                  object:
-                    type: string
-                    example: domain
-                  deleted:
-                    type: boolean
-                    example: true
-        401:
-          description: Unauthenticated
-          content:
-            application/json:
-              schema:
-                type: object
-                example:
-                  error:
-                    type: authentication_error
-                    message: Unauthenticated.
-                    code: unauthenticated
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                        example: authentication_error
-                      message:
-                        type: string
-                        example: Unauthenticated.
-                      code:
-                        type: string
-                        example: unauthenticated
-        404:
-          description: 'Not found'
-          content:
-            application/json:
-              schema:
-                type: object
-                example:
-                  error:
-                    type: invalid_request_error
-                    message: 'Domain not found.'
-                    code: resource_missing
-                    param: domain_uuid
-                properties:
-                  error:
-                    type: object
-                    properties:
-                      type:
-                        type: string
-                        example: invalid_request_error
-                      message:
-                        type: string
-                        example: 'Domain not found.'
-                      code:
-                        type: string
-                        example: resource_missing
-                      param:
-                        type: string
-                        example: domain_uuid
-      tags:
-        - Domains
     patch:
       summary: 'Update a domain'
       operationId: updateADomain
@@ -591,6 +511,86 @@ paths:
                   example: false
               required:
                 - domain_description
+    delete:
+      summary: 'Delete a domain'
+      operationId: deleteADomain
+      description: 'Permanently deletes the specified domain.'
+      parameters: []
+      responses:
+        200:
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  id: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  object: domain
+                  deleted: true
+                properties:
+                  id:
+                    type: string
+                    example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  object:
+                    type: string
+                    example: domain
+                  deleted:
+                    type: boolean
+                    example: true
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        404:
+          description: 'Not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Domain not found.'
+                    code: resource_missing
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Domain not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: domain_uuid
+      tags:
+        - Domains
     parameters:
       -
         in: path
@@ -600,9 +600,892 @@ paths:
         required: true
         schema:
           type: string
+  '/api/v1/domains/{domain_uuid}/extensions':
+    get:
+      summary: 'List extensions'
+      operationId: listExtensions
+      description: "Returns extensions for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `extension_domain` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 25.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `extension_uuid` from the previous response.\n\nExamples:\n- First page: `GET /api/v1/domains/{domain_uuid}/extensions`\n- Next page:  `GET /api/v1/domains/{domain_uuid}/extensions?starting_after={last_extension_uuid}`\n- Custom size: `GET /api/v1/domains/{domain_uuid}/extensions?limit=50`"
+      parameters:
+        -
+          in: query
+          name: limit
+          description: 'Optional. Number of results to return (min 1, max 100). Defaults to 25.'
+          example: 25
+          required: false
+          schema:
+            type: integer
+            description: 'Optional. Number of results to return (min 1, max 100). Defaults to 25.'
+            example: 25
+        -
+          in: query
+          name: starting_after
+          description: 'Optional. Return results after this extension UUID (cursor).'
+          example: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+          required: false
+          schema:
+            type: string
+            description: 'Optional. Return results after this extension UUID (cursor).'
+            example: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  object: list
+                  url: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/extensions
+                  has_more: true
+                  data:
+                    -
+                      extension_uuid: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                      object: extension
+                      domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                      extension: '1001'
+                      enabled: true
+                      effective_caller_id_name: 'Front Desk'
+                      effective_caller_id_number: '1001'
+                      outbound_caller_id_number_e164: '+12135551212'
+                      outbound_caller_id_number_formatted: '(213) 555-1212'
+                      emergency_caller_id_number_e164: '+12135559876'
+                      directory_first_name: Front
+                      directory_last_name: Desk
+                      name_formatted: 'Front Desk'
+                      directory_visible: true
+                      directory_exten_visible: true
+                      email: frontdesk@example.com
+                      do_not_disturb: false
+                      user_record: true
+                      suspended: false
+                      description: 'Main reception phone'
+                      forward_all_enabled: false
+                      forward_busy_enabled: false
+                      forward_no_answer_enabled: false
+                      forward_user_not_registered_enabled: false
+                      follow_me_enabled: false
+                properties:
+                  object:
+                    type: string
+                    example: list
+                  url:
+                    type: string
+                    example: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/extensions
+                  has_more:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    example:
+                      -
+                        extension_uuid: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                        object: extension
+                        domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                        extension: '1001'
+                        enabled: true
+                        effective_caller_id_name: 'Front Desk'
+                        effective_caller_id_number: '1001'
+                        outbound_caller_id_number_e164: '+12135551212'
+                        outbound_caller_id_number_formatted: '(213) 555-1212'
+                        emergency_caller_id_number_e164: '+12135559876'
+                        directory_first_name: Front
+                        directory_last_name: Desk
+                        name_formatted: 'Front Desk'
+                        directory_visible: true
+                        directory_exten_visible: true
+                        email: frontdesk@example.com
+                        do_not_disturb: false
+                        user_record: true
+                        suspended: false
+                        description: 'Main reception phone'
+                        forward_all_enabled: false
+                        forward_busy_enabled: false
+                        forward_no_answer_enabled: false
+                        forward_user_not_registered_enabled: false
+                        follow_me_enabled: false
+                    items:
+                      type: object
+                      properties:
+                        extension_uuid:
+                          type: string
+                          example: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                        object:
+                          type: string
+                          example: extension
+                        domain_uuid:
+                          type: string
+                          example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                        extension:
+                          type: string
+                          example: '1001'
+                        enabled:
+                          type: boolean
+                          example: true
+                        effective_caller_id_name:
+                          type: string
+                          example: 'Front Desk'
+                        effective_caller_id_number:
+                          type: string
+                          example: '1001'
+                        outbound_caller_id_number_e164:
+                          type: string
+                          example: '+12135551212'
+                        outbound_caller_id_number_formatted:
+                          type: string
+                          example: '(213) 555-1212'
+                        emergency_caller_id_number_e164:
+                          type: string
+                          example: '+12135559876'
+                        directory_first_name:
+                          type: string
+                          example: Front
+                        directory_last_name:
+                          type: string
+                          example: Desk
+                        name_formatted:
+                          type: string
+                          example: 'Front Desk'
+                        directory_visible:
+                          type: boolean
+                          example: true
+                        directory_exten_visible:
+                          type: boolean
+                          example: true
+                        email:
+                          type: string
+                          example: frontdesk@example.com
+                        do_not_disturb:
+                          type: boolean
+                          example: false
+                        user_record:
+                          type: boolean
+                          example: true
+                        suspended:
+                          type: boolean
+                          example: false
+                        description:
+                          type: string
+                          example: 'Main reception phone'
+                        forward_all_enabled:
+                          type: boolean
+                          example: false
+                        forward_busy_enabled:
+                          type: boolean
+                          example: false
+                        forward_no_answer_enabled:
+                          type: boolean
+                          example: false
+                        forward_user_not_registered_enabled:
+                          type: boolean
+                          example: false
+                        follow_me_enabled:
+                          type: boolean
+                          example: false
+        400:
+          description: 'Invalid domain UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid domain UUID.'
+                    code: invalid_request
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid domain UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: domain_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: 'Forbidden (domain access)'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'You do not have access to this domain.'
+                    code: forbidden_domain
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'You do not have access to this domain.'
+                      code:
+                        type: string
+                        example: forbidden_domain
+                      param:
+                        type: string
+                        example: domain_uuid
+        404:
+          description: 'Not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Domain not found.'
+                    code: resource_missing
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Domain not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: domain_uuid
+      tags:
+        - Extensions
+    post:
+      summary: 'Create an extension'
+      operationId: createAnExtension
+      description: "Creates a new extension in the specified domain.\n\nNotes:\n- Some fields are defaulted server-side (e.g., effective caller-id, voicemail defaults) based on your internal request logic.\n- Returns the created extension object."
+      parameters: []
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  extension_uuid: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                  object: extension
+                  domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  extension: '1001'
+                  enabled: true
+                  effective_caller_id_name: 'Front Desk'
+                  effective_caller_id_number: '1001'
+                  outbound_caller_id_number_e164: null
+                  outbound_caller_id_number_formatted: null
+                  emergency_caller_id_number_e164: null
+                  directory_first_name: Front
+                  directory_last_name: Desk
+                  name_formatted: 'Front Desk'
+                  directory_visible: true
+                  directory_exten_visible: true
+                  email: null
+                  do_not_disturb: null
+                  user_record: null
+                  suspended: null
+                  description: 'Main reception phone'
+                  forward_all_enabled: null
+                  forward_busy_enabled: null
+                  forward_no_answer_enabled: null
+                  forward_user_not_registered_enabled: null
+                  follow_me_enabled: null
+                properties:
+                  extension_uuid:
+                    type: string
+                    example: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                  object:
+                    type: string
+                    example: extension
+                  domain_uuid:
+                    type: string
+                    example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  extension:
+                    type: string
+                    example: '1001'
+                  enabled:
+                    type: boolean
+                    example: true
+                  effective_caller_id_name:
+                    type: string
+                    example: 'Front Desk'
+                  effective_caller_id_number:
+                    type: string
+                    example: '1001'
+                  outbound_caller_id_number_e164:
+                    type: string
+                    example: null
+                  outbound_caller_id_number_formatted:
+                    type: string
+                    example: null
+                  emergency_caller_id_number_e164:
+                    type: string
+                    example: null
+                  directory_first_name:
+                    type: string
+                    example: Front
+                  directory_last_name:
+                    type: string
+                    example: Desk
+                  name_formatted:
+                    type: string
+                    example: 'Front Desk'
+                  directory_visible:
+                    type: boolean
+                    example: true
+                  directory_exten_visible:
+                    type: boolean
+                    example: true
+                  email:
+                    type: string
+                    example: null
+                  do_not_disturb:
+                    type: string
+                    example: null
+                  user_record:
+                    type: string
+                    example: null
+                  suspended:
+                    type: string
+                    example: null
+                  description:
+                    type: string
+                    example: 'Main reception phone'
+                  forward_all_enabled:
+                    type: string
+                    example: null
+                  forward_busy_enabled:
+                    type: string
+                    example: null
+                  forward_no_answer_enabled:
+                    type: string
+                    example: null
+                  forward_user_not_registered_enabled:
+                    type: string
+                    example: null
+                  follow_me_enabled:
+                    type: string
+                    example: null
+        400:
+          description: 'Invalid domain UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid domain UUID.'
+                    code: invalid_request
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid domain UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: domain_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        404:
+          description: 'Domain not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Domain not found.'
+                    code: resource_missing
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Domain not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: domain_uuid
+      tags:
+        - Extensions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                directory_first_name:
+                  type: string
+                  description: 'Directory first name. Must not be greater than 60 characters.'
+                  example: Front
+                directory_last_name:
+                  type: string
+                  description: 'Directory last name. Must not be greater than 60 characters.'
+                  example: Desk
+                effective_caller_id_name:
+                  type: string
+                  description: ''
+                  example: null
+                effective_caller_id_number:
+                  type: string
+                  description: ''
+                  example: null
+                extension:
+                  type: number
+                  description: 'Extension number.'
+                  example: 1001.0
+                voicemail_mail_to:
+                  type: string
+                  description: 'Optional voicemail-to-email address. Must be a valid email address. Must not be greater than 255 characters.'
+                  example: frontdesk@example.com
+                description:
+                  type: string
+                  description: 'Optional label/description for the extension. Must not be greater than 255 characters.'
+                  example: 'Main reception phone'
+                user_context:
+                  type: string
+                  description: 'Must not be greater than 255 characters.'
+                  example: xpuqzwaoumglfmdwciw
+                accountcode:
+                  type: string
+                  description: 'Must not be greater than 255 characters.'
+                  example: c
+                domain_uuid:
+                  type: string
+                  description: 'Must be a valid UUID.'
+                  example: e6228d9d-ed95-3b2d-9def-d30844a9bbce
+                password:
+                  type: string
+                  description: 'Must be at least 6 characters. Must not be greater than 255 characters.'
+                  example: "i'}|.uY.~"
+                directory_visible:
+                  type: string
+                  description: 'Whether the user appears in the directory. Accepts true/false/1/0.'
+                  example: 'true'
+                  enum:
+                    - 'true'
+                    - 'false'
+                    - '1'
+                    - '0'
+                directory_exten_visible:
+                  type: string
+                  description: 'Whether the extension number is visible in the directory. Accepts true/false/1/0.'
+                  example: 'true'
+                  enum:
+                    - 'true'
+                    - 'false'
+                    - '1'
+                    - '0'
+                voicemail_enabled:
+                  type: string
+                  description: 'Whether voicemail is enabled. Accepts true/false/1/0.'
+                  example: 'true'
+                  enum:
+                    - 'true'
+                    - 'false'
+                    - '1'
+                    - '0'
+                voicemail_transcription_enabled:
+                  type: string
+                  description: 'Whether voicemail transcription is enabled. Accepts true/false/1/0.'
+                  example: 'true'
+                  enum:
+                    - 'true'
+                    - 'false'
+                    - '1'
+                    - '0'
+                voicemail_recording_instructions:
+                  type: string
+                  description: 'Whether voicemail recording instructions are enabled. Accepts true/false/1/0.'
+                  example: 'true'
+                  enum:
+                    - 'true'
+                    - 'false'
+                    - '1'
+                    - '0'
+                voicemail_file:
+                  type: string
+                  description: 'Voicemail delivery mode/file type (e.g. attach). Must not be greater than 16 characters.'
+                  example: attach
+                voicemail_local_after_email:
+                  type: string
+                  description: 'Whether to keep voicemail local after emailing. Accepts true/false/1/0.'
+                  example: 'true'
+                  enum:
+                    - 'true'
+                    - 'false'
+                    - '1'
+                    - '0'
+                voicemail_tutorial:
+                  type: string
+                  description: 'Whether voicemail tutorial is enabled. Accepts true/false/1/0.'
+                  example: 'true'
+                  enum:
+                    - 'true'
+                    - 'false'
+                    - '1'
+                    - '0'
+                voicemail_id:
+                  type: string
+                  description: 'Voicemail box ID (often same as extension). Must not be greater than 60 characters.'
+                  example: '1001'
+                voicemail_password:
+                  type: string
+                  description: 'Voicemail PIN/password. Must not be greater than 20 characters.'
+                  example: '1001'
+              required:
+                - directory_first_name
+                - extension
+                - user_context
+                - domain_uuid
+                - password
+                - directory_visible
+                - directory_exten_visible
+                - voicemail_enabled
+                - voicemail_transcription_enabled
+                - voicemail_recording_instructions
+                - voicemail_file
+                - voicemail_local_after_email
+                - voicemail_tutorial
+                - voicemail_id
+                - voicemail_password
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/extensions/{extension_uuid}':
+    get:
+      summary: 'Retrieve an extension'
+      operationId: retrieveAnExtension
+      description: "Returns a single extension for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `extension_view` permission.\n\nNotes:\n- If the domain does not exist, a `resource_missing` error is returned.\n- If the extension does not exist in that domain, a `resource_missing` error is returned."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  extension_uuid: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                  object: extension
+                  domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  extension: '1001'
+                  enabled: true
+                  effective_caller_id_name: 'Front Desk'
+                  effective_caller_id_number: '1001'
+                  outbound_caller_id_number_e164: '+12135551212'
+                  outbound_caller_id_number_formatted: '(213) 555-1212'
+                  emergency_caller_id_number_e164: '+12135559876'
+                  directory_first_name: Front
+                  directory_last_name: Desk
+                  name_formatted: 'Front Desk'
+                  directory_visible: true
+                  directory_exten_visible: true
+                  email: frontdesk@example.com
+                  do_not_disturb: false
+                  user_record: true
+                  suspended: false
+                  description: 'Main reception phone'
+                  forward_all_enabled: false
+                  forward_busy_enabled: false
+                  forward_no_answer_enabled: false
+                  forward_user_not_registered_enabled: false
+                  follow_me_enabled: false
+                properties:
+                  extension_uuid:
+                    type: string
+                    example: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                  object:
+                    type: string
+                    example: extension
+                  domain_uuid:
+                    type: string
+                    example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  extension:
+                    type: string
+                    example: '1001'
+                  enabled:
+                    type: boolean
+                    example: true
+                  effective_caller_id_name:
+                    type: string
+                    example: 'Front Desk'
+                  effective_caller_id_number:
+                    type: string
+                    example: '1001'
+                  outbound_caller_id_number_e164:
+                    type: string
+                    example: '+12135551212'
+                  outbound_caller_id_number_formatted:
+                    type: string
+                    example: '(213) 555-1212'
+                  emergency_caller_id_number_e164:
+                    type: string
+                    example: '+12135559876'
+                  directory_first_name:
+                    type: string
+                    example: Front
+                  directory_last_name:
+                    type: string
+                    example: Desk
+                  name_formatted:
+                    type: string
+                    example: 'Front Desk'
+                  directory_visible:
+                    type: boolean
+                    example: true
+                  directory_exten_visible:
+                    type: boolean
+                    example: true
+                  email:
+                    type: string
+                    example: frontdesk@example.com
+                  do_not_disturb:
+                    type: boolean
+                    example: false
+                  user_record:
+                    type: boolean
+                    example: true
+                  suspended:
+                    type: boolean
+                    example: false
+                  description:
+                    type: string
+                    example: 'Main reception phone'
+                  forward_all_enabled:
+                    type: boolean
+                    example: false
+                  forward_busy_enabled:
+                    type: boolean
+                    example: false
+                  forward_no_answer_enabled:
+                    type: boolean
+                    example: false
+                  forward_user_not_registered_enabled:
+                    type: boolean
+                    example: false
+                  follow_me_enabled:
+                    type: boolean
+                    example: false
+        400:
+          description: 'Invalid extension UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid extension UUID.'
+                    code: invalid_request
+                    param: extension_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid extension UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: extension_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: 'Forbidden (domain access)'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'You do not have access to this domain.'
+                    code: forbidden_domain
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'You do not have access to this domain.'
+                      code:
+                        type: string
+                        example: forbidden_domain
+                      param:
+                        type: string
+                        example: domain_uuid
+        404:
+          description: 'Extension not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Extension not found.'
+                    code: resource_missing
+                    param: extension_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Extension not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: extension_uuid
+      tags:
+        - Extensions
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+      -
+        in: path
+        name: extension_uuid
+        description: 'The extension UUID.'
+        example: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+        required: true
+        schema:
+          type: string
 tags:
   -
     name: Domains
+    description: ''
+  -
+    name: Extensions
     description: ''
 components:
   securitySchemes:
