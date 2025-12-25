@@ -1776,6 +1776,7 @@ public function export(Request $request)
         $permissions['extension_device_update'] = userCheckPermission('extension_device_update');
         $permissions['extension_device_assign'] = userCheckPermission('extension_device_assign');
         $permissions['extension_device_unassign'] = userCheckPermission('extension_device_unassign');
+        $permissions['extension_export'] = userCheckPermission('extension_export');
 
         $permissions['manage_mobile_app'] = userCheckPermission('extension_mobile_app_settings');
 
