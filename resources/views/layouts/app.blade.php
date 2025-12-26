@@ -12,6 +12,15 @@
     @vite(['resources/js/app.js','resources/js/hyper-head.js', 'resources/js/hyper-config.js'])
 
     @stack('head.end')
+    
+    <style>
+        /* Force 16px font on mobile inputs to prevent iOS auto-zoom */
+        @media screen and (max-width: 768px) {
+            input, select, textarea, .vf-input-group input {
+                font-size: 16px !important;
+            }
+        }
+    </style>
 </head>
 
 <body>
