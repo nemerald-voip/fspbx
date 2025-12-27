@@ -68,5 +68,8 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'verified' => \Illuminate\Auth\Middleware\EnsureEmailIsVerified::class,
         'provision.digest' => \App\Http\Middleware\DigestProvisionAuth::class,
+        'api.cookie.auth' => \App\Http\Middleware\RequireCookieAuthForSpaRequests::class,
+        'api.token.auth' => \App\Http\Middleware\RequireBearerToken::class,
+        'user.authorize' => \App\Http\Middleware\AuthorizeUser::class,
     ];
 }

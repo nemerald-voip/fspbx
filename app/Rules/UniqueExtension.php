@@ -21,10 +21,9 @@ class UniqueExtension implements ValidationRule
     protected $currentUuid; // The Uuid to exclude
 
 
-    public function __construct($currentUuid = null)
+    public function __construct($currentUuid = null, ?string $domainUuid = null)
     {
-        // Set the domain UUID from the session
-        $this->domainUuid = session('domain_uuid');
+        $this->domainUuid  = $domainUuid ?: session('domain_uuid');
         $this->currentUuid = $currentUuid;
     }
 

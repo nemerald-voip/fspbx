@@ -1,0 +1,3619 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>FS PBX Documentation</title>
+
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="./css/theme-default.style.css" media="screen">
+    <link rel="stylesheet" href="./css/theme-default.print.css" media="print">
+
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.10/lodash.min.js"></script>
+
+    <link rel="stylesheet"
+          href="https://unpkg.com/@highlightjs/cdn-assets@11.6.0/styles/obsidian.min.css">
+    <script src="https://unpkg.com/@highlightjs/cdn-assets@11.6.0/highlight.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jets/0.14.1/jets.min.js"></script>
+
+    <style id="language-style">
+        /* starts out as display none and is replaced with js later  */
+                    body .content .bash-example code { display: none; }
+                    body .content .javascript-example code { display: none; }
+            </style>
+
+
+    <script src="./js/theme-default-4.31.0.js"></script>
+
+</head>
+
+<body data-languages="[&quot;bash&quot;,&quot;javascript&quot;]">
+
+<a href="#" id="nav-button">
+    <span>
+        MENU
+        <img src="./images/navbar.png" alt="navbar-image"/>
+    </span>
+</a>
+<div class="tocify-wrapper">
+    
+            <div class="lang-selector">
+                                            <button type="button" class="lang-button" data-language-name="bash">bash</button>
+                                            <button type="button" class="lang-button" data-language-name="javascript">javascript</button>
+                    </div>
+    
+    <div class="search">
+        <input type="text" class="search" id="input-search" placeholder="Search">
+    </div>
+
+    <div id="toc">
+                    <ul id="tocify-header-introduction" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="introduction">
+                    <a href="#introduction">Introduction</a>
+                </li>
+                            </ul>
+                    <ul id="tocify-header-authenticating-requests" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="authenticating-requests">
+                    <a href="#authenticating-requests">Authenticating requests</a>
+                </li>
+                            </ul>
+                    <ul id="tocify-header-domains" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="domains">
+                    <a href="#domains">Domains</a>
+                </li>
+                                    <ul id="tocify-subheader-domains" class="tocify-subheader">
+                                                    <li class="tocify-item level-2" data-unique="domains-GETapi-v1-domains">
+                                <a href="#domains-GETapi-v1-domains">List domains</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="domains-GETapi-v1-domains--domain_uuid-">
+                                <a href="#domains-GETapi-v1-domains--domain_uuid-">Retrieve a domain</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="domains-POSTapi-v1-domains">
+                                <a href="#domains-POSTapi-v1-domains">Create a domain</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="domains-PATCHapi-v1-domains--domain_uuid-">
+                                <a href="#domains-PATCHapi-v1-domains--domain_uuid-">Update a domain</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="domains-DELETEapi-v1-domains--domain_uuid-">
+                                <a href="#domains-DELETEapi-v1-domains--domain_uuid-">Delete a domain</a>
+                            </li>
+                                                                        </ul>
+                            </ul>
+                    <ul id="tocify-header-extensions" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="extensions">
+                    <a href="#extensions">Extensions</a>
+                </li>
+                                    <ul id="tocify-subheader-extensions" class="tocify-subheader">
+                                                    <li class="tocify-item level-2" data-unique="extensions-GETapi-v1-domains--domain_uuid--extensions">
+                                <a href="#extensions-GETapi-v1-domains--domain_uuid--extensions">List extensions</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="extensions-GETapi-v1-domains--domain_uuid--extensions--extension_uuid-">
+                                <a href="#extensions-GETapi-v1-domains--domain_uuid--extensions--extension_uuid-">Retrieve an extension</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="extensions-POSTapi-v1-domains--domain_uuid--extensions">
+                                <a href="#extensions-POSTapi-v1-domains--domain_uuid--extensions">Create an extension</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="extensions-PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-">
+                                <a href="#extensions-PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-">Update an extension</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="extensions-DELETEapi-v1-domains--domain_uuid--extensions--extension_uuid-">
+                                <a href="#extensions-DELETEapi-v1-domains--domain_uuid--extensions--extension_uuid-">Delete an extension</a>
+                            </li>
+                                                                        </ul>
+                            </ul>
+            </div>
+
+    <ul class="toc-footer" id="toc-footer">
+                    <li style="padding-bottom: 5px;"><a href="./collection.json">View Postman collection</a></li>
+                            <li style="padding-bottom: 5px;"><a href="./openapi.yaml">View OpenAPI spec</a></li>
+                <li><a href="http://github.com/knuckleswtf/scribe">Documentation powered by Scribe ✍</a></li>
+    </ul>
+
+    <ul class="toc-footer" id="last-updated">
+        <li>Last updated: December 27, 2025</li>
+    </ul>
+</div>
+
+<div class="page-wrapper">
+    <div class="dark-box"></div>
+    <div class="content">
+        <h1 id="introduction">Introduction</h1>
+<aside>
+    <strong>Base URL</strong>: <code></code>
+</aside>
+<p>This documentation aims to provide all the information you need to work with our API.</p>
+<aside>As you scroll, you'll see code examples for working with the API in different programming languages in the dark area to the right (or as part of the content on mobile).
+You can switch the language used with the tabs at the top right (or from the nav menu at the top left on mobile).</aside>
+
+        <h1 id="authenticating-requests">Authenticating requests</h1>
+<p>To authenticate requests, include an <strong><code>Authorization</code></strong> header with the value <strong><code>"Bearer {YOUR_AUTH_KEY}"</code></strong>.</p>
+<p>All authenticated endpoints are marked with a <code>requires authentication</code> badge in the documentation below.</p>
+<p>You can retrieve your token by visiting your dashboard and clicking <b>Generate API token</b>.</p>
+
+        <h1 id="domains">Domains</h1>
+
+    
+
+                                <h2 id="domains-GETapi-v1-domains">List domains</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Returns only the domains the caller is allowed to access.</p>
+<p>Access rules:</p>
+<ul>
+<li>If the user has the <code>domain_all</code> permission, all domains are returned.</li>
+<li>If the user has any assigned domain groups or individual domains, only those domains are returned
+(even if the user's own domain is not included).</li>
+<li>If nothing is assigned, only the user's own domain is returned.</li>
+</ul>
+<p>Pagination (cursor-based):</p>
+<ul>
+<li>Both <code>limit</code> and <code>starting_after</code> are optional.</li>
+<li>If <code>limit</code> is not provided, it defaults to 25.</li>
+<li>If <code>starting_after</code> is not provided, results start from the beginning.</li>
+<li>If <code>has_more</code> is true, request the next page by passing <code>starting_after</code>
+equal to the last item's <code>domain_uuid</code> from the previous response.</li>
+</ul>
+<p>Examples:</p>
+<ul>
+<li>First page: <code>GET /api/v1/domains</code></li>
+<li>Next page:  <code>GET /api/v1/domains?starting_after={last_domain_uuid}</code></li>
+<li>Custom size: <code>GET /api/v1/domains?limit=50</code></li>
+</ul>
+
+<span id="example-requests-GETapi-v1-domains">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "/api/v1/domains?limit=25&amp;starting_after=7d58342b-2b29-4dcf-92d6-e9a9e002a4e5" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains"
+);
+
+const params = {
+    "limit": "25",
+    "starting_after": "7d58342b-2b29-4dcf-92d6-e9a9e002a4e5",
+};
+Object.keys(params)
+    .forEach(key =&gt; url.searchParams.append(key, params[key]));
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-domains">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;object&quot;: &quot;list&quot;,
+    &quot;url&quot;: &quot;/api/v1/domains&quot;,
+    &quot;has_more&quot;: true,
+    &quot;data&quot;: [
+        {
+            &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+            &quot;object&quot;: &quot;domain&quot;,
+            &quot;domain_name&quot;: &quot;10001.fspbx.com&quot;,
+            &quot;domain_enabled&quot;: true,
+            &quot;domain_description&quot;: &quot;BluePeak Solutions&quot;
+        }
+    ]
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-domains" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-domains"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-domains"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-domains" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-domains">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-domains" data-method="GET"
+      data-path="api/v1/domains"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-domains', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/domains</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-domains"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-domains"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-domains"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>limit</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="limit"                data-endpoint="GETapi-v1-domains"
+               value="25"
+               data-component="query">
+    <br>
+<p>Optional. Number of results to return (min 1, max 100). Defaults to 25. Example: <code>25</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>starting_after</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="starting_after"                data-endpoint="GETapi-v1-domains"
+               value="7d58342b-2b29-4dcf-92d6-e9a9e002a4e5"
+               data-component="query">
+    <br>
+<p>Optional. Return results after this domain UUID (cursor). Example: <code>7d58342b-2b29-4dcf-92d6-e9a9e002a4e5</code></p>
+            </div>
+                </form>
+
+                    <h2 id="domains-GETapi-v1-domains--domain_uuid-">Retrieve a domain</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Returns a single domain the caller is allowed to access.</p>
+<p>Access rules:</p>
+<ul>
+<li>If the user has the <code>domain_all</code> permission, any domain may be retrieved.</li>
+<li>If the user has assigned domain groups or individual domains, the domain must be in those assignments
+(even if the user's own domain is not included).</li>
+<li>If nothing is assigned, the user may only retrieve their own domain.</li>
+</ul>
+<p>Notes:</p>
+<ul>
+<li>If the domain does not exist, a <code>resource_missing</code> error is returned.</li>
+<li>If the domain exists but is not accessible, a <code>forbidden_domain</code> error is returned.</li>
+</ul>
+
+<span id="example-requests-GETapi-v1-domains--domain_uuid-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-domains--domain_uuid-">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;object&quot;: &quot;domain&quot;,
+    &quot;domain_name&quot;: &quot;10001.fspbx.com&quot;,
+    &quot;domain_enabled&quot;: true,
+    &quot;domain_description&quot;: &quot;BluePeak Solutions&quot;
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden (domain access)):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
+        &quot;code&quot;: &quot;forbidden_domain&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-domains--domain_uuid-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-domains--domain_uuid-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-domains--domain_uuid-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-domains--domain_uuid-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-domains--domain_uuid-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-domains--domain_uuid-" data-method="GET"
+      data-path="api/v1/domains/{domain_uuid}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-domains--domain_uuid-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/domains/{domain_uuid}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-domains--domain_uuid-"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-domains--domain_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-domains--domain_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid-"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    </form>
+
+                    <h2 id="domains-POSTapi-v1-domains">Create a domain</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Creates a new domain.</p>
+<p>Notes:</p>
+<ul>
+<li><code>domain_enabled</code> is optional and defaults to <code>true</code>.</li>
+<li><code>domain_name</code> is normalized to lowercase and trimmed.</li>
+</ul>
+
+<span id="example-requests-POSTapi-v1-domains">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "/api/v1/domains" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"domain_description\": \"BluePeak Solutions\",
+    \"domain_name\": \"10001.fspbx.com\",
+    \"domain_enabled\": false
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "domain_description": "BluePeak Solutions",
+    "domain_name": "10001.fspbx.com",
+    "domain_enabled": false
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-v1-domains">
+            <blockquote>
+            <p>Example response (201, Created):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;domain_uuid&quot;: &quot;9b6a4aa2-2b4f-4c5a-b4bb-1f6b2a9b9b01&quot;,
+    &quot;object&quot;: &quot;domain&quot;,
+    &quot;domain_name&quot;: &quot;10005.fspbx.com&quot;,
+    &quot;domain_enabled&quot;: true,
+    &quot;domain_description&quot;: &quot;BluePeak Solutions&quot;
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Domain name already exists):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain name already exists.&quot;,
+        &quot;code&quot;: &quot;domain_name_exists&quot;,
+        &quot;param&quot;: &quot;domain_name&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-POSTapi-v1-domains" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-v1-domains"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-v1-domains"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-v1-domains" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-v1-domains">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-v1-domains" data-method="POST"
+      data-path="api/v1/domains"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-v1-domains', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/v1/domains</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-domains"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-v1-domains"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-v1-domains"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>domain_description</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_description"                data-endpoint="POSTapi-v1-domains"
+               value="BluePeak Solutions"
+               data-component="body">
+    <br>
+<p>A human-friendly label for the domain. Must not be greater than 255 characters. Example: <code>BluePeak Solutions</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>domain_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_name"                data-endpoint="POSTapi-v1-domains"
+               value="10001.fspbx.com"
+               data-component="body">
+    <br>
+<p>The domain name (lowercase). Must not be greater than 255 characters. Example: <code>10001.fspbx.com</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>domain_enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains" style="display: none">
+            <input type="radio" name="domain_enabled"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains" style="display: none">
+            <input type="radio" name="domain_enabled"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether the domain is enabled. Example: <code>false</code></p>
+        </div>
+        </form>
+
+                    <h2 id="domains-PATCHapi-v1-domains--domain_uuid-">Update a domain</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Updates an existing domain. Returns the updated domain object.</p>
+<p>Access rules:</p>
+<ul>
+<li>Caller must have access to the target domain (domain scope).</li>
+<li>Caller must have the <code>domain_edit</code> permission.</li>
+</ul>
+
+<span id="example-requests-PATCHapi-v1-domains--domain_uuid-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request PATCH \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"domain_description\": \"BluePeak Solutions\",
+    \"domain_name\": \"10001.fspbx.com\",
+    \"domain_enabled\": false
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "domain_description": "BluePeak Solutions",
+    "domain_name": "10001.fspbx.com",
+    "domain_enabled": false
+};
+
+fetch(url, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-PATCHapi-v1-domains--domain_uuid-">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;object&quot;: &quot;domain&quot;,
+    &quot;domain_name&quot;: &quot;10001.fspbx.com&quot;,
+    &quot;domain_enabled&quot;: true,
+    &quot;domain_description&quot;: &quot;BluePeak Solutions&quot;
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Validation error):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Please enter a domain label.&quot;,
+        &quot;code&quot;: &quot;invalid_parameter&quot;,
+        &quot;param&quot;: &quot;domain_description&quot;,
+        &quot;doc_url&quot;: &quot;https://www.fspbx.com/docs/api/v1/errors/&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Forbidden.&quot;,
+        &quot;code&quot;: &quot;forbidden&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-PATCHapi-v1-domains--domain_uuid-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-PATCHapi-v1-domains--domain_uuid-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-PATCHapi-v1-domains--domain_uuid-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-PATCHapi-v1-domains--domain_uuid-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-PATCHapi-v1-domains--domain_uuid-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-PATCHapi-v1-domains--domain_uuid-" data-method="PATCH"
+      data-path="api/v1/domains/{domain_uuid}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('PATCHapi-v1-domains--domain_uuid-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-purple">PATCH</small>
+            <b><code>api/v1/domains/{domain_uuid}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="PATCHapi-v1-domains--domain_uuid-"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="PATCHapi-v1-domains--domain_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="PATCHapi-v1-domains--domain_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="PATCHapi-v1-domains--domain_uuid-"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>domain_description</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_description"                data-endpoint="PATCHapi-v1-domains--domain_uuid-"
+               value="BluePeak Solutions"
+               data-component="body">
+    <br>
+<p>A human-friendly label for the domain. Must not be greater than 255 characters. Example: <code>BluePeak Solutions</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>domain_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_name"                data-endpoint="PATCHapi-v1-domains--domain_uuid-"
+               value="10001.fspbx.com"
+               data-component="body">
+    <br>
+<p>The domain name (lowercase). Must not be greater than 255 characters. Example: <code>10001.fspbx.com</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>domain_enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="PATCHapi-v1-domains--domain_uuid-" style="display: none">
+            <input type="radio" name="domain_enabled"
+                   value="true"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid-"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="PATCHapi-v1-domains--domain_uuid-" style="display: none">
+            <input type="radio" name="domain_enabled"
+                   value="false"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid-"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether the domain is enabled. Example: <code>false</code></p>
+        </div>
+        </form>
+
+                    <h2 id="domains-DELETEapi-v1-domains--domain_uuid-">Delete a domain</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Permanently deletes the specified domain.</p>
+
+<span id="example-requests-DELETEapi-v1-domains--domain_uuid-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request DELETE \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "DELETE",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-DELETEapi-v1-domains--domain_uuid-">
+            <blockquote>
+            <p>Example response (200, Deleted):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;id&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;object&quot;: &quot;domain&quot;,
+    &quot;deleted&quot;: true
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-DELETEapi-v1-domains--domain_uuid-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-DELETEapi-v1-domains--domain_uuid-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-DELETEapi-v1-domains--domain_uuid-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-DELETEapi-v1-domains--domain_uuid-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-DELETEapi-v1-domains--domain_uuid-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-DELETEapi-v1-domains--domain_uuid-" data-method="DELETE"
+      data-path="api/v1/domains/{domain_uuid}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('DELETEapi-v1-domains--domain_uuid-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-red">DELETE</small>
+            <b><code>api/v1/domains/{domain_uuid}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="DELETEapi-v1-domains--domain_uuid-"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="DELETEapi-v1-domains--domain_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="DELETEapi-v1-domains--domain_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="DELETEapi-v1-domains--domain_uuid-"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    </form>
+
+                <h1 id="extensions">Extensions</h1>
+
+    
+
+                                <h2 id="extensions-GETapi-v1-domains--domain_uuid--extensions">List extensions</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Returns extensions for the specified domain the caller is allowed to access.</p>
+<p>Access rules:</p>
+<ul>
+<li>Caller must have access to the target domain (domain scope).</li>
+<li>Caller must have the <code>extension_domain</code> permission.</li>
+</ul>
+<p>Pagination (cursor-based):</p>
+<ul>
+<li>Both <code>limit</code> and <code>starting_after</code> are optional.</li>
+<li>If <code>limit</code> is not provided, it defaults to 25.</li>
+<li>If <code>starting_after</code> is not provided, results start from the beginning.</li>
+<li>If <code>has_more</code> is true, request the next page by passing <code>starting_after</code>
+equal to the last item's <code>extension_uuid</code> from the previous response.</li>
+</ul>
+<p>Examples:</p>
+<ul>
+<li>First page: <code>GET /api/v1/domains/{domain_uuid}/extensions</code></li>
+<li>Next page:  <code>GET /api/v1/domains/{domain_uuid}/extensions?starting_after={last_extension_uuid}</code></li>
+<li>Custom size: <code>GET /api/v1/domains/{domain_uuid}/extensions?limit=50</code></li>
+</ul>
+
+<span id="example-requests-GETapi-v1-domains--domain_uuid--extensions">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/extensions?limit=25&amp;starting_after=d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/extensions"
+);
+
+const params = {
+    "limit": "25",
+    "starting_after": "d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b",
+};
+Object.keys(params)
+    .forEach(key =&gt; url.searchParams.append(key, params[key]));
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-domains--domain_uuid--extensions">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;object&quot;: &quot;list&quot;,
+    &quot;url&quot;: &quot;/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/extensions&quot;,
+    &quot;has_more&quot;: true,
+    &quot;data&quot;: [
+        {
+            &quot;extension_uuid&quot;: &quot;d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b&quot;,
+            &quot;object&quot;: &quot;extension&quot;,
+            &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+            &quot;extension&quot;: &quot;1001&quot;,
+            &quot;enabled&quot;: true,
+            &quot;effective_caller_id_name&quot;: &quot;Front Desk&quot;,
+            &quot;effective_caller_id_number&quot;: &quot;1001&quot;,
+            &quot;outbound_caller_id_number_e164&quot;: &quot;+12135551212&quot;,
+            &quot;outbound_caller_id_number_formatted&quot;: &quot;(213) 555-1212&quot;,
+            &quot;emergency_caller_id_number_e164&quot;: &quot;+12135559876&quot;,
+            &quot;directory_first_name&quot;: &quot;Front&quot;,
+            &quot;directory_last_name&quot;: &quot;Desk&quot;,
+            &quot;name_formatted&quot;: &quot;Front Desk&quot;,
+            &quot;directory_visible&quot;: true,
+            &quot;directory_exten_visible&quot;: true,
+            &quot;email&quot;: &quot;frontdesk@example.com&quot;,
+            &quot;do_not_disturb&quot;: false,
+            &quot;user_record&quot;: true,
+            &quot;suspended&quot;: false,
+            &quot;description&quot;: &quot;Main reception phone&quot;,
+            &quot;forward_all_enabled&quot;: false,
+            &quot;forward_busy_enabled&quot;: false,
+            &quot;forward_no_answer_enabled&quot;: false,
+            &quot;forward_user_not_registered_enabled&quot;: false,
+            &quot;follow_me_enabled&quot;: false
+        }
+    ]
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid domain UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden (domain access)):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
+        &quot;code&quot;: &quot;forbidden_domain&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-domains--domain_uuid--extensions" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-domains--domain_uuid--extensions"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-domains--domain_uuid--extensions"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-domains--domain_uuid--extensions" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-domains--domain_uuid--extensions">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-domains--domain_uuid--extensions" data-method="GET"
+      data-path="api/v1/domains/{domain_uuid}/extensions"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-domains--domain_uuid--extensions', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/domains/{domain_uuid}/extensions</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-domains--domain_uuid--extensions"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-domains--domain_uuid--extensions"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-domains--domain_uuid--extensions"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--extensions"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>limit</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="limit"                data-endpoint="GETapi-v1-domains--domain_uuid--extensions"
+               value="25"
+               data-component="query">
+    <br>
+<p>Optional. Number of results to return (min 1, max 100). Defaults to 25. Example: <code>25</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>starting_after</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="starting_after"                data-endpoint="GETapi-v1-domains--domain_uuid--extensions"
+               value="d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"
+               data-component="query">
+    <br>
+<p>Optional. Return results after this extension UUID (cursor). Example: <code>d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b</code></p>
+            </div>
+                </form>
+
+                    <h2 id="extensions-GETapi-v1-domains--domain_uuid--extensions--extension_uuid-">Retrieve an extension</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Returns a single extension for the specified domain the caller is allowed to access.</p>
+<p>Access rules:</p>
+<ul>
+<li>Caller must have access to the target domain (domain scope).</li>
+<li>Caller must have the <code>extension_view</code> permission.</li>
+</ul>
+<p>Notes:</p>
+<ul>
+<li>If the domain does not exist, a <code>resource_missing</code> error is returned.</li>
+<li>If the extension does not exist in that domain, a <code>resource_missing</code> error is returned.</li>
+</ul>
+
+<span id="example-requests-GETapi-v1-domains--domain_uuid--extensions--extension_uuid-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/extensions/d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/extensions/d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-domains--domain_uuid--extensions--extension_uuid-">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;extension_uuid&quot;: &quot;d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b&quot;,
+    &quot;object&quot;: &quot;extension&quot;,
+    &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;extension&quot;: &quot;1001&quot;,
+    &quot;enabled&quot;: true,
+    &quot;effective_caller_id_name&quot;: &quot;Front Desk&quot;,
+    &quot;effective_caller_id_number&quot;: &quot;1001&quot;,
+    &quot;outbound_caller_id_number_e164&quot;: &quot;+12135551212&quot;,
+    &quot;outbound_caller_id_number_formatted&quot;: &quot;(213) 555-1212&quot;,
+    &quot;emergency_caller_id_number_e164&quot;: &quot;+12135559876&quot;,
+    &quot;directory_first_name&quot;: &quot;Front&quot;,
+    &quot;directory_last_name&quot;: &quot;Desk&quot;,
+    &quot;name_formatted&quot;: &quot;Front Desk&quot;,
+    &quot;directory_visible&quot;: true,
+    &quot;directory_exten_visible&quot;: true,
+    &quot;email&quot;: &quot;frontdesk@example.com&quot;,
+    &quot;do_not_disturb&quot;: false,
+    &quot;user_record&quot;: true,
+    &quot;suspended&quot;: false,
+    &quot;description&quot;: &quot;Main reception phone&quot;,
+    &quot;forward_all_enabled&quot;: false,
+    &quot;forward_busy_enabled&quot;: false,
+    &quot;forward_no_answer_enabled&quot;: false,
+    &quot;forward_user_not_registered_enabled&quot;: false,
+    &quot;follow_me_enabled&quot;: false
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid domain UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid extension UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid extension UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;extension_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden (domain access)):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
+        &quot;code&quot;: &quot;forbidden_domain&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Domain not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Extension not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Extension not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;extension_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-domains--domain_uuid--extensions--extension_uuid-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-domains--domain_uuid--extensions--extension_uuid-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-domains--domain_uuid--extensions--extension_uuid-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-domains--domain_uuid--extensions--extension_uuid-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-domains--domain_uuid--extensions--extension_uuid-" data-method="GET"
+      data-path="api/v1/domains/{domain_uuid}/extensions/{extension_uuid}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-domains--domain_uuid--extensions--extension_uuid-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/domains/{domain_uuid}/extensions/{extension_uuid}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>extension_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="extension_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"
+               data-component="url">
+    <br>
+<p>The extension UUID. Example: <code>d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b</code></p>
+            </div>
+                    </form>
+
+                    <h2 id="extensions-POSTapi-v1-domains--domain_uuid--extensions">Create an extension</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Creates a new extension in the specified domain.</p>
+<p>Notes:</p>
+<ul>
+<li>Some fields are defaulted server-side (e.g., effective caller-id, voicemail defaults) based on your internal request logic.</li>
+<li>Returns the created extension object.</li>
+</ul>
+
+<span id="example-requests-POSTapi-v1-domains--domain_uuid--extensions">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/extensions" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"extension\": 1001,
+    \"directory_first_name\": \"Front\",
+    \"directory_last_name\": \"Desk\",
+    \"voicemail_mail_to\": \"frontdesk@example.com\",
+    \"voicemail_sms_to\": \"+12135551212\",
+    \"description\": \"Main reception phone\",
+    \"suspended\": false,
+    \"do_not_disturb\": false,
+    \"enabled\": true,
+    \"call_timeout\": \"25\",
+    \"directory_visible\": true,
+    \"directory_exten_visible\": true,
+    \"user_record\": true,
+    \"call_screen_enabled\": false,
+    \"max_registrations\": \"1\",
+    \"limit_max\": \"5\",
+    \"limit_destination\": \"!USER_BUSY\",
+    \"toll_allow\": \"domestic\",
+    \"call_group\": \"sales\",
+    \"hold_music\": \"local_stream:\\/\\/default\",
+    \"cidr\": \"192.168.1.0\\/24\",
+    \"sip_force_contact\": \"NDLB-connectile-dysfunction\",
+    \"sip_force_expires\": \"300\",
+    \"sip_bypass_media\": \"false\",
+    \"mwi_account\": \"1001@your-domain.com\",
+    \"absolute_codec_string\": \"PCMU,PCMA,OPUS\",
+    \"dial_string\": \"{sip_invite_domain=${domain_name}}${sofia_contact(${dialed_user}@${dialed_domain})}\",
+    \"force_ping\": \"true\",
+    \"auth_acl\": \"localnet\",
+    \"outbound_caller_id_number\": \"+12135551212\",
+    \"emergency_caller_id_number\": \"+12135559876\",
+    \"outbound_caller_id_name\": \"Front Desk\",
+    \"emergency_caller_id_name\": \"Front Desk\",
+    \"voicemail_enabled\": true,
+    \"voicemail_file\": \"attach\",
+    \"voicemail_local_after_email\": true,
+    \"voicemail_transcription_enabled\": true,
+    \"voicemail_description\": \"Front Desk Voicemail\",
+    \"voicemail_password\": 1001,
+    \"voicemail_tutorial\": true,
+    \"voicemail_recording_instructions\": true
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/extensions"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "extension": 1001,
+    "directory_first_name": "Front",
+    "directory_last_name": "Desk",
+    "voicemail_mail_to": "frontdesk@example.com",
+    "voicemail_sms_to": "+12135551212",
+    "description": "Main reception phone",
+    "suspended": false,
+    "do_not_disturb": false,
+    "enabled": true,
+    "call_timeout": "25",
+    "directory_visible": true,
+    "directory_exten_visible": true,
+    "user_record": true,
+    "call_screen_enabled": false,
+    "max_registrations": "1",
+    "limit_max": "5",
+    "limit_destination": "!USER_BUSY",
+    "toll_allow": "domestic",
+    "call_group": "sales",
+    "hold_music": "local_stream:\/\/default",
+    "cidr": "192.168.1.0\/24",
+    "sip_force_contact": "NDLB-connectile-dysfunction",
+    "sip_force_expires": "300",
+    "sip_bypass_media": "false",
+    "mwi_account": "1001@your-domain.com",
+    "absolute_codec_string": "PCMU,PCMA,OPUS",
+    "dial_string": "{sip_invite_domain=${domain_name}}${sofia_contact(${dialed_user}@${dialed_domain})}",
+    "force_ping": "true",
+    "auth_acl": "localnet",
+    "outbound_caller_id_number": "+12135551212",
+    "emergency_caller_id_number": "+12135559876",
+    "outbound_caller_id_name": "Front Desk",
+    "emergency_caller_id_name": "Front Desk",
+    "voicemail_enabled": true,
+    "voicemail_file": "attach",
+    "voicemail_local_after_email": true,
+    "voicemail_transcription_enabled": true,
+    "voicemail_description": "Front Desk Voicemail",
+    "voicemail_password": 1001,
+    "voicemail_tutorial": true,
+    "voicemail_recording_instructions": true
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-v1-domains--domain_uuid--extensions">
+            <blockquote>
+            <p>Example response (201, Created):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;extension_uuid&quot;: &quot;d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b&quot;,
+    &quot;object&quot;: &quot;extension&quot;,
+    &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;extension&quot;: &quot;1001&quot;,
+    &quot;enabled&quot;: true,
+    &quot;effective_caller_id_name&quot;: &quot;Front Desk&quot;,
+    &quot;effective_caller_id_number&quot;: &quot;1001&quot;,
+    &quot;outbound_caller_id_number_e164&quot;: null,
+    &quot;outbound_caller_id_number_formatted&quot;: null,
+    &quot;emergency_caller_id_number_e164&quot;: null,
+    &quot;directory_first_name&quot;: &quot;Front&quot;,
+    &quot;directory_last_name&quot;: &quot;Desk&quot;,
+    &quot;name_formatted&quot;: &quot;Front Desk&quot;,
+    &quot;directory_visible&quot;: true,
+    &quot;directory_exten_visible&quot;: true,
+    &quot;email&quot;: null,
+    &quot;do_not_disturb&quot;: null,
+    &quot;user_record&quot;: null,
+    &quot;suspended&quot;: null,
+    &quot;description&quot;: &quot;Main reception phone&quot;,
+    &quot;forward_all_enabled&quot;: null,
+    &quot;forward_busy_enabled&quot;: null,
+    &quot;forward_no_answer_enabled&quot;: null,
+    &quot;forward_user_not_registered_enabled&quot;: null,
+    &quot;follow_me_enabled&quot;: null
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid domain UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Domain not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-POSTapi-v1-domains--domain_uuid--extensions" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-v1-domains--domain_uuid--extensions"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-v1-domains--domain_uuid--extensions"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-v1-domains--domain_uuid--extensions" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-v1-domains--domain_uuid--extensions">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-v1-domains--domain_uuid--extensions" data-method="POST"
+      data-path="api/v1/domains/{domain_uuid}/extensions"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-v1-domains--domain_uuid--extensions', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/v1/domains/{domain_uuid}/extensions</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>extension</code></b>&nbsp;&nbsp;
+<small>number</small>&nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="extension"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="1001"
+               data-component="body">
+    <br>
+<p>Numeric extension number. Example: <code>1001</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>directory_first_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="directory_first_name"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="Front"
+               data-component="body">
+    <br>
+<p>First name for directory display. Must not be greater than 60 characters. Example: <code>Front</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>directory_last_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="directory_last_name"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="Desk"
+               data-component="body">
+    <br>
+<p>Last name for directory display. Must not be greater than 60 characters. Example: <code>Desk</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_mail_to</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_mail_to"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="frontdesk@example.com"
+               data-component="body">
+    <br>
+<p>Email address for voicemail-to-email notifications. Must be a valid email address. Must not be greater than 255 characters. Example: <code>frontdesk@example.com</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_sms_to</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_sms_to"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="+12135551212"
+               data-component="body">
+    <br>
+<p>Optional SMS destination for voicemail alerts. . Example: <code>+12135551212</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>description</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="description"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="Main reception phone"
+               data-component="body">
+    <br>
+<p>Optional description/label. Example: <code>Main reception phone</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>suspended</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="suspended"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="suspended"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether the extension is suspended. Defaults to false if omitted. Example: <code>false</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>do_not_disturb</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="do_not_disturb"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="do_not_disturb"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Enable Do Not Disturb for this extension. Defaults to false if omitted. Example: <code>false</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="enabled"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="enabled"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether the extension is enabled. Defaults to true if omitted. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>call_timeout</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="call_timeout"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="25"
+               data-component="body">
+    <br>
+<p>Ring timeout in seconds. Defaults to 25. Example: <code>25</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>directory_visible</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="directory_visible"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="directory_visible"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether this user is visible in the directory (dial-by-name). Defaults to true if omitted. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>directory_exten_visible</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="directory_exten_visible"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="directory_exten_visible"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether the extension number is visible in the directory (dial-by-name). Defaults to true if omitted. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>user_record</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="user_record"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="user_record"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether call recording is enabled. Defaults to null if omitted. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>call_screen_enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="call_screen_enabled"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="call_screen_enabled"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether call screening is enabled. Defaults to false if omitted. Example: <code>false</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>max_registrations</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="max_registrations"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="1"
+               data-component="body">
+    <br>
+<p>Maximum allowed SIP registrations for this extension. Defaults to null if omitted. Example: <code>1</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>limit_max</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="limit_max"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="5"
+               data-component="body">
+    <br>
+<p>Max number of allowed outgoing calls. Defaults to 5 if omitted. Example: <code>5</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>limit_destination</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="limit_destination"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="!USER_BUSY"
+               data-component="body">
+    <br>
+<p>Limit destination. Defaults to !USER_BUSY if omitted. Example: <code>!USER_BUSY</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>toll_allow</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="toll_allow"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="domestic"
+               data-component="body">
+    <br>
+<p>Toll allow string (e.g., domestic,international,local). Defaults to null if omitted. Example: <code>domestic</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>call_group</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="call_group"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="sales"
+               data-component="body">
+    <br>
+<p>Call group string. A user in a call group can perform a call pickup (or an intercept) of a ringing phone belonging to another user who is also in the call group. Defaults to null if omitted. Example: <code>sales</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>hold_music</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="hold_music"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="local_stream://default"
+               data-component="body">
+    <br>
+<p>Music on hold source/category. Defaults to null if omitted. Example: <code>local_stream://default</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>cidr</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="cidr"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="192.168.1.0/24"
+               data-component="body">
+    <br>
+<p>CIDR/network restriction (if used by your security/dialplan rules). Defaults to null if omitted. Example: <code>192.168.1.0/24</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>sip_force_contact</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="sip_force_contact"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="NDLB-connectile-dysfunction"
+               data-component="body">
+    <br>
+<p>SIP force-contact setting. Example: <code>NDLB-connectile-dysfunction</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>sip_force_expires</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="sip_force_expires"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="300"
+               data-component="body">
+    <br>
+<p>SIP force-expires setting. Example: <code>300</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>sip_bypass_media</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="sip_bypass_media"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="false"
+               data-component="body">
+    <br>
+<p>SIP bypass-media setting. Defaults to null if omitted. Example: <code>false</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>mwi_account</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="mwi_account"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="1001@your-domain.com"
+               data-component="body">
+    <br>
+<p>MWI account string. Example: <code>1001@your-domain.com</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>absolute_codec_string</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="absolute_codec_string"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="PCMU,PCMA,OPUS"
+               data-component="body">
+    <br>
+<p>Absolute codec string. Example: <code>PCMU,PCMA,OPUS</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>dial_string</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="dial_string"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="{sip_invite_domain=${domain_name}}${sofia_contact(${dialed_user}@${dialed_domain})}"
+               data-component="body">
+    <br>
+<p>Custom dial string. Example: <code>{sip_invite_domain=${domain_name}}${sofia_contact(${dialed_user}@${dialed_domain})}</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>force_ping</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="force_ping"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="true"
+               data-component="body">
+    <br>
+<p>Force ping setting. Defaults to false if omitted. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>auth_acl</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="auth_acl"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="localnet"
+               data-component="body">
+    <br>
+<p>Auth ACL name (if used for registration/auth restrictions). Defaults to null if omitted. Example: <code>localnet</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>outbound_caller_id_number</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="outbound_caller_id_number"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="+12135551212"
+               data-component="body">
+    <br>
+<p>Outbound caller ID number (E.164 recommended). Example: <code>+12135551212</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>emergency_caller_id_number</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="emergency_caller_id_number"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="+12135559876"
+               data-component="body">
+    <br>
+<p>Emergency caller ID number (E.164 recommended). Example: <code>+12135559876</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>outbound_caller_id_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="outbound_caller_id_name"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="Front Desk"
+               data-component="body">
+    <br>
+<p>Outbound caller ID name. Example: <code>Front Desk</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>emergency_caller_id_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="emergency_caller_id_name"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="Front Desk"
+               data-component="body">
+    <br>
+<p>Emergency caller ID name. Example: <code>Front Desk</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+ &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="voicemail_enabled"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="voicemail_enabled"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether voicemail should be created/enabled. If true, a voicemail box will be created. If false, no voicemail box is created. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_id</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_id"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value=""
+               data-component="body">
+    <br>
+
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_file</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_file"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="attach"
+               data-component="body">
+    <br>
+<p>Voicemail delivery mode (e.g., attach). Defaults to &quot;attach&quot; if omitted. Example: <code>attach</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_local_after_email</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="voicemail_local_after_email"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="voicemail_local_after_email"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether to keep voicemail local after emailing it. Defaults to true if omitted. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_transcription_enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="voicemail_transcription_enabled"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="voicemail_transcription_enabled"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether voicemail transcription is enabled. Defaults to true if omitted. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_description</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_description"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="Front Desk Voicemail"
+               data-component="body">
+    <br>
+<p>Optional voicemail description/label. Example: <code>Front Desk Voicemail</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_destinations</code></b>&nbsp;&nbsp;
+<small>object</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_destinations"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value=""
+               data-component="body">
+    <br>
+
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_password</code></b>&nbsp;&nbsp;
+<small>number</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="voicemail_password"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="1001"
+               data-component="body">
+    <br>
+<p>Voicemail PIN/password. If omitted, defaults to the extension number unless password complexity is enabled (then a random PIN is generated). Example: <code>1001</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_tutorial</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="voicemail_tutorial"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="voicemail_tutorial"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether voicemail tutorial is enabled. Defaults to true if omitted. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_recording_instructions</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="voicemail_recording_instructions"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="voicemail_recording_instructions"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether voicemail recording instructions are enabled. Defaults to true if omitted. Example: <code>true</code></p>
+        </div>
+        </form>
+
+                    <h2 id="extensions-PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-">Update an extension</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Updates an existing extension in the specified domain.</p>
+<p>Access rules:</p>
+<ul>
+<li>Caller must have access to the target domain (domain scope).</li>
+<li>Caller must have the <code>extension_edit</code> permission.</li>
+</ul>
+<p>Notes:</p>
+<ul>
+<li>Fields are optional. If a field is omitted, the current value is unchanged.</li>
+<li>Voicemail behavior:
+<ul>
+<li>If <code>voicemail_enabled</code> is omitted, voicemail settings are unchanged.</li>
+<li>If <code>voicemail_enabled</code> is true, a voicemail box is created (or updated) for this extension.</li>
+<li>If <code>voicemail_enabled</code> is false, voicemail is disabled for this extension.</li>
+</ul></li>
+</ul>
+
+<span id="example-requests-PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request PATCH \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/extensions/d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"extension\": 1001,
+    \"directory_first_name\": \"Front\",
+    \"directory_last_name\": \"Desk\",
+    \"voicemail_mail_to\": \"frontdesk@example.com\",
+    \"voicemail_sms_to\": \"+12135551212\",
+    \"description\": \"Main reception phone\",
+    \"suspended\": false,
+    \"do_not_disturb\": false,
+    \"enabled\": true,
+    \"call_timeout\": \"25\",
+    \"directory_visible\": true,
+    \"directory_exten_visible\": true,
+    \"user_record\": true,
+    \"call_screen_enabled\": false,
+    \"max_registrations\": \"1\",
+    \"limit_max\": \"5\",
+    \"limit_destination\": \"!USER_BUSY\",
+    \"toll_allow\": \"domestic\",
+    \"call_group\": \"sales\",
+    \"hold_music\": \"local_stream:\\/\\/default\",
+    \"cidr\": \"192.168.1.0\\/24\",
+    \"sip_force_contact\": \"NDLB-connectile-dysfunction\",
+    \"sip_force_expires\": \"300\",
+    \"sip_bypass_media\": \"false\",
+    \"mwi_account\": \"1001@your-domain.com\",
+    \"absolute_codec_string\": \"PCMU,PCMA,OPUS\",
+    \"dial_string\": \"{sip_invite_domain=${domain_name}}${sofia_contact(${dialed_user}@${dialed_domain})}\",
+    \"force_ping\": \"true\",
+    \"auth_acl\": \"localnet\",
+    \"outbound_caller_id_number\": \"+12135551212\",
+    \"emergency_caller_id_number\": \"+12135559876\",
+    \"outbound_caller_id_name\": \"Front Desk\",
+    \"emergency_caller_id_name\": \"Front Desk\",
+    \"voicemail_enabled\": true,
+    \"voicemail_file\": \"attach\",
+    \"voicemail_local_after_email\": true,
+    \"voicemail_transcription_enabled\": true,
+    \"voicemail_description\": \"Front Desk Voicemail\",
+    \"voicemail_password\": 1001,
+    \"voicemail_tutorial\": true,
+    \"voicemail_recording_instructions\": true
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/extensions/d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "extension": 1001,
+    "directory_first_name": "Front",
+    "directory_last_name": "Desk",
+    "voicemail_mail_to": "frontdesk@example.com",
+    "voicemail_sms_to": "+12135551212",
+    "description": "Main reception phone",
+    "suspended": false,
+    "do_not_disturb": false,
+    "enabled": true,
+    "call_timeout": "25",
+    "directory_visible": true,
+    "directory_exten_visible": true,
+    "user_record": true,
+    "call_screen_enabled": false,
+    "max_registrations": "1",
+    "limit_max": "5",
+    "limit_destination": "!USER_BUSY",
+    "toll_allow": "domestic",
+    "call_group": "sales",
+    "hold_music": "local_stream:\/\/default",
+    "cidr": "192.168.1.0\/24",
+    "sip_force_contact": "NDLB-connectile-dysfunction",
+    "sip_force_expires": "300",
+    "sip_bypass_media": "false",
+    "mwi_account": "1001@your-domain.com",
+    "absolute_codec_string": "PCMU,PCMA,OPUS",
+    "dial_string": "{sip_invite_domain=${domain_name}}${sofia_contact(${dialed_user}@${dialed_domain})}",
+    "force_ping": "true",
+    "auth_acl": "localnet",
+    "outbound_caller_id_number": "+12135551212",
+    "emergency_caller_id_number": "+12135559876",
+    "outbound_caller_id_name": "Front Desk",
+    "emergency_caller_id_name": "Front Desk",
+    "voicemail_enabled": true,
+    "voicemail_file": "attach",
+    "voicemail_local_after_email": true,
+    "voicemail_transcription_enabled": true,
+    "voicemail_description": "Front Desk Voicemail",
+    "voicemail_password": 1001,
+    "voicemail_tutorial": true,
+    "voicemail_recording_instructions": true
+};
+
+fetch(url, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;extension_uuid&quot;: &quot;d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b&quot;,
+    &quot;object&quot;: &quot;extension&quot;,
+    &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;extension&quot;: &quot;1001&quot;,
+    &quot;enabled&quot;: true,
+    &quot;effective_caller_id_name&quot;: &quot;Front Desk&quot;,
+    &quot;effective_caller_id_number&quot;: &quot;1001&quot;,
+    &quot;outbound_caller_id_number_e164&quot;: &quot;+12135551212&quot;,
+    &quot;outbound_caller_id_number_formatted&quot;: null,
+    &quot;emergency_caller_id_number_e164&quot;: &quot;+12135559876&quot;,
+    &quot;directory_first_name&quot;: &quot;Front&quot;,
+    &quot;directory_last_name&quot;: &quot;Desk&quot;,
+    &quot;name_formatted&quot;: &quot;Front Desk&quot;,
+    &quot;directory_visible&quot;: true,
+    &quot;directory_exten_visible&quot;: true,
+    &quot;email&quot;: null,
+    &quot;do_not_disturb&quot;: false,
+    &quot;user_record&quot;: true,
+    &quot;suspended&quot;: false,
+    &quot;description&quot;: &quot;Main reception phone&quot;,
+    &quot;forward_all_enabled&quot;: null,
+    &quot;forward_busy_enabled&quot;: null,
+    &quot;forward_no_answer_enabled&quot;: null,
+    &quot;forward_user_not_registered_enabled&quot;: null,
+    &quot;follow_me_enabled&quot;: null
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden (domain access)):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
+        &quot;code&quot;: &quot;forbidden_domain&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Extension not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;extension_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" data-method="PATCH"
+      data-path="api/v1/domains/{domain_uuid}/extensions/{extension_uuid}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-purple">PATCH</small>
+            <b><code>api/v1/domains/{domain_uuid}/extensions/{extension_uuid}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>extension_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="extension_uuid"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"
+               data-component="url">
+    <br>
+<p>The extension UUID. Example: <code>d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>extension</code></b>&nbsp;&nbsp;
+<small>number</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="extension"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="1001"
+               data-component="body">
+    <br>
+<p>Numeric extension number. If omitted, value is unchanged. Example: <code>1001</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>directory_first_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="directory_first_name"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="Front"
+               data-component="body">
+    <br>
+<p>First name for directory display. If omitted, value is unchanged. Must not be greater than 60 characters. Example: <code>Front</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>directory_last_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="directory_last_name"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="Desk"
+               data-component="body">
+    <br>
+<p>Last name for directory display. If omitted, value is unchanged. Must not be greater than 60 characters. Example: <code>Desk</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_mail_to</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_mail_to"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="frontdesk@example.com"
+               data-component="body">
+    <br>
+<p>Email address for voicemail-to-email notifications. If omitted, value is unchanged. Must be a valid email address. Must not be greater than 255 characters. Example: <code>frontdesk@example.com</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_sms_to</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_sms_to"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="+12135551212"
+               data-component="body">
+    <br>
+<p>Optional SMS destination for voicemail alerts. If omitted, value is unchanged. Example: <code>+12135551212</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>description</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="description"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="Main reception phone"
+               data-component="body">
+    <br>
+<p>Optional description/label. If omitted, value is unchanged. Example: <code>Main reception phone</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>suspended</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="suspended"
+                   value="true"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="suspended"
+                   value="false"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether the extension is suspended. If omitted, value is unchanged. Example: <code>false</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>do_not_disturb</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="do_not_disturb"
+                   value="true"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="do_not_disturb"
+                   value="false"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Enable Do Not Disturb for this extension. If omitted, value is unchanged. Example: <code>false</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="enabled"
+                   value="true"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="enabled"
+                   value="false"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether the extension is enabled. If omitted, value is unchanged. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>call_timeout</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="call_timeout"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="25"
+               data-component="body">
+    <br>
+<p>Ring timeout in seconds. If omitted, value is unchanged. Example: <code>25</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>directory_visible</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="directory_visible"
+                   value="true"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="directory_visible"
+                   value="false"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether this user is visible in the directory (dial-by-name). If omitted, value is unchanged. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>directory_exten_visible</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="directory_exten_visible"
+                   value="true"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="directory_exten_visible"
+                   value="false"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether the extension number is visible in the directory (dial-by-name). If omitted, value is unchanged. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>user_record</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="user_record"
+                   value="true"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="user_record"
+                   value="false"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether call recording is enabled. If omitted, value is unchanged. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>call_screen_enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="call_screen_enabled"
+                   value="true"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="call_screen_enabled"
+                   value="false"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether call screening is enabled. If omitted, value is unchanged. Example: <code>false</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>max_registrations</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="max_registrations"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="1"
+               data-component="body">
+    <br>
+<p>Maximum allowed SIP registrations for this extension. If omitted, value is unchanged. Example: <code>1</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>limit_max</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="limit_max"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="5"
+               data-component="body">
+    <br>
+<p>Max number of allowed outgoing calls. If omitted, value is unchanged. Example: <code>5</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>limit_destination</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="limit_destination"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="!USER_BUSY"
+               data-component="body">
+    <br>
+<p>Limit destination. If omitted, value is unchanged. Example: <code>!USER_BUSY</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>toll_allow</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="toll_allow"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="domestic"
+               data-component="body">
+    <br>
+<p>Toll allow string (e.g., domestic, international, local). If omitted, value is unchanged. Example: <code>domestic</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>call_group</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="call_group"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="sales"
+               data-component="body">
+    <br>
+<p>Call group string. Users in the same call group can use call pickup/intercept. If omitted, value is unchanged. Example: <code>sales</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>hold_music</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="hold_music"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="local_stream://default"
+               data-component="body">
+    <br>
+<p>Music on hold source/category. If omitted, value is unchanged. Example: <code>local_stream://default</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>cidr</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="cidr"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="192.168.1.0/24"
+               data-component="body">
+    <br>
+<p>CIDR/network restriction (if used by your security/dialplan rules). If omitted, value is unchanged. Example: <code>192.168.1.0/24</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>sip_force_contact</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="sip_force_contact"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="NDLB-connectile-dysfunction"
+               data-component="body">
+    <br>
+<p>SIP force-contact setting. If omitted, value is unchanged. Example: <code>NDLB-connectile-dysfunction</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>sip_force_expires</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="sip_force_expires"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="300"
+               data-component="body">
+    <br>
+<p>SIP force-expires setting. If omitted, value is unchanged. Example: <code>300</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>sip_bypass_media</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="sip_bypass_media"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="false"
+               data-component="body">
+    <br>
+<p>SIP bypass-media setting. If omitted, value is unchanged. Example: <code>false</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>mwi_account</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="mwi_account"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="1001@your-domain.com"
+               data-component="body">
+    <br>
+<p>MWI account string. If omitted, value is unchanged. Example: <code>1001@your-domain.com</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>absolute_codec_string</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="absolute_codec_string"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="PCMU,PCMA,OPUS"
+               data-component="body">
+    <br>
+<p>Absolute codec string. If omitted, value is unchanged. Example: <code>PCMU,PCMA,OPUS</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>dial_string</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="dial_string"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="{sip_invite_domain=${domain_name}}${sofia_contact(${dialed_user}@${dialed_domain})}"
+               data-component="body">
+    <br>
+<p>Custom dial string. If omitted, value is unchanged. Example: <code>{sip_invite_domain=${domain_name}}${sofia_contact(${dialed_user}@${dialed_domain})}</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>force_ping</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="force_ping"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="true"
+               data-component="body">
+    <br>
+<p>Force ping setting. If omitted, value is unchanged. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>auth_acl</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="auth_acl"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="localnet"
+               data-component="body">
+    <br>
+<p>Auth ACL name (if used for registration/auth restrictions). If omitted, value is unchanged. Example: <code>localnet</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>outbound_caller_id_number</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="outbound_caller_id_number"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="+12135551212"
+               data-component="body">
+    <br>
+<p>Outbound caller ID number (E.164 recommended). If omitted, value is unchanged. Example: <code>+12135551212</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>emergency_caller_id_number</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="emergency_caller_id_number"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="+12135559876"
+               data-component="body">
+    <br>
+<p>Emergency caller ID number (E.164 recommended). If omitted, value is unchanged. Example: <code>+12135559876</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>outbound_caller_id_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="outbound_caller_id_name"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="Front Desk"
+               data-component="body">
+    <br>
+<p>Outbound caller ID name. If omitted, value is unchanged. Example: <code>Front Desk</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>emergency_caller_id_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="emergency_caller_id_name"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="Front Desk"
+               data-component="body">
+    <br>
+<p>Emergency caller ID name. If omitted, value is unchanged. Example: <code>Front Desk</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="voicemail_enabled"
+                   value="true"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="voicemail_enabled"
+                   value="false"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether voicemail should be enabled. If omitted, value is unchanged. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_id</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_id"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value=""
+               data-component="body">
+    <br>
+
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_file</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_file"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="attach"
+               data-component="body">
+    <br>
+<p>Voicemail delivery mode (e.g., attach). If omitted, value is unchanged. Example: <code>attach</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_local_after_email</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="voicemail_local_after_email"
+                   value="true"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="voicemail_local_after_email"
+                   value="false"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether to keep voicemail local after emailing it. If omitted, value is unchanged. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_transcription_enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="voicemail_transcription_enabled"
+                   value="true"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="voicemail_transcription_enabled"
+                   value="false"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether voicemail transcription is enabled. If omitted, value is unchanged. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_description</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_description"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="Front Desk Voicemail"
+               data-component="body">
+    <br>
+<p>Optional voicemail description/label. If omitted, value is unchanged. Example: <code>Front Desk Voicemail</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_password</code></b>&nbsp;&nbsp;
+<small>number</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="voicemail_password"                data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="1001"
+               data-component="body">
+    <br>
+<p>Voicemail PIN/password. If omitted, value is unchanged. Example: <code>1001</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_tutorial</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="voicemail_tutorial"
+                   value="true"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="voicemail_tutorial"
+                   value="false"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether voicemail tutorial is enabled. If omitted, value is unchanged. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_recording_instructions</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="voicemail_recording_instructions"
+                   value="true"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-" style="display: none">
+            <input type="radio" name="voicemail_recording_instructions"
+                   value="false"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether voicemail recording instructions are enabled. If omitted, value is unchanged. Example: <code>true</code></p>
+        </div>
+        </form>
+
+                    <h2 id="extensions-DELETEapi-v1-domains--domain_uuid--extensions--extension_uuid-">Delete an extension</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Deletes an extension within the specified domain.</p>
+<p>Access rules:</p>
+<ul>
+<li>Caller must have access to the target domain (domain scope).</li>
+<li>Caller must have the <code>extension_delete</code> permission.</li>
+</ul>
+
+<span id="example-requests-DELETEapi-v1-domains--domain_uuid--extensions--extension_uuid-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request DELETE \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/extensions/d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/extensions/d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "DELETE",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-DELETEapi-v1-domains--domain_uuid--extensions--extension_uuid-">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;object&quot;: &quot;extension&quot;,
+    &quot;extension_uuid&quot;: &quot;d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b&quot;,
+    &quot;deleted&quot;: true
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden (domain access)):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
+        &quot;code&quot;: &quot;forbidden_domain&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Domain not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Extension not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Extension not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;extension_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-DELETEapi-v1-domains--domain_uuid--extensions--extension_uuid-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-DELETEapi-v1-domains--domain_uuid--extensions--extension_uuid-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-DELETEapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-DELETEapi-v1-domains--domain_uuid--extensions--extension_uuid-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-DELETEapi-v1-domains--domain_uuid--extensions--extension_uuid-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-DELETEapi-v1-domains--domain_uuid--extensions--extension_uuid-" data-method="DELETE"
+      data-path="api/v1/domains/{domain_uuid}/extensions/{extension_uuid}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('DELETEapi-v1-domains--domain_uuid--extensions--extension_uuid-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-red">DELETE</small>
+            <b><code>api/v1/domains/{domain_uuid}/extensions/{extension_uuid}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="DELETEapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="DELETEapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="DELETEapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="DELETEapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>extension_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="extension_uuid"                data-endpoint="DELETEapi-v1-domains--domain_uuid--extensions--extension_uuid-"
+               value="d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"
+               data-component="url">
+    <br>
+<p>The extension UUID. Example: <code>d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b</code></p>
+            </div>
+                    </form>
+
+            
+
+        
+    </div>
+    <div class="dark-box">
+                    <div class="lang-selector">
+                                                        <button type="button" class="lang-button" data-language-name="bash">bash</button>
+                                                        <button type="button" class="lang-button" data-language-name="javascript">javascript</button>
+                            </div>
+            </div>
+</div>
+</body>
+</html>

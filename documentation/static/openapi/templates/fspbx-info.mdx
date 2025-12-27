@@ -1,0 +1,37 @@
+---
+id: fs-pbx-api
+sidebar_label: Introduction
+title: FS PBX API Reference v1
+sidebar_position: 1
+---
+
+The FS PBX API is organized around REST. Our API has predictable resource-oriented URLs, returns JSON-encoded responses, and uses standard HTTP response codes, authentication, and verbs.
+
+## Authentication
+Use a **Bearer token** to authenticate requests. You can view and manage your API keys in **FS PBX Dashboard -> Users**.
+All API requests must be made over HTTPS. Calls made over plain HTTP will fail. API requests without authentication will also fail.
+
+## Base path
+Use your FS PBX portal URL 
+
+`https://YOUR-FSPBX-HOST/`
+
+All endpoints are rooted at:
+
+`/api/v1`
+
+## Errors
+FS PBX uses conventional HTTP response codes to indicate the success or failure of an API request. 
+In general: Codes in the 2xx range indicate success. Codes in the 4xx range indicate an error that failed given the information provided 
+(e.g., a required parameter was omitted, a charge failed, etc.). Codes in the 5xx range indicate an error with FS PBX server.
+
+## Pagination
+
+All top-level API resources have support for bulk fetches through “list” API methods. For example, you can **list domains**, **list extensions**, and **list voicemails**. 
+These list API methods share a common structure and accept, at a minimum, the following three parameters: `limit`, and `starting_after`.
+
+The list API methods use cursor-based pagination through the `starting_after` parameter. This parameter accepts an existing object UUID value and return objects in reverse chronological order. 
+It returns objects listed after the named object. 
+
+## Support
+For issues, file a GitHub issue or contact support.

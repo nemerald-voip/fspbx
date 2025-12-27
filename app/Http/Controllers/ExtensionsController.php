@@ -47,11 +47,9 @@ use Maatwebsite\Excel\Excel as ExcelWriter;
 use Propaganistas\LaravelPhone\PhoneNumber;
 use App\Http\Requests\StoreExtensionRequest;
 use App\Http\Requests\UpdateExtensionRequest;
-use extension;
 use Spatie\Activitylog\Facades\CauserResolver;
 use Propaganistas\LaravelPhone\Exceptions\NumberParseException;
 use App\Traits\ChecksLimits;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 use App\Exports\ExtensionsExport;
 
 class ExtensionsController extends Controller
@@ -64,17 +62,17 @@ class ExtensionsController extends Controller
     public $sortOrder;
     protected $viewName = 'Extensions';
 
-public function export(Request $request)
-{
-    if (!userCheckPermission("extension_export")) {
-        abort(403);
+    public function export(Request $request)
+    {
+        if (!userCheckPermission("extension_export")) {
+            abort(403);
+        }
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new ExtensionsExport,
+            'extensions.csv',
+            \Maatwebsite\Excel\Excel::CSV
+        );
     }
-    return \Maatwebsite\Excel\Facades\Excel::download(
-        new ExtensionsExport,
-        'extensions.csv',
-        \Maatwebsite\Excel\Excel::CSV
-    );
-}
 
     public function __construct()
     {
@@ -96,6 +94,29 @@ public function export(Request $request)
             return redirect('/');
         }
 
+        return Inertia::render(
+            $this->viewName,
+            [
+
+                'routes' => [
+                    'current_page' => route('extensions.index'),
+                    'data_route' => route('extensions.data'),
+                    'item_options' => route('extensions.item.options'),
+                    'bulk_delete' => route('extensions.bulk.delete'),
+                    'select_all' => route('extensions.select.all'),
+                    'registrations' => route('extensions.registrations'),
+                    'download_template' => route('extensions.template.download'),
+                    'import' => route('extensions.import'),
+                    'create_user' => route('extensions.make.user'),
+                    'create_contact_center_user' => (Module::has('ContactCenter') && Module::collections()->has('ContactCenter') && Route::has('contact-center.user.store')) ? route('contact-center.user.store') : null,
+                    'export' => route('extensions.export'),
+                ]
+            ]
+        );
+    }
+
+    public function getData()
+    {
         $perPage = 50;
         $currentDomain = session('domain_uuid');
 
@@ -152,33 +173,14 @@ public function export(Request $request)
             // allow ?sort=-username or ?sort=add_date
             ->allowedSorts(['extension'])
             ->defaultSort('extension')
-            ->paginate($perPage)
-            ->appends($request->query());
+            ->paginate($perPage);
 
         // wrap in your DTO
         $extensionsDto = ExtensionListData::collect($extensions);
 
-        // logger($extensionsDto);
+        // logger( $extensionsDto);
 
-        return Inertia::render(
-            $this->viewName,
-            [
-                'data' => $extensionsDto,
-
-                'routes' => [
-                    'current_page' => route('extensions.index'),
-                    'item_options' => route('extensions.item.options'),
-                    'bulk_delete' => route('extensions.bulk.delete'),
-                    'select_all' => route('extensions.select.all'),
-                    'registrations' => route('extensions.registrations'),
-                    'download_template' => route('extensions.template.download'),
-                    'import' => route('extensions.import'),
-                    'create_user' => route('extensions.make.user'),
-                    'create_contact_center_user' => (Module::has('ContactCenter') && Module::collections()->has('ContactCenter') && Route::has('contact-center.user.store')) ? route('contact-center.user.store') : null,
-                    'export' => route('extensions.export'),
-                ]
-            ]
-        );
+        return $extensionsDto;
     }
 
     public function registrations(FreeswitchEslService $esl)
@@ -228,7 +230,7 @@ public function export(Request $request)
         $itemUuid = $request->input('item_uuid');
 
         //Check for limits
-                if (!$itemUuid) {
+        if (!$itemUuid) {
             if ($resp = $this->enforceLimit(
                 'extensions',
                 \App\Models\Extensions::class
@@ -967,7 +969,7 @@ public function export(Request $request)
                                         $profileQuery->select('device_profile_uuid', 'device_profile_name'); // Add fields as needed
                                     }])
                                     ->with(['template' => function ($query) {
-                                        $query->select('template_uuid', 'domain_uuid', 'vendor','name');
+                                        $query->select('template_uuid', 'domain_uuid', 'vendor', 'name');
                                     }]);
                             }]);
                     }
@@ -1221,8 +1223,8 @@ public function export(Request $request)
     public function import()
     {
         if (! userCheckPermission('extension_import')) {
-        abort(403);
-    }
+            abort(403);
+        }
         try {
 
             $file = request()->file('file');
@@ -1302,7 +1304,6 @@ public function export(Request $request)
         try {
             DB::beginTransaction();
 
-            // Eager load all relationships to avoid N+1 issues
             $extensions = Extensions::with([
                 'followMe.followMeDestinations',
                 'extension_users',
@@ -1726,6 +1727,34 @@ public function export(Request $request)
                 'success' => false,
                 'errors' => ['error' => [$e->getMessage()]],
             ], 500);
+        }
+    }
+
+    /**
+     * Get all items
+     *
+     * @return JsonResponse
+     */
+    public function selectAll()
+    {
+        try {
+
+            $uuids = $this->model::where('domain_uuid', session('domain_uuid'))
+                ->get($this->model->getKeyName())->pluck($this->model->getKeyName());
+
+
+            // Return a JSON response indicating success
+            return response()->json([
+                'messages' => ['success' => ['All items selected']],
+                'items' => $uuids,
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to select all items']]
+            ], 500); // 500 Internal Server Error for any other errors
         }
     }
 

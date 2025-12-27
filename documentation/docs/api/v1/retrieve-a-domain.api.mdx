@@ -1,0 +1,82 @@
+---
+id: retrieve-a-domain
+title: "Retrieve a domain"
+description: "Returns a single domain the caller is allowed to access."
+sidebar_label: "Retrieve a domain"
+hide_title: true
+hide_table_of_contents: true
+api: eJztV9tu2zgQ/RWCL5sA8m0ToF2hKJCgmzYvbRAnQIvESChpbLGhSZVDOjEM/XtBirJky3C9i83DAs1LEpEzPOfMhcMVVQVoZriSlxmNqQajOSzg7IOaMy5pRDPAVPPC7aAxvQZjtUTCCHI5E0Ayv4+YHEjKhABNOBImhHqGjBhFWJoCYv9e3ssz/yfRVgDG97JHLqfeziJokjP0/zxWDh+YEI+kAD3niFzJiDC5rA+bsyVJgNRYs/4uZwyRzyRktdFMK1sgUZpwmfEFzywTYQ0jb1p7t2ice89KIQRPc5AG7yUhR7AASXhz3B9I1LOszTkSqQzhMhU2g+y4BieVybmceXkCtKhB7CgpKZZrUm6J65ZjL+FnZTa1C4dmCqpj4YWjiQgjjxpQWZ3Cg1dQzh4JaK18eLQP4qZuwZG3R5JYUxOpAsgTAd7tVOmEZxnIh8pil1sa0YJpNgcDGml8t6Lc5U7BTE4jKtkcaExDnK3lWSfLbhpAt7eXH5xDeGHzQjjD0+Ho7fQNO+m9hSHrnb5Jkt5f09Npb3iajE5GJzCEUUIjquGH5RoyGhttIaKY5jBnNF5RsyycHzSayxkty4nbjIWSCOjW/xwO3a9NSGPrdaARTZU0II3bwopC8NRXz+A7un2r7jkq+Q6paVNYbZA/mFFwVEvnVKvcBEVHw+Fw1J9ikbz0UzVv1kGyRDRKhK+b/M6FhStgT2SshHXfkJYRLbRrD4ZXwmyg3tbxH4eobBjt8xXIllts95lsC1F2lVibJ0oJYLJt71Qqd8u079RdCvqfyOnRzahbyazJQRqXQZD9R5nlq7G1p3UGV/KhWo7oHBDZDLow+h5H5lbsFsCykxDbh60BbW6rVvdptxNl2YK5z7jDoKwp7LPqsmuiddKN1kXd98hR6ExVYzx+pbhxuWCCZw+ujQGaHYH7pizJlO/ROVtAwOPuXJNzrG+NJpzbnbvu0lu9+BWjvJvToWE+kO9Bwe9oUa7F+HUvqnVq8uW0my+flSFTZeVr1fWv86Oa4LxeHkgrFbZng/9bKnSpHRT1Du1/H/UyoobN3HATwCCdOPAmV+5Gn4EXxQ08MR2wgg8Wo0EYNgerlsOSRhRBL+pByWpBY5obU2A8GKxyhabsjEcXY3J1/pWcXV2SypZGdME0d3eb19+ZVSk5ZVa4keHbl9vr3sX46vxr79OX8U3H5SeFxl2s5DkHDSSc4IY6K6UbW4+CHjGp7tWlsroXak6COXbKTByX1Gpulp7M+vi7SXtt7PI9TBT1jrX+jjoN05q/n4FpT3ATr2sGKZPNuOzwEKOeQJJkSRYcuXGw/eeMYZ4opjPCZEZSwdMnt/Yuef8RpHv9gNfSW78bJO/7PvO5nCoPjBufBo3qHTROf9BY/bMY+bxSaObM13cYz65rqIw0A9zmcLFuFL/fWb/fWQe9s0LVGHgxg0KEm8w3kVVoP3eUFdwl6Gj9IHCvmLjd1SZRaBl3dLVKGMKtFmXpPv+woF0xT5oOU5U2xzBJT5lA2JPJR9fhIXZMdjzrduKvR1e59I1NWKhq7AmW2+14UkY0B5aB9rCqHa4ACtOy7dy6ZbtZf/z7hpblT5sB7kI=
+sidebar_class_name: "get api-method"
+info_path: docs/api/v1/fs-pbx-api
+custom_edit_url: null
+hide_send_button: true
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Retrieve a domain"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/api/v1/domains/{domain_uuid}"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Returns a single domain the caller is allowed to access.
+
+Access rules:
+- If the user has the `domain_all` permission, any domain may be retrieved.
+- If the user has assigned domain groups or individual domains, the domain must be in those assignments
+  (even if the user's own domain is not included).
+- If nothing is assigned, the user may only retrieve their own domain.
+
+Notes:
+- If the domain does not exist, a `resource_missing` error is returned.
+- If the domain exists but is not accessible, a `forbidden_domain` error is returned.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"in":"path","name":"domain_uuid","description":"The domain UUID.","example":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","required":true,"schema":{"type":"string"}}]}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"Success","content":{"application/json":{"schema":{"type":"object","example":{"domain_uuid":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","object":"domain","domain_name":"10001.fspbx.com","domain_enabled":true,"domain_description":"BluePeak Solutions"},"properties":{"domain_uuid":{"type":"string","example":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"},"object":{"type":"string","example":"domain"},"domain_name":{"type":"string","example":"10001.fspbx.com"},"domain_enabled":{"type":"boolean","example":true},"domain_description":{"type":"string","example":"BluePeak Solutions"}}}}}},"401":{"description":"Unauthenticated","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"authentication_error"},"message":{"type":"string","example":"Unauthenticated."},"code":{"type":"string","example":"unauthenticated"}}}}}}}},"403":{"description":"Forbidden (domain access)","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"You do not have access to this domain.","code":"forbidden_domain","param":"domain_uuid"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"You do not have access to this domain."},"code":{"type":"string","example":"forbidden_domain"},"param":{"type":"string","example":"domain_uuid"}}}}}}}},"404":{"description":"Not found","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Domain not found.","code":"resource_missing","param":"domain_uuid"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Domain not found."},"code":{"type":"string","example":"resource_missing"},"param":{"type":"string","example":"domain_uuid"}}}}}}}}}}
+>
+  
+</StatusCodes>
+
+
+      

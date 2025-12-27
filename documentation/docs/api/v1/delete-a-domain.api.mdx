@@ -1,0 +1,72 @@
+---
+id: delete-a-domain
+title: "Delete a domain"
+description: "Permanently deletes the specified domain."
+sidebar_label: "Delete a domain"
+hide_title: true
+hide_table_of_contents: true
+api: eJy1Vu9r2zwQ/lfEfdrAqZO3gW1mDDravSu8bGVtYKOEItvnWqsteZKcNRj97+MkJ3HjkHXwLl+SWPfjeZ473bkD1aDmVih5mUMCOVZo8exc1VxIiCBHk2nR0DkkcIW65hKlrdYsWBpmS2SmwUwUAnOWe8cTiKDhmtdoURtIbjsQ5N9wW0IEktdIubztXduKfJTppsQ+FlssLs8pID7yuqnIcT6dvS5e8dPJa5zyyfxVmk7eFPNiMp2ns9PZKU5xlkIEGn+0QmMOidUtRmCyEmsOSQd23VAcY7WQ9+DckoxNo6RBQ+f/TKf09RTSuSdMUDMlLUpLJrxpKpF5/eLvhuy6cR6VfsfMDil0IPLnE+n9N4p5sQIWz8xF0GgqoxUBPsXeJ/nH+rld3mOxekhugGlrnipVIZdDe4/XfyKCMVZ5IXlrS5SWVP3f1EatlR7YDHIIJe/CcQQ1GsPvcQzjxOPI6aTdA+hG8u8n2wJ6ahZOj2l7EKUbwDzmPGLgNhSOeY3Z7ao1H1frk7KsUK38W3UScsUrkd/RVUZjDxQqTComN0AGldJoVKszvKuFMYGoH0p7o+cvFvAw/OdWcEztWSUc0XZb3r+/yBtJtmW3/J4GeA/GwJLA21LtloWX1ZaQQMwbEa9mcQhl4m4Q00EEBvVqsw9aXUECpbWNSeK4K5WxbrQFPlyzq/df2dnVJQu+EMGKa8HTKpSA3EJXFrytaER++7z4MvlwffX+6+Tj5+ubUciPyljaP+xniRpZn0EYplsphbxnL3pJElaYJn08WatWT/q1JtG+JHGWxCVrtbBrT2ab/nY5PLumlg9AtxbbEhB16JeSH5bItSf4FO831bKMS6bRaoErZISHWfWAkqVrthJGWILtH+fclKniOmdc5iyrRPZAZ2/Td/+ipDWPXkvv/TZO35345heyUB6YsL4TdqqP0JD+qE34s5r51lLG1txf8X6vh0XJOMsPvkV0u0nxRy8UvW4WH23cVP3S8W3U9Q14C7wRBHFGOfuGjSAZtvYy6pvmFrou5QYXunKOHv9oUVM5l7seC8UVhn7nkBS8MniEzYsv/RvHS3bg/eUg/s0+kmvf2lWLQeUHXO/fyaWLoESeo/awgsVZlmFjB76j0euGN/b84r+Lmwtw7heu1GgS
+sidebar_class_name: "delete api-method"
+info_path: docs/api/v1/fs-pbx-api
+custom_edit_url: null
+hide_send_button: true
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Delete a domain"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"delete"}
+  path={"/api/v1/domains/{domain_uuid}"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Permanently deletes the specified domain.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"in":"path","name":"domain_uuid","description":"The domain UUID.","example":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","required":true,"schema":{"type":"string"}}]}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"Deleted","content":{"application/json":{"schema":{"type":"object","example":{"id":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","object":"domain","deleted":true},"properties":{"id":{"type":"string","example":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"},"object":{"type":"string","example":"domain"},"deleted":{"type":"boolean","example":true}}}}}},"401":{"description":"Unauthenticated","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"authentication_error"},"message":{"type":"string","example":"Unauthenticated."},"code":{"type":"string","example":"unauthenticated"}}}}}}}},"404":{"description":"Not found","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Domain not found.","code":"resource_missing","param":"domain_uuid"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Domain not found."},"code":{"type":"string","example":"resource_missing"},"param":{"type":"string","example":"domain_uuid"}}}}}}}}}}
+>
+  
+</StatusCodes>
+
+
+      

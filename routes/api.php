@@ -45,8 +45,7 @@ use App\Http\Controllers\HotelHousekeepingDefinitionController;
 |
 */
 
-
-Route::group(['middleware' => ['auth:sanctum']], function () {
+Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () {
     // Tokens
     Route::resource('/tokens', TokenController::class);
     Route::post('tokens/bulk-delete', [TokenController::class, 'bulkDelete'])->name('tokens.bulk.delete');
@@ -138,6 +137,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     // Extensions
     Route::post('extensions', [ExtensionsController::class, 'store'])->name('extensions.store');
     Route::put('extensions/{extension}', [ExtensionsController::class, 'update'])->name('extensions.update');
+    Route::get('extensions/data', [ExtensionsController::class, 'getData'])->name('extensions.data');
     Route::post('extensions/item-options', [ExtensionsController::class, 'getItemOptions'])->name('extensions.item.options');
     Route::post('extensions/bulk-delete', [ExtensionsController::class, 'bulkDelete'])->name('extensions.bulk.delete');
     Route::post('extensions/select-all', [ExtensionsController::class, 'selectAll'])->name('extensions.select.all');
@@ -242,9 +242,6 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::put('/gateways', [PaymentGatewayController::class, 'update'])->name('gateway.update');
     Route::post('/gateways/deactivate', [PaymentGatewayController::class, 'deactivate'])->name('gateway.deactivate');
 
-    // CHAR PMS
-    Route::post('/pms/char', CharPmsWebhookController::class)->name('pms.char');
-
     // Virtual Receptionist
     Route::post('virtual-receptionists/duplicate', [VirtualReceptionistController::class, 'duplicate'])->name('virtual-receptionists.duplicate');
 
@@ -264,4 +261,9 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::get('domains/data', [DomainController::class, 'getData'])->name('domains.data');
     Route::post('domains/item-options', [DomainController::class, 'getItemOptions'])->name('domains.item.options');
     Route::post('domains/bulk-delete', [DomainController::class, 'bulkDelete'])->name('domains.bulk.delete');
+});
+
+Route::group(['middleware' => ['auth:sanctum']], function () {
+    // CHAR PMS
+    Route::post('/pms/char', CharPmsWebhookController::class)->name('pms.char');
 });

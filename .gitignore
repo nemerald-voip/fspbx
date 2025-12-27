@@ -16,3 +16,6 @@ yarn-error.log
 /.vscode
 /Modules/*
 modules_statuses.json
+
+# Scribe generated docs/cache
+.scribe/

@@ -1,0 +1,76 @@
+---
+id: update-a-domain
+title: "Update a domain"
+description: "Updates an existing domain. Returns the updated domain object."
+sidebar_label: "Update a domain"
+hide_title: true
+hide_table_of_contents: true
+api: eJzdWG1v2zYQ/isEPyWA/NakaGcUBZJ2Xftha5CXrUVqpCfpbLGRSJWk7BiG/vtwpGTJluckxYIV8xfBIu949zzPkUetuMpRgxVKfoj5mBd5DBZP3qoMhOQBj9FEWuQ0zsf8yo0aBpLhnTBWyBmL3dQ+O0dbaGmYTZB5L3E1xlT4DSPb/yK/yJMoQmOYLlI04y+yx95AmqJmWWEsS2CODPwMq5wnC3qGtnZ0UD1NpHI87O+0J6uvft4NxsJ+ZTnqTBgjlOzzgOegIUOL2vDx9YoLyisHm/CAS8iQj3llXBQi7iBwmWAdzNXVh7fkEO8gy1MyPB6OXk5fwFHvJQ6hd/wiDHu/TI+nveFxODoaHeEQRyEPuMbvhdAY87HVBQbcRAlmwMcrbpc5+TFWCznjZTmhySZX0qCh8WfDIT02Q7ooHGI84JGSFqWlKZDnqYgcr4Nvhuatuut4XtoprDaSf3BGlaMaOkLNu6kQHQ2Hw1F/avLwrh+prBlHCWHaIFG93czvNC3wDOGWXai0oHeGlwHPNQnXCg/MRtTbOD6aorLJaJ+vKtlyK9t9JttAlF0k1uahUimCbNsTSuVumPatugtB9wv48S5F/QmpiJ12GGqt9L8kLe+rmSPknBa6oXpAY2/qtTI0BmY04yxFMMhQWtQM6sJLIcS074KK237WlV1XeVPL7fwIv+im0Ckf88Ta3IwHg8Vi0bAyiFVkBpCLwXw0cEGZAS87mttOZ53y5jQ/uo+e3TiULSD2We/FqKxBesj6DX7lGsD79b+BbdkCd5/pY3BvpDrqSvVKQmETlJYUifETKbW1hlByh1C3wmiJs9gK8Al1tDPKh8qok8GDpNPNrmHrqMvWO6VDEcco/7MdZR1Bi6LpOqqftshbYT+Il3ZKDSPHXUb+UJZNVSGfqnLuZ8S3mkzWgbSI0WhUoSO8ce2bS3FrX3cH/k/LWje1B5HXSftR23EFyZp2CzPqdKtgDJ/4BhSNPVXxklxu96M/rIOdPdk9XcqmHE9YUmQge1MtUMbp0p9jbKq06+vru8bv1O0TrCGymUago88mINmz589ZlICGiBr8/r1d0L2t2z92/2TADlK1QB2BwcMfDOrHGsLNqP5K0CbYRogJwyr7jeWmkBokUTSUX+/iaeKlk6FNVOzvR1Hiqs8mfMzrM9pbmsGqJb2SB9ygntf3q80+a5UoY8tOBu8u2NnpJ3Zy9oF5Wx7wOWhBGTgtkZnfvKZQpHTT+Pzx6rz37uLs9FPv/ceLy47L98pYx9EiQY2sWkHQ1VNKurceVKiMmUd/qQrdqwQm0R5SDU0ol6jQwi5dMuvlryftsQuqiEr09Yw1a5Q6ry55jkUE7RLcjPezKlgEkmm0WuAcGcXDrLpFycIlmwsj3HXbvY7BJKECHTOQMYtSEd3S2Kvw9W8o6TqPDktn/WoQvu67PZIK+Lwp/V87l757712Pv9d5xQVcyKlyoAjrD7Q14x0kiHvUxv+Zj9zup4zNwO0f1cr+S8S63912smo2sf/FR4tKSxbv7CBPq1tn1WX7orzmkAuCbrRmgfgat0+FSVAV0jVfrUIweKXTsqTX3wvUJPFJU3de8MK0idyD8sF5taUcsh3fSHbGXzfXcunKPS3Qs3+Ly+3jbFIGPEGIUbuw/Iw3fvHeJflpPHTOrDKoLYjI3O6dO2lte2cnl2/e84CH1UGZVW0JLOgrDix8uCr3xUEnKb1b8RTkrPDdjXdKv78BwaC78w==
+sidebar_class_name: "patch api-method"
+info_path: docs/api/v1/fs-pbx-api
+custom_edit_url: null
+hide_send_button: true
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Update a domain"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"patch"}
+  path={"/api/v1/domains/{domain_uuid}"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Updates an existing domain. Returns the updated domain object.
+
+Access rules:
+- Caller must have access to the target domain (domain scope).
+- Caller must have the `domain_edit` permission.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"in":"path","name":"domain_uuid","description":"The domain UUID.","example":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","required":true,"schema":{"type":"string"}}]}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={{"required":true,"content":{"application/json":{"schema":{"type":"object","properties":{"domain_description":{"type":"string","description":"A human-friendly label for the domain. Must not be greater than 255 characters.","example":"BluePeak Solutions"},"domain_name":{"type":"string","description":"The domain name (lowercase). Must not be greater than 255 characters.","example":"10001.fspbx.com"},"domain_enabled":{"type":"boolean","description":"Whether the domain is enabled.","example":false}},"required":["domain_description"]}}}}}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"Success","content":{"application/json":{"schema":{"type":"object","example":{"domain_uuid":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","object":"domain","domain_name":"10001.fspbx.com","domain_enabled":true,"domain_description":"BluePeak Solutions"},"properties":{"domain_uuid":{"type":"string","example":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"},"object":{"type":"string","example":"domain"},"domain_name":{"type":"string","example":"10001.fspbx.com"},"domain_enabled":{"type":"boolean","example":true},"domain_description":{"type":"string","example":"BluePeak Solutions"}}}}}},"400":{"description":"Validation error","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Please enter a domain label.","code":"invalid_parameter","param":"domain_description","doc_url":"https://www.fspbx.com/docs/api/v1/errors/"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Please enter a domain label."},"code":{"type":"string","example":"invalid_parameter"},"param":{"type":"string","example":"domain_description"},"doc_url":{"type":"string","example":"https://www.fspbx.com/docs/api/v1/errors/"}}}}}}}},"401":{"description":"Unauthenticated","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"authentication_error"},"message":{"type":"string","example":"Unauthenticated."},"code":{"type":"string","example":"unauthenticated"}}}}}}}},"403":{"description":"Forbidden","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Forbidden.","code":"forbidden"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Forbidden."},"code":{"type":"string","example":"forbidden"}}}}}}}},"404":{"description":"Not found","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Domain not found.","code":"resource_missing","param":"domain_uuid"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Domain not found."},"code":{"type":"string","example":"resource_missing"},"param":{"type":"string","example":"domain_uuid"}}}}}}}}}}
+>
+  
+</StatusCodes>
+
+
+      
