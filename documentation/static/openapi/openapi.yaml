@@ -1505,6 +1505,485 @@ paths:
                         example: extension_uuid
       tags:
         - Extensions
+    patch:
+      summary: 'Update an extension'
+      operationId: updateAnExtension
+      description: "Updates an existing extension in the specified domain.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `extension_edit` permission.\n\nNotes:\n- Fields are optional. If a field is omitted, the current value is unchanged.\n- Voicemail behavior:\n  - If `voicemail_enabled` is omitted, voicemail settings are unchanged.\n  - If `voicemail_enabled` is true, a voicemail box is created (or updated) for this extension.\n  - If `voicemail_enabled` is false, voicemail is disabled for this extension."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  extension_uuid: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                  object: extension
+                  domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  extension: '1001'
+                  enabled: true
+                  effective_caller_id_name: 'Front Desk'
+                  effective_caller_id_number: '1001'
+                  outbound_caller_id_number_e164: '+12135551212'
+                  outbound_caller_id_number_formatted: null
+                  emergency_caller_id_number_e164: '+12135559876'
+                  directory_first_name: Front
+                  directory_last_name: Desk
+                  name_formatted: 'Front Desk'
+                  directory_visible: true
+                  directory_exten_visible: true
+                  email: null
+                  do_not_disturb: false
+                  user_record: true
+                  suspended: false
+                  description: 'Main reception phone'
+                  forward_all_enabled: null
+                  forward_busy_enabled: null
+                  forward_no_answer_enabled: null
+                  forward_user_not_registered_enabled: null
+                  follow_me_enabled: null
+                properties:
+                  extension_uuid:
+                    type: string
+                    example: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                  object:
+                    type: string
+                    example: extension
+                  domain_uuid:
+                    type: string
+                    example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  extension:
+                    type: string
+                    example: '1001'
+                  enabled:
+                    type: boolean
+                    example: true
+                  effective_caller_id_name:
+                    type: string
+                    example: 'Front Desk'
+                  effective_caller_id_number:
+                    type: string
+                    example: '1001'
+                  outbound_caller_id_number_e164:
+                    type: string
+                    example: '+12135551212'
+                  outbound_caller_id_number_formatted:
+                    type: string
+                    example: null
+                  emergency_caller_id_number_e164:
+                    type: string
+                    example: '+12135559876'
+                  directory_first_name:
+                    type: string
+                    example: Front
+                  directory_last_name:
+                    type: string
+                    example: Desk
+                  name_formatted:
+                    type: string
+                    example: 'Front Desk'
+                  directory_visible:
+                    type: boolean
+                    example: true
+                  directory_exten_visible:
+                    type: boolean
+                    example: true
+                  email:
+                    type: string
+                    example: null
+                  do_not_disturb:
+                    type: boolean
+                    example: false
+                  user_record:
+                    type: boolean
+                    example: true
+                  suspended:
+                    type: boolean
+                    example: false
+                  description:
+                    type: string
+                    example: 'Main reception phone'
+                  forward_all_enabled:
+                    type: string
+                    example: null
+                  forward_busy_enabled:
+                    type: string
+                    example: null
+                  forward_no_answer_enabled:
+                    type: string
+                    example: null
+                  forward_user_not_registered_enabled:
+                    type: string
+                    example: null
+                  follow_me_enabled:
+                    type: string
+                    example: null
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: 'Forbidden (domain access)'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'You do not have access to this domain.'
+                    code: forbidden_domain
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'You do not have access to this domain.'
+                      code:
+                        type: string
+                        example: forbidden_domain
+                      param:
+                        type: string
+                        example: domain_uuid
+        404:
+          description: 'Not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Extension not found.'
+                    code: resource_missing
+                    param: extension_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Extension not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: extension_uuid
+      tags:
+        - Extensions
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                extension:
+                  type: number
+                  description: 'Numeric extension number. If omitted, value is unchanged.'
+                  example: 1001.0
+                directory_first_name:
+                  type: string
+                  description: 'First name for directory display. If omitted, value is unchanged. Must not be greater than 60 characters.'
+                  example: Front
+                directory_last_name:
+                  type: string
+                  description: 'Last name for directory display. If omitted, value is unchanged. Must not be greater than 60 characters.'
+                  example: Desk
+                voicemail_mail_to:
+                  type: string
+                  description: 'Email address for voicemail-to-email notifications. If omitted, value is unchanged. Must be a valid email address. Must not be greater than 255 characters.'
+                  example: frontdesk@example.com
+                voicemail_sms_to:
+                  type: string
+                  description: 'Optional SMS destination for voicemail alerts. If omitted, value is unchanged.'
+                  example: '+12135551212'
+                description:
+                  type: string
+                  description: 'Optional description/label. If omitted, value is unchanged.'
+                  example: 'Main reception phone'
+                suspended:
+                  type: boolean
+                  description: 'Whether the extension is suspended. If omitted, value is unchanged.'
+                  example: false
+                do_not_disturb:
+                  type: boolean
+                  description: 'Enable Do Not Disturb for this extension. If omitted, value is unchanged.'
+                  example: false
+                enabled:
+                  type: boolean
+                  description: 'Whether the extension is enabled. If omitted, value is unchanged.'
+                  example: true
+                call_timeout:
+                  type: string
+                  description: 'Ring timeout in seconds. If omitted, value is unchanged.'
+                  example: '25'
+                directory_visible:
+                  type: boolean
+                  description: 'Whether this user is visible in the directory (dial-by-name). If omitted, value is unchanged.'
+                  example: true
+                directory_exten_visible:
+                  type: boolean
+                  description: 'Whether the extension number is visible in the directory (dial-by-name). If omitted, value is unchanged.'
+                  example: true
+                user_record:
+                  type: boolean
+                  description: 'Whether call recording is enabled. If omitted, value is unchanged.'
+                  example: true
+                call_screen_enabled:
+                  type: boolean
+                  description: 'Whether call screening is enabled. If omitted, value is unchanged.'
+                  example: false
+                max_registrations:
+                  type: string
+                  description: 'Maximum allowed SIP registrations for this extension. If omitted, value is unchanged.'
+                  example: '1'
+                limit_max:
+                  type: string
+                  description: 'Max number of allowed outgoing calls. If omitted, value is unchanged.'
+                  example: '5'
+                limit_destination:
+                  type: string
+                  description: 'Limit destination. If omitted, value is unchanged.'
+                  example: '!USER_BUSY'
+                toll_allow:
+                  type: string
+                  description: 'Toll allow string (e.g., domestic, international, local). If omitted, value is unchanged.'
+                  example: domestic
+                call_group:
+                  type: string
+                  description: 'Call group string. Users in the same call group can use call pickup/intercept. If omitted, value is unchanged.'
+                  example: sales
+                hold_music:
+                  type: string
+                  description: 'Music on hold source/category. If omitted, value is unchanged.'
+                  example: 'local_stream://default'
+                cidr:
+                  type: string
+                  description: 'CIDR/network restriction (if used by your security/dialplan rules). If omitted, value is unchanged.'
+                  example: 192.168.1.0/24
+                sip_force_contact:
+                  type: string
+                  description: 'SIP force-contact setting. If omitted, value is unchanged.'
+                  example: NDLB-connectile-dysfunction
+                sip_force_expires:
+                  type: string
+                  description: 'SIP force-expires setting. If omitted, value is unchanged.'
+                  example: '300'
+                sip_bypass_media:
+                  type: string
+                  description: 'SIP bypass-media setting. If omitted, value is unchanged.'
+                  example: 'false'
+                mwi_account:
+                  type: string
+                  description: 'MWI account string. If omitted, value is unchanged.'
+                  example: 1001@your-domain.com
+                absolute_codec_string:
+                  type: string
+                  description: 'Absolute codec string. If omitted, value is unchanged.'
+                  example: 'PCMU,PCMA,OPUS'
+                dial_string:
+                  type: string
+                  description: 'Custom dial string. If omitted, value is unchanged.'
+                  example: '{sip_invite_domain=${domain_name}}${sofia_contact(${dialed_user}@${dialed_domain})}'
+                force_ping:
+                  type: string
+                  description: 'Force ping setting. If omitted, value is unchanged.'
+                  example: 'true'
+                auth_acl:
+                  type: string
+                  description: 'Auth ACL name (if used for registration/auth restrictions). If omitted, value is unchanged.'
+                  example: localnet
+                outbound_caller_id_number:
+                  type: string
+                  description: 'Outbound caller ID number (E.164 recommended). If omitted, value is unchanged.'
+                  example: '+12135551212'
+                emergency_caller_id_number:
+                  type: string
+                  description: 'Emergency caller ID number (E.164 recommended). If omitted, value is unchanged.'
+                  example: '+12135559876'
+                outbound_caller_id_name:
+                  type: string
+                  description: 'Outbound caller ID name. If omitted, value is unchanged.'
+                  example: 'Front Desk'
+                emergency_caller_id_name:
+                  type: string
+                  description: 'Emergency caller ID name. If omitted, value is unchanged.'
+                  example: 'Front Desk'
+                voicemail_enabled:
+                  type: boolean
+                  description: 'Whether voicemail should be enabled. If omitted, value is unchanged.'
+                  example: true
+                voicemail_id:
+                  type: string
+                  description: ''
+                  example: null
+                voicemail_file:
+                  type: string
+                  description: 'Voicemail delivery mode (e.g., attach). If omitted, value is unchanged.'
+                  example: attach
+                voicemail_local_after_email:
+                  type: boolean
+                  description: 'Whether to keep voicemail local after emailing it. If omitted, value is unchanged.'
+                  example: true
+                voicemail_transcription_enabled:
+                  type: boolean
+                  description: 'Whether voicemail transcription is enabled. If omitted, value is unchanged.'
+                  example: true
+                voicemail_description:
+                  type: string
+                  description: 'Optional voicemail description/label. If omitted, value is unchanged.'
+                  example: 'Front Desk Voicemail'
+                voicemail_password:
+                  type: number
+                  description: 'Voicemail PIN/password. If omitted, value is unchanged.'
+                  example: 1001.0
+                voicemail_tutorial:
+                  type: boolean
+                  description: 'Whether voicemail tutorial is enabled. If omitted, value is unchanged.'
+                  example: true
+                voicemail_recording_instructions:
+                  type: boolean
+                  description: 'Whether voicemail recording instructions are enabled. If omitted, value is unchanged.'
+                  example: true
+    delete:
+      summary: 'Delete an extension'
+      operationId: deleteAnExtension
+      description: "Deletes an extension within the specified domain.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `extension_delete` permission."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  object: extension
+                  extension_uuid: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                  deleted: true
+                properties:
+                  object:
+                    type: string
+                    example: extension
+                  extension_uuid:
+                    type: string
+                    example: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                  deleted:
+                    type: boolean
+                    example: true
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: 'Forbidden (domain access)'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'You do not have access to this domain.'
+                    code: forbidden_domain
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'You do not have access to this domain.'
+                      code:
+                        type: string
+                        example: forbidden_domain
+                      param:
+                        type: string
+                        example: domain_uuid
+        404:
+          description: 'Extension not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Extension not found.'
+                    code: resource_missing
+                    param: extension_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Extension not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: extension_uuid
+      tags:
+        - Extensions
     parameters:
       -
         in: path

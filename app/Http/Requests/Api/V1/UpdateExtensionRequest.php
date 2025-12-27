@@ -79,7 +79,6 @@ class UpdateExtensionRequest extends FormRequest
             'voicemail_local_after_email'      => ['sometimes', 'boolean'],
             'voicemail_transcription_enabled'  => ['sometimes', 'boolean'],
             'voicemail_description'            => ['sometimes', 'nullable', 'string'],
-            'voicemail_destinations'           => ['sometimes', 'nullable', 'array'],
             'voicemail_password'               => ['sometimes', 'nullable', 'numeric'],
             'voicemail_tutorial'               => ['sometimes', 'boolean'],
             'voicemail_recording_instructions' => ['sometimes', 'boolean'],

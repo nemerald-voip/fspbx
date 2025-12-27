@@ -50,11 +50,11 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
     Route::post('/domains/{domain_uuid}/extensions', [ExtensionController::class, 'store'])
         ->middleware('user.authorize:extension_add');
 
-    // Route::put('/domains/{domain_uuid}/extensions/{extension_uuid}', [ExtensionController::class, 'update'])
-    //     ->middleware('user.authorize:extensions_update');
+    Route::patch('/domains/{domain_uuid}/extensions/{extension_uuid}', [ExtensionController::class, 'update'])
+        ->middleware('user.authorize:extension_edit');
 
-    // Route::delete('/domains/{domain_uuid}/extensions/{extension_uuid}', [ExtensionController::class, 'destroy'])
-    //     ->middleware('user.authorize:extensions_delete');
+    Route::delete('/domains/{domain_uuid}/extensions/{extension_uuid}', [ExtensionController::class, 'destroy'])
+        ->middleware('user.authorize:extension_delete');
 
 
     /*

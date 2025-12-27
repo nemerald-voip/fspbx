@@ -1304,7 +1304,6 @@ class ExtensionsController extends Controller
         try {
             DB::beginTransaction();
 
-            // Eager load all relationships to avoid N+1 issues
             $extensions = Extensions::with([
                 'followMe.followMeDestinations',
                 'extension_users',

@@ -64,6 +64,18 @@ const sidebar: SidebarsConfig = {
           label: "Retrieve an extension",
           className: "api-method get",
         },
+        {
+          type: "doc",
+          id: "api/v1/update-an-extension",
+          label: "Update an extension",
+          className: "api-method patch",
+        },
+        {
+          type: "doc",
+          id: "api/v1/delete-an-extension",
+          label: "Delete an extension",
+          className: "api-method delete",
+        },
       ],
     },
   ],
