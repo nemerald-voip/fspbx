@@ -48,7 +48,7 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
         ->middleware('user.authorize:extension_view');
 
     Route::post('/domains/{domain_uuid}/extensions', [ExtensionController::class, 'store'])
-        ->middleware('user.authorize:extensions_create');
+        ->middleware('user.authorize:extension_add');
 
     // Route::put('/domains/{domain_uuid}/extensions/{extension_uuid}', [ExtensionController::class, 'update'])
     //     ->middleware('user.authorize:extensions_update');

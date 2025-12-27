@@ -516,7 +516,7 @@ class ExtensionController extends Controller
      * @authenticated
      *
      * @urlParam domain_uuid string required The domain UUID. Example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
-     *
+     * 
      * @response 201 scenario="Created" {
      *   "extension_uuid": "d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b",
      *   "object": "extension",
@@ -571,6 +571,7 @@ class ExtensionController extends Controller
      *   }
      * }
      */
+
     public function store(StoreExtensionRequest $request, string $domain_uuid)
     {
         $user = $request->user();
@@ -589,8 +590,12 @@ class ExtensionController extends Controller
             );
         }
 
-        $domainExists = Domain::query()->where('domain_uuid', $domain_uuid)->exists();
-        if (! $domainExists) {
+        // Verify domain exists + fetch domain_name for defaults
+        $domain = Domain::query()
+            ->where('domain_uuid', $domain_uuid)
+            ->first(['domain_uuid', 'domain_name']);
+
+        if (! $domain) {
             throw new ApiException(
                 404,
                 'invalid_request_error',
@@ -600,42 +605,153 @@ class ExtensionController extends Controller
             );
         }
 
-        // Force the domain_uuid from the route (prevents cross-domain writes)
-        $validated = array_merge($request->validated(), [
-            'domain_uuid' => $domain_uuid,
-        ]);
-
-        // Helper: normalize "true"/"false"/"1"/"0"/null => ?bool
-        $toBool = static function ($value): ?bool {
-            if ($value === null || $value === '') return null;
-            if (is_bool($value)) return $value;
-
-            return filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        // Normalize booleans into the DB's expected TEXT values ('true'/'false')
+        $boolText = static function ($value, ?bool $default = null): ?string {
+            if ($value === null || $value === '') {
+                return $default === null ? null : ($default ? 'true' : 'false');
+            }
+            if (is_bool($value)) {
+                return $value ? 'true' : 'false';
+            }
+            // handles "true"/"false"/"1"/"0"/1/0
+            $b = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($b === null) {
+                return $default === null ? null : ($default ? 'true' : 'false');
+            }
+            return $b ? 'true' : 'false';
         };
 
+        // Numeric normalization helpers
+        $toNumericString = static function ($value): ?string {
+            if ($value === null || $value === '') return null;
+            // Keep it simple; let DB cast numeric strings
+            return (string) $value;
+        };
+
+        $validated = $request->validated();
+
+        // --- Controller-only computed defaults (NOT documented) ---
+        $first = (string) ($validated['directory_first_name'] ?? '');
+        $last  = (string) ($validated['directory_last_name'] ?? '');
+        $fullName = trim($first . ' ' . $last);
+
+        $extensionNumber = (string) ($validated['extension'] ?? '');
+
+        // voicemail_password logic: default to extension unless complexity enabled
+        $voicemailPassword = $validated['voicemail_password'] ?? $extensionNumber;
+        if (function_exists('get_domain_setting') && get_domain_setting('password_complexity', $domain_uuid)) {
+            // 4-digit pin
+            $voicemailPassword = str_pad((string) random_int(0, 9999), 4, '0', STR_PAD_LEFT);
+        }
+
+        // Defaults that should apply when values are omitted
+        // (These match what you documented in descriptions)
+        $defaults = [
+            // required scoping
+            'domain_uuid'  => (string) $domain->domain_uuid,
+
+            // keep internal-only fields out of docs
+            'password'     => function_exists('generate_password') ? generate_password() : bin2hex(random_bytes(12)),
+            'user_context' => $validated['user_context'] ?? (string) $domain->domain_name,
+            'accountcode'  => $validated['accountcode']  ?? (string) $domain->domain_name,
+
+            'effective_caller_id_name'   => $fullName,
+            'effective_caller_id_number' => $extensionNumber,
+
+            // default booleans (DB stores as text)
+            'enabled'                 => $boolText($validated['enabled'] ?? null, true),
+            'do_not_disturb'          => $boolText($validated['do_not_disturb'] ?? null, false),
+            'directory_visible'       => $boolText($validated['directory_visible'] ?? null, true),
+            'directory_exten_visible' => $boolText($validated['directory_exten_visible'] ?? null, true),
+            'user_record'             => $boolText($validated['user_record'] ?? null, false),
+            'call_screen_enabled'     => $boolText($validated['call_screen_enabled'] ?? null, false),
+            'suspended'               => ($validated['suspended'] ?? null), // this is boolean column in your list; keep as bool
+        ];
+
+        // Normalize fields that are TEXT booleans in DB
+        // (These are *inputs* that can arrive as bool, but DB expects 'true'/'false')
+        $normalized = [
+            'sip_bypass_media' => $boolText($validated['sip_bypass_media'] ?? null, null),
+            'force_ping'       => $boolText($validated['force_ping'] ?? null, null),
+
+            // numeric columns in v_extensions
+            'call_timeout'     => $toNumericString($validated['call_timeout'] ?? null),
+            'sip_force_expires' => $toNumericString($validated['sip_force_expires'] ?? null),
+
+            // voicemail booleans stored as text
+            'voicemail_enabled'               => $boolText($validated['voicemail_enabled'] ?? null, true),
+            'voicemail_local_after_email'     => $boolText($validated['voicemail_local_after_email'] ?? null, true),
+            'voicemail_transcription_enabled' => $boolText($validated['voicemail_transcription_enabled'] ?? null, true),
+            'voicemail_tutorial'              => $boolText($validated['voicemail_tutorial'] ?? null, true),
+            'voicemail_recording_instructions' => $boolText($validated['voicemail_recording_instructions'] ?? null, true),
+        ];
+
+        // Build final inputs for v_extensions
+        // Only include keys that actually exist in v_extensions
+        $extensionInputs = array_merge(
+            $validated,
+            $defaults,
+            $normalized,
+            [
+                // If you want these as TEXT in v_extensions, you can boolText them too
+                // but your v_extensions doesn't have these as booleans anyway.
+            ]
+        );
+
+        // Ensure voicemail_id defaulting is consistent when enabled
+        $voicemailEnabled = filter_var($validated['voicemail_enabled'] ?? true, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        if ($voicemailEnabled === null) $voicemailEnabled = true;
+
+        $voicemailId = $validated['voicemail_id'] ?? null;
+        if ($voicemailEnabled && ($voicemailId === null || $voicemailId === '')) {
+            $voicemailId = $extensionNumber;
+        }
+
         try {
-            [$extension] = DB::transaction(function () use ($validated) {
+            $extension = DB::transaction(function () use (
+                $extensionInputs,
+                $voicemailEnabled,
+                $voicemailId,
+                $voicemailPassword,
+                $domain_uuid,
+                $boolText
+            ) {
+            // 1) Create extension
+                /** @var \App\Models\Extensions $ext */
+                $ext = Extensions::create($extensionInputs)->fresh();
 
-                // 1) Create extension
-                $extension = Extensions::create($validated);
+                // 2) Create voicemail ONLY if enabled
+                if ($voicemailEnabled) {
+                    $vmInputs = [
+                        'domain_uuid'                      => $domain_uuid,
+                        'voicemail_id'                     => (string) $voicemailId,
+                        'voicemail_password'               => (string) $voicemailPassword,
+                        'voicemail_mail_to'                => $extensionInputs['voicemail_mail_to'] ?? null,
+                        'voicemail_sms_to'                 => $extensionInputs['voicemail_sms_to'] ?? null,
+                        'voicemail_enabled'                => $boolText($extensionInputs['voicemail_enabled'] ?? 'true', true),
 
-                // 2) Create voicemail (only if voicemail_id provided)
-                if (! empty($validated['voicemail_id'])) {
-                    Voicemails::create($validated);
+                        'voicemail_transcription_enabled'  => $boolText($extensionInputs['voicemail_transcription_enabled'] ?? 'true', true),
+                        'voicemail_recording_instructions' => $boolText($extensionInputs['voicemail_recording_instructions'] ?? 'true', true),
+                        'voicemail_file'                   => $extensionInputs['voicemail_file'] ?? 'attach',
+                        'voicemail_local_after_email'      => $boolText($extensionInputs['voicemail_local_after_email'] ?? 'true', true),
+                        'voicemail_tutorial'               => $boolText($extensionInputs['voicemail_tutorial'] ?? 'true', true),
+
+                        'voicemail_description'            => $extensionInputs['voicemail_description'] ?? null,
+                        // greeting_id is numeric in DB. Only include if provided.
+                        'greeting_id'                      => $extensionInputs['greeting_id'] ?? null,
+                    ];
+
+                    Voicemails::create($vmInputs);
                 }
 
-                return [$extension->fresh()];
+                return $ext;
             });
 
-            // Clear FusionPBX cache for the extension
-            if (isset($extension->extension)) {
-                FusionCache::clear("directory:" . $extension->extension . "@" . $extension->user_context);
-            }
-
-            $first = $extension->directory_first_name ?? null;
-            $last  = $extension->directory_last_name ?? null;
-
-            $nameFormatted = trim(implode(' ', array_filter([$first, $last], fn($v) => $v !== null && $v !== '')));
+            // Build API payload (you can reuse your helper formatting from index/show)
+            $nameFormatted = trim(implode(' ', array_filter([
+                $extension->directory_first_name,
+                $extension->directory_last_name,
+            ])));
             $nameFormatted = $nameFormatted !== '' ? $nameFormatted : null;
 
             $payload = new ExtensionData(
@@ -644,44 +760,45 @@ class ExtensionController extends Controller
                 domain_uuid: (string) $extension->domain_uuid,
                 extension: (string) $extension->extension,
 
-                enabled: (bool) ($toBool($extension->enabled) ?? true),
+                // enabled stored as text in DB ('true'/'false')
+                enabled: filter_var($extension->enabled, FILTER_VALIDATE_BOOLEAN) ? true : false,
 
                 effective_caller_id_name: $extension->effective_caller_id_name,
                 effective_caller_id_number: $extension->effective_caller_id_number,
 
-                outbound_caller_id_number_e164: $extension->outbound_caller_id_number ?? null,
+                outbound_caller_id_number_e164: $extension->outbound_caller_id_number,
                 outbound_caller_id_number_formatted: null,
-                emergency_caller_id_number_e164: $extension->emergency_caller_id_number ?? null,
+                emergency_caller_id_number_e164: $extension->emergency_caller_id_number,
 
-                directory_first_name: $first,
-                directory_last_name: $last,
+                directory_first_name: $extension->directory_first_name,
+                directory_last_name: $extension->directory_last_name,
                 name_formatted: $nameFormatted,
 
-                directory_visible: $toBool($extension->directory_visible),
-                directory_exten_visible: $toBool($extension->directory_exten_visible),
+                directory_visible: filter_var($extension->directory_visible, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
+                directory_exten_visible: filter_var($extension->directory_exten_visible, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
 
                 email: $extension->email ?? null,
 
-                do_not_disturb: $toBool($extension->do_not_disturb),
-                user_record: $toBool($extension->user_record),
+                do_not_disturb: filter_var($extension->do_not_disturb, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
+                user_record: filter_var($extension->user_record, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
 
                 suspended: $extension->suspended !== null ? (bool) $extension->suspended : null,
 
-                description: $extension->description ?? null,
+                description: $extension->description,
 
-                forward_all_enabled: $toBool($extension->forward_all_enabled),
-                forward_busy_enabled: $toBool($extension->forward_busy_enabled),
-                forward_no_answer_enabled: $toBool($extension->forward_no_answer_enabled),
-                forward_user_not_registered_enabled: $toBool($extension->forward_user_not_registered_enabled),
+                forward_all_enabled: filter_var($extension->forward_all_enabled, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
+                forward_busy_enabled: filter_var($extension->forward_busy_enabled, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
+                forward_no_answer_enabled: filter_var($extension->forward_no_answer_enabled, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
+                forward_user_not_registered_enabled: filter_var($extension->forward_user_not_registered_enabled, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
 
-                follow_me_enabled: $toBool($extension->follow_me_enabled),
+                follow_me_enabled: filter_var($extension->follow_me_enabled, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
             );
 
             return response()
                 ->json($payload->toArray(), 201)
                 ->header('Location', "/api/v1/domains/{$domain_uuid}/extensions/{$extension->extension_uuid}");
         } catch (\Exception $e) {
-
+    
             logger('API Extension store QueryException: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             throw new ApiException(500, 'api_error', 'Internal server error.', 'internal_error');
         } catch (\Throwable $e) {

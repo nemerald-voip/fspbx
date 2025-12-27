@@ -117,7 +117,7 @@ class ExtensionsController extends Controller
 
     public function getData()
     {
-        $perPage = 5;
+        $perPage = 50;
         $currentDomain = session('domain_uuid');
 
         $extensions = QueryBuilder::for(Extensions::class)

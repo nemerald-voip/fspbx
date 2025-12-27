@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "FS PBX",
-        "_postman_id": "b6abf92c-339a-4382-9ade-8d7a23980380",
+        "_postman_id": "fcac60df-bda6-4f80-b8af-601f703074f1",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -489,7 +489,7 @@
                         ],
                         "body": {
                             "mode": "raw",
-                            "raw": "{\"directory_first_name\":\"Front\",\"directory_last_name\":\"Desk\",\"extension\":1001,\"voicemail_mail_to\":\"frontdesk@example.com\",\"description\":\"Main reception phone\",\"user_context\":\"xpuqzwaoumglfmdwciw\",\"accountcode\":\"c\",\"domain_uuid\":\"e6228d9d-ed95-3b2d-9def-d30844a9bbce\",\"password\":\"i'}|.uY.~\",\"directory_visible\":\"true\",\"directory_exten_visible\":\"true\",\"voicemail_enabled\":\"true\",\"voicemail_transcription_enabled\":\"true\",\"voicemail_recording_instructions\":\"true\",\"voicemail_file\":\"attach\",\"voicemail_local_after_email\":\"true\",\"voicemail_tutorial\":\"true\",\"voicemail_id\":\"1001\",\"voicemail_password\":\"1001\"}"
+                            "raw": "{\"extension\":1001,\"directory_first_name\":\"Front\",\"directory_last_name\":\"Desk\",\"voicemail_mail_to\":\"frontdesk@example.com\",\"voicemail_sms_to\":\"+12135551212\",\"description\":\"Main reception phone\",\"suspended\":false,\"do_not_disturb\":false,\"enabled\":true,\"call_timeout\":\"25\",\"directory_visible\":true,\"directory_exten_visible\":true,\"user_record\":true,\"call_screen_enabled\":false,\"max_registrations\":\"1\",\"limit_max\":\"5\",\"limit_destination\":\"!USER_BUSY\",\"toll_allow\":\"domestic\",\"call_group\":\"sales\",\"hold_music\":\"local_stream:\\\/\\\/default\",\"cidr\":\"192.168.1.0\\\/24\",\"sip_force_contact\":\"NDLB-connectile-dysfunction\",\"sip_force_expires\":\"300\",\"sip_bypass_media\":\"false\",\"mwi_account\":\"1001@your-domain.com\",\"absolute_codec_string\":\"PCMU,PCMA,OPUS\",\"dial_string\":\"{sip_invite_domain=${domain_name}}${sofia_contact(${dialed_user}@${dialed_domain})}\",\"force_ping\":\"true\",\"auth_acl\":\"localnet\",\"outbound_caller_id_number\":\"+12135551212\",\"emergency_caller_id_number\":\"+12135559876\",\"outbound_caller_id_name\":\"Front Desk\",\"emergency_caller_id_name\":\"Front Desk\",\"voicemail_enabled\":true,\"voicemail_file\":\"attach\",\"voicemail_local_after_email\":true,\"voicemail_transcription_enabled\":true,\"voicemail_description\":\"Front Desk Voicemail\",\"voicemail_password\":1001,\"voicemail_tutorial\":true,\"voicemail_recording_instructions\":true}"
                         },
                         "description": "Creates a new extension in the specified domain.\n\nNotes:\n- Some fields are defaulted server-side (e.g., effective caller-id, voicemail defaults) based on your internal request logic.\n- Returns the created extension object."
                     },

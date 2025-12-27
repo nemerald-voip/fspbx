@@ -182,23 +182,6 @@ INTRO,
         // You can override this by listing the groups, subgroups and endpoints here in the order you want them.
         // See https://scribe.knuckles.wtf/blog/laravel-v4#easier-sorting and https://scribe.knuckles.wtf/laravel/reference/config#order for details
         'order' => [
-            // 'Domains' => [
-            //     'GET /api/v1/domains',
-            //     'DELETE /api/v1/domains/{domain_uuid}',
-            //     'GET /api/v1/domains/{domain_uuid}',
-            //     'POST /api/v1/domains',
-            //     'PATCH /api/v1/domains/{domain_uuid}',
-                
-            // ],
-
-            // 'Extensions' => [
-            //     'GET /api/v1/domains/{domain_uuid}/extensions',
-            //     // later you can add:
-            //     // 'GET /api/v1/domains/{domain_uuid}/extensions/{extension_uuid}',
-            //     // 'POST /api/v1/domains/{domain_uuid}/extensions',
-            //     // 'PATCH /api/v1/domains/{domain_uuid}/extensions/{extension_uuid}',
-            //     // 'DELETE /api/v1/domains/{domain_uuid}/extensions/{extension_uuid}',
-            // ],
         ],
     ],
 

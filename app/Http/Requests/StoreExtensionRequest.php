@@ -15,15 +15,15 @@ class StoreExtensionRequest extends FormRequest
     public function rules()
     {
         return [
-            'directory_first_name'     => ['required', 'string', 'max:60'],
-            'directory_last_name'      => ['nullable', 'string', 'max:60'],
-            'effective_caller_id_name' => ['present'],
-            'effective_caller_id_number' => ['present'],
             'extension' => [
                 'required',
                 'numeric',
                 new UniqueExtension($this->input('extension_uuid') ?? null),
             ],
+            'directory_first_name'     => ['required', 'string', 'max:60'],
+            'directory_last_name'      => ['nullable', 'string', 'max:60'],
+            'effective_caller_id_name' => ['present'],
+            'effective_caller_id_number' => ['present'],
             'voicemail_mail_to'               => ['nullable', 'email', 'max:255'],
             'description'              => ['nullable', 'string', 'max:255'],
             // Dynamic/account/session-based fields

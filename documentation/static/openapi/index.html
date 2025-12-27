@@ -107,7 +107,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: December 25, 2025</li>
+        <li>Last updated: December 27, 2025</li>
     </ul>
 </div>
 
@@ -1655,25 +1655,47 @@ You can check the Dev Tools console for debugging information.</code></pre>
     --header "Content-Type: application/json" \
     --header "Accept: application/json" \
     --data "{
+    \"extension\": 1001,
     \"directory_first_name\": \"Front\",
     \"directory_last_name\": \"Desk\",
-    \"extension\": 1001,
     \"voicemail_mail_to\": \"frontdesk@example.com\",
+    \"voicemail_sms_to\": \"+12135551212\",
     \"description\": \"Main reception phone\",
-    \"user_context\": \"xpuqzwaoumglfmdwciw\",
-    \"accountcode\": \"c\",
-    \"domain_uuid\": \"e6228d9d-ed95-3b2d-9def-d30844a9bbce\",
-    \"password\": \"i\'}|.uY.~\",
-    \"directory_visible\": \"true\",
-    \"directory_exten_visible\": \"true\",
-    \"voicemail_enabled\": \"true\",
-    \"voicemail_transcription_enabled\": \"true\",
-    \"voicemail_recording_instructions\": \"true\",
+    \"suspended\": false,
+    \"do_not_disturb\": false,
+    \"enabled\": true,
+    \"call_timeout\": \"25\",
+    \"directory_visible\": true,
+    \"directory_exten_visible\": true,
+    \"user_record\": true,
+    \"call_screen_enabled\": false,
+    \"max_registrations\": \"1\",
+    \"limit_max\": \"5\",
+    \"limit_destination\": \"!USER_BUSY\",
+    \"toll_allow\": \"domestic\",
+    \"call_group\": \"sales\",
+    \"hold_music\": \"local_stream:\\/\\/default\",
+    \"cidr\": \"192.168.1.0\\/24\",
+    \"sip_force_contact\": \"NDLB-connectile-dysfunction\",
+    \"sip_force_expires\": \"300\",
+    \"sip_bypass_media\": \"false\",
+    \"mwi_account\": \"1001@your-domain.com\",
+    \"absolute_codec_string\": \"PCMU,PCMA,OPUS\",
+    \"dial_string\": \"{sip_invite_domain=${domain_name}}${sofia_contact(${dialed_user}@${dialed_domain})}\",
+    \"force_ping\": \"true\",
+    \"auth_acl\": \"localnet\",
+    \"outbound_caller_id_number\": \"+12135551212\",
+    \"emergency_caller_id_number\": \"+12135559876\",
+    \"outbound_caller_id_name\": \"Front Desk\",
+    \"emergency_caller_id_name\": \"Front Desk\",
+    \"voicemail_enabled\": true,
     \"voicemail_file\": \"attach\",
-    \"voicemail_local_after_email\": \"true\",
-    \"voicemail_tutorial\": \"true\",
-    \"voicemail_id\": \"1001\",
-    \"voicemail_password\": \"1001\"
+    \"voicemail_local_after_email\": true,
+    \"voicemail_transcription_enabled\": true,
+    \"voicemail_description\": \"Front Desk Voicemail\",
+    \"voicemail_password\": 1001,
+    \"voicemail_tutorial\": true,
+    \"voicemail_recording_instructions\": true
 }"
 </code></pre></div>
 
@@ -1690,25 +1712,47 @@ const headers = {
 };
 
 let body = {
+    "extension": 1001,
     "directory_first_name": "Front",
     "directory_last_name": "Desk",
-    "extension": 1001,
     "voicemail_mail_to": "frontdesk@example.com",
+    "voicemail_sms_to": "+12135551212",
     "description": "Main reception phone",
-    "user_context": "xpuqzwaoumglfmdwciw",
-    "accountcode": "c",
-    "domain_uuid": "e6228d9d-ed95-3b2d-9def-d30844a9bbce",
-    "password": "i'}|.uY.~",
-    "directory_visible": "true",
-    "directory_exten_visible": "true",
-    "voicemail_enabled": "true",
-    "voicemail_transcription_enabled": "true",
-    "voicemail_recording_instructions": "true",
+    "suspended": false,
+    "do_not_disturb": false,
+    "enabled": true,
+    "call_timeout": "25",
+    "directory_visible": true,
+    "directory_exten_visible": true,
+    "user_record": true,
+    "call_screen_enabled": false,
+    "max_registrations": "1",
+    "limit_max": "5",
+    "limit_destination": "!USER_BUSY",
+    "toll_allow": "domestic",
+    "call_group": "sales",
+    "hold_music": "local_stream:\/\/default",
+    "cidr": "192.168.1.0\/24",
+    "sip_force_contact": "NDLB-connectile-dysfunction",
+    "sip_force_expires": "300",
+    "sip_bypass_media": "false",
+    "mwi_account": "1001@your-domain.com",
+    "absolute_codec_string": "PCMU,PCMA,OPUS",
+    "dial_string": "{sip_invite_domain=${domain_name}}${sofia_contact(${dialed_user}@${dialed_domain})}",
+    "force_ping": "true",
+    "auth_acl": "localnet",
+    "outbound_caller_id_number": "+12135551212",
+    "emergency_caller_id_number": "+12135559876",
+    "outbound_caller_id_name": "Front Desk",
+    "emergency_caller_id_name": "Front Desk",
+    "voicemail_enabled": true,
     "voicemail_file": "attach",
-    "voicemail_local_after_email": "true",
-    "voicemail_tutorial": "true",
-    "voicemail_id": "1001",
-    "voicemail_password": "1001"
+    "voicemail_local_after_email": true,
+    "voicemail_transcription_enabled": true,
+    "voicemail_description": "Front Desk Voicemail",
+    "voicemail_password": 1001,
+    "voicemail_tutorial": true,
+    "voicemail_recording_instructions": true
 };
 
 fetch(url, {
@@ -1872,6 +1916,17 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                             <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
         <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>extension</code></b>&nbsp;&nbsp;
+<small>number</small>&nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="extension"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="1001"
+               data-component="body">
+    <br>
+<p>Numeric extension number. Example: <code>1001</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>directory_first_name</code></b>&nbsp;&nbsp;
 <small>string</small>&nbsp;
  &nbsp;
@@ -1880,7 +1935,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="Front"
                data-component="body">
     <br>
-<p>Directory first name. Must not be greater than 60 characters. Example: <code>Front</code></p>
+<p>First name for directory display. Must not be greater than 60 characters. Example: <code>Front</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>directory_last_name</code></b>&nbsp;&nbsp;
@@ -1891,40 +1946,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="Desk"
                data-component="body">
     <br>
-<p>Directory last name. Must not be greater than 60 characters. Example: <code>Desk</code></p>
-        </div>
-                <div style=" padding-left: 28px;  clear: unset;">
-            <b style="line-height: 2;"><code>effective_caller_id_name</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
-<i>optional</i> &nbsp;
-                <input type="text" style="display: none"
-                              name="effective_caller_id_name"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
-               value=""
-               data-component="body">
-    <br>
-
-        </div>
-                <div style=" padding-left: 28px;  clear: unset;">
-            <b style="line-height: 2;"><code>effective_caller_id_number</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
-<i>optional</i> &nbsp;
-                <input type="text" style="display: none"
-                              name="effective_caller_id_number"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
-               value=""
-               data-component="body">
-    <br>
-
-        </div>
-                <div style=" padding-left: 28px;  clear: unset;">
-            <b style="line-height: 2;"><code>extension</code></b>&nbsp;&nbsp;
-<small>number</small>&nbsp;
- &nbsp;
-                <input type="number" style="display: none"
-               step="any"               name="extension"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
-               value="1001"
-               data-component="body">
-    <br>
-<p>Extension number. Example: <code>1001</code></p>
+<p>Last name for directory display. Must not be greater than 60 characters. Example: <code>Desk</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>voicemail_mail_to</code></b>&nbsp;&nbsp;
@@ -1935,7 +1957,18 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="frontdesk@example.com"
                data-component="body">
     <br>
-<p>Optional voicemail-to-email address. Must be a valid email address. Must not be greater than 255 characters. Example: <code>frontdesk@example.com</code></p>
+<p>Email address for voicemail-to-email notifications. Must be a valid email address. Must not be greater than 255 characters. Example: <code>frontdesk@example.com</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_sms_to</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_sms_to"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="+12135551212"
+               data-component="body">
+    <br>
+<p>Optional SMS destination for voicemail alerts. . Example: <code>+12135551212</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>description</code></b>&nbsp;&nbsp;
@@ -1946,175 +1979,534 @@ You can check the Dev Tools console for debugging information.</code></pre>
                value="Main reception phone"
                data-component="body">
     <br>
-<p>Optional label/description for the extension. Must not be greater than 255 characters. Example: <code>Main reception phone</code></p>
+<p>Optional description/label. Example: <code>Main reception phone</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
-            <b style="line-height: 2;"><code>user_context</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="user_context"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
-               value="xpuqzwaoumglfmdwciw"
-               data-component="body">
+            <b style="line-height: 2;"><code>suspended</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="suspended"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="suspended"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
     <br>
-<p>Must not be greater than 255 characters. Example: <code>xpuqzwaoumglfmdwciw</code></p>
+<p>Whether the extension is suspended. Defaults to false if omitted. Example: <code>false</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
-            <b style="line-height: 2;"><code>accountcode</code></b>&nbsp;&nbsp;
+            <b style="line-height: 2;"><code>do_not_disturb</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="do_not_disturb"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="do_not_disturb"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Enable Do Not Disturb for this extension. Defaults to false if omitted. Example: <code>false</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="enabled"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="enabled"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether the extension is enabled. Defaults to true if omitted. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>call_timeout</code></b>&nbsp;&nbsp;
 <small>string</small>&nbsp;
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
-                              name="accountcode"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
-               value="c"
+                              name="call_timeout"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="25"
                data-component="body">
     <br>
-<p>Must not be greater than 255 characters. Example: <code>c</code></p>
-        </div>
-                <div style=" padding-left: 28px;  clear: unset;">
-            <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="domain_uuid"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
-               value="e6228d9d-ed95-3b2d-9def-d30844a9bbce"
-               data-component="body">
-    <br>
-<p>Must be a valid UUID. Example: <code>e6228d9d-ed95-3b2d-9def-d30844a9bbce</code></p>
-        </div>
-                <div style=" padding-left: 28px;  clear: unset;">
-            <b style="line-height: 2;"><code>password</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="password"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
-               value="i'}|.uY.~"
-               data-component="body">
-    <br>
-<p>Must be at least 6 characters. Must not be greater than 255 characters. Example: <code>i'}|.uY.~</code></p>
+<p>Ring timeout in seconds. Defaults to 25. Example: <code>25</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>directory_visible</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="directory_visible"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
-               value="true"
-               data-component="body">
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="directory_visible"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="directory_visible"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
     <br>
-<p>Whether the user appears in the directory. Accepts true/false/1/0. Example: <code>true</code></p>
-Must be one of:
-<ul style="list-style-type: square;"><li><code>true</code></li> <li><code>false</code></li> <li><code>1</code></li> <li><code>0</code></li></ul>
+<p>Whether this user is visible in the directory (dial-by-name). Defaults to true if omitted. Example: <code>true</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>directory_exten_visible</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="directory_exten_visible"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="directory_exten_visible"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether the extension number is visible in the directory (dial-by-name). Defaults to true if omitted. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>user_record</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="user_record"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="user_record"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether call recording is enabled. Defaults to null if omitted. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>call_screen_enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="call_screen_enabled"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="call_screen_enabled"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether call screening is enabled. Defaults to false if omitted. Example: <code>false</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>max_registrations</code></b>&nbsp;&nbsp;
 <small>string</small>&nbsp;
- &nbsp;
+<i>optional</i> &nbsp;
                 <input type="text" style="display: none"
-                              name="directory_exten_visible"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                              name="max_registrations"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="1"
+               data-component="body">
+    <br>
+<p>Maximum allowed SIP registrations for this extension. Defaults to null if omitted. Example: <code>1</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>limit_max</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="limit_max"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="5"
+               data-component="body">
+    <br>
+<p>Max number of allowed outgoing calls. Defaults to 5 if omitted. Example: <code>5</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>limit_destination</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="limit_destination"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="!USER_BUSY"
+               data-component="body">
+    <br>
+<p>Limit destination. Defaults to !USER_BUSY if omitted. Example: <code>!USER_BUSY</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>toll_allow</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="toll_allow"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="domestic"
+               data-component="body">
+    <br>
+<p>Toll allow string (e.g., domestic,international,local). Defaults to null if omitted. Example: <code>domestic</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>call_group</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="call_group"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="sales"
+               data-component="body">
+    <br>
+<p>Call group string. A user in a call group can perform a call pickup (or an intercept) of a ringing phone belonging to another user who is also in the call group. Defaults to null if omitted. Example: <code>sales</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>hold_music</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="hold_music"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="local_stream://default"
+               data-component="body">
+    <br>
+<p>Music on hold source/category. Defaults to null if omitted. Example: <code>local_stream://default</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>cidr</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="cidr"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="192.168.1.0/24"
+               data-component="body">
+    <br>
+<p>CIDR/network restriction (if used by your security/dialplan rules). Defaults to null if omitted. Example: <code>192.168.1.0/24</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>sip_force_contact</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="sip_force_contact"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="NDLB-connectile-dysfunction"
+               data-component="body">
+    <br>
+<p>SIP force-contact setting. Example: <code>NDLB-connectile-dysfunction</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>sip_force_expires</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="sip_force_expires"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="300"
+               data-component="body">
+    <br>
+<p>SIP force-expires setting. Example: <code>300</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>sip_bypass_media</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="sip_bypass_media"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="false"
+               data-component="body">
+    <br>
+<p>SIP bypass-media setting. Defaults to null if omitted. Example: <code>false</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>mwi_account</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="mwi_account"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="1001@your-domain.com"
+               data-component="body">
+    <br>
+<p>MWI account string. Example: <code>1001@your-domain.com</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>absolute_codec_string</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="absolute_codec_string"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="PCMU,PCMA,OPUS"
+               data-component="body">
+    <br>
+<p>Absolute codec string. Example: <code>PCMU,PCMA,OPUS</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>dial_string</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="dial_string"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="{sip_invite_domain=${domain_name}}${sofia_contact(${dialed_user}@${dialed_domain})}"
+               data-component="body">
+    <br>
+<p>Custom dial string. Example: <code>{sip_invite_domain=${domain_name}}${sofia_contact(${dialed_user}@${dialed_domain})}</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>force_ping</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="force_ping"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
                value="true"
                data-component="body">
     <br>
-<p>Whether the extension number is visible in the directory. Accepts true/false/1/0. Example: <code>true</code></p>
-Must be one of:
-<ul style="list-style-type: square;"><li><code>true</code></li> <li><code>false</code></li> <li><code>1</code></li> <li><code>0</code></li></ul>
+<p>Force ping setting. Defaults to false if omitted. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>auth_acl</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="auth_acl"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="localnet"
+               data-component="body">
+    <br>
+<p>Auth ACL name (if used for registration/auth restrictions). Defaults to null if omitted. Example: <code>localnet</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>outbound_caller_id_number</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="outbound_caller_id_number"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="+12135551212"
+               data-component="body">
+    <br>
+<p>Outbound caller ID number (E.164 recommended). Example: <code>+12135551212</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>emergency_caller_id_number</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="emergency_caller_id_number"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="+12135559876"
+               data-component="body">
+    <br>
+<p>Emergency caller ID number (E.164 recommended). Example: <code>+12135559876</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>outbound_caller_id_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="outbound_caller_id_name"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="Front Desk"
+               data-component="body">
+    <br>
+<p>Outbound caller ID name. Example: <code>Front Desk</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>emergency_caller_id_name</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="emergency_caller_id_name"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="Front Desk"
+               data-component="body">
+    <br>
+<p>Emergency caller ID name. Example: <code>Front Desk</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>voicemail_enabled</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
+<small>boolean</small>&nbsp;
  &nbsp;
-                <input type="text" style="display: none"
-                              name="voicemail_enabled"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
-               value="true"
-               data-component="body">
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="voicemail_enabled"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="voicemail_enabled"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
     <br>
-<p>Whether voicemail is enabled. Accepts true/false/1/0. Example: <code>true</code></p>
-Must be one of:
-<ul style="list-style-type: square;"><li><code>true</code></li> <li><code>false</code></li> <li><code>1</code></li> <li><code>0</code></li></ul>
+<p>Whether voicemail should be created/enabled. If true, a voicemail box will be created. If false, no voicemail box is created. Example: <code>true</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
-            <b style="line-height: 2;"><code>voicemail_transcription_enabled</code></b>&nbsp;&nbsp;
+            <b style="line-height: 2;"><code>voicemail_id</code></b>&nbsp;&nbsp;
 <small>string</small>&nbsp;
- &nbsp;
+<i>optional</i> &nbsp;
                 <input type="text" style="display: none"
-                              name="voicemail_transcription_enabled"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
-               value="true"
+                              name="voicemail_id"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value=""
                data-component="body">
     <br>
-<p>Whether voicemail transcription is enabled. Accepts true/false/1/0. Example: <code>true</code></p>
-Must be one of:
-<ul style="list-style-type: square;"><li><code>true</code></li> <li><code>false</code></li> <li><code>1</code></li> <li><code>0</code></li></ul>
-        </div>
-                <div style=" padding-left: 28px;  clear: unset;">
-            <b style="line-height: 2;"><code>voicemail_recording_instructions</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="voicemail_recording_instructions"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
-               value="true"
-               data-component="body">
-    <br>
-<p>Whether voicemail recording instructions are enabled. Accepts true/false/1/0. Example: <code>true</code></p>
-Must be one of:
-<ul style="list-style-type: square;"><li><code>true</code></li> <li><code>false</code></li> <li><code>1</code></li> <li><code>0</code></li></ul>
+
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>voicemail_file</code></b>&nbsp;&nbsp;
 <small>string</small>&nbsp;
- &nbsp;
+<i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="voicemail_file"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
                value="attach"
                data-component="body">
     <br>
-<p>Voicemail delivery mode/file type (e.g. attach). Must not be greater than 16 characters. Example: <code>attach</code></p>
+<p>Voicemail delivery mode (e.g., attach). Defaults to &quot;attach&quot; if omitted. Example: <code>attach</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>voicemail_local_after_email</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="voicemail_local_after_email"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
-               value="true"
-               data-component="body">
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="voicemail_local_after_email"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="voicemail_local_after_email"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
     <br>
-<p>Whether to keep voicemail local after emailing. Accepts true/false/1/0. Example: <code>true</code></p>
-Must be one of:
-<ul style="list-style-type: square;"><li><code>true</code></li> <li><code>false</code></li> <li><code>1</code></li> <li><code>0</code></li></ul>
+<p>Whether to keep voicemail local after emailing it. Defaults to true if omitted. Example: <code>true</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
-            <b style="line-height: 2;"><code>voicemail_tutorial</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="voicemail_tutorial"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
-               value="true"
-               data-component="body">
+            <b style="line-height: 2;"><code>voicemail_transcription_enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="voicemail_transcription_enabled"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="voicemail_transcription_enabled"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
     <br>
-<p>Whether voicemail tutorial is enabled. Accepts true/false/1/0. Example: <code>true</code></p>
-Must be one of:
-<ul style="list-style-type: square;"><li><code>true</code></li> <li><code>false</code></li> <li><code>1</code></li> <li><code>0</code></li></ul>
+<p>Whether voicemail transcription is enabled. Defaults to true if omitted. Example: <code>true</code></p>
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
-            <b style="line-height: 2;"><code>voicemail_id</code></b>&nbsp;&nbsp;
+            <b style="line-height: 2;"><code>voicemail_description</code></b>&nbsp;&nbsp;
 <small>string</small>&nbsp;
- &nbsp;
+<i>optional</i> &nbsp;
                 <input type="text" style="display: none"
-                              name="voicemail_id"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
-               value="1001"
+                              name="voicemail_description"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value="Front Desk Voicemail"
                data-component="body">
     <br>
-<p>Voicemail box ID (often same as extension). Must not be greater than 60 characters. Example: <code>1001</code></p>
+<p>Optional voicemail description/label. Example: <code>Front Desk Voicemail</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_destinations</code></b>&nbsp;&nbsp;
+<small>object</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_destinations"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+               value=""
+               data-component="body">
+    <br>
+
         </div>
                 <div style=" padding-left: 28px;  clear: unset;">
             <b style="line-height: 2;"><code>voicemail_password</code></b>&nbsp;&nbsp;
-<small>string</small>&nbsp;
- &nbsp;
-                <input type="text" style="display: none"
-                              name="voicemail_password"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+<small>number</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="voicemail_password"                data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
                value="1001"
                data-component="body">
     <br>
-<p>Voicemail PIN/password. Must not be greater than 20 characters. Example: <code>1001</code></p>
+<p>Voicemail PIN/password. If omitted, defaults to the extension number unless password complexity is enabled (then a random PIN is generated). Example: <code>1001</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_tutorial</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="voicemail_tutorial"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="voicemail_tutorial"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether voicemail tutorial is enabled. Defaults to true if omitted. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_recording_instructions</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="voicemail_recording_instructions"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--extensions" style="display: none">
+            <input type="radio" name="voicemail_recording_instructions"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--extensions"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether voicemail recording instructions are enabled. Defaults to true if omitted. Example: <code>true</code></p>
         </div>
         </form>
 
