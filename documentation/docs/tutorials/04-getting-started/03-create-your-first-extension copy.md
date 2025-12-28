@@ -2,7 +2,7 @@
 id: create-your-first-extension
 title: Create Your First Extension
 slug: /getting-started/create-your-first-extension/
-sidebar_position: 2
+sidebar_position: 3
 ---
 
 # Create Your First Extension
@@ -18,6 +18,8 @@ This guide walks you through setting up your **first working extension** so you 
 Log in to your FS PBX web dashboard using your admin account.
 
 If you've just installed FS PBX, use the credentials that were generated during installation.
+
+Once you’re logged in, **select an existing Domain** (tenant) from the Domain selector, or **create a new Domain** where the extension will be created.
 
 * * * * *
 
