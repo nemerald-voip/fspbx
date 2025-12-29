@@ -573,7 +573,7 @@ const submittingKeyCreate = ref(false);
 
 const handleCopyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
-        emits('success', ['Copied to clipboard.']);
+        emits('success', 'success', ['Copied to clipboard.']);
     }).catch((error) => {
         // Handle the error case
         emits('error', { response: { data: { errors: { request: ['Failed to copy to clipboard.'] } } } });
@@ -808,7 +808,7 @@ const handleGreetingSaved = ({ greeting_id, greeting_name, description }) => {
             // console.log(response.data);
             if (response.data.success) {
                 // Notify the parent component or show a local success message
-                emits('success', response.data.messages); // Or handle locally
+                emits('success', 'success', response.data.messages); //handle locally
             }
         }).catch((error) => {
             emits('error', error);
@@ -918,7 +918,7 @@ const confirmDeleteAction = () => {
                 form.ivr_menu_greet_long = null; // Or set it to another default if needed
 
                 // Notify the parent component or show a local success message
-                emits('success', response.data.messages);
+                emits('success', 'success', response.data.messages);
             }
         })
         .catch((error) => {
@@ -975,7 +975,7 @@ const handleGreetingUpdate = (updatedGreeting) => {
         .then((response) => {
             if (response.data.success) {
                 // Notify the parent component or show a local success message
-                emits('success', response.data.messages); // Or handle locally
+                emits('success', 'success', response.data.messages); // Or handle locally
             }
         })
         .catch((error) => {
