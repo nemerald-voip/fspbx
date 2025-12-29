@@ -380,6 +380,12 @@ const bulkActions = computed(() => {
 
 const advancedActions = computed(() => [
     {
+        category: "Advanced",
+        actions: [
+            { id: 'duplicate', label: 'Duplicate', icon: 'DocumentDuplicateIcon' },
+        ],
+    },
+    {
         category: "Users",
         actions: [
             { id: 'make_user', label: 'Make User', icon: 'UserPlusIcon' },
@@ -528,6 +534,26 @@ const handleBulkActionRequest = (action) => {
 }
 
 const handleAdvancedActionRequest = (action, extension_uuid) => {
+
+    if (action === 'duplicate') {
+        const url = props.routes.duplicate || '/extensions/duplicate';
+        loading.value = true;
+
+        axios.post(url, { uuid: extension_uuid })
+            .then((response) => {
+                showNotification('success', response.data.messages);
+                handleSearchButtonClick();
+            })
+            .catch((error) => {
+                handleErrorResponse(error);
+            })
+            .finally(() => {
+                loading.value = false;
+            });
+
+        return;
+    }
+    
     let role = null;
     let url = null;
 
