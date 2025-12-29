@@ -34,7 +34,7 @@
                     <DocumentArrowUpIcon class="h-5 w-5" aria-hidden="true" />
                     Import CSV
                 </button>
-                <button type="button" @click.prevent="exportExtensionsCsv()"
+                <button type="button" v-if="page.props.auth.can.extension_export" @click.prevent="exportExtensionsCsv()"
                     class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     <DocumentArrowDownIcon class="h-5 w-5" aria-hidden="true" />
                     Export CSV
@@ -283,7 +283,6 @@
 import { computed, onMounted, ref } from "vue";
 import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
-import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
@@ -293,7 +292,6 @@ import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
-import BulkActionButton from "./components/general/BulkActionButton.vue";
 import AdvancedActionButton from "./components/general/AdvancedActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import CreateExtensionForm from "./components/forms/CreateExtensionForm.vue";
