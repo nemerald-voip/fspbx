@@ -107,6 +107,7 @@
 
                                 <ComboBox :options="localOptions.greetings" :search="false" :placeholder="'Select prompt'"
                                     :selectedItem="form.ivr_menu_greet_long"
+                                    autocomplete="off"
                                     @update:model-value="handleUpdateGreetingField" />
 
                                 <div v-if="errors?.ivr_menu_greet_long" class="mt-2 text-xs text-red-600">
@@ -190,6 +191,7 @@
                                 <ComboBox :options="localOptions.promt_repeat_options" :search="false"
                                     :placeholder="'Select a repeat option'" :selectedItem="form.repeat_prompt"
                                     :error="errors?.repeat_prompt && errors.repeat_prompt.length > 0"
+                                    autocomplete="off"
                                     @update:model-value="handleUpdateRepeatPropmtField" />
 
                                 <div v-if="errors?.repeat_prompt" class="mt-2 text-xs text-red-600">
@@ -205,6 +207,7 @@
                                 <div class="">
                                     <ComboBox :options="options.routing_types" :selectedItem="form.exit_action"
                                         :search="true" placeholder="Choose Action"
+                                        autocomplete="off"
                                         @update:model-value="(value) => handleUpdateActionField(value)"
                                         :error="errors?.exit_action && errors.exit_action.length > 0" />
                                 </div>
@@ -218,6 +221,7 @@
                                 <div class="relative">
                                     <ComboBox :options="targets" :selectedItem="form.exit_target_uuid" :search="true"
                                         :key="targets" placeholder="Choose Target"
+                                        autocomplete="off"
                                         @update:model-value="(value) => handleUpdateTargetField(value)"
                                         :disabled="isTargetDisabled"
                                         :error="errors?.exit_target_uuid && errors.exit_target_uuid.length > 0" />
