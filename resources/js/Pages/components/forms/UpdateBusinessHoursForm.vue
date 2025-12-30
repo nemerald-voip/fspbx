@@ -59,8 +59,6 @@
 
                             <HiddenElement name="uuid" :meta="true" />
 
-                            <StaticElement name="business_hours_header" tag="h4" content="Business Hours" />
-
                             <StaticElement name="uuid_clean"
                                 :conditions="[() => options.permissions.is_superadmin]">
 
@@ -128,45 +126,25 @@
                                 @change="handleCustomHoursUpdate" />
                             <ListElement name="time_slots" :sort="true" label="Time Slots" :initial="1"
                                 :conditions="[['custom_hours', true]]"
-                                :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                :add-classes="{ ListElement: { listItem: 'bg-white p-3 sm:p-4 mb-4 rounded-lg shadow-md' } }">
                                 <template #default="{ index }">
                                     <ObjectElement :name="index">
                                         <CheckboxgroupElement name="weekdays" view="tabs" label="Weekdays" :items="[
-                                            {
-                                                value: '1',
-                                                label: 'S',
-                                            },
-                                            {
-                                                value: '2',
-                                                label: 'M',
-                                            },
-                                            {
-                                                value: '3',
-                                                label: 'T',
-                                            },
-                                            {
-                                                value: '4',
-                                                label: 'W',
-                                            },
-                                            {
-                                                value: '5',
-                                                label: 'T',
-                                            },
-                                            {
-                                                value: '6',
-                                                label: 'F',
-                                            },
-                                            {
-                                                value: '7',
-                                                label: 'S',
-                                            },
-
-                                        ]" size="sm" :columns="{ sm: { container: 6, }, }" />
-
+                                            { value: '1', label: 'S' },
+                                            { value: '2', label: 'M' },
+                                            { value: '3', label: 'T' },
+                                            { value: '4', label: 'W' },
+                                            { value: '5', label: 'T' },
+                                            { value: '6', label: 'F' },
+                                            { value: '7', label: 'S' },
+                                        ]" size="sm" :columns="{
+                            default: { container: 12 },
+                            sm: { container: 6 },
+                        }" />
                                         <DateElement name="time_from" label="From" :time="true" :date="false"
                                             :hour24="false" :columns="{
                                                 default: {
-                                                    container: 6,
+                                                    container: 12,
                                                 },
                                                 sm: {
                                                     container: 3,
@@ -174,7 +152,7 @@
                                             }" size="sm" />
                                         <DateElement name="time_to" :time="true" :date="false" :hour24="false" :columns="{
                                             default: {
-                                                container: 6,
+                                                container: 12,
                                             },
                                             sm: {
                                                 container: 3,
@@ -184,7 +162,7 @@
                                         <SelectElement name="action" :items="options.routing_types" label-prop="name"
                                             :search="true" :native="false" label="Choose Action" input-type="search"
                                             autocomplete="off" placeholder="Choose Action" :floating="false" :strict="false"
-                                            :columns="{ sm: { container: 6, }, }" @change="(newValue, oldValue, el$) => {
+                                            :columns="{ default: { container: 12 }, sm: { container: 6 } }" @change="(newValue, oldValue, el$) => {
                                                 let target = el$.form$.el$('time_slots').children$[index].children$['target']
                                                 // console.log(el$.form$.el$('time_slots').children$[index].children$['target']);
 
@@ -225,7 +203,7 @@
                                         }" :search="true" label-prop="name" :native="false" label="Target"
                                             input-type="search" allow-absent :object="true" autocomplete="off"
                                             placeholder="Choose Target" :floating="false" :strict="false"
-                                            :columns="{ sm: { container: 6, }, }" :conditions="[
+                                            :columns="{ default: { container: 12 }, sm: { container: 6 } }" :conditions="[
                                                 ['time_slots.*.action', 'not_empty'],
                                                 ['time_slots.*.action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
                                             ]" size="sm" />
@@ -249,7 +227,7 @@
                             <SelectElement name="after_hours_action" :items="options.routing_types" label-prop="name"
                                 :search="true" :native="false" label="Choose Action" input-type="search" autocomplete="off"
                                 placeholder="Choose Action" :floating="false" :strict="false"
-                                :columns="{ sm: { container: 6, }, }" @change="(newValue, oldValue, el$) => {
+                                :columns="{ default: { container: 12 }, sm: { container: 6 } }" @change="(newValue, oldValue, el$) => {
                                     let after_hours_target = el$.form$.el$('after_hours_target')
 
                                     // only clear when this isn’t the very first time (i.e. oldValue was set)
@@ -290,7 +268,7 @@
                                 }
                             }" :search="true" label-prop="name" :native="false" label="Target" input-type="search"
                                 allow-absent :object="true" autocomplete="off" placeholder="Choose Target" :floating="false"
-                                :strict="false" :columns="{ sm: { container: 6, }, }" :conditions="[
+                                :strict="false" :columns="{ default: { container: 12 }, sm: { container: 6 } }" :conditions="[
                                     ['after_hours_action', 'not_empty'],
                                     ['after_hours_action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
                                 ]" />
