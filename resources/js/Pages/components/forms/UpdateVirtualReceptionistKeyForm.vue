@@ -10,7 +10,8 @@
                 <LabelInputRequired :target="'key'" :label="'Key'" />
                 <div class="mt-2">
                     <InputField v-model="form.key" type="text" name="key"
-                        placeholder="Enter one or more digits (e.g., 1, 12, 123)" />
+                        placeholder="Enter one or more digits (e.g., 1, 12, 123)"
+                        autocomplete="off" />
                 </div>
                 <div v-if="errors?.key" class="mt-2 text-xs text-red-600">
                     {{ errors.key[0] }}
@@ -22,6 +23,7 @@
                 <div class="mt-2">
                     <ComboBox :options="options.routing_types" :selectedItem="form.action" :search="true"
                         placeholder="Choose Action" @update:model-value="(value) => handleUpdateActionField(value)"
+                        autocomplete="off"
                         :error="errors?.action && errors.action.length > 0" />
                 </div>
                 <div v-if="errors?.action" class="mt-2 text-xs text-red-600">
@@ -34,6 +36,7 @@
                 <div class="mt-2 relative">
                     <ComboBox :options="targets" :selectedItem="form.target" :search="true" :key="targets"
                         placeholder="Choose Target" @update:model-value="(value) => handleUpdateTargetField(value)"
+                        autocomplete="off"
                         :disabled="isTargetDisabled" :error="errors?.target && errors.target.length > 0"/>
 
                     <!-- Spinner Overlay -->
