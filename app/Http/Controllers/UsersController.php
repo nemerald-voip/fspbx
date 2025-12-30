@@ -325,7 +325,7 @@ class UsersController extends Controller
             // 1) Core user
             $user = User::create([
                 'username'     => $username,
-                'user_email'   => $data['user_email'],
+                'user_email'   => Str::lower($data['user_email']),
                 'user_enabled' => $data['user_enabled'] ?? 'true',
                 'domain_uuid'  => $data['domain_uuid'] ?? session('domain_uuid'),
             ]);
@@ -411,6 +411,9 @@ class UsersController extends Controller
     {
 
         $validated   = $request->validated();
+        if (isset($validated['user_email'])) {
+            $validated['user_email'] = Str::lower($validated['user_email']);
+        }
         $domain_uuid = session('domain_uuid');
         // logger($validated);
 
