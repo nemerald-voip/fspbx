@@ -416,4 +416,62 @@ class Extensions extends Model
     {
         return $this->forward_user_not_registered_option_details['extension'] ?? null;
     }
+
+    public function generateUniqueSequenceNumber(): ?string
+    {
+        $domainUuid = session('domain_uuid');
+
+        // Highest numeric extension in Extensions
+        $highest = Extensions::where('domain_uuid', $domainUuid)
+            ->pluck('extension')
+            ->filter(fn ($e) => ctype_digit((string) $e))
+            ->map(fn ($e) => (int) $e)
+            ->max();
+
+        $start = ($highest ?? 0) + 1;
+
+        // Build a set of all used numeric strings (no * codes, digits only)
+        $usedExtensions = collect()
+
+            // Dialplans (exclude star codes)
+            ->merge(
+                Dialplans::where('domain_uuid', $domainUuid)
+                    ->where('dialplan_number', 'not like', '*%')
+                    ->pluck('dialplan_number')
+            )
+
+            // Voicemail IDs
+            ->merge(
+                Voicemails::where('domain_uuid', $domainUuid)
+                    ->pluck('voicemail_id')
+            )
+
+            // Extensions
+            ->merge(
+                Extensions::where('domain_uuid', $domainUuid)
+                    ->pluck('extension')
+            )
+
+            // Keep only numeric values and normalize to string
+            ->filter(fn ($v) => ctype_digit((string) $v))
+            ->map(fn ($v) => (string) (int) $v) // normalize "0010" -> "10"
+            ->unique()
+            ->flip(); // turn into a fast lookup set: ['1001' => 0, ...]
+
+        // Search forward starting at highest+1 until we find a gap
+        $ext = $start;
+        $maxAttempts = 100; // safety guard
+        $attempts = 0;
+
+        while ($attempts < $maxAttempts) {
+            if (!isset($usedExtensions[(string) $ext])) {
+                return (string) $ext;
+            }
+            $ext++;
+            $attempts++;
+        }
+
+        return null;
+    }
+
 }

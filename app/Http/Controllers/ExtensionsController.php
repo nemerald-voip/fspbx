@@ -110,6 +110,7 @@ class ExtensionsController extends Controller
                     'create_user' => route('extensions.make.user'),
                     'create_contact_center_user' => (Module::has('ContactCenter') && Module::collections()->has('ContactCenter') && Route::has('contact-center.user.store')) ? route('contact-center.user.store') : null,
                     'export' => route('extensions.export'),
+                    'duplicate' => route('extensions.duplicate'),
                 ]
             ]
         );
@@ -181,6 +182,132 @@ class ExtensionsController extends Controller
         // logger( $extensionsDto);
 
         return $extensionsDto;
+    }
+
+    /**
+     * Duplicate the specified Extension.
+     *
+     * Creates a new extension with a new UUID and a newly generated extension number.
+     * Copies key configuration (and optionally follow-me / voicemail / advanced settings when present).
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function duplicate(Request $request)
+    {
+        // 1) Validate input
+        $request->validate([
+            'uuid' => 'required|uuid|exists:v_extensions,extension_uuid',
+        ]);
+
+        if (!userCheckPermission('extension_add') && !userCheckPermission('extension_create')) {
+            return response()->json([
+                'messages' => ['error' => ['Access denied.']]
+            ], 403);
+        }
+
+        $domain_uuid = session('domain_uuid');
+
+        try {
+            DB::beginTransaction();
+
+            // 3) Fetch original (scoped to domain)
+        $original = Extensions::where('extension_uuid', $request->uuid)
+            ->where('domain_uuid', $domain_uuid)
+            ->with([
+                'followMe.followMeDestinations',
+                'voicemail' => function ($q) use ($domain_uuid) {
+                    $q->where('domain_uuid', $domain_uuid);
+                },
+                'advSettings',
+            ])
+            ->firstOrFail();
+
+            // 4) Generate a new extension number
+            $newExtensionNumber = $this->model->generateUniqueSequenceNumber();        
+
+            // 5) Replicate extension row
+            $newExtension = $original->replicate();
+            $newExtension->extension_uuid = (string) Str::uuid();
+            $newExtension->extension = $newExtensionNumber;
+
+            //do not copy the sip password; generate a new one
+            $newPassword = generate_password();
+            $newExtension->password = $newPassword;
+
+            if (!empty($newExtension->effective_caller_id_name)) {
+                $newExtension->effective_caller_id_name = $newExtension->effective_caller_id_name . ' (Copy)';
+            }
+
+            // If the effective CID number was the old extension, update to the new one
+            if (!empty($original->extension) && $newExtension->effective_caller_id_number === $original->extension) {
+                $newExtension->effective_caller_id_number = $newExtensionNumber;
+            }
+
+            $newExtension->save();
+
+        // 6) Duplicate voicemail (if present)
+            $originalVoicemail = Voicemails::where('domain_uuid', $domain_uuid)
+                ->where('voicemail_id', $original->extension)
+                ->first();
+
+            if ($originalVoicemail) {
+                $newVoicemail = $originalVoicemail->replicate();
+                $newVoicemail->voicemail_uuid = (string) Str::uuid();
+                $newVoicemail->voicemail_id = $newExtensionNumber;
+                $newVoicemail->domain_uuid = $domain_uuid;
+                $newVoicemail->save();
+            }
+
+            // 7) Duplicate Follow Me config (if present)
+            if ($original->followMe) {
+                $newFollowMeUuid = (string) Str::uuid();
+                $newFollowMe = $original->followMe->replicate();
+                $newFollowMe->follow_me_uuid = $newFollowMeUuid;
+                $newFollowMe->domain_uuid = $domain_uuid;
+                $newFollowMe->save();
+                $newExtension->follow_me_uuid = $newFollowMeUuid;
+                $newExtension->follow_me_enabled = $original->follow_me_enabled; // keep same state
+                $newExtension->save();
+
+                // duplicate destinations
+                if ($original->followMe->followMeDestinations && $original->followMe->followMeDestinations->count()) {
+                    foreach ($original->followMe->followMeDestinations as $dest) {
+                        $newDest = $dest->replicate();
+                        $newDest->follow_me_destination_uuid = (string) Str::uuid();
+                        $newDest->follow_me_uuid = $newFollowMeUuid;
+                        $newDest->domain_uuid = $domain_uuid;
+                        $newDest->save();
+                    }
+                }
+            }
+
+            // 8) Duplicate advanced settings (if present)
+            if ($original->advSettings) {
+                $newSetting = $original->advSettings->replicate(['setting_uuid', 'domain_uuid']);
+                $newSetting->setting_uuid = (string) Str::uuid();
+                $newSetting->extension_uuid = $newExtension->extension_uuid;
+                $newSetting->save();
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'messages' => ['success' => ['Extension duplicated successfully', 'New Extension: ' . $newExtensionNumber]],
+                'extension_uuid' => $newExtension->extension_uuid,
+                'extension' => $newExtensionNumber,
+            ], 201);
+
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to duplicate extension.']]
+            ], 500);
+        }
     }
 
     public function registrations(FreeswitchEslService $esl)
