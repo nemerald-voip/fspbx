@@ -44,7 +44,12 @@ class StoreUserRequest extends FormRequest
 
     protected function prepareForValidation()
     {
+        $email = $this->input('user_email');
 
+        if (is_string($email)) {
+            $this->merge([
+                'user_email' => mb_strtolower(trim($email)),
+            ]);
+        }
     }
 }
-
