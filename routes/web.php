@@ -108,7 +108,6 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Extensions
     Route::get('extensions', [ExtensionsController::class, 'index'])->name('extensions.index');
-    Route::get('extensions', [ExtensionsController::class, 'index'])->name('extensions.index');
     Route::post('extensions/duplicate', [ExtensionsController::class, 'duplicate'])->name('extensions.duplicate');
     // Route::resource('extensions', ExtensionsController::class);
     Route::post('/extensions/{extension}/assign-device', [ExtensionsController::class, 'assignDevice'])->name('extensions.assign-device');

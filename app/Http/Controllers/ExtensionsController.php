@@ -224,17 +224,7 @@ class ExtensionsController extends Controller
             ->firstOrFail();
 
             // 4) Generate a new extension number
-            if (method_exists($this->model, 'generateUniqueSequenceNumber')) {
-                $newExtensionNumber = $this->model->generateUniqueSequenceNumber();
-            } else {
-                // Fallback: next numeric extension in this domain
-                $max = Extensions::where('domain_uuid', $domain_uuid)
-                    ->whereRaw("extension ~ '^[0-9]+$'")
-                    ->selectRaw("MAX(CAST(extension as integer)) as max_ext")
-                    ->value('max_ext');
-
-                $newExtensionNumber = (string) ((int) $max + 1);
-            }
+            $newExtensionNumber = $this->model->generateUniqueSequenceNumber();        
 
             // 5) Replicate extension row
             $newExtension = $original->replicate();
@@ -254,16 +244,11 @@ class ExtensionsController extends Controller
                 $newExtension->effective_caller_id_number = $newExtensionNumber;
             }
 
-            // If voicemail was enabled on the original, keep it enabled but point to a new mailbox id
-            if (!empty($original->voicemail_id)) {
-                $newExtension->voicemail_id = $newExtensionNumber;
-            }
-
             $newExtension->save();
 
         // 6) Duplicate voicemail (if present)
             $originalVoicemail = Voicemails::where('domain_uuid', $domain_uuid)
-                ->where('voicemail_id', $original->voicemail_id ?: $original->extension)
+                ->where('voicemail_id', $original->extension)
                 ->first();
 
             if ($originalVoicemail) {
