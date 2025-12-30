@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Data\VoicemailData;
 use Inertia\Inertia;
 use App\Models\Domain;
 use App\Models\Voicemails;
@@ -11,6 +12,8 @@ use App\Services\OpenAIService;
 use App\Models\VoicemailGreetings;
 use Illuminate\Support\Facades\DB;
 use App\Models\VoicemailDestinations;
+use Spatie\QueryBuilder\QueryBuilder;
+use Spatie\QueryBuilder\AllowedFilter;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Response;
@@ -25,7 +28,6 @@ class VoicemailController extends Controller
     public $sortField;
     public $sortOrder;
     protected $viewName = 'Voicemails';
-    protected $searchable = ['voicemail_id', 'voicemail_mail_to', 'extension.effective_caller_id_name'];
 
     public function __construct()
     {
@@ -49,12 +51,9 @@ class VoicemailController extends Controller
         return Inertia::render(
             $this->viewName,
             [
-                'data' => function () {
-                    return $this->getData();
-                },
-
                 'routes' => [
                     'current_page' => route('voicemails.index'),
+                    'data_route' => route('voicemails.data'),
                     'store' => route('voicemails.store'),
                     'item_options' => route('voicemails.item.options'),
                     'bulk_delete' => route('voicemails.bulk.delete'),
@@ -67,98 +66,63 @@ class VoicemailController extends Controller
     /**
      *  Get data
      */
-    public function getData($paginate = 50)
+    public function getData()
     {
+        $perPage = 50;
+        $currentDomain = session('domain_uuid');
 
-        // Check if search parameter is present and not empty
-        if (!empty(request('filterData.search'))) {
-            $this->filters['search'] = request('filterData.search');
-        }
-
-        // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'voicemail_id'); // Default to 'voicemail_id'
-        $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to descending
-
-        $data = $this->builder($this->filters);
-
-        // Apply pagination if requested
-        if ($paginate) {
-            $data = $data->paginate($paginate);
-        } else {
-            $data = $data->get(); // This will return a collection
-        }
-
-        $data->getCollection()->each->append(['destroy_route', 'messages_route']);
-
-        return $data;
-    }
-
-    /**
-     * @param  array  $filters
-     * @return Builder
-     */
-    public function builder(array $filters = [])
-    {
-        $data =  $this->model::query();
-        $domainUuid = session('domain_uuid');
-        $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
-        $data->with(['extension' => function ($query) use ($domainUuid) {
-            $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
-                ->where('domain_uuid', $domainUuid);
-        }]);
-
-        $data->select(
-            'voicemail_uuid',
-            'voicemail_id',
-            'voicemail_mail_to',
-            'voicemail_enabled',
-            'voicemail_description',
-
-        );
-
-        // Add message count
-        $data->withCount(['messages']);
-
-        if (is_array($filters)) {
-            foreach ($filters as $field => $value) {
-                if (method_exists($this, $method = "filter" . ucfirst($field))) {
-                    $this->$method($data, $value);
+        $items = QueryBuilder::for(Voicemails::class)
+            // only voicemails in the current domain
+            ->where('domain_uuid', $currentDomain)
+            ->select([
+                'voicemail_uuid',
+                'domain_uuid',         
+                'voicemail_id',
+                'voicemail_mail_to',
+                'voicemail_enabled',
+                'voicemail_description',
+            ])
+            ->with([
+                'extension' => function ($q) use ($currentDomain) {
+                    $q->select([
+                        'extension_uuid',
+                        'domain_uuid',      // include if you filter by it
+                        'extension',
+                        'effective_caller_id_name',
+                    ])->where('domain_uuid', $currentDomain);
                 }
-            }
-        }
-
-        // Apply sorting
-        $data->orderBy($this->sortField, $this->sortOrder);
-
-        return $data;
-    }
-
-    /**
-     * @param $query
-     * @param $value
-     * @return void
-     */
-    protected function filterSearch($query, $value)
-    {
-        $searchable = $this->searchable;
-
-        // Case-insensitive partial string search in the specified fields
-        $query->where(function ($query) use ($value, $searchable) {
-            foreach ($searchable as $field) {
-                if (strpos($field, '.') !== false) {
-                    // Nested field (e.g., 'extension.name_formatted')
-                    [$relation, $nestedField] = explode('.', $field, 2);
-
-                    $query->orWhereHas($relation, function ($query) use ($nestedField, $value) {
-                        $query->where($nestedField, 'ilike', '%' . $value . '%');
+            ])
+            ->withCount('messages')
+            ->allowedFilters([
+                AllowedFilter::callback('search', function ($query, $value)  use ($currentDomain) {
+                    $query->where(function ($q) use ($value, $currentDomain) {
+                        $q->where('voicemail_id', 'ilike', "%{$value}%")
+                            ->orWhere('voicemail_mail_to', 'ilike', "%{$value}%")
+                            ->orWhere('voicemail_description', 'ilike', "%{$value}%")
+                            // Search related extenion
+                            ->orWhereHas('extension', function ($q2) use ($value, $currentDomain) {
+                                $q2->where('domain_uuid', $currentDomain)
+                                    ->where('extension', 'ilike', "%{$value}%")
+                                    ->orWhere('effective_caller_id_name', 'ilike', "%{$value}%");
+                            });
+                        // Add more fields if needed
                     });
-                } else {
-                    // Direct field
-                    $query->orWhere($field, 'ilike', '%' . $value . '%');
-                }
-            }
-        });
+                }),
+                AllowedFilter::exact('voicemail_enabled'), // Example: filter[enabled]=true
+            ])
+            ->allowedSorts(['voicemail_id'])
+            ->defaultSort('voicemail_id')
+            ->paginate($perPage);
+
+        // // wrap in your DTO
+        // $voiemailsDto = VoicemailData::collect($items);
+
+        // logger( $items);
+
+        return $items;
     }
+
+
 
 
     public function store(StoreVoicemailRequest $request)
@@ -166,25 +130,25 @@ class VoicemailController extends Controller
         $inputs = $request->validated();
 
         // If blank, generate
-if (empty($inputs['voicemail_password'])) {
-    if (get_domain_setting('password_complexity') == 'true') {
-        $inputs['voicemail_password'] = str_pad(mt_rand(0, 9999), 4, '0', STR_PAD_LEFT);
-    } else {
-        $inputs['voicemail_password'] = $inputs['voicemail_id'] ?? '0000';
-    }
-}
+        if (empty($inputs['voicemail_password'])) {
+            if (get_domain_setting('password_complexity') == 'true') {
+                $inputs['voicemail_password'] = str_pad(mt_rand(0, 9999), 4, '0', STR_PAD_LEFT);
+            } else {
+                $inputs['voicemail_password'] = $inputs['voicemail_id'] ?? '0000';
+            }
+        }
 
-// If it was prefilled to mailbox number, override to random when complexity is on
-if (
-    get_domain_setting('password_complexity') == 'true'
-    && !empty($inputs['voicemail_id'])
-    && isset($inputs['voicemail_password'])
-    && (string)$inputs['voicemail_password'] === (string)$inputs['voicemail_id']
-) {
-    $inputs['voicemail_password'] = str_pad(mt_rand(0, 9999), 4, '0', STR_PAD_LEFT);
-}
+        // If it was prefilled to mailbox number, override to random when complexity is on
+        if (
+            get_domain_setting('password_complexity') == 'true'
+            && !empty($inputs['voicemail_id'])
+            && isset($inputs['voicemail_password'])
+            && (string)$inputs['voicemail_password'] === (string)$inputs['voicemail_id']
+        ) {
+            $inputs['voicemail_password'] = str_pad(mt_rand(0, 9999), 4, '0', STR_PAD_LEFT);
+        }
 
-    
+
         try {
             $this->model->fill($inputs);
 
@@ -404,57 +368,7 @@ if (
             'filename' => 'greeting_1.wav',
             'message' => 'Greeting deleted successfully'
         ]);
-    }
-
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Voicemails $voicemail)
-    {
-
-        try {
-            // throw new \Exception;
-
-            // Start a database transaction to ensure atomic operations
-            DB::beginTransaction();
-
-            // Delete related voicemail destinations
-            $voicemail->voicemail_destinations()->delete();
-
-            // Delete related voicemail messages
-            $voicemail->messages()->delete();
-
-            // Delete related voicemail greetings
-            $voicemail->greetings()->delete();
-
-            // Define the path to the voicemail folder
-            $path = session('domain_name') . '/' . $voicemail->voicemail_id;
-
-            // Check if the directory exists and delete it
-            if (Storage::disk('voicemail')->exists($path)) {
-                Storage::disk('voicemail')->deleteDirectory($path);
-            }
-
-            // Finally, delete the voicemail itself
-            $voicemail->delete();
-
-            // Commit the transaction
-            DB::commit();
-
-            return redirect()->back()->with('message', ['server' => ['Item deleted']]);
-        } catch (\Exception $e) {
-            // Rollback the transaction if an error occurs
-            DB::rollBack();
-            // Log the error message
-            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
-
-            return redirect()->back()->with('error', ['server' => ['Server returned an error while deleting this item']]);
-        }
-    }
+    } 
 
     /**
      * Remove the specified resource from storage.

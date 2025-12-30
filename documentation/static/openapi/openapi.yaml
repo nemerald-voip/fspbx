@@ -2001,12 +2001,811 @@ paths:
         required: true
         schema:
           type: string
+  '/api/v1/domains/{domain_uuid}/voicemails':
+    get:
+      summary: 'List voicemails'
+      operationId: listVoicemails
+      description: "Returns voicemails for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `voicemail_domain` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 50.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `voicemail_uuid` from the previous response.\n\nExamples:\n- First page: `GET /api/v1/domains/{domain_uuid}/voicemails`\n- Next page:  `GET /api/v1/domains/{domain_uuid}/voicemails?starting_after={last_voicemail_uuid}`\n- Custom size: `GET /api/v1/domains/{domain_uuid}/voicemails?limit=50`"
+      parameters:
+        -
+          in: query
+          name: limit
+          description: 'Optional. Number of results to return (min 1, max 100). Defaults to 50.'
+          example: 25
+          required: false
+          schema:
+            type: integer
+            description: 'Optional. Number of results to return (min 1, max 100). Defaults to 50.'
+            example: 25
+        -
+          in: query
+          name: starting_after
+          description: 'Optional. Return results after this voicemail UUID (cursor).'
+          example: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+          required: false
+          schema:
+            type: string
+            description: 'Optional. Return results after this voicemail UUID (cursor).'
+            example: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+      responses:
+        200:
+          description: Success
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "{\n  \"object\": \"list\",\n  \"url\": \"/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/voicemails\",\n  \"has_more\": true,\n  \"data\": [\n    {\n      \"voicemail_uuid\": \"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\",\n      \"object\": \"voicemail\",\n      \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n      \"voicemail_id\": \"1001\",\n      \"voicemail_password: \"1001\",\n      \"voicemail_mail_to\": \"frontdesk@example.com\",\n      \"voicemail_sms_to\": null,\n      \"voicemail_transcription_enabled\": true,\n      \"voicemail_local_after_email\": true,\n      \"voicemail_tutorial\": true,\n      \"voicemail_recording_instructions\": true,\n      \"voicemail_file\": \"attach\",\n      \"voicemail_alternate_greet_id\": 200,\n      \"voicemail_description\": \"Front desk voicemail\",\n      \"greeting_id\": 3,\n      \"voicemail_enabled\": true\n    }\n  ]\n}"
+        400:
+          description: 'Invalid starting_after UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid starting_after UUID.'
+                    code: invalid_request
+                    param: starting_after
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid starting_after UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: starting_after
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: 'Forbidden (domain access)'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'You do not have access to this domain.'
+                    code: forbidden_domain
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'You do not have access to this domain.'
+                      code:
+                        type: string
+                        example: forbidden_domain
+                      param:
+                        type: string
+                        example: domain_uuid
+        404:
+          description: 'Not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Domain not found.'
+                    code: resource_missing
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Domain not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: domain_uuid
+      tags:
+        - Voicemails
+    post:
+      summary: 'Create a voicemail'
+      operationId: createAVoicemail
+      description: "Creates a new voicemail box in the specified domain.\n\nNotes:\n- Some fields may be defaulted server-side (e.g., voicemail_password when omitted)."
+      parameters: []
+      responses:
+        201:
+          description: Created
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "{\n  \"voicemail_uuid\": \"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\",\n  \"object\": \"voicemail\",\n  \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"voicemail_id\": \"1001\",\n  \"voicemail_password: \"1001\",\n  \"voicemail_mail_to\": \"frontdesk@example.com\",\n  \"voicemail_sms_to\": null,\n  \"voicemail_transcription_enabled\": true,\n  \"voicemail_local_after_email\": true,\n  \"voicemail_tutorial\": true,\n  \"voicemail_recording_instructions\": true,\n  \"voicemail_file\": \"attach\",\n  \"voicemail_description\": \"Front desk voicemail\",\n  \"greeting_id\": 3,\n  \"voicemail_alternate_greet_id\": null\n  \"voicemail_enabled\": true\n}"
+        400:
+          description: 'Invalid domain UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid domain UUID.'
+                    code: invalid_request
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid domain UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: domain_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: 'Forbidden (domain access)'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'You do not have access to this domain.'
+                    code: forbidden_domain
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'You do not have access to this domain.'
+                      code:
+                        type: string
+                        example: forbidden_domain
+                      param:
+                        type: string
+                        example: domain_uuid
+        404:
+          description: 'Domain not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Domain not found.'
+                    code: resource_missing
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Domain not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: domain_uuid
+      tags:
+        - Voicemails
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                voicemail_id:
+                  type: number
+                  description: 'Numeric voicemail box number.'
+                  example: 1001.0
+                voicemail_password:
+                  type: number
+                  description: 'Voicemail PIN/password. If omitted, the server may default it (e.g., to the voicemail_id) or generate a random PIN when password complexity is enabled.'
+                  example: 1001.0
+                voicemail_mail_to:
+                  type: string
+                  description: 'Email address for voicemail-to-email notifications. Must be a valid email address. Must not be greater than 255 characters.'
+                  example: frontdesk@example.com
+                voicemail_sms_to:
+                  type: string
+                  description: 'Optional SMS destination for voicemail alerts.'
+                  example: '+12135551212'
+                voicemail_enabled:
+                  type: boolean
+                  description: 'Whether the voicemail box is enabled. Defaults to true if omitted.'
+                  example: true
+                voicemail_file:
+                  type: string
+                  description: 'Voicemail delivery mode (e.g., attach). Defaults to "attach" if omitted.'
+                  example: attach
+                voicemail_local_after_email:
+                  type: boolean
+                  description: 'Whether to keep voicemail local after emailing it. Defaults to true if omitted.'
+                  example: true
+                voicemail_transcription_enabled:
+                  type: boolean
+                  description: 'Whether voicemail transcription is enabled. Defaults to true if omitted.'
+                  example: true
+                voicemail_tutorial:
+                  type: boolean
+                  description: 'Whether voicemail tutorial is enabled. Defaults to true if omitted.'
+                  example: true
+                voicemail_recording_instructions:
+                  type: boolean
+                  description: 'Whether voicemail recording instructions are enabled. Defaults to true if omitted.'
+                  example: true
+                voicemail_description:
+                  type: string
+                  description: 'Optional voicemail description/label.'
+                  example: 'Front Desk Voicemail'
+                greeting_id:
+                  type: number
+                  description: 'Optional greeting ID to use for this mailbox.'
+                  example: 3.0
+                voicemail_alternate_greet_id:
+                  type: number
+                  description: 'Optional alternate greeting ID. It will be used with default voicemail greeting.'
+                  example: 200.0
+              required:
+                - voicemail_id
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/voicemails/{voicemail_uuid}':
+    get:
+      summary: 'Retrieve a voicemail'
+      operationId: retrieveAVoicemail
+      description: "Returns a single voicemail for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `voicemail_view` permission.\n\nNotes:\n- If the domain does not exist, a `resource_missing` error is returned.\n- If the voicemail does not exist in that domain, a `resource_missing` error is returned.\n- The voicemail password is never returned in API responses."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "{\n  \"voicemail_uuid\": \"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\",\n  \"object\": \"voicemail\",\n  \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"voicemail_id\": \"1001\",\n  \"voicemail_password: \"1001\",\n  \"voicemail_mail_to\": \"frontdesk@example.com\",\n  \"voicemail_sms_to\": null,\n  \"voicemail_transcription_enabled\": true,\n  \"voicemail_local_after_email\": true,\n  \"voicemail_tutorial\": true,\n  \"voicemail_recording_instructions\": true,\n  \"voicemail_file\": \"attach\",\n  \"voicemail_description\": \"Front desk voicemail\",\n  \"greeting_id\": 3,\n  \"voicemail_enabled\": true\n}"
+        400:
+          description: 'Invalid voicemail UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid voicemail UUID.'
+                    code: invalid_request
+                    param: voicemail_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid voicemail UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: voicemail_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: 'Forbidden (domain access)'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'You do not have access to this domain.'
+                    code: forbidden_domain
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'You do not have access to this domain.'
+                      code:
+                        type: string
+                        example: forbidden_domain
+                      param:
+                        type: string
+                        example: domain_uuid
+        404:
+          description: 'Voicemail not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Voicemail not found.'
+                    code: resource_missing
+                    param: voicemail_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Voicemail not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: voicemail_uuid
+      tags:
+        - Voicemails
+    patch:
+      summary: 'Update a voicemail'
+      operationId: updateAVoicemail
+      description: "Updates an existing voicemail in the specified domain.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `voicemail_edit` permission.\n\nNotes:\n- Fields are optional. If a field is omitted, the current value is unchanged."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "{\n  \"voicemail_uuid\": \"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\",\n  \"object\": \"voicemail\",\n  \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"voicemail_id\": \"1001\",\n  \"voicemail_password: \"1001\",\n  \"voicemail_mail_to\": \"frontdesk@example.com\",\n  \"voicemail_sms_to\": null,\n  \"voicemail_transcription_enabled\": true,\n  \"voicemail_local_after_email\": true,\n  \"voicemail_tutorial\": true,\n  \"voicemail_recording_instructions\": true,\n  \"voicemail_file\": \"attach\",\n  \"voicemail_description\": \"Updated description\",\n  \"greeting_id\": 3,\n  \"voicemail_alternate_greet_id\": null,\n  \"voicemail_enabled\": true\n}"
+        400:
+          description: 'Invalid voicemail UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid voicemail UUID.'
+                    code: invalid_request
+                    param: voicemail_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid voicemail UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: voicemail_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: 'Forbidden (domain access)'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'You do not have access to this domain.'
+                    code: forbidden_domain
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'You do not have access to this domain.'
+                      code:
+                        type: string
+                        example: forbidden_domain
+                      param:
+                        type: string
+                        example: domain_uuid
+        404:
+          description: 'Voicemail not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Voicemail not found.'
+                    code: resource_missing
+                    param: voicemail_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Voicemail not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: voicemail_uuid
+      tags:
+        - Voicemails
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                voicemail_id:
+                  type: number
+                  description: 'Numeric voicemail box number. Must be unique within the domain.'
+                  example: 1001.0
+                voicemail_password:
+                  type: number
+                  description: 'Voicemail PIN/password. If omitted, the current PIN is unchanged.'
+                  example: 1001.0
+                voicemail_mail_to:
+                  type: string
+                  description: 'Email address for voicemail-to-email notifications. If omitted, the current value is unchanged. Use null to clear. Must be a valid email address. Must not be greater than 255 characters.'
+                  example: frontdesk@example.com
+                voicemail_sms_to:
+                  type: string
+                  description: 'Optional SMS destination for voicemail alerts. If omitted, unchanged. Use null to clear. Must not be greater than 255 characters.'
+                  example: '+12135551212'
+                voicemail_transcription_enabled:
+                  type: boolean
+                  description: 'Whether voicemail transcription is enabled. If omitted, unchanged.'
+                  example: true
+                voicemail_local_after_email:
+                  type: boolean
+                  description: 'Whether to keep voicemail local after emailing it. If omitted, unchanged.'
+                  example: true
+                voicemail_tutorial:
+                  type: boolean
+                  description: 'Whether voicemail tutorial is enabled. If omitted, unchanged.'
+                  example: true
+                voicemail_recording_instructions:
+                  type: boolean
+                  description: 'Whether voicemail recording instructions are enabled. If omitted, unchanged.'
+                  example: true
+                voicemail_file:
+                  type: string
+                  description: 'Voicemail delivery mode (e.g., attach). If omitted, unchanged. Must not be greater than 50 characters.'
+                  example: attach
+                voicemail_description:
+                  type: string
+                  description: 'Optional voicemail description/label. If omitted, unchanged. Use null to clear. Must not be greater than 255 characters.'
+                  example: 'Front Desk Voicemail (updated)'
+                greeting_id:
+                  type: integer
+                  description: 'Greeting ID to use for this voicemail (if applicable). If omitted, unchanged. Use null to clear.'
+                  example: 3
+                voicemail_alternate_greet_id:
+                  type: integer
+                  description: 'Alternate greeting ID (if applicable). If omitted, unchanged. Use null to clear.'
+                  example: 200
+                voicemail_enabled:
+                  type: boolean
+                  description: 'Whether voicemail is enabled. If omitted, unchanged.'
+                  example: true
+    delete:
+      summary: 'Delete a voicemail'
+      operationId: deleteAVoicemail
+      description: "Deletes a voicemail within the specified domain.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `voicemail_delete` permission."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  object: voicemail
+                  uuid: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                  deleted: true
+                properties:
+                  object:
+                    type: string
+                    example: voicemail
+                  uuid:
+                    type: string
+                    example: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+                  deleted:
+                    type: boolean
+                    example: true
+        400:
+          description: 'Invalid voicemail UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid voicemail UUID.'
+                    code: invalid_request
+                    param: voicemail_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid voicemail UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: voicemail_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: 'Forbidden (domain access)'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'You do not have access to this domain.'
+                    code: forbidden_domain
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'You do not have access to this domain.'
+                      code:
+                        type: string
+                        example: forbidden_domain
+                      param:
+                        type: string
+                        example: domain_uuid
+        404:
+          description: 'Voicemail not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Voicemail not found.'
+                    code: resource_missing
+                    param: voicemail_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Voicemail not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: voicemail_uuid
+      tags:
+        - Voicemails
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+      -
+        in: path
+        name: voicemail_uuid
+        description: 'The voicemail UUID.'
+        example: d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b
+        required: true
+        schema:
+          type: string
 tags:
   -
     name: Domains
     description: ''
   -
     name: Extensions
+    description: ''
+  -
+    name: Voicemails
     description: ''
 components:
   securitySchemes:

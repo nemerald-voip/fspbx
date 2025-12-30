@@ -78,6 +78,42 @@ const sidebar: SidebarsConfig = {
         },
       ],
     },
+    {
+      type: "category",
+      label: "Voicemails",
+      items: [
+        {
+          type: "doc",
+          id: "api/v1/list-voicemails",
+          label: "List voicemails",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/create-a-voicemail",
+          label: "Create a voicemail",
+          className: "api-method post",
+        },
+        {
+          type: "doc",
+          id: "api/v1/retrieve-a-voicemail",
+          label: "Retrieve a voicemail",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/update-a-voicemail",
+          label: "Update a voicemail",
+          className: "api-method patch",
+        },
+        {
+          type: "doc",
+          id: "api/v1/delete-a-voicemail",
+          label: "Delete a voicemail",
+          className: "api-method delete",
+        },
+      ],
+    },
   ],
 };
 

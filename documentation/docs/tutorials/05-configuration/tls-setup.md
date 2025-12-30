@@ -134,7 +134,7 @@ Now we will enable TLS support in FreeSWITCH's SIP profiles and adjust settings 
 
 -   Dialplan (Optional SRTP enforcement): By default, SRTP enforcement is not strict (to maintain compatibility). If you require all calls from TLS endpoints to be encrypted, you could modify the dial-string or use FS PBX's Dialplan manager to require `rtp_secure_media=true`. This is an advanced configuration and should be tested carefully (many ITSP trunks don't support SRTP, so you may not want to enforce it globally). For most setups, enabling TLS on registration is enough, and endpoints will use SRTP if they are WebRTC or if configured to do so.
 
-After updating FS PBX settings, flush the cache and rescan profiles if you made changes through the GUI. The FS PBX interface and FreeSWITCH should now be configured to use your SSL certificate for both HTTPS and SIP TLS/WSS. You may also need to restat FreeSWITCH service `systemctl restart freeswitch`
+After updating FS PBX settings, go to **Status->SIP Status** and flush the cache and rescan profiles if you made changes through the GUI. The FS PBX interface and FreeSWITCH should now be configured to use your SSL certificate for both HTTPS and SIP TLS/WSS. You may also need to restat FreeSWITCH service `systemctl restart freeswitch`
 
 4\. TLS Security
 ================

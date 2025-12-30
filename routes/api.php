@@ -12,6 +12,7 @@ use App\Http\Controllers\FaxInboxController;
 use App\Http\Controllers\UserLogsController;
 use App\Http\Controllers\EmailLogsController;
 use App\Http\Controllers\HotelRoomController;
+use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\DomainGroupsController;
@@ -150,9 +151,27 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/extensions/make-user', [ExtensionsController::class, 'makeUser'])->name('extensions.make.user');
     Route::post('/extensions/password', [ExtensionsController::class, 'updatePassword'])->name('extensions.password.update');
 
-
     // Extension statistics
     Route::get('/extension-statistics/data', [ExtensionStatisticsController::class, 'getData'])->name('extension-statistics.data');
+
+    // Voicemails
+    Route::post('voicemails', [VoicemailController::class, 'store'])->name('voicemails.store');
+    Route::put('voicemails/{voicemail}', [VoicemailController::class, 'update'])->name('voicemails.update');
+    Route::get('voicemails/data', [VoicemailController::class, 'getData'])->name('voicemails.data');
+    Route::post('voicemails/item-options', [VoicemailController::class, 'getItemOptions'])->name('voicemails.item.options');
+    Route::post('/voicemails/bulk-delete', [VoicemailController::class, 'bulkDelete'])->name('voicemails.bulk.delete');
+    Route::post('/voicemails/select-all', [VoicemailController::class, 'selectAll'])->name('voicemails.select.all');
+    Route::post('/voicemails/{voicemail}/text-to-speech', [VoicemailController::class, 'textToSpeech'])->name('voicemails.textToSpeech');
+    Route::post('/voicemails/{voicemail}/text-to-speech-for-name', [VoicemailController::class, 'textToSpeechForName'])->name('voicemails.textToSpeechForName');
+    Route::get('/voicemail/{domain}/{voicemail_id}/{file}', [VoicemailController::class, 'serveVoicemailFile'])->name('voicemail.file.serve');
+    Route::post('/voicemail/apply-greeting', [VoicemailController::class, 'applyVoicemailFile'])->name('voicemail.file.apply');
+    Route::post('/voicemail/{domain}/{voicemail}/{file}/name', [VoicemailController::class, 'applyVoicemailFileForName'])->name('voicemail.file.name.apply');
+    Route::post('/voicemail/{voicemail}/greeting', [VoicemailController::class, 'getVoicemailGreeting'])->name('voicemail.greeting');
+    Route::post('voicemails/{voicemail}/delete-greeting', [VoicemailController::class, 'deleteGreeting'])->name('voicemails.deleteGreeting');
+    Route::post('voicemails/{voicemail}/upload-greeting', [VoicemailController::class, 'uploadGreeting'])->name('voicemails.uploadGreeting');
+    Route::post('/voicemail/{voicemail}/recorde-name', [VoicemailController::class, 'getRecordedName'])->name('voicemail.recorded_name');
+    Route::post('voicemails/{voicemail}/delete-recorded-name', [VoicemailController::class, 'deleteRecordedName'])->name('voicemails.deleteRecordedName');
+    Route::post('voicemails/{voicemail}/upload-recorded-name', [VoicemailController::class, 'uploadRecordedName'])->name('voicemails.uploadRecordedName');
 
     // Inbound Webhooks
     Route::get('/inbound-webhooks/data', [InboundWebhooksController::class, 'getData'])->name('inbound-webhooks.data');

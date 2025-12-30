@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "FS PBX",
-        "_postman_id": "5b5f6f2e-730e-4db0-9b88-47cbc71ada01",
+        "_postman_id": "0ba41516-9539-452c-be46-ecd56c4e1358",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -654,6 +654,399 @@
                             "code": 404,
                             "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Extension not found.\",\n    \"code\": \"resource_missing\",\n    \"param\": \"extension_uuid\"\n  }\n}",
                             "name": "Extension not found"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Voicemails",
+            "description": "",
+            "item": [
+                {
+                    "name": "List voicemails",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/voicemails",
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "25",
+                                    "description": "Optional. Number of results to return (min 1, max 100). Defaults to 50.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "starting_after",
+                                    "value": "d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b",
+                                    "description": "Optional. Return results after this voicemail UUID (cursor).",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/voicemails?limit=25&starting_after=d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns voicemails for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `voicemail_domain` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 50.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `voicemail_uuid` from the previous response.\n\nExamples:\n- First page: `GET \/api\/v1\/domains\/{domain_uuid}\/voicemails`\n- Next page:  `GET \/api\/v1\/domains\/{domain_uuid}\/voicemails?starting_after={last_voicemail_uuid}`\n- Custom size: `GET \/api\/v1\/domains\/{domain_uuid}\/voicemails?limit=50`"
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"object\": \"list\",\n  \"url\": \"\/api\/v1\/domains\/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\/voicemails\",\n  \"has_more\": true,\n  \"data\": [\n    {\n      \"voicemail_uuid\": \"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\",\n      \"object\": \"voicemail\",\n      \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n      \"voicemail_id\": \"1001\",\n      \"voicemail_password: \"1001\",\n      \"voicemail_mail_to\": \"frontdesk@example.com\",\n      \"voicemail_sms_to\": null,\n      \"voicemail_transcription_enabled\": true,\n      \"voicemail_local_after_email\": true,\n      \"voicemail_tutorial\": true,\n      \"voicemail_recording_instructions\": true,\n      \"voicemail_file\": \"attach\",\n      \"voicemail_alternate_greet_id\": 200,\n      \"voicemail_description\": \"Front desk voicemail\",\n      \"greeting_id\": 3,\n      \"voicemail_enabled\": true\n    }\n  ]\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Invalid domain UUID.\",\n    \"code\": \"invalid_request\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Invalid starting_after UUID.\",\n    \"code\": \"invalid_request\",\n    \"param\": \"starting_after\"\n  }\n}",
+                            "name": "Invalid starting_after UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\n  \"error\": {\n    \"type\": \"authentication_error\",\n    \"message\": \"Unauthenticated.\",\n    \"code\": \"unauthenticated\"\n  }\n}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"You do not have access to this domain.\",\n    \"code\": \"forbidden_domain\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Forbidden (domain access)"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Domain not found.\",\n    \"code\": \"resource_missing\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Retrieve a voicemail",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/voicemails\/:voicemail_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/voicemails\/:voicemail_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "voicemail_uuid",
+                                    "key": "voicemail_uuid",
+                                    "value": "d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b",
+                                    "description": "The voicemail UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns a single voicemail for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `voicemail_view` permission.\n\nNotes:\n- If the domain does not exist, a `resource_missing` error is returned.\n- If the voicemail does not exist in that domain, a `resource_missing` error is returned.\n- The voicemail password is never returned in API responses."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"voicemail_uuid\": \"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\",\n  \"object\": \"voicemail\",\n  \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"voicemail_id\": \"1001\",\n  \"voicemail_password: \"1001\",\n  \"voicemail_mail_to\": \"frontdesk@example.com\",\n  \"voicemail_sms_to\": null,\n  \"voicemail_transcription_enabled\": true,\n  \"voicemail_local_after_email\": true,\n  \"voicemail_tutorial\": true,\n  \"voicemail_recording_instructions\": true,\n  \"voicemail_file\": \"attach\",\n  \"voicemail_description\": \"Front desk voicemail\",\n  \"greeting_id\": 3,\n  \"voicemail_enabled\": true\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Invalid domain UUID.\",\n    \"code\": \"invalid_request\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Invalid voicemail UUID.\",\n    \"code\": \"invalid_request\",\n    \"param\": \"voicemail_uuid\"\n  }\n}",
+                            "name": "Invalid voicemail UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\n  \"error\": {\n    \"type\": \"authentication_error\",\n    \"message\": \"Unauthenticated.\",\n    \"code\": \"unauthenticated\"\n  }\n}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"You do not have access to this domain.\",\n    \"code\": \"forbidden_domain\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Forbidden (domain access)"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Domain not found.\",\n    \"code\": \"resource_missing\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Voicemail not found.\",\n    \"code\": \"resource_missing\",\n    \"param\": \"voicemail_uuid\"\n  }\n}",
+                            "name": "Voicemail not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Create a voicemail",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/voicemails",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/voicemails",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"voicemail_id\":1001,\"voicemail_password\":1001,\"voicemail_mail_to\":\"frontdesk@example.com\",\"voicemail_sms_to\":\"+12135551212\",\"voicemail_enabled\":true,\"voicemail_file\":\"attach\",\"voicemail_local_after_email\":true,\"voicemail_transcription_enabled\":true,\"voicemail_tutorial\":true,\"voicemail_recording_instructions\":true,\"voicemail_description\":\"Front Desk Voicemail\",\"greeting_id\":3,\"voicemail_alternate_greet_id\":200}"
+                        },
+                        "description": "Creates a new voicemail box in the specified domain.\n\nNotes:\n- Some fields may be defaulted server-side (e.g., voicemail_password when omitted)."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 201,
+                            "body": "{\n  \"voicemail_uuid\": \"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\",\n  \"object\": \"voicemail\",\n  \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"voicemail_id\": \"1001\",\n  \"voicemail_password: \"1001\",\n  \"voicemail_mail_to\": \"frontdesk@example.com\",\n  \"voicemail_sms_to\": null,\n  \"voicemail_transcription_enabled\": true,\n  \"voicemail_local_after_email\": true,\n  \"voicemail_tutorial\": true,\n  \"voicemail_recording_instructions\": true,\n  \"voicemail_file\": \"attach\",\n  \"voicemail_description\": \"Front desk voicemail\",\n  \"greeting_id\": 3,\n  \"voicemail_alternate_greet_id\": null\n  \"voicemail_enabled\": true\n}",
+                            "name": "Created"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Invalid domain UUID.\",\n    \"code\": \"invalid_request\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\n  \"error\": {\n    \"type\": \"authentication_error\",\n    \"message\": \"Unauthenticated.\",\n    \"code\": \"unauthenticated\"\n  }\n}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"You do not have access to this domain.\",\n    \"code\": \"forbidden_domain\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Forbidden (domain access)"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Domain not found.\",\n    \"code\": \"resource_missing\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Domain not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Update a voicemail",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/voicemails\/:voicemail_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/voicemails\/:voicemail_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "voicemail_uuid",
+                                    "key": "voicemail_uuid",
+                                    "value": "d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b",
+                                    "description": "The voicemail UUID."
+                                }
+                            ]
+                        },
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"voicemail_id\":1001,\"voicemail_password\":1001,\"voicemail_mail_to\":\"frontdesk@example.com\",\"voicemail_sms_to\":\"+12135551212\",\"voicemail_transcription_enabled\":true,\"voicemail_local_after_email\":true,\"voicemail_tutorial\":true,\"voicemail_recording_instructions\":true,\"voicemail_file\":\"attach\",\"voicemail_description\":\"Front Desk Voicemail (updated)\",\"greeting_id\":3,\"voicemail_alternate_greet_id\":200,\"voicemail_enabled\":true}"
+                        },
+                        "description": "Updates an existing voicemail in the specified domain.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `voicemail_edit` permission.\n\nNotes:\n- Fields are optional. If a field is omitted, the current value is unchanged."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"voicemail_uuid\": \"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\",\n  \"object\": \"voicemail\",\n  \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"voicemail_id\": \"1001\",\n  \"voicemail_password: \"1001\",\n  \"voicemail_mail_to\": \"frontdesk@example.com\",\n  \"voicemail_sms_to\": null,\n  \"voicemail_transcription_enabled\": true,\n  \"voicemail_local_after_email\": true,\n  \"voicemail_tutorial\": true,\n  \"voicemail_recording_instructions\": true,\n  \"voicemail_file\": \"attach\",\n  \"voicemail_description\": \"Updated description\",\n  \"greeting_id\": 3,\n  \"voicemail_alternate_greet_id\": null,\n  \"voicemail_enabled\": true\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Invalid domain UUID.\",\n    \"code\": \"invalid_request\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Invalid voicemail UUID.\",\n    \"code\": \"invalid_request\",\n    \"param\": \"voicemail_uuid\"\n  }\n}",
+                            "name": "Invalid voicemail UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\n  \"error\": {\n    \"type\": \"authentication_error\",\n    \"message\": \"Unauthenticated.\",\n    \"code\": \"unauthenticated\"\n  }\n}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"You do not have access to this domain.\",\n    \"code\": \"forbidden_domain\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Forbidden (domain access)"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Voicemail not found.\",\n    \"code\": \"resource_missing\",\n    \"param\": \"voicemail_uuid\"\n  }\n}",
+                            "name": "Voicemail not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Delete a voicemail",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/voicemails\/:voicemail_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/voicemails\/:voicemail_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "voicemail_uuid",
+                                    "key": "voicemail_uuid",
+                                    "value": "d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b",
+                                    "description": "The voicemail UUID."
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Deletes a voicemail within the specified domain.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `voicemail_delete` permission."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"object\": \"voicemail\",\n  \"uuid\": \"d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b\",\n  \"deleted\": true\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Invalid domain UUID.\",\n    \"code\": \"invalid_request\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Invalid voicemail UUID.\",\n    \"code\": \"invalid_request\",\n    \"param\": \"voicemail_uuid\"\n  }\n}",
+                            "name": "Invalid voicemail UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\n  \"error\": {\n    \"type\": \"authentication_error\",\n    \"message\": \"Unauthenticated.\",\n    \"code\": \"unauthenticated\"\n  }\n}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"You do not have access to this domain.\",\n    \"code\": \"forbidden_domain\",\n    \"param\": \"domain_uuid\"\n  }\n}",
+                            "name": "Forbidden (domain access)"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Voicemail not found.\",\n    \"code\": \"resource_missing\",\n    \"param\": \"voicemail_uuid\"\n  }\n}",
+                            "name": "Voicemail not found"
                         }
                     ]
                 }

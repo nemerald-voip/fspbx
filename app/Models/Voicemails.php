@@ -56,11 +56,6 @@ class Voicemails extends Model
     protected $hidden = [];
 
 
-    public function getDestroyRouteAttribute()
-    {
-        return route('voicemails.destroy', $this);
-    }
-
     public function getMessagesRouteAttribute()
     {
         return route('voicemails.messages.index', $this);

@@ -33,16 +33,15 @@
             <template #navigation>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    @pagination-change-page="renderRequestedPage" :bulk-actions="bulkActions"
+                    @bulk-action="handleBulkActionRequest" :has-selected-items="selectedItems.length > 0" />
             </template>
             <template #table-header>
 
                 <TableColumnHeader
-                    class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
-                        :has-selected-items="selectedItems.length > 0" />
                     <span class="pl-4">Voicemail ID</span>
                 </TableColumnHeader>
 
@@ -55,7 +54,7 @@
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
-                <td colspan="6">
+                <td colspan="9">
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
                         <button v-if="!selectAll && selectedItems.length != data.total"
@@ -78,7 +77,7 @@
                         <div class="flex items-center">
                             <input v-if="row.voicemail_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
                                 :value="row.voicemail_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="ml-9"
+                            <div class="ml-4"
                                 :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.voicemail_update, }"
                                 @click="page.props.auth.can.voicemail_update && handleEditRequest(row.voicemail_uuid)">
                                 <span v-if="row.extension" class="flex items-center">
@@ -98,7 +97,7 @@
                         :text="row.voicemail_description" />
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <Badge :text="row.messages_count" @click="navigateToMessages(row.messages_route)"
+                        <Badge :text="row.messages_count" @click="navigateToMessages(row.voicemail_uuid)"
                             backgroundColor="bg-blue-50" textColor="text-blue-700" ringColor="ring-blue-600/20" class="cursor-pointer"/>
 
                     </TableField>
@@ -127,7 +126,7 @@
                                 <ejs-tooltip :content="'Check messages'" position='TopCenter'
                                     target="#restart_tooltip_target">
                                     <div id="restart_tooltip_target">
-                                        <EnvelopeIcon @click="navigateToMessages(row.messages_route)"
+                                        <EnvelopeIcon @click="navigateToMessages(row.voicemail_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
@@ -135,7 +134,7 @@
                                 <ejs-tooltip v-if="page.props.auth.can.voicemail_destroy" :content="'Delete'"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
-                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
+                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.voicemail_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
@@ -194,8 +193,10 @@
         </template>
     </AddEditItemModal>
 
-    <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
-        @confirm="confirmDeleteAction" />
+    <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
+        @confirm="confirmDeleteAction" :header="'Confirm Deletion'" :loading="isModalLoading"
+        :text="'This action will permanently delete the selected voicemail(s). Are you sure you want to proceed?'"
+        :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -211,13 +212,12 @@ import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
-import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
+import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
-import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import CreateVoicemailForm from "./components/forms/CreateVoicemailForm.vue";
 import UpdateVoicemailForm from "./components/forms/UpdateVoicemailForm.vue";
@@ -236,8 +236,8 @@ const selectPageItems = ref(false);
 const createModalTrigger = ref(false);
 const editModalTrigger = ref(false);
 const bulkUpdateModalTrigger = ref(false);
-const confirmationModalTrigger = ref(false);
-const confirmationModalDestroyPath = ref(null);
+const showDeleteConfirmationModal = ref(false);
+const isModalLoading = ref(false)
 const createFormSubmiting = ref(null);
 const updateFormSubmiting = ref(null);
 const confirmDeleteAction = ref(null);
@@ -248,11 +248,50 @@ const notificationMessages = ref(null);
 const notificationShow = ref(null);
 
 const props = defineProps({
-    data: Object,
     routes: Object,
     itemData: Object,
 });
 
+const data = ref({
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: 0,
+    to: 0,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
+});
+
+onMounted(() => {
+    handleSearchButtonClick();
+})
+
+const handleSearchButtonClick = () => {
+    getData()
+};
+
+const getData = (page = 1) => {
+    loading.value = true;
+
+    axios.get(props.routes.data_route, {
+        params: {
+            filter: filterData.value,
+            page,
+        }
+    })
+        .then((response) => {
+            data.value = response.data;
+            // console.log(data.value);
+
+        }).catch((error) => {
+
+            handleErrorResponse(error);
+        }).finally(() => {
+            loading.value = false
+        })
+}
 
 const filterData = ref({
     search: null,
@@ -281,9 +320,6 @@ const bulkActions = computed(() => {
     }
 
     return actions;
-});
-
-onMounted(() => {
 });
 
 const handleEditRequest = (itemUuid) => {
@@ -331,38 +367,15 @@ const handleUpdateRequest = (form) => {
 
 };
 
-const handleSingleItemDeleteRequest = (url) => {
-    confirmationModalTrigger.value = true;
-    confirmDeleteAction.value = () => executeSingleDelete(url);
-}
+const handleSingleItemDeleteRequest = (uuid) => {
+    showDeleteConfirmationModal.value = true;
+    confirmDeleteAction.value = () => executeBulkDelete([uuid]);
+};
 
-const executeSingleDelete = (url) => {
-    router.delete(url, {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: (page) => {
-            if (page.props.flash.error) {
-                showNotification('error', page.props.flash.error);
-            }
-            if (page.props.flash.message) {
-                showNotification('success', page.props.flash.message);
-            }
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onFinish: () => {
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onError: (errors) => {
-            console.log(errors);
-        },
-    });
-}
 
 const handleBulkActionRequest = (action) => {
     if (action === 'bulk_delete') {
-        confirmationModalTrigger.value = true;
+        showDeleteConfirmationModal.value = true;
         confirmDeleteAction.value = () => executeBulkDelete();
     }
     if (action === 'bulk_update') {
@@ -374,20 +387,20 @@ const handleBulkActionRequest = (action) => {
 
 }
 
-
-
-const executeBulkDelete = () => {
-    axios.post(`${props.routes.bulk_delete}`, { items: selectedItems.value })
+const executeBulkDelete = (items = selectedItems.value) => {
+    isModalLoading.value = true
+    axios.post(props.routes.bulk_delete, { items })
         .then((response) => {
-            handleModalClose();
             showNotification('success', response.data.messages);
             handleSearchButtonClick();
         })
         .catch((error) => {
-            handleClearSelection();
-            handleModalClose();
             handleErrorResponse(error);
-        });
+        })
+        .finally(() => {
+            handleModalClose();
+            isModalLoading.value = false
+        })
 }
 
 const handleBulkUpdateRequest = (form) => {
@@ -427,25 +440,6 @@ const handleSelectAll = () => {
 };
 
 
-
-const handleSearchButtonClick = () => {
-    loading.value = true;
-    router.visit(props.routes.current_page, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-        ],
-        onSuccess: (page) => {
-            loading.value = false;
-            handleClearSelection();
-        }
-    });
-};
-
 const handleFiltersReset = () => {
     filterData.value.search = null;
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
@@ -455,17 +449,12 @@ const handleFiltersReset = () => {
 
 const renderRequestedPage = (url) => {
     loading.value = true;
-    router.visit(url, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
-    });
+    // Extract the page number from the url, e.g. "?page=3"
+    const urlObj = new URL(url, window.location.origin);
+    const pageParam = urlObj.searchParams.get("page") ?? 1;
+
+    // Now call getData with the page number
+    getData(pageParam);
 };
 
 
@@ -528,7 +517,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.voicemail_uuid);
+        selectedItems.value = data.value.data.map(item => item.voicemail_uuid);
     } else {
         selectedItems.value = [];
     }
@@ -545,7 +534,7 @@ const handleClearSelection = () => {
 const handleModalClose = () => {
     createModalTrigger.value = false;
     editModalTrigger.value = false;
-    confirmationModalTrigger.value = false;
+    showDeleteConfirmationModal.value = false;
     bulkUpdateModalTrigger.value = false;
 }
 
@@ -561,9 +550,8 @@ const showNotification = (type, messages = null) => {
     notificationShow.value = true;
 }
 
-const navigateToMessages = (messagesRoute) => {
-    // Use Inertia's router to visit the messages page
-    router.visit(messagesRoute);
+const navigateToMessages = (uuid) => {
+    window.location.href = `/voicemails/${uuid}/messages`;
 };
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\DomainController;
 use App\Http\Controllers\Api\V1\ExtensionController;
+use App\Http\Controllers\Api\V1\VoicemailController;
 
 
 
@@ -62,20 +63,6 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
     | Ring Groups (domain-scoped)
     |--------------------------------------------------------------------------
     */
-    // Route::get('/domains/{domain_uuid}/ring-groups', [RingGroupController::class, 'index'])
-    //     ->middleware('user.authorize:ring_groups_list');
-
-    // Route::post('/domains/{domain_uuid}/ring-groups', [RingGroupController::class, 'store'])
-    //     ->middleware('user.authorize:ring_groups_create');
-
-    // Route::get('/domains/{domain_uuid}/ring-groups/{ring_group_uuid}', [RingGroupController::class, 'show'])
-    //     ->middleware('user.authorize:ring_groups_view');
-
-    // Route::put('/domains/{domain_uuid}/ring-groups/{ring_group_uuid}', [RingGroupController::class, 'update'])
-    //     ->middleware('user.authorize:ring_groups_update');
-
-    // Route::delete('/domains/{domain_uuid}/ring-groups/{ring_group_uuid}', [RingGroupController::class, 'destroy'])
-    //     ->middleware('user.authorize:ring_groups_delete');
 
 
     /*
@@ -83,19 +70,18 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
     | Voicemails (domain-scoped)
     |--------------------------------------------------------------------------
     */
-    // Route::get('/domains/{domain_uuid}/voicemails', [VoicemailController::class, 'index'])
-    //     ->middleware('user.authorize:voicemails_list');
+    Route::get('/domains/{domain_uuid}/voicemails', [VoicemailController::class, 'index'])
+        ->middleware('user.authorize:voicemail_domain');
 
-    // Route::post('/domains/{domain_uuid}/voicemails', [VoicemailController::class, 'store'])
-    //     ->middleware('user.authorize:voicemails_create');
+    Route::get('/domains/{domain_uuid}/voicemails/{voicemail_uuid}', [VoicemailController::class, 'show'])
+        ->middleware('user.authorize:voicemail_view');
 
-    // Route::get('/domains/{domain_uuid}/voicemails/{voicemail_uuid}', [VoicemailController::class, 'show'])
-    //     ->middleware('user.authorize:voicemails_view');
+    Route::post('/domains/{domain_uuid}/voicemails', [VoicemailController::class, 'store'])
+        ->middleware('user.authorize:voicemail_add');
 
-    // Route::put('/domains/{domain_uuid}/voicemails/{voicemail_uuid}', [VoicemailController::class, 'update'])
-    //     ->middleware('user.authorize:voicemails_update');
+    Route::patch('/domains/{domain_uuid}/voicemails/{voicemail_uuid}', [VoicemailController::class, 'update'])
+        ->middleware('user.authorize:voicemail_edit');
 
-    // Route::delete('/domains/{domain_uuid}/voicemails/{voicemail_uuid}', [VoicemailController::class, 'destroy'])
-    //     ->middleware('user.authorize:voicemails_delete');
-
+    Route::delete('/domains/{domain_uuid}/voicemails/{voicemail_uuid}', [VoicemailController::class, 'destroy'])
+        ->middleware('user.authorize:voicemail_delete');
 });

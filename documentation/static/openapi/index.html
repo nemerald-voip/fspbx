@@ -104,6 +104,28 @@
                             </li>
                                                                         </ul>
                             </ul>
+                    <ul id="tocify-header-voicemails" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="voicemails">
+                    <a href="#voicemails">Voicemails</a>
+                </li>
+                                    <ul id="tocify-subheader-voicemails" class="tocify-subheader">
+                                                    <li class="tocify-item level-2" data-unique="voicemails-GETapi-v1-domains--domain_uuid--voicemails">
+                                <a href="#voicemails-GETapi-v1-domains--domain_uuid--voicemails">List voicemails</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="voicemails-GETapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-">
+                                <a href="#voicemails-GETapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-">Retrieve a voicemail</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="voicemails-POSTapi-v1-domains--domain_uuid--voicemails">
+                                <a href="#voicemails-POSTapi-v1-domains--domain_uuid--voicemails">Create a voicemail</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="voicemails-PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-">
+                                <a href="#voicemails-PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-">Update a voicemail</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="voicemails-DELETEapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-">
+                                <a href="#voicemails-DELETEapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-">Delete a voicemail</a>
+                            </li>
+                                                                        </ul>
+                            </ul>
             </div>
 
     <ul class="toc-footer" id="toc-footer">
@@ -113,7 +135,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: December 27, 2025</li>
+        <li>Last updated: December 30, 2025</li>
     </ul>
 </div>
 
@@ -3601,6 +3623,1618 @@ You can check the Dev Tools console for debugging information.</code></pre>
                data-component="url">
     <br>
 <p>The extension UUID. Example: <code>d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b</code></p>
+            </div>
+                    </form>
+
+                <h1 id="voicemails">Voicemails</h1>
+
+    
+
+                                <h2 id="voicemails-GETapi-v1-domains--domain_uuid--voicemails">List voicemails</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Returns voicemails for the specified domain the caller is allowed to access.</p>
+<p>Access rules:</p>
+<ul>
+<li>Caller must have access to the target domain (domain scope).</li>
+<li>Caller must have the <code>voicemail_domain</code> permission.</li>
+</ul>
+<p>Pagination (cursor-based):</p>
+<ul>
+<li>Both <code>limit</code> and <code>starting_after</code> are optional.</li>
+<li>If <code>limit</code> is not provided, it defaults to 50.</li>
+<li>If <code>starting_after</code> is not provided, results start from the beginning.</li>
+<li>If <code>has_more</code> is true, request the next page by passing <code>starting_after</code>
+equal to the last item's <code>voicemail_uuid</code> from the previous response.</li>
+</ul>
+<p>Examples:</p>
+<ul>
+<li>First page: <code>GET /api/v1/domains/{domain_uuid}/voicemails</code></li>
+<li>Next page:  <code>GET /api/v1/domains/{domain_uuid}/voicemails?starting_after={last_voicemail_uuid}</code></li>
+<li>Custom size: <code>GET /api/v1/domains/{domain_uuid}/voicemails?limit=50</code></li>
+</ul>
+
+<span id="example-requests-GETapi-v1-domains--domain_uuid--voicemails">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/voicemails?limit=25&amp;starting_after=d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/voicemails"
+);
+
+const params = {
+    "limit": "25",
+    "starting_after": "d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b",
+};
+Object.keys(params)
+    .forEach(key =&gt; url.searchParams.append(key, params[key]));
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-domains--domain_uuid--voicemails">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+  &quot;object&quot;: &quot;list&quot;,
+  &quot;url&quot;: &quot;/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/voicemails&quot;,
+  &quot;has_more&quot;: true,
+  &quot;data&quot;: [
+    {
+      &quot;voicemail_uuid&quot;: &quot;d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b&quot;,
+      &quot;object&quot;: &quot;voicemail&quot;,
+      &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+      &quot;voicemail_id&quot;: &quot;1001&quot;,
+      &quot;voicemail_password: &quot;1001&quot;,
+      &quot;voicemail_mail_to&quot;: &quot;frontdesk@example.com&quot;,
+      &quot;voicemail_sms_to&quot;: null,
+      &quot;voicemail_transcription_enabled&quot;: true,
+      &quot;voicemail_local_after_email&quot;: true,
+      &quot;voicemail_tutorial&quot;: true,
+      &quot;voicemail_recording_instructions&quot;: true,
+      &quot;voicemail_file&quot;: &quot;attach&quot;,
+      &quot;voicemail_alternate_greet_id&quot;: 200,
+      &quot;voicemail_description&quot;: &quot;Front desk voicemail&quot;,
+      &quot;greeting_id&quot;: 3,
+      &quot;voicemail_enabled&quot;: true
+    }
+  ]
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid domain UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid starting_after UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid starting_after UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;starting_after&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden (domain access)):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
+        &quot;code&quot;: &quot;forbidden_domain&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-domains--domain_uuid--voicemails" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-domains--domain_uuid--voicemails"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-domains--domain_uuid--voicemails"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-domains--domain_uuid--voicemails" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-domains--domain_uuid--voicemails">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-domains--domain_uuid--voicemails" data-method="GET"
+      data-path="api/v1/domains/{domain_uuid}/voicemails"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-domains--domain_uuid--voicemails', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/domains/{domain_uuid}/voicemails</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-domains--domain_uuid--voicemails"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-domains--domain_uuid--voicemails"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-domains--domain_uuid--voicemails"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--voicemails"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>limit</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="limit"                data-endpoint="GETapi-v1-domains--domain_uuid--voicemails"
+               value="25"
+               data-component="query">
+    <br>
+<p>Optional. Number of results to return (min 1, max 100). Defaults to 50. Example: <code>25</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>starting_after</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="starting_after"                data-endpoint="GETapi-v1-domains--domain_uuid--voicemails"
+               value="d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"
+               data-component="query">
+    <br>
+<p>Optional. Return results after this voicemail UUID (cursor). Example: <code>d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b</code></p>
+            </div>
+                </form>
+
+                    <h2 id="voicemails-GETapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-">Retrieve a voicemail</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Returns a single voicemail for the specified domain the caller is allowed to access.</p>
+<p>Access rules:</p>
+<ul>
+<li>Caller must have access to the target domain (domain scope).</li>
+<li>Caller must have the <code>voicemail_view</code> permission.</li>
+</ul>
+<p>Notes:</p>
+<ul>
+<li>If the domain does not exist, a <code>resource_missing</code> error is returned.</li>
+<li>If the voicemail does not exist in that domain, a <code>resource_missing</code> error is returned.</li>
+<li>The voicemail password is never returned in API responses.</li>
+</ul>
+
+<span id="example-requests-GETapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/voicemails/d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/voicemails/d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+  &quot;voicemail_uuid&quot;: &quot;d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b&quot;,
+  &quot;object&quot;: &quot;voicemail&quot;,
+  &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+  &quot;voicemail_id&quot;: &quot;1001&quot;,
+  &quot;voicemail_password: &quot;1001&quot;,
+  &quot;voicemail_mail_to&quot;: &quot;frontdesk@example.com&quot;,
+  &quot;voicemail_sms_to&quot;: null,
+  &quot;voicemail_transcription_enabled&quot;: true,
+  &quot;voicemail_local_after_email&quot;: true,
+  &quot;voicemail_tutorial&quot;: true,
+  &quot;voicemail_recording_instructions&quot;: true,
+  &quot;voicemail_file&quot;: &quot;attach&quot;,
+  &quot;voicemail_description&quot;: &quot;Front desk voicemail&quot;,
+  &quot;greeting_id&quot;: 3,
+  &quot;voicemail_enabled&quot;: true
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid domain UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid voicemail UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid voicemail UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;voicemail_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden (domain access)):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
+        &quot;code&quot;: &quot;forbidden_domain&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Domain not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Voicemail not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Voicemail not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;voicemail_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-" data-method="GET"
+      data-path="api/v1/domains/{domain_uuid}/voicemails/{voicemail_uuid}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/domains/{domain_uuid}/voicemails/{voicemail_uuid}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>voicemail_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+               value="d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"
+               data-component="url">
+    <br>
+<p>The voicemail UUID. Example: <code>d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b</code></p>
+            </div>
+                    </form>
+
+                    <h2 id="voicemails-POSTapi-v1-domains--domain_uuid--voicemails">Create a voicemail</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Creates a new voicemail box in the specified domain.</p>
+<p>Notes:</p>
+<ul>
+<li>Some fields may be defaulted server-side (e.g., voicemail_password when omitted).</li>
+</ul>
+
+<span id="example-requests-POSTapi-v1-domains--domain_uuid--voicemails">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/voicemails" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"voicemail_id\": 1001,
+    \"voicemail_password\": 1001,
+    \"voicemail_mail_to\": \"frontdesk@example.com\",
+    \"voicemail_sms_to\": \"+12135551212\",
+    \"voicemail_enabled\": true,
+    \"voicemail_file\": \"attach\",
+    \"voicemail_local_after_email\": true,
+    \"voicemail_transcription_enabled\": true,
+    \"voicemail_tutorial\": true,
+    \"voicemail_recording_instructions\": true,
+    \"voicemail_description\": \"Front Desk Voicemail\",
+    \"greeting_id\": 3,
+    \"voicemail_alternate_greet_id\": 200
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/voicemails"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "voicemail_id": 1001,
+    "voicemail_password": 1001,
+    "voicemail_mail_to": "frontdesk@example.com",
+    "voicemail_sms_to": "+12135551212",
+    "voicemail_enabled": true,
+    "voicemail_file": "attach",
+    "voicemail_local_after_email": true,
+    "voicemail_transcription_enabled": true,
+    "voicemail_tutorial": true,
+    "voicemail_recording_instructions": true,
+    "voicemail_description": "Front Desk Voicemail",
+    "greeting_id": 3,
+    "voicemail_alternate_greet_id": 200
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-v1-domains--domain_uuid--voicemails">
+            <blockquote>
+            <p>Example response (201, Created):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+  &quot;voicemail_uuid&quot;: &quot;d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b&quot;,
+  &quot;object&quot;: &quot;voicemail&quot;,
+  &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+  &quot;voicemail_id&quot;: &quot;1001&quot;,
+  &quot;voicemail_password: &quot;1001&quot;,
+  &quot;voicemail_mail_to&quot;: &quot;frontdesk@example.com&quot;,
+  &quot;voicemail_sms_to&quot;: null,
+  &quot;voicemail_transcription_enabled&quot;: true,
+  &quot;voicemail_local_after_email&quot;: true,
+  &quot;voicemail_tutorial&quot;: true,
+  &quot;voicemail_recording_instructions&quot;: true,
+  &quot;voicemail_file&quot;: &quot;attach&quot;,
+  &quot;voicemail_description&quot;: &quot;Front desk voicemail&quot;,
+  &quot;greeting_id&quot;: 3,
+  &quot;voicemail_alternate_greet_id&quot;: null
+  &quot;voicemail_enabled&quot;: true
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid domain UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden (domain access)):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
+        &quot;code&quot;: &quot;forbidden_domain&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Domain not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-POSTapi-v1-domains--domain_uuid--voicemails" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-v1-domains--domain_uuid--voicemails"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-v1-domains--domain_uuid--voicemails"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-v1-domains--domain_uuid--voicemails" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-v1-domains--domain_uuid--voicemails">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-v1-domains--domain_uuid--voicemails" data-method="POST"
+      data-path="api/v1/domains/{domain_uuid}/voicemails"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-v1-domains--domain_uuid--voicemails', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/v1/domains/{domain_uuid}/voicemails</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_id</code></b>&nbsp;&nbsp;
+<small>number</small>&nbsp;
+ &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="voicemail_id"                data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails"
+               value="1001"
+               data-component="body">
+    <br>
+<p>Numeric voicemail box number. Example: <code>1001</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_password</code></b>&nbsp;&nbsp;
+<small>number</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="voicemail_password"                data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails"
+               value="1001"
+               data-component="body">
+    <br>
+<p>Voicemail PIN/password. If omitted, the server may default it (e.g., to the voicemail_id) or generate a random PIN when password complexity is enabled. Example: <code>1001</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_mail_to</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_mail_to"                data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails"
+               value="frontdesk@example.com"
+               data-component="body">
+    <br>
+<p>Email address for voicemail-to-email notifications. Must be a valid email address. Must not be greater than 255 characters. Example: <code>frontdesk@example.com</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_sms_to</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_sms_to"                data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails"
+               value="+12135551212"
+               data-component="body">
+    <br>
+<p>Optional SMS destination for voicemail alerts. Example: <code>+12135551212</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails" style="display: none">
+            <input type="radio" name="voicemail_enabled"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails" style="display: none">
+            <input type="radio" name="voicemail_enabled"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether the voicemail box is enabled. Defaults to true if omitted. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_file</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_file"                data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails"
+               value="attach"
+               data-component="body">
+    <br>
+<p>Voicemail delivery mode (e.g., attach). Defaults to &quot;attach&quot; if omitted. Example: <code>attach</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_local_after_email</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails" style="display: none">
+            <input type="radio" name="voicemail_local_after_email"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails" style="display: none">
+            <input type="radio" name="voicemail_local_after_email"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether to keep voicemail local after emailing it. Defaults to true if omitted. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_transcription_enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails" style="display: none">
+            <input type="radio" name="voicemail_transcription_enabled"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails" style="display: none">
+            <input type="radio" name="voicemail_transcription_enabled"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether voicemail transcription is enabled. Defaults to true if omitted. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_tutorial</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails" style="display: none">
+            <input type="radio" name="voicemail_tutorial"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails" style="display: none">
+            <input type="radio" name="voicemail_tutorial"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether voicemail tutorial is enabled. Defaults to true if omitted. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_recording_instructions</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails" style="display: none">
+            <input type="radio" name="voicemail_recording_instructions"
+                   value="true"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails" style="display: none">
+            <input type="radio" name="voicemail_recording_instructions"
+                   value="false"
+                   data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether voicemail recording instructions are enabled. Defaults to true if omitted. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_description</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_description"                data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails"
+               value="Front Desk Voicemail"
+               data-component="body">
+    <br>
+<p>Optional voicemail description/label. Example: <code>Front Desk Voicemail</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>greeting_id</code></b>&nbsp;&nbsp;
+<small>number</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="greeting_id"                data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails"
+               value="3"
+               data-component="body">
+    <br>
+<p>Optional greeting ID to use for this mailbox. Example: <code>3</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_alternate_greet_id</code></b>&nbsp;&nbsp;
+<small>number</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="voicemail_alternate_greet_id"                data-endpoint="POSTapi-v1-domains--domain_uuid--voicemails"
+               value="200"
+               data-component="body">
+    <br>
+<p>Optional alternate greeting ID. It will be used with default voicemail greeting. Example: <code>200</code></p>
+        </div>
+        </form>
+
+                    <h2 id="voicemails-PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-">Update a voicemail</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Updates an existing voicemail in the specified domain.</p>
+<p>Access rules:</p>
+<ul>
+<li>Caller must have access to the target domain (domain scope).</li>
+<li>Caller must have the <code>voicemail_edit</code> permission.</li>
+</ul>
+<p>Notes:</p>
+<ul>
+<li>Fields are optional. If a field is omitted, the current value is unchanged.</li>
+</ul>
+
+<span id="example-requests-PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request PATCH \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/voicemails/d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json" \
+    --data "{
+    \"voicemail_id\": 1001,
+    \"voicemail_password\": 1001,
+    \"voicemail_mail_to\": \"frontdesk@example.com\",
+    \"voicemail_sms_to\": \"+12135551212\",
+    \"voicemail_transcription_enabled\": true,
+    \"voicemail_local_after_email\": true,
+    \"voicemail_tutorial\": true,
+    \"voicemail_recording_instructions\": true,
+    \"voicemail_file\": \"attach\",
+    \"voicemail_description\": \"Front Desk Voicemail (updated)\",
+    \"greeting_id\": 3,
+    \"voicemail_alternate_greet_id\": 200,
+    \"voicemail_enabled\": true
+}"
+</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/voicemails/d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+let body = {
+    "voicemail_id": 1001,
+    "voicemail_password": 1001,
+    "voicemail_mail_to": "frontdesk@example.com",
+    "voicemail_sms_to": "+12135551212",
+    "voicemail_transcription_enabled": true,
+    "voicemail_local_after_email": true,
+    "voicemail_tutorial": true,
+    "voicemail_recording_instructions": true,
+    "voicemail_file": "attach",
+    "voicemail_description": "Front Desk Voicemail (updated)",
+    "greeting_id": 3,
+    "voicemail_alternate_greet_id": 200,
+    "voicemail_enabled": true
+};
+
+fetch(url, {
+    method: "PATCH",
+    headers,
+    body: JSON.stringify(body),
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+  &quot;voicemail_uuid&quot;: &quot;d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b&quot;,
+  &quot;object&quot;: &quot;voicemail&quot;,
+  &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+  &quot;voicemail_id&quot;: &quot;1001&quot;,
+  &quot;voicemail_password: &quot;1001&quot;,
+  &quot;voicemail_mail_to&quot;: &quot;frontdesk@example.com&quot;,
+  &quot;voicemail_sms_to&quot;: null,
+  &quot;voicemail_transcription_enabled&quot;: true,
+  &quot;voicemail_local_after_email&quot;: true,
+  &quot;voicemail_tutorial&quot;: true,
+  &quot;voicemail_recording_instructions&quot;: true,
+  &quot;voicemail_file&quot;: &quot;attach&quot;,
+  &quot;voicemail_description&quot;: &quot;Updated description&quot;,
+  &quot;greeting_id&quot;: 3,
+  &quot;voicemail_alternate_greet_id&quot;: null,
+  &quot;voicemail_enabled&quot;: true
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid domain UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid voicemail UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid voicemail UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;voicemail_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden (domain access)):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
+        &quot;code&quot;: &quot;forbidden_domain&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Voicemail not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Voicemail not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;voicemail_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-" data-method="PATCH"
+      data-path="api/v1/domains/{domain_uuid}/voicemails/{voicemail_uuid}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-purple">PATCH</small>
+            <b><code>api/v1/domains/{domain_uuid}/voicemails/{voicemail_uuid}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>voicemail_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_uuid"                data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+               value="d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"
+               data-component="url">
+    <br>
+<p>The voicemail UUID. Example: <code>d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b</code></p>
+            </div>
+                            <h4 class="fancy-heading-panel"><b>Body Parameters</b></h4>
+        <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_id</code></b>&nbsp;&nbsp;
+<small>number</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="voicemail_id"                data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+               value="1001"
+               data-component="body">
+    <br>
+<p>Numeric voicemail box number. Must be unique within the domain. Example: <code>1001</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_password</code></b>&nbsp;&nbsp;
+<small>number</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="voicemail_password"                data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+               value="1001"
+               data-component="body">
+    <br>
+<p>Voicemail PIN/password. If omitted, the current PIN is unchanged. Example: <code>1001</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_mail_to</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_mail_to"                data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+               value="frontdesk@example.com"
+               data-component="body">
+    <br>
+<p>Email address for voicemail-to-email notifications. If omitted, the current value is unchanged. Use null to clear. Must be a valid email address. Must not be greater than 255 characters. Example: <code>frontdesk@example.com</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_sms_to</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_sms_to"                data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+               value="+12135551212"
+               data-component="body">
+    <br>
+<p>Optional SMS destination for voicemail alerts. If omitted, unchanged. Use null to clear. Must not be greater than 255 characters. Example: <code>+12135551212</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_transcription_enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-" style="display: none">
+            <input type="radio" name="voicemail_transcription_enabled"
+                   value="true"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-" style="display: none">
+            <input type="radio" name="voicemail_transcription_enabled"
+                   value="false"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether voicemail transcription is enabled. If omitted, unchanged. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_local_after_email</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-" style="display: none">
+            <input type="radio" name="voicemail_local_after_email"
+                   value="true"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-" style="display: none">
+            <input type="radio" name="voicemail_local_after_email"
+                   value="false"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether to keep voicemail local after emailing it. If omitted, unchanged. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_tutorial</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-" style="display: none">
+            <input type="radio" name="voicemail_tutorial"
+                   value="true"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-" style="display: none">
+            <input type="radio" name="voicemail_tutorial"
+                   value="false"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether voicemail tutorial is enabled. If omitted, unchanged. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_recording_instructions</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-" style="display: none">
+            <input type="radio" name="voicemail_recording_instructions"
+                   value="true"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-" style="display: none">
+            <input type="radio" name="voicemail_recording_instructions"
+                   value="false"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether voicemail recording instructions are enabled. If omitted, unchanged. Example: <code>true</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_file</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_file"                data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+               value="attach"
+               data-component="body">
+    <br>
+<p>Voicemail delivery mode (e.g., attach). If omitted, unchanged. Must not be greater than 50 characters. Example: <code>attach</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_description</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_description"                data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+               value="Front Desk Voicemail (updated)"
+               data-component="body">
+    <br>
+<p>Optional voicemail description/label. If omitted, unchanged. Use null to clear. Must not be greater than 255 characters. Example: <code>Front Desk Voicemail (updated)</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>greeting_id</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="greeting_id"                data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+               value="3"
+               data-component="body">
+    <br>
+<p>Greeting ID to use for this voicemail (if applicable). If omitted, unchanged. Use null to clear. Example: <code>3</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_alternate_greet_id</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="voicemail_alternate_greet_id"                data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+               value="200"
+               data-component="body">
+    <br>
+<p>Alternate greeting ID (if applicable). If omitted, unchanged. Use null to clear. Example: <code>200</code></p>
+        </div>
+                <div style=" padding-left: 28px;  clear: unset;">
+            <b style="line-height: 2;"><code>voicemail_enabled</code></b>&nbsp;&nbsp;
+<small>boolean</small>&nbsp;
+<i>optional</i> &nbsp;
+                <label data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-" style="display: none">
+            <input type="radio" name="voicemail_enabled"
+                   value="true"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+                   data-component="body"             >
+            <code>true</code>
+        </label>
+        <label data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-" style="display: none">
+            <input type="radio" name="voicemail_enabled"
+                   value="false"
+                   data-endpoint="PATCHapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+                   data-component="body"             >
+            <code>false</code>
+        </label>
+    <br>
+<p>Whether voicemail is enabled. If omitted, unchanged. Example: <code>true</code></p>
+        </div>
+        </form>
+
+                    <h2 id="voicemails-DELETEapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-">Delete a voicemail</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Deletes a voicemail within the specified domain.</p>
+<p>Access rules:</p>
+<ul>
+<li>Caller must have access to the target domain (domain scope).</li>
+<li>Caller must have the <code>voicemail_delete</code> permission.</li>
+</ul>
+
+<span id="example-requests-DELETEapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request DELETE \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/voicemails/d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/voicemails/d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "DELETE",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-DELETEapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;object&quot;: &quot;voicemail&quot;,
+    &quot;uuid&quot;: &quot;d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b&quot;,
+    &quot;deleted&quot;: true
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid domain UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid voicemail UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid voicemail UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;voicemail_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (403, Forbidden (domain access)):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;You do not have access to this domain.&quot;,
+        &quot;code&quot;: &quot;forbidden_domain&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Voicemail not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Voicemail not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;voicemail_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-DELETEapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-DELETEapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-DELETEapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-DELETEapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-DELETEapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-DELETEapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-" data-method="DELETE"
+      data-path="api/v1/domains/{domain_uuid}/voicemails/{voicemail_uuid}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('DELETEapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-red">DELETE</small>
+            <b><code>api/v1/domains/{domain_uuid}/voicemails/{voicemail_uuid}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="DELETEapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="DELETEapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="DELETEapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="DELETEapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>voicemail_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="voicemail_uuid"                data-endpoint="DELETEapi-v1-domains--domain_uuid--voicemails--voicemail_uuid-"
+               value="d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b"
+               data-component="url">
+    <br>
+<p>The voicemail UUID. Example: <code>d2c7b17c-8b0d-4f0f-b5ff-2cfb6d7a4f4b</code></p>
             </div>
                     </form>
 
