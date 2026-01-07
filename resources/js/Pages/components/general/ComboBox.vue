@@ -4,7 +4,8 @@
         <div class="relative w-full">
             <ComboboxButton class="w-full">
                 <ComboboxInput :class="inputClass" @change="searchKeyword = $event.target.value"
-                    :display-value="displayValue" :placeholder="placeholder">
+                    :display-value="displayValue" :placeholder="placeholder"
+                    v-bind="$attrs">
 
                 </ComboboxInput>
 
