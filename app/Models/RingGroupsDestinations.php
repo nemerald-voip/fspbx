@@ -51,6 +51,15 @@ class RingGroupsDestinations extends Model
 
     public function ringGroups()
     {
-        return $this->hasOne(RingGroups::class,'ring_group_uuid','ring_group_uuid');
+        return $this->hasOne(RingGroups::class, 'ring_group_uuid', 'ring_group_uuid');
+    }
+
+    /**
+     * This gets you “all possible” extensions where destination_number matches extension, regardless of domain.
+     * Further filtering by domain is REQUIRED to avoid false positives and PERFORMANCE ISSUES  
+     */
+    public function extension()
+    {
+        return $this->belongsTo(Extensions::class, 'destination_number', 'extension');
     }
 }

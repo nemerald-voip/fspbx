@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "FS PBX",
-        "_postman_id": "0ba41516-9539-452c-be46-ecd56c4e1358",
+        "_postman_id": "9722a93b-0f83-4c1e-b7df-ff0dfdb675c3",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -654,6 +654,363 @@
                             "code": 404,
                             "body": "{\n  \"error\": {\n    \"type\": \"invalid_request_error\",\n    \"message\": \"Extension not found.\",\n    \"code\": \"resource_missing\",\n    \"param\": \"extension_uuid\"\n  }\n}",
                             "name": "Extension not found"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Ring Groups",
+            "description": "",
+            "item": [
+                {
+                    "name": "List ring groups",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/ring-groups",
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "50",
+                                    "description": "Optional. Number of results to return (min 1, max 100). Defaults to 50.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "starting_after",
+                                    "value": "c0ec8113-aa15-40ac-8437-47185dd9dcf4",
+                                    "description": "Optional. Return results after this ring group UUID (cursor).",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/ring-groups?limit=50&starting_after=c0ec8113-aa15-40ac-8437-47185dd9dcf4",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns ring groups for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `ring_group_view` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 50.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `ring_group_uuid` from the previous response.\n\nExamples:\n- First page: `GET \/api\/v1\/domains\/{domain_uuid}\/ring-groups`\n- Next page:  `GET \/api\/v1\/domains\/{domain_uuid}\/ring-groups?starting_after={last_ring_group_uuid}`\n- Custom size: `GET \/api\/v1\/domains\/{domain_uuid}\/ring-groups?limit=50`"
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"object\": \"list\",\n  \"url\": \"\/api\/v1\/domains\/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\/ring-groups\",\n  \"has_more\": true,\n  \"data\": [\n    {\n      \"ring_group_uuid\": \"c0ec8113-aa15-40ac-8437-47185dd9dcf4\",\n      \"object\": \"ring_group\",\n      \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n\n      \"ring_group_name\": \"Sales Ring Group\",\n      \"ring_group_extension\": \"9000\",\n\n      \"ring_group_enabled\": true,\n      \"ring_group_description\": null\n\n    }\n  ]\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid starting_after UUID.\",\"code\":\"invalid_request\",\"param\":\"starting_after\"}}",
+                            "name": "Invalid starting_after UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Retrieve a ring group",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/ring-groups\/:ring_group_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/ring-groups\/:ring_group_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "7d58342b-2b29-4dcf-92d6-e9a9e002a4e5",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "ring_group_uuid",
+                                    "key": "ring_group_uuid",
+                                    "value": "40aec3e8-a572-40da-954b-ddf6a8a65324",
+                                    "description": "The ring group UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns a single ring group for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `ring_group_view` permission."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"ring_group_uuid\": \"40aec3e8-a572-40da-954b-ddf6a8a65324\",\n  \"object\": \"ring_group\",\n  \"domain_uuid\": \"7d58342b-2b29-4dcf-92d6-e9a9e002a4e5\",\n  \"ring_group_name\": \"Seattle Main Group\",\n  \"ring_group_extension\": \"0\",\n  \"ring_group_greeting\": null,\n  \"ring_group_caller_id_name\": null,\n  \"ring_group_caller_id_number\": null,\n  \"ring_group_cid_name_prefix\": null,\n  \"ring_group_cid_number_prefix\": null,\n  \"ring_group_strategy\": \"sequence\",\n  \"timeout_action\": \"voicemails\",\n  \"timeout_target\": \"101\",\n  \"ring_group_call_forward_enabled\": true,\n  \"ring_group_follow_me_enabled\": true,\n  \"ring_group_description\": null,\n  \"ring_group_forward_enabled\": false,\n  \"forward_action\": \"external\",\n  \"forward_target\": \"456\",\n  \"ring_group_enabled\": true,\n  \"members\": [\n    {\n      \"ring_group_destination_uuid\": \"4ec29bfd-9f4b-4a4c-b934-0015412711c9\",\n      \"ring_group_uuid\": \"40aec3e8-a572-40da-954b-ddf6a8a65324\",\n      \"destination_number\": \"100\",\n      \"destination_enabled\": true,\n      \"destination_delay\": 0,\n      \"destination_timeout\": 25,\n      \"destination_prompt\": false\n    }\n  ]\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid ring group UUID.\",\"code\":\"invalid_request\",\"param\":\"ring_group_uuid\"}}",
+                            "name": "Invalid ring group UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Ring group not found.\",\"code\":\"resource_missing\",\"param\":\"ring_group_uuid\"}}",
+                            "name": "Ring group not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Create a ring group",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/ring-groups",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/ring-groups",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"ring_group_name\":\"Sales Ring Group\",\"ring_group_extension\":9000,\"ring_group_description\":\"Main sales queue (ring group)\",\"ring_group_strategy\":\"sequence\",\"ring_group_ringback\":\"${us-ring}\",\"timeout_action\":\"voicemails\",\"timeout_target\":\"101\",\"ring_group_forward_enabled\":false,\"forward_action\":\"ring_groups\",\"forward_target\":\"456\",\"forward_external_target\":\"+12135551212\",\"ring_group_cid_name_prefix\":\"Sales\",\"ring_group_cid_number_prefix\":\"9\",\"ring_group_caller_id_name\":\"ABC Corporation\",\"ring_group_caller_id_number\":\"+12135550100\",\"ring_group_distinctive_ring\":\"ring4\",\"ring_group_call_forward_enabled\":true,\"ring_group_follow_me_enabled\":true,\"members\":[{\"destination_number\":\"100\",\"destination_delay\":0,\"destination_timeout\":25,\"destination_prompt\":false,\"destination_enabled\":true}]}"
+                        },
+                        "description": "Creates a new ring group in the specified domain."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 201,
+                            "body": "{\n  \"ring_group_uuid\": \"40aec3e8-a572-40da-954b-ddf6a8a65324\",\n  \"object\": \"ring_group\",\n  \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"ring_group_name\": \"Sales Ring Group\",\n  \"ring_group_extension\": \"9000\",\n  \"ring_group_greeting\": null,\n  \"ring_group_caller_id_name\": null,\n  \"ring_group_caller_id_number\": null,\n  \"ring_group_cid_name_prefix\": null,\n  \"ring_group_cid_number_prefix\": null,\n  \"ring_group_strategy\": \"sequence\",\n  \"timeout_action\": \"voicemails\",\n  \"timeout_target\": \"101\",\n  \"ring_group_call_forward_enabled\": true,\n  \"ring_group_follow_me_enabled\": true,\n  \"ring_group_description\": null,\n  \"ring_group_forward_enabled\": false,\n  \"forward_action\": \"external\",\n  \"forward_target\": \"456\",\n  \"ring_group_enabled\": true,\n  \"members\": [\n    {\n      \"ring_group_destination_uuid\": \"4ec29bfd-9f4b-4a4c-b934-0015412711c9\",\n      \"ring_group_uuid\": \"40aec3e8-a572-40da-954b-ddf6a8a65324\",\n      \"destination_number\": \"100\",\n      \"destination_enabled\": true,\n      \"destination_delay\": 0,\n      \"destination_timeout\": 25,\n      \"destination_prompt\": false\n    }\n  ]\n}",
+                            "name": "Created"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The given data was invalid.\",\"code\":\"invalid_request\",\"param\":null,\"details\":{\"ring_group_extension\":[\"The ring group extension has already been taken.\"]}}}",
+                            "name": "Validation error"
+                        }
+                    ]
+                },
+                {
+                    "name": "Update a ring group",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/ring-groups\/:ring_group_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/ring-groups\/:ring_group_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "ring_group_uuid",
+                                    "key": "ring_group_uuid",
+                                    "value": "40aec3e8-a572-40da-954b-ddf6a8a65324",
+                                    "description": "The ring group UUID."
+                                }
+                            ]
+                        },
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"ring_group_name\":\"Sales Ring Group\",\"ring_group_extension\":9000,\"ring_group_greeting\":\"sales-greeting.wav\",\"ring_group_strategy\":\"sequence\",\"timeout_action\":\"voicemails\",\"timeout_target\":\"101\",\"ring_group_cid_name_prefix\":\"Sales\",\"ring_group_cid_number_prefix\":\"9\",\"ring_group_description\":\"Main sales queue (ring group)\",\"ring_group_forward_enabled\":false,\"forward_action\":\"ring_groups\",\"forward_target\":\"456\",\"forward_external_target\":\"+12135551212\",\"ring_group_caller_id_name\":\"ABC Corporation\",\"ring_group_caller_id_number\":\"+12135550100\",\"ring_group_distinctive_ring\":\"ring4\",\"ring_group_ringback\":\"${us-ring}\",\"ring_group_call_forward_enabled\":true,\"ring_group_follow_me_enabled\":true,\"members\":[{\"destination_number\":\"100\",\"destination_delay\":0,\"destination_timeout\":25,\"destination_prompt\":false,\"destination_enabled\":true}]}"
+                        },
+                        "description": "Updates an existing ring group in the specified domain.\n\nNotes:\n- Fields are optional. If omitted, the current value is unchanged.\n- If `members` is present:\n  - members omitted => no change\n  - members: [] => deletes all members\n  - members: [...] => replaces all members\n- The response payload matches the `show` endpoint shape."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"ring_group_uuid\": \"40aec3e8-a572-40da-954b-ddf6a8a65324\",\n  \"object\": \"ring_group\",\n  \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"ring_group_name\": \"Sales Ring Group\",\n  \"ring_group_extension\": \"9000\",\n  \"ring_group_greeting\": null,\n  \"ring_group_caller_id_name\": null,\n  \"ring_group_caller_id_number\": null,\n  \"ring_group_cid_name_prefix\": null,\n  \"ring_group_cid_number_prefix\": null,\n  \"ring_group_strategy\": \"sequence\",\n  \"timeout_action\": \"voicemails\",\n  \"timeout_target\": \"101\",\n  \"ring_group_call_forward_enabled\": true,\n  \"ring_group_follow_me_enabled\": true,\n  \"ring_group_description\": null,\n  \"ring_group_forward_enabled\": false,\n  \"forward_action\": \"external\",\n  \"forward_target\": \"456\",\n  \"ring_group_enabled\": true,\n  \"members\": [\n    {\n      \"ring_group_destination_uuid\": \"4ec29bfd-9f4b-4a4c-b934-0015412711c9\",\n      \"ring_group_uuid\": \"40aec3e8-a572-40da-954b-ddf6a8a65324\",\n      \"destination_number\": \"100\",\n      \"destination_enabled\": true,\n      \"destination_delay\": 0,\n      \"destination_timeout\": 25,\n      \"destination_prompt\": false\n    }\n  ]\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid ring group UUID.\",\"code\":\"invalid_request\",\"param\":\"ring_group_uuid\"}}",
+                            "name": "Invalid ring group UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Ring group not found.\",\"code\":\"resource_missing\",\"param\":\"ring_group_uuid\"}}",
+                            "name": "Ring group not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"The given data was invalid.\",\"code\":\"invalid_request\",\"param\":null,\"details\":{\"ring_group_extension\":[\"The ring group extension has already been taken.\"]}}}",
+                            "name": "Validation error"
+                        }
+                    ]
+                },
+                {
+                    "name": "Delete a ring group",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/ring-groups\/:ring_group_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/ring-groups\/:ring_group_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "ring_group_uuid",
+                                    "key": "ring_group_uuid",
+                                    "value": "c0ec8113-aa15-40ac-8437-47185dd9dcf4",
+                                    "description": "The ring group UUID."
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Deletes a ring group within the specified domain."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"object\":\"ring_group\",\"uuid\":\"c0ec8113-aa15-40ac-8437-47185dd9dcf4\",\"deleted\":true}",
+                            "name": "Success"
                         }
                     ]
                 }

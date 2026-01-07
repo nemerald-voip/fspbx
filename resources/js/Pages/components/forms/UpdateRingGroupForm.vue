@@ -36,8 +36,8 @@
                                 'container_5',
                                 'container_6',
                                 'h3_2',
-                                'fallback_action',
-                                'fallback_target',
+                                'timeout_action',
+                                'timeout_target',
                                 'container_7',
                                 'container_8',
                                 'ring_group_cid_name_prefix',
@@ -313,8 +313,8 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                 :conditions="[() => localOptions.permissions.destination_view]">
                                 <template #default="{ index }">
                                     <ObjectElement :name="index">
-                                        <HiddenElement name="uuid" :meta="true" />
-                                        <HiddenElement name="destination" :meta="true" />
+                                        <HiddenElement name="ring_group_destination_uuid" :meta="true" />
+                                        <HiddenElement name="destination_number" :meta="true" />
                                         <StaticElement name="p_1" tag="div"
                                             :columns="{ default: { container: 8 }, sm: { container: 4 } }" :label="(el$) => {
                                                 const isSusp = el$.parent.value.suspended;
@@ -331,12 +331,12 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
 
                                                 return html;
                                             }" :content="(el$) => {
-                                                const label = getMemberLabel(el$.parent.value.destination);
+                                                const label = getMemberLabel(el$.parent.value.destination_number);
 
                                                 return `<span class='text-base font-semibold'>${label}</span>`;
                                             }" />
 
-                                        <SelectElement name="delay" :items="delayOptions" :search="true" :native="false"
+                                        <SelectElement name="destination_delay" :items="delayOptions" :search="true" :native="false"
                                             label="Delay" input-type="search" allow-absent autocomplete="off" :columns="{
                                                 default: {
                                                     container: 6,
@@ -351,7 +351,7 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                             :disabled="() => { return !localOptions.permissions.destination_update }" />
 
 
-                                        <SelectElement name="timeout" :items="timeoutOptions" :search="true"
+                                        <SelectElement name="destination_timeout" :items="timeoutOptions" :search="true"
                                             :native="false" label="Ring for" input-type="search" allow-absent
                                             autocomplete="off" :columns="{
                                                 default: {
@@ -383,7 +383,7 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                             },
                                         }"
                                             :conditions="[['ring_group_strategy', 'not_in', ['sequence', 'rollover', 'random']]]" />
-                                        <ToggleElement name="prompt" :columns="{
+                                        <ToggleElement name="destination_prompt" :columns="{
                                             default: {
                                                 container: 6,
                                             },
@@ -394,7 +394,7 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                             info="Enable answer confirmation to prevent voicemails and automated systems from answering a call."
                                             :disabled="() => { return !localOptions.permissions.destination_update }" />
 
-                                        <ToggleElement name="enabled"
+                                        <ToggleElement name="destination_enabled"
                                             :columns="{ default: { container: 5 }, sm: { container: 4 } }" size="sm"
                                             label="Active"
                                             :disabled="(el$) => el$.parent.value.suspended || !localOptions.permissions.destination_update" />
@@ -408,7 +408,7 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                             <GroupElement name="container_6" />
                             <StaticElement name="h3_2" tag="h4" content="When no one in ring group answers"
                                 description="Forward calls to" />
-                            <SelectElement name="fallback_action" :items="localOptions.routing_types" label-prop="name"
+                            <SelectElement name="timeout_action" :items="localOptions.routing_types" label-prop="name"
                                 :search="true" :native="false" label="Choose Action" input-type="search"
                                 autocomplete="off" placeholder="Choose Action" :floating="false" :strict="false"
                                 :columns="{
@@ -416,23 +416,23 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                         container: 6,
                                     },
                                 }" @change="(newValue, oldValue, el$) => {
-                                    let fallback_target = el$.form$.el$('fallback_target')
+                                    let timeout_target = el$.form$.el$('timeout_target')
 
                                     // only clear when this isn’t the very first time (i.e. oldValue was set)
                                     if (oldValue !== null && oldValue !== undefined) {
-                                        fallback_target.clear();
+                                        timeout_target.clear();
                                     }
 
-                                    // fallback_target.clear()
-                                    fallback_target.updateItems()
+                                    // timeout_target.clear()
+                                    timeout_target.updateItems()
                                 }" />
-                            <SelectElement name="fallback_target" :items="async (query, input) => {
-                                let fallback_action = input.$parent.el$.form$.el$('fallback_action');
+                            <SelectElement name="timeout_target" :items="async (query, input) => {
+                                let timeout_action = input.$parent.el$.form$.el$('timeout_action');
 
                                 try {
-                                    let response = await fallback_action.$vueform.services.axios.post(
+                                    let response = await timeout_action.$vueform.services.axios.post(
                                         options.routes.get_routing_options,
-                                        { category: fallback_action.value }
+                                        { category: timeout_action.value }
                                     );
                                     // console.log(response.data.options);
                                     return response.data.options;
@@ -447,8 +447,8 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                         container: 6,
                                     },
                                 }" :conditions="[
-                                    ['fallback_action', 'not_empty'],
-                                    ['fallback_action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
+                                    ['timeout_action', 'not_empty'],
+                                    ['timeout_action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
                                 ]" />
 
 
@@ -702,13 +702,13 @@ const memberItems = props.options.ring_group.destinations?.map(dest => {
     const match = allMemberOptions.find(opt => opt.destination === dest.destination_number);
 
     return {
-        uuid: dest.ring_group_destination_uuid,
-        destination: dest.destination_number,                 // The member's extension/number
-        delay: dest.destination_delay,                   // Delay (must match a Select option value)
-        timeout: dest.destination_timeout,               // Timeout (must match a Select option value)
-        prompt: !!dest.destination_prompt,               // Convert to boolean for Toggle
+        ring_group_destination_uuid: dest.ring_group_destination_uuid,
+        destination_number: dest.destination_number,                 // The member's extension/number
+        destination_delay: dest.destination_delay,                   // Delay (must match a Select option value)
+        destination_timeout: dest.destination_timeout,               // Timeout (must match a Select option value)
+        destination_prompt: !!dest.destination_prompt,               // Convert to boolean for Toggle
         //       enabled: dest.suspended ? false : !!dest.destination_enabled, //force to disable suspended member
-        enabled: toBool(dest.destination_enabled),
+        destination_enabled: toBool(dest.destination_enabled),
         type: match?.type || null,
         suspended: dest.suspended === true,
 
@@ -726,8 +726,8 @@ onMounted(() => {
             ? props.options.call_distributions.find(rp => rp.value === props.options.ring_group.ring_group_strategy)?.value || 'enterprise'
             : 'enterprise',
 
-        fallback_action: props.options.ring_group.timeout_action ?? null,
-        fallback_target: { value: props.options.ring_group.timeout_target_uuid ?? null, extension: props.options.ring_group.timeout_target_extension ?? null, name: props.options.ring_group.timeout_target_name ?? null },
+        timeout_action: props.options.ring_group.timeout_action ?? null,
+        timeout_target: { value: props.options.ring_group.timeout_target_uuid ?? null, extension: props.options.ring_group.timeout_target_extension ?? null, name: props.options.ring_group.timeout_target_name ?? null },
         members: memberItems,
 
         ring_group_forward_enabled: props.options.ring_group.ring_group_forward_enabled === 'true',
@@ -785,7 +785,7 @@ const availableMembers = computed(() => {
     const membersField = form$.value?.el$('members');
     const currentMembers = membersField?.value || [];
 
-    const selectedDestinations = currentMembers.map(m => m.destination);
+    const selectedDestinations = currentMembers.map(m => m.destination_number);
 
     return props.options.member_options.map(group => ({
         label: group.groupLabel,
@@ -800,13 +800,13 @@ const addSelectedMembers = () => {
     // console.log(form$.value.el$('selectedMembers').value);
     const selectedItems = form$.value.el$('selectedMembers').value.map(item => {
         return {
-            uuid: item.destination ? item.value : null,              // if a destination exists, use the item.value as uuid; otherwise, uuid is null
-            destination: item.destination ? item.destination : item.label,  // if item.destination exists, use it; otherwise, use the label
+            ring_group_destination_uuid: item.destination ? item.value : null,              // if a destination exists, use the item.value as uuid; otherwise, uuid is null
+            destination_number: item.destination ? item.destination : item.label,  // if item.destination exists, use it; otherwise, use the label
             type: item.type ? item.type : "other",                     // if type exists, use it; else default to "other"
-            delay: "0",
-            timeout: "25",
-            prompt: false,
-            enabled: true
+            destination_delay: "0",
+            destination_timeout: "25",
+            destination_prompt: false,
+            destination_enabled: true
         }
     });
 
@@ -815,7 +815,7 @@ const addSelectedMembers = () => {
     form$.value.update({
         members: [...currentMembers, ...selectedItems]
     })
-    console.log(form$.value.el$('members').value);
+    // console.log(form$.value.el$('members').value);
 
     form$.value.el$('selectedMembers').update([]); // clear selection
 };

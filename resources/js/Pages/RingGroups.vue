@@ -22,7 +22,8 @@
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.ring_group_create" type="button" @click.prevent="handleCreateButtonClick()"
+                <button v-if="page.props.auth.can.ring_group_create" type="button"
+                    @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
@@ -33,7 +34,8 @@
             <template #navigation>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    @pagination-change-page="renderRequestedPage" :bulk-actions="bulkActions"
+                    @bulk-action="handleBulkActionRequest" :has-selected-items="selectedItems.length > 0" />
             </template>
             <template #table-header>
 
@@ -41,15 +43,16 @@
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
-                        :has-selected-items="selectedItems.length > 0" />
+
                     <span class="pl-4">Name</span>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Extension" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Extension"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Members" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Description"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
@@ -73,18 +76,20 @@
 
             <template #table-body>
                 <tr v-for="row in data.data" :key="row.ring_group_uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.ring_group_extension">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500"
+                        :text="row.ring_group_extension">
                         <div class="flex items-center">
-                            <input v-if="row.ring_group_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
-                                :value="row.ring_group_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <input v-if="row.ring_group_uuid" v-model="selectedItems" type="checkbox"
+                                name="action_box[]" :value="row.ring_group_uuid"
+                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-9"
                                 :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.ring_group_update, }"
                                 @click="page.props.auth.can.ring_group_update && handleEditButtonClick(row.ring_group_uuid)">
                                 <span class="flex flex-col lg:flex-row items-start gap-2">
                                     {{ row.ring_group_name }}
                                     <Badge v-if="row.ring_group_forward_enabled == 'true'" :text="'FWD'"
-                                            :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
-                                            ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
+                                        :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
+                                        ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
                                 </span>
                             </div>
                         </div>
@@ -95,54 +100,36 @@
 
                     <TableField class="px-2 py-2 text-sm text-gray-500">
                         <div class="flex flex-wrap gap-1">
-                            <ejs-tooltip
-                                v-for="destination in row.destinations"
-                                :key="destination.ring_group_destination_uuid"
-                                :content="
-                                    destination.suspended
+                            <ejs-tooltip v-for="destination in row.destinations"
+                                :key="destination.ring_group_destination_uuid" :content="destination.extension?.suspended
                                         ? 'Suspended Extension'
                                         : destination.destination_enabled === false
                                             ? 'Disabled Extension'
                                             : 'Active Extension'
-                                "
-                                position="TopCenter"
-                            >
-                                <Badge
-                                    :text="destination.destination_number"
-
-                                    :backgroundColor="
-                                        destination.suspended
-                                            ? 'bg-red-50'                  // Use the palest red
-                                            : destination.destination_enabled === false
-                                                ? 'bg-gray-50'              // Use the palest gray
-                                                : 'bg-blue-100'               // Soft blue for active
-                                    "
-
-                                    :textColor="
-                                        destination.suspended
+                                    " position="TopCenter">
+                                <Badge :text="destination.destination_number" :backgroundColor="destination.extension?.suspended
+                                        ? 'bg-red-50'                  // Use the palest red
+                                        : destination.destination_enabled === false
+                                            ? 'bg-gray-50'              // Use the palest gray
+                                            : 'bg-blue-100'               // Soft blue for active
+                                    " :textColor="destination.extension?.suspended
                                             ? 'text-red-500'               // Softer red text
                                             : destination.destination_enabled === false
                                                 ? 'text-gray-500'           // Lighter gray text
                                                 : 'text-blue-800'             // Darker blue for contrast
-                                    "
-
-                                    :ringColor="
-                                        destination.suspended
+                                        " :ringColor="destination.extension?.suspended
                                             ? 'ring-red-200/20'
                                             : destination.destination_enabled === false
                                                 ? 'ring-gray-300/20'
                                                 : 'ring-blue-200/20'
-                                    "
-
-                                    :class="[
+                                        " :class="[
                                         'px-2 py-1 text-xs font-semibold',
-                                        { 'opacity-75': destination.suspended || destination.destination_enabled === false }
-                                    ]"
-                                />
+                                        { 'opacity-75': destination.extension?.suspended || destination.destination_enabled === false }
+                                    ]" />
                             </ejs-tooltip>
                         </div>
                     </TableField>
-                    
+
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.ring_group_description" />
 
@@ -159,7 +146,8 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="page.props.auth.can.ring_group_destroy" :content="'Delete'" position='TopCenter' target="#delete_tooltip_target">
+                                <ejs-tooltip v-if="page.props.auth.can.ring_group_destroy" :content="'Delete'"
+                                    position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.ring_group_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
@@ -200,15 +188,18 @@
     <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showCreateModal" :header="'Create New Ring Group'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateRingGroupForm :options="itemOptions" @close="handleModalClose" @error="handleErrorResponse"  @success="showNotification" @refresh-data="handleSearchButtonClick" @open-edit-form="handleEditButtonClick"/>
+            <CreateRingGroupForm :options="itemOptions" @close="handleModalClose" @error="handleErrorResponse"
+                @success="showNotification" @refresh-data="handleSearchButtonClick"
+                @open-edit-form="handleEditButtonClick" />
         </template>
     </AddEditItemModal>
 
     <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showEditModal"
-        :header="'Update Ring Group Settings - ' + itemOptions?.ring_group?.ring_group_name"
-        :loading="loadingModal" @close="handleModalClose">
+        :header="'Update Ring Group Settings - ' + itemOptions?.ring_group?.ring_group_name" :loading="loadingModal"
+        @close="handleModalClose">
         <template #modal-body>
-            <UpdateRingGroupForm :options="itemOptions" @close="handleModalClose" @error="handleErrorResponse" @success="showNotification" @refresh-data="handleSearchButtonClick"/>
+            <UpdateRingGroupForm :options="itemOptions" @close="handleModalClose" @error="handleErrorResponse"
+                @success="showNotification" @refresh-data="handleSearchButtonClick" />
         </template>
     </AddEditItemModal>
 
@@ -234,7 +225,6 @@
 import { computed, onMounted, ref } from "vue";
 import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
-import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
@@ -246,7 +236,6 @@ import { registerLicense } from '@syncfusion/ej2-base';
 import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
-import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import CreateRingGroupForm from "./components/forms/CreateRingGroupForm.vue";
 import UpdateRingGroupForm from "./components/forms/UpdateRingGroupForm.vue";
@@ -273,14 +262,54 @@ const notificationShow = ref(null);
 const showDeleteConfirmationModal = ref(false);
 
 const props = defineProps({
-    data: Object,
     routes: Object,
     itemData: Object,
+});
+
+const data = ref({
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: 0,
+    to: 0,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
 });
 
 const filterData = ref({
     search: null,
 });
+
+onMounted(() => {
+    handleSearchButtonClick();
+})
+
+const handleSearchButtonClick = () => {
+    getData()
+};
+
+const getData = (page = 1) => {
+    loading.value = true;
+
+    axios.get(props.routes.data_route, {
+        params: {
+            filter: filterData.value,
+            page,
+        }
+    })
+        .then((response) => {
+            data.value = response.data;
+            // console.log(data.value);
+
+        }).catch((error) => {
+
+            handleErrorResponse(error);
+        }).finally(() => {
+            loading.value = false
+        })
+}
 
 const itemOptions = ref({})
 
@@ -296,12 +325,12 @@ const advancedActions = computed(() => [
 const handleAdvancedActionRequest = async (action, uuid) => {
     if (action === 'duplicate') {
         const url = props.routes.duplicate || '/ring-groups/duplicate';
-        
+
         try {
             loading.value = true;
             const response = await axios.post(url, { uuid: uuid });
             showNotification('success', response.data.messages);
-            handleSearchButtonClick(); 
+            handleSearchButtonClick();
         } catch (error) {
             handleErrorResponse(error);
         } finally {
@@ -411,25 +440,6 @@ const handleSelectAll = () => {
 };
 
 
-
-const handleSearchButtonClick = () => {
-    loading.value = true;
-    router.visit(props.routes.current_page, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-        ],
-        onSuccess: (page) => {
-            loading.value = false;
-            handleClearSelection();
-        }
-    });
-};
-
 const handleFiltersReset = () => {
     filterData.value.search = null;
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
@@ -439,17 +449,12 @@ const handleFiltersReset = () => {
 
 const renderRequestedPage = (url) => {
     loading.value = true;
-    router.visit(url, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
-    });
+    // Extract the page number from the url, e.g. "?page=3"
+    const urlObj = new URL(url, window.location.origin);
+    const pageParam = urlObj.searchParams.get("page") ?? 1;
+
+    // Now call getData with the page number
+    getData(pageParam);
 };
 
 
@@ -512,7 +517,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.ring_group_uuid);
+        selectedItems.value = data.value.data.map(item => item.ring_group_uuid);
     } else {
         selectedItems.value = [];
     }

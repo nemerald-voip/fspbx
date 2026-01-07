@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Domain;
 use App\Models\Devices;
 use App\Models\Extensions;
+use App\Models\RingGroups;
 use Laravel\Horizon\Horizon;
 use Laravel\Sanctum\Sanctum;
 use App\Models\EmergencyCall;
@@ -17,6 +18,7 @@ use App\Models\BusinessHourHoliday;
 use App\Models\EmergencyCallMember;
 use App\Models\DomainGroupRelations;
 use App\Observers\ExtensionObserver;
+use App\Observers\RingGroupObserver;
 use App\Services\RingotelApiService;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Http;
@@ -111,6 +113,7 @@ class AppServiceProvider extends ServiceProvider
         CallTranscriptionProviderConfig::observe(CallTranscriptionProviderConfigObserver::class);
         Domain::observe(DomainObserver::class);    
         DomainGroupRelations::observe(DomainGroupRelationsObserver::class);
+        RingGroups::observe(RingGroupObserver::class);
 
 
         Builder::macro('orWhereLike', function (string $column, string $search) {

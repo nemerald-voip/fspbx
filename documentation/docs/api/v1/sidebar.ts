@@ -80,6 +80,42 @@ const sidebar: SidebarsConfig = {
     },
     {
       type: "category",
+      label: "Ring Groups",
+      items: [
+        {
+          type: "doc",
+          id: "api/v1/list-ring-groups",
+          label: "List ring groups",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/create-a-ring-group",
+          label: "Create a ring group",
+          className: "api-method post",
+        },
+        {
+          type: "doc",
+          id: "api/v1/retrieve-a-ring-group",
+          label: "Retrieve a ring group",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/update-a-ring-group",
+          label: "Update a ring group",
+          className: "api-method patch",
+        },
+        {
+          type: "doc",
+          id: "api/v1/delete-a-ring-group",
+          label: "Delete a ring group",
+          className: "api-method delete",
+        },
+      ],
+    },
+    {
+      type: "category",
       label: "Voicemails",
       items: [
         {

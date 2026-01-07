@@ -82,12 +82,13 @@ class Voicemails extends Model
 
     /**
      * Get the extension voicemail belongs to.
+     * This gets you “all possible” extensions where ID matches voicemail id, regardless of domain.
+     * Further filtering by domain is REQUIRED to avoid false positives and PERFORMANCE ISSUES  
      */
-    public function extension($domain_uuid = null)
+    public function extension()
     {
-        $domain_uuid = $domain_uuid ?: session('domain_uuid');
-        return $this->hasOne(Extensions::class, 'extension', 'voicemail_id')
-            ->where('domain_uuid', $domain_uuid);
+        return $this->hasOne(Extensions::class, 'extension', 'voicemail_id');
+
     }
 
     /**
