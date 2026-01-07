@@ -1,0 +1,8 @@
+{
+  "label": "Upstream Firewall",
+  "position": 1,
+  "link": {
+    "type": "generated-index",
+    "description": "Some helpful links for configuring your firewalls"
+  }
+}
