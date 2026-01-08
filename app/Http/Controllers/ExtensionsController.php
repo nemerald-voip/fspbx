@@ -172,7 +172,7 @@ class ExtensionsController extends Controller
                 AllowedFilter::exact('enabled'), // Example: filter[enabled]=true
             ])
             // allow ?sort=-username or ?sort=add_date
-            ->allowedSorts(['extension'])
+            ->allowedSorts(['extension', 'outbound_caller_id_number', 'description'])
             ->defaultSort('extension')
             ->paginate($perPage);
 
