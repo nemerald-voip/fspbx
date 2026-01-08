@@ -156,7 +156,6 @@ class UpdateRingGroupRequest extends FormRequest
             $this->merge(['forward_external_target' => $v]);
         }
 
-        // delay defaulting (sequence/random/rollover)
         $input = $this->all();
         $strategy = $input['ring_group_strategy'] ?? null;
 

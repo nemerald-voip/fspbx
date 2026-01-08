@@ -1374,8 +1374,9 @@ if (!function_exists('getGroupedTimezones')) {
  * Helper function to build destination action based on routing option type.
  */
 if (!function_exists('buildDestinationAction')) {
-    function buildDestinationAction($option)
+    function buildDestinationAction($option, $domain_name = null)
     {
+        $domain_name = $domain_name ?? session('domain_name');
         switch ($option['type']) {
             case 'extensions':
             case 'ring_groups':
@@ -1388,25 +1389,25 @@ if (!function_exists('buildDestinationAction')) {
             case 'call_flows':
                 return [
                     'destination_app' => 'transfer',
-                    'destination_data' => $option['extension'] . ' XML ' . session('domain_name'),
+                    'destination_data' => $option['extension'] . ' XML ' . $domain_name,
                 ];
 
             case 'voicemails':
                 return [
                     'destination_app' => 'transfer',
-                    'destination_data' => '*99' . $option['extension'] . ' XML ' . session('domain_name'),
+                    'destination_data' => '*99' . $option['extension'] . ' XML ' . $domain_name,
                 ];
 
             case 'check_voicemail':
                 return [
                     'destination_app' => 'transfer',
-                    'destination_data' => '*98 XML ' . session('domain_name'),
+                    'destination_data' => '*98 XML ' . $domain_name,
                 ];
 
             case 'company_directory':
                 return [
                     'destination_app' => 'transfer',
-                    'destination_data' => '*411 XML ' . session('domain_name'),
+                    'destination_data' => '*411 XML ' . $domain_name,
                 ];
 
             case 'recordings':

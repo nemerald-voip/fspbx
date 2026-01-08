@@ -95,7 +95,7 @@ class Destinations extends Model
         if (empty($this->destination_actions)) {
             return null;
         }
-        $service = new \App\Services\CallRoutingOptionsService();
+        $service = new \App\Services\CallRoutingOptionsService($this->domain_uuid);
         return $service->reverseEngineerDestinationActions($this->destination_actions);
     }
 

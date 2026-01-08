@@ -39,13 +39,13 @@
                     Profiles
                 </a>
 
-                <button v-if="!showGlobal && page.props.auth.can.device_view_global" type="button"
+                <button v-if="!filterData.showGlobal && page.props.auth.can.device_view_global" type="button"
                     @click.prevent="handleShowGlobal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show global
                 </button>
 
-                <button v-if="showGlobal && page.props.auth.can.device_view_global" type="button"
+                <button v-if="filterData.showGlobal && page.props.auth.can.device_view_global" type="button"
                     @click.prevent="handleShowLocal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show local
@@ -68,13 +68,13 @@
                         :has-selected-items="selectedItems.length > 0" /> -->
                     <span class="pl-4">MAC Address</span>
                 </TableColumnHeader>
-                <TableColumnHeader v-if="showGlobal" header="Domain"
+                <TableColumnHeader v-if="filterData.showGlobal" header="Domain"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                 <TableColumnHeader header="Template"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Profile" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader v-if="!showGlobal" header="Assigned extension"
+                <TableColumnHeader v-if="!filterData.showGlobal" header="Assigned extension"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Description"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
@@ -124,7 +124,7 @@
                         </div>
                     </TableField>
 
-                    <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                    <TableField v-if="filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.domain?.domain_description">
                         <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft'
                             target="#domain_tooltip_target">
@@ -138,7 +138,7 @@
                         : (row.device_template || '—')" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.profile?.device_profile_name" />
-                    <TableField v-if="!showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField v-if="!filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <template #default>
                             <div v-if="row.lines?.length === 0">—</div>
                             <div v-else>
@@ -314,7 +314,6 @@
 import { computed, onMounted, ref } from "vue";
 import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
-import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
@@ -390,7 +389,6 @@ const filterData = ref({
     showGlobal: false,
 });
 
-const showGlobal = ref(props.showGlobal);
 const advancedActions = computed(() => [
     {
         category: "Advanced",
@@ -615,13 +613,11 @@ const handleRestart = (device_uuid) => {
 
 const handleShowGlobal = () => {
     filterData.value.showGlobal = true;
-    showGlobal.value = true;
     handleSearchButtonClick();
 }
 
 const handleShowLocal = () => {
     filterData.value.showGlobal = false;
-    showGlobal.value = false;
     handleSearchButtonClick();
 }
 

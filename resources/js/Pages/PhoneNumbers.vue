@@ -22,30 +22,26 @@
             </template>
 
             <template #action>
-                <button type="button" v-if="permissions.create"
-                    @click.prevent="handleCreateButtonClick()"
+                <button type="button" v-if="permissions.create" @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
-                <button v-if="permissions.upload" type="button"
-                    @click.prevent="handleImportButtonClick()"
+                <button v-if="permissions.upload" type="button" @click.prevent="handleImportButtonClick()"
                     class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     <DocumentArrowUpIcon class="h-5 w-5" aria-hidden="true" />
                     Import CSV
                 </button>
-                <button
-                  type="button"
-                  @click.prevent="exportPhoneNumbersCsv()"
-                  class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                  <DocumentArrowDownIcon class="h-5 w-5" aria-hidden="true" />
-                  Export CSV
+                <button type="button" @click.prevent="exportPhoneNumbersCsv()"
+                    class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    <DocumentArrowDownIcon class="h-5 w-5" aria-hidden="true" />
+                    Export CSV
                 </button>
-                <button v-if="permissions.view_global && !showGlobal" type="button"
+                <button v-if="permissions.view_global && !filterData.showGlobal" type="button"
                     @click.prevent="handleShowGlobal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show global
                 </button>
-                <button v-if="permissions.view_global && showGlobal" type="button"
+                <button v-if="permissions.view_global && filterData.showGlobal" type="button"
                     @click.prevent="handleShowLocal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show local
@@ -66,9 +62,9 @@
 
                     <span class="pl-4">Phone Number</span>
                 </TableColumnHeader>
-                <TableColumnHeader v-if="showGlobal" header="Domain"
+                <TableColumnHeader v-if="filterData.showGlobal" header="Domain"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader v-if="!showGlobal" header="Call Routing"
+                <TableColumnHeader v-if="!filterData.showGlobal" header="Call Routing"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="Description"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
@@ -102,8 +98,7 @@
                             <input v-if="row.destination_uuid" v-model="selectedItems" type="checkbox"
                                 name="action_box[]" :value="row.destination_uuid"
                                 class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="ml-4"
-                                :class="{ 'cursor-pointer hover:text-gray-900': permissions.update, }"
+                            <div class="ml-4" :class="{ 'cursor-pointer hover:text-gray-900': permissions.update, }"
                                 @click="permissions.update && handleEditRequest(row.destination_uuid)">
                                 {{ row.destination_number_formatted }}
                             </div>
@@ -118,7 +113,7 @@
                         </div>
                     </TableField>
 
-                    <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                    <TableField v-if="filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.domain?.domain_description || row.domain?.domain_name">
                         <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft'
                             target="#domain_tooltip_target">
@@ -128,7 +123,7 @@
                         </ejs-tooltip>
                     </TableField>
 
-                    <TableField v-if="!showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                    <TableField v-if="!filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <ul v-if="row.routing_options">
                             <li v-for="(action, index) in row.routing_options" :key="index">
                                 <span v-if="action && action.type && action.extension">
@@ -160,15 +155,15 @@
                     <TableField class="w-4 whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center space-x-2 whitespace-nowrap">
-                                <ejs-tooltip v-if="permissions.update"
-                                    :content="'Edit phone number'" position='TopLeft' target="#edit_tooltip_target">
+                                <ejs-tooltip v-if="permissions.update" :content="'Edit phone number'" position='TopLeft'
+                                    target="#edit_tooltip_target">
                                     <div id="edit_tooltip_target">
                                         <PencilSquareIcon @click="handleEditRequest(row.destination_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
-                                <ejs-tooltip v-if="permissions.destroy"
-                                    :content="'Remove phone number'" position='TopLeft' target="#delete_tooltip_target">
+                                <ejs-tooltip v-if="permissions.destroy" :content="'Remove phone number'"
+                                    position='TopLeft' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.destination_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
@@ -271,47 +266,89 @@ const showUploadModal = ref(false);
 const isUploadingFile = ref(null);
 let tooltipCopyContent = ref('Copy to Clipboard');
 
+const data = ref({
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: 0,
+    to: 0,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
+});
+
 const props = defineProps({
-    data: Object,
-    showGlobal: Boolean,
     routes: Object,
     permissions: Object,
 });
 
-// console.log(props.data)
+onMounted(() => {
+    handleSearchButtonClick();
+})
+
+const handleSearchButtonClick = () => {
+    getData()
+};
+
+const getData = (page = 1) => {
+    loading.value = true;
+
+    axios.get(props.routes.data_route, {
+        params: {
+            filter: filterData.value,
+            page,
+        }
+    })
+        .then((response) => {
+            data.value = response.data;
+            // console.log(data.value);
+
+        }).catch((error) => {
+
+            handleErrorResponse(error);
+        }).finally(() => {
+            loading.value = false
+        })
+}
 
 const filterData = ref({
     search: null,
-    showGlobal: props.showGlobal,
+    showGlobal: false,
 });
+
+const renderRequestedPage = (url) => {
+    loading.value = true;
+    // Extract the page number from the url, e.g. "?page=3"
+    const urlObj = new URL(url, window.location.origin);
+    const pageParam = urlObj.searchParams.get("page") ?? 1;
+
+    // Now call getData with the page number
+    getData(pageParam);
+};
+
 
 const itemOptions = ref({})
 
-const showGlobal = ref(props.showGlobal);
-
-// --- Export CSV (respects current filters/sort on server if your Export uses request()) ---
-// --- Export CSV (GET to match Route::get('/phone-numbers-export', ...)) ---
 const exportPhoneNumbersCsv = () => {
-  axios.get(props.routes.export, {
-    params: {
-      // only needed if your export() reads filters from the request
-      filter: filterData.value,
-      // items: selectedItems.value, // enable later if you support "export selected"
-    },
-    responseType: 'blob',
-  })
-  .then((response) => {
-    const blob = new Blob([response.data], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'phone_numbers.csv';
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
-  })
-  .catch(handleErrorResponse);
+    axios.get(props.routes.export, {
+        params: {
+            filter: filterData.value,
+        },
+        responseType: 'blob',
+    })
+        .then((response) => {
+            const blob = new Blob([response.data], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'phone_numbers.csv';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        })
+        .catch(handleErrorResponse);
 };
 
 // Computed property for bulk actions based on permissions
@@ -335,8 +372,6 @@ const bulkActions = computed(() => {
     return actions;
 });
 
-onMounted(() => {
-});
 
 const handleEditRequest = (itemUuid) => {
     showUpdateModal.value = true
@@ -488,60 +523,20 @@ const handleCopyToClipboard = (text) => {
 
 const handleShowGlobal = () => {
     filterData.value.showGlobal = true;
-    showGlobal.value = true;
     handleSearchButtonClick();
 }
 
 const handleShowLocal = () => {
     filterData.value.showGlobal = false;
-    showGlobal.value = false;
     handleSearchButtonClick();
 }
 
-const handleSearchButtonClick = () => {
-    // Normalize phone-number-style searches only if no letters present
-    filterData.value.search = normalizeSearchQuery(filterData.value.search);
-
-    loading.value = true;
-
-    router.visit(props.routes.current_page, {
-        data: {
-            filter: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-            "showGlobal",
-        ],
-        onSuccess: () => {
-            loading.value = false;
-            handleClearSelection();
-        }
-    });
-};
 
 const handleFiltersReset = () => {
     filterData.value.search = null;
-    // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();
 }
 
-
-const renderRequestedPage = (url) => {
-    loading.value = true;
-    router.visit(url, {
-        data: {
-            filter: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
-    });
-};
 
 const getItemOptions = (itemUuid = null) => {
     const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload

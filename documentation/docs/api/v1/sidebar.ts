@@ -80,6 +80,42 @@ const sidebar: SidebarsConfig = {
     },
     {
       type: "category",
+      label: "Phone Numbers",
+      items: [
+        {
+          type: "doc",
+          id: "api/v1/list-phone-numbers",
+          label: "List phone numbers",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/create-phone-number",
+          label: "Create phone number",
+          className: "api-method post",
+        },
+        {
+          type: "doc",
+          id: "api/v1/retrieve-phone-number",
+          label: "Retrieve  phone number",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/update-phone-number",
+          label: "Update phone number",
+          className: "api-method patch",
+        },
+        {
+          type: "doc",
+          id: "api/v1/delete-a-phone-number",
+          label: "Delete a phone number",
+          className: "api-method delete",
+        },
+      ],
+    },
+    {
+      type: "category",
       label: "Ring Groups",
       items: [
         {

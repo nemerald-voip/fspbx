@@ -68,10 +68,22 @@ class RingGroupService
         }
     }
 
+    private function toBool(mixed $value, bool $default = false): bool
+    {
+        // Handles: true/false, "true"/"false", 1/0, "1"/"0", "on"/"off", etc.
+        return filter_var($value ?? $default, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    private function boolToString(mixed $value, bool $default = false): string
+    {
+        return $this->toBool($value, $default) ? 'true' : 'false';
+    }
+
     public function buildUpdateData(array $validated, $domain_name): array
     {
         $updateData = $validated;
 
+        // --- Derived fields ---
         $updateData['ring_group_call_timeout'] = $this->calculateTimeout($validated);
 
         if (array_key_exists('timeout_action', $validated)) {
@@ -80,17 +92,33 @@ class RingGroupService
             $updateData['ring_group_timeout_data'] = $timeout['data'] ?? null;
         }
 
-        $forwardEnabled = ($validated['ring_group_forward_enabled'] ?? 'false') === 'true';
+        // --- Normalize booleans for logic (but store as strings) ---
+        $forwardEnabledBool = $this->toBool($validated['ring_group_forward_enabled'] ?? false);
 
-        if ($forwardEnabled && array_key_exists('forward_action', $validated)) {
+        // Convert only if provided (PATCH-safe)
+        foreach (
+            [
+                'ring_group_forward_enabled',
+                'ring_group_call_forward_enabled',
+                'ring_group_follow_me_enabled',
+            ] as $field
+        ) {
+            if (array_key_exists($field, $validated)) {
+                $updateData[$field] = $this->boolToString($validated[$field]);
+            }
+        }
+
+        // --- Conditional forward destination ---
+        if ($forwardEnabledBool && array_key_exists('forward_action', $validated)) {
             $updateData['ring_group_forward_destination'] = $this->buildForwardDestinationTarget($validated);
         }
 
+        // --- Missed call notifications  ---
         if (array_key_exists('missed_call_notifications', $validated)) {
-            $missedEnabled = ($validated['missed_call_notifications'] === true);
+            $missedEnabledBool = $this->toBool($validated['missed_call_notifications']);
 
-            $updateData['ring_group_missed_call_app']  = $missedEnabled ? 'email' : null;
-            $updateData['ring_group_missed_call_data'] = $missedEnabled
+            $updateData['ring_group_missed_call_app']  = $missedEnabledBool ? 'email' : null;
+            $updateData['ring_group_missed_call_data'] = $missedEnabledBool
                 ? ($validated['ring_group_missed_call_data'] ?? null)
                 : null;
         }
@@ -98,12 +126,13 @@ class RingGroupService
         return $updateData;
     }
 
+
     private function calculateTimeout(array $validated): int
     {
-        $enabledMembers = array_filter($validated['members'] ?? [], fn ($m) => !empty($m['enabled']));
+        $enabledMembers = array_filter($validated['members'] ?? [], fn($m) => !empty($m['enabled']));
 
         if (in_array($validated['ring_group_strategy'] ?? '', ['random', 'sequence', 'rollover'], true)) {
-            return array_reduce($enabledMembers, fn ($carry, $m) => $carry + (int) ($m['timeout'] ?? 0), 0);
+            return array_reduce($enabledMembers, fn($carry, $m) => $carry + (int) ($m['timeout'] ?? 0), 0);
         }
 
         $max = 0;

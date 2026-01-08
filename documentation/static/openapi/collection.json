@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "FS PBX",
-        "_postman_id": "9722a93b-0f83-4c1e-b7df-ff0dfdb675c3",
+        "_postman_id": "4215b068-dd9d-4792-bc77-16253e96b8b5",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -660,6 +660,417 @@
             ]
         },
         {
+            "name": "Phone Numbers",
+            "description": "",
+            "item": [
+                {
+                    "name": "List phone numbers",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/phone-numbers",
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "50",
+                                    "description": "Optional. Number of results to return (min 1, max 100). Defaults to 50.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "starting_after",
+                                    "value": "c0ec8113-aa15-40ac-8437-47185dd9dcf4",
+                                    "description": "Optional. Return results after this destination UUID (cursor).",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/phone-numbers?limit=50&starting_after=c0ec8113-aa15-40ac-8437-47185dd9dcf4",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns phone numbers for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `destination_domain` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 50.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `destination_uuid` from the previous response.\n\nExamples:\n- First page: `GET \/api\/v1\/domains\/{domain_uuid}\/phone-numbers`\n- Next page:  `GET \/api\/v1\/domains\/{domain_uuid}\/phone-numbers?starting_after={destination_uuid}`\n- Custom size: `GET \/api\/v1\/domains\/{domain_uuid}\/phone-numbers?limit=50`"
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"object\": \"list\",\n  \"url\": \"\/api\/v1\/domains\/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\/phone-numbers\",\n  \"has_more\": true,\n  \"data\": [\n    {\n      \"destination_uuid\": \"c0ec8113-aa15-40ac-8437-47185dd9dcf4\",\n      \"object\": \"phone_number\",\n      \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n\n      \"destination_prefix\": \"1\",\n      \"destination_number\": \"2135551212\",\n      \"destination_enabled\": true,\n      \"destination_description\": null\n    }\n  ]\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid starting_after UUID.\",\"code\":\"invalid_request\",\"param\":\"starting_after\"}}",
+                            "name": "Invalid starting_after UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Retrieve  phone number",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/phone-numbers\/:destination_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/phone-numbers\/:destination_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "7d58342b-2b29-4dcf-92d6-e9a9e002a4e5",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "destination_uuid",
+                                    "key": "destination_uuid",
+                                    "value": "ad45f53d-405b-48bc-aac2-d51b2b3b3e55",
+                                    "description": "The destination UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns a single phone number for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `destination_view` permission.\n\nExample:\n- `GET \/api\/v1\/domains\/{domain_uuid}\/phone-numbers\/{destination_uuid}`"
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"destination_uuid\": \"ad45f53d-405b-48bc-aac2-d51b2b3b3e55\",\n  \"object\": \"phone_number\",\n  \"domain_uuid\": \"7d58342b-2b29-4dcf-92d6-e9a9e002a4e5\",\n  \"destination_number\": \"2137577900\",\n  \"destination_prefix\": \"1\",\n  \"destination_enabled\": true,\n  \"destination_description\": null,\n  \"fax_uuid\": null,\n  \"destination_record\": true,\n  \"destination_type_fax\": null,\n  \"destination_hold_music\": null,\n  \"destination_distinctive_ring\": null,\n  \"destination_cid_name_prefix\": null,\n  \"destination_accountcode\": null,\n  \"routing_options\": [\n    {\n      \"type\": \"extensions\",\n      \"extension\": \"100\",\n      \"option\": \"2304420c-9ec2-469c-a7d0-f671a6176f36\",\n      \"name\": \"100 - Alice Johnson\"\n    }\n  ]\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid destination UUID.\",\"code\":\"invalid_request\",\"param\":\"destination_uuid\"}}",
+                            "name": "Invalid destination UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"error\":{\"type\":\"permission_error\",\"message\":\"You do not have permission to access this resource.\",\"code\":\"forbidden\"}}",
+                            "name": "Forbidden"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Phone number not found.\",\"code\":\"resource_missing\",\"param\":\"destination_uuid\"}}",
+                            "name": "Phone number not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Create phone number",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/phone-numbers",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/phone-numbers",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "7d58342b-2b29-4dcf-92d6-e9a9e002a4e5",
+                                    "description": "The domain UUID."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"destination_number\":\"5023883937\",\"destination_prefix\":\"1\",\"destination_description\":\"Main inbound line\",\"destination_record\":false,\"destination_type_fax\":false,\"destination_distinctive_ring\":\"ring4\",\"destination_cid_name_prefix\":\"Sales\",\"destination_accountcode\":\"23435456\",\"fax_uuid\":\"9a458dfd-a989-4e77-ab1d-711f5ecd35cb\",\"destination_enabled\":false,\"routing_options\":[{\"type\":\"ring_groups\",\"extension\":\"9000\"}]}"
+                        },
+                        "description": "Creates a phone number in the specified domain.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `destination_add` permission.\n\nExample:\n- `POST \/api\/v1\/domains\/{domain_uuid}\/phone-numbers`"
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 201,
+                            "body": "{\n  \"destination_uuid\": \"ad45f53d-405b-48bc-aac2-d51b2b3b3e55\",\n  \"object\": \"phone_number\",\n  \"domain_uuid\": \"7d58342b-2b29-4dcf-92d6-e9a9e002a4e5\",\n  \"destination_number\": \"2137577900\",\n  \"destination_prefix\": \"1\",\n  \"destination_enabled\": true,\n  \"destination_description\": null,\n  \"fax_uuid\": null,\n  \"destination_record\": true,\n  \"destination_type_fax\": null,\n  \"destination_hold_music\": null,\n  \"destination_distinctive_ring\": null,\n  \"destination_cid_name_prefix\": null,\n  \"destination_accountcode\": null,\n  \"routing_options\": [\n    {\n      \"type\": \"extensions\",\n      \"extension\": \"100\",\n      \"option\": \"2304420c-9ec2-469c-a7d0-f671a6176f36\",\n      \"name\": \"100 - Alice Johnson\"\n    }\n  ]\n}",
+                            "name": "Created"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"error\":{\"type\":\"permission_error\",\"message\":\"You do not have permission to access this resource.\",\"code\":\"forbidden\"}}",
+                            "name": "Forbidden"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"errors\":{\"destination_number\":[\"The destination number has already been taken.\"]}}",
+                            "name": "Validation error"
+                        }
+                    ]
+                },
+                {
+                    "name": "Update phone number",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/phone-numbers\/:destination_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/phone-numbers\/:destination_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "7d58342b-2b29-4dcf-92d6-e9a9e002a4e5",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "destination_uuid",
+                                    "key": "destination_uuid",
+                                    "value": "ad45f53d-405b-48bc-aac2-d51b2b3b3e55",
+                                    "description": "The destination UUID."
+                                }
+                            ]
+                        },
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\"destination_number\":\"5023883937\",\"destination_prefix\":\"1\",\"destination_description\":\"Main inbound line\",\"destination_record\":false,\"destination_type_fax\":false,\"destination_distinctive_ring\":\"ring4\",\"destination_cid_name_prefix\":\"Sales\",\"destination_accountcode\":\"23435456\",\"fax_uuid\":\"9a458dfd-a989-4e77-ab1d-711f5ecd35cb\",\"destination_enabled\":false,\"routing_options\":[{\"type\":\"ring_groups\",\"extension\":\"9000\"}]}"
+                        },
+                        "description": "Updates a phone number within the specified domain.\n\nAccess rules:\n- Caller must be authenticated.\n- Caller must have access to the target domain (domain scope via middleware).\n- Caller must have the `destination_edit` permission.\n\nNotes:\n- This endpoint is PATCH-like: only provided fields are updated."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"destination_uuid\": \"ad45f53d-405b-48bc-aac2-d51b2b3b3e55\",\n  \"object\": \"phone_number\",\n  \"domain_uuid\": \"7d58342b-2b29-4dcf-92d6-e9a9e002a4e5\",\n  \"destination_number\": \"2137577900\",\n  \"destination_prefix\": \"1\",\n  \"destination_enabled\": true,\n  \"destination_description\": null,\n  \"fax_uuid\": null,\n  \"destination_record\": true,\n  \"destination_type_fax\": null,\n  \"destination_hold_music\": null,\n  \"destination_distinctive_ring\": null,\n  \"destination_cid_name_prefix\": null,\n  \"destination_accountcode\": null,\n  \"routing_options\": [\n    {\n      \"type\": \"extensions\",\n      \"extension\": \"100\",\n      \"option\": \"2304420c-9ec2-469c-a7d0-f671a6176f36\",\n      \"name\": \"100 - Alice Johnson\"\n    }\n  ]\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid destination UUID.\",\"code\":\"invalid_request\",\"param\":\"destination_uuid\"}}",
+                            "name": "Invalid destination UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Phone number not found.\",\"code\":\"resource_missing\",\"param\":\"destination_uuid\"}}",
+                            "name": "Phone number not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 422,
+                            "body": "{\"errors\":{\"destination_number\":[\"The destination number has already been taken.\"]}}",
+                            "name": "Validation error"
+                        },
+                        {
+                            "header": [],
+                            "code": 500,
+                            "body": "{\"error\":{\"type\":\"api_error\",\"message\":\"Internal server error.\",\"code\":\"internal_error\"}}",
+                            "name": "Internal server error"
+                        }
+                    ]
+                },
+                {
+                    "name": "Delete a phone number",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/phone-numbers\/:destination_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/phone-numbers\/:destination_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "7d58342b-2b29-4dcf-92d6-e9a9e002a4e5",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "destination_uuid",
+                                    "key": "destination_uuid",
+                                    "value": "ad45f53d-405b-48bc-aac2-d51b2b3b3e55",
+                                    "description": "The destination UUID."
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Deletes a phone number within the specified domain."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"object\":\"phone_number\",\"uuid\":\"ad45f53d-405b-48bc-aac2-d51b2b3b3e55\",\"deleted\":true}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid destination UUID.\",\"code\":\"invalid_request\",\"param\":\"destination_uuid\"}}",
+                            "name": "Invalid destination UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Phone number not found.\",\"code\":\"resource_missing\",\"param\":\"destination_uuid\"}}",
+                            "name": "Phone number not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 500,
+                            "body": "{\"error\":{\"type\":\"api_error\",\"message\":\"Internal server error.\",\"code\":\"internal_error\"}}",
+                            "name": "Internal server error"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "name": "Ring Groups",
             "description": "",
             "item": [
@@ -775,7 +1186,7 @@
                             }
                         ],
                         "body": null,
-                        "description": "Returns a single ring group for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `ring_group_view` permission."
+                        "description": "Returns a single ring group for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `ring_group_domain` permission."
                     },
                     "response": [
                         {

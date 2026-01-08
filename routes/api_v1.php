@@ -5,8 +5,7 @@ use App\Http\Controllers\Api\V1\DomainController;
 use App\Http\Controllers\Api\V1\ExtensionController;
 use App\Http\Controllers\Api\V1\RingGroupController;
 use App\Http\Controllers\Api\V1\VoicemailController;
-
-
+use App\Http\Controllers\Api\V1\PhoneNumberController;
 
 /*
 |--------------------------------------------------------------------------
@@ -96,5 +95,25 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
         ->middleware('user.authorize:ring_group_edit');
 
     Route::delete('/domains/{domain_uuid}/ring-groups/{ring_group_uuid}', [RingGroupController::class, 'destroy'])
+        ->middleware('user.authorize:ring_group_delete');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Phone Numbers (domain-scoped)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/domains/{domain_uuid}/phone-numbers', [PhoneNumberController::class, 'index'])
+        ->middleware('user.authorize:ring_group_domain');
+
+    Route::get('/domains/{domain_uuid}/phone-numbers/{destination_uuid}', [PhoneNumberController::class, 'show'])
+        ->middleware('user.authorize:ring_group_view');
+
+    Route::post('/domains/{domain_uuid}/phone-numbers', [PhoneNumberController::class, 'store'])
+        ->middleware('user.authorize:ring_group_add');
+
+    Route::patch('/domains/{domain_uuid}/phone-numbers/{destination_uuid}', [PhoneNumberController::class, 'update'])
+        ->middleware('user.authorize:ring_group_edit');
+
+    Route::delete('/domains/{domain_uuid}/phone-numbers/{destination_uuid}', [PhoneNumberController::class, 'destroy'])
         ->middleware('user.authorize:ring_group_delete');
 });

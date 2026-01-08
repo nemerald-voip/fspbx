@@ -2001,6 +2001,1117 @@ paths:
         required: true
         schema:
           type: string
+  '/api/v1/domains/{domain_uuid}/phone-numbers':
+    get:
+      summary: 'List phone numbers'
+      operationId: listPhoneNumbers
+      description: "Returns phone numbers for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `destination_domain` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 50.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `destination_uuid` from the previous response.\n\nExamples:\n- First page: `GET /api/v1/domains/{domain_uuid}/phone-numbers`\n- Next page:  `GET /api/v1/domains/{domain_uuid}/phone-numbers?starting_after={destination_uuid}`\n- Custom size: `GET /api/v1/domains/{domain_uuid}/phone-numbers?limit=50`"
+      parameters:
+        -
+          in: query
+          name: limit
+          description: 'Optional. Number of results to return (min 1, max 100). Defaults to 50.'
+          example: 50
+          required: false
+          schema:
+            type: integer
+            description: 'Optional. Number of results to return (min 1, max 100). Defaults to 50.'
+            example: 50
+        -
+          in: query
+          name: starting_after
+          description: 'Optional. Return results after this destination UUID (cursor).'
+          example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+          required: false
+          schema:
+            type: string
+            description: 'Optional. Return results after this destination UUID (cursor).'
+            example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  object: list
+                  url: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/phone-numbers
+                  has_more: true
+                  data:
+                    -
+                      destination_uuid: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                      object: phone_number
+                      domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                      destination_prefix: '1'
+                      destination_number: '2135551212'
+                      destination_enabled: true
+                      destination_description: null
+                properties:
+                  object:
+                    type: string
+                    example: list
+                  url:
+                    type: string
+                    example: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/phone-numbers
+                  has_more:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    example:
+                      -
+                        destination_uuid: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                        object: phone_number
+                        domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                        destination_prefix: '1'
+                        destination_number: '2135551212'
+                        destination_enabled: true
+                        destination_description: null
+                    items:
+                      type: object
+                      properties:
+                        destination_uuid:
+                          type: string
+                          example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                        object:
+                          type: string
+                          example: phone_number
+                        domain_uuid:
+                          type: string
+                          example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                        destination_prefix:
+                          type: string
+                          example: '1'
+                        destination_number:
+                          type: string
+                          example: '2135551212'
+                        destination_enabled:
+                          type: boolean
+                          example: true
+                        destination_description:
+                          type: string
+                          example: null
+        400:
+          description: 'Invalid starting_after UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid starting_after UUID.'
+                    code: invalid_request
+                    param: starting_after
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid starting_after UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: starting_after
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        404:
+          description: 'Domain not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Domain not found.'
+                    code: resource_missing
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Domain not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: domain_uuid
+      tags:
+        - 'Phone Numbers'
+    post:
+      summary: 'Create phone number'
+      operationId: createPhoneNumber
+      description: "Creates a phone number in the specified domain.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `destination_add` permission.\n\nExample:\n- `POST /api/v1/domains/{domain_uuid}/phone-numbers`"
+      parameters: []
+      responses:
+        201:
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  destination_uuid: ad45f53d-405b-48bc-aac2-d51b2b3b3e55
+                  object: phone_number
+                  domain_uuid: 7d58342b-2b29-4dcf-92d6-e9a9e002a4e5
+                  destination_number: '2137577900'
+                  destination_prefix: '1'
+                  destination_enabled: true
+                  destination_description: null
+                  fax_uuid: null
+                  destination_record: true
+                  destination_type_fax: null
+                  destination_hold_music: null
+                  destination_distinctive_ring: null
+                  destination_cid_name_prefix: null
+                  destination_accountcode: null
+                  routing_options:
+                    -
+                      type: extensions
+                      extension: '100'
+                      option: 2304420c-9ec2-469c-a7d0-f671a6176f36
+                      name: '100 - Alice Johnson'
+                properties:
+                  destination_uuid:
+                    type: string
+                    example: ad45f53d-405b-48bc-aac2-d51b2b3b3e55
+                  object:
+                    type: string
+                    example: phone_number
+                  domain_uuid:
+                    type: string
+                    example: 7d58342b-2b29-4dcf-92d6-e9a9e002a4e5
+                  destination_number:
+                    type: string
+                    example: '2137577900'
+                  destination_prefix:
+                    type: string
+                    example: '1'
+                  destination_enabled:
+                    type: boolean
+                    example: true
+                  destination_description:
+                    type: string
+                    example: null
+                  fax_uuid:
+                    type: string
+                    example: null
+                  destination_record:
+                    type: boolean
+                    example: true
+                  destination_type_fax:
+                    type: string
+                    example: null
+                  destination_hold_music:
+                    type: string
+                    example: null
+                  destination_distinctive_ring:
+                    type: string
+                    example: null
+                  destination_cid_name_prefix:
+                    type: string
+                    example: null
+                  destination_accountcode:
+                    type: string
+                    example: null
+                  routing_options:
+                    type: array
+                    example:
+                      -
+                        type: extensions
+                        extension: '100'
+                        option: 2304420c-9ec2-469c-a7d0-f671a6176f36
+                        name: '100 - Alice Johnson'
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          example: extensions
+                        extension:
+                          type: string
+                          example: '100'
+                        option:
+                          type: string
+                          example: 2304420c-9ec2-469c-a7d0-f671a6176f36
+                        name:
+                          type: string
+                          example: '100 - Alice Johnson'
+        400:
+          description: 'Invalid domain UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid domain UUID.'
+                    code: invalid_request
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid domain UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: domain_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: permission_error
+                    message: 'You do not have permission to access this resource.'
+                    code: forbidden
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: permission_error
+                      message:
+                        type: string
+                        example: 'You do not have permission to access this resource.'
+                      code:
+                        type: string
+                        example: forbidden
+        404:
+          description: 'Domain not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Domain not found.'
+                    code: resource_missing
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Domain not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: domain_uuid
+        422:
+          description: 'Validation error'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  errors:
+                    destination_number:
+                      - 'The destination number has already been taken.'
+                properties:
+                  errors:
+                    type: object
+                    properties:
+                      destination_number:
+                        type: array
+                        example:
+                          - 'The destination number has already been taken.'
+                        items:
+                          type: string
+      tags:
+        - 'Phone Numbers'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                destination_number:
+                  type: string
+                  description: 'Phone number. Digits and + only. Must match the regex /^\+?\d+$/.'
+                  example: '5023883937'
+                destination_prefix:
+                  type: string
+                  description: 'Optional country prefix. Must not be greater than 5 characters.'
+                  example: '1'
+                destination_description:
+                  type: string
+                  description: 'Optional label/description. Must not be greater than 150 characters.'
+                  example: 'Main inbound line'
+                destination_record:
+                  type: boolean
+                  description: 'Whether to record calls for this phone number.'
+                  example: false
+                destination_type_fax:
+                  type: boolean
+                  description: 'Activate this setting if calls will be routed directly to a physical fax machine. This ensures proper handling of fax transmissions.'
+                  example: false
+                destination_hold_music:
+                  type: string
+                  description: 'Optional hold music value. Must not be greater than 120 characters.'
+                  example: null
+                destination_distinctive_ring:
+                  type: string
+                  description: 'Optional distinctive ring value. Must not be greater than 30 characters.'
+                  example: ring4
+                destination_cid_name_prefix:
+                  type: string
+                  description: 'Optional caller ID name prefix. Must not be greater than 20 characters.'
+                  example: Sales
+                destination_accountcode:
+                  type: string
+                  description: 'Optional account code. Must not be greater than 50 characters.'
+                  example: '23435456'
+                fax_uuid:
+                  type: string
+                  description: 'Optional fax UUID. Helps with fax detection. Must be a valid UUID.'
+                  example: 9a458dfd-a989-4e77-ab1d-711f5ecd35cb
+                destination_enabled:
+                  type: boolean
+                  description: 'Whether the phone number is enabled. Default: true.'
+                  example: false
+                routing_options:
+                  type: array
+                  description: 'Optional call routing options.'
+                  example:
+                    -
+                      type: ring_groups
+                      extension: '9000'
+                  items:
+                    type: string
+              required:
+                - destination_number
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/phone-numbers/{destination_uuid}':
+    get:
+      summary: 'Retrieve  phone number'
+      operationId: retrievePhoneNumber
+      description: "Returns a single phone number for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `destination_view` permission.\n\nExample:\n- `GET /api/v1/domains/{domain_uuid}/phone-numbers/{destination_uuid}`"
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  destination_uuid: ad45f53d-405b-48bc-aac2-d51b2b3b3e55
+                  object: phone_number
+                  domain_uuid: 7d58342b-2b29-4dcf-92d6-e9a9e002a4e5
+                  destination_number: '2137577900'
+                  destination_prefix: '1'
+                  destination_enabled: true
+                  destination_description: null
+                  fax_uuid: null
+                  destination_record: true
+                  destination_type_fax: null
+                  destination_hold_music: null
+                  destination_distinctive_ring: null
+                  destination_cid_name_prefix: null
+                  destination_accountcode: null
+                  routing_options:
+                    -
+                      type: extensions
+                      extension: '100'
+                      option: 2304420c-9ec2-469c-a7d0-f671a6176f36
+                      name: '100 - Alice Johnson'
+                properties:
+                  destination_uuid:
+                    type: string
+                    example: ad45f53d-405b-48bc-aac2-d51b2b3b3e55
+                  object:
+                    type: string
+                    example: phone_number
+                  domain_uuid:
+                    type: string
+                    example: 7d58342b-2b29-4dcf-92d6-e9a9e002a4e5
+                  destination_number:
+                    type: string
+                    example: '2137577900'
+                  destination_prefix:
+                    type: string
+                    example: '1'
+                  destination_enabled:
+                    type: boolean
+                    example: true
+                  destination_description:
+                    type: string
+                    example: null
+                  fax_uuid:
+                    type: string
+                    example: null
+                  destination_record:
+                    type: boolean
+                    example: true
+                  destination_type_fax:
+                    type: string
+                    example: null
+                  destination_hold_music:
+                    type: string
+                    example: null
+                  destination_distinctive_ring:
+                    type: string
+                    example: null
+                  destination_cid_name_prefix:
+                    type: string
+                    example: null
+                  destination_accountcode:
+                    type: string
+                    example: null
+                  routing_options:
+                    type: array
+                    example:
+                      -
+                        type: extensions
+                        extension: '100'
+                        option: 2304420c-9ec2-469c-a7d0-f671a6176f36
+                        name: '100 - Alice Johnson'
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          example: extensions
+                        extension:
+                          type: string
+                          example: '100'
+                        option:
+                          type: string
+                          example: 2304420c-9ec2-469c-a7d0-f671a6176f36
+                        name:
+                          type: string
+                          example: '100 - Alice Johnson'
+        400:
+          description: 'Invalid destination UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid destination UUID.'
+                    code: invalid_request
+                    param: destination_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid destination UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: destination_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: permission_error
+                    message: 'You do not have permission to access this resource.'
+                    code: forbidden
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: permission_error
+                      message:
+                        type: string
+                        example: 'You do not have permission to access this resource.'
+                      code:
+                        type: string
+                        example: forbidden
+        404:
+          description: 'Phone number not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Phone number not found.'
+                    code: resource_missing
+                    param: destination_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Phone number not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: destination_uuid
+      tags:
+        - 'Phone Numbers'
+    patch:
+      summary: 'Update phone number'
+      operationId: updatePhoneNumber
+      description: "Updates a phone number within the specified domain.\n\nAccess rules:\n- Caller must be authenticated.\n- Caller must have access to the target domain (domain scope via middleware).\n- Caller must have the `destination_edit` permission.\n\nNotes:\n- This endpoint is PATCH-like: only provided fields are updated."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  destination_uuid: ad45f53d-405b-48bc-aac2-d51b2b3b3e55
+                  object: phone_number
+                  domain_uuid: 7d58342b-2b29-4dcf-92d6-e9a9e002a4e5
+                  destination_number: '2137577900'
+                  destination_prefix: '1'
+                  destination_enabled: true
+                  destination_description: null
+                  fax_uuid: null
+                  destination_record: true
+                  destination_type_fax: null
+                  destination_hold_music: null
+                  destination_distinctive_ring: null
+                  destination_cid_name_prefix: null
+                  destination_accountcode: null
+                  routing_options:
+                    -
+                      type: extensions
+                      extension: '100'
+                      option: 2304420c-9ec2-469c-a7d0-f671a6176f36
+                      name: '100 - Alice Johnson'
+                properties:
+                  destination_uuid:
+                    type: string
+                    example: ad45f53d-405b-48bc-aac2-d51b2b3b3e55
+                  object:
+                    type: string
+                    example: phone_number
+                  domain_uuid:
+                    type: string
+                    example: 7d58342b-2b29-4dcf-92d6-e9a9e002a4e5
+                  destination_number:
+                    type: string
+                    example: '2137577900'
+                  destination_prefix:
+                    type: string
+                    example: '1'
+                  destination_enabled:
+                    type: boolean
+                    example: true
+                  destination_description:
+                    type: string
+                    example: null
+                  fax_uuid:
+                    type: string
+                    example: null
+                  destination_record:
+                    type: boolean
+                    example: true
+                  destination_type_fax:
+                    type: string
+                    example: null
+                  destination_hold_music:
+                    type: string
+                    example: null
+                  destination_distinctive_ring:
+                    type: string
+                    example: null
+                  destination_cid_name_prefix:
+                    type: string
+                    example: null
+                  destination_accountcode:
+                    type: string
+                    example: null
+                  routing_options:
+                    type: array
+                    example:
+                      -
+                        type: extensions
+                        extension: '100'
+                        option: 2304420c-9ec2-469c-a7d0-f671a6176f36
+                        name: '100 - Alice Johnson'
+                    items:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          example: extensions
+                        extension:
+                          type: string
+                          example: '100'
+                        option:
+                          type: string
+                          example: 2304420c-9ec2-469c-a7d0-f671a6176f36
+                        name:
+                          type: string
+                          example: '100 - Alice Johnson'
+        400:
+          description: 'Invalid destination UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid destination UUID.'
+                    code: invalid_request
+                    param: destination_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid destination UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: destination_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        404:
+          description: 'Phone number not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Phone number not found.'
+                    code: resource_missing
+                    param: destination_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Phone number not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: destination_uuid
+        422:
+          description: 'Validation error'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  errors:
+                    destination_number:
+                      - 'The destination number has already been taken.'
+                properties:
+                  errors:
+                    type: object
+                    properties:
+                      destination_number:
+                        type: array
+                        example:
+                          - 'The destination number has already been taken.'
+                        items:
+                          type: string
+        500:
+          description: 'Internal server error'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: api_error
+                    message: 'Internal server error.'
+                    code: internal_error
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: api_error
+                      message:
+                        type: string
+                        example: 'Internal server error.'
+                      code:
+                        type: string
+                        example: internal_error
+      tags:
+        - 'Phone Numbers'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                destination_number:
+                  type: string
+                  description: 'Phone number. Digits and + only. Must match the regex /^\+?\d+$/.'
+                  example: '5023883937'
+                destination_prefix:
+                  type: string
+                  description: 'Optional country prefix. Must not be greater than 5 characters.'
+                  example: '1'
+                destination_description:
+                  type: string
+                  description: 'Optional label/description. Must not be greater than 150 characters.'
+                  example: 'Main inbound line'
+                destination_record:
+                  type: boolean
+                  description: 'Whether to record calls for this phone number.'
+                  example: false
+                destination_type_fax:
+                  type: boolean
+                  description: 'Activate this setting if calls will be routed directly to a physical fax machine. This ensures proper handling of fax transmissions.'
+                  example: false
+                destination_hold_music:
+                  type: string
+                  description: 'Optional hold music value. Must not be greater than 120 characters.'
+                  example: null
+                destination_distinctive_ring:
+                  type: string
+                  description: 'Optional distinctive ring value. Must not be greater than 30 characters.'
+                  example: ring4
+                destination_cid_name_prefix:
+                  type: string
+                  description: 'Optional caller ID name prefix. Must not be greater than 20 characters.'
+                  example: Sales
+                destination_accountcode:
+                  type: string
+                  description: 'Optional account code. Must not be greater than 50 characters.'
+                  example: '23435456'
+                fax_uuid:
+                  type: string
+                  description: 'Optional fax UUID. Helps with fax detection. Must be a valid UUID.'
+                  example: 9a458dfd-a989-4e77-ab1d-711f5ecd35cb
+                destination_enabled:
+                  type: boolean
+                  description: 'Whether the phone number is enabled. Default: true.'
+                  example: false
+                routing_options:
+                  type: array
+                  description: 'Optional call routing options.'
+                  example:
+                    -
+                      type: ring_groups
+                      extension: '9000'
+                  items:
+                    type: string
+              required:
+                - destination_number
+    delete:
+      summary: 'Delete a phone number'
+      operationId: deleteAPhoneNumber
+      description: 'Deletes a phone number within the specified domain.'
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  object: phone_number
+                  uuid: ad45f53d-405b-48bc-aac2-d51b2b3b3e55
+                  deleted: true
+                properties:
+                  object:
+                    type: string
+                    example: phone_number
+                  uuid:
+                    type: string
+                    example: ad45f53d-405b-48bc-aac2-d51b2b3b3e55
+                  deleted:
+                    type: boolean
+                    example: true
+        400:
+          description: 'Invalid destination UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid destination UUID.'
+                    code: invalid_request
+                    param: destination_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid destination UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: destination_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        404:
+          description: 'Phone number not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Phone number not found.'
+                    code: resource_missing
+                    param: destination_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Phone number not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: destination_uuid
+        500:
+          description: 'Internal server error'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: api_error
+                    message: 'Internal server error.'
+                    code: internal_error
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: api_error
+                      message:
+                        type: string
+                        example: 'Internal server error.'
+                      code:
+                        type: string
+                        example: internal_error
+      tags:
+        - 'Phone Numbers'
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 7d58342b-2b29-4dcf-92d6-e9a9e002a4e5
+        required: true
+        schema:
+          type: string
+      -
+        in: path
+        name: destination_uuid
+        description: 'The destination UUID.'
+        example: ad45f53d-405b-48bc-aac2-d51b2b3b3e55
+        required: true
+        schema:
+          type: string
   '/api/v1/domains/{domain_uuid}/ring-groups':
     get:
       summary: 'List ring groups'
@@ -2572,7 +3683,7 @@ paths:
     get:
       summary: 'Retrieve a ring group'
       operationId: retrieveARingGroup
-      description: "Returns a single ring group for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `ring_group_view` permission."
+      description: "Returns a single ring group for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `ring_group_domain` permission."
       parameters: []
       responses:
         200:
@@ -4025,6 +5136,9 @@ tags:
     description: ''
   -
     name: Extensions
+    description: ''
+  -
+    name: 'Phone Numbers'
     description: ''
   -
     name: 'Ring Groups'

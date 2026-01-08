@@ -128,7 +128,6 @@ class RingGroupController extends Controller
                 'ring_group_extension',
                 'ring_group_call_forward_enabled',
                 'ring_group_follow_me_enabled',
-                'ring_group_enabled',
                 'ring_group_description',
                 'ring_group_forward_destination',
                 'ring_group_forward_enabled',
@@ -155,7 +154,6 @@ class RingGroupController extends Controller
                 ring_group_name: (string) $rg->ring_group_name,
                 ring_group_extension: (string) $rg->ring_group_extension,
 
-                ring_group_enabled: $textBool($rg->ring_group_enabled),
                 ring_group_description: $rg->ring_group_description,
 
             );
@@ -178,7 +176,7 @@ class RingGroupController extends Controller
      *
      * Access rules:
      * - Caller must have access to the target domain (domain scope).
-     * - Caller must have the `ring_group_view` permission.
+     * - Caller must have the `ring_group_domain` permission.
      *
      * @group Ring Groups
      * @authenticated
@@ -348,7 +346,7 @@ class RingGroupController extends Controller
                     'dialplan_uuid' => (string) Str::uuid(),
                 ]);
 
-                // Derived fields (same logic as internal)
+                // Derived fields 
                 $derived = app(RingGroupService::class)->buildUpdateData($validated, (string) $domain->domain_name);
 
                 $createData = array_merge($createData, $derived);
@@ -567,7 +565,6 @@ class RingGroupController extends Controller
                 'ring_group_timeout_data',
                 'ring_group_call_forward_enabled',
                 'ring_group_follow_me_enabled',
-                'ring_group_enabled',
                 'ring_group_description',
                 'ring_group_forward_destination',
                 'ring_group_forward_enabled',
@@ -647,8 +644,6 @@ class RingGroupController extends Controller
             ring_group_forward_enabled: $textBool($rg->ring_group_forward_enabled),
             forward_action: $rg->forward_action,
             forward_target: $rg->forward_target_extension,
-
-            ring_group_enabled: $textBool($rg->ring_group_enabled),
 
             members: $destinations,
         );
@@ -767,127 +762,4 @@ class RingGroupController extends Controller
         }
     }
 
-    // ------------------------
-    // Helpers (ported from internal controller)
-    // ------------------------
-
-    protected function buildExitDestinationAction(array $inputs, string $domainName): array
-    {
-        $action = $inputs['fallback_action'] ?? null;
-
-        switch ($action) {
-            case 'extensions':
-            case 'ring_groups':
-            case 'ivrs':
-            case 'business_hours':
-            case 'time_conditions':
-            case 'contact_centers':
-            case 'faxes':
-            case 'call_flows':
-                return ['action' => 'transfer', 'data' => ($inputs['fallback_target'] ?? '') . ' XML ' . $domainName];
-
-            case 'voicemails':
-                return ['action' => 'transfer', 'data' => '*99' . ($inputs['fallback_target'] ?? '') . ' XML ' . $domainName];
-
-            case 'recordings':
-                return ['action' => 'lua', 'data' => 'streamfile.lua ' . ($inputs['fallback_target'] ?? '')];
-
-            case 'check_voicemail':
-                return ['action' => 'transfer', 'data' => '*98 XML ' . $domainName];
-
-            case 'company_directory':
-                return ['action' => 'transfer', 'data' => '*411 XML ' . $domainName];
-
-            case 'hangup':
-                return ['action' => 'hangup', 'data' => ''];
-
-            default:
-                return [];
-        }
-    }
-
-    protected function buildForwardDestinationTarget(array $inputs): ?string
-    {
-        $action = $inputs['forward_action'] ?? null;
-
-        switch ($action) {
-            case 'extensions':
-            case 'ring_groups':
-            case 'ivrs':
-            case 'business_hours':
-            case 'time_conditions':
-            case 'contact_centers':
-            case 'faxes':
-            case 'call_flows':
-                return $inputs['forward_target'] ?? null;
-
-            case 'voicemails':
-                return isset($inputs['forward_target']) ? '*99' . $inputs['forward_target'] : null;
-
-            case 'external':
-                return $inputs['forward_external_target'] ?? $inputs['forward_target'];
-
-            default:
-                return null;
-        }
-    }
-
-    protected function calculateTimeout(array $validated): int
-    {
-        $enabledMembers = array_filter($validated['members'] ?? [], fn($m) => !empty($m['enabled']));
-
-        if (in_array($validated['ring_group_strategy'] ?? '', ['random', 'sequence', 'rollover'], true)) {
-            return array_reduce($enabledMembers, fn($carry, $m) => $carry + (int) ($m['timeout'] ?? 0), 0);
-        }
-
-        return collect($enabledMembers)
-            ->map(fn($m) => (int) ($m['delay'] ?? 0) + (int) ($m['timeout'] ?? 0))
-            ->max() ?? 0;
-    }
-
-    protected function generateDialPlanXML(RingGroups $ringGroup, string $domainName, string $domainUuid, ?string $userUuid = null): void
-    {
-        $xml = view('layouts.xml.ring-group-dial-plan-template', [
-            'ring_group' => $ringGroup,
-        ])->render();
-
-        $dialPlan = Dialplans::where('dialplan_uuid', $ringGroup->dialplan_uuid)->first();
-
-        if (!$dialPlan) {
-            $dialPlan = new Dialplans();
-            $dialPlan->dialplan_uuid = $ringGroup->dialplan_uuid;
-            $dialPlan->app_uuid = '1d61fb65-1eec-bc73-a6ee-a6203b4fe6f2';
-            $dialPlan->domain_uuid = $domainUuid;
-            $dialPlan->dialplan_name = $ringGroup->ring_group_name;
-            $dialPlan->dialplan_number = $ringGroup->ring_group_extension;
-            $dialPlan->dialplan_context = $ringGroup->ring_group_context ?? $domainName;
-            $dialPlan->dialplan_continue = 'false';
-            $dialPlan->dialplan_xml = $xml;
-            $dialPlan->dialplan_order = 101;
-            $dialPlan->dialplan_enabled = $ringGroup->ring_group_enabled;
-            $dialPlan->dialplan_description = $ringGroup->ring_group_description;
-            $dialPlan->insert_date = date('Y-m-d H:i:s');
-            $dialPlan->insert_user = $userUuid;
-        } else {
-            $dialPlan->dialplan_xml = $xml;
-            $dialPlan->dialplan_name = $ringGroup->ring_group_name;
-            $dialPlan->dialplan_number = $ringGroup->ring_group_extension;
-            $dialPlan->dialplan_description = $ringGroup->ring_group_description;
-            $dialPlan->update_date = date('Y-m-d H:i:s');
-            $dialPlan->update_user = $userUuid;
-        }
-
-        $dialPlan->save();
-
-        // Reload XML from FreeSWITCH
-        $fp = event_socket_create(
-            config('eventsocket.ip'),
-            config('eventsocket.port'),
-            config('eventsocket.password')
-        );
-        event_socket_request($fp, 'bgapi reloadxml');
-
-        // Clear FusionPBX cache
-        FusionCache::clear("dialplan:" . ($ringGroup->ring_group_context ?? $domainName));
-    }
 }

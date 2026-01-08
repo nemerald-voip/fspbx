@@ -1,6 +1,7 @@
 # 📡 FS PBX API v1 Availability & Overview
 
 FS PBX provides a modern, RESTful API (v1) that enables programmatic access to core PBX resources such as domains, extensions, and voicemails. This API is designed for developers, integrators, and service providers who want to automate provisioning, integrate external systems, or build custom dashboards on top of FS PBX.
+<!-- truncate -->
 
 Official documentation:  
 https://www.fspbx.com/docs/api/v1/fs-pbx-api/

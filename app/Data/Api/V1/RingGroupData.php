@@ -37,8 +37,6 @@ class RingGroupData extends Data
         public string|Optional|null $forward_action = new Optional(),
         public string|Optional|null $forward_target = new Optional(),
 
-        public ?bool $ring_group_enabled = null,
-
         /** @var array<int, RingGroupDestinationData>|null */
         public array|Optional|null $members = new Optional(),
     ) {}
