@@ -57,10 +57,12 @@ class VoicemailMessagesController extends Controller
                     'get_message_url' => route('voicemail.message.url'),
                     'select_all' => route('voicemails.messages.select.all'),
                     'bulk_delete' => route('voicemails.messages.bulk.delete'),
-                ]
+                ],
+                'permissions' => function () {
+                    return $this->getUserPermissions();
+                },
             ]
         );
-
     }
 
 
@@ -439,13 +441,13 @@ class VoicemailMessagesController extends Controller
             if (!empty(data_get($params, 'filter.dateRange'))) {
                 $startTs = Carbon::parse(data_get($params, 'filter.dateRange.0'))
                     ->getTimestamp();
-    
+
                 $endTs = Carbon::parse(data_get($params, 'filter.dateRange.1'))
                     ->getTimestamp();
-    
+
                 $params['filter']['startPeriod'] = $startTs;
                 $params['filter']['endPeriod']   = $endTs;
-    
+
                 unset($params['filter']['dateRange']);
             }
 
@@ -519,12 +521,12 @@ class VoicemailMessagesController extends Controller
                 // Define the paths to the voicemail files
                 $wavPath = session('domain_name') . '/' . $voicemail->voicemail_id . '/msg_' . $item->voicemail_message_uuid . '.wav';
                 $mp3Path = session('domain_name') . '/' . $voicemail->voicemail_id . '/msg_' . $item->voicemail_message_uuid . '.mp3';
-        
+
                 // Check if the .wav file exists and delete it
                 if (Storage::disk('voicemail')->exists($wavPath)) {
                     Storage::disk('voicemail')->delete($wavPath);
                 }
-        
+
                 // Check if the .mp3 file exists and delete it
                 if (Storage::disk('voicemail')->exists($mp3Path)) {
                     Storage::disk('voicemail')->delete($mp3Path);
@@ -560,5 +562,13 @@ class VoicemailMessagesController extends Controller
                 'errors' => ['server' => ['Server returned an error while deleting the selected items.']]
             ], 500); // 500 Internal Server Error for any other errors
         }
+    }
+
+    public function getUserPermissions()
+    {
+        $permissions = [];
+        $permissions['voicemail_message_destroy'] = userCheckPermission('voicemail_message_delete');
+
+        return $permissions;
     }
 }
