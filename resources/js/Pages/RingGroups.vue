@@ -40,19 +40,36 @@
             <template #table-header>
 
                 <TableColumnHeader
-                    class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
 
-                    <span class="pl-4">Name</span>
+                <div class="ml-9 flex items-center cursor-pointer select-none"
+                    @click="handleSortRequest('ring_group_name')">
+                    <span class="mr-2">Name</span>
+                    <ChevronUpIcon v-if="sortData.name === 'ring_group_name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                    <ChevronDownIcon v-else-if="sortData.name === 'ring_group_name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Extension"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none"
+                        @click="handleSortRequest('ring_group_extension')">
+                        <span class="mr-2">Extension</span>
+                        <ChevronUpIcon v-if="sortData.name === 'ring_group_extension' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'ring_group_extension' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
                 <TableColumnHeader header="Members" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
-                <TableColumnHeader header="Description"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none"
+                        @click="handleSortRequest('ring_group_description')">
+                        <span class="mr-2">Description</span>
+                        <ChevronUpIcon v-if="sortData.name === 'ring_group_description' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'ring_group_description' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
@@ -233,7 +250,7 @@ import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
+import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon, ChevronUpIcon, ChevronDownIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -282,6 +299,11 @@ const filterData = ref({
     search: null,
 });
 
+const sortData = ref({
+    name: 'ring_group_extension',
+    order: 'asc',
+});
+
 onMounted(() => {
     handleSearchButtonClick();
 })
@@ -290,13 +312,30 @@ const handleSearchButtonClick = () => {
     getData()
 };
 
+const handleSortRequest = (column) => {
+    if (sortData.value.name === column) {
+        sortData.value.order = sortData.value.order === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortData.value.name = column;
+        sortData.value.order = 'asc';
+    }
+    getData();
+};
+
 const getData = (page = 1) => {
     loading.value = true;
+
+    let sort = sortData.value.name;
+    if (sortData.value.order === 'desc') {
+        sort = `-${sort}`;
+    }
+
 
     axios.get(props.routes.data_route, {
         params: {
             filter: filterData.value,
             page,
+            sort,
         }
     })
         .then((response) => {
