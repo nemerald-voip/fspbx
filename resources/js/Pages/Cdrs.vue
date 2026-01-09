@@ -71,6 +71,13 @@
                         </multiselect>
                     </div>
 
+                    <div v-if="permissions.search_sentiment && permissions.transcription_summary" class="relative min-w-36 mb-2 shrink-0 sm:mr-4">
+                        <multiselect v-model="filterData.sentiment" :options="sentimentOptions" :searchable="false"
+                            :close-on-select="true" track-by="value" label="name" :show-labels="false"
+                            placeholder="Sentiment" aria-label="pick a value">
+                        </multiselect>
+                    </div>
+
 
                 </template>
 
@@ -158,7 +165,7 @@
 
                             <div v-if="row.extension && row.direction == 'outbound' && false">{{
                                 row.extension?.extension
-                                }}</div>
+                            }}</div>
                             <div v-else>{{ row.caller_id_number_formatted }}</div>
                         </TableField>
 
@@ -184,11 +191,12 @@
 
                         <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                             <template v-if="(row.record_name && row.record_path) || row.record_path === 'S3'
-                                " #action-buttons>
+                            " #action-buttons>
                                 <div class="flex items-center space-x-2 whitespace-nowrap">
-                                    <PlayCircleIcon v-if="permissions.call_recording_play" @click="handleCallRecordingButtonClick(row.xml_cdr_uuid)"
-                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
-                                        <!-- class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" /> -->
+                                    <PlayCircleIcon v-if="permissions.call_recording_play"
+                                        @click="handleCallRecordingButtonClick(row.xml_cdr_uuid)"
+                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                    <!-- class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" /> -->
                                     <!-- <PauseCircleIcon v-if="currentAudioUuid === row.xml_cdr_uuid && isAudioPlaying"
                                         @click="pauseAudio"
                                         class="h-6 w-6 text-blue-500 hover:text-blue-700 active:h-5 active:w-5 cursor-pointer" /> -->
@@ -248,8 +256,8 @@
         :customClass="'sm:max-w-4xl'" @close="handleModalClose">
     </CallDetailsModal>
 
-    <CallRecordingModal :show="showCallRecordingModal" :cdr_uuid="selectedUuid" :routes="routes" @close="showCallRecordingModal = false"
-        @error="handleErrorResponse" @success="showNotification"/>
+    <CallRecordingModal :show="showCallRecordingModal" :cdr_uuid="selectedUuid" :routes="routes"
+        @close="showCallRecordingModal = false" @error="handleErrorResponse" @success="showNotification" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -287,7 +295,7 @@ import 'vue-multiselect/dist/vue-multiselect.css'
 
 import Loading from "./components/general/Loading.vue";
 import Spinner from "./components/general/Spinner.vue";
-    
+
 const page = usePage()
 const loading = ref(false)
 const showDetailsModal = ref(false);
@@ -365,6 +373,12 @@ const statusOptions = [
     { name: 'Voicemail', value: 'voicemail' },
     { name: 'Missed Call', value: 'missed call' },
     { name: 'Abandoned', value: 'abandoned' },
+];
+
+const sentimentOptions = [
+    { name: 'Neutral', value: 'neutral' },
+    { name: 'Positive', value: 'positive' },
+    { name: 'Negative', value: 'negative' },
 ];
 
 const handleCallRecordingButtonClick = (uuid) => {
@@ -472,6 +486,7 @@ const handleFiltersReset = () => {
     filterData.value.entity = null;
     filterData.value.entityType = null;
     filterData.value.status = null;
+    filterData.value.sentiment = null;
 
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();

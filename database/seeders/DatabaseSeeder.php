@@ -145,6 +145,7 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Call Transcriptions', 'permission_name' => 'transcription_create'],
             ['application_name' => 'Call Transcriptions', 'permission_name' => 'transcription_read'],
             ['application_name' => 'Call Transcriptions', 'permission_name' => 'transcription_summary'],
+            ['application_name' => 'XML CDR', 'permission_name' => 'xml_cdr_search_sentiment'],
         ];
         $timestamp = date("Y-m-d H:i:s");
 
@@ -237,6 +238,7 @@ class DatabaseSeeder extends Seeder
                 'transcription_read',
                 'transcription_create',
                 'transcription_summary',
+                'xml_cdr_search_sentiment',
             ],
             'admin' => [
                 'wakeup_calls_list_view',
@@ -263,6 +265,7 @@ class DatabaseSeeder extends Seeder
                 'extension_call_sequence',
                 'extension_do_not_disturb',
                 'extension_mobile_app_settings',
+                'xml_cdr_search_sentiment',
             ],
             'Message Admin' => [
                 'message_settings_list_view',

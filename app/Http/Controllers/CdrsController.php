@@ -1026,6 +1026,14 @@ class CdrsController extends Controller
         $permissions['cdr_mos_view'] = userCheckPermission('xml_cdr_mos');
         $permissions['call_recording_play'] = userCheckPermission('call_recording_play');
         $permissions['call_recording_download'] = userCheckPermission('call_recording_download');
+        $permissions['transcription_summary'] = userCheckPermission('transcription_summary');
+
+        // Is call transcription service enabled for this account
+        $transcriptionService = app(CallTranscriptionService::class);
+        $config = $transcriptionService->getCachedConfig(session('domain_uuid') ?? null);
+        $isCallTranscriptionServiceEnabled = (bool) ($config['enabled'] ?? false);
+
+        $permissions['search_sentiment'] = userCheckPermission('xml_cdr_search_sentiment') && $isCallTranscriptionServiceEnabled;
 
         return $permissions;
     }
@@ -1092,7 +1100,9 @@ class CdrsController extends Controller
         $permissions['transcription_read'] = userCheckPermission('transcription_read');
         $permissions['transcription_create'] = userCheckPermission('transcription_create');
         $permissions['transcription_summary'] = userCheckPermission('transcription_summary');
+        $permissions['xml_cdr_search_sentiment'] = userCheckPermission('xml_cdr_search_sentiment');
 
+        logger($permissions);
 
         return $permissions;
     }
