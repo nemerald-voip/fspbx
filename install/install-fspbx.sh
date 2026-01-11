@@ -43,7 +43,15 @@ PUBLIC_DIR="$INSTALL_DIR/public"
 BACKUP_DIR="/var/www/fspbx_backup_$(date +%Y%m%d_%H%M%S)"
 export PHP_VERSION="8.1"
 export FREESWITCH_VERSION="v1.10"
-export POSTGRESQL_VERSION="17"
+
+#Set Postgres Version
+if [[ "$OS_CODENAME" == "bookworm" ]]; then
+    export POSTGRESQL_VERSION="17"
+fi
+
+if [[ "$OS_CODENAME" == "trixie" ]]; then
+    export POSTGRESQL_VERSION="18"
+fi
 
 # Fetch the latest FusionPBX version from GitHub API
 print_success "Fetching the latest FusionPBX release version..."
