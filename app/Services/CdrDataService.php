@@ -82,6 +82,21 @@ class CdrDataService
                         });
                     });
                 }),
+                AllowedFilter::callback('sentiment', function ($query, $value) {
+                    if ($value === null) return;
+
+                    $value = strtolower(trim((string) $value['value']));
+                    $allowed = ['negative', 'neutral', 'positive'];
+
+                    if (!in_array($value, $allowed, true)) {
+                        return; // ignore invalid values
+                    }
+
+                    $query->whereHas('callTranscription', function ($tq) use ($value) {
+                        // Postgres jsonb: this compiles to summary_payload->>'sentiment_overall' = ?
+                        $tq->where('summary_payload->sentiment_overall', $value);
+                    });
+                }),
                 AllowedFilter::callback('entity', function ($query, $value) {
                     switch ($value['type']) {
                         case 'queue':
