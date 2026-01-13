@@ -114,11 +114,6 @@ class Domain extends Model
         return $this->hasMany(HotelPendingAction::class, 'domain_uuid', 'domain_uuid');
     }
 
-    public function hotelReservations()
-    {
-        return $this->hasMany(HotelReservation::class, 'domain_uuid', 'domain_uuid');
-    }
-
     public function hotelRoomStatuses()
     {
         return $this->hasMany(HotelRoomStatus::class, 'domain_uuid', 'domain_uuid');
