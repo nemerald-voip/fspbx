@@ -105,7 +105,11 @@ async function getConfig() {
         ],
         build: {
             outDir: 'storage/app/public/vite',
-            emptyOutDir: true
+            emptyOutDir: true,
+            sourcemap: false,
+            reportCompressedSize: false,
+            minify: 'esbuild',
+            cssMinify: 'esbuild',
         },
         resolve: {
             alias: {
