@@ -21,6 +21,10 @@ class ProFeaturesService
     {
         $enabled = collect(Module::allEnabled())->map(fn($m) => $m->getName())->values();
 
+        logger($enabled);
+
+        if ($enabled->count() == 0) return ['updated' => [], 'skipped' => [], 'errors' => []];
+
         return $this->syncModules(
             mode: 'enabled_only',
             enabledModules: $enabled
@@ -123,110 +127,131 @@ class ProFeaturesService
     {
         $result = ['updated' => [], 'skipped' => [], 'errors' => []];
 
-        $pro = $this->getProRow();
-        if (!$pro) {
-            $result['errors'][] = 'ProFeatures row not found (slug=fspbx).';
-            return $result;
-        }
-
-        $licenseKey = $licenseOverride ?: $pro->license;
-        if (!$licenseKey) {
-            $result['errors'][] = 'No license key found.';
-            return $result;
-        }
-
-        // Validate license
-        $licenseResponse = $this->validateLicenseOrFail($licenseKey);
-        if (isset($licenseResponse['__error'])) {
-            $result['errors'][] = $licenseResponse['__error'];
-            return $result;
-        }
-
-        $entitlements = $this->getEntitlementsOrFail($licenseResponse);
-        if (isset($entitlements['__error'])) {
-            $result['errors'][] = $entitlements['__error'];
-            return $result;
-        }
-
-        $releases = $this->getReleasesOrFail($licenseKey);
-        if (isset($releases['__error'])) {
-            $result['errors'][] = $releases['__error'];
-            return $result;
-        }
-
-        $map = $this->moduleMap();
-
-        foreach ($entitlements as $entitlement) {
-            $code = $entitlement['attributes']['code'] ?? null;
-            if (!$code || !isset($map[$code])) {
-                continue;
+        try {
+            $pro = $this->getProRow();
+            if (!$pro) {
+                $result['errors'][] = 'ProFeatures row not found (slug=fspbx).';
+                return $result;
             }
 
-            $moduleName = $map[$code]['module'];
+            $licenseKey = $licenseOverride ?: $pro->license;
+            if (!$licenseKey) {
+                $result['errors'][] = 'No Pro Features license key found.';
+                return $result;
+            }
 
-            // Mode gating
-            if ($mode === 'enabled_only') {
-                if (!$enabledModules || !$enabledModules->contains($moduleName)) {
-                    $result['skipped'][] = "{$moduleName}: not enabled";
+            // Validate license
+            $licenseResponse = $this->validateLicenseOrFail($licenseKey);
+            if (isset($licenseResponse['__error'])) {
+                $result['errors'][] = $licenseResponse['__error'];
+                return $result;
+            }
+
+            $entitlements = $this->getEntitlementsOrFail($licenseResponse);
+            if (isset($entitlements['__error'])) {
+                $result['errors'][] = $entitlements['__error'];
+                return $result;
+            }
+
+            $releases = $this->getReleasesOrFail($licenseKey);
+            if (isset($releases['__error'])) {
+                $result['errors'][] = $releases['__error'];
+                return $result;
+            }
+
+            $map = $this->moduleMap();
+
+            foreach ($entitlements as $entitlement) {
+                try {
+                    $code = $entitlement['attributes']['code'] ?? null;
+                    if (!$code || !isset($map[$code])) {
+                        continue;
+                    }
+
+                    $moduleName = $map[$code]['module'];
+
+                    // Mode gating
+                    if ($mode === 'enabled_only') {
+                        if (!$enabledModules || !$enabledModules->contains($moduleName)) {
+                            $result['skipped'][] = "{$moduleName}: not enabled";
+                            continue;
+                        }
+                    }
+
+                    $latest = $this->findLatestReleaseForCode($releases, $code);
+                    if (!$latest) {
+                        $result['errors'][] = "{$moduleName}: no release found for {$code}";
+                        continue;
+                    }
+
+                    $version = $latest['attributes']['version'] ?? null;
+                    if (!$version) {
+                        $result['errors'][] = "{$moduleName}: latest release missing version";
+                        continue;
+                    }
+
+                    $artifactName = ($map[$code]['artifact'])($version);
+
+                    $deploy = $this->downloadAndDeployModule($licenseKey, $moduleName, $version, $artifactName);
+                    if ($deploy !== true) {
+                        $result['errors'][] = "{$moduleName}: {$deploy}";
+                        continue;
+                    }
+
+                    $result['updated'][] = "{$moduleName}: refreshed to latest ({$version})";
+                } catch (\Throwable $e) {
+                    // Don't let one module kill the rest
+                    $result['errors'][] = "Module loop failure: {$e->getMessage()}";
                     continue;
                 }
             }
 
-            $latest = $this->findLatestReleaseForCode($releases, $code);
-            if (!$latest) {
-                $result['errors'][] = "{$moduleName}: no release found for {$code}";
-                continue;
+            if ($mode === 'all_entitled') {
+                try {
+                    Artisan::call('route:cache');
+                } catch (\Throwable $e) {
+                    $result['errors'][] = "route:cache failed: {$e->getMessage()}";
+                }
             }
 
-            $version = $latest['attributes']['version'] ?? null;
-            if (!$version) {
-                $result['errors'][] = "{$moduleName}: latest release missing version";
-                continue;
+            try {
+                $this->clearLicenseCaches($licenseKey);
+            } catch (\Throwable $e) {
+                $result['errors'][] = "Failed clearing license caches: {$e->getMessage()}";
             }
 
-            $artifactName = ($map[$code]['artifact'])($version);
-
-            $deploy = $this->downloadAndDeployModule($licenseKey, $moduleName, $version, $artifactName);
-            if ($deploy !== true) {
-                $result['errors'][] = "{$moduleName}: {$deploy}";
-                continue;
-            }
-
-            $result['updated'][] = "{$moduleName}: refreshed to latest ({$version})";
+            return $result;
+        } catch (\Throwable $e) {
+            // Absolute last line of defense — never throw.
+            $result['errors'][] = "syncModules crashed: {$e->getMessage()}";
+            return $result;
         }
-
-        // IMPORTANT: don’t route:cache inside per-module loop. Cache once outside (app:update).
-        // In UI install flow, you can still do it once at the end if you want:
-        if ($mode === 'all_entitled') {
-            Artisan::call('route:cache');
-        }
-
-        $this->clearLicenseCaches($licenseKey);
-
-        return $result;
     }
+
 
     protected function downloadAndDeployModule(string $licenseKey, string $moduleName, string $version, string $artifactName): bool|string
     {
-        $content = $this->keygenApiService->downloadArtifact($licenseKey, $version, $artifactName);
-        if (!$content) {
-            return "failed to download artifact {$artifactName}";
+        try {
+            $content = $this->keygenApiService->downloadArtifact($licenseKey, $version, $artifactName);
+            if (!$content) {
+                return "failed to download artifact {$artifactName}";
+            }
+
+            $this->saveAndExtract($artifactName, $content, $moduleName);
+
+            Artisan::call('module:enable', ['module' => $moduleName]);
+
+            // Artisan::call('module:migrate', ['module' => $moduleName, '--force' => true]);
+
+            Artisan::call('module:seed', ['module' => $moduleName, '--force' => true]);
+
+            $this->callIfExists("module:install-{$moduleName}");
+            $this->callIfExists("module:update-{$moduleName}");
+
+            return true;
+        } catch (\Throwable $e) {
+            return "deploy failed: {$e->getMessage()}";
         }
-
-        $this->saveAndExtract($artifactName, $content, $moduleName);
-
-        Artisan::call('module:enable', ['module' => $moduleName]);
-
-        // If you have module migrations, you can enable this:
-        // Artisan::call('module:migrate', ['module' => $moduleName, '--force' => true]);
-
-        Artisan::call('module:seed', ['module' => $moduleName, '--force' => true]);
-
-        // Optional post hooks
-        $this->callIfExists("module:install-{$moduleName}");
-        $this->callIfExists("module:update-{$moduleName}");
-
-        return true;
     }
 
     protected function getProRow(): ?ProFeatures
