@@ -212,19 +212,19 @@ class ExtensionsController extends Controller
             DB::beginTransaction();
 
             // 3) Fetch original (scoped to domain)
-        $original = Extensions::where('extension_uuid', $request->uuid)
-            ->where('domain_uuid', $domain_uuid)
-            ->with([
-                'followMe.followMeDestinations',
-                'voicemail' => function ($q) use ($domain_uuid) {
-                    $q->where('domain_uuid', $domain_uuid);
-                },
-                'advSettings',
-            ])
-            ->firstOrFail();
+            $original = Extensions::where('extension_uuid', $request->uuid)
+                ->where('domain_uuid', $domain_uuid)
+                ->with([
+                    'followMe.followMeDestinations',
+                    'voicemail' => function ($q) use ($domain_uuid) {
+                        $q->where('domain_uuid', $domain_uuid);
+                    },
+                    'advSettings',
+                ])
+                ->firstOrFail();
 
             // 4) Generate a new extension number
-            $newExtensionNumber = $this->model->generateUniqueSequenceNumber();        
+            $newExtensionNumber = $this->model->generateUniqueSequenceNumber();
 
             // 5) Replicate extension row
             $newExtension = $original->replicate();
@@ -246,7 +246,7 @@ class ExtensionsController extends Controller
 
             $newExtension->save();
 
-        // 6) Duplicate voicemail (if present)
+            // 6) Duplicate voicemail (if present)
             $originalVoicemail = Voicemails::where('domain_uuid', $domain_uuid)
                 ->where('voicemail_id', $original->extension)
                 ->first();
@@ -297,7 +297,6 @@ class ExtensionsController extends Controller
                 'extension_uuid' => $newExtension->extension_uuid,
                 'extension' => $newExtensionNumber,
             ], 201);
-
         } catch (\Throwable $e) {
             DB::rollBack();
 
@@ -1190,6 +1189,7 @@ class ExtensionsController extends Controller
 
             // Update related models
             if ($extension->voicemail) {
+                $data['voicemail_id'] = $extension->extension;
                 $extension->voicemail->update($data);
             } else {
                 // If enabling voicemail and no voicemail exists, create one
