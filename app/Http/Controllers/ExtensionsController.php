@@ -94,9 +94,12 @@ class ExtensionsController extends Controller
             return redirect('/');
         }
 
+        $permissions = $this->getUserPermissions();
+
         return Inertia::render(
             $this->viewName,
             [
+                'permissions' => $permissions,
 
                 'routes' => [
                     'current_page' => route('extensions.index'),
@@ -1934,6 +1937,9 @@ class ExtensionsController extends Controller
         $permissions['extension_device_unassign'] = userCheckPermission('extension_device_unassign');
 
         $permissions['manage_mobile_app'] = userCheckPermission('extension_mobile_app_settings');
+
+        $permissions['extension_export'] = userCheckPermission('extension_export');
+        $permissions['extension_import'] = userCheckPermission('extension_import');
 
         $permissions['is_superadmin'] = isSuperAdmin();
 
