@@ -134,8 +134,22 @@
                         </ejs-tooltip>
                     </TableField>
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.template?.name
-                        ? (row.template.vendor ? `${row.template.vendor}/${row.template.name}` : row.template.name)
+                        ? (() => {
+                            const t = row.template;
+
+                            const base = t.vendor ? `${t.vendor}/${t.name}` : t.name;
+
+                            const suffixParts = [];
+                            if (t.version) suffixParts.push(`v${t.version}`);
+
+                            // show revision ONLY if it's non-zero / meaningful
+                            const rev = Number(t.revision);
+                            if (Number.isFinite(rev) && rev > 0) suffixParts.push(`r${rev}`);
+
+                            return suffixParts.length ? `${base} (${suffixParts.join(', ')})` : base;
+                        })()
                         : (row.device_template || '—')" />
+
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.profile?.device_profile_name" />
                     <TableField v-if="!filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
@@ -206,9 +220,9 @@
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
-                                    <div class="relative z-20 ml-2">
-                                        <AdvancedActionButton :actions="advancedActions"
-                                    @advanced-action="(action) => handleAdvancedActionRequest(action, row.device_uuid)" />
+                                <div class="relative z-20 ml-2">
+                                    <AdvancedActionButton :actions="advancedActions"
+                                        @advanced-action="(action) => handleAdvancedActionRequest(action, row.device_uuid)" />
                                 </div>
                             </div>
                         </template>
@@ -282,11 +296,9 @@
                         New MAC Address
                     </label>
                     <div class="mt-2">
-                        <input type="text" id="new_mac" v-model="newMacAddress"
-                            placeholder="00:00:00:00:00:00"
+                        <input type="text" id="new_mac" v-model="newMacAddress" placeholder="00:00:00:00:00:00"
                             class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                            @keydown.enter="submitDuplicateRequest" 
-                        />
+                            @keydown.enter="submitDuplicateRequest" />
                     </div>
                     <div v-if="formErrors?.new_mac_address" class="mt-2 text-sm text-red-600">
                         {{ formErrors.new_mac_address[0] }}
@@ -307,7 +319,7 @@
             </div>
         </template>
     </AddEditItemModal>
-    
+
 </template>
 
 <script setup>
@@ -401,9 +413,9 @@ const advancedActions = computed(() => [
 const handleAdvancedActionRequest = (action, uuid) => {
     if (action === 'duplicate') {
         itemToDuplicate.value = uuid;
-        newMacAddress.value = ''; 
+        newMacAddress.value = '';
         formErrors.value = null;
-        showDuplicateModal.value = true; 
+        showDuplicateModal.value = true;
     }
 };
 
@@ -416,21 +428,21 @@ const submitDuplicateRequest = () => {
     const url = props.routes.duplicate || '/devices/duplicate';
     isModalLoading.value = true;
 
-    axios.post(url, { 
+    axios.post(url, {
         uuid: itemToDuplicate.value,
-        new_mac_address: newMacAddress.value 
+        new_mac_address: newMacAddress.value
     })
-    .then((response) => {
-        showDuplicateModal.value = false;
-        showNotification('success', response.data.messages);
-        handleSearchButtonClick(); 
-    })
-    .catch((error) => {
-        handleFormErrorResponse(error); 
-    })
-    .finally(() => {
-        isModalLoading.value = false;
-    });
+        .then((response) => {
+            showDuplicateModal.value = false;
+            showNotification('success', response.data.messages);
+            handleSearchButtonClick();
+        })
+        .catch((error) => {
+            handleFormErrorResponse(error);
+        })
+        .finally(() => {
+            isModalLoading.value = false;
+        });
 };
 
 // Computed property for bulk actions based on permissions
@@ -461,8 +473,8 @@ const bulkActions = computed(() => {
 });
 
 const handleEditButtonClick = (itemUuid) => {
- //Removed to make way for checking limits:
- //    showUpdateModal.value = true
+    //Removed to make way for checking limits:
+    //    showUpdateModal.value = true
     getItemOptions(itemUuid);
 }
 
@@ -476,7 +488,7 @@ const getItemOptions = async (itemUuid = null) => {
         itemOptions.value = response.data;
 
         if (itemUuid) {
-            showUpdateModal.value = true; 
+            showUpdateModal.value = true;
         }
 
     } catch (error) {
@@ -643,9 +655,9 @@ const getData = (page = 1) => {
 }
 
 const handleSearchButtonClick = () => {
-        getData()
-    };
-    
+    getData()
+};
+
 
 const handleFiltersReset = () => {
     filterData.value.search = null;

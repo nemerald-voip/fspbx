@@ -62,28 +62,28 @@ class UpdateDeviceRequest extends FormRequest
 
             'device_vendor' => ['nullable', 'string', 'max:100'],
 
-            'device_keys' => [
+            'device_lines' => [
                 'nullable',
                 'array'
             ],
             // Required fields for each key:
-            'device_keys.*.line_type_id' => ['required', 'string'],
-            'device_keys.*.auth_id' => ['required', 'string'],
-            'device_keys.*.line_number' => ['required', 'numeric'],
+            'device_lines.*.line_type_id' => ['required', 'string'],
+            'device_lines.*.auth_id' => ['required', 'string'],
+            'device_lines.*.line_number' => ['required', 'numeric'],
 
             // These fields can be null/empty:
-            'device_keys.*.display_name' => ['nullable'],
-            'device_keys.*.server_address' => ['nullable'],
-            'device_keys.*.server_address_primary' => ['nullable'],
-            'device_keys.*.server_address_secondary' => ['nullable'],
-            'device_keys.*.outbound_proxy_primary' => ['nullable'],
-            'device_keys.*.outbound_proxy_secondary' => ['nullable'],
-            'device_keys.*.sip_port' => ['nullable'],
-            'device_keys.*.sip_transport' => ['nullable'],
-            'device_keys.*.register_expires' => ['nullable'],
-            'device_keys.*.domain_uuid' => ['nullable'],
-            'device_keys.*.device_line_uuid' => ['nullable'],
-            'device_keys.*.user_id' => ['nullable'],
+            'device_lines.*.display_name' => ['nullable'],
+            'device_lines.*.server_address' => ['nullable'],
+            'device_lines.*.server_address_primary' => ['nullable'],
+            'device_lines.*.server_address_secondary' => ['nullable'],
+            'device_lines.*.outbound_proxy_primary' => ['nullable'],
+            'device_lines.*.outbound_proxy_secondary' => ['nullable'],
+            'device_lines.*.sip_port' => ['nullable'],
+            'device_lines.*.sip_transport' => ['nullable'],
+            'device_lines.*.register_expires' => ['nullable'],
+            'device_lines.*.domain_uuid' => ['nullable'],
+            'device_lines.*.device_line_uuid' => ['nullable'],
+            'device_lines.*.user_id' => ['nullable'],
 
             'device_provisioning' => [
                 'boolean'
@@ -138,9 +138,9 @@ class UpdateDeviceRequest extends FormRequest
             'device_template.required' => 'Template is required',
             'device_address_modified.unique' => 'Duplicate MAC address has been found',
             'domain_uuid.required' => 'Acccount must be selected.',
-            'device_keys.*.line_type_id.required' => 'The key type is required for each device key.',
-            'device_keys.*.auth_id.required' => 'The extension/number is required for each device key.',
-            'device_keys.*.line_number.required' => 'Key is required.',
+            'device_lines.*.line_type_id.required' => 'The key type is required for each device key.',
+            'device_lines.*.auth_id.required' => 'The extension/number is required for each device key.',
+            'device_lines.*.line_number.required' => 'Key is required.',
             'device_template_uuid.uuid'   => 'Selected template is invalid.',
             'device_template_uuid.exists' => 'Selected template was not found.',
         ];

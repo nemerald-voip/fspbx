@@ -49,7 +49,7 @@
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
-                                    device_keys: [
+                                    device_lines: [
                                         {
                                             line_number: '1',
                                             user_id: extension.extension,
@@ -84,7 +84,7 @@
                                             class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                                             <FormElements>
 
-                                                <HiddenElement name="device_keys" :meta="true" />
+                                                <HiddenElement name="device_lines" :meta="true" />
                                                 <StaticElement name="h4" tag="h4" content="Choose Device" />
 
                                                 <SelectElement name="device_address" :items="devices" :search="true"
@@ -99,7 +99,7 @@
                                                     'numeric',
                                                 ]" autocomplete="off" label="Line" default="1"
                                                     :columns="{ wrapper: 3, }" @change="(newValue, oldValue, el$) => {
-                                                        el$.form$.el$('device_keys').update([
+                                                        el$.form$.el$('device_lines').update([
                                                             {
                                                                 line_number: newValue,
                                                                 user_id: extension.extension,
