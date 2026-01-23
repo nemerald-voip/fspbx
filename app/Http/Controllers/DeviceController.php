@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\Devices;
 use App\Data\DeviceData;
+use App\Models\DeviceKey;
 use App\Models\Extensions;
 use App\Models\DeviceLines;
 use Illuminate\Support\Str;
+use App\Traits\ChecksLimits;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +22,6 @@ use App\Http\Requests\StoreDeviceRequest;
 use App\Http\Requests\UpdateDeviceRequest;
 use App\Http\Requests\BulkUpdateDeviceRequest;
 use App\Services\DeviceCloudProvisioningService;
-use App\Traits\ChecksLimits;
 
 /**
  * The DeviceController class is responsible for handling device-related operations, such as listing, creating, and storing devices.
@@ -352,18 +353,6 @@ class DeviceController extends Controller
     }
 
 
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  Devices  $device
-     * @return void
-     */
-    public function show(Devices $device)
-    {
-        //
-    }
-
     /**
      * Update the specified resource in storage.
      *
@@ -375,7 +364,7 @@ class DeviceController extends Controller
     {
         $inputs = $request->validated();
 
-        // logger($inputs);
+        logger($inputs);
 
         if (!$device) {
             return response()->json([
@@ -460,6 +449,34 @@ class DeviceController extends Controller
 
                         $device->settings()->create($payload);
                     }
+                }
+            }
+
+            // Create/update device keys
+            if (array_key_exists('device_keys', $inputs)) {
+                if (empty($inputs['device_keys'])) {
+                    // Field is present but empty: remove all device keys
+                    $device->keys()->delete();
+                } else {
+                    // Field is present and has items: remove all then recreate
+                    $device->keys()->delete();
+
+                    $rows = [];
+
+                    foreach ($inputs['device_keys'] as $k) {
+                        $rows[] = [
+                            'device_uuid' => $device->device_uuid,
+                            'key_index'   => $k['key_index'],
+                            'key_type'    => $k['key_type'] ?? null,
+                            'key_value'   => $k['key_value'] ?? null,
+                            'key_label'   => $k['key_label'] ?? null,
+                            'created_at'  => now(),
+                            'updated_at'  => now(),
+                        ];
+                    }
+
+                    // Bulk insert 
+                    DeviceKey::insert($rows);
                 }
             }
 
@@ -682,6 +699,9 @@ class DeviceController extends Controller
                         //     },
 
                         // ]);
+                    }])
+                    ->with(['keys' => function ($query) {
+                        $query->select('device_key_uuid', 'device_uuid', 'key_index', 'key_type', 'key_value', 'key_label');
                     }])
                     ->with(['profile' => function ($query) {
                         $query->select('device_profile_uuid', 'device_profile_name', 'device_profile_description');

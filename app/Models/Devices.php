@@ -80,6 +80,15 @@ class Devices extends Model
     }
 
     /**
+     * Get the Legacy Device Keys objects associated with this device.
+     *  returns Eloquent Object
+     */
+    public function legacy_keys(): HasMany
+    {
+        return $this->hasMany(LegacyDeviceKey::class, 'device_uuid', 'device_uuid');
+    }
+
+    /**
      * Get the Device Keys objects associated with this device.
      *  returns Eloquent Object
      */

@@ -169,7 +169,7 @@ class ProvisioningController extends Controller
                     },
                 ]);
             },
-            'keys' => function ($k) {
+            'legacy_keys' => function ($k) {
                 // Need FK back to device + correct orderBy column
                 $k->select([
                     'device_key_uuid',

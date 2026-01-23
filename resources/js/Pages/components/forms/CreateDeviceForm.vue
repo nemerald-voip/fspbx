@@ -91,7 +91,7 @@
                                                     'lines_container',
                                                     'keys_title',
                                                     'add_key',
-                                                    'device_keys',
+                                                    'device_lines',
                                                     'advanced',
                                                     'keys_container2',
                                                     'submit_keys',
@@ -200,9 +200,9 @@
                                                                 @change="(newValue, oldValue, el$) => {
 
                                                                     if (newValue == 'sharedline') {
-                                                                        el$.form$.el$('device_keys').children$[index].children$['shared_line'].update('1');
+                                                                        el$.form$.el$('device_lines').children$[index].children$['shared_line'].update('1');
                                                                     } else {
-                                                                        el$.form$.el$('device_keys').children$[index].children$['shared_line'].update(null);
+                                                                        el$.form$.el$('device_lines').children$[index].children$['shared_line'].update(null);
                                                                     }
 
 
@@ -219,8 +219,8 @@
                                                                 }" placeholder="Choose Ext/Number" :floating="false"
                                                                 @change="(newValue, oldValue, el$) => {
 
-                                                                    el$.form$.el$('device_keys').children$[index].children$['display_name'].update(newValue);
-                                                                    el$.form$.el$('device_keys').children$[index].children$['user_id'].update(newValue);
+                                                                    el$.form$.el$('device_lines').children$[index].children$['display_name'].update(newValue);
+                                                                    el$.form$.el$('device_lines').children$[index].children$['user_id'].update(newValue);
 
 
                                                                 }" />
@@ -332,7 +332,7 @@
 
 
                                                 <GroupElement name="keys_container" />
-                                                <ListElement name="device_keys" :sort="true" size="sm"
+                                                <ListElement name="device_lines" :sort="true" size="sm"
                                                     :controls="{ add: options.permissions.device_key_create, remove: options.permissions.device_key_destroy, sort: options.permissions.device_key_up }"
                                                     :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
                                                     <template #default="{ index }">
@@ -384,9 +384,9 @@
                                                                 @change="(newValue, oldValue, el$) => {
 
                                                                     if (newValue == 'sharedline') {
-                                                                        el$.form$.el$('device_keys').children$[index].children$['shared_line'].update('1');
+                                                                        el$.form$.el$('device_lines').children$[index].children$['shared_line'].update('1');
                                                                     } else {
-                                                                        el$.form$.el$('device_keys').children$[index].children$['shared_line'].update(null);
+                                                                        el$.form$.el$('device_lines').children$[index].children$['shared_line'].update(null);
                                                                     }
 
 
@@ -403,8 +403,8 @@
                                                                 }" placeholder="Choose Ext/Number" :floating="false"
                                                                 @change="(newValue, oldValue, el$) => {
 
-                                                                    el$.form$.el$('device_keys').children$[index].children$['display_name'].update(newValue);
-                                                                    el$.form$.el$('device_keys').children$[index].children$['user_id'].update(newValue);
+                                                                    el$.form$.el$('device_lines').children$[index].children$['display_name'].update(newValue);
+                                                                    el$.form$.el$('device_lines').children$[index].children$['user_id'].update(newValue);
 
 
                                                                 }" />
@@ -562,8 +562,8 @@ const handleTabSelected = (activeTab, previousTab) => {
 }
 
 const nextLineNumber = computed(() => {
-    const deviceKeys = form$?.value?.el$('device_keys')
-    const children = deviceKeys?.children$Array ?? []
+    const deviceLines = form$?.value?.el$('device_lines')
+    const children = deviceLines?.children$Array ?? []
     const maxLine = children.reduce((max, child) => {
         const n = parseInt(child?.value?.line_number, 10)
         return Number.isFinite(n) && n > max ? n : max

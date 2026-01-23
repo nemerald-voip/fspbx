@@ -57,6 +57,7 @@
                                     device_profile_uuid: options.item?.device_profile_uuid,
                                     domain_uuid: options.item?.domain_uuid,
                                     device_lines: options.lines,
+                                    device_keys:  normalizeDeviceKeysForForm(options.item?.keys ?? []),
                                     device_settings: options.item?.settings,
                                     device_description: options.item?.device_description ?? null,
                                 }">
@@ -753,6 +754,7 @@ const isCloudProvisioningLoading = reactive({
     loading: false,
 })
 
+
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
 
 const provisioning = ref(null);
@@ -823,7 +825,7 @@ const getKeyValueSelectItems = async (query, input, index) => {
         return Array.from({ length: count }, (_, i) => {
             const displayName = form$.el$(`device_lines.${i}.display_name`)?.value ?? ''
             return {
-                extension: i + 1, // line number shown to user
+                extension: `${i + 1}`, 
                 name: `Line ${i + 1}${displayName ? ' - ' + displayName : ''}`,
             }
         })
@@ -1050,6 +1052,38 @@ const handleCloudProvisioningRetryButtonClick = async () => {
 
 const handleCloudProvisioningRefreshButtonClick = async () => {
     getCloudProvisioningStatus();
+}
+
+const normalizeDeviceKeysForForm = (keys = []) => {
+  if (!Array.isArray(keys)) return []
+
+  const key_types = ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']
+
+  return keys.map(k => {
+    const key_type = (k?.key_type ?? '')?.trim?.() ?? k?.key_type ?? ''
+    const key_value = k?.key_value ?? null
+
+    const row = {
+      ...k,
+      // keep canonical
+      key_type: key_type,
+      key_value: key_value,
+
+      // UI fields (computed from key_value)
+      key_value_select: null,
+      key_value_text: null,
+    }
+
+    if (!key_type || key_value == null || key_value === '') return row
+
+    if (key_types.includes(key_type)) {
+      row.key_value_select = String(key_value)
+    } else {
+      row.key_value_text = String(key_value)
+    }
+
+    return row
+  })
 }
 
 

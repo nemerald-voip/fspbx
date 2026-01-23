@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Models\IvrMenus;
-use App\Models\DeviceKey;
 use App\Models\RingGroups;
 use App\Models\DeviceLines;
 use App\Models\IvrMenuOptions;
@@ -11,7 +10,6 @@ use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Inertia\Ssr\Gateway;
 
 class Domain extends Model
 {
@@ -191,9 +189,9 @@ class Domain extends Model
         return $this->hasMany(DeviceLines::class, 'domain_uuid', 'domain_uuid');
     }
 
-    public function deviceKeys()
+    public function deviceLegacyKeys()
     {
-        return $this->hasMany(DeviceKey::class, 'domain_uuid', 'domain_uuid');
+        return $this->hasMany(LegacyDeviceKey::class, 'domain_uuid', 'domain_uuid');
     }
 
     public function deviceLogs()
