@@ -1065,11 +1065,8 @@ const normalizeDeviceKeysForForm = (keys = []) => {
 
     const row = {
       ...k,
-      // keep canonical
       key_type: key_type,
       key_value: key_value,
-
-      // UI fields (computed from key_value)
       key_value_select: null,
       key_value_text: null,
     }
@@ -1091,7 +1088,7 @@ const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
-    console.log(requestData);
+    // console.log(requestData);
 
     // Using form$.data will INCLUDE conditional elements and it
     // will submit the form as "Content-Type: application/json".

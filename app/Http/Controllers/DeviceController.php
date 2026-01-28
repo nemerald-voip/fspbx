@@ -364,7 +364,7 @@ class DeviceController extends Controller
     {
         $inputs = $request->validated();
 
-        logger($inputs);
+        // logger($inputs);
 
         if (!$device) {
             return response()->json([
@@ -854,7 +854,7 @@ class DeviceController extends Controller
 
             $cloudProviderSelector = app()->make(\App\Services\CloudProviderSelector::class);
 
-            logger($deviceDto);
+            // logger($deviceDto);
 
             // Construct the itemOptions object
             $itemOptions = [

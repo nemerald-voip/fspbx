@@ -32,10 +32,9 @@
             <div>
                 <LabelInputOptional target="vendors" label="Vendor" />
                 <div class="mt-2 relative">
-                    <Multiselect v-model="vendor" :options="options.vendors" :multiple="false"
-                        :close-on-select="true" :clear-on-select="false" :preserve-search="true"
-                        placeholder="Choose Vendor" label="name" track-by="value" :searchable="true"
-                        />
+                    <Multiselect v-model="vendor" :options="options.vendors" :multiple="false" :close-on-select="true"
+                        :clear-on-select="false" :preserve-search="true" placeholder="Choose Vendor" label="name"
+                        track-by="value" :searchable="true" />
                 </div>
             </div>
 
@@ -127,8 +126,6 @@ const props = defineProps({
     readOnly: { type: Boolean, default: false },
 });
 
-console.log(props.options)
-
 const isLoadingTemplate = ref(false)
 const base_template = ref(null);
 const vendor = ref(null);
@@ -195,7 +192,10 @@ const loadBaseTemplate = (selectedOption, id) => {
 
 const submitForm = () => {
     // console.log(form)
-    emits('submit', form); // Emit the event with the form data
+    emits('submit', {
+        ...form,
+        vendor: vendor.value?.value ?? null,
+    });
 }
 
 

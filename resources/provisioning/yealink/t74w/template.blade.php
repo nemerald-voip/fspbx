@@ -1,4 +1,4 @@
-{{-- version: 1.0.2 --}}
+{{-- version: 1.0.3 --}}
 
 @switch($flavor)
 
@@ -406,31 +406,56 @@ features.usb_call_recording.enable = {{ $settings['yealink_usb_record_enable'] ?
     search_in_dialing.ldap.priority = {{ $settings['search_in_dialing_ldap_priority'] ?? 0 }}
 @endif
 
-@if (!empty($settings['yealink_wifi_enable']) && $settings['yealink_wifi_enable'] == '1'))
-    ################################################################
-    ##                      Network WiFi                          ##
-    ################################################################
-    static.wifi.enable = {{ $settings['yealink_wifi_enable'] ?? 0 }}
+################################################################
+##                      Network WiFi                          ##
+################################################################
+
+@if (array_key_exists('yealink_wifi_enable', $settings))
+    static.wifi.enable = {{ $settings['yealink_wifi_enable'] }}
+@endif
     
-    static.wifi.1.label = "{{ $settings['yealink_wifi_1_label'] ?? '' }}"
-    static.wifi.1.ssid = "{{ $settings['yealink_wifi_1_ssid'] ?? '' }}"
-    static.wifi.1.priority = {{ $settings['yealink_wifi_1_priority'] ?? 1 }}
+@if (array_key_exists('yealink_wifi_enable', $settings)
+    && $settings['yealink_wifi_enable'] == '1')
     
-    # security_mode examples: open/WEP/WPA/WPA2/WPA3/EAP  (model-dependent)
-    static.wifi.1.security_mode = "{{ $settings['yealink_wifi_1_security'] ?? 'WPA2' }}"
-    # cipher_type examples: TKIP/CCMP/AES (model-dependent; AES == CCMP)
-    static.wifi.1.cipher_type = "{{ $settings['yealink_wifi_1_cipher'] ?? 'AES' }}"
+    @if (array_key_exists('yealink_wifi_1_label', $settings))
+    static.wifi.1.label = {{ $settings['yealink_wifi_1_label'] }}
+    @endif
     
-    # PSK password (leave empty for open/EAP as needed)
-    static.wifi.1.password = "{{ $settings['yealink_wifi_1_password'] ?? '' }}"
+    @if (array_key_exists('yealink_wifi_1_ssid', $settings))
+    static.wifi.1.ssid = {{ $settings['yealink_wifi_1_ssid'] }}
+    @endif
     
-    # EAP settings (used only if security_mode == EAP)
-    static.wifi.1.eap_type = "{{ $settings['yealink_wifi_1_type'] ?? 'PEAP' }}"
-    static.wifi.1.eap_user_name = "{{ $settings['yealink_wifi_1_username'] ?? '' }}"
-    static.wifi.1.eap_password = "{{ $settings['yealink_wifi_1_password'] ?? '' }}"
+    @if (array_key_exists('yealink_wifi_1_priority', $settings))
+    static.wifi.1.priority = {{ $settings['yealink_wifi_1_priority'] }}
+    @endif
     
-    # Show scan prompt on phone UI (0/1)
-    static.wifi.show_scan_prompt = {{ $settings['yealink_wifi_scan_prompt'] ?? 0 }}
+    @if (array_key_exists('yealink_wifi_1_security', $settings))
+    static.wifi.1.security_mode = {{ $settings['yealink_wifi_1_security'] }}
+    @endif
+    
+    @if (array_key_exists('yealink_wifi_1_cipher', $settings))
+    static.wifi.1.cipher_type = {{ $settings['yealink_wifi_1_cipher'] }}
+    @endif
+    
+    @if (array_key_exists('yealink_wifi_1_password', $settings))
+    static.wifi.1.password = {{ $settings['yealink_wifi_1_password'] }}
+    @endif
+    
+    @if (array_key_exists('yealink_wifi_1_type', $settings))
+    static.wifi.1.eap_type = {{ $settings['yealink_wifi_1_type'] }}
+    @endif
+    
+    @if (array_key_exists('yealink_wifi_1_username', $settings) && $settings['yealink_wifi_1_security'] == '802.1x EAP')
+    static.wifi.1.eap_user_name = {{ $settings['yealink_wifi_1_username'] }}
+    @endif
+    
+    @if (array_key_exists('yealink_wifi_1_password', $settings) && $settings['yealink_wifi_1_security'] == '802.1x EAP')
+    static.wifi.1.eap_password = {{ $settings['yealink_wifi_1_password'] }}
+    @endif
+    
+    @if (array_key_exists('yealink_wifi_scan_prompt', $settings))
+    static.wifi.show_scan_prompt = {{ $settings['yealink_wifi_scan_prompt'] }}
+    @endif
 @endif
 
 ################################################################
