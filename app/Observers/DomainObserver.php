@@ -9,7 +9,9 @@ use App\Services\FreeswitchEslService;
 use Illuminate\Support\Facades\Session;
 use App\Services\DialplanProvisioningService;
 use Illuminate\Support\Facades\File;
-
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\DB;
 
 class DomainObserver
 {
@@ -246,27 +248,52 @@ class DomainObserver
 
     protected function cleanupDomainDatabase(Domain $domain): void
     {
-        foreach ($domain->cascadeRelations() as $relation) {
-            if (!method_exists($domain, $relation)) {
-                logger("DomainObserver.cleanupDomainDatabase: relation {$relation} not found on Domain model");
+        foreach ($domain->cascadeRelations() as $relationName) {
+            if (!method_exists($domain, $relationName)) {
+                logger("DomainObserver.cleanupDomainDatabase: relation {$relationName} not found on Domain model");
                 continue;
             }
 
             try {
-                $domain->{$relation}()
-                    ->chunkById(200, function ($models) use ($relation) {
-                        $models->each(function ($model) use ($relation) {
+                $rel = $domain->{$relationName}();
+
+                if (!$rel instanceof Relation) {
+                    logger("DomainObserver.cleanupDomainDatabase: {$relationName} did not return an Eloquent Relation");
+                    continue;
+                }
+
+                $related = $rel->getRelated();
+                $conn    = $related->getConnectionName(); // null => default
+                $table   = $related->getTable();
+                $pk      = $related->getKeyName();         // UUID PKs matter here
+
+                // Skip missing table
+                if (!Schema::connection($conn)->hasTable($table)) {
+                    logger("DomainObserver.cleanupDomainDatabase: skipping {$relationName} (missing table {$table})");
+                    continue;
+                }
+
+                // Savepoint per relation (prevents 25P02 poisoning the whole delete)
+                DB::connection($conn)->transaction(function () use ($rel, $relationName, $pk) {
+                    $rel->chunkById(200, function ($models) use ($relationName) {
+                        $models->each(function ($model) use ($relationName) {
                             try {
-                                $model->delete();
+                                $model->delete(); 
                             } catch (\Throwable $e) {
-                                logger("DomainObserver.cleanupDomainDatabase: failed deleting model from {$relation}: "
-                                    . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+                                logger(
+                                    "DomainObserver.cleanupDomainDatabase: failed deleting model from {$relationName}: "
+                                    . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine()
+                                );
                             }
                         });
-                    });
+                    }, $pk);
+                });
+
             } catch (\Throwable $e) {
-                logger("DomainObserver.cleanupDomainDatabase: error while chunking relation {$relation}: "
-                    . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+                logger(
+                    "DomainObserver.cleanupDomainDatabase: error cleaning relation {$relationName}: "
+                    . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine()
+                );
             }
         }
     }

@@ -484,7 +484,6 @@ public function cascadeRelations(): array
 
         'hotelHousekeepingDefinitions',
         'hotelPendingActions',
-        'hotelReservations',
         'hotelRoomStatuses',
         'hotelRooms',
 
