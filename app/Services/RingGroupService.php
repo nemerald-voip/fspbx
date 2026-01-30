@@ -129,6 +129,17 @@ class RingGroupService
 
     private function calculateTimeout(array $validated): int
     {
+        if (($validated['ring_group_strategy'] ?? '') === 'rollover') {
+            $members = is_array($validated['members'] ?? null) ? $validated['members'] : [];
+            $enabledMembers = array_values(array_filter($members, fn ($m) => !empty($m['destination_enabled'])));
+
+            $max = 0;
+            foreach ($enabledMembers as $m) {
+                $max = max($max, (int) ($m['destination_timeout'] ?? 0));
+            }
+            return $max;
+        }
+
         $enabledMembers = array_filter($validated['members'] ?? [], fn($m) => !empty($m['enabled']));
 
         if (in_array($validated['ring_group_strategy'] ?? '', ['random', 'sequence', 'rollover'], true)) {
