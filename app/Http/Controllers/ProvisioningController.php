@@ -57,8 +57,6 @@ class ProvisioningController extends Controller
         // logger($vars);
         // Compute flavor + MIME
         $flv = $this->computeFlavor($request, $device, $id, $ext);
-        logger($flv);
-
 
         // Add provisioning context
         $vars += [
@@ -545,10 +543,27 @@ class ProvisioningController extends Controller
 
         // logger($map);
 
-        // Use this if array needs to be normilized by key_id
-        // $keys = collect(array_values($map))->keyBy('id')->toArray();
-
         $keys = array_values($map);
+
+        // Build list of device’s own extensions
+        $selfExts = collect($device->lines ?? [])
+            ->pluck('auth_id')
+            ->filter()
+            ->map(fn($v) => (string) $v)
+            ->unique();
+
+        // Drop any key whose value matches a self extension
+        $keys = array_values(array_filter($keys, function ($k) use ($selfExts) {
+            $val = (string) ($k['value'] ?? '');
+            if ($val === '') return true;           // keep empty values
+            return !$selfExts->contains($val);      // skip if value is one of selfExts
+        }));
+
+        foreach ($keys as $i => &$k) {
+            $k['id'] = $i + 1;
+        }
+        unset($k);
+
         // fill BLF labels from Extensions.effective_caller_id_name (domain-scoped)
         $blfTargets = collect($keys)
             ->filter(fn($k) => (empty($k['label']) || $k['label'] === null)
@@ -601,9 +616,26 @@ class ProvisioningController extends Controller
             return $this->mapNewDeviceKeyToPolycomShape($device, $id, $type, $nk);
         }
 
+        // Grandstream expects 0-based line index
+        if ($device->device_vendor == 'grandstream') {
+            $line = $line - 1; // 1->0, 2->1, ...
+            if ($line < 0) $line = 0;
+        }
+
         switch ($type) {
             case 'line':
                 $line  = (int) $nk->key_value ?? 1;
+
+                $lines = $device->lines ?? [];
+                $lineObj = collect($lines)->firstWhere('line_number', (string) $line);
+                $label = $lineObj['display_name'];
+
+                // Grandstream expects 0-based line index
+                if ($device->device_vendor == 'grandstream') {
+                    $line = $line - 1; // 1->0, 2->1, ...
+                    if ($line < 0) $line = 0;
+                }
+
                 $value = null;
                 break;
 
@@ -656,7 +688,10 @@ class ProvisioningController extends Controller
 
             case 'grandstream':
                 $out['type'] = match ($t) {
-                    'speed_dial' => 'speed_dial',
+                    'speed_dial' => 'speed dial',
+                    '' => 'none',
+                    'park' => 'monitored call park',
+                    'check_voicemail' => 'blf',
                     default      => $t,
                 };
                 break;

@@ -1,4 +1,4 @@
-{{-- version: 1.0.3 --}}
+{{-- version: 1.0.4 --}}
 
 @switch($flavor)
 
@@ -93,7 +93,6 @@
 
 @endforeach
 
-
 ################################################################
 #                      Account Advanced                       ##
 ################################################################
@@ -116,12 +115,10 @@
 
 @endforeach
 
-
 ################################################################
 ##                          Linekeys                          ##
 ################################################################
 @php
-  // 1) Mark which accounts are shared (optional: if you already know this, build this array upstream)
   $sharedLines = [];
   foreach ($lines as $ln) {
       $n = (int)($ln['line_number'] ?? 0);
@@ -130,7 +127,6 @@
       }
   }
 
-  // 2) Count appearances per account for type=15 (line keys)
   $appearanceCount = [];
   foreach ($keys as $k) {
       if ((string)($k['type'] ?? '') === '15') {
@@ -141,11 +137,9 @@
       }
   }
 
-  // 3) Running index per account to pick suffix a,b,c...
   $appearanceIndex = [];
   $slot = 1;
 
-  // helper for suffix: 1->a, 2->b ... wraps after 26
   $suffixFor = static function (int $idx): string {
       $idx = max(1, $idx);
       $alpha = chr(96 + ((($idx - 1) % 26) + 1));
@@ -158,15 +152,12 @@
   $type = (string)($k['type'] ?? '');
   $ln   = (int)($k['line'] ?? 0);
 
-  // Base label as provided
-  $label = isset($k['label']) ? (string)$k['label'] : '';
+  $label = isset($k['label']) ? (string)$k['label'] : ' ';
 
-  // If it's a line key on a shared account AND label is empty, add postfix
   if ($type === '15' && $ln > 0 && !isset($k['label']) && !empty($sharedLines[$ln])) {
       $appearanceIndex[$ln] = ($appearanceIndex[$ln] ?? 0) + 1;
       $sfx = $suffixFor($appearanceIndex[$ln]);
 
-      // Find a base (display_name/auth_id) for this account
       $base = '';
       if (!empty($lines[$ln]['display_name']))       $base = (string)$lines[$ln]['display_name'];
       elseif (!empty($lines[$ln]['auth_id']))        $base = (string)$lines[$ln]['auth_id'];
@@ -183,7 +174,7 @@ linekey.{{ $slot }}.line = {{ $k['line'] }}
 linekey.{{ $slot }}.label = {{ $label }}
 linekey.{{ $slot }}.value = {{ $value }}
 @if ($ext !== null)
-linekey.{{ $slot }}.extension = "{{ $ext }}"
+linekey.{{ $slot }}.extension = {{ $ext }}
 @endif
 
 @php $slot++; @endphp
