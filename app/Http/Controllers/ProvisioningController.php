@@ -588,7 +588,7 @@ class ProvisioningController extends Controller
                     if ($val !== '' && !empty($extLabels[$val])) {
                         $k['label'] = $extLabels[$val];
                     }
-                    // else: leave label null; Blade will fall back to value
+                    // else: leave label null; 
                 }
             }
             unset($k);
@@ -709,7 +709,7 @@ class ProvisioningController extends Controller
         $value = $nk->key_value ?? null;
         $label = $nk->key_label ?? null;
 
-        $category = 'unassigned';
+        $category = 'line';
         $polyType = null;
         $line     = 0;
         $outValue = null;
@@ -717,6 +717,8 @@ class ProvisioningController extends Controller
         switch ($type) {
             case '':
             case 'unassigned':
+                $category = 'line';
+                $polyType = 'unassigned';
                 break;
 
             case 'line':
@@ -737,14 +739,14 @@ class ProvisioningController extends Controller
                 break;
 
             case 'blf':
-                $category = 'blf';
+                $category = 'line';
                 $polyType = 'normal';
                 $line     = 1;
                 $outValue = ($value !== null && $value !== '') ? (string) $value : null;
                 break;
 
             case 'park':
-                $category = 'blf';
+                $category = 'line';
                 $polyType = 'automata';
                 $line     = 1;
                 $park = (string) ($value ?? '');
@@ -752,7 +754,7 @@ class ProvisioningController extends Controller
                 break;
 
             case 'check_voicemail':
-                $category = 'blf';
+                $category = 'line';
                 $polyType = 'normal';
                 $line     = 1;
                 $vm = (string) ($value ?? '');
@@ -760,7 +762,7 @@ class ProvisioningController extends Controller
                 break;
 
             case 'speed_dial':
-                $category = 'speeddial';
+                $category = 'line';
                 $polyType = null;
                 $line     = 1;
                 $outValue = ($value !== null && $value !== '') ? (string) $value : null;
