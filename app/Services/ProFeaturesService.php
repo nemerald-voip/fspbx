@@ -21,8 +21,6 @@ class ProFeaturesService
     {
         $enabled = collect(Module::allEnabled())->map(fn($m) => $m->getName())->values();
 
-        logger($enabled);
-
         if ($enabled->count() == 0) return ['updated' => [], 'skipped' => [], 'errors' => []];
 
         return $this->syncModules(
@@ -232,6 +230,11 @@ class ProFeaturesService
     protected function downloadAndDeployModule(string $licenseKey, string $moduleName, string $version, string $artifactName): bool|string
     {
         try {
+            //don't overwrite a git-managed module folder
+            if ($this->isGitManagedModule($moduleName)) {
+                return "skipped artifact deploy for " . $moduleName . " (git-managed dev module)";
+            }
+
             $content = $this->keygenApiService->downloadArtifact($licenseKey, $version, $artifactName);
             if (!$content) {
                 return "failed to download artifact {$artifactName}";
@@ -254,6 +257,15 @@ class ProFeaturesService
         }
     }
 
+    protected function isGitManagedModule(string $moduleName): bool
+    {
+        $path = base_path("Modules/{$moduleName}");
+
+        // normal clone: Modules/Name/.git (dir)
+        // submodule/worktree: Modules/Name/.git (file)
+        return is_dir($path) && (is_dir("{$path}/.git") || is_file("{$path}/.git"));
+    }
+
     protected function getProRow(): ?ProFeatures
     {
         return ProFeatures::query()->where('slug', 'fspbx')->first();
@@ -263,8 +275,10 @@ class ProFeaturesService
     {
         $licenseResponse = $this->keygenApiService->validateLicenseKey($licenseKey);
 
+        logger($licenseResponse);
+
         if (!$licenseResponse || !($licenseResponse['meta']['valid'] ?? false)) {
-            return ['__error' => 'License invalid or expired.'];
+            return ['__error' => 'Pro Features License invalid or expired.'];
         }
 
         return $licenseResponse;
