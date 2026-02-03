@@ -394,7 +394,10 @@
                                                     :controls="{ add: options.permissions.device_key_create, remove: options.permissions.device_key_destroy, sort: options.permissions.device_key_up }"
                                                     :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
                                                     <template #default="{ index }">
-                                                        <ObjectElement :name="index">
+                                                        <ObjectElement :name="index" :key="form$?.data?.device_keys?.[index]?.key_uuid">
+
+                                                            <HiddenElement name="key_uuid" :meta="true" :default="Math.random().toString(36).slice(2)"/>
+                                                            <HiddenElement name="_generated_label" :meta="true" :default="null" />
 
                                                             <TextElement name="key_index" label="Key" :rules="[
                                                                 'nullable',
@@ -467,7 +470,8 @@
                                                                 sm: {
                                                                     container: 3,
                                                                 },
-                                                            }" placeholder="Enter Value" :floating="false" :disabled="[
+                                                            }" :placeholder="form$?.data?.device_keys?.[index]?._generated_label ?? 'Enter Value'"
+                                                            :floating="false" :disabled="[
                                                                 ['device_keys.*.key_type', ['', 'line']]
                                                             ]" />
 
@@ -483,8 +487,8 @@
                                                                 :conditions="[() => options?.permissions?.device_key_advanced]">
 
 
-                                                                <Cog8ToothIcon @click="showLineAdvSettings(index)"
-                                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                                                <!-- <Cog8ToothIcon @click="showLineAdvSettings(index)"
+                                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" /> -->
 
                                                             </StaticElement>
 
@@ -906,11 +910,15 @@ const updateLabel = (newValue, oldValue, el$, index) => {
     el$?.form$?.el$('device_keys').children$[index].children$['key_value'].update(newValue)
 
     const keyLabelEl = el$?.form$?.el$('device_keys').children$[index].children$['key_label']
+    
+    // Get the Hidden Element instance
+    const generatedLabelEl = el$?.form$?.el$('device_keys').children$[index].children$['_generated_label']
+
     const keyType = el$?.form$.el$('device_keys.' + index + '.key_type')?.value
     let label = null
 
     if (keyType === 'park') {
-        label = parkLabelFromValue(newValue, 5900) // 5901 => Park 1, 5910 => Park 10, etc
+        label = parkLabelFromValue(newValue, 5900)
     }
 
     if (keyType === 'check_voicemail') {
@@ -924,21 +932,20 @@ const updateLabel = (newValue, oldValue, el$, index) => {
 
         label = nameOnlyFromOption(selected)
 
+        // Clear the actual input value
         keyLabelEl.update(null)
 
-        if (keyLabelEl.attrs) {
-            keyLabelEl.attrs.placeholder = label
-        }
+        // SAVE the placeholder text to the hidden element
+        generatedLabelEl.update(label)
 
         return
     }
 
-    if (keyLabelEl.attrs) {
-        keyLabelEl.attrs.placeholder = 'Enter Value'
-    }
-
+    // Default case: clear the custom placeholder so it reverts to 'Enter Value'
+    generatedLabelEl.update(null)
+    
+    // For other types (park/vm), you were setting the actual value
     keyLabelEl.update(label)
-
 }
 
 const getCloudProvisioningStatus = async () => {
@@ -1063,8 +1070,25 @@ const normalizeDeviceKeysForForm = (keys = []) => {
     const key_type = (k?.key_type ?? '')?.trim?.() ?? k?.key_type ?? ''
     const key_value = k?.key_value ?? null
 
+    let label = null
+
+    if (key_type === 'blf' || key_type === 'speed_dial') {
+        // Try to find the matching object in the extensions list provided in props
+        const match = props.options.extensions?.find(ext => ext.value == key_value);
+
+        if (match) {
+            // If found, pass the object to your helper to extract the name
+            label = nameOnlyFromOption(match);
+        } else {
+            //Fallback: use the extension number itself if the name isn't found
+            label = key_value; 
+        }
+    }
+
     const row = {
       ...k,
+      key_uuid: k?.device_key_uuid,
+      _generated_label: label ?? null,
       key_type: key_type,
       key_value: key_value,
       key_value_select: null,
