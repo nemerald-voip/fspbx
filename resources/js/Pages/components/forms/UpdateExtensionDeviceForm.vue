@@ -55,7 +55,7 @@
                                         ?? null,
                                     device_uuid: options.item.device_uuid,
                                     device_address: options.item.device_address,
-                                    device_keys: options.lines,
+                                    device_lines: options.lines,
                                 }">
 
                                 <template #empty>
@@ -81,7 +81,7 @@
 
                                                 <HiddenElement name="device_uuid" :meta="true" />
                                                 <HiddenElement name="device_address" :meta="true" />
-                                                <HiddenElement name="device_keys" :meta="true" />
+                                                <HiddenElement name="device_lines" :meta="true" />
                                                 <StaticElement name="h4" tag="h4" content="Settings" />
 
 
@@ -138,7 +138,7 @@ const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
     const requestData = form$.requestData
-    console.log(requestData);
+    // console.log(requestData);
 
     return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
 };

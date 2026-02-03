@@ -17,7 +17,6 @@ use App\Models\GatewaySetting;
 use App\Models\PaymentGateway;
 use App\Models\SwitchVariable;
 use App\Models\DefaultSettings;
-use Illuminate\Support\Facades\Log;
 use libphonenumber\PhoneNumberUtil;
 use App\Models\ProvisioningTemplate;
 use Illuminate\Support\Facades\Http;
@@ -1250,7 +1249,7 @@ if (!function_exists('getSoundsCollection')) {
             ->values()
             ->all();
 
-        
+
 
         unset($musicOnHoldCollection, $recordingsCollection, $ringtonesCollection, $item);
         return [
@@ -1466,6 +1465,495 @@ if (!function_exists('buildDestinationAction')) {
 
             // 3. Unlimited if not found
             return null;
+        }
+    }
+
+    if (!function_exists('fspbx_vendor_key_type_code')) {
+        function fspbx_vendor_key_type_code(string $vendor, string $simple_type, ?string $category = null): string
+        {
+            $v = strtolower(trim($vendor));
+            $t = strtolower(trim($simple_type));
+            $cat = strtolower(trim((string)$category));
+
+            // Yealink
+            if ($v === 'yealink') {
+                return match ($t) {
+                    'line' => '15',
+                    'speed_dial' => '13',
+                    'blf', 'check_voicemail' => '16',
+                    'park' => '16',
+                    '' => '0',
+                    default => '0',
+                };
+            }
+
+            // Polycom
+            if ($v === 'polycom') {
+                return match ($t) {
+                    'line' => 'line',
+                    'speed_dial' => 'blf',
+                    'blf' => 'normal',
+                    'check_voicemail' => 'normal',
+                    'park' => 'automata',
+                    '' => 'unassigned',
+                    default => 'unassigned',
+                };
+            }
+
+            // Cisco
+            if ($v === 'cisco') {
+                return match ($t) {
+                    'line' => 'line',
+                    'park' => 'blf',
+                    '' => 'disabled',
+                    default => $t,
+                };
+            }
+
+            // Fanvil
+            if ($v === 'fanvil') {
+                return match ($t) {
+                    'line' => '1',
+                    'speed_dial' => 'f',
+                    'park' => 'c',
+                    'blf', 'check_voicemail' => 'bc',
+                    '' => '3',
+                    default => $t,
+                };
+            }
+
+            // Escene
+            if ($v === 'escene') {
+                return match ($t) {
+                    'speed_dial' => '5',
+                    'park' => '7',
+                    'blf', 'check_voicemail' => '1',
+                    default => $t,
+                };
+            }
+
+            // Flyingvoice
+            if ($v === 'flyingvoice') {
+                return match ($t) {
+                    'line' => '15',
+                    'speed_dial' => '13',
+                    'park' => '10',
+                    'blf', 'check_voicemail' => '16',
+                    '' => '0',
+                    default => $t,
+                };
+            }
+
+            if ($v === 'grandstream') {
+                return match ($t) {
+                    'speed_dial'      => 'speed dial',
+                    'check_voicemail' => 'blf',
+                    'park'            => 'monitored call park',
+                    default           => $t,
+                };
+            }
+
+            // Htek
+            if ($v === 'htek') {
+                return match ($t) {
+                    'line' => '1',
+                    'speed_dial' => '2',
+                    'park' => '8',
+                    'blf', 'check_voicemail' => '3',
+                    '' => '0',
+                    default => $t,
+                };
+            }
+
+            // Linksys
+            if ($v === 'linksys') {
+                return match ($t) {
+                    '' => 'disabled',
+                    default           => $t,
+                };
+            }
+
+            // mitel
+            if ($v === 'mitel') {
+                return match ($t) {
+                    'line' => '6',
+                    'speed_dial' => '1',
+                    'park' => '27',
+                    'blf', 'check_voicemail' => '27',
+                    '' => '0',
+                    default => $t,
+                };
+            }
+
+            // sangoma
+            if ($v === 'sangoma') {
+                return match ($t) {
+                    'line' => '1',
+                    'speed_dial' => '2',
+                    'park' => '8',
+                    'blf', 'check_voicemail' => '3',
+                    '' => '0',
+                    default => $t,
+                };
+            }
+
+            // snom
+            if ($v === 'snom') {
+                return match ($t) {
+                    'speed_dial' => 'speed',
+                    'park' => 'orbit',
+                    'check_voicemail' => 'blf',
+                    '' => 'none',
+                    default => $t,
+                };
+            }
+
+            return match ($t) {
+                default           => $t,
+            };
+        }
+    }
+
+    if (!function_exists('fspbx_map_simple_key_to_fusion_row')) {
+        /**
+         * Convert simplified device_keys row to FusionPBX legacy row format
+         *
+         * If key_type is blank => clear slot (remove existing id).
+         */
+        function fspbx_map_simple_key_to_fusion_row(
+            array $nk,
+            string $device_uuid,
+            string $vendor,
+            array $device_lines,
+            string $domain_uuid,
+            array $blfLabelMap = []
+        ): array {
+            $id = (int)($nk['key_index'] ?? 0);
+            if ($id <= 0) return [];
+
+            $rawType = strtolower(trim((string)($nk['key_type'] ?? '')));
+
+            $category = 'line';
+
+            // Vendor-coded type 
+            $device_key_type = fspbx_vendor_key_type_code($vendor, $rawType, $category);
+
+            $value = $nk['key_value'] ?? null;
+            $label = $nk['key_label'] ?? null;
+
+            if ($vendor == 'grandstream') {
+                $line = 0;
+            } else {
+                $line = 1;
+            }
+
+
+            // Build the row with the SAME keys FusionPBX uses
+            $row = [
+                'device_key_id'        => $id,
+                'device_key_category'  => $category,
+                'device_key_vendor'    => strtolower(trim($vendor)),
+                'device_key_type'      => $device_key_type,
+                'device_key_subtype'   => '',
+                'device_key_line'      => $line,
+                'device_key_value'     => '',
+                'device_key_extension' => '',
+                'device_key_protected' => '',
+                'device_key_label'     => '',
+                'device_key_icon'      => '',
+            ];
+
+            // Fill fields according to simplified type
+            if ($rawType === 'line') {
+                $acct = (int)($nk['key_value'] ?? 1);
+                if ($acct <= 0) $acct = 1;
+
+                $row['device_key_line'] = $acct;
+                $row['device_key_value'] = '';
+
+                // If the label is currently empty, look inside $device_lines
+                if ($row['device_key_label'] === '' && isset($device_lines[$acct])) {
+                    // Try 'label' (custom label field)
+                    if (!empty($device_lines[$acct]['label'])) {
+                        $row['device_key_label'] = $device_lines[$acct]['label'];
+                    }
+                    // Fallback to 'display_name' (caller ID name)
+                    elseif (!empty($device_lines[$acct]['display_name'])) {
+                        $row['device_key_label'] = $device_lines[$acct]['display_name'];
+                    }
+                    // Fallback to 'user_id' (extension number)
+                    elseif (!empty($device_lines[$acct]['user_id'])) {
+                        $row['device_key_label'] = $device_lines[$acct]['user_id'];
+                    }
+                }
+            } elseif ($rawType === 'speed_dial') {
+                $row['device_key_value'] = ($value !== null ? (string)$value : '');
+                $row['device_key_label'] = (strlen((string)$label) ? (string)$label : '');
+            } elseif ($rawType === 'blf') {
+                $row['device_key_value'] = ($value !== null ? (string)$value : '');
+
+                if (!strlen((string)$label)) {
+                    $row['device_key_label'] = $blfLabelMap[$row['device_key_value']] ?? '';
+                } else {
+                    $row['device_key_label'] = (string)$label;
+                }
+            } elseif ($rawType === 'check_voicemail') {
+                $val = ($value !== null ? (string)$value : '');
+                if ($val !== '' && ctype_digit($val)) {
+                    $val = 'vm' . $val; // allow storing "101" in DB but emitting "vm101"
+                }
+                $row['device_key_value'] = $val;
+
+                if (strlen((string)$label)) {
+                    $row['device_key_label'] = (string)$label;
+                } else {
+                    $digits = preg_replace('/\D+/', '', $val);
+                    $row['device_key_label'] = ($digits !== '') ? ('VM ' . $digits) : '';
+                }
+            } elseif ($rawType === 'park') {
+                $val = ($value !== null ? (string)$value : '');
+                if ($val !== '' && ctype_digit($val)) {
+                    $val = 'park+*' . $val;
+                }
+                $row['device_key_value'] = $val;
+                $row['device_key_label'] = (strlen((string)$label) ? (string)$label : 'Park');
+            } else {
+                // Unknown type => safest is disabled slot
+                $row['device_key_type'] = fspbx_vendor_key_type_code($vendor, '', $category); // => 0 for yealink
+                $row['device_key_value'] = '';
+                $row['device_key_label'] = '';
+            }
+
+            return $row;
+        }
+    }
+
+    if (!function_exists('fspbx_apply_new_keys_override')) {
+        /**
+         * Apply new device_keys rows as strongest override onto FusionPBX $device_keys structure.
+         */
+        function fspbx_apply_new_keys_override(
+            ?array &$device_keys,
+            array $new_keys_rows,
+            string $device_uuid,
+            string $vendor,
+            array $device_lines = [],
+            string $domain_uuid
+        ): void {
+            if ($device_keys === null) {
+                $device_keys = [];
+            }
+
+            if ($device_lines === null) {
+                $device_lines = [];
+            }
+            $blfLabelMap = fspbx_prefetch_extension_labels($domain_uuid, $new_keys_rows);
+
+            $polycomLineCounts = [];
+            $polycomFirstIndex = [];
+
+            if ($vendor === 'polycom') {
+                foreach ($new_keys_rows as $nk) {
+                    $type = strtolower(trim((string)($nk['key_type'] ?? '')));
+                    if ($type !== 'line') continue;
+
+                    $acct = (int)($nk['key_value'] ?? 1);
+                    if ($acct <= 0) $acct = 1;
+
+                    $polycomLineCounts[$acct] = ($polycomLineCounts[$acct] ?? 0) + 1;
+
+                    $idx = (int)($nk['key_index'] ?? 0);
+                    if ($idx > 0 && (!isset($polycomFirstIndex[$acct]) || $idx < $polycomFirstIndex[$acct])) {
+                        $polycomFirstIndex[$acct] = $idx;
+                    }
+                }
+            }
+
+            $polycomEmptyCount = 0;
+            $polycomEmptyLeaderIdx = null;
+
+            if ($vendor === 'polycom') {
+                foreach ($new_keys_rows as $nk) {
+                    $type = strtolower(trim((string)($nk['key_type'] ?? '')));
+                    if ($type !== '') continue;
+
+                    $polycomEmptyCount++;
+
+                    $idx = (int)($nk['key_index'] ?? 0);
+                    if ($idx > 0 && ($polycomEmptyLeaderIdx === null || $idx < $polycomEmptyLeaderIdx)) {
+                        $polycomEmptyLeaderIdx = $idx;
+                    }
+                }
+            }
+
+            foreach ($new_keys_rows as $nk) {
+
+                // Pass $device_lines down
+                $row = fspbx_map_simple_key_to_fusion_row(
+                    $nk,
+                    $device_uuid,
+                    $vendor,
+                    $device_lines,
+                    $domain_uuid,
+                    $blfLabelMap
+                );
+
+                if (empty($row)) continue;
+
+                // --- Polycom special handling for line keys ---
+                if ($vendor === 'polycom' && $row['device_key_type'] === 'line') {
+                    $acct = (int)($nk['key_value'] ?? 1);
+                    if ($acct <= 0) $acct = 1;
+
+                    $count = (int)($polycomLineCounts[$acct] ?? 1);
+                    if ($count <= 0) $count = 1;
+
+                    $idx = (int)($nk['key_index'] ?? 0);
+                    $leaderIdx = (int)($polycomFirstIndex[$acct] ?? $idx);
+
+                    if ($idx !== $leaderIdx) {
+                        continue;
+                    }
+
+                    // Leader row carries the count
+                    $row['device_key_type']  = 'line';
+                    $row['device_key_line']  = $acct;
+                    $row['device_key_value'] = (string)$count;
+
+                    if (!isset($device_lines[$acct]) || !is_array($device_lines[$acct])) {
+                        $device_lines[$acct] = [];
+                    }
+                    $device_lines[$acct]['line_keys'] = (string)$count;
+                    $device_lines[$acct]['device_key_owner'] = 'device';
+                }
+
+                // --- Polycom special handling for empty/unassigned keys ---
+                if ($vendor === 'polycom' && $row['device_key_type'] === 'unassigned') {
+                    // If there are multiple blanks, only emit one leader row
+                    $idx = (int)($nk['key_index'] ?? 0);
+
+                    // No leader (shouldn't happen unless key_index missing), just treat as 1
+                    if ($polycomEmptyLeaderIdx === null) {
+                        $polycomEmptyLeaderIdx = $idx;
+                        $polycomEmptyCount = max(1, $polycomEmptyCount);
+                    }
+
+                    if ($idx !== $polycomEmptyLeaderIdx) {
+                        continue;
+                    }
+
+                    // Leader row carries the count
+                    $row['device_key_type']  = fspbx_vendor_key_type_code($vendor, '', 'line'); // => 'unassigned'
+                    $row['device_key_line']  = 0;
+                    $row['device_key_value'] = (string)max(1, (int)$polycomEmptyCount);
+                    $row['device_key_label'] = '';
+                }
+
+                $id = (int)($row['device_key_id'] ?? 0);
+                if ($id <= 0) continue;
+
+                $cat = $row['device_key_category'] ?: 'line';
+                $device_keys[$cat][$id] = $row;
+
+                // This line ensures backwards compatibility with older templates
+                $device_keys[$id] = $row;
+                $device_keys[$id]['device_key_owner'] = 'device';
+            }
+        }
+    }
+
+
+    if (!function_exists('fspbx_prefetch_extension_labels')) {
+        function fspbx_prefetch_extension_labels(string $domain_uuid, array $new_keys_rows): array
+        {
+            $exts = [];
+
+            foreach ($new_keys_rows as $nk) {
+                $type  = strtolower(trim((string)($nk['key_type'] ?? '')));
+                $label = (string)($nk['key_label'] ?? '');
+                $val   = (string)($nk['key_value'] ?? '');
+
+                if ($type === 'blf' && $label === '' && $val !== '') {
+                    $exts[$val] = true; // unique
+                }
+            }
+
+            $exts = array_keys($exts);
+            if (empty($exts)) return [];
+
+            // Build IN (:e0,:e1,...)
+            $placeholders = [];
+            $params = ['domain_uuid' => $domain_uuid];
+
+            foreach ($exts as $i => $ext) {
+                $ph = 'e' . $i;
+                $placeholders[] = ':' . $ph;
+                $params[$ph] = $ext;
+            }
+
+            $sql = "select extension, effective_caller_id_name
+                from v_extensions
+                where domain_uuid = :domain_uuid
+                  and extension in (" . implode(',', $placeholders) . ")";
+
+            $database = new database;
+            $rows = $database->select($sql, $params, 'all');
+
+            $map = [];
+            if (is_array($rows)) {
+                foreach ($rows as $r) {
+                    $map[(string)$r['extension']] = (string)($r['effective_caller_id_name'] ?? '');
+                }
+            }
+
+            return $map;
+        }
+    }
+
+    if (!function_exists('fspbx_prefetch_blf_labels')) {
+        function fspbx_prefetch_blf_labels(string $domain_uuid, array $keys): array
+        {
+            // Collect unique extensions that need labels
+            $need = [];
+            foreach ($keys as $row) {
+                $type  = strtolower((string)($row['device_key_type'] ?? ''));
+                $value = (string)($row['device_key_value'] ?? '');
+                $label = (string)($row['device_key_label'] ?? '');
+
+                // Only BLF (match your system’s BLF type values; legacy Fusion uses 'blf' string here)
+                if ($value !== '' && $label === '') {
+                    $need[$value] = true;
+                }
+            }
+
+            $exts = array_keys($need);
+            if (!$exts) return [];
+
+            // Build IN list safely
+            $params = ['domain_uuid' => $domain_uuid];
+            $ph = [];
+            foreach ($exts as $i => $ext) {
+                $k = "e{$i}";
+                $ph[] = ":{$k}";
+                $params[$k] = $ext;
+            }
+
+            $sql = "select extension, effective_caller_id_name
+            from v_extensions
+            where domain_uuid = :domain_uuid
+              and extension in (" . implode(',', $ph) . ")";
+
+            $database = new database;
+            $rows = $database->select($sql, $params, 'all');
+
+            $map = [];
+            if (is_array($rows)) {
+                foreach ($rows as $r) {
+                    $map[(string)$r['extension']] = (string)($r['effective_caller_id_name'] ?? '');
+                }
+            }
+
+            return $map;
         }
     }
 }

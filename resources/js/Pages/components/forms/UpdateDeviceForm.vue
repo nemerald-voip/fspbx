@@ -56,7 +56,8 @@
                                         ?? null,
                                     device_profile_uuid: options.item?.device_profile_uuid,
                                     domain_uuid: options.item?.domain_uuid,
-                                    device_keys: options.lines,
+                                    device_lines: options.lines,
+                                    device_keys:  normalizeDeviceKeysForForm(options.item?.keys ?? []),
                                     device_settings: options.item?.settings,
                                     device_description: options.item?.device_description ?? null,
                                 }">
@@ -79,12 +80,20 @@
                                                     'submit',
 
                                                 ]" />
-                                                <FormTab name="page1" label="Keys" :elements="[
-                                                    'password_reset',
-                                                    'security_title',
-                                                    'keys_container',
+                                                <FormTab name="lines" label="Lines" :elements="[
+                                                    'lines_container',
+                                                    'lines_title',
+                                                    'add_key',
+                                                    'device_lines',
+                                                    'advanced',
+                                                    'lines_container2',
+                                                    'submit_lines',
+
+                                                ]" />
+
+                                                <FormTab name="keys" label="Function Keys" :elements="[
+                                                    'lines_container',
                                                     'keys_title',
-                                                    'assign_existing',
                                                     'add_key',
                                                     'device_keys',
                                                     'advanced',
@@ -124,7 +133,7 @@
                                             <FormElements>
 
                                                 <StaticElement name="h4" tag="h4" content="Device Settings" />
-                                                 <StaticElement name="uuid_clean"
+                                                <StaticElement name="uuid_clean"
                                                     :conditions="[() => options.permissions.is_superadmin]">
 
                                                     <div class="mb-1">
@@ -137,14 +146,14 @@
                                                                 {{ options.item.device_uuid }}
                                                             </span>
 
-                                                    <button type="button"
-                                                        @click="handleCopyToClipboard(options.item.device_uuid)"
-                                                        class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
-                                                        title="Copy to clipboard">
-                                                        <!-- Small Copy Icon -->
-                                                        <ClipboardDocumentIcon
-                                                            class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
-                                                    </button>
+                                                            <button type="button"
+                                                                @click="handleCopyToClipboard(options.item.device_uuid)"
+                                                                class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                                                title="Copy to clipboard">
+                                                                <!-- Small Copy Icon -->
+                                                                <ClipboardDocumentIcon
+                                                                    class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
+                                                            </button>
                                                         </div>
                                                     </div>
 
@@ -193,14 +202,13 @@
 
 
                                                 <!-- Lines tab-->
-                                                <StaticElement name="keys_title" tag="h4" content="Device Keys"
-                                                    description="Assign functions to the device keys." />
+                                                <StaticElement name="lines_title" tag="h4" content="Device Lines"
+                                                    description="Assign lines to this device." />
 
+                                                <GroupElement name="lines_container" />
 
-                                                <GroupElement name="keys_container" />
-
-                                                <ListElement name="device_keys" :sort="true" size="sm"
-                                                    :controls="{ add: options.permissions.device_key_create, remove: options.permissions.destination_delete, sort: options.permissions.destination_update }"
+                                                <ListElement name="device_lines" :sort="true" size="sm"
+                                                    :controls="{ add: options.permissions.device_line_create, remove: options.permissions.device_line_destroy, sort: options.permissions.device_line_update }"
                                                     :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
                                                     <template #default="{ index }">
                                                         <ObjectElement :name="index">
@@ -229,7 +237,7 @@
                                                                 :default="null" />
 
 
-                                                            <TextElement name="line_number" label="Key" :rules="[
+                                                            <TextElement name="line_number" label="Line" :rules="[
                                                                 'nullable',
                                                                 'numeric',
                                                             ]" autocomplete="off" :columns="{
@@ -239,7 +247,7 @@
                                                                 },
                                                             }" :default="nextLineNumber" />
 
-                                                            <SelectElement name="line_type_id" label="Function"
+                                                            <SelectElement name="line_type_id" label="Type"
                                                                 :items="options.line_key_types" :search="true"
                                                                 label-prop="name" :native="false" input-type="search"
                                                                 autocomplete="off" :columns="{
@@ -247,13 +255,12 @@
                                                                     sm: {
                                                                         container: 3,
                                                                     },
-                                                                }" placeholder="Choose Function" :floating="false"
-                                                                @change="(newValue, oldValue, el$) => {
+                                                                }" placeholder="Choose Type" :floating="false" @change="(newValue, oldValue, el$) => {
 
                                                                     if (newValue == 'sharedline') {
-                                                                        el$.form$.el$('device_keys').children$[index].children$['shared_line'].update('1');
+                                                                        el$.form$.el$('device_lines').children$[index].children$['shared_line'].update('1');
                                                                     } else {
-                                                                        el$.form$.el$('device_keys').children$[index].children$['shared_line'].update(null);
+                                                                        el$.form$.el$('device_lines').children$[index].children$['shared_line'].update(null);
                                                                     }
 
 
@@ -270,8 +277,8 @@
                                                                 }" placeholder="Choose Ext/Number" :floating="false"
                                                                 @change="(newValue, oldValue, el$) => {
 
-                                                                    el$.form$.el$('device_keys').children$[index].children$['display_name'].update(newValue);
-                                                                    el$.form$.el$('device_keys').children$[index].children$['user_id'].update(newValue);
+                                                                    el$.form$.el$('device_lines').children$[index].children$['display_name'].update(newValue);
+                                                                    el$.form$.el$('device_lines').children$[index].children$['user_id'].update(newValue);
 
 
                                                                 }" />
@@ -365,6 +372,127 @@
                                                                         @click="closeAdvSettings" />
                                                                 </div>
                                                             </FormChildModal>
+
+
+                                                        </ObjectElement>
+                                                    </template>
+                                                </ListElement>
+
+                                                <GroupElement name="lines_container2" />
+
+                                                <ButtonElement name="submit_lines" button-label="Save" :submits="true"
+                                                    align="right" />
+
+
+                                                <!-- Function Keys -->
+                                                <StaticElement name="keys_title" tag="h4" content="Device Function Keys"
+                                                    description="Assign function keys to this device." />
+
+
+                                                <GroupElement name="keys_container" />
+                                                <ListElement name="device_keys" :sort="true" size="sm"
+                                                    :controls="{ add: options.permissions.device_key_create, remove: options.permissions.device_key_destroy, sort: options.permissions.device_key_up }"
+                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                                    <template #default="{ index }">
+                                                        <ObjectElement :name="index" :key="form$?.data?.device_keys?.[index]?.key_uuid">
+
+                                                            <HiddenElement name="key_uuid" :meta="true" :default="Math.random().toString(36).slice(2)"/>
+                                                            <HiddenElement name="_generated_label" :meta="true" :default="null" />
+
+                                                            <TextElement name="key_index" label="Key" :rules="[
+                                                                'nullable',
+                                                                'numeric',
+                                                            ]" autocomplete="off" :columns="{
+
+                                                                sm: {
+                                                                    container: 1,
+                                                                },
+                                                            }" :default="nextKeyNumber" />
+
+                                                            <SelectElement name="key_type" label="Type"
+                                                                :items="keyTypes" :search="true" label-prop="name"
+                                                                :native="false" input-type="search" autocomplete="off"
+                                                                :columns="{
+
+                                                                    sm: {
+                                                                        container: 3,
+                                                                    },
+                                                                }" placeholder="Choose Function" :floating="false"
+                                                                @change="(newValue, oldValue, el$) => {
+
+                                                                    let key_value_select = el$.form$.el$('device_keys.' + index + '.key_value_select')
+
+                                                                    // only clear when this isn’t the very first time (i.e. oldValue was set)
+                                                                    if (oldValue !== null && oldValue !== undefined) {
+                                                                        key_value_select.clear();
+                                                                    }
+
+                                                                    key_value_select.updateItems()
+
+                                                                }" />
+
+                                                            <SelectElement name="key_value_select" label="Value"
+                                                                label-prop="name" value-prop="extension" :search="true"
+                                                                :native="false" :submit="false"
+                                                                :create="['blf', 'speed_dial', 'park']
+                                                                    .includes(form$?.data?.device_keys?.[index]?.key_type)"
+                                                                :append-new-option="false" input-type="search"
+                                                                autocomplete="off" :columns="{
+
+                                                                    sm: {
+                                                                        container: 4,
+                                                                    },
+                                                                }" placeholder="Choose Ext/Number" :floating="false"
+                                                                :items="(query, input) => getKeyValueSelectItems(query, input, index)"
+                                                                @change="(newValue, oldValue, el$) => updateLabel(newValue, oldValue, el$, index)"
+                                                                :conditions="[
+                                                                    ['device_keys.*.key_type', ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']]
+                                                                ]" />
+
+                                                            <TextElement name="key_value_text" label="Value" :columns="{
+                                                                sm: {
+                                                                    container: 4,
+                                                                },
+                                                            }" placeholder="Enter Value" :floating="false" :disabled="[
+                                                                ['device_keys.*.key_type', '']
+                                                            ]" :conditions="[
+                                                                ['device_keys.*.key_type', '!=', ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']]
+                                                            ]" />
+
+                                                            <HiddenElement name="key_value" :meta="true"
+                                                                :default="null" />
+
+                                                            <TextElement name="key_label" label="Label" :columns="{
+
+                                                                default: {
+                                                                    container: 10,
+                                                                },
+                                                                sm: {
+                                                                    container: 3,
+                                                                },
+                                                            }" :placeholder="form$?.data?.device_keys?.[index]?._generated_label ?? 'Enter Value'"
+                                                            :floating="false" :disabled="[
+                                                                ['device_keys.*.key_type', ['', 'line']]
+                                                            ]" />
+
+                                                            <StaticElement label="&nbsp;" name="key_advanced" :columns="{
+
+                                                                default: {
+                                                                    container: 1,
+                                                                },
+                                                                sm: {
+                                                                    container: 1,
+                                                                },
+                                                            }"
+                                                                :conditions="[() => options?.permissions?.device_key_advanced]">
+
+
+                                                                <!-- <Cog8ToothIcon @click="showLineAdvSettings(index)"
+                                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" /> -->
+
+                                                            </StaticElement>
+
+
 
 
                                                         </ObjectElement>
@@ -630,9 +758,11 @@ const isCloudProvisioningLoading = reactive({
     loading: false,
 })
 
+
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
 
 const provisioning = ref(null);
+const keyValueOptionsByIndex = reactive({})
 
 const handleCopyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -652,8 +782,8 @@ function closeAdvSettings() {
 }
 
 const nextLineNumber = computed(() => {
-    const deviceKeys = form$?.value?.el$('device_keys')
-    const children = deviceKeys?.children$Array ?? []
+    const deviceLines = form$?.value?.el$('device_lines')
+    const children = deviceLines?.children$Array ?? []
     const maxLine = children.reduce((max, child) => {
         const n = parseInt(child?.value?.line_number, 10)
         return Number.isFinite(n) && n > max ? n : max
@@ -661,10 +791,161 @@ const nextLineNumber = computed(() => {
     return maxLine + 1
 })
 
+const nextKeyNumber = computed(() => {
+    const deviceKeys = form$?.value?.el$('device_keys')
+    const children = deviceKeys?.children$Array ?? []
+    const maxLine = children.reduce((max, child) => {
+        const n = parseInt(child?.value?.key_index, 10)
+        return Number.isFinite(n) && n > max ? n : max
+    }, 0)
+    return maxLine + 1
+})
+
+const keyTypes = [
+    { value: '', name: 'N/A' },
+    { value: 'line', name: 'Line' },
+    { value: 'blf', name: 'BLF' },
+    { value: 'speed_dial', name: 'Speed Dial' },
+    { value: 'check_voicemail', name: 'Check Voicemail' },
+    { value: 'park', name: 'Park & Retrieve' },
+]
+
 const handleTabSelected = (activeTab, previousTab) => {
     if (activeTab.name == 'cloud_provisioning') {
         getCloudProvisioningStatus();
     }
+}
+
+const getKeyValueSelectItems = async (query, input, index) => {
+    const form$ = input.$parent.el$.form$
+    const keyTypeEl = form$.el$('device_keys.' + index + '.key_type')
+    const keyType = keyTypeEl?.value
+
+    // line => Line 1..N based on device_lines count
+    if (keyType === 'line') {
+        const deviceLinesEl = form$.el$('device_lines')
+        const count = deviceLinesEl?.children$Array?.length ?? deviceLinesEl?.value?.length ?? 0
+
+        return Array.from({ length: count }, (_, i) => {
+            const displayName = form$.el$(`device_lines.${i}.display_name`)?.value ?? ''
+            return {
+                extension: `${i + 1}`, 
+                name: `Line ${i + 1}${displayName ? ' - ' + displayName : ''}`,
+            }
+        })
+    }
+
+    // check_voicemail => fetch voicemails
+    if (keyType === 'check_voicemail') {
+        try {
+            const axios = keyTypeEl.$vueform.services.axios
+            const response = await axios.post(
+                props.options.routes.get_routing_options,
+                { category: 'voicemails' }
+            )
+            keyValueOptionsByIndex[index] = response.data.options ?? []
+            return response.data.options ?? []
+        } catch (error) {
+            emit('error', error)
+            return []
+        }
+    }
+
+    if (keyType === 'blf' || keyType === 'speed_dial') {
+        try {
+            const axios = keyTypeEl.$vueform.services.axios
+            const response = await axios.post(
+                props.options.routes.get_routing_options,
+                { category: 'extensions' }
+            )
+            keyValueOptionsByIndex[index] = response.data.options ?? []
+            return response.data.options ?? []
+        } catch (error) {
+            emit('error', error)
+            return []
+        }
+    }
+
+    if (keyType === 'park') {
+        const base = 5901
+
+        return Array.from({ length: 10 }, (_, i) => {
+            const ext = String(base + i)
+            return {
+                extension: ext,
+                name: `Park ${i + 1} (${ext})`,
+            }
+        })
+    }
+
+    return []
+}
+
+const parkLabelFromValue = (value, base = 5900) => {
+    const n = parseInt(value, 10)
+    // Best (works for 5901..5910..5999): slot = extension - 5900
+    if (Number.isFinite(n) && n > base) {
+        return `Park ${n - base}`
+    }
+
+    // Fallback: last 1–2 digits
+    const m = String(value).match(/(\d{1,2})$/)
+    return m ? `Park ${parseInt(m[1], 10)}` : ''
+}
+
+const nameOnlyFromOption = (opt) => {
+    if (!opt) return null
+
+    // Your payload uses "name": "100 - Alice Johnson"
+    const s = String(opt.name ?? '').trim()
+    if (!s) return null
+
+    // Split on first " - " and keep the remainder
+    const parts = s.split(' - ')
+    return (parts.length > 1 ? parts.slice(1).join(' - ') : s).trim()
+}
+
+const updateLabel = (newValue, oldValue, el$, index) => {
+    // Update key_value field
+    el$?.form$?.el$('device_keys').children$[index].children$['key_value'].update(newValue)
+
+    const keyLabelEl = el$?.form$?.el$('device_keys').children$[index].children$['key_label']
+    
+    // Get the Hidden Element instance
+    const generatedLabelEl = el$?.form$?.el$('device_keys').children$[index].children$['_generated_label']
+
+    const keyType = el$?.form$.el$('device_keys.' + index + '.key_type')?.value
+    let label = null
+
+    if (keyType === 'park') {
+        label = parkLabelFromValue(newValue, 5900)
+    }
+
+    if (keyType === 'check_voicemail') {
+        const selected = (keyValueOptionsByIndex[index] ?? []).find(o => String(o.extension) === String(newValue))
+        label = selected?.extension ? `VM ${selected.extension}` : null
+    }
+
+    if (keyType === 'blf' || keyType === 'speed_dial') {
+        const selected = (keyValueOptionsByIndex[index] ?? [])
+            .find(o => String(o.extension) === String(newValue))
+
+        label = nameOnlyFromOption(selected)
+
+        // Clear the actual input value
+        keyLabelEl.update(null)
+
+        // SAVE the placeholder text to the hidden element
+        generatedLabelEl.update(label)
+
+        return
+    }
+
+    // Default case: clear the custom placeholder so it reverts to 'Enter Value'
+    generatedLabelEl.update(null)
+    
+    // For other types (park/vm), you were setting the actual value
+    keyLabelEl.update(label)
 }
 
 const getCloudProvisioningStatus = async () => {
@@ -780,11 +1061,57 @@ const handleCloudProvisioningRefreshButtonClick = async () => {
     getCloudProvisioningStatus();
 }
 
+const normalizeDeviceKeysForForm = (keys = []) => {
+  if (!Array.isArray(keys)) return []
+
+  const key_types = ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']
+
+  return keys.map(k => {
+    const key_type = (k?.key_type ?? '')?.trim?.() ?? k?.key_type ?? ''
+    const key_value = k?.key_value ?? null
+
+    let label = null
+
+    if (key_type === 'blf' || key_type === 'speed_dial') {
+        // Try to find the matching object in the extensions list provided in props
+        const match = props.options.extensions?.find(ext => ext.value == key_value);
+
+        if (match) {
+            // If found, pass the object to your helper to extract the name
+            label = nameOnlyFromOption(match);
+        } else {
+            //Fallback: use the extension number itself if the name isn't found
+            label = key_value; 
+        }
+    }
+
+    const row = {
+      ...k,
+      key_uuid: k?.device_key_uuid,
+      _generated_label: label ?? null,
+      key_type: key_type,
+      key_value: key_value,
+      key_value_select: null,
+      key_value_text: null,
+    }
+
+    if (!key_type || key_value == null || key_value === '') return row
+
+    if (key_types.includes(key_type)) {
+      row.key_value_select = String(key_value)
+    } else {
+      row.key_value_text = String(key_value)
+    }
+
+    return row
+  })
+}
+
 
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
-    // const requestData = form$.requestData
+    const requestData = form$.requestData
     // console.log(requestData);
 
     // Using form$.data will INCLUDE conditional elements and it
