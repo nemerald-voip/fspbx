@@ -17,6 +17,7 @@ use App\Console\Commands\Updates\Update114;
 use App\Console\Commands\Updates\Update120;
 use App\Console\Commands\Updates\Update121;
 use App\Console\Commands\Updates\Update131;
+use App\Console\Commands\Updates\Update140;
 use App\Console\Commands\Updates\Update0917;
 use App\Console\Commands\Updates\Update0918;
 use App\Console\Commands\Updates\Update0924;
@@ -103,6 +104,7 @@ class UpdateApp extends Command
             '1.2.0' => Update120::class,
             '1.2.1' => Update121::class,
             '1.3.1' => Update131::class,
+            '1.4.0' => Update140::class,
             // Add more versions as needed
         ];
 
