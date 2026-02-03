@@ -1102,8 +1102,6 @@ class CdrsController extends Controller
         $permissions['transcription_summary'] = userCheckPermission('transcription_summary');
         $permissions['xml_cdr_search_sentiment'] = userCheckPermission('xml_cdr_search_sentiment');
 
-        logger($permissions);
-
         return $permissions;
     }
 }
