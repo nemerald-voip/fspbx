@@ -258,6 +258,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::delete('/call-transcription/policy', [CallTranscriptionController::class, 'destroyPolicy'])->name('call-transcription.policy.destroy');
     Route::get('/call-transcription/assemblyai', [CallTranscriptionController::class, 'getAssemblyAiConfig'])->name('call-transcription.assemblyai');
     Route::post('/call-transcription/assemblyai', [CallTranscriptionController::class, 'storeAssemblyAiConfig'])->name('call-transcription.assemblyai.store');
+    Route::delete('/call-transcription/assemblyai', [CallTranscriptionController::class, 'destroyAssemblyAiConfig'])->name('call-transcription.assemblyai.destroy');
 
     // Payment Gateways
     Route::put('/gateways', [PaymentGatewayController::class, 'update'])->name('gateway.update');

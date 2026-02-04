@@ -82,8 +82,14 @@
 
             <!--  Transcription - General Settings -->
             <section v-if="selectedMenuOption === 'transcription_options'">
-                <CallTranscriptionOptionsForm :domain_uuid="data?.domain_uuid" :routes="routes" @error="handleErrorResponse"
-                    @success="showNotification" />
+                <CallTranscriptionOptionsForm :domain_uuid="data?.domain_uuid" :routes="routes"
+                    @error="handleErrorResponse" @success="showNotification" />
+            </section>
+
+            <!--  ASSEMBLY AI -->
+            <section v-if="selectedMenuOption === 'assemblyai'">
+                <AssemblyAiForm :routes="routes" :domain_uuid="data.domain_uuid" @error="handleErrorResponse" @success="showNotification" />
+
             </section>
 
             <!-- ROOM MANAGEMENT -->
@@ -170,6 +176,7 @@ import UpdateLocationModal from "./components/modal/UpdateLocationModal.vue"
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import GraphicEqIcon from "@icons/GraphicEqIcon.vue"
 import CallTranscriptionOptionsForm from "./components/forms/CallTranscriptionOptionsForm.vue"
+import AssemblyAiForm from "./components/forms/AssemblyAiForm.vue"
 import {
     Cog6ToothIcon,
     MapPinIcon,
@@ -232,7 +239,7 @@ const navigation = [
         icon: markRaw(GraphicEqIcon),
         children: [
             { key: 'transcription_options', name: 'Options', icon: markRaw(AdjustmentsVerticalIcon) },
-            // { key: 'assemblyai', name: 'AssemblyAI', icon: markRaw(GraphicEqIcon) }
+            { key: 'assemblyai', name: 'AssemblyAI', icon: markRaw(GraphicEqIcon) }
         ],
     },
     {
