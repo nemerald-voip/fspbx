@@ -961,6 +961,11 @@ class ExtensionsController extends Controller
                 $voicemail = Voicemails::create($data);
             }
 
+            $extension->advSettings()->updateOrCreate(
+                ['extension_uuid' => $extension->extension_uuid],
+                $data
+            );
+
             DB::commit();
 
             // Clear FusionPBX cache for the extension
@@ -1138,7 +1143,6 @@ class ExtensionsController extends Controller
         try {
             DB::beginTransaction();
             $data = $request->validated();
-            // logger($data);
 
             $currentDomain = session('domain_uuid');
 
@@ -1259,8 +1263,6 @@ class ExtensionsController extends Controller
             if (isset($_SESSION['destinations']['array'])) {
                 unset($_SESSION['destinations']['array']);
             }
-
-
 
             // logger($extension->toArray());
             return response()->json([
