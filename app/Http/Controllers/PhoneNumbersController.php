@@ -247,11 +247,36 @@ class PhoneNumbersController extends Controller
             ->allowedFilters([
                 // Only email and name_formatted
                 AllowedFilter::callback('search', function ($query, $value) {
-                    $query->where(function ($q) use ($value) {
-                        $q->where('destination_number', 'ilike', "%{$value}%")
-                            ->orWhere('destination_description', 'ilike', "%{$value}%")
-                            ->orWhere('destination_actions', 'ilike', "%{$value}%");
-                    });
+                    $s = trim((string) $value);
+                    if ($s === '') {
+                        return;
+                    }
+
+                    // If it contains any letters, keep original behavior (text search)
+                    if (preg_match('/[A-Za-z]/', $s)) {
+                        $query->where(function ($q) use ($s) {
+                            $q->where('destination_number', 'ilike', "%{$s}%")
+                                ->orWhere('destination_description', 'ilike', "%{$s}%")
+                                ->orWhere('destination_actions', 'ilike', "%{$s}%");
+                        });
+                        return;
+                    }
+
+                    // Numeric-only: remove all non-digits
+                    $digits = preg_replace('/\D+/', '', $s);
+
+                    // If 11 digits and starts with 1 (covers +1 once stripped), drop leading 1
+                    if (strlen($digits) === 11 && str_starts_with($digits, '1')) {
+                        $digits = substr($digits, 1);
+                    }
+
+                    if ($digits === '') {
+                        return;
+                    }
+
+                    // Search destination_number after stripping non-digits in SQL (Postgres)
+                    $pattern = '%' . implode('%', str_split($digits)) . '%';
+                    $query->where('destination_number', 'ilike', $pattern);                        
                 }),
                 AllowedFilter::callback('showGlobal', function ($query, $value) use ($currentDomain) {
                     // If showGlobal is falsey (0, '0', false, null), restrict to the current domain
@@ -672,11 +697,36 @@ class PhoneNumbersController extends Controller
                         // else, do nothing and show all domains
                     }),
                     AllowedFilter::callback('search', function ($query, $value) {
-                        $query->where(function ($q) use ($value) {
-                            $q->where('destination_number', 'ilike', "%{$value}%")
-                                ->orWhere('destination_data', 'ilike', "%{$value}%")
-                                ->orWhere('destination_description', 'ilike', "%{$value}%");
-                        });
+                        $s = trim((string) $value);
+                        if ($s === '') {
+                            return;
+                        }
+
+                        // If it contains any letters, keep original behavior (text search)
+                        if (preg_match('/[A-Za-z]/', $s)) {
+                            $query->where(function ($q) use ($s) {
+                                $q->where('destination_number', 'ilike', "%{$s}%")
+                                    ->orWhere('destination_data', 'ilike', "%{$s}%")
+                                    ->orWhere('destination_description', 'ilike', "%{$s}%");
+                            });
+                            return;
+                        }
+
+                        // Numeric-only: remove all non-digits
+                        $digits = preg_replace('/\D+/', '', $s);
+
+                        // If 11 digits and starts with 1 (covers +1 once stripped), drop leading 1
+                        if (strlen($digits) === 11 && str_starts_with($digits, '1')) {
+                            $digits = substr($digits, 1);
+                        }
+
+                        if ($digits === '') {
+                            return;
+                        }
+
+                        // Search destination_number after stripping non-digits in SQL (Postgres)
+                    $pattern = '%' . implode('%', str_split($digits)) . '%';
+                    $query->where('destination_number', 'ilike', $pattern);
                     }),
                 ])
                 ->pluck('destination_uuid');
