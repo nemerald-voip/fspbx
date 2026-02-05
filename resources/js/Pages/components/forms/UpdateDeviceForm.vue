@@ -57,7 +57,7 @@
                                     device_profile_uuid: options.item?.device_profile_uuid,
                                     domain_uuid: options.item?.domain_uuid,
                                     device_lines: options.lines,
-                                    device_keys:  normalizeDeviceKeysForForm(options.item?.keys ?? []),
+                                    device_keys: normalizeDeviceKeysForForm(options.item?.keys ?? []),
                                     device_settings: options.item?.settings,
                                     device_description: options.item?.device_description ?? null,
                                 }">
@@ -92,7 +92,7 @@
                                                 ]" />
 
                                                 <FormTab name="keys" label="Function Keys" :elements="[
-                                                    'lines_container',
+                                                    'keys_container',
                                                     'keys_title',
                                                     'add_key',
                                                     'device_keys',
@@ -101,6 +101,16 @@
                                                     'submit_keys',
 
                                                 ]" />
+                                                <!-- <FormTab name="secondary_screen_keys" label="Secondary Screen"
+                                                    :elements="[
+                                                        'secondary_screen_keys_container',
+                                                        'secondary_screen_keys_title',
+                                                        // 'add_key',
+                                                        'secondary_screen_device_keys',
+                                                        'secondary_screen_keys_container2',
+                                                        // 'submit_keys',
+
+                                                    ]" :conditions="[() => options?.item?.device_vendor == 'polycom']" /> -->
                                                 <FormTab name="cloud_provisioning" label="Cloud Provisioning" :elements="[
                                                     'cloud_provisioning_title',
                                                     'cloud_provisioning_status',
@@ -388,16 +398,18 @@
                                                 <StaticElement name="keys_title" tag="h4" content="Device Function Keys"
                                                     description="Assign function keys to this device." />
 
-
                                                 <GroupElement name="keys_container" />
                                                 <ListElement name="device_keys" :sort="true" size="sm"
                                                     :controls="{ add: options.permissions.device_key_create, remove: options.permissions.device_key_destroy, sort: options.permissions.device_key_up }"
                                                     :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
                                                     <template #default="{ index }">
-                                                        <ObjectElement :name="index" :key="form$?.data?.device_keys?.[index]?.key_uuid">
+                                                        <ObjectElement :name="index"
+                                                            :key="form$?.data?.device_keys?.[index]?.key_uuid">
 
-                                                            <HiddenElement name="key_uuid" :meta="true" :default="Math.random().toString(36).slice(2)"/>
-                                                            <HiddenElement name="_generated_label" :meta="true" :default="null" />
+                                                            <HiddenElement name="key_uuid" :meta="true"
+                                                                :default="Math.random().toString(36).slice(2)" />
+                                                            <HiddenElement name="_generated_label" :meta="true"
+                                                                :default="null" />
 
                                                             <TextElement name="key_index" label="Key" :rules="[
                                                                 'nullable',
@@ -435,9 +447,8 @@
                                                                 label-prop="name" value-prop="extension" :search="true"
                                                                 :native="false" :submit="false"
                                                                 :create="['blf', 'speed_dial', 'park']
-                                                                    .includes(form$?.data?.device_keys?.[index]?.key_type)"
-                                                                :append-new-option="false" input-type="search"
-                                                                autocomplete="off" :columns="{
+                                                                    .includes(form$?.data?.device_keys?.[index]?.key_type)" :append-new-option="false"
+                                                                input-type="search" autocomplete="off" :columns="{
 
                                                                     sm: {
                                                                         container: 4,
@@ -471,9 +482,130 @@
                                                                     container: 3,
                                                                 },
                                                             }" :placeholder="form$?.data?.device_keys?.[index]?._generated_label ?? 'Enter Value'"
-                                                            :floating="false" :disabled="[
-                                                                ['device_keys.*.key_type', ['', 'line']]
+                                                                :floating="false" :disabled="[
+                                                                    ['device_keys.*.key_type', ['', 'line']]
+                                                                ]" />
+
+                                                            <StaticElement label="&nbsp;" name="key_advanced" :columns="{
+
+                                                                default: {
+                                                                    container: 1,
+                                                                },
+                                                                sm: {
+                                                                    container: 1,
+                                                                },
+                                                            }"
+                                                                :conditions="[() => options?.permissions?.device_key_advanced]">
+
+
+                                                                <!-- <Cog8ToothIcon @click="showLineAdvSettings(index)"
+                                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" /> -->
+
+                                                            </StaticElement>
+
+
+
+
+                                                        </ObjectElement>
+                                                    </template>
+                                                </ListElement>
+
+                                                <GroupElement name="keys_container2" />
+
+                                                <ButtonElement name="submit_keys" button-label="Save" :submits="true"
+                                                    align="right" />
+
+                                                <!-- Secondar Screen Keys -->
+                                                <StaticElement name="secondary_screen_keys_title" tag="h4" content="Device Secondary Screen Keys"
+                                                    description="Assign function keys to this device's secondary screen." />
+
+                                                <GroupElement name="secondary_screen_keys_container" />
+                                                <ListElement name="secondary_screen_device_keys" :sort="true" size="sm"
+                                                    :controls="{ add: options.permissions.device_key_create, remove: options.permissions.device_key_destroy, sort: options.permissions.device_key_up }"
+                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                                    <template #default="{ index }">
+                                                        <ObjectElement :name="index"
+                                                            :key="form$?.data?.device_keys?.[index]?.key_uuid">
+
+                                                            <HiddenElement name="key_uuid" :meta="true"
+                                                                :default="Math.random().toString(36).slice(2)" />
+                                                            <HiddenElement name="_generated_label" :meta="true"
+                                                                :default="null" />
+
+                                                            <TextElement name="key_index" label="Key" :rules="[
+                                                                'nullable',
+                                                                'numeric',
+                                                            ]" autocomplete="off" :columns="{
+
+                                                                sm: {
+                                                                    container: 1,
+                                                                },
+                                                            }" :default="nextKeyNumber" />
+
+                                                            <SelectElement name="key_type" label="Type"
+                                                                :items="keyTypes" :search="true" label-prop="name"
+                                                                :native="false" input-type="search" autocomplete="off"
+                                                                :columns="{
+
+                                                                    sm: {
+                                                                        container: 3,
+                                                                    },
+                                                                }" placeholder="Choose Function" :floating="false"
+                                                                @change="(newValue, oldValue, el$) => {
+
+                                                                    let key_value_select = el$.form$.el$('device_keys.' + index + '.key_value_select')
+
+                                                                    // only clear when this isn’t the very first time (i.e. oldValue was set)
+                                                                    if (oldValue !== null && oldValue !== undefined) {
+                                                                        key_value_select.clear();
+                                                                    }
+
+                                                                    key_value_select.updateItems()
+
+                                                                }" />
+
+                                                            <SelectElement name="key_value_select" label="Value"
+                                                                label-prop="name" value-prop="extension" :search="true"
+                                                                :native="false" :submit="false"
+                                                                :create="['blf', 'speed_dial', 'park']
+                                                                    .includes(form$?.data?.device_keys?.[index]?.key_type)" :append-new-option="false"
+                                                                input-type="search" autocomplete="off" :columns="{
+
+                                                                    sm: {
+                                                                        container: 4,
+                                                                    },
+                                                                }" placeholder="Choose Ext/Number" :floating="false"
+                                                                :items="(query, input) => getKeyValueSelectItems(query, input, index)"
+                                                                @change="(newValue, oldValue, el$) => updateLabel(newValue, oldValue, el$, index)"
+                                                                :conditions="[
+                                                                    ['device_keys.*.key_type', ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']]
+                                                                ]" />
+
+                                                            <TextElement name="key_value_text" label="Value" :columns="{
+                                                                sm: {
+                                                                    container: 4,
+                                                                },
+                                                            }" placeholder="Enter Value" :floating="false" :disabled="[
+                                                                ['device_keys.*.key_type', '']
+                                                            ]" :conditions="[
+                                                                ['device_keys.*.key_type', '!=', ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']]
                                                             ]" />
+
+                                                            <HiddenElement name="key_value" :meta="true"
+                                                                :default="null" />
+
+                                                            <TextElement name="key_label" label="Label" :columns="{
+
+                                                                default: {
+                                                                    container: 10,
+                                                                },
+                                                                sm: {
+                                                                    container: 3,
+                                                                },
+                                                            }" :placeholder="form$?.data?.device_keys?.[index]?._generated_label ?? 'Enter Value'"
+                                                                :floating="false" :disabled="[
+                                                                    ['device_keys.*.key_type', ['', 'line']]
+                                                                ]" />
 
                                                             <StaticElement label="&nbsp;" name="key_advanced" :columns="{
 
@@ -500,9 +632,9 @@
                                                 </ListElement>
 
 
-                                                <GroupElement name="keys_container2" />
+                                                <GroupElement name="secondary_screen_keys_container2" />
 
-                                                <ButtonElement name="submit_keys" button-label="Save" :submits="true"
+                                                <ButtonElement name="secondary_screen_submit_keys" button-label="Save" :submits="true"
                                                     align="right" />
 
                                                 <!-- Cloud Provisioning tab-->
@@ -829,7 +961,7 @@ const getKeyValueSelectItems = async (query, input, index) => {
         return Array.from({ length: count }, (_, i) => {
             const displayName = form$.el$(`device_lines.${i}.display_name`)?.value ?? ''
             return {
-                extension: `${i + 1}`, 
+                extension: `${i + 1}`,
                 name: `Line ${i + 1}${displayName ? ' - ' + displayName : ''}`,
             }
         })
@@ -910,7 +1042,7 @@ const updateLabel = (newValue, oldValue, el$, index) => {
     el$?.form$?.el$('device_keys').children$[index].children$['key_value'].update(newValue)
 
     const keyLabelEl = el$?.form$?.el$('device_keys').children$[index].children$['key_label']
-    
+
     // Get the Hidden Element instance
     const generatedLabelEl = el$?.form$?.el$('device_keys').children$[index].children$['_generated_label']
 
@@ -943,7 +1075,7 @@ const updateLabel = (newValue, oldValue, el$, index) => {
 
     // Default case: clear the custom placeholder so it reverts to 'Enter Value'
     generatedLabelEl.update(null)
-    
+
     // For other types (park/vm), you were setting the actual value
     keyLabelEl.update(label)
 }
@@ -1062,49 +1194,49 @@ const handleCloudProvisioningRefreshButtonClick = async () => {
 }
 
 const normalizeDeviceKeysForForm = (keys = []) => {
-  if (!Array.isArray(keys)) return []
+    if (!Array.isArray(keys)) return []
 
-  const key_types = ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']
+    const key_types = ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']
 
-  return keys.map(k => {
-    const key_type = (k?.key_type ?? '')?.trim?.() ?? k?.key_type ?? ''
-    const key_value = k?.key_value ?? null
+    return keys.map(k => {
+        const key_type = (k?.key_type ?? '')?.trim?.() ?? k?.key_type ?? ''
+        const key_value = k?.key_value ?? null
 
-    let label = null
+        let label = null
 
-    if (key_type === 'blf' || key_type === 'speed_dial') {
-        // Try to find the matching object in the extensions list provided in props
-        const match = props.options.extensions?.find(ext => ext.value == key_value);
+        if (key_type === 'blf' || key_type === 'speed_dial') {
+            // Try to find the matching object in the extensions list provided in props
+            const match = props.options.extensions?.find(ext => ext.value == key_value);
 
-        if (match) {
-            // If found, pass the object to your helper to extract the name
-            label = nameOnlyFromOption(match);
-        } else {
-            //Fallback: use the extension number itself if the name isn't found
-            label = key_value; 
+            if (match) {
+                // If found, pass the object to your helper to extract the name
+                label = nameOnlyFromOption(match);
+            } else {
+                //Fallback: use the extension number itself if the name isn't found
+                label = key_value;
+            }
         }
-    }
 
-    const row = {
-      ...k,
-      key_uuid: k?.device_key_uuid,
-      _generated_label: label ?? null,
-      key_type: key_type,
-      key_value: key_value,
-      key_value_select: null,
-      key_value_text: null,
-    }
+        const row = {
+            ...k,
+            key_uuid: k?.device_key_uuid,
+            _generated_label: label ?? null,
+            key_type: key_type,
+            key_value: key_value,
+            key_value_select: null,
+            key_value_text: null,
+        }
 
-    if (!key_type || key_value == null || key_value === '') return row
+        if (!key_type || key_value == null || key_value === '') return row
 
-    if (key_types.includes(key_type)) {
-      row.key_value_select = String(key_value)
-    } else {
-      row.key_value_text = String(key_value)
-    }
+        if (key_types.includes(key_type)) {
+            row.key_value_select = String(key_value)
+        } else {
+            row.key_value_text = String(key_value)
+        }
 
-    return row
-  })
+        return row
+    })
 }
 
 
