@@ -98,6 +98,18 @@ class CallTranscriptionService
         return array_key_exists('auto_transcribe', $cfg)
             ? (bool) $cfg['auto_transcribe']
             : false;
+    }
 
+    public function emailDeliveryConfig(?string $domainUuid): array
+    {
+        $cfg = $this->transcriptionConfigCached($domainUuid);
+
+        $enabled = (bool) ($cfg['email_transcription'] ?? false);
+        $email   = isset($cfg['email']) ? trim((string) $cfg['email']) : '';
+
+        return [
+            'enabled' => $enabled,
+            'email'   => ($email !== '') ? $email : null,
+        ];
     }
 }

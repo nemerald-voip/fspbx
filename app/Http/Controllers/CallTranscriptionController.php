@@ -66,6 +66,8 @@ class CallTranscriptionController extends Controller
         $enabled       = $domain?->enabled ?? ($system?->enabled ?? false);
         $auto_transcribe       = $domain?->auto_transcribe ?? ($system?->auto_transcribe ?? false);
         $providerUuid  = $domain?->provider_uuid ?? ($system?->provider_uuid ?? null);
+        $emailTranscription = $domain?->email_transcription ?? ($system?->email_transcription ?? false);
+        $email              = $domain?->email ?? ($system?->email ?? null);
 
         return response()->json([
             'scope'         => $domain ? 'domain' : 'system',
@@ -73,6 +75,8 @@ class CallTranscriptionController extends Controller
             'enabled'       => (bool) $enabled,
             'auto_transcribe' => (bool) $auto_transcribe,
             'provider_uuid' => $providerUuid,
+            'email_transcription' => (bool) $emailTranscription,
+            'email'              => $email,
         ]);
     }
 
@@ -93,6 +97,8 @@ class CallTranscriptionController extends Controller
                     'auto_transcribe'       => (bool) $data['auto_transcribe'],
                     // In domain scope this may be null to inherit system provider
                     'provider_uuid' => $data['provider_uuid'] ?? null,
+                    'email_transcription'       => (bool) $data['email_transcription'],
+                    'email'       => $data['email'] ?? null,
                 ]
             );
 
