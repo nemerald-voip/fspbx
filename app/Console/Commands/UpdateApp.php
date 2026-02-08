@@ -144,24 +144,14 @@ class UpdateApp extends Command
         $this->runArtisanCommand('modules:refresh');
 
         $this->executeCommand('php artisan route:cache');
-        $this->runArtisanCommand('queue:restart');
+        $this->executeCommand('php artisan queue:restart');
 
         //Seed the db
-        $this->runArtisanCommand('db:seed', ['--force' => true]);
+        $this->executeCommand('php artisan db:seed --force');
 
-        //Seed the templates
-        echo "Running prov:templates:seed...\n";
-        try {
-            $exitCode = Artisan::call('prov:templates:seed', [
-                '--no-interaction' => true,
-            ]);
-            echo Artisan::output();
-            if ($exitCode !== 0) {
-                echo "prov:templates:seed returned non-zero exit code: {$exitCode} (continuing)\n";
-            }
-        } catch (\Throwable $e) {
-            echo "Skipping prov:templates:seed due to error: {$e->getMessage()}\n";
-        }
+        $this->info("Seeding Templates...");
+        // Run prov:templates:seed in a subprocess too
+        $this->executeCommand('php artisan prov:templates:seed --no-interaction', 300);
 
         // Create storage link
         $this->runArtisanCommand('storage:link', ['--force' => true]);
