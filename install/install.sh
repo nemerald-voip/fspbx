@@ -293,6 +293,15 @@ else
     exit 1
 fi
 
+# Install nginx snippet for Laravel Reverb
+cp install/nginx_reverb.conf /etc/nginx/snippets/fspbx-reverb.conf
+if [ $? -eq 0 ]; then
+    print_success "Copied new Nginx snippet config for Laravel Reverb."
+else
+    print_error "Error occurred while copying new Nginx  snippet config for Laravel Reverb."
+    exit 1
+fi
+
 # FS PBX internal vhost (new in 1.0.2)
 cp install/nginx_fspbx_internal.conf /etc/nginx/sites-available/fspbx_internal.conf
 if [ $? -eq 0 ]; then
@@ -388,16 +397,6 @@ else
     print_error "Error occurred while installing Composer dependencies."
     exit 1
 fi
-
-# Regenerate Composer autoload files without interaction
-# composer dump-autoload --no-interaction
-# if [ $? -eq 0 ]; then
-#     print_success "Composer autoload files regenerated successfully."
-# else
-#     print_error "Error occurred while regenerating Composer autoload files."
-#     exit 1
-# fi
-
 
 # Generate application key
 php artisan key:generate
@@ -848,6 +847,15 @@ if [ $? -eq 0 ]; then
     print_success "FS ELS Emergency Listener configuration file copied to Supervisor successfully."
 else
     print_error "Error occurred while copying FS ELS Emergency Listener configuration file to Supervisor."
+    exit 1
+fi
+
+# Copy Laravel Reverb configuration to Supervisor
+sudo cp install/reverb.conf /etc/supervisor/conf.d/
+if [ $? -eq 0 ]; then
+    print_success "Laravel Reverb configuration file copied to Supervisor successfully."
+else
+    print_error "Error occurred while copying Laravel Reverb configuration file to Supervisor."
     exit 1
 fi
 
