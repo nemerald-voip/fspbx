@@ -96,8 +96,3 @@ The FS PBX API v1 enables a wide range of integrations, including:
 - Integration with billing, CRM, or OSS/BSS systems
 - Custom reporting and analytics dashboards
 - MSP and multi-tenant PBX management
-<<<<<<< HEAD
-- Workflow automation and DevOps-style PBX operations
-=======
-- Workflow automation and DevOps-style PBX operations
->>>>>>> 8caa45cd20ba00b37aae96e88cf6b6e58092a198
