@@ -7,6 +7,7 @@ use App\Models\Extensions;
 use Illuminate\Http\Request;
 use App\Models\DeviceSettings;
 use App\Models\DomainSettings;
+use Illuminate\Support\Carbon;
 use App\Models\DefaultSettings;
 use App\Models\ProvisioningTemplate;
 use Illuminate\Support\Facades\Blade;
@@ -57,7 +58,6 @@ class ProvisioningController extends Controller
         // Compute flavor + MIME
         $flv = $this->computeFlavor($request, $device, $id, $ext);
 
-
         // Add provisioning context
         $vars += [
             'flavor'        => $flv['flavor'],           // 'serial.xml' | 'mac.cfg' | 'poly-index.cfg' | 'yealink-model.cfg'
@@ -87,6 +87,14 @@ class ProvisioningController extends Controller
                 'X-Prov-Version'  => (string)($tpl->version ?? ''),
             ]);
         }
+
+        // Log device provisioning event
+        $device->fill([
+            'device_provisioned_date'   => Carbon::now('UTC'),
+            'device_provisioned_method' => strtolower($request->getScheme()),
+            'device_provisioned_ip'     => $request->ip(),
+            'device_provisioned_agent'  => (string) $request->userAgent(),
+        ])->save();
 
         return response($body, 200, [
             'ETag'            => $etag,
@@ -169,8 +177,7 @@ class ProvisioningController extends Controller
                     },
                 ]);
             },
-            'keys' => function ($k) {
-                // Need FK back to device + correct orderBy column
+            'legacy_keys' => function ($k) {
                 $k->select([
                     'device_key_uuid',
                     'device_uuid',
@@ -182,6 +189,16 @@ class ProvisioningController extends Controller
                     'device_key_extension',
                     'device_key_label',
                 ])->orderBy('device_key_line');
+            },
+            'keys' => function ($k) {
+                $k->select([
+                    'device_key_uuid',
+                    'device_uuid',
+                    'key_index',
+                    'key_type',
+                    'key_value',
+                    'key_label',
+                ])->orderBy('key_index');
             },
             'domain' => function ($q) {
                 $q->select([
@@ -324,6 +341,18 @@ class ProvisioningController extends Controller
             ];
         }
 
+        // Grandstream per-device: cfg<MAC>.xml (e.g., cfg000b82877bd4.xml)
+        if (
+            $vendor === 'grandstream' &&
+            $extLower === 'xml' &&
+            preg_match('/^cfg[0-9a-f]{12}$/', $idLower)
+        ) {
+            return [
+                'flavor' => 'cfgmac.xml',
+                'mime'   => 'application/xml',
+            ];
+        }
+
         // Otherwise, treat as per-device config for all vendors
         // Note: Dinstar's per-device ".cfg" content is XML, others are plain text.
         $mime = ($vendor === 'dinstar') ? 'application/xml' : ($extLower === 'xml' ? 'application/xml' : 'text/plain');
@@ -409,6 +438,7 @@ class ProvisioningController extends Controller
                     );
                 });
         }
+        $settings['provision_base_url'] = config('app.url') . '/prov/';
         return $settings;
     }
 
@@ -457,7 +487,13 @@ class ProvisioningController extends Controller
     private function getEffectiveDeviceKeys(Devices $device): array
     {
         $profileKeys = collect($device->profile?->keys ?? []);
-        $deviceKeys  = collect($device->keys ?? []);
+        $legacyKeys  = collect($device->legacy_keys ?? []); // old device keys
+        $newKeys     = collect($device->keys ?? []);        // new simplified table
+
+        // for polycom
+        if ($device->device_vendor == 'polycom') {
+            $newKeys = $this->normalizeNewKeysForPolycom($device, $device->keys ?? []);
+        }
 
         $map = [];
 
@@ -479,8 +515,8 @@ class ProvisioningController extends Controller
             ];
         }
 
-        // Overlay with device keys (override by same key order)
-        foreach ($deviceKeys as $dk) {
+        // Overlay with legacy device keys (override by same key order)
+        foreach ($legacyKeys as $dk) {
             $id = (int) $dk->device_key_id;
             if ($id <= 0) {
                 continue;
@@ -496,13 +532,38 @@ class ProvisioningController extends Controller
                 'source'    => 'device',
             ];
         }
+        foreach ($newKeys as $nk) {
+            $id = (int) ($nk->key_index ?? 0);
+            if ($id <= 0) continue;
+
+            $map[$id] = $this->mapNewDeviceKeyToLegacyShape($device, $nk);
+        }
 
         ksort($map, SORT_NUMERIC);
 
-        // Use this if array needs to be normilized by key_id
-        // $keys = collect(array_values($map))->keyBy('id')->toArray();
+        // logger($map);
 
         $keys = array_values($map);
+
+        // Build list of device’s own extensions
+        $selfExts = collect($device->lines ?? [])
+            ->pluck('auth_id')
+            ->filter()
+            ->map(fn($v) => (string) $v)
+            ->unique();
+
+        // Drop any key whose value matches a self extension
+        $keys = array_values(array_filter($keys, function ($k) use ($selfExts) {
+            $val = (string) ($k['value'] ?? '');
+            if ($val === '') return true;           // keep empty values
+            return !$selfExts->contains($val);      // skip if value is one of selfExts
+        }));
+
+        foreach ($keys as $i => &$k) {
+            $k['id'] = $i + 1;
+        }
+        unset($k);
+
         // fill BLF labels from Extensions.effective_caller_id_name (domain-scoped)
         $blfTargets = collect($keys)
             ->filter(fn($k) => (empty($k['label']) || $k['label'] === null)
@@ -521,14 +582,13 @@ class ProvisioningController extends Controller
                 ->toArray();
 
             foreach ($keys as &$k) {
-                if ((empty($k['label']) || $k['label'] === null)
-                ) {
+                if ((empty($k['label']) || $k['label'] === null)) {
 
                     $val = (string) ($k['value'] ?? '');
                     if ($val !== '' && !empty($extLabels[$val])) {
                         $k['label'] = $extLabels[$val];
                     }
-                    // else: leave label null; Blade will fall back to value
+                    // else: leave label null; 
                 }
             }
             unset($k);
@@ -536,6 +596,223 @@ class ProvisioningController extends Controller
 
         return $keys;
     }
+
+    /**
+     * Convert a row from new device_keys table to the "legacy" key array shape,
+     * including vendor-specific key_type translation.
+     */
+    private function mapNewDeviceKeyToLegacyShape(Devices $device, $nk): array
+    {
+        $type = strtolower(trim((string) $nk->key_type));
+        $translated = $this->translateKeyTypeForVendor($device->device_vendor, $type);
+
+        // Defaults
+        $id   = (int) ($nk->key_index ?? 0);
+        $line = 1;
+        $value = $nk->key_value ?? null;
+        $label = $nk->key_label ?? null;
+
+        if ($device->device_vendor === 'polycom') {
+            return $this->mapNewDeviceKeyToPolycomShape($device, $id, $type, $nk);
+        }
+
+        // Grandstream expects 0-based line index
+        if ($device->device_vendor == 'grandstream') {
+            $line = $line - 1; // 1->0, 2->1, ...
+            if ($line < 0) $line = 0;
+        }
+
+        switch ($type) {
+            case 'line':
+                $line  = (int) $nk->key_value ?? 1;
+
+                $lines = $device->lines ?? [];
+                $lineObj = collect($lines)->firstWhere('line_number', (string) $line);
+                $label = $lineObj['display_name'];
+
+                // Grandstream expects 0-based line index
+                if ($device->device_vendor == 'grandstream') {
+                    $line = $line - 1; // 1->0, 2->1, ...
+                    if ($line < 0) $line = 0;
+                }
+
+                $value = null;
+                break;
+
+            case 'park':
+                $park = (string) ($nk->key_value ?? '');
+                $value = ($park !== '') ? ('park+*' . $park) : null;
+                break;
+
+            case 'check_voicemail':
+                $vm = (string) ($nk->key_value ?? '');
+                $value = ($vm !== '') ? ('vm' . $vm) : null;
+                break;
+        }
+
+        return [
+            'id'        => $id,
+            'category'  => $translated['category'] ?? 'line',
+            'type'      => $translated['type'] ?? $nk->key_type,
+            'line'      => $line,
+            'value'     => $value,
+            'extension' => null,
+            'label'     => $label,
+            'source'    => 'device', // new-table keys are the strongest override
+        ];
+    }
+
+    /**
+     * Translate generic key types (line/blf/park/...) to vendor-specific types/categories.
+     * Expand these mappings as you discover what each vendor template expects.
+     */
+    private function translateKeyTypeForVendor(?string $vendor, string $keyType): array
+    {
+        $t = strtolower(trim($keyType));
+
+        // Default: passthrough
+        $out = ['category' => null, 'type' => $t];
+
+        switch ($vendor) {
+            case 'yealink':
+                $out['type'] = match ($t) {
+                    'line' => '15',
+                    'blf' => '16',
+                    'speed_dial' => '13',
+                    '' => '0',
+                    'park' => '16',
+                    'check_voicemail' => '16',
+                    default      => $t,
+                };
+                break;
+
+            case 'grandstream':
+                $out['type'] = match ($t) {
+                    'speed_dial' => 'speed dial',
+                    '' => 'none',
+                    'park' => 'monitored call park',
+                    'check_voicemail' => 'blf',
+                    default      => $t,
+                };
+                break;
+
+            default:
+                // unknown vendor -> keep generic
+                break;
+        }
+
+        return $out;
+    }
+
+    private function mapNewDeviceKeyToPolycomShape(Devices $device, int $id, string $type, $nk): array
+    {
+        $value = $nk->key_value ?? null;
+        $label = $nk->key_label ?? null;
+
+        $category = 'line';
+        $polyType = null;
+        $line     = 0;
+        $outValue = null;
+
+        switch ($type) {
+            case '':
+            case 'unassigned':
+                $category = 'line';
+                $polyType = 'unassigned';
+                break;
+
+            case 'line':
+                $category = 'line';
+                $polyType = 'line';
+                $line     = (int) ($value ?? 1); // line number (from key_value)
+
+                $lineStr = (string) ($value ?? '');
+                $count = collect($device->keys ?? [])
+                    ->filter(
+                        fn($k) =>
+                        strtolower((string)($k->key_type ?? '')) === 'line'
+                            && (string)($k->key_value ?? '') === $lineStr
+                    )
+                    ->count();
+
+                $outValue = (string) max(1, $count); // appearances
+                break;
+
+            case 'blf':
+                $category = 'line';
+                $polyType = 'normal';
+                $line     = 1;
+                $outValue = ($value !== null && $value !== '') ? (string) $value : null;
+                break;
+
+            case 'park':
+                $category = 'line';
+                $polyType = 'automata';
+                $line     = 1;
+                $park = (string) ($value ?? '');
+                $outValue = ($park !== '') ? ('park+*' . $park) : null;
+                break;
+
+            case 'check_voicemail':
+                $category = 'line';
+                $polyType = 'normal';
+                $line     = 1;
+                $vm = (string) ($value ?? '');
+                $outValue = ($vm !== '') ? ('vm' . $vm) : null;
+                break;
+
+            case 'speed_dial':
+                $category = 'line';
+                $polyType = null;
+                $line     = 1;
+                $outValue = ($value !== null && $value !== '') ? (string) $value : null;
+                break;
+        }
+
+        return [
+            'id'        => $id,
+            'category'  => $category,
+            'type'      => $polyType,
+            'line'      => $line,
+            'value'     => $outValue,
+            'extension' => null,
+            'label'     => ($label !== '' ? $label : null),
+            'source'    => 'device',
+        ];
+    }
+
+
+    private function normalizeNewKeysForPolycom(Devices $device, $newKeys)
+    {
+        $vendor = strtolower((string) $device->device_vendor);
+
+        $keys = collect($newKeys ?? []);
+
+        if ($vendor !== 'polycom') {
+            return $keys;
+        }
+
+        // For Polycom: group "line" keys by key_value (line number)
+        $lineGroups = $keys
+            ->filter(fn($k) => strtolower((string)($k->key_type ?? '')) === 'line')
+            ->groupBy(fn($k) => (string)($k->key_value ?? ''));
+
+        $collapsedLineKeys = $lineGroups->map(function ($group) {
+            // choose the first key_index as the "id"
+            $first = $group->sortBy(fn($k) => (int)($k->key_index ?? PHP_INT_MAX))->first();
+
+            // attach how many times it appears
+            $first->polycom_line_count = $group->count();
+
+            return $first;
+        })->values();
+
+        $nonLineKeys = $keys->reject(fn($k) => strtolower((string)($k->key_type ?? '')) === 'line');
+
+        // return merged list (non-line + collapsed line keys)
+        return $nonLineKeys->concat($collapsedLineKeys);
+    }
+
 
     /**
      * If $raw is valid XML, returns pretty-printed XML.
@@ -595,6 +872,16 @@ class ProvisioningController extends Controller
                 'dns srv', 'dnssrv', 'dnsnaptr' => '3',
                 '', 'udp' => '0',
                 default => '0',
+            };
+        }
+
+        if ($vendor === 'grandstream') {
+            return match ($t) {
+                'tcp' => 'TCP',
+                'tls' => 'Tls',
+                'dns srv', 'dnssrv', 'dnsnaptr' => 'dnssrv',
+                '', 'udp' => 'UDP',
+                default => 'UDP',
             };
         }
 

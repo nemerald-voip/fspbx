@@ -1,4 +1,4 @@
-{{-- version: 1.0.1 --}}
+{{-- version: 1.0.2 --}}
 
 @switch($flavor)
 
@@ -7,7 +7,9 @@
 
 <?xml version="1.0" standalone="yes"?>
 <APPLICATION
-    APP_FILE_PATH="{{ $settings['poly_e550_firmware'] ?? }}"
+    @if (array_key_exists('poly_e550_firmware', $settings) && $settings['poly_e550_firmware'] != '')
+    APP_FILE_PATH="{{ $settings['poly_e550_firmware'] ?? ''}}"
+    @endif
     CONFIG_FILES="phone[PHONE_MAC_ADDRESS].cfg,  [PHONE_MODEL]-[PHONE_MAC_ADDRESS].cfg" 
     MISC_FILES="" 
     LOG_FILE_DIRECTORY="" 
@@ -60,54 +62,17 @@
 @php
   $lineKeyCounts = [];
   foreach ($keys as $k) {
-      if (strtolower($k['category'] ?? '') === 'line') {
+      if (($k['type'] ?? '') === 'line') {
           $ln  = (int)($k['line'] ?? 0);
           $cnt = is_numeric($k['value'] ?? null) ? (int)$k['value'] : null;
           if ($ln > 0 && $cnt !== null) {
-              $lineKeyCounts[$ln] = $cnt; // take the value as set; last occurrence wins
+              $lineKeyCounts[$ln] = $cnt;
           }
       }
   }
 @endphp
 
-<lineKey
-  lineKey.reassignment.enabled="1"
-  @php $slot = 1; @endphp
-
-  @foreach ($keys as $k)
-    @php
-      $cat = strtolower($k['category'] ?? '');
-    @endphp
-
-    @if ($cat === 'line')
-      @php
-        $ln    = (int)($k['line'] ?? 0);
-        // expand to the exact number set for this registration (default 1)
-        $count = $lineKeyCounts[$ln] ?? 1;
-      @endphp
-      @for ($j = 1; $j <= $count; $j++)
-        lineKey.{{ $slot }}.category="Line"
-        lineKey.{{ $slot }}.index="{{ $ln }}"
-        @php $slot++; @endphp
-      @endfor
-      
-    @elseif ($cat === 'unassigned')
-      lineKey.{{ $slot }}.category="Unassigned"
-      lineKey.{{ $slot }}.index="null"
-      @php $slot++; @endphp
-
-    @elseif ($cat === 'blf')
-      lineKey.{{ $slot }}.category="BLF"
-      lineKey.{{ $slot }}.index="0"
-      @php $slot++; @endphp
-      
-    @elseif ($cat === 'presence')
-      lineKey.{{ $slot }}.category="BLF"
-      lineKey.{{ $slot }}.index="0"
-      @php $slot++; @endphp
-    @endif
-  @endforeach
-/>
+@php $slot = 1; @endphp
 
 <REGISTRATION
   @foreach ($lines as $line)
@@ -128,7 +93,9 @@
     reg.{{ $n }}.server.1.port="{{ $line['sip_port'] ?? '' }}"
     reg.{{ $n }}.server.1.transport="{{ $line['sip_transport'] ?? 'UDPOnly' }}"
     reg.{{ $n }}.server.1.expires="{{ $line['register_expires'] ?? '3600' }}"
-    reg.{{ $n }}.srtp.enable="{{ $settings['polycom_srtp_enable'] ?? '0' }}"
+    @if (($line['sip_transport'] ?? 'UDPOnly') == "TLS" && array_key_exists('polycom_srtp_enable', $settings) && $settings['polycom_srtp_enable'] == '1')
+        reg.{{ $n }}.srtp.enable="{{ $settings['polycom_srtp_enable'] ?? '0' }}"
+    @endif
     reg.{{ $n }}.srtp.offer="{{ $settings['polycom_srtp_offer'] ?? '0' }}"
     reg.{{ $n }}.srtp.require="{{ $settings['polycom_srtp_require'] ?? '0' }}"
 
@@ -159,6 +126,55 @@
   @endforeach
 />
 
+<lineKey
+    @if (!empty($keys))
+        lineKey.reassignment.enabled="1"
+    @else 
+        lineKey.reassignment.enabled="0"
+    @endif
+
+  @foreach ($keys as $k)
+    
+    @if ($k['type'] === 'unassigned')
+        @php $slot += max(1,(int)($k['value'] ?? 0)); @endphp
+        @continue
+    @endif
+    
+    @if ($k['type'] === 'line')
+        @for ($i = 1; $i <= ($lineKeyCounts[$k['line']] ?? 0); $i++)
+            linekey.{{ $slot }}.category="Line"
+            linekey.{{ $slot }}.index="{{ $k['line'] ?? 0 }}"
+            @php $slot++; @endphp
+        @endfor
+    @endif
+  
+    @if ($k['type'] === 'normal')
+        lineKey.{{ $slot }}.category="BLF"
+        lineKey.{{ $slot }}.index="0"
+        @php $slot++; @endphp
+    @endif
+
+    @if ($k['type'] === 'automata')
+      lineKey.{{ $slot }}.category="BLF"
+      lineKey.{{ $slot }}.index="0"
+      @php $slot++; @endphp
+    @endif
+      
+    @if ($k['type'] === 'speeddial')
+      lineKey.{{ $slot }}.category="SpeedDial"
+      lineKey.{{ $slot }}.index="{{ $k['line_number'] ?? 0 }}"
+      @php $slot++; @endphp
+    @endif
+      
+    @if ($k['type'] === 'presence')
+      lineKey.{{ $slot }}.category="BLF"
+      lineKey.{{ $slot }}.index="0"
+      @php $slot++; @endphp
+    @endif
+    
+  @endforeach
+/>
+
 <attendant
     @if (isset($settings['polycom_remotecallerid_automata']))
 		attendant.behaviors.display.remoteCallerID.automata="{{ $settings['polycom_remotecallerid_automata'] }}"
@@ -185,17 +201,11 @@
 		
   @php $r = 1; @endphp
   @foreach ($keys as $k)
-    @php
-      $category = strtolower($k['category'] ?? '');
-      $val      = trim((string)($k['value'] ?? ''));
-      $label    = $k['label'] ?? $val;
-      $type     = strtolower($k['type'] ?? 'normal');
-    @endphp
-    @continue(!in_array($category, ['blf','presence']) || $val === '')
+    @continue(!in_array(($k['type'] ?? ''), ['normal','automata']) || trim($k['value'] ?? '') === '')
 
-    attendant.resourceList.{{ $r }}.address="{{ $val }}"
-    attendant.resourceList.{{ $r }}.label="{{ $label }}"
-    @if ($type === 'automata')
+    attendant.resourceList.{{ $r }}.address="{{ $k['value'] ?? '' }}"
+    attendant.resourceList.{{ $r }}.label="{{ $k['label'] ?? $val }}"
+    @if (($k['type'] ?? '') === 'automata')
       attendant.resourceList.{{ $r }}.type="automata"
     @endif
     @php $r++; @endphp

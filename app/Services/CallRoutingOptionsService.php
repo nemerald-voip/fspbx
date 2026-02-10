@@ -8,6 +8,7 @@ use App\Models\{
     CallFlows,
     Conferences,
     Dialplans,
+    Domain,
     Extensions,
     Faxes,
     IvrMenus,
@@ -72,9 +73,9 @@ class CallRoutingOptionsService
 
     private const TRANSFER_FORMAT = '%s:%s XML %s';
 
-    public function __construct()
+    public function __construct(?string $domainUuid = null,)
     {
-        $this->domainUuid = session('domain_uuid');
+        $this->domainUuid = $domainUuid ?? session('domain_uuid');
         $this->domainName = session('domain_name');
     }
 
@@ -300,6 +301,9 @@ class CallRoutingOptionsService
     public function reverseEngineerRingGroupExitAction($action)
     {
         try {
+            if (!$action) {
+                return null;
+            }
             $action = trim($action);
             // Split the string by spaces to extract details
             $parts = explode(' ', $action);
@@ -313,16 +317,16 @@ class CallRoutingOptionsService
             if ($actionType != 'hangup') {
                 $destination = $parts[1]; // e.g., "201"
                 $context = $parts[2]; // e.g., "XML"
-                $domain = $parts[3] ?? null; // e.g., "api.us.domain.net"
+                $domain_name = $parts[3] ?? null; // e.g., "api.us.domain.net"
             }
 
             // Reverse engineer based on the action type
             switch ($actionType) {
                 case 'transfer':
-                    return $this->reverseEngineerTransferAction("$destination $context $domain");
+                    return $this->reverseEngineerTransferAction("$destination $context $domain_name");
                     break;
                 case 'lua':
-                    return $this->extractRecordingUuidFromData("$destination $context $domain");
+                    return $this->extractRecordingUuidFromData("$destination $context $domain_name");
                     break;
 
                 case 'hangup':
@@ -331,7 +335,7 @@ class CallRoutingOptionsService
                     );
                     break;
 
-                // Add more cases for other IVR actions as needed
+                // Add more cases for other actions as needed
 
                 default:
                     throw new \Exception("Unsupported Ring Group action type: $actionType");
@@ -361,13 +365,15 @@ class CallRoutingOptionsService
                 ];
             }
 
+            $domainUuid = $this->domainUuid;
+
             $dialplan = Dialplans::where(function ($query) use ($destination) {
                 $query->where('dialplan_number', $destination)
                     ->orWhere('dialplan_number', '=', '1' . $destination);
             })
                 ->where('dialplan_enabled', 'true')
-                ->where(function ($query) {
-                    $query->where('domain_uuid', session('domain_uuid'))
+                ->where(function ($query) use ($domainUuid) {
+                    $query->where('domain_uuid', $domainUuid)
                         ->orWhereNull('domain_uuid');
                 })
                 ->where('dialplan_context', '!=', 'public')
@@ -381,13 +387,14 @@ class CallRoutingOptionsService
 
             // Check if destination is voicemail
             if ((substr($destination, 0, 3) == '*99') !== false) {
-                $voicemail = Voicemails::where('domain_uuid', session('domain_uuid'))
+                $voicemail = Voicemails::where('domain_uuid', $domainUuid)
                     ->where('voicemail_id', substr($destination, 3))
-                    ->with(['extension' => function ($query) {
+                    ->with(['extension' => function ($query) use ($domainUuid) {
                         $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
-                            ->where('domain_uuid', session('domain_uuid'));
+                            ->where('domain_uuid', $domainUuid);
                     }])
                     ->first();
+
 
                 if ($voicemail) {
                     return [
@@ -400,7 +407,7 @@ class CallRoutingOptionsService
             }
 
             // Check if it's an extension
-            $ext = Extensions::where('domain_uuid', session('domain_uuid'))
+            $ext = Extensions::where('domain_uuid', $domainUuid)
                 ->where('extension', $destination)
                 ->first();
             if ($ext) {
@@ -433,6 +440,7 @@ class CallRoutingOptionsService
     {
         // Extract the extension/identifier from destination_data
         $extension = explode(' ', $destinationData)[0]; // Extracts '0600' from '0600 XML tenant.domain.net'
+        $domainUuid = $this->domainUuid;
 
         // Use regex and check in the Dialplan database to determine what this extension belongs to
         $dialplan = Dialplans::where(function ($query) use ($extension) {
@@ -440,8 +448,8 @@ class CallRoutingOptionsService
                 ->orWhere('dialplan_number', '=', '1' . $extension);
         })
             ->where('dialplan_enabled', 'true')
-            ->where(function ($query) {
-                $query->where('domain_uuid', session('domain_uuid'))
+            ->where(function ($query) use ($domainUuid) {
+                $query->where('domain_uuid', $domainUuid)
                     ->orWhereNull('domain_uuid');
             })
             ->select('dialplan_uuid', 'dialplan_name', 'dialplan_number', 'dialplan_xml', 'dialplan_order')
@@ -454,11 +462,11 @@ class CallRoutingOptionsService
 
         // Check if destination is voicemail
         if ((substr($extension, 0, 3) == '*99') !== false) {
-            $voicemail = Voicemails::where('domain_uuid', session('domain_uuid'))
+            $voicemail = Voicemails::where('domain_uuid', $domainUuid)
                 ->where('voicemail_id', substr($extension, 3))
-                ->with(['extension' => function ($query) {
+                ->with(['extension' => function ($query) use ($domainUuid){
                     $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
-                        ->where('domain_uuid', session('domain_uuid'));
+                        ->where('domain_uuid', $domainUuid);
                 }])
                 ->first();
 
@@ -472,7 +480,7 @@ class CallRoutingOptionsService
         }
 
         // Fallback: assume it's an extension if no Dialplan match
-        $ext = Extensions::where('domain_uuid', session('domain_uuid'))
+        $ext = Extensions::where('domain_uuid', $domainUuid)
             ->where('extension', $extension)
             ->first();
         if (!$ext) {
@@ -592,16 +600,16 @@ class CallRoutingOptionsService
      */
     protected function extractRecordingUuidFromData($destinationData)
     {
-
         // Split the string by spaces
         $parts = explode(' ', $destinationData);
+        $domainUuid = $this->domainUuid;
 
         // Get the second part, which is the file name
         if (isset($parts[1])) {
             $fileName = $parts[1]; // This will return the file name (e.g., recorded_0bbac5f48265cd0392946a0f2f79423c.wav)
         }
 
-        $recording = Recordings::where('domain_uuid', session('domain_uuid'))
+        $recording = Recordings::where('domain_uuid', $domainUuid)
             ->where('recording_filename', $fileName)
             ->first();
 

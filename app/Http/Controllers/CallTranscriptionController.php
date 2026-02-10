@@ -66,6 +66,8 @@ class CallTranscriptionController extends Controller
         $enabled       = $domain?->enabled ?? ($system?->enabled ?? false);
         $auto_transcribe       = $domain?->auto_transcribe ?? ($system?->auto_transcribe ?? false);
         $providerUuid  = $domain?->provider_uuid ?? ($system?->provider_uuid ?? null);
+        $emailTranscription = $domain?->email_transcription ?? ($system?->email_transcription ?? false);
+        $email              = $domain?->email ?? ($system?->email ?? null);
 
         return response()->json([
             'scope'         => $domain ? 'domain' : 'system',
@@ -73,6 +75,8 @@ class CallTranscriptionController extends Controller
             'enabled'       => (bool) $enabled,
             'auto_transcribe' => (bool) $auto_transcribe,
             'provider_uuid' => $providerUuid,
+            'email_transcription' => (bool) $emailTranscription,
+            'email'              => $email,
         ]);
     }
 
@@ -93,6 +97,8 @@ class CallTranscriptionController extends Controller
                     'auto_transcribe'       => (bool) $data['auto_transcribe'],
                     // In domain scope this may be null to inherit system provider
                     'provider_uuid' => $data['provider_uuid'] ?? null,
+                    'email_transcription'       => (bool) $data['email_transcription'],
+                    'email'       => $data['email'] ?? null,
                 ]
             );
 
@@ -223,39 +229,96 @@ class CallTranscriptionController extends Controller
             ], 422);
         }
 
+        $scope = null;
+        $config = null;
+
         // Prefer domain row if requested & exists
         if ($domainUuid) {
             $domainCfg = CallTranscriptionProviderConfig::where('provider_uuid', $provider->uuid)
                 ->where('domain_uuid', $domainUuid)
-                ->first()
-                ->toArray();
+                ->first();
 
             if ($domainCfg) {
-                // Return flat config fields + meta
-                return response()->json(array_merge([
-                    'scope'       => 'domain',
-                    'domain_uuid' => $domainUuid,
-                ], $domainCfg['config'] ?? []));
+                // Get config and normalize it to a plain array
+                $config = data_get($domainCfg, 'config', []);
+                $scope = 'domain';
             }
         }
 
-        // Fall back to system row (domain_uuid = NULL)
-        $systemRow = CallTranscriptionProviderConfig::where('provider_uuid', $provider->uuid)
-            ->whereNull('domain_uuid')
-            ->first();
+        if (!$config) {
+            // Fall back to system row (domain_uuid = NULL)
+            $systemCfg = CallTranscriptionProviderConfig::where('provider_uuid', $provider->uuid)
+                ->whereNull('domain_uuid')
+                ->first();
 
-        // Get config and normalize it to a plain array
-        $config = data_get($systemRow, 'config', []);
+            if ($systemCfg) {
+                // Get config and normalize it to a plain array
+                $config = data_get($systemCfg, 'config', []);
+                $scope = 'system';
+            }
+        }
 
         if ($config instanceof \Illuminate\Database\Eloquent\Casts\ArrayObject) {
             $config = $config->toArray();
         }
 
         return response()->json(array_merge([
-            'scope'       => 'system',
+            'scope'       => $scope,
             'domain_uuid' => $domainUuid,
-        ], $config));
+        ], $config ?? []));
     }
+
+    public function destroyAssemblyAiConfig(Request $request)
+    {
+        $data = $request->validate([
+            'domain_uuid' => ['required', 'uuid'],
+        ]);
+
+        $domainUuid = $data['domain_uuid'];
+
+        // Find the provider row (active AssemblyAI)
+        $provider = CallTranscriptionProvider::where('key', 'assemblyai')
+            ->where('is_active', true)
+            ->first();
+
+        if (!$provider) {
+            return response()->json([
+                'messages' => ['error' => ['AssemblyAI provider is not configured or inactive.']],
+            ], 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            // Remove the domain override (if present)
+            $deleted = CallTranscriptionProviderConfig::where('provider_uuid', $provider->uuid)
+                ->where('domain_uuid', $domainUuid)
+                ->delete();
+
+            DB::commit();
+
+            // Invalidate cached effective config for this domain
+            app(CallTranscriptionConfigService::class)->invalidate($domainUuid);
+
+            return response()->json([
+                'messages' => ['success' => [
+                    $deleted ? 'Reverted to defaults.' : 'No custom options found; already using defaults.'
+                ]],
+            ], 200);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+
+            logger(
+                'CallTranscriptionController@destroyAssemblyAiConfig error: ' .
+                    $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine()
+            );
+
+            return response()->json([
+                'messages' => ['error' => ['Something went wrong while reverting to defaults.']],
+            ], 500);
+        }
+    }
+
 
     /**
      * Start a transcription for a CDR recording.

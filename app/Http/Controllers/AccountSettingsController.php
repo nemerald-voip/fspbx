@@ -74,6 +74,8 @@ class AccountSettingsController extends Controller
                     'transcription_policy_route' => route('call-transcription.policy'),
                     'transcription_policy_store_route' => route('call-transcription.policy.store'),
                     'transcription_policy_destroy_route' => route('call-transcription.policy.destroy'),
+                    'assemblyai_route' => route('call-transcription.assemblyai'),
+                    'assemblyai_store_route' => route('call-transcription.assemblyai.store'),
 
                     //'bulk_update' => route('devices.bulk.update'),
                 ],

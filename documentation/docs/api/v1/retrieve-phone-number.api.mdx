@@ -1,0 +1,79 @@
+---
+id: retrieve-phone-number
+title: "Retrieve  phone number"
+description: "Returns a single phone number for the specified domain the caller is allowed to access."
+sidebar_label: "Retrieve  phone number"
+hide_title: true
+hide_table_of_contents: true
+api: eJztWNtu2zgQ/RWCTy0gxfe4FooC7W4v2Yc2yAVokRoORY4stjKpkpSbwNC/L0jJlmypjp1usFhg/WJbnBmemTkzImeFZQqKGC7FGcMBVmAUhyWcx1LAx2wRgsIeZqCp4qmVwgG+AJMpoRFBmot5Aii1wkg4aRRJhUwMSKdAecSBISYXhAv3kJIkAYW4RiRJ5E9gyEhEKAWtT76Kr+K1+4lUloAOvgof/VEoLDJtUEyWUApbNWvPEDUHs97hWfmtqUzh+UmrvtW6ZaANF87r2ZLDz1uUglpwrbkUDsfbO7JIE3AQbt+/vUIdkvLOstcpdtCdVfFjlmWc5R0XAL8IgF2rmXcCt9jDKVFkAQaUxsHNCnMbyZSYGHtYkAXgANdMNmJ+FcPay+vrsz9PsIehwIgDPGajF4NhP/T7YX/iDxmN/EmfnfowIRPodvtkCCPsYQU/Mq6A4cCoDDysaQwLgoMVNveptaON4mKO89xrx7fjVjvISqgFKWHDUTQaMH/YHYX+8EVIfUJo32ejXtgPB+EARschnVphnUqhQdv1frdrv7ZxXWaONNjDVAoDwlgRkqYJpw5o55u2cqvmPjL8BtTUXVg1w3CwW6W1ADu+zMSmvGqJPzibdRilpQD3e4PxaDyedLs7EqmCiN/hAPd2FkCQMKkiXV/aCqLIksTDEbkrYRb/6+IKqFSthmwwZxG5a9OKZcJmi0xz2rbKuP1NDV/CzGW8RYZyNrMM3fjYFCGUykwYKhmsl5XMDBfzmXT+FTVZJh3uDAjtnnrVHxs7F1a5plV/0B0O+13qT4D2/eHphPpkzLp+dDrukdPe+DQanFbV0+t2kY9eJ5wC+kvGwlIun+YeTpVtwYYXBG6ya5f0R9dTXjFvn60tUuY7rNyneBBh83bG7rNbI3PezuZ92r1dpQ3TN1qhlAkQUVez5M33lMGeHS2v8nqJPCzbVj5Hoqtq67jt6nV3nGazJo/Tb9TrcepbtfywaqPONypEKXJf1/h3OoCHuYGFbnvpbHeGYnUf5Wuw8y3ce+ukKC/5MMEPczdf+/vAps1QrD8eHra9xc/EkiScNU4Y/9BrHZSS9YbEi+1m9iwC2syKdQ8vQGsyhz2AThwi1mJkfQxsO0zljVfBLqJH86Ldlbzmyz7tX7uZr/08YnOrVMZgn1ZLeCpy9JrkuBYkMzEIY3MP7Ik4UdvDvVEalNiBUWNCtgPwCdPdivLQbDc8OCjJTe+qbA2a2XonVcgZA/FEeapucy05+iIzxCQSsrwRVsLVZRSZmGukQMtMUailMdogf8IENuAfmrzHuHZQfutuV5kdNjN7Xh8FWByRzMRTlePDLbodTi2f6zjMXJyc1/+9Dv0rLw9KbSMCv9mgcw8bMrcXqhJXMUXSeGq9MbG0d9w5FO9CE+MA/95sBXtYg1qu5yqZSnCAY2NSHXQ6q1hqkzcGFe8u0fmbz+j1+RkqdLGHl0Rxe0FwGbNqBbkjkiX2yv7l0/WF/+7y/M1n/8Ony6uGyQ9SG3vuQT9jUIDKHWylZUJwMUfPytgFKNJpeHdyLzPlF56eCDDPbQCn1heaKW7unTOb7W+m9bVLWyzr62IpscmVdR2XIxN3jQCiWoZ4tlVQItB64IcsHmTkdxAovEdLrrk9NxePGdFxKIliiAiGaMLpd7v2Mnz1HoQdH4KLpdN+2Qlfnbha4SKSDhg3jjJV1BtobPxBlYfspbu6pVKbBXHNoTw/X6yhbg0cd22tqlbz/6TyUZPKkkgG7kwnTQgXNh2urlZlyd5gknKbs95memVvSsH2BHNrL7e82zOmXllpN3i1ComGa5XkuX38IwNla2BaFWZREVyXt/iIJBr25P7ZRTlEfI5ahqetPq5PeeLe9YMkg4Ka3+F+ZzxrJ6SPh9JyX3gMnkYHttOkGAizg5WbVSlmiZqamoHG6zevd+b3b69wnv8NrBhbCg==
+sidebar_class_name: "get api-method"
+info_path: docs/api/v1/fs-pbx-api
+custom_edit_url: null
+hide_send_button: true
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Retrieve  phone number"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/api/v1/domains/{domain_uuid}/phone-numbers/{destination_uuid}"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Returns a single phone number for the specified domain the caller is allowed to access.
+
+Access rules:
+- Caller must have access to the target domain (domain scope).
+- Caller must have the `destination_view` permission.
+
+Example:
+- `GET /api/v1/domains/{domain_uuid}/phone-numbers/{destination_uuid}`
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"in":"path","name":"domain_uuid","description":"The domain UUID.","example":"7d58342b-2b29-4dcf-92d6-e9a9e002a4e5","required":true,"schema":{"type":"string"}},{"in":"path","name":"destination_uuid","description":"The destination UUID.","example":"ad45f53d-405b-48bc-aac2-d51b2b3b3e55","required":true,"schema":{"type":"string"}}]}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"Success","content":{"application/json":{"schema":{"type":"object","example":{"destination_uuid":"ad45f53d-405b-48bc-aac2-d51b2b3b3e55","object":"phone_number","domain_uuid":"7d58342b-2b29-4dcf-92d6-e9a9e002a4e5","destination_number":"2137577900","destination_prefix":"1","destination_enabled":true,"destination_description":null,"fax_uuid":null,"destination_record":true,"destination_type_fax":null,"destination_hold_music":null,"destination_distinctive_ring":null,"destination_cid_name_prefix":null,"destination_accountcode":null,"routing_options":[{"type":"extensions","extension":"100","option":"2304420c-9ec2-469c-a7d0-f671a6176f36","name":"100 - Alice Johnson"}]},"properties":{"destination_uuid":{"type":"string","example":"ad45f53d-405b-48bc-aac2-d51b2b3b3e55"},"object":{"type":"string","example":"phone_number"},"domain_uuid":{"type":"string","example":"7d58342b-2b29-4dcf-92d6-e9a9e002a4e5"},"destination_number":{"type":"string","example":"2137577900"},"destination_prefix":{"type":"string","example":"1"},"destination_enabled":{"type":"boolean","example":true},"destination_description":{"type":"string","example":null},"fax_uuid":{"type":"string","example":null},"destination_record":{"type":"boolean","example":true},"destination_type_fax":{"type":"string","example":null},"destination_hold_music":{"type":"string","example":null},"destination_distinctive_ring":{"type":"string","example":null},"destination_cid_name_prefix":{"type":"string","example":null},"destination_accountcode":{"type":"string","example":null},"routing_options":{"type":"array","example":[{"type":"extensions","extension":"100","option":"2304420c-9ec2-469c-a7d0-f671a6176f36","name":"100 - Alice Johnson"}],"items":{"type":"object","properties":{"type":{"type":"string","example":"extensions"},"extension":{"type":"string","example":"100"},"option":{"type":"string","example":"2304420c-9ec2-469c-a7d0-f671a6176f36"},"name":{"type":"string","example":"100 - Alice Johnson"}}}}}}}}},"400":{"description":"Invalid destination UUID","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Invalid destination UUID.","code":"invalid_request","param":"destination_uuid"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Invalid destination UUID."},"code":{"type":"string","example":"invalid_request"},"param":{"type":"string","example":"destination_uuid"}}}}}}}},"401":{"description":"Unauthenticated","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"authentication_error"},"message":{"type":"string","example":"Unauthenticated."},"code":{"type":"string","example":"unauthenticated"}}}}}}}},"403":{"description":"Forbidden","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"permission_error","message":"You do not have permission to access this resource.","code":"forbidden"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"permission_error"},"message":{"type":"string","example":"You do not have permission to access this resource."},"code":{"type":"string","example":"forbidden"}}}}}}}},"404":{"description":"Phone number not found","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Phone number not found.","code":"resource_missing","param":"destination_uuid"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Phone number not found."},"code":{"type":"string","example":"resource_missing"},"param":{"type":"string","example":"destination_uuid"}}}}}}}}}}
+>
+  
+</StatusCodes>
+
+
+      

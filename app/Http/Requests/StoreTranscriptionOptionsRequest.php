@@ -33,9 +33,9 @@ class StoreTranscriptionOptionsRequest extends FormRequest
                     ->where('is_active', true),
             ],
 
-            // Optional: validate domain exists. Adjust table/column to your system.
             'domain_uuid' => ['nullable', 'uuid'],
-            // e.g. add: Rule::exists('domains', 'domain_uuid'),
+            'email_transcription'  => ['required','boolean'],
+            'email' => ['nullable', 'string'],
         ];
     }
 

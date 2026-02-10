@@ -145,6 +145,7 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Call Transcriptions', 'permission_name' => 'transcription_create'],
             ['application_name' => 'Call Transcriptions', 'permission_name' => 'transcription_read'],
             ['application_name' => 'Call Transcriptions', 'permission_name' => 'transcription_summary'],
+            ['application_name' => 'XML CDR', 'permission_name' => 'xml_cdr_search_sentiment'],
         ];
         $timestamp = date("Y-m-d H:i:s");
 
@@ -237,6 +238,7 @@ class DatabaseSeeder extends Seeder
                 'transcription_read',
                 'transcription_create',
                 'transcription_summary',
+                'xml_cdr_search_sentiment',
             ],
             'admin' => [
                 'wakeup_calls_list_view',
@@ -263,6 +265,7 @@ class DatabaseSeeder extends Seeder
                 'extension_call_sequence',
                 'extension_do_not_disturb',
                 'extension_mobile_app_settings',
+                'xml_cdr_search_sentiment',
             ],
             'Message Admin' => [
                 'message_settings_list_view',
@@ -1027,14 +1030,6 @@ class DatabaseSeeder extends Seeder
                 'default_setting_description'   => "",
             ],
             [
-                'default_setting_category'      => 'provision',
-                'default_setting_subcategory'   => 'provision_base_url',
-                'default_setting_name'          => 'text',
-                'default_setting_value'         => 'https://domain.com/prov',
-                'default_setting_enabled'       => true,
-                'default_setting_description'   => "New provision server base URL",
-            ],
-            [
                 'default_setting_category'      => 'fax',
                 'default_setting_subcategory'   => 'notify_in_transit',
                 'default_setting_name'          => 'text',
@@ -1042,6 +1037,31 @@ class DatabaseSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "Send a notification to the sender that the fax has been accepted and is being processed",
             ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'yealink_wifi_enable',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => '1',
+                'default_setting_enabled'       => false,
+                'default_setting_description'   => "It activates or deactivates the Wi-Fi mode. 0-Disabled. 1-Enabled",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'yealink_wifi_1_security',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => '',
+                'default_setting_enabled'       => false,
+                'default_setting_description'   => "NONE, WEP, WPA/WPA2 PSK, WPA3-Personal, 802.1x EAP",
+            ],
+            [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'yealink_wifi_1_password',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => '',
+                'default_setting_enabled'       => false,
+                'default_setting_description'   => "It configures the password of a specific wireless network.",
+            ],
+
 
 
         ];

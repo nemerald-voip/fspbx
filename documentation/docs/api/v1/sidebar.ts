@@ -80,6 +80,78 @@ const sidebar: SidebarsConfig = {
     },
     {
       type: "category",
+      label: "Phone Numbers",
+      items: [
+        {
+          type: "doc",
+          id: "api/v1/list-phone-numbers",
+          label: "List phone numbers",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/create-phone-number",
+          label: "Create phone number",
+          className: "api-method post",
+        },
+        {
+          type: "doc",
+          id: "api/v1/retrieve-phone-number",
+          label: "Retrieve  phone number",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/update-phone-number",
+          label: "Update phone number",
+          className: "api-method patch",
+        },
+        {
+          type: "doc",
+          id: "api/v1/delete-a-phone-number",
+          label: "Delete a phone number",
+          className: "api-method delete",
+        },
+      ],
+    },
+    {
+      type: "category",
+      label: "Ring Groups",
+      items: [
+        {
+          type: "doc",
+          id: "api/v1/list-ring-groups",
+          label: "List ring groups",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/create-a-ring-group",
+          label: "Create a ring group",
+          className: "api-method post",
+        },
+        {
+          type: "doc",
+          id: "api/v1/retrieve-a-ring-group",
+          label: "Retrieve a ring group",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/update-a-ring-group",
+          label: "Update a ring group",
+          className: "api-method patch",
+        },
+        {
+          type: "doc",
+          id: "api/v1/delete-a-ring-group",
+          label: "Delete a ring group",
+          className: "api-method delete",
+        },
+      ],
+    },
+    {
+      type: "category",
       label: "Voicemails",
       items: [
         {

@@ -49,7 +49,8 @@ class CallTranscriptionConfigService
         $enabled       = $domain?->enabled ?? ($system?->enabled ?? false);
         $auto_transcribe = $domain?->auto_transcribe ?? ($system?->auto_transcribe ?? false);
         $providerUuid  = $domain?->provider_uuid ?? ($system?->provider_uuid ?? null);
-
+        $emailTranscription = $domain?->email_transcription ?? ($system?->email_transcription ?? false);
+        $email              = $domain?->email ?? ($system?->email ?? null);
 
         // 2) Provider row (may be null if not set yet)
         $provider = null;
@@ -86,6 +87,8 @@ class CallTranscriptionConfigService
         return [
             'enabled'          => $enabled,
             'auto_transcribe'  => $auto_transcribe,
+            'email_transcription' => $emailTranscription,
+            'email' => $email,
             'provider_uuid'    => $providerUuid,
             'provider_key'     => $providerKey,
             'provider_active'  => $providerActive,
@@ -100,7 +103,7 @@ class CallTranscriptionConfigService
             Cache::tags('ct-config')->forget($this->cacheKey($domainUuid));
             return;
         }
-    
+
         // no domain => wipe *all* tagged entries (system + every domain)
         Cache::tags('ct-config')->flush();
     }

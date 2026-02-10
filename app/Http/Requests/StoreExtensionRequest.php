@@ -33,6 +33,7 @@ class StoreExtensionRequest extends FormRequest
             'password'        => ['required', 'string', 'min:6', 'max:255'],
             'directory_visible' => ['required', 'in:true,false,1,0'],
             'directory_exten_visible' => ['required', 'in:true,false,1,0'],
+            'suspended' => ['nullable', 'boolean'],
 
 
             // Voicemail fields
@@ -85,6 +86,10 @@ class StoreExtensionRequest extends FormRequest
             'voicemail_id' => $this->extension,
             'voicemail_password' => $voicemailPassword,
         ]);
+
+        if (!$this->has('suspended')) {
+            $this->merge(['suspended' => false]);
+        }
     }
 
     public function withValidator($validator)

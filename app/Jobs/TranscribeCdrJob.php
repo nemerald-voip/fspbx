@@ -2,16 +2,13 @@
 
 namespace App\Jobs;
 
-use Throwable;
 use Illuminate\Bus\Queueable;
 use App\Models\CallTranscription;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\Middleware\WithoutOverlapping;
 use App\Services\CallTranscription\CallTranscriptionService;
 use Exception;
 
@@ -87,7 +84,7 @@ class TranscribeCdrJob implements ShouldQueue
             }
 
             $row = \App\Models\CallTranscription::updateOrCreate(
-                ['xml_cdr_uuid' => $this->xmlCdrUuid],               // lookup by unique key
+                ['xml_cdr_uuid' => $this->xmlCdrUuid],         
                 [
                     'domain_uuid'     => $this->domainUuid,
                     'provider_key'    => $providerKey,

@@ -94,9 +94,12 @@ class ExtensionsController extends Controller
             return redirect('/');
         }
 
+        $permissions = $this->getUserPermissions();
+
         return Inertia::render(
             $this->viewName,
             [
+                'permissions' => $permissions,
 
                 'routes' => [
                     'current_page' => route('extensions.index'),
@@ -212,19 +215,19 @@ class ExtensionsController extends Controller
             DB::beginTransaction();
 
             // 3) Fetch original (scoped to domain)
-        $original = Extensions::where('extension_uuid', $request->uuid)
-            ->where('domain_uuid', $domain_uuid)
-            ->with([
-                'followMe.followMeDestinations',
-                'voicemail' => function ($q) use ($domain_uuid) {
-                    $q->where('domain_uuid', $domain_uuid);
-                },
-                'advSettings',
-            ])
-            ->firstOrFail();
+            $original = Extensions::where('extension_uuid', $request->uuid)
+                ->where('domain_uuid', $domain_uuid)
+                ->with([
+                    'followMe.followMeDestinations',
+                    'voicemail' => function ($q) use ($domain_uuid) {
+                        $q->where('domain_uuid', $domain_uuid);
+                    },
+                    'advSettings',
+                ])
+                ->firstOrFail();
 
             // 4) Generate a new extension number
-            $newExtensionNumber = $this->model->generateUniqueSequenceNumber();        
+            $newExtensionNumber = $this->model->generateUniqueSequenceNumber();
 
             // 5) Replicate extension row
             $newExtension = $original->replicate();
@@ -246,7 +249,7 @@ class ExtensionsController extends Controller
 
             $newExtension->save();
 
-        // 6) Duplicate voicemail (if present)
+            // 6) Duplicate voicemail (if present)
             $originalVoicemail = Voicemails::where('domain_uuid', $domain_uuid)
                 ->where('voicemail_id', $original->extension)
                 ->first();
@@ -297,7 +300,6 @@ class ExtensionsController extends Controller
                 'extension_uuid' => $newExtension->extension_uuid,
                 'extension' => $newExtensionNumber,
             ], 201);
-
         } catch (\Throwable $e) {
             DB::rollBack();
 
@@ -959,6 +961,11 @@ class ExtensionsController extends Controller
                 $voicemail = Voicemails::create($data);
             }
 
+            $extension->advSettings()->updateOrCreate(
+                ['extension_uuid' => $extension->extension_uuid],
+                $data
+            );
+
             DB::commit();
 
             // Clear FusionPBX cache for the extension
@@ -1136,7 +1143,6 @@ class ExtensionsController extends Controller
         try {
             DB::beginTransaction();
             $data = $request->validated();
-            // logger($data);
 
             $currentDomain = session('domain_uuid');
 
@@ -1190,6 +1196,7 @@ class ExtensionsController extends Controller
 
             // Update related models
             if ($extension->voicemail) {
+                $data['voicemail_id'] = $extension->extension;
                 $extension->voicemail->update($data);
             } else {
                 // If enabling voicemail and no voicemail exists, create one
@@ -1256,8 +1263,6 @@ class ExtensionsController extends Controller
             if (isset($_SESSION['destinations']['array'])) {
                 unset($_SESSION['destinations']['array']);
             }
-
-
 
             // logger($extension->toArray());
             return response()->json([
@@ -1934,6 +1939,9 @@ class ExtensionsController extends Controller
         $permissions['extension_device_unassign'] = userCheckPermission('extension_device_unassign');
 
         $permissions['manage_mobile_app'] = userCheckPermission('extension_mobile_app_settings');
+
+        $permissions['extension_export'] = userCheckPermission('extension_export');
+        $permissions['extension_import'] = userCheckPermission('extension_import');
 
         $permissions['is_superadmin'] = isSuperAdmin();
 

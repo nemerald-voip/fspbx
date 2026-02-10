@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\Devices;
 use App\Data\DeviceData;
+use App\Models\DeviceKey;
 use App\Models\Extensions;
 use App\Models\DeviceLines;
 use Illuminate\Support\Str;
+use App\Traits\ChecksLimits;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
@@ -20,7 +22,6 @@ use App\Http\Requests\StoreDeviceRequest;
 use App\Http\Requests\UpdateDeviceRequest;
 use App\Http\Requests\BulkUpdateDeviceRequest;
 use App\Services\DeviceCloudProvisioningService;
-use App\Traits\ChecksLimits;
 
 /**
  * The DeviceController class is responsible for handling device-related operations, such as listing, creating, and storing devices.
@@ -113,7 +114,7 @@ class DeviceController extends Controller
             $exists = $this->model::where('device_address', $cleanMac)
                 ->where('domain_uuid', session('domain_uuid'))
                 ->exists();
-                
+
             if ($exists) {
                 throw new \Exception("Device with this MAC address already exists.");
             }
@@ -128,7 +129,7 @@ class DeviceController extends Controller
             $newDevice->device_uuid = Str::uuid();
             $newDevice->device_label = $original->device_label . ' (Copy)';
             $newDevice->device_address = $cleanMac; // Set the new sanitized MAC
-            
+
             $newDevice->save();
 
             // 6. Replicate Lines
@@ -157,7 +158,6 @@ class DeviceController extends Controller
                 'messages' => ['success' => ['Device duplicated successfully.']],
                 'device_uuid' => $newDevice->device_uuid
             ], 201);
-
         } catch (\Throwable $e) {
             DB::rollBack();
             // logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -222,15 +222,15 @@ class DeviceController extends Controller
                             }
                         })
 
-                        // 2) free-text on other columns (keep raw needle to preserve text searches)
-                        ->orWhere('device_template', 'ilike', "%{$needle}%")
-                        ->orWhereHas('profile', function ($q2) use ($needle) {
-                            $q2->where('device_profile_name', 'ilike', "%{$needle}%");
-                        })
-                        ->orWhereHas('lines.extension', function ($q3) use ($needle) {
-                            $q3->where('extension', 'ilike', "%{$needle}%")
-                            ->orWhere('effective_caller_id_name', 'ilike', "%{$needle}%");
-                        });
+                            // 2) free-text on other columns (keep raw needle to preserve text searches)
+                            ->orWhere('device_template', 'ilike', "%{$needle}%")
+                            ->orWhereHas('profile', function ($q2) use ($needle) {
+                                $q2->where('device_profile_name', 'ilike', "%{$needle}%");
+                            })
+                            ->orWhereHas('lines.extension', function ($q3) use ($needle) {
+                                $q3->where('extension', 'ilike', "%{$needle}%")
+                                    ->orWhere('effective_caller_id_name', 'ilike', "%{$needle}%");
+                            });
                     });
                 }),
                 AllowedFilter::callback('showGlobal', function ($query, $value) use ($currentDomain) {
@@ -262,7 +262,7 @@ class DeviceController extends Controller
                 $query->select('domain_uuid', 'domain_name', 'domain_description');
             }])
             ->with(['template' => function ($query) {
-                $query->select('template_uuid', 'domain_uuid', 'vendor','name');
+                $query->select('template_uuid', 'domain_uuid', 'vendor', 'name', 'version', 'revision');
             }])
 
             ->allowedSorts(['device_address'])
@@ -275,18 +275,6 @@ class DeviceController extends Controller
         // logger( $devicesDto);
 
         return $devicesDto;
-
-    }
-
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return void
-     */
-    public function create()
-    {
-        //
     }
 
     /**
@@ -312,8 +300,8 @@ class DeviceController extends Controller
             $device->save();
 
             // Create device lines
-            if (!empty($inputs['device_keys']) && is_array($inputs['device_keys'])) {
-                foreach ($inputs['device_keys'] as $index => $line) {
+            if (!empty($inputs['device_lines']) && is_array($inputs['device_lines'])) {
+                foreach ($inputs['device_lines'] as $index => $line) {
                     $extension = Extensions::where('extension', $line['auth_id'])
                         ->where('domain_uuid', $inputs['domain_uuid'])
                         ->first();
@@ -329,7 +317,7 @@ class DeviceController extends Controller
                             'server_address_primary' => $line['server_address_primary'] ?? get_domain_setting('server_address_primary'),
                             'server_address_secondary' => $line['server_address_secondary'] ?? get_domain_setting('server_address_secondary'),
                             'outbound_proxy_primary' => $line['outbound_proxy_primary'] ?? get_domain_setting('outbound_proxy_primary'),
-                            'outbound_proxy_secondary' => $line['outbound_proxy_secondary'] ?? get_domain_setting('outbound_proxy_secondary') ,
+                            'outbound_proxy_secondary' => $line['outbound_proxy_secondary'] ?? get_domain_setting('outbound_proxy_secondary'),
                             'display_name' => $line['display_name'],
                             'user_id' => $extension ? $extension->extension : null,
                             'auth_id' => $extension ? $extension->extension : $line['auth_id'],
@@ -365,18 +353,6 @@ class DeviceController extends Controller
     }
 
 
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  Devices  $device
-     * @return void
-     */
-    public function show(Devices $device)
-    {
-        //
-    }
-
     /**
      * Update the specified resource in storage.
      *
@@ -406,15 +382,15 @@ class DeviceController extends Controller
             $device->update($inputs);
 
             // Create new device lines
-            if (array_key_exists('device_keys', $inputs)) {
-                if (empty($inputs['device_keys'])) {
+            if (array_key_exists('device_lines', $inputs)) {
+                if (empty($inputs['device_lines'])) {
                     // Field is present but empty: remove all device lines
                     $device->lines()->delete();
                 } else {
                     // Field is present and has items: remove all then recreate
                     $device->lines()->delete();
 
-                    foreach ($inputs['device_keys'] as $index => $line) {
+                    foreach ($inputs['device_lines'] as $index => $line) {
                         $extension = Extensions::where('extension', $line['auth_id'])
                             ->where('domain_uuid', $inputs['domain_uuid'])
                             ->first();
@@ -448,7 +424,7 @@ class DeviceController extends Controller
                 }
             }
 
-            // Create/update device settings (mirror the device_keys pattern)
+            // Create/update device settings
             if (array_key_exists('device_settings', $inputs)) {
                 if (empty($inputs['device_settings'])) {
                     // Field present but empty → remove all settings for this device
@@ -473,6 +449,34 @@ class DeviceController extends Controller
 
                         $device->settings()->create($payload);
                     }
+                }
+            }
+
+            // Create/update device keys
+            if (array_key_exists('device_keys', $inputs)) {
+                if (empty($inputs['device_keys'])) {
+                    // Field is present but empty: remove all device keys
+                    $device->keys()->delete();
+                } else {
+                    // Field is present and has items: remove all then recreate
+                    $device->keys()->delete();
+
+                    $rows = [];
+
+                    foreach ($inputs['device_keys'] as $k) {
+                        $rows[] = [
+                            'device_uuid' => $device->device_uuid,
+                            'key_index'   => $k['key_index'],
+                            'key_type'    => $k['key_type'] ?? null,
+                            'key_value'   => $k['key_value'] ?? null,
+                            'key_label'   => $k['key_label'] ?? null,
+                            'created_at'  => now(),
+                            'updated_at'  => now(),
+                        ];
+                    }
+
+                    // Bulk insert 
+                    DeviceKey::insert($rows);
                 }
             }
 
@@ -508,9 +512,9 @@ class DeviceController extends Controller
         }
 
         try {
-            // Assign or update device_keys
-            if (!empty($data['device_keys']) && is_array($data['device_keys'])) {
-                foreach ($data['device_keys'] as $index => $line) {
+            // Assign or update device_lines
+            if (!empty($data['device_lines']) && is_array($data['device_lines'])) {
+                foreach ($data['device_lines'] as $index => $line) {
                     $extension = Extensions::where('extension', $line['user_id'])
                         ->where('domain_uuid', $data['domain_uuid'])
                         ->first();
@@ -659,15 +663,15 @@ class DeviceController extends Controller
 
             $itemUuid = request('itemUuid');
 
-        // Check for limits
-        if (!$itemUuid) {
-            if ($resp = $this->enforceLimit(
-                'devices',
-                \App\Models\Devices::class
-            )) {
-                return $resp;
+            // Check for limits
+            if (!$itemUuid) {
+                if ($resp = $this->enforceLimit(
+                    'devices',
+                    \App\Models\Devices::class
+                )) {
+                    return $resp;
+                }
             }
-        }
 
             $routes = [];
 
@@ -696,11 +700,14 @@ class DeviceController extends Controller
 
                         // ]);
                     }])
+                    ->with(['keys' => function ($query) {
+                        $query->select('device_key_uuid', 'device_uuid', 'key_index', 'key_type', 'key_value', 'key_label');
+                    }])
                     ->with(['profile' => function ($query) {
                         $query->select('device_profile_uuid', 'device_profile_name', 'device_profile_description');
                     }])
                     ->with(['settings' => function ($query) {
-                        $query->select('device_setting_uuid', 'device_uuid','device_setting_subcategory', 'device_setting_value', 'device_setting_enabled', 'device_setting_description');
+                        $query->select('device_setting_uuid', 'device_uuid', 'device_setting_subcategory', 'device_setting_value', 'device_setting_enabled', 'device_setting_description');
                     }])
                     ->whereKey($itemUuid)
                     ->firstOrFail();
@@ -711,6 +718,7 @@ class DeviceController extends Controller
                     'update_route' => route('devices.update', ['device' => $itemUuid]),
                     'cloud_provisioning_status_route' => route('cloud-provisioning.status', ['device' => $itemUuid]),
                     'cloud_provisioning_reset_route' => route('cloud-provisioning.reset', ['device' => $itemUuid]),
+                    'get_routing_options' => route('routing.options'),
                 ]);
             } else {
                 // New device defaults
@@ -845,6 +853,8 @@ class DeviceController extends Controller
             ];
 
             $cloudProviderSelector = app()->make(\App\Services\CloudProviderSelector::class);
+
+            // logger($deviceDto);
 
             // Construct the itemOptions object
             $itemOptions = [
@@ -1106,6 +1116,9 @@ class DeviceController extends Controller
         $permissions['device_setting_add'] = userCheckPermission('device_setting_add');
         $permissions['device_setting_update'] = userCheckPermission('device_setting_edit');
         $permissions['device_setting_destroy'] = userCheckPermission('device_setting_delete');
+        $permissions['device_line_create'] = userCheckPermission('device_line_add');
+        $permissions['device_line_update'] = userCheckPermission('device_line_edit');
+        $permissions['device_line_destroy'] = userCheckPermission('device_line_delete');
         $permissions['manage_device_line_primary_server'] = userCheckPermission('device_line_server_address_primary');
         $permissions['manage_device_line_secondary_server'] = userCheckPermission('device_line_server_address_secondary');
         $permissions['manage_device_line_primary_proxy'] = userCheckPermission('device_line_outbound_proxy_primary');

@@ -7,11 +7,9 @@ use Inertia\Inertia;
 use App\Models\Faxes;
 use Inertia\Response;
 use App\Models\Dialplans;
-use App\Models\FusionCache;
 use Illuminate\Support\Str;
 use App\Models\Destinations;
 use Illuminate\Http\Request;
-use App\Models\DialplanDetails;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\DB;
@@ -23,7 +21,6 @@ use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
 use Illuminate\Support\Facades\Session;
 use Maatwebsite\Excel\HeadingRowImport;
-use Illuminate\Database\Eloquent\Builder;
 use App\Services\CallRoutingOptionsService;
 use Maatwebsite\Excel\Excel as ExcelWriter;
 use App\Http\Requests\StorePhoneNumberRequest;
@@ -31,7 +28,6 @@ use App\Http\Requests\UpdatePhoneNumberRequest;
 use Illuminate\Contracts\Foundation\Application;
 use App\Http\Requests\BulkUpdatePhoneNumberRequest;
 use App\Services\DialplanBuilderService;
-use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use App\Traits\ChecksLimits;
 use App\Exports\PhoneNumbersExport;
 
@@ -71,69 +67,14 @@ class PhoneNumbersController extends Controller
             return redirect('/');
         }
 
-        $perPage = 50;
-        $currentDomain = session('domain_uuid');
-
-        // If the filter is not present, assign default value before QueryBuilder
-        if (!$request->has('filter.showGlobal')) {
-            $request->merge([
-                'filter' => array_merge(
-                    $request->input('filter', []),
-                    ['showGlobal' => false]
-                ),
-            ]);
-        }
-
-        $phone_numbers = QueryBuilder::for(Destinations::class)
-            ->select([
-                'destination_uuid',
-                'destination_number',
-                'destination_prefix',
-                'destination_actions',
-                'destination_enabled',
-                'destination_description',
-                'domain_uuid',
-            ])
-            // allow ?filter[username]=foo or ?filter[user_email]=bar
-            ->allowedFilters([
-                // Only email and name_formatted
-                AllowedFilter::callback('search', function ($query, $value) {
-                    $query->where(function ($q) use ($value) {
-                        $q->where('destination_number', 'ilike', "%{$value}%")
-                            ->orWhere('destination_description', 'ilike', "%{$value}%")
-                            ->orWhere('destination_actions', 'ilike', "%{$value}%");
-                    });
-                }),
-                AllowedFilter::callback('showGlobal', function ($query, $value) use ($currentDomain) {
-                    // If showGlobal is falsey (0, '0', false, null), restrict to the current domain
-                    if (!$value || $value === '0' || $value === 0 || $value === false) {
-                        $query->where('domain_uuid', $currentDomain);
-                    }
-                    // else, do nothing and show all domains
-                }),
-            ])
-
-            ->with(['domain' => function ($query) {
-                $query->select('domain_uuid', 'domain_name', 'domain_description');
-            }])
-
-            ->allowedSorts(['destination_number'])
-            ->defaultSort('destination_number')
-            ->paginate($perPage);
-
-
         return Inertia::render(
             $this->viewName,
             [
-                'data' => $phone_numbers,
-
-                'showGlobal' => function () {
-                    return request('filterData.showGlobal') === 'true';
-                },
 
                 'routes' => [
                     'current_page' => route('phone-numbers.index'),
                     'store' => route('phone-numbers.store'),
+                    'data_route' => route('phone-numbers.data'),
                     'select_all' => route('phone-numbers.select.all'),
                     'bulk_update' => route('phone-numbers.bulk.update'),
                     'bulk_delete' => route('phone-numbers.bulk.delete'),
@@ -277,101 +218,84 @@ class PhoneNumbersController extends Controller
         }
     }
 
-    /**
-     * @return LengthAwarePaginator
-     */
-    public function getData($paginate = 50): LengthAwarePaginator
+    public function getData()
     {
-        // Check if search parameter is present and not empty
-        if (!empty(request('filterData.search'))) {
-            $this->filters['search'] = request('filterData.search');
+        $perPage = 50;
+        $currentDomain = session('domain_uuid');
+
+        // If the filter is not present, assign default value before QueryBuilder
+        if (!request()->has('filter.showGlobal')) {
+            request()->merge([
+                'filter' => array_merge(
+                    request()->input('filter', []),
+                    ['showGlobal' => false]
+                ),
+            ]);
         }
 
-        // Check if showGlobal parameter is present and not empty
-        if (!empty(request('filterData.showGlobal'))) {
-            $this->filters['showGlobal'] = request('filterData.showGlobal') === 'true';
-        } else {
-            $this->filters['showGlobal'] = null;
-        }
+        $data = QueryBuilder::for(Destinations::class)
+            ->select([
+                'destination_uuid',
+                'destination_number',
+                'destination_prefix',
+                'destination_actions',
+                'destination_enabled',
+                'destination_description',
+                'domain_uuid',
+            ])
+            // allow ?filter[username]=foo or ?filter[user_email]=bar
+            ->allowedFilters([
+                // Only email and name_formatted
+                AllowedFilter::callback('search', function ($query, $value) {
+                    $s = trim((string) $value);
+                    if ($s === '') {
+                        return;
+                    }
 
-        // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'destination_number'); // Default to 'destination'
-        $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to ascending
+                    // If it contains any letters, keep original behavior (text search)
+                    if (preg_match('/[A-Za-z]/', $s)) {
+                        $query->where(function ($q) use ($s) {
+                            $q->where('destination_number', 'ilike', "%{$s}%")
+                                ->orWhere('destination_description', 'ilike', "%{$s}%")
+                                ->orWhere('destination_actions', 'ilike', "%{$s}%");
+                        });
+                        return;
+                    }
 
-        $data = $this->builder($this->filters);
+                    // Numeric-only: remove all non-digits
+                    $digits = preg_replace('/\D+/', '', $s);
 
-        // Apply pagination if requested
-        if ($paginate) {
-            $data = $data->paginate($paginate);
-        } else {
-            $data = $data->get(); // This will return a collection
-        }
+                    // If 11 digits and starts with 1 (covers +1 once stripped), drop leading 1
+                    if (strlen($digits) === 11 && str_starts_with($digits, '1')) {
+                        $digits = substr($digits, 1);
+                    }
+
+                    if ($digits === '') {
+                        return;
+                    }
+
+                    // Search destination_number after stripping non-digits in SQL (Postgres)
+                    $pattern = '%' . implode('%', str_split($digits)) . '%';
+                    $query->where('destination_number', 'ilike', $pattern);                        
+                }),
+                AllowedFilter::callback('showGlobal', function ($query, $value) use ($currentDomain) {
+                    // If showGlobal is falsey (0, '0', false, null), restrict to the current domain
+                    if (!$value || $value === '0' || $value === 0 || $value === false) {
+                        $query->where('domain_uuid', $currentDomain);
+                    }
+                    // else, do nothing and show all domains
+                }),
+            ])
+
+            ->with(['domain' => function ($query) {
+                $query->select('domain_uuid', 'domain_name', 'domain_description');
+            }])
+
+            ->allowedSorts(['destination_number'])
+            ->defaultSort('destination_number')
+            ->paginate($perPage);
 
         return $data;
-    }
-
-
-    /**
-     * @param  array  $filters
-     * @return Builder
-     */
-    public function builder(array $filters = []): Builder
-    {
-        $data =  $this->model::query();
-
-        if (isset($filters['showGlobal']) and $filters['showGlobal']) {
-            $data->with(['domain' => function ($query) {
-                $query->select('domain_uuid', 'domain_name', 'domain_description'); // Specify the fields you need
-            }]);
-            // Access domains through the session and filter devices by those domains
-            $domainUuids = Session::get('domains')->pluck('domain_uuid');
-            $data->whereHas('domain', function ($query) use ($domainUuids) {
-                $query->whereIn($this->model->getTable() . '.domain_uuid', $domainUuids);
-            });
-        } else {
-            // Directly filter devices by the session's domain_uuid
-            $domainUuid = Session::get('domain_uuid');
-            $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
-        }
-
-        $data->select(
-            'destination_uuid',
-            'destination_number',
-            'destination_prefix',
-            'destination_actions',
-            'destination_enabled',
-            'destination_description',
-            'domain_uuid',
-        );
-
-        if (is_array($filters)) {
-            foreach ($filters as $field => $value) {
-                if (method_exists($this, $method = "filter" . ucfirst($field))) {
-                    $this->$method($data, $value);
-                }
-            }
-        }
-
-        // Apply sorting
-        $data->orderBy($this->sortField, $this->sortOrder);
-
-        return $data;
-    }
-
-    /**
-     * @param $query
-     * @param $value
-     * @return void
-     */
-    protected function filterSearch($query, $value)
-    {
-        $searchable = $this->searchable;
-        // Case-insensitive partial string search in the specified fields
-        $query->where(function ($query) use ($value, $searchable) {
-            foreach ($searchable as $field) {
-                $query->orWhere($field, 'ilike', '%' . $value . '%');
-            }
-        });
     }
 
     /**
@@ -651,7 +575,7 @@ class PhoneNumbersController extends Controller
 
             // Retrieve all items at once
             $items = $this->model::whereIn('destination_uuid', request('items'))
-                ->get(['destination_uuid', 'dialplan_uuid']);
+                ->get(['destination_uuid', 'dialplan_uuid', 'destination_prefix', 'destination_number', 'destination_context']);
 
             $dialplanBuilder = new DialplanBuilderService();
 
@@ -666,8 +590,7 @@ class PhoneNumbersController extends Controller
                 // Delete the item itself
                 $item->delete();
 
-                //clear fusionpbx cache
-                // $this->clearCache($item);
+                //clear cache
                 $dialplanBuilder->clearCacheForPhoneNumber($item);
             }
 
@@ -689,66 +612,6 @@ class PhoneNumbersController extends Controller
             ], 500); // 500 Internal Server Error for any other errors
         }
     }
-
-    // public function generateDialPlanXML(Destinations $phoneNumber): void
-    // {
-
-    //     // logger($phoneNumber);
-    //     // Data to pass to the Blade template
-    //     $data = [
-    //         'phone_number' => $phoneNumber,
-    //         'domain_name' => Session::get('domain_name'),
-    //         'fax_data' => $phoneNumber->fax()->first() ?? null,
-    //         'dialplan_continue' => 'false',
-    //         'destination_condition_field' => get_domain_setting('destination'),
-    //     ];
-
-    //     // Render the Blade template and get the XML content as a string
-    //     $xml = trim(view('layouts.xml.phone-number-dial-plan-template', $data)->render());
-
-    //     $dom = new \DOMDocument();
-    //     $dom->preserveWhiteSpace = false;  // Removes extra spaces
-    //     $dom->loadXML($xml);
-    //     $dom->formatOutput = true;         // Formats XML properly
-    //     $xml = $dom->saveXML($dom->documentElement);
-
-
-    //     $dialPlan = Dialplans::where('dialplan_uuid', $phoneNumber->dialplan_uuid)->first();
-
-    //     if (!$dialPlan) {
-    //         $dialPlan = new Dialplans();
-    //         $dialPlan->dialplan_uuid = $phoneNumber->dialplan_uuid;
-    //         $dialPlan->app_uuid = 'c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4';
-    //         $dialPlan->domain_uuid = Session::get('domain_uuid');
-    //         $dialPlan->dialplan_name = $phoneNumber->destination_number;
-    //         $dialPlan->dialplan_number = $phoneNumber->destination_number;
-    //         if (isset($phoneNumber->destination_context)) {
-    //             $dialPlan->dialplan_context = $phoneNumber->destination_context;
-    //         }
-    //         $dialPlan->dialplan_continue = $data['dialplan_continue'];
-    //         $dialPlan->dialplan_xml = $xml;
-    //         $dialPlan->dialplan_order = 100;
-    //         $dialPlan->dialplan_enabled = $phoneNumber->destination_enabled;
-    //         $dialPlan->dialplan_description = $phoneNumber->destination_description;
-    //         $dialPlan->insert_date = date('Y-m-d H:i:s');
-    //         $dialPlan->insert_user = Session::get('user_uuid');
-    //     } else {
-    //         $dialPlan->dialplan_xml = $xml;
-    //         $dialPlan->dialplan_name = $phoneNumber->destination_number;
-    //         $dialPlan->dialplan_number = $phoneNumber->destination_number;
-    //         $dialPlan->dialplan_enabled = $phoneNumber->destination_enabled;
-    //         $dialPlan->dialplan_description = $phoneNumber->destination_description;
-    //         $dialPlan->update_date = date('Y-m-d H:i:s');
-    //         $dialPlan->update_user = Session::get('user_uuid');
-    //     }
-
-    //     $dialPlan->save();
-
-    //     $this->generateDialplanDetails($phoneNumber, $dialPlan);
-
-    //     //clear fusionpbx cache
-    //     $this->clearCache($phoneNumber);
-    // }
 
     /**
      * Probably need to move this to somewhere else like helper
@@ -796,421 +659,6 @@ class PhoneNumbersController extends Controller
         }
     }
 
-    // private function clearCache($phoneNumber): void
-    // {
-    //     // Handling for multiple dialplan mode
-    //     FusionCache::clear("dialplan:public");
-
-    //     // Handling for single dialplan mode
-    //     if (isset($phoneNumber->destination_prefix) && is_numeric($phoneNumber->destination_prefix) && isset($phoneNumber->destination_number) && is_numeric($phoneNumber->destination_number)) {
-    //         //  logger("dialplan:". $phoneNumber->destination_context.":".$phoneNumber->destination_prefix.$phoneNumber->destination_number);
-    //         FusionCache::clear("dialplan:" . $phoneNumber->destination_context . ":" . $phoneNumber->destination_prefix . $phoneNumber->destination_number);
-    //         //logger("dialplan:". $phoneNumber->destination_context.":+".$phoneNumber->destination_prefix.$phoneNumber->destination_number);
-    //         FusionCache::clear("dialplan:" . $phoneNumber->destination_context . ":+" . $phoneNumber->destination_prefix . $phoneNumber->destination_number);
-    //     }
-    //     if (isset($phoneNumber->destination_number) && str_starts_with($phoneNumber->destination_number, '+') && is_numeric(str_replace('+', '', $phoneNumber->destination_number))) {
-    //         //logger("dialplan:". $phoneNumber->destination_context.":".$phoneNumber->destination_number);
-    //         FusionCache::clear("dialplan:" . $phoneNumber->destination_context . ":" . $phoneNumber->destination_number);
-    //     }
-    //     if (isset($phoneNumber->destination_number) && is_numeric($phoneNumber->destination_number)) {
-    //         //logger("dialplan:". $phoneNumber->destination_context.":".$phoneNumber->destination_number);
-    //         FusionCache::clear("dialplan:" . $phoneNumber->destination_context . ":" . $phoneNumber->destination_number);
-    //     }
-
-    //     /*
-    //     if (isset($phoneNumber->destination_number)) {
-    //         FusionCache::clear("dialplan:" . $phoneNumber->destination_context . ":" . $phoneNumber->destination_number);
-
-    //         if (isset($phoneNumber->destination_prefix)) {
-    //             FusionCache::clear("dialplan:" . $phoneNumber->destination_context . ":" . $phoneNumber->destination_prefix . $phoneNumber->destination_number);
-
-    //             // Assuming the "+" version is a variation of the prefix, and you want to clear it only if it wasn't cleared before.
-    //             if ("+" . $phoneNumber->destination_prefix !== $phoneNumber->destination_prefix) {
-    //                 FusionCache::clear("dialplan:" . $phoneNumber->destination_context . ":+" . $phoneNumber->destination_prefix . $phoneNumber->destination_number);
-    //             }
-    //         }
-    //     }*/
-    // }
-
-    // private function generateDialplanDetails(Destinations $phoneNumber, Dialplans $dialPlan): void
-    // {
-    //     // Remove existing device lines
-    //     if ($dialPlan->dialplan_details()->exists()) {
-    //         $dialPlan->dialplan_details()->delete();
-    //     }
-
-    //     $detailOrder = 20;
-    //     $detailGroup = 0;
-
-    //     $destination_condition_field = get_domain_setting('destination');
-
-    //     if ($phoneNumber->destination_conditions) {
-    //         $conditions = json_decode($phoneNumber->destination_conditions);
-    //         foreach ($conditions as $condition) {
-    //             $dialPlanDetails = new DialplanDetails();
-    //             $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //             $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //             $dialPlanDetails->dialplan_detail_tag = "condition";
-    //             $dialPlanDetails->dialplan_detail_type = 'regex';
-    //             $dialPlanDetails->dialplan_detail_data = 'all';
-    //             $dialPlanDetails->dialplan_detail_break = 'never';
-    //             $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //             $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //             $dialPlanDetails->save();
-
-    //             $detailOrder += 10;
-
-    //             $dialPlanDetails = new DialplanDetails();
-    //             //check the destination number
-    //             $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //             $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //             $dialPlanDetails->dialplan_detail_tag = "regex";
-    //             /*if (!empty($condition->condition_app)) {
-    //                 $dialPlanDetails->dialplan_detail_type = $condition->condition_app;
-    //             } else {
-    //                 $dialPlanDetails->dialplan_detail_type = "regex";
-    //             }*/
-    //             $dialPlanDetails->dialplan_detail_type = $destination_condition_field;
-    //             $dialPlanDetails->dialplan_detail_data = $phoneNumber->destination_number_regex;
-    //             $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //             $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //             $dialPlanDetails->save();
-
-    //             //die;
-
-    //             $detailOrder += 10;
-
-    //             $dialPlanDetails = new DialplanDetails();
-    //             $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //             $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //             $dialPlanDetails->dialplan_detail_tag = "regex";
-    //             $dialPlanDetails->dialplan_detail_type = $condition->condition_field;
-    //             $dialPlanDetails->dialplan_detail_data = '^\+?' . $phoneNumber->destination_prefix . '?' . $condition->condition_expression . '$';
-    //             $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //             $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //             $dialPlanDetails->save();
-
-    //             $detailOrder += 10;
-
-    //             $dialPlanDetails = new DialplanDetails();
-    //             $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //             $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //             $dialPlanDetails->dialplan_detail_tag = "action";
-    //             $dialPlanDetails->dialplan_detail_type = $condition->condition_app;
-    //             $dialPlanDetails->dialplan_detail_data = $condition->condition_data;
-    //             $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //             $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //             $dialPlanDetails->save();
-
-    //             $detailOrder += 10;
-    //             $detailGroup += 10;
-    //         }
-    //     }
-
-    //     //check the destination number
-    //     $dialPlanDetails = new DialplanDetails();
-    //     $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //     $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //     $dialPlanDetails->dialplan_detail_tag = "condition";
-    //     $dialPlanDetails->dialplan_detail_type = $destination_condition_field;
-    //     //$dialPlanDetails->dialplan_detail_type = 'destination_number';
-    //     $dialPlanDetails->dialplan_detail_data = $phoneNumber->destination_number_regex;
-    //     $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //     $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //     $dialPlanDetails->save();
-
-    //     $detailOrder += 10;
-
-    //     if (!empty($phoneNumber->destination_cid_name_prefix)) {
-    //         $dialPlanDetails = new DialplanDetails();
-    //         $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //         $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //         $dialPlanDetails->dialplan_detail_tag = "action";
-    //         $dialPlanDetails->dialplan_detail_type = "set";
-    //         $dialPlanDetails->dialplan_detail_data = "effective_caller_id_name=" . $phoneNumber->destination_cid_name_prefix . "#\${caller_id_name}";
-    //         $dialPlanDetails->dialplan_detail_inline = "false";
-    //         $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //         $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //         $dialPlanDetails->save();
-
-    //         $detailOrder += 10;
-    //     }
-
-    //     if (!empty($phoneNumber->destination_cid_name_prefix)) {
-    //         $dialPlanDetails = new DialplanDetails();
-    //         $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //         $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //         $dialPlanDetails->dialplan_detail_tag = "action";
-    //         $dialPlanDetails->dialplan_detail_type = "set";
-    //         $dialPlanDetails->dialplan_detail_data = "cnam_prefix=" . $phoneNumber->destination_cid_name_prefix;
-    //         $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //         $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //         $dialPlanDetails->save();
-
-    //         $detailOrder += 10;
-    //     }
-
-    //     if (!empty($phoneNumber->destination_accountcode)) {
-    //         $dialPlanDetails = new DialplanDetails();
-    //         $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //         $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //         $dialPlanDetails->dialplan_detail_tag = "action";
-    //         $dialPlanDetails->dialplan_detail_type = "export";
-    //         $dialPlanDetails->dialplan_detail_data = "accountcode=" . $phoneNumber->destination_accountcode;
-    //         $dialPlanDetails->dialplan_detail_inline = "true";
-    //         $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //         $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //         $dialPlanDetails->save();
-
-    //         $detailOrder += 10;
-    //     }
-
-    //     if (!empty($phoneNumber->destination_type_fax) && $phoneNumber->destination_type_fax == 1) {
-    //         $dialPlanDetails = new DialplanDetails();
-    //         $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //         $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //         $dialPlanDetails->dialplan_detail_tag = "action";
-    //         $dialPlanDetails->dialplan_detail_type = "export";
-    //         $dialPlanDetails->dialplan_detail_data = "fax_enable_t38=true";
-    //         $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //         $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //         $dialPlanDetails->save();
-
-    //         $detailOrder += 10;
-    //     }
-
-    //     if (!empty($phoneNumber->destination_type_fax) && $phoneNumber->destination_type_fax == 1) {
-    //         $dialPlanDetails = new DialplanDetails();
-    //         $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //         $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //         $dialPlanDetails->dialplan_detail_tag = "action";
-    //         $dialPlanDetails->dialplan_detail_type = "export";
-    //         $dialPlanDetails->dialplan_detail_data = "fax_enable_t38_request=true";
-    //         $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //         $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //         $dialPlanDetails->save();
-
-    //         $detailOrder += 10;
-    //     }
-
-    //     if (!empty($phoneNumber->destination_type_fax) && $phoneNumber->destination_type_fax == 1) {
-    //         $dialPlanDetails = new DialplanDetails();
-    //         $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //         $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //         $dialPlanDetails->dialplan_detail_tag = "action";
-    //         $dialPlanDetails->dialplan_detail_type = "export";
-    //         $dialPlanDetails->dialplan_detail_data = "fax_use_ecm=true";
-    //         $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //         $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //         $dialPlanDetails->save();
-
-    //         $detailOrder += 10;
-    //     }
-
-    //     if (!empty($phoneNumber->destination_type_fax) && $phoneNumber->destination_type_fax == 1) {
-    //         $dialPlanDetails = new DialplanDetails();
-    //         $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //         $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //         $dialPlanDetails->dialplan_detail_tag = "action";
-    //         $dialPlanDetails->dialplan_detail_type = "export";
-    //         $dialPlanDetails->dialplan_detail_data = "inbound-proxy-media=true";
-    //         $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //         $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //         $dialPlanDetails->save();
-
-    //         $detailOrder += 10;
-    //     }
-
-
-    //     if (!empty($phoneNumber->destination_hold_music)) {
-    //         $dialPlanDetails = new DialplanDetails();
-    //         $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //         $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //         $dialPlanDetails->dialplan_detail_tag = "action";
-    //         $dialPlanDetails->dialplan_detail_type = "export";
-    //         $dialPlanDetails->dialplan_detail_data = "hold_music=" . $phoneNumber->destination_hold_music;
-    //         $dialPlanDetails->dialplan_detail_inline = "true";
-    //         $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //         $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //         $dialPlanDetails->save();
-
-    //         //increment the dialplan detail order
-    //         $detailOrder += 10;
-    //     }
-
-    //     if (!empty($phoneNumber->destination_distinctive_ring)) {
-    //         $dialPlanDetails = new DialplanDetails();
-    //         $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //         $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //         $dialPlanDetails->dialplan_detail_tag = "action";
-    //         $dialPlanDetails->dialplan_detail_type = "export";
-    //         $dialPlanDetails->dialplan_detail_data = "sip_h_Alert-Info=" . $phoneNumber->destination_distinctive_ring;
-    //         $dialPlanDetails->dialplan_detail_inline = "true";
-    //         $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //         $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //         $dialPlanDetails->save();
-
-    //         //increment the dialplan detail order
-    //         $detailOrder += 10;
-    //     }
-
-    //     if (!empty($phoneNumber->fax_uuid)) {
-
-    //         //add set tone detect_hits=1
-    //         $dialPlanDetails = new DialplanDetails();
-    //         $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //         $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //         $dialPlanDetails->dialplan_detail_tag = "action";
-    //         $dialPlanDetails->dialplan_detail_type = "set";
-    //         $dialPlanDetails->dialplan_detail_data = "tone_detect_hits=1";
-    //         $dialPlanDetails->dialplan_detail_inline = "true";
-    //         $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //         $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //         $dialPlanDetails->save();
-
-    //         //increment the dialplan detail order
-    //         $detailOrder += 10;
-
-    //         //execute on tone detect
-    //         $dialPlanDetails = new DialplanDetails();
-    //         $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //         $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //         $dialPlanDetails->dialplan_detail_tag = "action";
-    //         $dialPlanDetails->dialplan_detail_type = "set";
-    //         $dialPlanDetails->dialplan_detail_data = "execute_on_tone_detect=transfer " . $phoneNumber->fax()->first()->fax_extension . " XML \${domain_name}";
-    //         $dialPlanDetails->dialplan_detail_inline = "true";
-    //         $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //         $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //         $dialPlanDetails->save();
-
-    //         //increment the dialplan detail order
-    //         $detailOrder += 10;
-
-    //         //add tone_detect fax 1100 r +5000
-    //         $dialPlanDetails = new DialplanDetails();
-    //         $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //         $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //         $dialPlanDetails->dialplan_detail_tag = "action";
-    //         $dialPlanDetails->dialplan_detail_type = "tone_detect";
-    //         $dialPlanDetails->dialplan_detail_data = "fax 1100 r +5000";
-    //         $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //         $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //         $dialPlanDetails->save();
-
-    //         //increment the dialplan detail order
-    //         $detailOrder += 10;
-    //     }
-
-    //     if ($phoneNumber->destination_record == 'true') {
-    //         //add a variable
-    //         $dialPlanDetails = new DialplanDetails();
-    //         $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //         $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //         $dialPlanDetails->dialplan_detail_tag = "action";
-    //         $dialPlanDetails->dialplan_detail_type = "set";
-    //         $dialPlanDetails->dialplan_detail_data = "record_path=\${recordings_dir}/\${domain_name}/archive/\${strftime(%Y)}/\${strftime(%b)}/\${strftime(%d)}";
-    //         $dialPlanDetails->dialplan_detail_inline = "true";
-    //         $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //         $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //         $dialPlanDetails->save();
-
-    //         //increment the dialplan detail order
-    //         $detailOrder += 10;
-
-    //         //add a variable
-    //         $dialPlanDetails = new DialplanDetails();
-    //         $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //         $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //         $dialPlanDetails->dialplan_detail_tag = "action";
-    //         $dialPlanDetails->dialplan_detail_type = "set";
-    //         $dialPlanDetails->dialplan_detail_data = "record_name=\${uuid}.\${record_ext}";
-    //         $dialPlanDetails->dialplan_detail_inline = "true";
-    //         $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //         $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //         $dialPlanDetails->save();
-
-    //         //increment the dialplan detail order
-    //         $detailOrder += 10;
-
-    //         //add a variable
-    //         $dialPlanDetails = new DialplanDetails();
-    //         $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //         $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //         $dialPlanDetails->dialplan_detail_tag = "action";
-    //         $dialPlanDetails->dialplan_detail_type = "set";
-    //         $dialPlanDetails->dialplan_detail_data = "record_append=true";
-    //         $dialPlanDetails->dialplan_detail_inline = "true";
-    //         $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //         $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //         $dialPlanDetails->save();
-
-    //         //increment the dialplan detail order
-    //         $detailOrder += 10;
-
-    //         //add a variable
-    //         $dialPlanDetails = new DialplanDetails();
-    //         $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //         $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //         $dialPlanDetails->dialplan_detail_tag = "action";
-    //         $dialPlanDetails->dialplan_detail_type = "set";
-    //         $dialPlanDetails->dialplan_detail_data = "record_in_progress=true";
-    //         $dialPlanDetails->dialplan_detail_inline = "true";
-    //         $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //         $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //         $dialPlanDetails->save();
-
-    //         //increment the dialplan detail order
-    //         $detailOrder += 10;
-
-    //         //add a variable
-    //         $dialPlanDetails = new DialplanDetails();
-    //         $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //         $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //         $dialPlanDetails->dialplan_detail_tag = "action";
-    //         $dialPlanDetails->dialplan_detail_type = "set";
-    //         $dialPlanDetails->dialplan_detail_data = "recording_follow_transfer=true";
-    //         $dialPlanDetails->dialplan_detail_inline = "true";
-    //         $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //         $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //         $dialPlanDetails->save();
-
-    //         //increment the dialplan detail order
-    //         $detailOrder += 10;
-
-    //         //add a variable
-    //         $dialPlanDetails = new DialplanDetails();
-    //         $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //         $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //         $dialPlanDetails->dialplan_detail_tag = "action";
-    //         $dialPlanDetails->dialplan_detail_type = "record_session";
-    //         $dialPlanDetails->dialplan_detail_data = "\${record_path}/\${record_name}";
-    //         $dialPlanDetails->dialplan_detail_inline = "false";
-    //         $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //         $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //         $dialPlanDetails->save();
-
-    //         //increment the dialplan detail order
-    //         $detailOrder += 10;
-    //     }
-
-    //     if ($phoneNumber->destination_actions) {
-    //         $actions = json_decode($phoneNumber->destination_actions);
-    //         foreach ($actions as $action) {
-    //             //add to the dialplan_details array
-    //             $dialPlanDetails = new DialplanDetails();
-    //             $dialPlanDetails->domain_uuid = $dialPlan->domain_uuid;
-    //             $dialPlanDetails->dialplan_uuid = $dialPlan->dialplan_uuid;
-    //             $dialPlanDetails->dialplan_detail_tag = "action";
-    //             $dialPlanDetails->dialplan_detail_type = $action->destination_app;
-    //             $dialPlanDetails->dialplan_detail_data = $action->destination_data;
-    //             $dialPlanDetails->dialplan_detail_group = $detailGroup;
-    //             $dialPlanDetails->dialplan_detail_order = $detailOrder;
-    //             $dialPlanDetails->save();
-    //             $detailOrder += 10;
-    //         }
-    //     }
-    // }
-
     public function getUserPermissions()
     {
         $permissions = [];
@@ -1249,11 +697,36 @@ class PhoneNumbersController extends Controller
                         // else, do nothing and show all domains
                     }),
                     AllowedFilter::callback('search', function ($query, $value) {
-                        $query->where(function ($q) use ($value) {
-                            $q->where('destination_number', 'ilike', "%{$value}%")
-                                ->orWhere('destination_data', 'ilike', "%{$value}%")
-                                ->orWhere('destination_description', 'ilike', "%{$value}%");
-                        });
+                        $s = trim((string) $value);
+                        if ($s === '') {
+                            return;
+                        }
+
+                        // If it contains any letters, keep original behavior (text search)
+                        if (preg_match('/[A-Za-z]/', $s)) {
+                            $query->where(function ($q) use ($s) {
+                                $q->where('destination_number', 'ilike', "%{$s}%")
+                                    ->orWhere('destination_data', 'ilike', "%{$s}%")
+                                    ->orWhere('destination_description', 'ilike', "%{$s}%");
+                            });
+                            return;
+                        }
+
+                        // Numeric-only: remove all non-digits
+                        $digits = preg_replace('/\D+/', '', $s);
+
+                        // If 11 digits and starts with 1 (covers +1 once stripped), drop leading 1
+                        if (strlen($digits) === 11 && str_starts_with($digits, '1')) {
+                            $digits = substr($digits, 1);
+                        }
+
+                        if ($digits === '') {
+                            return;
+                        }
+
+                        // Search destination_number after stripping non-digits in SQL (Postgres)
+                    $pattern = '%' . implode('%', str_split($digits)) . '%';
+                    $query->where('destination_number', 'ilike', $pattern);
                     }),
                 ])
                 ->pluck('destination_uuid');

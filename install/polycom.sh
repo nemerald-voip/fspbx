@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Define variables
-firmware_version="6.4.6.2453"
+firmware_version="6.3"
 phone_models=("vvx300" "vvx301" "vvx310" "vvx311" "vvx400" "vvx401" "vvx410" "vvx411" "vvx500" "vvx250" "vvx350" "vvx450")
 
 # Iterate over phone models

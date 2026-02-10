@@ -22,6 +22,8 @@ class DeviceData extends Data
         public ?string $device_provisioned_date_formatted = null,
         /** @var DeviceLineData[]|null */
         public ?array $lines = null,
+        /** @var DeviceKeyData[]|null */
+        public ?array $keys = null,
         public ?DeviceProfileData $profile = null,
         /** @var DeviceSettingData[]|null */
         public ?array $settings = null,

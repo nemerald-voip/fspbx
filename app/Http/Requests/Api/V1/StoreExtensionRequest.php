@@ -81,6 +81,13 @@ class StoreExtensionRequest extends FormRequest
         ];
     }
 
+    public function prepareForValidation()
+    {
+        if (!$this->has('suspended')) {
+            $this->merge(['suspended' => false]);
+        }
+    }
+
     public function bodyParameters(): array
     {
         return [

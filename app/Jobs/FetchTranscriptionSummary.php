@@ -10,6 +10,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use App\Services\CallTranscription\CallTranscriptionService;
 
 class FetchTranscriptionSummary implements ShouldQueue
 {
@@ -87,6 +88,14 @@ class FetchTranscriptionSummary implements ShouldQueue
                     'summary_payload'      => $decoded,
                     'summary_completed_at' => now(),
                 ]);
+
+                // Check if transcript should be emailed
+                $transcriptionService = app(CallTranscriptionService::class);
+                $cfg = $transcriptionService->emailDeliveryConfig($row->domain_uuid ?? null);
+
+                if ($cfg['enabled'] && !empty($cfg['email'])) {
+                    SendTranscriptionEmail::dispatch($row->uuid, $cfg['email']);
+                }
 
                 return;
             }

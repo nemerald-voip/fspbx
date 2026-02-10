@@ -42,6 +42,15 @@
                             <ToggleElement name="auto_transcribe" text="Automatically transcribe new calls"
                                 :true-value="true" :false-value="false" :disabled="disableOptions" />
 
+                            <!-- Email Transcription -->
+                            <ToggleElement name="email_transcription" text="Automatically email call transcripts"
+                                :true-value="true" :false-value="false" :disabled="disableOptions" />
+
+                            <TextElement name="email" label="Email"
+                                :columns="{ lg: { wrapper: 5 } }" :conditions="[
+                                    ['email_transcription', '==', true]
+                                ]" />
+
                             <!-- Provider -->
                             <SelectElement v-if="!domain_uuid" name="provider_uuid" label="Provider" :search="true"
                                 :items="providers" :floating="false" placeholder="Select Provider"

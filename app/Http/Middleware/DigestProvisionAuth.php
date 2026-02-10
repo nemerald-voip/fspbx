@@ -19,7 +19,7 @@ class DigestProvisionAuth
 
         // Send 404 if requested file matches one of the generic names
         $lower = strtolower($id);
-        if (in_array($lower, ['default', 'index', 'master', '000000000000', 'sip.ld', 'sip_59x.ld'], true)) {
+        if (in_array($lower, ['default', 'index', 'master', '000000000000', 'sip.ld', 'sip_59x.ld', 'cfg.xml'], true)) {
             $this->dbg($debug, 'early-404.generic', ['path' => $request->getRequestUri()]);
             return response('', 404);
         }

@@ -2,28 +2,26 @@
 
 namespace App\Services;
 
-use SimpleXMLElement;
-use App\Models\Domain;
-use App\Models\Dialplans;
-use Illuminate\Support\Str;
 use App\Models\DefaultSettings;
 use App\Models\DialplanDetails;
+use App\Models\Dialplans;
+use App\Models\Domain;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
+use SimpleXMLElement;
 
 class DialplanProvisioningService
 {
     /**
      * Bootstrap stock dialplans for a newly-created domain.
      *
-     * This roughly mirrors FusionPBX dialplan->import(),
-     * but only for ONE domain and using Laravel patterns.
      */
     public function bootstrapForDomain(Domain $domain): void
     {
         $templateDir = base_path('public/app/dialplans/resources/switch/conf/dialplan/');
 
-        if (!$templateDir || !File::isDirectory($templateDir)) {
+        if (!File::isDirectory($templateDir)) {
             logger('DialplanProvisioningService: dialplan template directory not found: ' . $templateDir);
             return;
         }
@@ -57,21 +55,20 @@ class DialplanProvisioningService
                     $insertDetails
                 );
             } catch (\Throwable $e) {
-                logger('DialplanProvisioningService: failed to parse template ' . $xmlFile . ' - ' .
-                    $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+                logger(
+                    'DialplanProvisioningService: failed to parse template ' . $xmlFile . ' - ' .
+                    $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine()
+                );
             }
         }
 
         if (empty($insertDialplans)) {
-            // nothing new to insert
             return;
         }
 
         DB::transaction(function () use ($insertDialplans, $insertDetails) {
-            // Insert dialplans
             Dialplans::insert($insertDialplans);
 
-            // Insert details (in chunks to avoid giant single insert)
             foreach (array_chunk($insertDetails, 500) as $chunk) {
                 DialplanDetails::insert($chunk);
             }
@@ -101,60 +98,58 @@ class DialplanProvisioningService
             return;
         }
 
-        // PIN length – if you want this configurable, put it into config/default_settings
+        // PIN length – configurable if you want
         $pinLength = 8;
 
         // Replace template variables
         $xmlString = str_replace('{v_context}', $domain->domain_name, $xmlString);
         $xmlString = str_replace('{v_pin_number}', $this->generateNumericPin($pinLength), $xmlString);
 
-        // Parse XML
-        /** @var SimpleXMLElement $xml */
+        /** @var SimpleXMLElement|false $xml */
         $xml = simplexml_load_string($xmlString);
         if (!$xml) {
             return;
         }
 
-        $json     = json_encode($xml);
-        $dialplan = json_decode($json, true);
+        $dialplan = json_decode(json_encode($xml), true);
 
         if (empty($dialplan) || !isset($dialplan['@attributes'])) {
             return;
         }
 
-        $attrs    = $dialplan['@attributes'];
-        $appUuid  = $attrs['app_uuid'] ?? null;
+        $attrs   = $dialplan['@attributes'];
+        $appUuid = $attrs['app_uuid'] ?? null;
 
-        // If this app_uuid already exists for this domain/global, skip (same behavior as Fusion)
+        // Same behavior as Fusion: skip if this app_uuid already exists for domain/global
         if ($appUuid && in_array($appUuid, $existingAppUuids, true)) {
             return;
         }
 
-        // Global dialplans (context=global) don't belong to a specific domain_uuid
+        // Global dialplans don't belong to a specific domain_uuid
         $dialplanGlobal  = !empty($attrs['global']) && $attrs['global'] === 'true';
         $dialplanContext = $attrs['context'] ?? 'default';
         $dialplanContext = str_replace('${domain_name}', $domain->domain_name, $dialplanContext);
 
-        $domainUuid = $dialplanGlobal ? null : $domain->domain_uuid;
-
+        $domainUuid   = $dialplanGlobal ? null : $domain->domain_uuid;
         $dialplanUuid = (string) Str::uuid();
 
-        // Build dialplan row
+        // Build dialplan row (IMPORTANT: dialplan_xml must be FusionPBX-style)
         $insertDialplans[] = [
-            'dialplan_uuid'       => $dialplanUuid,
-            'domain_uuid'         => $domainUuid,
-            'app_uuid'            => $appUuid,
-            'dialplan_name'       => $attrs['name'] ?? basename($xmlFile, '.xml'),
-            'dialplan_number'     => $attrs['number'] ?? null,
-            'dialplan_context'    => $dialplanContext,
+            'dialplan_uuid'        => $dialplanUuid,
+            'domain_uuid'          => $domainUuid,
+            'app_uuid'             => $appUuid,
+            'dialplan_name'        => $attrs['name'] ?? basename($xmlFile, '.xml'),
+            'dialplan_number'      => $attrs['number'] ?? null,
+            'dialplan_context'     => $dialplanContext,
             'dialplan_destination' => $attrs['destination'] ?? null,
-            'dialplan_continue'   => $attrs['continue'] ?? null,
-            'dialplan_order'      => $attrs['order'] ?? 0,
-            'dialplan_enabled'    => $attrs['enabled'] ?? 'true',
+            'dialplan_continue'    => $attrs['continue'] ?? null,
+            'dialplan_order'       => $attrs['order'] ?? 0,
+            'dialplan_enabled'     => $attrs['enabled'] ?? 'true',
             'dialplan_description' => $attrs['description'] ?? null,
-            'dialplan_xml'         => $this->normalizeDialplanXml($xmlString),
+            'dialplan_xml'         => $this->normalizeDialplanXml($xmlString, $dialplanUuid),
         ];
 
+        // Ensure the condition array is uniform
         if (!empty($dialplan['condition']) && empty($dialplan['condition'][0])) {
             $tmp = $dialplan['condition'];
             unset($dialplan['condition']);
@@ -170,16 +165,16 @@ class DialplanProvisioningService
                 $condAttrs = $cond['@attributes'] ?? [];
 
                 $insertDetails[] = [
-                    'dialplan_detail_uuid'   => (string) Str::uuid(),
-                    'domain_uuid'            => $domainUuid,
-                    'dialplan_uuid'          => $dialplanUuid,
-                    'dialplan_detail_tag'    => 'condition',
-                    'dialplan_detail_order'  => $order,
-                    'dialplan_detail_type'   => $condAttrs['field'] ?? null,
-                    'dialplan_detail_data'   => $condAttrs['expression'] ?? null,
-                    'dialplan_detail_break'  => $condAttrs['break'] ?? null,
-                    'dialplan_detail_inline' => null,
-                    'dialplan_detail_group'  => $group,
+                    'dialplan_detail_uuid'    => (string) Str::uuid(),
+                    'domain_uuid'             => $domainUuid,
+                    'dialplan_uuid'           => $dialplanUuid,
+                    'dialplan_detail_tag'     => 'condition',
+                    'dialplan_detail_order'   => $order,
+                    'dialplan_detail_type'    => $condAttrs['field'] ?? null,
+                    'dialplan_detail_data'    => $condAttrs['expression'] ?? null,
+                    'dialplan_detail_break'   => $condAttrs['break'] ?? null,
+                    'dialplan_detail_inline'  => null,
+                    'dialplan_detail_group'   => $group,
                     'dialplan_detail_enabled' => $condAttrs['enabled'] ?? 'true',
                 ];
 
@@ -203,16 +198,16 @@ class DialplanProvisioningService
                         $actAttrs = $act['@attributes'] ?? [];
 
                         $insertDetails[] = [
-                            'dialplan_detail_uuid'   => (string) Str::uuid(),
-                            'domain_uuid'            => $domainUuid,
-                            'dialplan_uuid'          => $dialplanUuid,
-                            'dialplan_detail_tag'    => 'action',
-                            'dialplan_detail_order'  => $order,
-                            'dialplan_detail_type'   => $actAttrs['application'] ?? null,
-                            'dialplan_detail_data'   => $actAttrs['data'] ?? null,
-                            'dialplan_detail_break'  => null,
-                            'dialplan_detail_inline' => $actAttrs['inline'] ?? null,
-                            'dialplan_detail_group'  => $group,
+                            'dialplan_detail_uuid'    => (string) Str::uuid(),
+                            'domain_uuid'             => $domainUuid,
+                            'dialplan_uuid'           => $dialplanUuid,
+                            'dialplan_detail_tag'     => 'action',
+                            'dialplan_detail_order'   => $order,
+                            'dialplan_detail_type'    => $actAttrs['application'] ?? null,
+                            'dialplan_detail_data'    => $actAttrs['data'] ?? null,
+                            'dialplan_detail_break'   => null,
+                            'dialplan_detail_inline'  => $actAttrs['inline'] ?? null,
+                            'dialplan_detail_group'   => $group,
                             'dialplan_detail_enabled' => $actAttrs['enabled'] ?? 'true',
                         ];
 
@@ -226,16 +221,16 @@ class DialplanProvisioningService
                         $actAttrs = $act['@attributes'] ?? [];
 
                         $insertDetails[] = [
-                            'dialplan_detail_uuid'   => (string) Str::uuid(),
-                            'domain_uuid'            => $domainUuid,
-                            'dialplan_uuid'          => $dialplanUuid,
-                            'dialplan_detail_tag'    => 'anti-action',
-                            'dialplan_detail_order'  => $order,
-                            'dialplan_detail_type'   => $actAttrs['application'] ?? null,
-                            'dialplan_detail_data'   => $actAttrs['data'] ?? null,
-                            'dialplan_detail_break'  => null,
-                            'dialplan_detail_inline' => $actAttrs['inline'] ?? null,
-                            'dialplan_detail_group'  => $group,
+                            'dialplan_detail_uuid'    => (string) Str::uuid(),
+                            'domain_uuid'             => $domainUuid,
+                            'dialplan_uuid'           => $dialplanUuid,
+                            'dialplan_detail_tag'     => 'anti-action',
+                            'dialplan_detail_order'   => $order,
+                            'dialplan_detail_type'    => $actAttrs['application'] ?? null,
+                            'dialplan_detail_data'    => $actAttrs['data'] ?? null,
+                            'dialplan_detail_break'   => null,
+                            'dialplan_detail_inline'  => $actAttrs['inline'] ?? null,
+                            'dialplan_detail_group'   => $group,
                             'dialplan_detail_enabled' => $actAttrs['enabled'] ?? 'true',
                         ];
 
@@ -263,24 +258,84 @@ class DialplanProvisioningService
         for ($i = 0; $i < $length; $i++) {
             $digits .= random_int(0, 9);
         }
-
         return $digits;
     }
 
     /**
-     * Clean up the template XML so it’s safe to be stored in dialplan_xml.
-     * - strips the XML declaration if present
-     * - trims whitespace
+     * Normalize template XML into dialplan_xml:
      */
-    protected function normalizeDialplanXml(string $xmlString): string
+    protected function normalizeDialplanXml(string $xmlString, string $dialplanUuid): string
     {
-        // remove XML declaration if present
         $xmlString = preg_replace('/^<\?xml[^>]*\?>\s*/', '', $xmlString);
+        $xmlString = trim($xmlString);
 
-        // you can add more normalization here if needed later
-        return trim($xmlString);
+        if ($xmlString === '') {
+            return '';
+        }
+
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = true;
+
+        // Suppress warnings for slightly imperfect templates
+        if (!@$dom->loadXML($xmlString)) {
+            return $xmlString; // fallback (better than breaking inserts)
+        }
+
+        $xpath = new \DOMXPath($dom);
+
+        // Remove any node with enabled="false" (actions, conditions, etc.)
+        foreach ($xpath->query('//*[@enabled="false"]') as $node) {
+            $node->parentNode?->removeChild($node);
+        }
+
+        // Strip enabled="true" attributes (optional but matches FusionPBX dialplan_xml style)
+        foreach ($xpath->query('//*[@enabled="true"]') as $node) {
+            if ($node instanceof \DOMElement) {
+                $node->removeAttribute('enabled');
+            }
+        }
+
+        // Find the <extension> root element
+        $extension = $xpath->query('/extension')->item(0);
+
+        if ($extension instanceof \DOMElement) {
+            // Force uuid
+            $extension->setAttribute('uuid', $dialplanUuid);
+
+            // Remove template/meta attrs Fusion doesn't store on <extension>
+            foreach (['number', 'context', 'app_uuid', 'order', 'destination', 'global', 'enabled'] as $attr) {
+                if ($extension->hasAttribute($attr)) {
+                    $extension->removeAttribute($attr);
+                }
+            }
+
+            // Keep only name/continue/uuid on extension
+            $allowed = ['name', 'continue', 'uuid'];
+            $toRemove = [];
+            foreach ($extension->attributes as $attrNode) {
+                if (!in_array($attrNode->nodeName, $allowed, true)) {
+                    $toRemove[] = $attrNode->nodeName;
+                }
+            }
+            foreach ($toRemove as $attrName) {
+                $extension->removeAttribute($attrName);
+            }
+        }
+
+        // Ensure every <action> and <anti-action> has data="" attribute (Fusion-style)
+        foreach ($xpath->query('//action | //anti-action') as $node) {
+            if ($node instanceof \DOMElement) {
+                if (!$node->hasAttribute('data')) {
+                    $node->setAttribute('data', '');
+                }
+            }
+        }
+
+        // Return without XML declaration
+        $out = $dom->saveXML($dom->documentElement);
+        return trim($out ?: '');
     }
-
 
     public function ensureSwitchDirectories(string $domainName): void
     {

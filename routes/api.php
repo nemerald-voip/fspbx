@@ -94,6 +94,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
 
     // Ring Groups
     Route::post('ring-groups', [RingGroupsController::class, 'store'])->name('ring-groups.store');
+    Route::get('ring-groups/data', [RingGroupsController::class, 'getData'])->name('ring-groups.data');
     Route::put('ring-groups/{ring_group}', [RingGroupsController::class, 'update'])->name('ring-groups.update');
     Route::delete('ring-groups/{ring_group}', [RingGroupsController::class, 'destroy'])->name('ring-groups.destroy');
     Route::post('ring-groups/item-options', [RingGroupsController::class, 'getItemOptions'])->name('ring-groups.item.options');
@@ -194,6 +195,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // Phone Numbers
     Route::post('phone-numbers', [PhoneNumbersController::class, 'store'])->name('phone-numbers.store');
     Route::put('phone-numbers/{phone_number}', [PhoneNumbersController::class, 'update'])->name('phone-numbers.update');
+    Route::get('/phone-numbers/data', [PhoneNumbersController::class, 'getData'])->name('phone-numbers.data');
     Route::post('/phone-numbers/select-all', [PhoneNumbersController::class, 'selectAll'])->name('phone-numbers.select.all');
     Route::post('/phone-numbers/bulk-update', [PhoneNumbersController::class, 'bulkUpdate'])->name('phone-numbers.bulk.update');
     Route::post('/phone-numbers/bulk-delete', [PhoneNumbersController::class, 'bulkDelete'])->name('phone-numbers.bulk.delete');
@@ -256,6 +258,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::delete('/call-transcription/policy', [CallTranscriptionController::class, 'destroyPolicy'])->name('call-transcription.policy.destroy');
     Route::get('/call-transcription/assemblyai', [CallTranscriptionController::class, 'getAssemblyAiConfig'])->name('call-transcription.assemblyai');
     Route::post('/call-transcription/assemblyai', [CallTranscriptionController::class, 'storeAssemblyAiConfig'])->name('call-transcription.assemblyai.store');
+    Route::delete('/call-transcription/assemblyai', [CallTranscriptionController::class, 'destroyAssemblyAiConfig'])->name('call-transcription.assemblyai.destroy');
 
     // Payment Gateways
     Route::put('/gateways', [PaymentGatewayController::class, 'update'])->name('gateway.update');

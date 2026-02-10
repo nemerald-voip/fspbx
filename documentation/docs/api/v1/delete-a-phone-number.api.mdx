@@ -1,0 +1,72 @@
+---
+id: delete-a-phone-number
+title: "Delete a phone number"
+description: "Deletes a phone number within the specified domain."
+sidebar_label: "Delete a phone number"
+hide_title: true
+hide_table_of_contents: true
+api: eJzVV1Fv2zYQ/ivEPbWAFMeOvTVCUSBF0jXAsBpNArQIjIASzxEbmVRJyo0h6L8PJGVbllTPzeaH+cW2eOR939131F0JMkdFDZfimkEEDDM0eDFNpcC/ikWMCgJgqBPFc2sEEVw6E00oya0VEc6M/OAm5YKYFInOMeFzjowwuaBcnEAAOVV0gQaVhui+BG5PyqlJIQBBF2hdO9uHouCs4/M2xfoscnd3fWkPxGe6yDO78Xc2eXM2HsXhKB6dh2OWzMPzEfstxHN6jqenIzrGCQSg8HvBFTKIjCowAJ2kuKAQlWBWuT1HG8XFI1RV0I8PteHChWoPyK1RD1LKxpP55IyF49NJHI7fxElIaTIK2WQYj+Kz+Awnv4Z0Zo11LoVGbddHp6f2axfXTZEkqDUEkEhhUBhrQvM844kDOvimrV3Z9SPjb5iYJoVy/SwCl/0HsRaJC8nBFL3OaoZVALmyOjTc01j7aBNuxnLHfbX2v2/HQdCqBrbNYbGUGVLRPM3hdp8Axn1RvxZLmnHWUcR/lAZUSqqGDffuHqx2UJsHvx7AArWmj7gH0IlDxHoOWZdtn/irTtLaiDaod8386r489VOpGlz27f45zWrN8xec2011DPbt6gnPVhzDrjjuBC1MisLY3CM7kiYaPiywriRaMBpKKFoAj5juXpSHZrvD4KAkd9ltszXuZmvafM8JachcFuJYSfvnQu6H00ieQi0LleDDgmvtuf//6vhnLA9KcCcC/7qMJ/13vEElaEY0qiUqss7VUYo5572Xeg+CnRvdr6+Df8Qy3uA7/KbuxX7gNd3itUmUoY+2xaz143tYDTOLyaRy2+O6ojApRDCgOR8shwPfYOpB2ehEq4HrM0KvQ7vWkkgFAXj8vrEtVAYRpMbkOhoMylRqU3U6xQ83ZPr+C7mYXtfcIYAlVZzGmQ+33eblNqdFZrutr5/uPocfbqbvv4QfP93cdo78KLWxjSr5kaJCUnvgmqhCCC4eyas6eBGZ6zx+PlnJQoV1fy7QvLYxnFkuSaG4WTkyG/f3s+bajdWvB7qx2CTLUoe6Z3W9E1LVM0V8lQVJqCAKjeK4RGLxECOfUJB4RZZcc2Nhu8eM6jSWVDFCBSNJxpMnu/Y2fvcHCju+oIul2/12EL87cULnYi4dMG6cZrZR76Cx8Uel/Z/l0F0XUpsFdfVaDwB+8GnNPe2jym3xv3BSquNo8NkM8oxy4bpbK6uyVuy9LTYLeWi9e9VCANHuBLUjXLfcvt1mQS20eyjLmGq8U1lV2cffC1RWArOtLr0guLa/GURzmmncw/3V53qIeU16hrdejuuLTqxcOWQF+sw84ao1HtoJ7eVQevrfl+DpvCtmVQApUobKxcqbXSQJ5qZxQOeFUDXvpsurP69ur6Cq/gbpCGNt
+sidebar_class_name: "delete api-method"
+info_path: docs/api/v1/fs-pbx-api
+custom_edit_url: null
+hide_send_button: true
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Delete a phone number"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"delete"}
+  path={"/api/v1/domains/{domain_uuid}/phone-numbers/{destination_uuid}"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Deletes a phone number within the specified domain.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"in":"path","name":"domain_uuid","description":"The domain UUID.","example":"7d58342b-2b29-4dcf-92d6-e9a9e002a4e5","required":true,"schema":{"type":"string"}},{"in":"path","name":"destination_uuid","description":"The destination UUID.","example":"ad45f53d-405b-48bc-aac2-d51b2b3b3e55","required":true,"schema":{"type":"string"}}]}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"Success","content":{"application/json":{"schema":{"type":"object","example":{"object":"phone_number","uuid":"ad45f53d-405b-48bc-aac2-d51b2b3b3e55","deleted":true},"properties":{"object":{"type":"string","example":"phone_number"},"uuid":{"type":"string","example":"ad45f53d-405b-48bc-aac2-d51b2b3b3e55"},"deleted":{"type":"boolean","example":true}}}}}},"400":{"description":"Invalid destination UUID","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Invalid destination UUID.","code":"invalid_request","param":"destination_uuid"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Invalid destination UUID."},"code":{"type":"string","example":"invalid_request"},"param":{"type":"string","example":"destination_uuid"}}}}}}}},"401":{"description":"Unauthenticated","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"authentication_error"},"message":{"type":"string","example":"Unauthenticated."},"code":{"type":"string","example":"unauthenticated"}}}}}}}},"404":{"description":"Phone number not found","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Phone number not found.","code":"resource_missing","param":"destination_uuid"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Phone number not found."},"code":{"type":"string","example":"resource_missing"},"param":{"type":"string","example":"destination_uuid"}}}}}}}},"500":{"description":"Internal server error","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"api_error","message":"Internal server error.","code":"internal_error"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"api_error"},"message":{"type":"string","example":"Internal server error."},"code":{"type":"string","example":"internal_error"}}}}}}}}}}
+>
+  
+</StatusCodes>
+
+
+      

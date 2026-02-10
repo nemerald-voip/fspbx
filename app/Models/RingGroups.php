@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Session;
 use App\Services\CallRoutingOptionsService;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class RingGroups extends Model
@@ -18,8 +19,6 @@ class RingGroups extends Model
     protected $primaryKey = 'ring_group_uuid';
     public $incrementing = false;
     protected $keyType = 'string';
-    protected $timeoutOptionDetailsCache;
-    protected $rorwardDetailsCache;
 
 
     /**
@@ -62,31 +61,38 @@ class RingGroups extends Model
     ];
 
 
+    protected function timeoutOptionDetails(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->computeTimeoutOptionDetails()
+        )->shouldCache();
+    }
+
+    protected function forwardOptionDetails(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->computeForwardOptionDetails()
+        )->shouldCache();
+    }
+
+
     /**
      * Reverse‐engineer ring_group_timeout_app + ring_group_timeout_data
      * into a single array of details.
      */
 
-    protected function getTimeoutOptionDetailsAttribute(): ?array
+    protected function computeTimeoutOptionDetails(): array
     {
-        if ($this->timeoutOptionDetailsCache !== null) {
-            return $this->timeoutOptionDetailsCache;
-        }
-
-        if (! $this->ring_group_timeout_app) {
-            return $this->timeoutOptionDetailsCache = [
+        $service = new CallRoutingOptionsService($this->domain_uuid);
+        return $this->timeoutOptionDetailsCache = $service
+            ->reverseEngineerRingGroupExitAction(
+                trim("{$this->ring_group_timeout_app} {$this->ring_group_timeout_data}")
+            ) ?? [
                 'type' => null,
                 'extension' => null,
                 'option' => null,
                 'name' => null
             ];
-        }
-
-        $service = new CallRoutingOptionsService;
-        return $this->timeoutOptionDetailsCache = $service
-            ->reverseEngineerRingGroupExitAction(
-                "{$this->ring_group_timeout_app} {$this->ring_group_timeout_data}"
-            );
     }
 
     public function getTimeoutTargetUuidAttribute(): ?string
@@ -119,64 +125,53 @@ class RingGroups extends Model
         return $this->timeout_option_details['extension'] ?? null;
     }
 
-    /**
-     * Just like you did in your other model: build a destroy URL.
-     */
+
     public function getDestroyRouteAttribute(): string
     {
         return route('ring-groups.destroy', $this);
     }
 
-    protected function getForwardDetailsAttribute(): ?array
+    protected function computeForwardOptionDetails(): array
     {
-        if ($this->forwardDetailsCache !== null) {
-            return $this->forwardDetailsCache;
-        }
-
-        if ($this->ring_group_forward_enabled != 'true' || empty($this->ring_group_forward_destination)) {
-            return $this->forwardDetailsCache = [
+        $service = new CallRoutingOptionsService($this->domain_uuid);
+        return $this->forwardDetailsCache = $service
+            ->reverseEngineerForwardAction($this->ring_group_forward_destination)
+            ?? [
                 'type' => null,
                 'extension' => null,
                 'option' => null,
                 'name' => null
             ];
-        }
-
-        $service = new CallRoutingOptionsService;
-        return $this->forwardDetailsCache = $service
-            ->reverseEngineerForwardAction($this->ring_group_forward_destination);
-
     }
-
 
     public function getForwardTargetUuidAttribute(): ?string
     {
-        return $this->forward_details['option'] ?? null;
+        return $this->forward_option_details['option'] ?? null;
     }
 
     public function getForwardActionAttribute(): ?string
     {
-        return $this->forward_details['type'] ?? null;
+        return $this->forward_option_details['type'] ?? null;
     }
 
     public function getForwardActionDisplayAttribute(): ?string
     {
-        if (! $this->forward_details['type']) {
+        if (! $this->forward_option_details['type']) {
             return null;
         }
 
         return (new CallRoutingOptionsService)
-            ->getFriendlyTypeName($this->forward_details['type']);
+            ->getFriendlyTypeName($this->forward_option_details['type']);
     }
 
     public function getForwardTargetNameAttribute(): ?string
     {
-        return $this->forward_details['name'] ?? null;
+        return $this->forward_option_details['name'] ?? null;
     }
 
     public function getForwardTargetExtensionAttribute(): ?string
     {
-        return $this->forward_details['extension'] ?? null;
+        return $this->forward_option_details['extension'] ?? null;
     }
 
 

@@ -210,6 +210,7 @@ const props = defineProps({
     data: Object,
     routes: Object,
     itemData: Object,
+    permissions: Object,
 });
 
 
@@ -350,7 +351,7 @@ const bulkActions = computed(() => {
     ];
 
     // Conditionally add the delete action if permission is granted
-    if (page.props.auth.can.device_destroy) {
+    if (props.permissions.voicemail_message_destroy) {
         actions.push({
             id: 'bulk_delete',
             label: 'Delete',
