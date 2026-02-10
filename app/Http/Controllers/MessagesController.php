@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use App\Models\DomainSettings;
 use App\Models\MessageSetting;
 use App\Models\SmsDestinations;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Session;
@@ -50,13 +51,130 @@ class MessagesController extends Controller
                 ],
                 'auth' => [
                     // Adjust these to however FS PBX exposes current extension
-                    'currentExtensionUuid' => session('extension_uuid') ?? '',
+                    'currentExtensionUuid' => auth()->user()->extension_uuid ?? '',
                     'currentExtensionName' => session('extension_name') ?? 'You',
                 ],
             ]
         );
     }
 
+
+    public function rooms(Request $request)
+    {
+        $domainUuid = $this->currentDomainUuid();
+        $extensionUuid = $this->currentExtensionUuid();
+
+
+        $limit = min((int) $request->input('limit', 200), 500);
+        $q = trim((string) $request->input('q', ''));
+
+        $base = Messages::query()
+            ->where('domain_uuid', $domainUuid)
+            // ->where('extension_uuid', $extensionUuid)
+            ->selectRaw("
+            message_uuid,
+            message,
+            direction,
+            created_at,
+            CASE WHEN direction = 'in' THEN source ELSE destination END AS external_number
+        ");
+
+        if ($q !== '') {
+            $base->where(function ($w) use ($q) {
+                $w->where('source', 'like', "%{$q}%")
+                    ->orWhere('destination', 'like', "%{$q}%")
+                    ->orWhere('message', 'like', "%{$q}%");
+            });
+        }
+
+        $rows = DB::query()
+            ->fromSub($base, 't')
+            ->selectRaw("DISTINCT ON (external_number)
+            external_number,
+            message_uuid,
+            message,
+            direction,
+            created_at
+        ")
+            ->orderBy('external_number')
+            ->orderByDesc('created_at')
+            ->limit($limit)
+            ->get();
+
+        $rooms = $rows->map(function ($r) use ($extensionUuid) {
+            $external = (string) $r->external_number;
+
+            return [
+                'roomId' => $this->buildRoomId($extensionUuid, $external),
+                'roomName' => $external,
+                'unreadCount' => 0,
+                'lastMessage' => [
+                    '_id' => (string) $r->message_uuid,
+                    'content' => (string) ($r->message ?? ''),
+                    'timestamp' => optional($r->created_at)->toISOString() ?? null,
+                ],
+                'users' => [],
+            ];
+        })->values();
+
+        return response()->json(['rooms' => $rooms]);
+    }
+
+
+
+    /**
+     * Fetch messages for a specific room (Conversation between Extension and External Number)
+     */
+    public function roomMessages(Request $request, $roomId)
+    {
+        try {
+            // 1. Context & Security
+            $domainUuid = $this->currentDomainUuid();
+
+            // 2. Parse the Room ID using your existing helper
+            // Format is expected to be: {extension_uuid}:{external_number}
+            $parts = $this->parseRoomId($roomId);
+            $extensionUuid = $parts['extension_uuid'];
+            $externalNumber = $parts['external'];
+
+            // 3. Pagination Settings
+            // Frontend sends: params: { 'page[size]': 50 }
+            $pageSize = $request->input('page.size', 50);
+
+            // 4. Query the Messages
+            $query = Messages::query()
+                ->where('domain_uuid', $domainUuid)
+                // Ensure we only look at messages belonging to this specific extension
+                // ->where('extension_uuid', $extensionUuid)
+                // Filter for conversation with the external number (either inbound or outbound)
+                ->where(function ($q) use ($externalNumber) {
+                    $q->where('source', $externalNumber)
+                        ->orWhere('destination', $externalNumber);
+                })
+                // Order by Newest First (Frontend reverses this to show history correctly)
+                ->orderBy('created_at', 'desc');
+
+            // 5. Execute Query
+            $messages = $query->paginate($pageSize);
+
+            // 6. Return JSON
+            return response()->json([
+                'messages' => $messages->items(),
+                'meta' => [
+                    'current_page' => $messages->currentPage(),
+                    'last_page' => $messages->lastPage(),
+                    'total' => $messages->total(),
+                ]
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            // Handle invalid room ID format
+            return response()->json(['error' => 'Invalid Room ID', 'messages' => []], 400);
+        } catch (\Exception $e) {
+            // Handle general errors
+            logger($e->getMessage());
+            return response()->json(['error' => 'Server Error', 'messages' => []], 500);
+        }
+    }
 
 
 
@@ -71,11 +189,13 @@ class MessagesController extends Controller
 
     private function currentExtensionUuid(): string
     {
-        $ext = session('extension_uuid');
-        if (!$ext) {
-            throw new \Exception('extension_uuid not found in session');
+        // Prefer auth user
+        $user = auth()->user();
+        if ($user && !empty($user->extension_uuid)) {
+            return (string) $user->extension_uuid;
         }
-        return (string) $ext;
+
+        throw new \Exception('extension_uuid not found (auth or session)');
     }
 
     private function buildRoomId(string $extensionUuid, string $externalE164): string

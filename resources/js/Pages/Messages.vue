@@ -5,8 +5,7 @@
         <vue-advanced-chat :height="height" :current-user-id="currentUserId" :rooms="JSON.stringify(rooms)"
             :messages="JSON.stringify(messages)" :loading-rooms="loadingRooms" :loading-messages="loadingMessages"
             :rooms-loaded="roomsLoaded" :messages-loaded="messagesLoaded" :room-id="currentRoomId"
-            @fetch-rooms="fetchRooms" @fetch-messages="onFetchMessages" @send-message="onSendMessage"
-            @open-room="onOpenRoom" />
+            @fetch-rooms="fetchRooms" @fetch-messages="fetchMessages"  @send-message="onSendMessage" />
     </div>
 
 
@@ -38,33 +37,9 @@ import MainLayout from "../Layouts/MainLayout.vue";
 import Notification from "./components/notifications/Notification.vue";
 
 
-const loading = ref(false)
-const loadingModal = ref(false)
-const selectAll = ref(false);
-const selectedItems = ref([]);
-const selectPageItems = ref(false);
-const restartRequestNotificationSuccessTrigger = ref(false);
-const restartRequestNotificationErrorTrigger = ref(false);
-const createModalTrigger = ref(false);
-const editModalTrigger = ref(false);
-const bulkUpdateModalTrigger = ref(false);
-const confirmationModalTrigger = ref(false);
-const confirmationRetryTrigger = ref(false);
-const confirmationModalDestroyPath = ref(null);
-const createFormSubmiting = ref(null);
-const updateFormSubmiting = ref(null);
-const confirmDeleteAction = ref(null);
-const confirmRetryAction = ref(null);
-const bulkUpdateFormSubmiting = ref(null);
-const formErrors = ref(null);
-const notificationType = ref(null);
-const notificationMessages = ref(null);
-const notificationShow = ref(null);
-let tooltipCopyContent = ref('Copy to Clipboard');
-
 const props = defineProps({
-  routes: { type: Object, required: true },
-  auth: { type: Object, required: true }
+    routes: { type: Object, required: true },
+    auth: { type: Object, required: true }
 })
 
 // UI state
@@ -87,108 +62,120 @@ let activeChannelName = null
 
 onMounted(async () => {
     register()
-  await fetchRooms()
+    await fetchRooms()
 })
 
 onBeforeUnmount(() => {
-  unsubscribeActiveRoom()
+    unsubscribeActiveRoom()
 })
 
 async function fetchRooms() {
-  if (loadingRooms.value) return
-  loadingRooms.value = true
+    if (loadingRooms.value) return
+    loadingRooms.value = true
 
-  try {
-    const { data } = await axios.get(props.routes.roomsIndex)
+    try {
+        const { data } = await axios.get(props.routes.roomsIndex)
 
-    // Expecting API shape:
-    // data.rooms = [{ roomId, roomName, users, lastMessage, unreadCount, ... }]
-    rooms.value = (data.rooms || []).map(normalizeRoom)
-    roomsLoaded.value = true
-  } finally {
-    loadingRooms.value = false
-  }
+        // Expecting API shape:
+        // data.rooms = [{ roomId, roomName, users, lastMessage, unreadCount, ... }]
+        rooms.value = (data.rooms || []).map(normalizeRoom)
+        roomsLoaded.value = true
+    } finally {
+        loadingRooms.value = false
+    }
 }
 
-async function onOpenRoom({ detail }) {
-  // detail: { roomId }
-  const roomId = String(detail?.roomId || '')
-  if (!roomId) return
+async function fetchMessages(param) {
+    // 1. EXTRACT DATA
+    // If triggered by the template event, data is in param.detail[0]
+    // If triggered manually (by you), data is param itself
+    const { room, options } = (param.detail && param.detail[0]) ? param.detail[0] : param;
 
-  currentRoomId.value = roomId
-  await loadMessages(roomId)
+    // Safety check
+    if (!room || !room.roomId) {
+        console.warn('fetchMessages called without a valid room:', room);
+        return;
+    }
 
-  // subscribe to realtime room channel
-  subscribeToRoom(roomId)
+    // 2. LOGIC (The rest of your code remains the same)
+    if (options && options.reset) {
+        messagesLoaded.value = false
+        messages.value = []
+    }
+
+    loadingMessages.value = true
+    const url = props.routes.roomMessages.replace(':roomId', room.roomId)
+
+    try {
+        const { data } = await axios.get(url, {
+            params: { 'page[size]': 30 }
+        })
+
+        // Backend sends Newest -> Oldest (DESC)
+        // Chat component needs Oldest -> Newest (ASC)
+        const raw = data.messages || []
+        const formatted = raw.map(m => normalizeMessage(m, room.roomId)).reverse()
+
+        if (options && options.reset) {
+            messages.value = formatted
+        } else {
+            messages.value = [...formatted, ...messages.value]
+        }
+
+        messagesLoaded.value = raw.length < 30
+    } catch (e) {
+        console.error(e)
+    } finally {
+        loadingMessages.value = false
+    }
 }
 
-async function onFetchMessages({ detail }) {
-  // vue-advanced-chat calls this when it needs messages
-  // detail: { roomId, options: { offset, limit } } depending on config
-  const roomId = String(detail?.roomId || currentRoomId.value || '')
-  if (!roomId) return
-  await loadMessages(roomId)
-}
-
-async function loadMessages(roomId) {
-  loadingMessages.value = true
-  try {
-    const { data } = await axios.get(props.routes.roomMessages.replace(':roomId', roomId))
-
-    // Expecting API shape:
-    // data.messages = [{ message_uuid, source, destination, message, direction, created_at, media, ... }]
-    messages.value = (data.messages || []).map(m => normalizeMessage(m, roomId))
-    messagesLoaded.value = true
-  } finally {
-    loadingMessages.value = false
-  }
-}
 
 async function onSendMessage({ detail }) {
-  // detail from vue-advanced-chat typically includes:
-  // { roomId, content, files, ... }
-  const roomId = String(detail?.roomId || currentRoomId.value || '')
-  const content = String(detail?.content || '').trim()
+    // detail from vue-advanced-chat typically includes:
+    // { roomId, content, files, ... }
+    const roomId = String(detail?.roomId || currentRoomId.value || '')
+    const content = String(detail?.content || '').trim()
 
-  if (!roomId || !content) return
+    if (!roomId || !content) return
 
-  // optimistic UI: show immediately
-  const tempId = `tmp-${Date.now()}`
-  const optimistic = {
-    _id: tempId,
-    content,
-    senderId: currentUserId,
-    username: props.auth.currentExtensionName || 'You',
-    timestamp: new Date().toISOString(),
-    date: new Date().toISOString().slice(0, 10),
-    roomId,
-    status: 'sending'
-  }
-  messages.value = [optimistic, ...messages.value]
-
-  try {
-    const { data } = await axios.post(props.routes.sendMessage, {
-      roomId,
-      message: content
-    })
-
-    // Expecting API response:
-    // data.message = { message_uuid, ... }
-    // Replace optimistic message with real one
-    if (data?.message) {
-      messages.value = messages.value.map(m => {
-        if (m._id === tempId) return normalizeMessage(data.message, roomId)
-        return m
-      })
-    } else {
-      // keep optimistic, but mark as sent
-      messages.value = messages.value.map(m => (m._id === tempId ? { ...m, status: 'sent' } : m))
+    // optimistic UI: show immediately
+    const tempId = `tmp-${Date.now()}`
+    const optimistic = {
+        _id: tempId,
+        content,
+        senderId: currentUserId,
+        username: props.auth.currentExtensionName || 'You',
+        timestamp: new Date().toISOString(),
+        date: new Date().toISOString().slice(0, 10),
+        roomId,
+        status: 'sending'
     }
-  } catch (e) {
-    // mark failed
-    messages.value = messages.value.map(m => (m._id === tempId ? { ...m, status: 'failed' } : m))
-    throw e
-  }
+    messages.value = [optimistic, ...messages.value]
+
+    try {
+        const { data } = await axios.post(props.routes.sendMessage, {
+            roomId,
+            message: content
+        })
+
+        // Expecting API response:
+        // data.message = { message_uuid, ... }
+        // Replace optimistic message with real one
+        if (data?.message) {
+            messages.value = messages.value.map(m => {
+                if (m._id === tempId) return normalizeMessage(data.message, roomId)
+                return m
+            })
+        } else {
+            // keep optimistic, but mark as sent
+            messages.value = messages.value.map(m => (m._id === tempId ? { ...m, status: 'sent' } : m))
+        }
+    } catch (e) {
+        // mark failed
+        messages.value = messages.value.map(m => (m._id === tempId ? { ...m, status: 'failed' } : m))
+        throw e
+    }
 }
 
 /**
@@ -196,79 +183,80 @@ async function onSendMessage({ detail }) {
  * You can rename this to match your Laravel broadcast channel naming.
  */
 function subscribeToRoom(roomId) {
-  unsubscribeActiveRoom()
+    unsubscribeActiveRoom()
 
-  // If Echo isn't set up, skip gracefully
-  if (!window.Echo) return
+    // If Echo isn't set up, skip gracefully
+    if (!window.Echo) return
 
-  activeChannelName = `private-sms.room.${roomId}`
+    activeChannelName = `private-sms.room.${roomId}`
 
-  window.Echo.private(`sms.room.${roomId}`)
-    .listen('.sms.message.received', (payload) => {
-      // payload.message should be your DB row / API shape
-      const msg = payload?.message
-      if (!msg) return
+    window.Echo.private(`sms.room.${roomId}`)
+        .listen('.sms.message.received', (payload) => {
+            // payload.message should be your DB row / API shape
+            const msg = payload?.message
+            if (!msg) return
 
-      const normalized = normalizeMessage(msg, roomId)
+            const normalized = normalizeMessage(msg, roomId)
 
-      // Prevent duplicates (if we already have it)
-      const exists = messages.value.some(m => String(m._id) === String(normalized._id))
-      if (exists) return
+            // Prevent duplicates (if we already have it)
+            const exists = messages.value.some(m => String(m._id) === String(normalized._id))
+            if (exists) return
 
-      messages.value = [normalized, ...messages.value]
-    })
+            messages.value = [normalized, ...messages.value]
+        })
 }
 
 function unsubscribeActiveRoom() {
-  if (!window.Echo) return
-  if (!activeChannelName) return
+    if (!window.Echo) return
+    if (!activeChannelName) return
 
-  // activeChannelName is "private-..." but Echo.leaveChannel uses the base name you passed (without "private-")
-  const base = activeChannelName.replace(/^private-/, '')
-  try {
-    window.Echo.leave(base)
-  } catch (_) {}
+    // activeChannelName is "private-..." but Echo.leaveChannel uses the base name you passed (without "private-")
+    const base = activeChannelName.replace(/^private-/, '')
+    try {
+        window.Echo.leave(base)
+    } catch (_) { }
 
-  activeChannelName = null
+    activeChannelName = null
 }
 
 /**
  * Normalize data to what vue-advanced-chat expects
  */
 function normalizeRoom(r) {
-  // required keys for rooms:
-  // roomId, roomName, users, lastMessage, unreadCount, etc.
-  return {
-    roomId: String(r.roomId),
-    roomName: r.roomName || r.name || 'Conversation',
-    avatar: r.avatar || null,
-    unreadCount: Number(r.unreadCount || 0),
-    lastMessage: r.lastMessage || null,
-    users: Array.isArray(r.users) ? r.users : []
-  }
+    // required keys for rooms:
+    // roomId, roomName, users, lastMessage, unreadCount, etc.
+    return {
+        roomId: String(r.roomId),
+        roomName: r.roomName || r.name || 'Conversation',
+        avatar: r.avatar || null,
+        unreadCount: Number(r.unreadCount || 0),
+        lastMessage: r.lastMessage || null,
+        users: Array.isArray(r.users) ? r.users : []
+    }
 }
 
 function normalizeMessage(row, roomId) {
-  // DB row you showed:
-  // message_uuid, source, destination, message, direction, created_at, media...
-  const id = row.message_uuid || row.uuid || row.id || `${Date.now()}`
-  const createdAt = row.created_at || row.timestamp || new Date().toISOString()
+    const id = row.message_uuid || row.uuid || row.id || `${Date.now()}`
+    const createdAt = row.created_at || row.timestamp || new Date().toISOString()
+    
+    // 1. FIX: normalize the direction check
+    const dir = String(row.direction || '').toLowerCase().trim();
+    // Check for 'out', 'outbound', or 'outgoing'
+    const isOutbound = dir === 'out' || dir === 'outbound' || dir === 'outgoing';
 
-  const isOutbound = String(row.direction || '').toLowerCase() === 'outbound'
-
-  return {
-    _id: String(id),
-    content: row.message ?? '',
-    senderId: isOutbound ? currentUserId : `external:${row.source || row.destination || 'unknown'}`,
-    username: isOutbound ? (props.auth.currentExtensionName || 'You') : (row.source || 'External'),
-    timestamp: new Date(createdAt).toISOString(),
-    date: new Date(createdAt).toISOString().slice(0, 10),
-    roomId: String(roomId),
-    // optional status hook
-    status: row.status || (isOutbound ? 'sent' : 'received'),
-    // optional: attach media support later
-    files: row.media ? [{ name: 'media', url: row.media }] : []
-  }
+    return {
+        _id: String(id),
+        content: row.message ?? '',
+        // 2. FIX: Ensure senderId matches currentUserId ONLY if outbound
+        senderId: isOutbound ? currentUserId : `external:${row.source || 'unknown'}`,
+        username: isOutbound ? (props.auth.currentExtensionName || 'You') : (row.source || 'External'),
+        timestamp: new Date(createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        date: new Date(createdAt).toISOString().slice(0, 10),
+        roomId: String(roomId),
+        saved: true,
+        distributed: true,
+        seen: true,
+    }
 }
 
 </script>
