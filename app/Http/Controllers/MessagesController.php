@@ -43,143 +43,58 @@ class MessagesController extends Controller
         return Inertia::render(
             $this->viewName,
             [
-                'data' => function () {
-                    return $this->getData();
-                },
-                'showGlobal' => function () {
-                    return request('filterData.showGlobal') === 'true';
-                },
-
                 'routes' => [
-                    'current_page' => route('messages.index'),
-                    'store' => route('messages.store'),
-                    'select_all' => route('messages.select.all'),
-                    'bulk_delete' => route('messages.bulk.delete'),
-                    'bulk_update' => route('messages.bulk.update'),
-                    'retry' => route('messages.retry'),
-                ]
+                    'roomsIndex'   => route('messages.rooms'),
+                    'roomMessages' => route('messages.room.messages', ['roomId' => ':roomId']),
+                    'sendMessage'  => route('messages.send'),
+                ],
+                'auth' => [
+                    // Adjust these to however FS PBX exposes current extension
+                    'currentExtensionUuid' => session('extension_uuid') ?? '',
+                    'currentExtensionName' => session('extension_name') ?? 'You',
+                ],
             ]
         );
     }
 
 
-    /**
-     *  Get data
-     */
-    public function getData($paginate = 50)
+
+
+    private function currentDomainUuid(): string
     {
-
-        // Check if search parameter is present and not empty
-        if (!empty(request('filterData.search'))) {
-            $this->filters['search'] = request('filterData.search');
+        $domain = session('domain_uuid');
+        if (!$domain) {
+            throw new \Exception('domain_uuid not found in session');
         }
-
-        // Check if showGlobal parameter is present and not empty
-        if (!empty(request('filterData.showGlobal'))) {
-            $this->filters['showGlobal'] = request('filterData.showGlobal') === 'true';
-        } else {
-            $this->filters['showGlobal'] = null;
-        }
-
-        // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'created_at'); // Default to 'created_at'
-        $this->sortOrder = request()->get('sortOrder', 'desc'); // Default to descending
-
-        $data = $this->builder($this->filters);
-
-        // Apply pagination if requested
-        if ($paginate) {
-            $data = $data->paginate($paginate);
-        } else {
-            $data = $data->get(); // This will return a collection
-        }
-
-        if (isset($this->filters['showGlobal']) && $this->filters['showGlobal']) {
-            // Access domains through the session and filter extensions by those domains
-            $domainUuids = Session::get('domains')->pluck('domain_uuid');
-            // $extensions = Extensions::whereIn('domain_uuid', $domainUuids)
-            //     ->get(['domain_uuid', 'extension', 'effective_caller_id_name']);
-        } else {
-            // get extensions for session domain
-            // $extensions = Extensions::where('domain_uuid', session('domain_uuid'))
-            //     ->get(['domain_uuid', 'extension', 'effective_caller_id_name']);
-        }
-
-
-
-        return $data;
+        return (string) $domain;
     }
 
-    /**
-     * @param  array  $filters
-     * @return Builder
-     */
-    public function builder(array $filters = [])
+    private function currentExtensionUuid(): string
     {
-        $data =  $this->model::query();
-
-        if (isset($filters['showGlobal']) and $filters['showGlobal']) {
-            $data->with(['domain' => function ($query) {
-                $query->select('domain_uuid', 'domain_name', 'domain_description'); // Specify the fields you need
-            }]);
-            // Access domains through the session and filter devices by those domains
-            $domainUuids = Session::get('domains')->pluck('domain_uuid');
-            $data->where(function ($q) use ($domainUuids) {
-                $q->whereIn($this->model->getTable() . '.domain_uuid', $domainUuids);
-                if (isSuperAdmin()) {
-                    $q->orWhereNull($this->model->getTable() . '.domain_uuid');
-                }
-            });
-        } else {
-            // Directly filter devices by the session's domain_uuid
-            $domainUuid = Session::get('domain_uuid');
-            $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
+        $ext = session('extension_uuid');
+        if (!$ext) {
+            throw new \Exception('extension_uuid not found in session');
         }
-
-
-        $data->select(
-            'message_uuid',
-            'extension_uuid',
-            'domain_uuid',
-            'source',
-            'destination',
-            'message',
-            'direction',
-            'type',
-            'status',
-            'created_at'
-
-        );
-
-        if (is_array($filters)) {
-            foreach ($filters as $field => $value) {
-                if (method_exists($this, $method = "filter" . ucfirst($field))) {
-                    $this->$method($data, $value);
-                }
-            }
-        }
-
-        // Apply sorting
-        $data->orderBy($this->sortField, $this->sortOrder);
-
-        return $data;
+        return (string) $ext;
     }
 
-    /**
-     * @param $query
-     * @param $value
-     * @return void
-     */
-    protected function filterSearch($query, $value)
+    private function buildRoomId(string $extensionUuid, string $externalE164): string
     {
-        $searchable = $this->searchable;
-        // Case-insensitive partial string search in the specified fields
-        $query->where(function ($query) use ($value, $searchable) {
-            foreach ($searchable as $field) {
-                $query->orWhere($field, 'ilike', '%' . $value . '%');
-            }
-        });
+        return $extensionUuid . ':' . $externalE164;
     }
+
+    private function parseRoomId(string $roomId): array
+    {
+        $parts = explode(':', $roomId, 2);
+        if (count($parts) !== 2 || $parts[0] === '' || $parts[1] === '') {
+            throw new \InvalidArgumentException("Invalid roomId: {$roomId}");
+        }
+        return [
+            'extension_uuid' => $parts[0],
+            'external' => $parts[1],
+        ];
+    }
+
 
 
     public function retry()
@@ -200,8 +115,8 @@ class MessagesController extends Controller
 
                 if (!$extension && !$messageSettings && !$messageSettings->email) {
                     throw new Exception('No assigned destination found.');
-                } 
-                    
+                }
+
 
                 if ($item->direction == "out") {
 
@@ -223,9 +138,9 @@ class MessagesController extends Controller
 
                 if ($item->direction == "in") {
                     $org_id = DomainSettings::where('domain_uuid', $item->domain_uuid)
-                    ->where('domain_setting_category', 'app shell')
-                    ->where('domain_setting_subcategory', 'org_id')
-                    ->value('domain_setting_value');
+                        ->where('domain_setting_category', 'app shell')
+                        ->where('domain_setting_subcategory', 'org_id')
+                        ->value('domain_setting_value');
 
                     if (is_null($org_id)) {
                         throw new \Exception("From: " . $item->source . " To: " . $item->destination . " \n Org ID not found");
@@ -263,17 +178,16 @@ class MessagesController extends Controller
                         $attributes['message'] = $item->message;
                         $attributes['email_subject'] = 'SMS Notification: New Message from ' . $item->source;
                         // $attributes['smtp_from'] = config('mail.from.address');
-                
+
                         // Logic to deliver the SMS message using email
                         // This method should return a boolean indicating whether the message was sent successfully.
                         Mail::to($messageSettings->email)->send(new SmsToEmail($attributes));
-                
+
                         if ($item->status = "queued") {
                             $item->status = 'emailed';
                         }
                         $item->save();
                     }
-                    
                 }
             }
 

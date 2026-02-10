@@ -100,6 +100,10 @@ async function getConfig() {
                         // reference assets in the public directory as expected.
                         includeAbsolute: false,
                     },
+                    compilerOptions: {
+                        isCustomElement: (tag) =>
+                            tag === 'vue-advanced-chat' || tag === 'emoji-picker',
+                    },
                 },
             }),
         ],
