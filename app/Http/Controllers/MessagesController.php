@@ -10,10 +10,13 @@ use App\Models\Extensions;
 use Illuminate\Http\Request;
 use App\Models\DomainSettings;
 use App\Models\MessageSetting;
+use Illuminate\Support\Carbon;
 use App\Models\SmsDestinations;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use Spatie\QueryBuilder\QueryBuilder;
+use Spatie\QueryBuilder\AllowedFilter;
 use Illuminate\Support\Facades\Session;
 use App\Jobs\SendSmsNotificationToSlack;
 use App\Factories\MessageProviderFactory;
@@ -69,7 +72,7 @@ class MessagesController extends Controller
         $q = trim((string) $request->input('q', ''));
 
         $base = Messages::query()
-            ->where('domain_uuid', $domainUuid)
+            // ->where('domain_uuid', $domainUuid)
             // ->where('extension_uuid', $extensionUuid)
             ->selectRaw("
             message_uuid,
@@ -97,7 +100,7 @@ class MessagesController extends Controller
             created_at
         ")
             ->orderBy('external_number')
-            ->orderByDesc('created_at')
+            ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get();
 
@@ -355,5 +358,68 @@ class MessagesController extends Controller
             SendSmsNotificationToSlack::dispatch("*Commio Inbound SMS Failed*.From: " . $this->source . " To: " . $this->extension . "\nRingotel API Failure: " . $errorDetail)->onQueue('messages');
         }
         $message->save();
+    }
+
+    public function logs()
+    {
+        $params = request()->all();
+        $params['paginate'] = 50;
+        $domain_uuid = session('domain_uuid');
+        $params['domain_uuid'] = $domain_uuid;
+
+        if (!empty(request('filter.dateRange'))) {
+            $startPeriod = Carbon::parse(request('filter.dateRange')[0])->setTimeZone('UTC');
+            $endPeriod = Carbon::parse(request('filter.dateRange')[1])->setTimeZone('UTC');
+        }
+
+        $params['filter']['startPeriod'] = $startPeriod;
+        $params['filter']['endPeriod'] = $endPeriod;
+
+        unset(
+            $params['filter']['dateRange'],
+        );
+
+        $data = QueryBuilder::for(Messages::class, request()->merge($params))
+            ->select([
+                'message_uuid',
+                'extension_uuid',
+                'domain_uuid',
+                'source',
+                'destination',
+                'message',
+                'direction',
+                'type',
+                'status',
+                'created_at',
+            ])
+
+            ->allowedFilters([
+                AllowedFilter::callback('startPeriod', function ($query, $value) {
+                    $query->where('created_at', '>=', $value);
+                }),
+                AllowedFilter::callback('endPeriod', function ($query, $value) {
+                    $query->where('created_at', '<=', $value);
+                }),
+                AllowedFilter::callback('search', function ($query, $value) {
+                    $query->where(function ($q) use ($value) {
+                        $q->where('source', 'ilike', "%{$value}%")
+                            ->orWhere('destination', 'ilike', "%{$value}%")
+                            ->orWhere('message', 'ilike', "%{$value}%");
+                    });
+                }),
+            ])
+            // Sorting
+            ->allowedSorts(['created_at']) // add more if needed
+            ->defaultSort('-created_at');
+
+        if ($params['paginate']) {
+            $data = $data->paginate($params['paginate']);
+        } else {
+            $data = $data->cursor();
+        }
+
+        logger($data);
+
+        return $data;
     }
 }

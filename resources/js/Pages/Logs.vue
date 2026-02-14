@@ -24,6 +24,16 @@
                     :timezone="timezone" :routes="routes" :permissions="permissions" />
             </section>
 
+            <!-- Messages -->
+            <section v-show="selectedMenuOption === 'message_logs'">
+                <Vueform>
+                    <StaticElement name="locations_title" tag="h4" content="Messages" />
+                </Vueform>
+
+                <MessageLogs :trigger="messageLogsTrigger" :startPeriod="startPeriod" :endPeriod="endPeriod"
+                    :timezone="timezone" :routes="routes" :permissions="permissions" />
+            </section>
+
 
         </template>
 
@@ -47,12 +57,14 @@ import PageWithSideMenu from '../Layouts/PageWithSideMenu.vue'
 import Notification from "./components/notifications/Notification.vue";
 import EmailLogs from "./components/EmailLogs.vue";
 import InboundWebhooks from "./components/InboundWebhooks.vue";
+import MessageLogs from "./components/MessageLogs.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 
 import {
     EnvelopeIcon,
     InboxArrowDownIcon,
     DocumentTextIcon,
+    ChatBubbleLeftRightIcon,
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -69,6 +81,7 @@ const showDeleteLocationConfirmationModal = ref(false)
 const confirmDeleteLocationAction = ref(null);
 const emailsTrigger = ref(false)
 const inboundWebhooksTrigger = ref(false)
+const messageLogsTrigger = ref(false)
 const initialMenuOption = ref(null)
 
 
@@ -80,11 +93,13 @@ const pages = [
 const handleUpdateSelectedMenuOption = (key) => {
     if (key === 'emails') emailsTrigger.value = !emailsTrigger.value
     if (key === 'inbound_webhooks') inboundWebhooksTrigger.value = !inboundWebhooksTrigger.value
+    if (key === 'message_logs') messageLogsTrigger.value = !messageLogsTrigger.value
 }
 
 const navigation = [
     { key: 'emails', name: 'Emails', icon: EnvelopeIcon },
     { key: 'inbound_webhooks', name: 'Inbound Webhooks', icon: InboxArrowDownIcon },
+    { key: 'message_logs', name: 'Messages', icon: ChatBubbleLeftRightIcon },
 ]
 
 
@@ -94,11 +109,6 @@ onMounted(() => {
         // handleUpdateSelectedMenuOption(navigation.value[0].key)
     }
 })
-
-onUnmounted(() => {
-    // Clean up the event listener when the component is destroyed
-    window.removeEventListener('resize', checkScreenSize);
-});
 
 
 const notificationType = ref(null);

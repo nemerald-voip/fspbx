@@ -272,6 +272,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::get('/messages/rooms', [MessagesController::class, 'rooms'])->name('messages.rooms');
     Route::get('/messages/rooms/{roomId}/messages', [MessagesController::class, 'roomMessages'])->name('messages.room.messages');
     Route::post('/messages/send', [MessagesController::class, 'send'])->name('messages.send');
+    Route::get('/messages/logs', [MessagesController::class, 'logs'])->name('messages.logs');
 
 
     // Message Settings

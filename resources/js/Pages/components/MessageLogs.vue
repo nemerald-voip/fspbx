@@ -51,10 +51,14 @@
                         <thead class="bg-gray-100">
                             <tr>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Date</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Name</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">URL</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Payload</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Exception</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">In/Out</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Source</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Destination</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Message</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Type</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Action</th>
+
                             </tr>
                         </thead>
 
@@ -65,17 +69,28 @@
                                         {{ row.created_at_formatted ?? row.created_at }}
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
-                                        {{ row.name }}
+                                        {{ row.direction }}
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
-                                        {{ row.url }}
-                                    </td>
-                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-blue-600">
-                                        <span class="underline">Click for details…</span>
+                                        {{ row.source_formatted }}
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
-                                        {{ row.exception }}
+                                        {{ row.destination_formatted }}
                                     </td>
+                                    <td class="px-6 py-2 text-sm text-gray-500">
+                                        {{ row.message }}
+                                    </td>
+                                    <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                        {{ row.type }}
+                                    </td>
+                                    <td class="px-6 py-2 text-sm text-gray-500">
+                                        <Badge :text="row.status"
+                                            :backgroundColor="determineColor(row.status).backgroundColor"
+                                            :textColor="determineColor(row.status).textColor"
+                                            :ringColor="determineColor(row.status).ringColor" />
+                                    </td>
+
+
                                 </tr>
 
                                 <!-- EXPANDED DETAILS -->
@@ -131,6 +146,8 @@ import Notification from "./notifications/Notification.vue";
 import {
     MagnifyingGlassIcon,
 } from "@heroicons/vue/24/solid";
+import Badge from "@generalComponents/Badge.vue";
+
 
 
 const isDataLoading = ref(false)
@@ -181,7 +198,7 @@ const filterData = ref({
 
 const fetchData = async (page = 1) => {
     isDataLoading.value = true
-    axios.get(props.routes.inbound_webhooks, {
+    axios.get(props.routes.message_logs, {
         params: {
             filter: filterData.value,
             page,
@@ -222,6 +239,31 @@ const handleFiltersReset = () => {
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();
 }
+
+const determineColor = (status) => {
+  switch (status) {
+    case 'success':
+    case 'emailed':
+    case 'delivered':
+      return {
+        backgroundColor: 'bg-green-50',
+        textColor: 'text-green-700',
+        ringColor: 'ring-green-600/20'
+      };
+    case 'queued':
+      return {
+        backgroundColor: 'bg-blue-50',
+        textColor: 'text-blue-700',
+        ringColor: 'ring-blue-600/20'
+      };
+    default:
+      return {
+        backgroundColor: 'bg-yellow-50',
+        textColor: 'text-yellow-700',
+        ringColor: 'ring-yellow-600/20'
+      };
+  }
+};
 
 const renderRequestedPage = (url) => {
     isDataLoading.value = true;
