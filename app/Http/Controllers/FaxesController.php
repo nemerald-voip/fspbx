@@ -935,8 +935,8 @@ class FaxesController extends Controller
         $fax = FaxQueues::findOrFail($id);
 
         if (isset($fax)) {
-            if ($fax->getFaxFile()) {
-                $file = $fax->getFaxFile();
+            if ($fax->faxAttachment) {
+                $file = $fax->faxAttachment;
                 $file->delete();
             }
 
