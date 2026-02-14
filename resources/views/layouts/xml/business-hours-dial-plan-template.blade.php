@@ -23,66 +23,65 @@
         'voicemails' => 'voicemail_id',
     ];
 
-    /**
-    * Build regexes for any time range (e.g., 2215–0110).
-    * Returns an array of regexes for use in <condition> blocks.
-    *
-    * IMPORTANT: Zero-pad minutes so they match %H%M (e.g., '1005', not '105').
-    */
-    function makeTimeRangeRegex($start, $end)
-    {
-        $start = str_pad($start, 4, '0', STR_PAD_LEFT);
-        $end   = str_pad($end,   4, '0', STR_PAD_LEFT);
+/**
+ * Build regexes for any time range (e.g., 2215–0110).
+ * Returns an array of regexes for use in <condition> blocks.
+ *
+ * IMPORTANT: Zero-pad minutes so they match %H%M (e.g., '1005', not '105').
+ */
+$makeTimeRangeRegex = function ($start, $end) {
+    $start = str_pad($start, 4, '0', STR_PAD_LEFT);
+    $end   = str_pad($end,   4, '0', STR_PAD_LEFT);
 
-        $startHour = intval(substr($start, 0, 2));
-        $startMin  = intval(substr($start, 2, 2));
-        $endHour   = intval(substr($end,   0, 2));
-        $endMin    = intval(substr($end,   2, 2));
+    $startHour = intval(substr($start, 0, 2));
+    $startMin  = intval(substr($start, 2, 2));
+    $endHour   = intval(substr($end,   0, 2));
+    $endMin    = intval(substr($end,   2, 2));
 
-        $pad = fn($m) => sprintf('%02d', $m);
-        $regexes = [];
+    $pad = fn($m) => sprintf('%02d', $m);
+    $regexes = [];
 
-        // Not overnight
-        if ($start < $end) {
-            for ($h = $startHour; $h <= $endHour; $h++) {
-                if ($h == $startHour && $h == $endHour) {
-                    // Single-hour window
-                    $mins = implode('|', array_map($pad, range($startMin, $endMin)));
-                    $regexes[] = '^' . sprintf('%02d', $h) . '(' . $mins . ')$';
-                } elseif ($h == $startHour) {
-                    $mins = implode('|', array_map($pad, range($startMin, 59)));
-                    $regexes[] = '^' . sprintf('%02d', $h) . '(' . $mins . ')$';
-                } elseif ($h == $endHour) {
-                    $mins = implode('|', array_map($pad, range(0, $endMin)));
-                    $regexes[] = '^' . sprintf('%02d', $h) . '(' . $mins . ')$';
-                } else {
-                    $regexes[] = '^' . sprintf('%02d', $h) . '([0-5][0-9])$';
-                }
-            }
-        } else {
-            // Overnight (spans midnight)
-            // Late segment (startHour:startMin → 23:59)
-            for ($h = $startHour; $h <= 23; $h++) {
-                if ($h == $startHour) {
-                    $mins = implode('|', array_map($pad, range($startMin, 59)));
-                    $regexes[] = '^' . sprintf('%02d', $h) . '(' . $mins . ')$';
-                } else {
-                    $regexes[] = '^' . sprintf('%02d', $h) . '([0-5][0-9])$';
-                }
-            }
-            // Early segment (00:00 → endHour:endMin)
-            for ($h = 0; $h <= $endHour; $h++) {
-                if ($h == $endHour) {
-                    $mins = implode('|', array_map($pad, range(0, $endMin)));
-                    $regexes[] = '^' . sprintf('%02d', $h) . '(' . $mins . ')$';
-                } else {
-                    $regexes[] = '^' . sprintf('%02d', $h) . '([0-5][0-9])$';
-                }
+    // Not overnight
+    if ($start < $end) {
+        for ($h = $startHour; $h <= $endHour; $h++) {
+            if ($h == $startHour && $h == $endHour) {
+                // Single-hour window
+                $mins = implode('|', array_map($pad, range($startMin, $endMin)));
+                $regexes[] = '^' . sprintf('%02d', $h) . '(' . $mins . ')$';
+            } elseif ($h == $startHour) {
+                $mins = implode('|', array_map($pad, range($startMin, 59)));
+                $regexes[] = '^' . sprintf('%02d', $h) . '(' . $mins . ')$';
+            } elseif ($h == $endHour) {
+                $mins = implode('|', array_map($pad, range(0, $endMin)));
+                $regexes[] = '^' . sprintf('%02d', $h) . '(' . $mins . ')$';
+            } else {
+                $regexes[] = '^' . sprintf('%02d', $h) . '([0-5][0-9])$';
             }
         }
-
-        return $regexes;
+    } else {
+        // Overnight (spans midnight)
+        // Late segment (startHour:startMin → 23:59)
+        for ($h = $startHour; $h <= 23; $h++) {
+            if ($h == $startHour) {
+                $mins = implode('|', array_map($pad, range($startMin, 59)));
+                $regexes[] = '^' . sprintf('%02d', $h) . '(' . $mins . ')$';
+            } else {
+                $regexes[] = '^' . sprintf('%02d', $h) . '([0-5][0-9])$';
+            }
+        }
+        // Early segment (00:00 → endHour:endMin)
+        for ($h = 0; $h <= $endHour; $h++) {
+            if ($h == $endHour) {
+                $mins = implode('|', array_map($pad, range(0, $endMin)));
+                $regexes[] = '^' . sprintf('%02d', $h) . '(' . $mins . ')$';
+            } else {
+                $regexes[] = '^' . sprintf('%02d', $h) . '([0-5][0-9])$';
+            }
+        }
     }
+
+    return $regexes;
+};
 
 @endphp
 
@@ -167,7 +166,7 @@
 
                             if ($sd->isSameDay($ed)) {
                                 // Single day (could be overnight, but dates match)
-                                $regexes = makeTimeRangeRegex($st, $et);
+                                $regexes = $makeTimeRangeRegex($st, $et);
                                 foreach ($regexes as $regex) {
                                     $strftimeConditions[] = [
                                         'date'       => $sd->format('Y-m-d'),
@@ -177,7 +176,7 @@
                             } else {
                                 // Multi-day or overnight across days
                                 // First day (start_time → 23:59)
-                                $regexes = makeTimeRangeRegex($st, '2359');
+                                $regexes = $makeTimeRangeRegex($st, '2359');
                                 foreach ($regexes as $regex) {
                                     $strftimeConditions[] = [
                                         'date'       => $sd->format('Y-m-d'),
@@ -196,7 +195,7 @@
                                 }
 
                                 // Last day (00:00 → end_time)
-                                $regexes = makeTimeRangeRegex('0000', $et);
+                                $regexes = $makeTimeRangeRegex('0000', $et);
                                 foreach ($regexes as $regex) {
                                     $strftimeConditions[] = [
                                         'date'       => $ed->format('Y-m-d'),
