@@ -5,6 +5,7 @@
         <vue-advanced-chat :height="height" :current-user-id="currentUserId" :rooms="JSON.stringify(rooms)"
             :messages="JSON.stringify(messages)" :loading-rooms="loadingRooms" :loading-messages="loadingMessages"
             :rooms-loaded="roomsLoaded" :messages-loaded="messagesLoaded" :room-id="currentRoomId"
+            :show-add-room="showAddRoom"
             @fetch-rooms="fetchRooms" @fetch-messages="fetchMessages"  @send-message="onSendMessage" />
     </div>
 
@@ -56,6 +57,7 @@ const loadingRooms = ref(false)
 const loadingMessages = ref(false)
 const roomsLoaded = ref(false)
 const messagesLoaded = ref(false)
+const showAddRoom = ref(false)
 
 // Realtime subscription handle
 let activeChannelName = null
