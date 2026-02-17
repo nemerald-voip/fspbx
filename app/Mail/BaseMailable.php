@@ -52,13 +52,6 @@ abstract class BaseMailable extends Mailable
         return $attributes;
     }
 
-    protected function buildMessageHeaders()
-    {
-        $this->withSymfonyMessage(function ($message) {
-            $message->getHeaders()->addTextHeader('List-Unsubscribe', 'mailto:' . $this->attributes['unsubscribe_email']);
-        });
-    }
-
     public function headers(): Headers
     {
         $text = [];
@@ -84,7 +77,7 @@ abstract class BaseMailable extends Mailable
 
         return new Envelope(
             from: new Address($fromEmail, $fromName),
-            subject: $this->attributes['email_subject'],
+            subject: $this->attributes['email_subject'] ?? '',
         );
     }
 }
