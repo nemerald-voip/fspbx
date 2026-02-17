@@ -1549,6 +1549,7 @@ if (!function_exists('buildDestinationAction')) {
                     'speed_dial'      => 'speed dial',
                     'check_voicemail' => 'blf',
                     'park'            => 'monitored call park',
+                    '' => 'none',
                     default           => $t,
                 };
             }
@@ -1642,11 +1643,10 @@ if (!function_exists('buildDestinationAction')) {
             $label = $nk['key_label'] ?? null;
 
             if ($vendor == 'grandstream') {
-                $line = 0;
+                $line = $value-1;
             } else {
                 $line = 1;
             }
-
 
             // Build the row with the SAME keys FusionPBX uses
             $row = [
@@ -1668,7 +1668,7 @@ if (!function_exists('buildDestinationAction')) {
                 $acct = (int)($nk['key_value'] ?? 1);
                 if ($acct <= 0) $acct = 1;
 
-                $row['device_key_line'] = $acct;
+                // $row['device_key_line'] = $acct;
                 $row['device_key_value'] = '';
 
                 // If the label is currently empty, look inside $device_lines

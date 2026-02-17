@@ -276,7 +276,7 @@ class PhoneNumbersController extends Controller
 
                     // Search destination_number after stripping non-digits in SQL (Postgres)
                     $pattern = '%' . implode('%', str_split($digits)) . '%';
-                    $query->where('destination_number', 'ilike', $pattern);                        
+                    $query->where('destination_number', 'ilike', $pattern);
                 }),
                 AllowedFilter::callback('showGlobal', function ($query, $value) use ($currentDomain) {
                     // If showGlobal is falsey (0, '0', false, null), restrict to the current domain
@@ -305,71 +305,50 @@ class PhoneNumbersController extends Controller
      */
     public function import()
     {
+
         if (! userCheckPermission('destination_import')) {
             abort(403);
+        }
 
-            try {
+        try {
+            $file = request()->file('file');
 
-                $file = request()->file('file');
-                // $domain_uuid = session('domain_uuid');
+            $headings = (new HeadingRowImport)->toArray(request()->file('file'));
 
-                // 1. Count how many rows will be imported
-                // $rows = Excel::toCollection(new PhoneNumbersImport, $file)->first(); // Get first sheet
-                // $importCount = $rows->count();
+            $import = new PhoneNumbersImport;
+            $import->import($file);
 
-                // 2. Check current count and limit
-                // $currentCount = \App\Models\Extensions::where('domain_uuid', $domain_uuid)->count();
-                // $maxLimit = get_limit_setting('extensions', $domain_uuid);
+            if ($import->failures()->isNotEmpty()) {
 
-                // if ($maxLimit !== null && ($currentCount + $importCount) > $maxLimit) {
-                //     return response()->json([
-                //         'success' => false,
-                //         'errors' => [
-                //             'extension' => [
-                //                 "Importing this file would exceed your extension limit of $maxLimit. " .
-                //                     "You currently have $currentCount extensions and are trying to import $importCount."
-                //             ]
-                //         ]
-                //     ], 422);
-                // }
+                // Transform each failure into a readable error message
+                $errors = [];
+                foreach ($import->failures() as $failure) {
+                    $row = $failure->row(); // Row number
+                    $attr = $failure->attribute(); // Column/field name
+                    $errList = $failure->errors(); // Array of error messages
 
-                $headings = (new HeadingRowImport)->toArray(request()->file('file'));
-
-                $import = new PhoneNumbersImport;
-                $import->import($file);
-
-                if ($import->failures()->isNotEmpty()) {
-
-                    // Transform each failure into a readable error message
-                    $errors = [];
-                    foreach ($import->failures() as $failure) {
-                        $row = $failure->row(); // Row number
-                        $attr = $failure->attribute(); // Column/field name
-                        $errList = $failure->errors(); // Array of error messages
-
-                        foreach ($errList as $errMsg) {
-                            $errors[] = "Row {$row}, '{$attr}': {$errMsg}";
-                        }
+                    foreach ($errList as $errMsg) {
+                        $errors[] = "Row {$row}, '{$attr}': {$errMsg}";
                     }
-
-                    return response()->json([
-                        'success' => false,
-                        'errors' => ['server' => $errors]
-                    ], 500);
                 }
 
                 return response()->json([
-                    'success' => true,
-                    'messages' => ['success' => ['Phone numbers have been successfully imported.']]
-                ], 200);
-            } catch (Throwable $e) {
-                logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
-                // Send response in format that Dropzone understands
-                return response()->json([
                     'success' => false,
-                    'errors' => ['server' => [$e->getMessage()]]
+                    'errors' => ['server' => $errors]
                 ], 500);
             }
+
+            return response()->json([
+                'success' => true,
+                'messages' => ['success' => ['Phone numbers have been successfully imported.']]
+            ], 200);
+        } catch (Throwable $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            // Send response in format that Dropzone understands
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => [$e->getMessage()]]
+            ], 500);
         }
     }
 
@@ -725,8 +704,8 @@ class PhoneNumbersController extends Controller
                         }
 
                         // Search destination_number after stripping non-digits in SQL (Postgres)
-                    $pattern = '%' . implode('%', str_split($digits)) . '%';
-                    $query->where('destination_number', 'ilike', $pattern);
+                        $pattern = '%' . implode('%', str_split($digits)) . '%';
+                        $query->where('destination_number', 'ilike', $pattern);
                     }),
                 ])
                 ->pluck('destination_uuid');
