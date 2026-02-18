@@ -1023,11 +1023,19 @@ if (!function_exists('getMusicOnHoldCollection')) {
             $musicOnHoldCollection->where('domain_uuid', $domain)
                 ->orWhere('domain_uuid', null);
         }
-        $musicOnHoldCollection = $musicOnHoldCollection->orderBy('music_on_hold_name')->get()->unique('music_on_hold_name');
+        $musicOnHoldCollection = $musicOnHoldCollection
+            ->with("domain:domain_uuid,domain_name")
+            ->orderBy('music_on_hold_name')
+            ->get()
+            ->unique('music_on_hold_name');
+
         foreach ($musicOnHoldCollection as $item) {
+            $domainName = optional($item->domain)->domain_name;
             $musicOnHold[] = [
                 'label' => $item->music_on_hold_name,
-                'value' => 'local_stream://' . $item->music_on_hold_name
+                'value' => $domainName
+                    ? "local_stream://{$domainName}/{$item->music_on_hold_name}"
+                    : "local_stream://{$item->music_on_hold_name}",
             ];
         }
 
@@ -1643,7 +1651,7 @@ if (!function_exists('buildDestinationAction')) {
             $label = $nk['key_label'] ?? null;
 
             if ($vendor == 'grandstream') {
-                $line = $value-1;
+                $line = $value - 1;
             } else {
                 $line = 1;
             }
