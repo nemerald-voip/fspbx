@@ -183,7 +183,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'success']);
 const form$ = ref(null);
 
-// -- Bulk Apply Logic (Implementing Developer's 2-Step Approach with Bulletproof Targeting) --
+// Bulk Apply Logic
 const handleBulkApply = () => {
     if (!form$.value) return;
     const f = form$.value;
@@ -205,8 +205,7 @@ const handleBulkApply = () => {
 
     if (numItems === 0) return;
 
-    // STEP 1: Push out the Actions (Type) and Description first
-    // We use a safe standard 'for' loop instead of .elements$ which prevents the crash
+    // Push out the Actions (Type) and Description first
     for (let i = 0; i < numItems; i++) {
         if (bulkDesc !== null && bulkDesc !== undefined && bulkDesc !== '') {
             let descEl = f.el$('items.' + i + '.destination_description');
@@ -219,19 +218,17 @@ const handleBulkApply = () => {
         }
     }
 
-    // STEP 2: Wait for Targets to load, then push the Target Value
+    // Wait for Targets to load, then push the Target Value
     if (bulkType !== null && bulkType !== undefined && bulkType !== '') {
         
-        // Give Vueform a tiny moment to register the new Action values internally
+        // Give Vueform a moment to register the new Action values internally
         setTimeout(() => {
             for (let i = 0; i < numItems; i++) {
                 let targetEl = f.el$('items.' + i + '.routing_extension');
                 if (targetEl) {
                     
-                    // .updateItems() returns a Promise when it finishes downloading the list!
                     targetEl.updateItems().then(() => {
                         
-                        // Once the list is downloaded, apply the Target Extension
                         if (bulkExt !== null && bulkExt !== undefined && bulkExt !== '') {
                             targetEl.update(bulkExt);
                         }

@@ -374,7 +374,7 @@ class PhoneNumbersController extends Controller
     }
 
 /**
-     * Step 1: Parse the file and return data to frontend
+     * Parse the file and return data to frontend
      */
     public function importPreview()
     {
@@ -387,7 +387,7 @@ class PhoneNumbersController extends Controller
             
             // Import to array instead of collection
             $import = new PhoneNumbersImport;
-            $rows = $import->toArray($file); // This returns the array from the sheet
+            $rows = $import->toArray($file);
 
             // Handle Parsing Errors
             if ($import->failures()->isNotEmpty()) {
@@ -398,9 +398,7 @@ class PhoneNumbersController extends Controller
                 return response()->json(['success' => false, 'errors' => ['server' => $errors]], 500);
             }
 
-            // Process the raw rows into a displayable format
             $previewData = [];
-            // Maatwebsite toArray returns an array of sheets, so we access index 0
             $sheet = $rows[0] ?? [];
 
             foreach ($sheet as $row) {
@@ -432,7 +430,7 @@ class PhoneNumbersController extends Controller
     }
 
     /**
-     * Step 2: Receive the approved list and save to DB
+     * Receive the approved list and save to DB
      */
 public function importCommit(Request $request)
     {
