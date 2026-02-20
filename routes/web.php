@@ -227,6 +227,8 @@ Route::group(['middleware' => 'auth'], function () {
     //Phone Numbers
     Route::get('phone-numbers', [PhoneNumbersController::class, 'index'])->name('phone-numbers.index');
     Route::get('/phone-numbers-export', [PhoneNumbersController::class, 'export'])->name('phone-numbers.export');
+    Route::post('/phone-numbers/import', [PhoneNumbersController::class, 'importPreview'])->name('phone-numbers.import');
+    Route::post('/phone-numbers/import/commit', [PhoneNumbersController::class, 'importCommit'])->name('phone-numbers.import.commit');
 
     //Wakeup Calls
     Route::resource('wakeup-calls', WakeupCallsController::class);
@@ -294,11 +296,12 @@ Route::group(['middleware' => 'auth'], function () {
     // Route::get('/sms/ringotelwebhook', [SmsWebhookController::class,"messageFromRingotel"]);
 
     // Messages
-    Route::resource('messages', MessagesController::class);
-    Route::post('/messages/retry', [MessagesController::class, 'retry'])->name('messages.retry');
-    Route::post('/messages/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('messages.bulk.update');
-    Route::post('/messages/bulk-delete', [DeviceController::class, 'bulkDelete'])->name('messages.bulk.delete');
-    Route::post('/messages/select-all', [DeviceController::class, 'selectAll'])->name('messages.select.all');
+    // Route::resource('messages', MessagesController::class);
+    Route::get('/messages', [MessagesController::class, 'index'])->name('messages.index');
+    // Route::post('/messages/retry', [MessagesController::class, 'retry'])->name('messages.retry');
+    // Route::post('/messages/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('messages.bulk.update');
+    // Route::post('/messages/bulk-delete', [DeviceController::class, 'bulkDelete'])->name('messages.bulk.delete');
+    // Route::post('/messages/select-all', [DeviceController::class, 'selectAll'])->name('messages.select.all');
 
 
 

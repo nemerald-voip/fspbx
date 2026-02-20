@@ -276,7 +276,7 @@ class PhoneNumbersController extends Controller
 
                     // Search destination_number after stripping non-digits in SQL (Postgres)
                     $pattern = '%' . implode('%', str_split($digits)) . '%';
-                    $query->where('destination_number', 'ilike', $pattern);
+                    $query->where('destination_number', 'ilike', $pattern);                        
                 }),
                 AllowedFilter::callback('showGlobal', function ($query, $value) use ($currentDomain) {
                     // If showGlobal is falsey (0, '0', false, null), restrict to the current domain
@@ -305,49 +305,219 @@ class PhoneNumbersController extends Controller
      */
     public function import()
     {
-
         if (! userCheckPermission('destination_import')) {
+            abort(403);
+
+            try {
+
+                $file = request()->file('file');
+                // $domain_uuid = session('domain_uuid');
+
+                // 1. Count how many rows will be imported
+                // $rows = Excel::toCollection(new PhoneNumbersImport, $file)->first(); // Get first sheet
+                // $importCount = $rows->count();
+
+                // 2. Check current count and limit
+                // $currentCount = \App\Models\Extensions::where('domain_uuid', $domain_uuid)->count();
+                // $maxLimit = get_limit_setting('extensions', $domain_uuid);
+
+                // if ($maxLimit !== null && ($currentCount + $importCount) > $maxLimit) {
+                //     return response()->json([
+                //         'success' => false,
+                //         'errors' => [
+                //             'extension' => [
+                //                 "Importing this file would exceed your extension limit of $maxLimit. " .
+                //                     "You currently have $currentCount extensions and are trying to import $importCount."
+                //             ]
+                //         ]
+                //     ], 422);
+                // }
+
+                $headings = (new HeadingRowImport)->toArray(request()->file('file'));
+
+                $import = new PhoneNumbersImport;
+                $import->import($file);
+
+                if ($import->failures()->isNotEmpty()) {
+
+                    // Transform each failure into a readable error message
+                    $errors = [];
+                    foreach ($import->failures() as $failure) {
+                        $row = $failure->row(); // Row number
+                        $attr = $failure->attribute(); // Column/field name
+                        $errList = $failure->errors(); // Array of error messages
+
+                        foreach ($errList as $errMsg) {
+                            $errors[] = "Row {$row}, '{$attr}': {$errMsg}";
+                        }
+                    }
+
+                    return response()->json([
+                        'success' => false,
+                        'errors' => ['server' => $errors]
+                    ], 500);
+                }
+
+                return response()->json([
+                    'success' => true,
+                    'messages' => ['success' => ['Phone numbers have been successfully imported.']]
+                ], 200);
+            } catch (Throwable $e) {
+                logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+                // Send response in format that Dropzone understands
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['server' => [$e->getMessage()]]
+                ], 500);
+            }
+        }
+    }
+
+/**
+     * Parse the file and return data to frontend
+     */
+    public function importPreview()
+    {
+        if (!userCheckPermission('destination_import')) {
             abort(403);
         }
 
         try {
             $file = request()->file('file');
-
-            $headings = (new HeadingRowImport)->toArray(request()->file('file'));
-
+            
+            // Import to array instead of collection
             $import = new PhoneNumbersImport;
-            $import->import($file);
+            $rows = $import->toArray($file);
 
+            // Handle Parsing Errors
             if ($import->failures()->isNotEmpty()) {
-
-                // Transform each failure into a readable error message
                 $errors = [];
                 foreach ($import->failures() as $failure) {
-                    $row = $failure->row(); // Row number
-                    $attr = $failure->attribute(); // Column/field name
-                    $errList = $failure->errors(); // Array of error messages
-
-                    foreach ($errList as $errMsg) {
-                        $errors[] = "Row {$row}, '{$attr}': {$errMsg}";
-                    }
+                    $errors[] = "Row {$failure->row()}: " . implode(', ', $failure->errors());
                 }
+                return response()->json(['success' => false, 'errors' => ['server' => $errors]], 500);
+            }
 
-                return response()->json([
-                    'success' => false,
-                    'errors' => ['server' => $errors]
-                ], 500);
+            $previewData = [];
+            $sheet = $rows[0] ?? [];
+
+            foreach ($sheet as $row) {
+                // Combine Country code and number for display
+                $prefix = preg_replace('/\D+/', '', $row['country_code'] ?? '');
+                $number = preg_replace('/\D+/', '', $row['phone_number'] ?? '');
+                
+                $previewData[] = [
+                    'id' => Str::uuid()->toString(), // Temp ID for frontend keys
+                    'destination_prefix' => $prefix,
+                    'destination_number' => $number,
+                    'destination_number_formatted' => $prefix . $number, // Initial value
+                    'destination_description' => '', // Empty by default
+                ];
             }
 
             return response()->json([
                 'success' => true,
-                'messages' => ['success' => ['Phone numbers have been successfully imported.']]
+                'data' => $previewData
             ], 200);
+
         } catch (Throwable $e) {
-            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
-            // Send response in format that Dropzone understands
+            logger($e->getMessage());
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => [$e->getMessage()]]
+            ], 500);
+        }
+    }
+
+    /**
+     * Receive the approved list and save to DB
+     */
+public function importCommit(Request $request)
+    {
+        if (!userCheckPermission('destination_import')) {
+            abort(403);
+        }
+
+        $items = $request->input('items');
+        $domain_uuid = session('domain_uuid');
+        $domain_name = session('domain_name');
+
+        if (empty($items)) {
+            return response()->json(['success' => false, 'messages' => ['error' => ['No items to import']]], 422);
+        }
+
+        // --- DUPLICATE CHECKING ---
+        // 1. Get all incoming numbers
+        $incomingNumbers = collect($items)->pluck('destination_number')->filter()->toArray();
+
+        // 2. Check if the CSV itself contains duplicate rows
+        $duplicatesInFile = collect($incomingNumbers)->duplicates()->unique()->toArray();
+        if (!empty($duplicatesInFile)) {
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['The import list contains duplicate numbers: ' . implode(', ', $duplicatesInFile)]]
+            ], 422);
+        }
+
+        // 3. Check if any of these numbers already exist in the database
+        $existingNumbers = Destinations::whereIn('destination_number', $incomingNumbers)
+            ->pluck('destination_number')
+            ->toArray();
+
+        if (!empty($existingNumbers)) {
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['The following numbers already exist in the system: ' . implode(', ', $existingNumbers)]]
+            ], 422);
+        }
+        // --------------------------
+
+        try {
+            DB::beginTransaction();
+
+            foreach ($items as $row) {
+                $destination_actions = null;
+                
+                if (!empty($row['routing_type']) && !empty($row['routing_extension'])) {
+                    $destination_actions = json_encode([
+                        buildDestinationAction([
+                            'type' => $row['routing_type'], 
+                            'extension' => $row['routing_extension']
+                        ])
+                    ]);
+                }
+
+                $phone_number = Destinations::create([
+                    'destination_uuid' => Str::uuid(),
+                    'domain_uuid' => $domain_uuid,
+                    'dialplan_uuid' => Str::uuid(),
+                    'destination_prefix' => $row['destination_prefix'] ?? null,
+                    'destination_number' => $row['destination_number'],
+                    'destination_description' => $row['destination_description'] ?? null,
+                    'destination_type' => 'inbound',
+                    'destination_actions' => $destination_actions,
+                    'destination_enabled' => 'true', 
+                    'destination_record' => 'false', 
+                    'destination_context' => 'public',
+                    'destination_accountcode' => $domain_name,
+                ]);
+
+                dispatch(new \App\Jobs\BuildDialplanForPhoneNumber($phone_number->destination_uuid, $domain_name));
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'messages' => ['success' => [count($items) . ' phone numbers imported successfully.']]
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            logger($e);
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Error saving phone numbers: ' . $e->getMessage()]]
             ], 500);
         }
     }
@@ -704,8 +874,8 @@ class PhoneNumbersController extends Controller
                         }
 
                         // Search destination_number after stripping non-digits in SQL (Postgres)
-                        $pattern = '%' . implode('%', str_split($digits)) . '%';
-                        $query->where('destination_number', 'ilike', $pattern);
+                    $pattern = '%' . implode('%', str_split($digits)) . '%';
+                    $query->where('destination_number', 'ilike', $pattern);
                     }),
                 ])
                 ->pluck('destination_uuid');
