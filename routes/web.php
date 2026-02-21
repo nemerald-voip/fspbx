@@ -14,7 +14,7 @@ use App\Http\Controllers\ContactsController;
 use App\Http\Controllers\FaxInboxController;
 use App\Http\Controllers\FaxQueueController;
 use App\Http\Controllers\FirewallController;
-use App\Http\Controllers\MessagesController;
+use App\Http\Controllers\MessageController;
 use App\Http\Controllers\UserLogsController;
 use App\Http\Controllers\CsrfTokenController;
 use App\Http\Controllers\DashboardController;
@@ -295,7 +295,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Messages
     // Route::resource('messages', MessagesController::class);
-    Route::get('/messages', [MessagesController::class, 'index'])->name('messages.index');
+    Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
     // Route::post('/messages/retry', [MessagesController::class, 'retry'])->name('messages.retry');
     // Route::post('/messages/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('messages.bulk.update');
     // Route::post('/messages/bulk-delete', [DeviceController::class, 'bulkDelete'])->name('messages.bulk.delete');

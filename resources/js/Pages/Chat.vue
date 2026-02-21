@@ -26,7 +26,6 @@
 <script setup>
 import { computed, onMounted, ref, onBeforeUnmount } from "vue";
 import axios from 'axios';
-import { register } from 'vue-advanced-chat'
 
 import NotificationSimple from "./components/notifications/Simple.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";

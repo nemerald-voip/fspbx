@@ -25,4 +25,5 @@ window.Echo = new Echo({
     forceTLS: isHttps,
 
     enabledTransports: ['ws', 'wss'],
+    wsPath: '/ws',
 })

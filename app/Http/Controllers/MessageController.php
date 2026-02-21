@@ -2,25 +2,26 @@
 
 namespace App\Http\Controllers;
 
-use Exception;
-use Inertia\Inertia;
+use App\Factories\MessageProviderFactory;
+use App\Jobs\SendSmsNotificationToSlack;
 use App\Mail\SmsToEmail;
-use App\Models\Messages;
-use App\Models\Extensions;
-use Illuminate\Http\Request;
 use App\Models\DomainSettings;
+use App\Models\Extensions;
+use App\Models\Messages;
 use App\Models\MessageSetting;
-use Illuminate\Support\Carbon;
 use App\Models\SmsDestinations;
+use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
-use Spatie\QueryBuilder\QueryBuilder;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
 use Spatie\QueryBuilder\AllowedFilter;
-use App\Jobs\SendSmsNotificationToSlack;
-use App\Factories\MessageProviderFactory;
+use Spatie\QueryBuilder\QueryBuilder;
 
-class MessagesController extends Controller
+class MessageController extends Controller
 {
 
     public $model;
@@ -43,6 +44,14 @@ class MessagesController extends Controller
     public function index(Request $request)
     {
 
+        $extension = Extensions::where('extension_uuid', auth()->user()->extension_uuid)->select('extension_uuid', 'domain_uuid', 'extension')->first();
+
+        $smsConfigs = SmsDestinations::where('domain_uuid', $extension->domain_uuid ?? null)
+            ->where('chatplan_detail_data', $extension->extension ?? null)
+            ->get();
+
+        logger($smsConfigs);
+
         return Inertia::render(
             $this->viewName,
             [
@@ -50,6 +59,7 @@ class MessagesController extends Controller
                     'roomsIndex'   => route('messages.rooms'),
                     'roomMessages' => route('messages.room.messages', ['roomId' => ':roomId']),
                     'sendMessage'  => route('messages.send'),
+                    'data_route'   => route('messages.data'),
                 ],
                 'auth' => [
                     // Adjust these to however FS PBX exposes current extension
@@ -60,67 +70,137 @@ class MessagesController extends Controller
         );
     }
 
+    public function getData()
+    {
+        try {
+
+            $itemUuid = request('itemUuid');
+
+
+
+            // $device = $this->model::find(request('itemUuid'));
+
+            $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
+
+            // Define the options for the 'extensions' field
+            $extensions = Extensions::where('domain_uuid', $domain_uuid)
+                ->orderBy('extension')  // Sorts by the 'extension' field in ascending order
+                ->get([
+                    'extension_uuid',
+                    'extension',
+                    'effective_caller_id_name',
+                ]);
+
+            $extensionOptions = [];
+            // Loop through each extension and create an option
+            foreach ($extensions as $extension) {
+                $extensionOptions[] = [
+                    'value' => $extension->extension_uuid,
+                    'name' => auth()->user()->extension_uuid ==  $extension->extension_uuid ? "My Extension" :$extension->name_formatted,
+                ];
+            }
+
+
+            // Construct the data object
+            $data = [
+                'item' => $deviceDto ?? null,
+                'extensions' => $extensionOptions,
+                // 'permissions' => $this->getUserPermissions(),
+                // Define options for other fields as needed
+            ];
+
+            return $data;
+        } catch (\Exception $e) {
+            logger('MessagesController@getData error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to get item details']]
+            ], 500); // 500 Internal Server Error for any other errors
+        }
+    }
+
 
     public function rooms(Request $request)
     {
+        // ... setup variables ...
         $domainUuid = $this->currentDomainUuid();
-        $extensionUuid = $this->currentExtensionUuid();
+        $limit = min((int) $request->input('limit', 50), 200);
 
+        // 1. Define the SQL for "Raw Digits"
+        // This strips everything except numbers 0-9
+        $rawDigitsSql = "REGEXP_REPLACE(
+        CASE WHEN direction = 'in' THEN source ELSE destination END, 
+        '\D', '', 'g'
+    )";
 
-        $limit = min((int) $request->input('limit', 200), 500);
-        $q = trim((string) $request->input('q', ''));
+        // 2. Define the Smart Normalization Logic
+        // IF 11 digits and starts with '1' (US E.164) -> Keep it
+        // IF 10 digits (US Local) -> Prepend '1'
+        // ELSE -> Keep the raw digits (International fallback)
+        $normalizedSql = "
+        CASE 
+            WHEN LENGTH($rawDigitsSql) = 11 AND LEFT($rawDigitsSql, 1) = '1' THEN $rawDigitsSql
+            WHEN LENGTH($rawDigitsSql) = 10 THEN '1' || $rawDigitsSql
+            ELSE $rawDigitsSql 
+        END
+    ";
 
+        // 3. Build the Query
         $base = Messages::query()
-            // ->where('domain_uuid', $domainUuid)
-            // ->where('extension_uuid', $extensionUuid)
             ->selectRaw("
             message_uuid,
             message,
-            direction,
             created_at,
-            CASE WHEN direction = 'in' THEN source ELSE destination END AS external_number
-        ");
+            -- Select the raw original for display
+            CASE WHEN direction = 'in' THEN source ELSE destination END AS original_number,
+            -- Select our calculated ID for grouping
+            $normalizedSql as normalized_id
+        ")
+            ->where('domain_uuid', $domainUuid);
 
-        if ($q !== '') {
-            $base->where(function ($w) use ($q) {
-                $w->where('source', 'like', "%{$q}%")
-                    ->orWhere('destination', 'like', "%{$q}%")
-                    ->orWhere('message', 'like', "%{$q}%");
-            });
-        }
+        // ... Add your search/permission filters here ...
 
+        // 4. Distinct On the CALCULATED ID
         $rows = DB::query()
             ->fromSub($base, 't')
-            ->selectRaw("DISTINCT ON (external_number)
-            external_number,
+            ->selectRaw("DISTINCT ON (normalized_id)
+            normalized_id,
+            original_number,
             message_uuid,
             message,
-            direction,
             created_at
         ")
-            ->orderBy('external_number')
+            ->orderBy('normalized_id')
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get();
 
-        $rooms = $rows->map(function ($r) use ($extensionUuid) {
-            $external = (string) $r->external_number;
-
+        // 5. Map to Vue
+        $rooms = $rows->map(function ($r) {
             return [
-                'roomId' => $this->buildRoomId($extensionUuid, $external),
-                'roomName' => $external,
-                'unreadCount' => 0,
-                'lastMessage' => [
-                    '_id' => (string) $r->message_uuid,
-                    'content' => (string) ($r->message ?? ''),
-                    'timestamp' => optional($r->created_at)->toISOString() ?? null,
-                ],
-                'users' => [],
+                'id' => $r->normalized_id, // This is now clean (e.g., 16467052267)
+                'name' => $r->original_number, // Display the number as it appears in DB
+                'avatar' => null,
+                'unread' => 0,
+                'lastMessage' => $r->message,
+                'timestamp' => $r->created_at,
             ];
-        })->values();
+        })->sortByDesc('timestamp')->values();
 
         return response()->json(['rooms' => $rooms]);
     }
+
+    // Add this helper method to your controller
+    private function formatPhoneNumber($digits)
+    {
+        // If it's 10 digits (US standard), format it nicely
+        if (strlen($digits) === 10) {
+            return '+1 ' . substr($digits, 0, 3) . '-' . substr($digits, 3, 3) . '-' . substr($digits, 6);
+        }
+        return $digits;
+    }
+
 
 
 
@@ -129,53 +209,70 @@ class MessagesController extends Controller
      */
     public function roomMessages(Request $request, $roomId)
     {
-        try {
-            // 1. Context & Security
-            $domainUuid = $this->currentDomainUuid();
+        // $roomId comes in as "16474775001" (from your frontend URL)
 
-            // 2. Parse the Room ID using your existing helper
-            // Format is expected to be: {extension_uuid}:{external_number}
-            $parts = $this->parseRoomId($roomId);
-            $extensionUuid = $parts['extension_uuid'];
-            $externalNumber = $parts['external'];
+        $domainUuid = $this->currentDomainUuid();
+        $isAdmin = true; // Or your actual admin check logic
 
-            // 3. Pagination Settings
-            // Frontend sends: params: { 'page[size]': 50 }
-            $pageSize = $request->input('page.size', 50);
+        // 1. Define the Same Normalization SQL used in 'rooms()'
+        // We need this to match the '16474775001' ID back to rows like '+1 (647)...'
+        $rawDigitsSql = "REGEXP_REPLACE(CASE WHEN direction = 'in' THEN source ELSE destination END, '\D', '', 'g')";
 
-            // 4. Query the Messages
-            $query = Messages::query()
-                ->where('domain_uuid', $domainUuid)
-                // Ensure we only look at messages belonging to this specific extension
-                // ->where('extension_uuid', $extensionUuid)
-                // Filter for conversation with the external number (either inbound or outbound)
-                ->where(function ($q) use ($externalNumber) {
-                    $q->where('source', $externalNumber)
-                        ->orWhere('destination', $externalNumber);
-                })
-                // Order by Newest First (Frontend reverses this to show history correctly)
-                ->orderBy('created_at', 'desc');
+        // This SQL mimics the logic we used to generate the ID
+        $normalizedIdSql = "
+        CASE 
+            WHEN LENGTH($rawDigitsSql) = 11 AND LEFT($rawDigitsSql, 1) = '1' THEN $rawDigitsSql
+            WHEN LENGTH($rawDigitsSql) = 10 THEN '1' || $rawDigitsSql
+            ELSE $rawDigitsSql 
+        END
+    ";
 
-            // 5. Execute Query
-            $messages = $query->paginate($pageSize);
+        // 2. Build the Query
+        $query = Messages::query()
+            ->select('*')
+            ->where('domain_uuid', $domainUuid);
 
-            // 6. Return JSON
-            return response()->json([
-                'messages' => $messages->items(),
-                'meta' => [
-                    'current_page' => $messages->currentPage(),
-                    'last_page' => $messages->lastPage(),
-                    'total' => $messages->total(),
-                ]
-            ]);
-        } catch (\InvalidArgumentException $e) {
-            // Handle invalid room ID format
-            return response()->json(['error' => 'Invalid Room ID', 'messages' => []], 400);
-        } catch (\Exception $e) {
-            // Handle general errors
-            logger($e->getMessage());
-            return response()->json(['error' => 'Server Error', 'messages' => []], 500);
+        // 3. Filter by Permission
+        if (!$isAdmin) {
+            $query->where('extension_uuid', $this->currentExtensionUuid());
         }
+
+        // 4. CRITICAL: Filter by the "Virtual" Room ID
+        // We compare the calculated SQL ID against the $roomId passed in the URL
+        $query->whereRaw("($normalizedIdSql) = ?", [$roomId]);
+
+        // 5. Pagination
+        // DeepChat loads history Oldest -> Newest, but API usually paginates Newest -> Oldest.
+        // We fetch Newest first (desc), then the frontend reverses it.
+        $rows = $query->orderBy('created_at', 'desc')
+            ->paginate($request->input('page.size', 50));
+
+        // 6. Format for DeepChat
+        $messages = collect($rows->items())->map(function ($r) {
+            // Determine if this message is "Mine" (user) or "Theirs" (ai/contact)
+            // Adjust this logic based on your system. 
+            // Usually: Outbound = Me, Inbound = Contact.
+            $isOutbound = in_array(strtolower($r->direction), ['out', 'outbound', 'outgoing']);
+
+            return [
+                // DeepChat Keys
+                'text' => $r->message,
+                'role' => $isOutbound ? 'user' : 'ai',
+
+                // Optional Metadata
+                'timestamp' => $r->created_at->toIsoString(),
+            ];
+        });
+
+        return response()->json([
+            'messages' => $messages, // The array DeepChat needs
+            'pagination' => [
+                'total' => $rows->total(),
+                'per_page' => $rows->perPage(),
+                'current_page' => $rows->currentPage(),
+                'last_page' => $rows->lastPage(),
+            ]
+        ]);
     }
 
 
@@ -198,23 +295,6 @@ class MessagesController extends Controller
         }
 
         throw new \Exception('extension_uuid not found (auth or session)');
-    }
-
-    private function buildRoomId(string $extensionUuid, string $externalE164): string
-    {
-        return $extensionUuid . ':' . $externalE164;
-    }
-
-    private function parseRoomId(string $roomId): array
-    {
-        $parts = explode(':', $roomId, 2);
-        if (count($parts) !== 2 || $parts[0] === '' || $parts[1] === '') {
-            throw new \InvalidArgumentException("Invalid roomId: {$roomId}");
-        }
-        return [
-            'extension_uuid' => $parts[0],
-            'external' => $parts[1],
-        ];
     }
 
 
@@ -416,8 +496,6 @@ class MessagesController extends Controller
         } else {
             $data = $data->cursor();
         }
-
-        logger($data);
 
         return $data;
     }

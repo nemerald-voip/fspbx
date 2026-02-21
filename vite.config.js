@@ -101,9 +101,8 @@ async function getConfig() {
                         includeAbsolute: false,
                     },
                     compilerOptions: {
-                        isCustomElement: (tag) =>
-                            tag === 'vue-advanced-chat' || tag === 'emoji-picker',
-                    },
+                        isCustomElement: (tag) => tag === 'deep-chat'
+                    }
                 },
             }),
         ],

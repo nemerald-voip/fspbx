@@ -9,7 +9,7 @@ use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\FaxInboxController;
-use App\Http\Controllers\MessagesController;
+use App\Http\Controllers\MessageController;
 use App\Http\Controllers\UserLogsController;
 use App\Http\Controllers\EmailLogsController;
 use App\Http\Controllers\HotelRoomController;
@@ -269,11 +269,11 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('virtual-receptionists/duplicate', [VirtualReceptionistController::class, 'duplicate'])->name('virtual-receptionists.duplicate');
 
     // Messages
-    Route::get('/messages/rooms', [MessagesController::class, 'rooms'])->name('messages.rooms');
-    Route::get('/messages/rooms/{roomId}/messages', [MessagesController::class, 'roomMessages'])->name('messages.room.messages');
-    Route::post('/messages/send', [MessagesController::class, 'send'])->name('messages.send');
-    Route::get('/messages/logs', [MessagesController::class, 'logs'])->name('messages.logs');
-
+    Route::get('/messages/rooms', [MessageController::class, 'rooms'])->name('messages.rooms');
+    Route::get('/messages/rooms/{roomId}/messages', [MessageController::class, 'roomMessages'])->name('messages.room.messages');
+    Route::post('/messages/send', [MessageController::class, 'send'])->name('messages.send');
+    Route::get('/messages/logs', [MessageController::class, 'logs'])->name('messages.logs');
+    Route::get('/messages/data', [MessageController::class, 'getData'])->name('messages.data');
 
     // Message Settings
     Route::get('/message-settings/data', [MessageSettingsController::class, 'getData'])->name('messages.settings.data');
