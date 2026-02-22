@@ -27,7 +27,7 @@ In our demonstration we will be setting up Asterisk AI to host two contexts, wit
 
 This assumes you'll be hosting Ollama on a dedicated system.
 
-# FusionPBX Configuration Changes
+## FusionPBX Configuration Changes
 
 ## Overview
 
