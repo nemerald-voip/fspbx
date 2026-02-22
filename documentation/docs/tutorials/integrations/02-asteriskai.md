@@ -282,4 +282,3 @@ As far as configuration goes, for Asterisk AI, we strongly encourage you review 
 
 Be sure to support the work of the maintainer by going [here](https://ko-fi.com/asteriskaivoiceagent).
 
----
