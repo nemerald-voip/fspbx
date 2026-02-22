@@ -281,3 +281,5 @@ And click **Submit**
 As far as configuration goes, for Asterisk AI, we strongly encourage you review the [documentation](https://github.com/hkjarral/Asterisk-AI-Voice-Agent?tab=readme-ov-file#-documentation), we also encourage checking out their [Discord](https://discord.gg/ysg8fphxUe).  The maintainer is quite active, and if you've caught him at a good time will offer assistance.  
 
 Be sure to support the work of the maintainer by going [here](https://ko-fi.com/asteriskaivoiceagent).
+
+---
