@@ -2,43 +2,45 @@
 
 namespace App\Providers;
 
-use App\Models\User;
-use App\Models\Domain;
-use App\Models\Devices;
-use App\Models\Extensions;
-use App\Models\RingGroups;
-use Laravel\Horizon\Horizon;
-use Laravel\Sanctum\Sanctum;
-use App\Models\EmergencyCall;
-use App\Observers\UserObserver;
-use App\Observers\DeviceObserver;
-use App\Observers\DomainObserver;
-use App\Models\EmergencyCallEmail;
 use App\Models\BusinessHourHoliday;
-use App\Models\EmergencyCallMember;
+use App\Models\CallTranscriptionPolicy;
+use App\Models\CallTranscriptionProviderConfig;
+use App\Models\Devices;
+use App\Models\Domain;
 use App\Models\DomainGroupRelations;
+use App\Models\EmergencyCall;
+use App\Models\EmergencyCallEmail;
+use App\Models\EmergencyCallMember;
+use App\Models\Extensions;
+use App\Models\Messages;
+use App\Models\RingGroups;
+use App\Models\Sanctum\PersonalAccessToken;
+use App\Models\User;
+use App\Models\UserDomainGroupPermissions;
+use App\Observers\BusinessHourHolidayObserver;
+use App\Observers\CallTranscriptionPolicyObserver;
+use App\Observers\CallTranscriptionProviderConfigObserver;
+use App\Observers\DeviceObserver;
+use App\Observers\DomainGroupRelationsObserver;
+use App\Observers\DomainObserver;
+use App\Observers\EmergencyCallEmailObserver;
+use App\Observers\EmergencyCallMemberObserver;
+use App\Observers\EmergencyCallObserver;
 use App\Observers\ExtensionObserver;
+use App\Observers\MessageObserver;
 use App\Observers\RingGroupObserver;
+use App\Observers\UserDomainGroupPermissionsObserver;
+use App\Observers\UserObserver;
+use App\Services\PolycomCloudProvider;
 use App\Services\RingotelApiService;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Vite;
-use App\Services\PolycomCloudProvider;
-use App\Models\CallTranscriptionPolicy;
 use Illuminate\Support\ServiceProvider;
-use App\Observers\EmergencyCallObserver;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\Rules\Password;
-use App\Models\UserDomainGroupPermissions;
-use App\Models\Sanctum\PersonalAccessToken;
-use App\Observers\EmergencyCallEmailObserver;
-use App\Observers\BusinessHourHolidayObserver;
-use App\Observers\EmergencyCallMemberObserver;
-use App\Models\CallTranscriptionProviderConfig;
-use App\Observers\DomainGroupRelationsObserver;
-use App\Observers\CallTranscriptionPolicyObserver;
-use App\Observers\UserDomainGroupPermissionsObserver;
-use App\Observers\CallTranscriptionProviderConfigObserver;
+use Laravel\Horizon\Horizon;
+use Laravel\Sanctum\Sanctum;
 
 
 class AppServiceProvider extends ServiceProvider
@@ -114,6 +116,7 @@ class AppServiceProvider extends ServiceProvider
         Domain::observe(DomainObserver::class);    
         DomainGroupRelations::observe(DomainGroupRelationsObserver::class);
         RingGroups::observe(RingGroupObserver::class);
+        Messages::observe(MessageObserver::class);
 
 
         Builder::macro('orWhereLike', function (string $column, string $search) {

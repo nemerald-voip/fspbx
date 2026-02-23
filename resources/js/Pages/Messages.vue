@@ -31,14 +31,9 @@
                     <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">
                         Viewing as:
                     </label>
-                    <select v-model="currentExtensionUuid" @change="onExtensionChange"
-                        class="w-full text-sm pl-3 pr-8 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition shadow-sm bg-white"
-                        :disabled="loadingRooms">
-                        <option :value="null" disabled>Select Extension...</option>
-                        <option v-for="ext in extensionList" :key="ext.value" :value="ext.value">
-                            {{ ext.name }}
-                        </option>
-                    </select>
+                    <Multiselect v-model="selectedExtension" :options="extensionList" :searchable="true"
+                        :close-on-select="true" :show-labels="false" placeholder="Select Extension" label="name"
+                        track-by="value" class="custom-multiselect" @select="onExtensionChange" />
                 </div>
 
                 <!-- Room List -->
@@ -96,7 +91,7 @@
                     }" :textInput="{
                         placeholder: { text: 'Type a message...' },
                         styles: {
-                            container: { backgroundColor: 'white', borderTop: '1px solid #e5e7eb', padding: '15px' },
+                            container: { backgroundColor: 'white', borderTop: '1px solid #e5e7eb', maxHeight: '100px', },
                             text: { color: '#374151' }
                         }
                     }">
@@ -142,12 +137,13 @@ import axios from 'axios';
 import 'deep-chat'; // Registers the web component
 import MainLayout from "../Layouts/MainLayout.vue";
 import Notification from "./components/notifications/Notification.vue";
+import Multiselect from 'vue-multiselect'
+import 'vue-multiselect/dist/vue-multiselect.css'
 
 
 // --- Props (from Laravel/Inertia) ---
 const props = defineProps({
     routes: { type: Object, required: true },
-    auth: { type: Object, required: true }
 })
 
 // --- State ---
@@ -158,7 +154,8 @@ const loadingRooms = ref(false);
 const currentHistory = ref([]); // Messages for the active room
 const showCreateModal = ref(false);
 const newRoomName = ref('');
-const currentExtensionUuid = ref(null)
+const currentExtensionUuid = ref(null);
+const selectedExtension = ref(null); // <--- Holds the full {name, value} object
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
@@ -183,7 +180,7 @@ const extensionList = computed(() => data.value.extensions || []);
 onMounted(async () => {
     // 1. Fetch Extensions first
     await getData();
-    
+
     // 2. Fetch Rooms (only after we have the Extension ID)
     await fetchRooms();
 });
@@ -194,22 +191,19 @@ const getData = async () => {
     try {
         const response = await axios.get(props.routes.data_route);
         data.value = response.data;
-        
+
         // AUTO-SELECT LOGIC:
-        // If currentExtensionUuid is empty, try to set it to the logged-in user's extension
         if (!currentExtensionUuid.value) {
-            // Check where the extension_uuid lives in your auth prop structure.
-            // Usually: props.auth.user.extension_uuid OR props.auth.extension_uuid
-            const myExtensionId = props.auth.user?.extension_uuid || props.auth.extension_uuid;
-            
-            // Validate that this ID actually exists in the list we just fetched
-            const exists = (data.value.extensions || []).find(e => e.value === myExtensionId);
-            
+            const defaultId = data.value.extension_uuid;
+            const exists = (data.value.extensions || []).find(e => e.value === defaultId);
+
             if (exists) {
-                currentExtensionUuid.value = myExtensionId;
+                // Set BOTH states
+                currentExtensionUuid.value = defaultId;
+                selectedExtension.value = exists; // <--- Sync object for Multiselect
             } else if (data.value.extensions?.length > 0) {
-                // Fallback: Select the first one if my extension isn't in the list
                 currentExtensionUuid.value = data.value.extensions[0].value;
+                selectedExtension.value = data.value.extensions[0];
             }
         }
     } catch (error) {
@@ -217,22 +211,23 @@ const getData = async () => {
     }
 }
 
-const onExtensionChange = () => {
-    // Clear current chat view when switching users
+// When user selects from Dropdown
+const onExtensionChange = (selectedOption) => {
+    // 1. Update the string UUID that your API logic uses
+    currentExtensionUuid.value = selectedOption ? selectedOption.value : null;
+
+    // 2. Clear Chat & Refresh
     activeRoomId.value = null;
     currentHistory.value = [];
-    
-    // Refresh list
     fetchRooms();
-}
+};
 
 async function fetchRooms() {
     loadingRooms.value = true;
     try {
         const { data } = await axios.get(props.routes.roomsIndex, {
             params: {
-                // CRITICAL: Send the selected extension to the backend
-                extension_uuid: currentExtensionUuid.value 
+                extension_uuid: currentExtensionUuid.value
             }
         });
 
@@ -276,8 +271,9 @@ function joinChannel(roomId) {
         .listen('.message.new', (e) => {
             console.log('📩 Reverb Message:', e);
 
-            // e contains exactly what we returned in broadcastWith()
-            // { text: "Hello", role: "ai", timestamp: "..." }
+            // IGNORE messages sent by 'user' (You) 
+            // because DeepChat already showed them when you hit Enter.
+            if (e.role === 'user') return;
 
             if (elementRef.value) {
                 // 3. Inject directly into DeepChat
@@ -372,36 +368,38 @@ async function createRoom() {
 }
 
 // --- DeepChat Configuration ---
+// --- DeepChat Configuration ---
 const connectConfig = {
-    handler: async (body, signals) => {
-        // 'body' contains the message the user just typed: { messages: [{ text: 'Hello' }] }
-        const userMessageText = body.messages[0].text;
-        const currentId = activeRoomId.value;
+    websocket: true, // <--- 1. Enable Async/Socket Mode
+    handler: (body, signals) => {
+        // 2. Immediately mark the connection as "Open" so the user can type
+        signals.onOpen(); 
 
-        if (!currentId) {
-            signals.onResponse({ error: 'No room selected' });
-            return;
-        }
+        // 3. Listen for when the user hits "Send"
+        signals.newUserMessage.listener = async (messageBody) => {
+            const userMessageText = messageBody.messages[0].text;
+            const currentId = activeRoomId.value;
 
-        try {
-            // Send to Backend
-            const { data } = await axios.post(props.routes.sendMessage, {
-                roomId: currentId,
-                message: userMessageText
-            });
+            if (!currentId) return;
 
-            // If backend returns a formatted message object, great. 
-            // If not, DeepChat has already displayed the user's message optimistically.
-            // We just need to tell DeepChat the transfer is done.
-            signals.onResponse({});
+            try {
+                // 4. Send to Backend (Fire & Forget)
+                await axios.post(props.routes.sendMessage, {
+                    roomId: currentId,
+                    message: userMessageText,
+                    extension_uuid: currentExtensionUuid.value
+                });
 
-            // NOTE: If your backend replies immediately with an auto-response, 
-            // you would pass it here: signals.onResponse({ text: data.reply });
+                // DONE! We do NOT need to call signals.onResponse().
+                // Deep Chat has already added the user's message to the UI.
+                // The "real" confirmation will come later via your Reverb listener.
 
-        } catch (e) {
-            console.error("Send failed", e);
-            signals.onResponse({ error: 'Failed to send message' });
-        }
+            } catch (e) {
+                console.error("Send failed", e);
+                // Optional: If you want to show a generic error bubble
+                signals.onResponse({ error: "Failed to send message" });
+            }
+        };
     }
 };
 
@@ -465,3 +463,19 @@ const showNotification = (type, messages = null) => {
 }
 
 </script>
+
+<style>
+.multiselect__content-wrapper {
+    z-index: 50 !important;
+}
+
+/* Optional: Match your Tailwind styles closer */
+.custom-multiselect .multiselect__tags {
+    min-height: 42px;
+    padding-top: 10px;
+    border-radius: 0.5rem;
+    /* rounded-lg */
+    border-color: #d1d5db;
+    /* border-gray-300 */
+}
+</style>

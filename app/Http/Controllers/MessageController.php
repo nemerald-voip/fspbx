@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MessageSent;
 use App\Factories\MessageProviderFactory;
 use App\Jobs\SendSmsNotificationToSlack;
 use App\Mail\SmsToEmail;
@@ -61,11 +62,6 @@ class MessageController extends Controller
                     'sendMessage'  => route('messages.send'),
                     'data_route'   => route('messages.data'),
                 ],
-                'auth' => [
-                    // Adjust these to however FS PBX exposes current extension
-                    'currentExtensionUuid' => auth()->user()->extension_uuid ?? '',
-                    'currentExtensionName' => session('extension_name') ?? 'You',
-                ],
             ]
         );
     }
@@ -73,12 +69,8 @@ class MessageController extends Controller
     public function getData()
     {
         try {
+            $extension_uuid = auth()->user()->extension_uuid;
 
-            $itemUuid = request('itemUuid');
-
-
-
-            // $device = $this->model::find(request('itemUuid'));
 
             $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
 
@@ -91,19 +83,21 @@ class MessageController extends Controller
                     'effective_caller_id_name',
                 ]);
 
-            $extensionOptions = [];
-            // Loop through each extension and create an option
-            foreach ($extensions as $extension) {
-                $extensionOptions[] = [
-                    'value' => $extension->extension_uuid,
-                    'name' => auth()->user()->extension_uuid ==  $extension->extension_uuid ? "My Extension" :$extension->name_formatted,
+            $extensionOptions = $extensions->map(function ($ext) use ($extension_uuid) {
+                $isMe = $ext->extension_uuid === $extension_uuid;
+                return [
+                    'value' => $ext->extension_uuid,
+                    'name' => $isMe ? "{$ext->name_formatted} (Me)" : $ext->name_formatted,
+                    'is_me' => $isMe, // Add a flag for sorting
                 ];
-            }
+            })
+                ->sortByDesc('is_me') // True (1) comes before False (0)
+                ->values();
 
 
             // Construct the data object
             $data = [
-                'item' => $deviceDto ?? null,
+                'extension_uuid' => $extension_uuid ?? null,
                 'extensions' => $extensionOptions,
                 // 'permissions' => $this->getUserPermissions(),
                 // Define options for other fields as needed
@@ -123,21 +117,21 @@ class MessageController extends Controller
 
     public function rooms(Request $request)
     {
-        // ... setup variables ...
+        // logger($request->all()); 
+
         $domainUuid = $this->currentDomainUuid();
         $limit = min((int) $request->input('limit', 50), 200);
 
-        // 1. Define the SQL for "Raw Digits"
-        // This strips everything except numbers 0-9
+        // 1. CAPTURE THE EXTENSION UUID
+        $targetExtensionUuid = $request->input('extension_uuid');
+        $search = trim((string) $request->input('q', ''));
+
+        // 2. Define SQL Logic (Keep exactly as you had it)
         $rawDigitsSql = "REGEXP_REPLACE(
         CASE WHEN direction = 'in' THEN source ELSE destination END, 
         '\D', '', 'g'
     )";
 
-        // 2. Define the Smart Normalization Logic
-        // IF 11 digits and starts with '1' (US E.164) -> Keep it
-        // IF 10 digits (US Local) -> Prepend '1'
-        // ELSE -> Keep the raw digits (International fallback)
         $normalizedSql = "
         CASE 
             WHEN LENGTH($rawDigitsSql) = 11 AND LEFT($rawDigitsSql, 1) = '1' THEN $rawDigitsSql
@@ -146,22 +140,34 @@ class MessageController extends Controller
         END
     ";
 
-        // 3. Build the Query
+        // 3. Build Base Query
         $base = Messages::query()
             ->selectRaw("
             message_uuid,
             message,
             created_at,
-            -- Select the raw original for display
+            extension_uuid, 
             CASE WHEN direction = 'in' THEN source ELSE destination END AS original_number,
-            -- Select our calculated ID for grouping
             $normalizedSql as normalized_id
         ")
             ->where('domain_uuid', $domainUuid);
 
-        // ... Add your search/permission filters here ...
+        // 4. APPLY THE EXTENSION FILTER
+        // This is the key update. If the frontend sends an extension_uuid, we filter by it.
+        if ($targetExtensionUuid) {
+            $base->where('extension_uuid', $targetExtensionUuid);
+        }
 
-        // 4. Distinct On the CALCULATED ID
+        // 5. APPLY SEARCH (If needed)
+        if ($search !== '') {
+            $base->where(function ($w) use ($search) {
+                $w->where('source', 'like', "%{$search}%")
+                    ->orWhere('destination', 'like', "%{$search}%")
+                    ->orWhere('message', 'like', "%{$search}%");
+            });
+        }
+
+        // 6. Execute Grouping
         $rows = DB::query()
             ->fromSub($base, 't')
             ->selectRaw("DISTINCT ON (normalized_id)
@@ -176,11 +182,11 @@ class MessageController extends Controller
             ->limit($limit)
             ->get();
 
-        // 5. Map to Vue
+        // 7. Format Response
         $rooms = $rows->map(function ($r) {
             return [
-                'id' => $r->normalized_id, // This is now clean (e.g., 16467052267)
-                'name' => $r->original_number, // Display the number as it appears in DB
+                'id' => $r->normalized_id,
+                'name' => $this->formatPhoneNumber($r->original_number), // Optional formatter
                 'avatar' => null,
                 'unread' => 0,
                 'lastMessage' => $r->message,
@@ -191,17 +197,11 @@ class MessageController extends Controller
         return response()->json(['rooms' => $rooms]);
     }
 
-    // Add this helper method to your controller
-    private function formatPhoneNumber($digits)
+    // Optional helper if you don't have it yet
+    private function formatPhoneNumber($number)
     {
-        // If it's 10 digits (US standard), format it nicely
-        if (strlen($digits) === 10) {
-            return '+1 ' . substr($digits, 0, 3) . '-' . substr($digits, 3, 3) . '-' . substr($digits, 6);
-        }
-        return $digits;
+        return $number; // Add formatting logic here if desired
     }
-
-
 
 
     /**
@@ -297,6 +297,65 @@ class MessageController extends Controller
         throw new \Exception('extension_uuid not found (auth or session)');
     }
 
+
+    public function send(Request $request)
+    {
+        // 1. Validate
+        $data = $request->validate([
+            'roomId' => 'required|string', // This is the Destination Number (e.g. 1646...)
+            'message' => 'required|string',
+            'extension_uuid' => 'required|uuid', // The "From" identity
+        ]);
+
+        try {
+            $domainUuid = $this->currentDomainUuid();
+
+            // 2. Find the Extension to get its Number
+            $extension = Extensions::where('extension_uuid', $data['extension_uuid'])
+                ->where('domain_uuid', $domainUuid)
+                ->firstOrFail();
+
+            // 3. Find the Source Phone Number (DID) for this extension
+            // We reuse your existing logic helper
+            $smsConfig = $this->getPhoneNumberSmsConfig($extension->extension, $domainUuid);
+            $sourceNumber = $smsConfig->destination; // 'destination' in SmsDestinations is the DID
+
+            // 4. Save to Database
+            $msg = new Messages();
+            $msg->domain_uuid = $domainUuid;
+            $msg->extension_uuid = $extension->extension_uuid;
+            $msg->direction = 'out';
+            $msg->type = 'sms';
+            $msg->status = 'queued';
+            $msg->source = $sourceNumber; // The DID
+            $msg->destination = $data['roomId']; // The Customer Number
+            $msg->message = $data['message'];
+            $msg->created_at = now();
+            $msg->save();
+
+            // 5. Trigger the Actual SMS Provider (Commio/etc)
+            // Using your existing Factory logic
+            try {
+                $carrier = $smsConfig->carrier;
+                $messageProvider = MessageProviderFactory::make($carrier);
+                $messageProvider->send($msg->message_uuid);
+
+                $msg->status = 'sent';
+                $msg->save();
+            } catch (\Exception $e) {
+                logger("Provider Send Failed: " . $e->getMessage());
+                // We don't fail the request here, just log it, 
+                // because we successfully saved it to DB for the UI.
+                $msg->status = 'failed';
+                $msg->save();
+            }
+
+            return response()->json(['success' => true, 'message' => $msg]);
+        } catch (\Exception $e) {
+            logger($e);
+            return response()->json(['message' => $e->getMessage()], 500);
+        }
+    }
 
 
     public function retry()
