@@ -99,27 +99,19 @@
             </main>
         </div>
 
-        <!-- CREATE ROOM MODAL -->
+        <!-- VueForm CREATE ROOM MODAL -->
         <div v-if="showCreateModal"
             class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
             <div class="bg-white rounded-lg shadow-2xl w-96 p-6 transform transition-all scale-100">
-                <h3 class="text-lg font-bold text-gray-900 mb-4">Create New Room</h3>
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Start New Conversation</h3>
 
-                <input v-model="newRoomName" @keyup.enter="createRoom"
-                    placeholder="Enter room name (e.g., 'Project Alpha')"
-                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none mb-4"
-                    autofocus />
+                <!-- VueForm Component -->
+                <Vueform :endpoint="false" :schema="createRoomSchema" @submit="handleCreateRoom" />
 
-                <div class="flex justify-end space-x-3">
+                <!-- Close Button (Optional, if not included in form actions) -->
+                <div class="mt-4 flex justify-center">
                     <button @click="showCreateModal = false"
-                        class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
-                        Cancel
-                    </button>
-                    <button @click="createRoom"
-                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 shadow-md transition-colors"
-                        :disabled="!newRoomName.trim()">
-                        Create
-                    </button>
+                        class="text-sm text-gray-400 hover:text-gray-600">Cancel</button>
                 </div>
             </div>
         </div>
@@ -163,6 +155,9 @@ const notificationShow = ref(null);
 // Reference to DeepChat element to call methods directly
 const elementRef = ref(null);
 
+// DIDs State (Populated when extension changes)
+const myDids = ref([]);
+
 // --- Computed ---
 const currentRoomName = computed(() => {
     return rooms.value.find(r => r.id === activeRoomId.value)?.name || 'Chat';
@@ -193,17 +188,29 @@ const getData = async () => {
         data.value = response.data;
 
         // AUTO-SELECT LOGIC:
+        // If currentExtensionUuid is empty, try to set it to the logged-in user's extension
         if (!currentExtensionUuid.value) {
             const defaultId = data.value.extension_uuid;
+
+            // Find the extension object in the list
             const exists = (data.value.extensions || []).find(e => e.value === defaultId);
 
             if (exists) {
-                // Set BOTH states
+                // 1. Set the UUID
                 currentExtensionUuid.value = defaultId;
-                selectedExtension.value = exists; // <--- Sync object for Multiselect
+
+                // 2. Set the Multiselect Object
+                selectedExtension.value = exists;
+
+                // 3. CRITICAL: Populate DIDs for the "From" dropdown
+                if (exists.dids) myDids.value = exists.dids;
+
             } else if (data.value.extensions?.length > 0) {
-                currentExtensionUuid.value = data.value.extensions[0].value;
-                selectedExtension.value = data.value.extensions[0];
+                // Fallback: Select the first one available
+                const firstExt = data.value.extensions[0];
+                currentExtensionUuid.value = firstExt.value;
+                selectedExtension.value = firstExt;
+                if (firstExt.dids) myDids.value = firstExt.dids;
             }
         }
     } catch (error) {
@@ -368,36 +375,42 @@ async function createRoom() {
 }
 
 // --- DeepChat Configuration ---
-// --- DeepChat Configuration ---
 const connectConfig = {
-    websocket: true, // <--- 1. Enable Async/Socket Mode
+    websocket: true,
     handler: (body, signals) => {
-        // 2. Immediately mark the connection as "Open" so the user can type
-        signals.onOpen(); 
-
-        // 3. Listen for when the user hits "Send"
-        signals.newUserMessage.listener = async (messageBody) => {
-            const userMessageText = messageBody.messages[0].text;
-            const currentId = activeRoomId.value;
+        signals.onOpen();
+        signals.newUserMessage.listener = async (msgBody) => {
+            const text = msgBody.messages[0].text;
+            const currentId = activeRoomId.value; // e.g. "+1555...+1646..."
 
             if (!currentId) return;
 
+            // 1. Parse the Room ID to get From/To
+            let source = null;
+            let destination = null;
+
+            if (currentId.includes('_')) {
+                const parts = currentId.split('_');
+                source = parts[0];      // My DID
+                destination = parts[1]; // Customer
+            } else {
+                console.error("Invalid Room ID Format");
+                return;
+            }
+
             try {
-                // 4. Send to Backend (Fire & Forget)
+                // 2. Send Explicit From/To
                 await axios.post(props.routes.sendMessage, {
-                    roomId: currentId,
-                    message: userMessageText,
+                    source: source,
+                    destination: destination,
+                    message: text,
                     extension_uuid: currentExtensionUuid.value
                 });
 
-                // DONE! We do NOT need to call signals.onResponse().
-                // Deep Chat has already added the user's message to the UI.
-                // The "real" confirmation will come later via your Reverb listener.
-
+                // Success (No response needed in websocket mode)
             } catch (e) {
                 console.error("Send failed", e);
-                // Optional: If you want to show a generic error bubble
-                signals.onResponse({ error: "Failed to send message" });
+                // Optional: Show error
             }
         };
     }
@@ -425,6 +438,74 @@ function normalizeMessageForDeepChat(row) {
         // timestamp: row.timestamp 
     };
 }
+
+// --- Action: Handle Form Submit ---
+const handleCreateRoom = (form$, form) => {
+    const data = form.requestData; // Get clean data
+
+    const source = data.source;
+    let dest = data.destination.replace(/\D/g, ''); // Strip non-digits
+
+    // E.164 Cleanup (Simple +1 prepend if length is 10)
+    if (dest.length === 10) dest = '1' + dest;
+    dest = '+' + dest;
+
+    // 1. Construct Composite ID
+    const newCompositeId = `${source}_${dest}`;
+
+    // 2. Optimistic UI Update
+    const newRoom = {
+        id: newCompositeId,
+        name: dest,
+        my_number: source,
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(dest)}&background=random`,
+        unread: 0,
+        lastMessage: 'Draft'
+    };
+
+    rooms.value.unshift(newRoom);
+    selectRoom(newRoom.id);
+
+    // 3. Reset & Close
+    showCreateModal.value = false;
+}
+
+// --- VueForm Schema ---
+// We use a computed property so the 'items' (options) update automatically 
+// when 'myDids' changes.
+const createRoomSchema = computed(() => {
+    return {
+        source: {
+            type: 'select',
+            label: 'From',
+            items: myDids.value.map(did => ({
+                value: did.number,
+                label: `${did.label || 'Main'} (${did.number})`
+            })),
+            rules: ['required'],
+            default: myDids.value.length > 0 ? myDids.value[0].number : null,
+            search: true,
+            native: false, // Use custom select UI
+        },
+        destination: {
+            type: 'text',
+            inputType: 'tel',
+            label: 'To (Customer)',
+            placeholder: '+15550000000',
+            rules: ['required', 'min:10'],
+        },
+        submit: {
+            type: 'button',
+            submits: true,
+            buttonLabel: 'Start Chat',
+            align: 'center',
+            buttonClass: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded mt-2',
+
+            disabled: myDids.value.length === 0,
+        }
+
+    }
+});
 
 // Cleanup
 onBeforeUnmount(() => {
