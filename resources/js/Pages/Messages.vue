@@ -70,11 +70,8 @@
 
             <!-- RIGHT COLUMN: Chat Area -->
             <main class="flex-1 relative flex flex-col bg-gray-100">
-                <!-- 
-               :key="activeRoomId" ensures the component re-renders when switching rooms 
-               to load the new history cleanly.
-            -->
-                <deep-chat :key="activeRoomId" :history="currentHistory" :connect="connectConfig"
+
+                <deep-chat ref="elementRef"  :history="currentHistory" :connect="connectConfig"
                     :introMessage="introMessage"
                     style="width: 100%; height: 100%; border: none; background-color: #f3f4f6;" :messageStyles="{
                         default: {
@@ -131,7 +128,7 @@ import MainLayout from "../Layouts/MainLayout.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Multiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.css'
-
+import Pusher from 'pusher-js';
 
 // --- Props (from Laravel/Inertia) ---
 const props = defineProps({
@@ -158,6 +155,9 @@ const elementRef = ref(null);
 // DIDs State (Populated when extension changes)
 const myDids = ref([]);
 
+// Global Variable to store DeepChat signals ---
+let deepChatSignals = null;
+
 // --- Computed ---
 const currentRoomName = computed(() => {
     return rooms.value.find(r => r.id === activeRoomId.value)?.name || 'Chat';
@@ -173,6 +173,10 @@ const extensionList = computed(() => data.value.extensions || []);
 
 // --- Lifecycle ---
 onMounted(async () => {
+
+        // Enable debug logs to see Subscription Success/Failure
+    Pusher.logToConsole = true; 
+
     // 1. Fetch Extensions first
     await getData();
 
@@ -220,10 +224,17 @@ const getData = async () => {
 
 // When user selects from Dropdown
 const onExtensionChange = (selectedOption) => {
-    // 1. Update the string UUID that your API logic uses
+    // 1. Update the string UUID
     currentExtensionUuid.value = selectedOption ? selectedOption.value : null;
 
-    // 2. Clear Chat & Refresh
+    // 2. CRITICAL: Update the DIDs list for the "Create Room" form
+    if (selectedOption && selectedOption.dids) {
+        myDids.value = selectedOption.dids;
+    } else {
+        myDids.value = [];
+    }
+
+    // 3. Clear Chat & Refresh Rooms
     activeRoomId.value = null;
     currentHistory.value = [];
     fetchRooms();
@@ -261,42 +272,46 @@ async function fetchRooms() {
 }
 
 // --- REVERB WEBSOCKET LOGIC ---
-
 function joinChannel(roomId) {
-    // 1. Safety check: Leave old channel
     leaveChannel(activeRoomId.value);
 
-    if (!window.Echo) {
-        console.error("Laravel Echo is not configured.");
-        return;
-    }
+    if (!window.Echo) return;
 
-    console.log(`🔌 Joining Reverb channel: room.${roomId}`);
+    const channelId = roomId.replace(/\+/g, '');
 
-    // 2. Listen to Private Channel
-    window.Echo.private(`room.${roomId}`)
+    console.log(`🔌 Joining Reverb channel: room.${channelId}`);
+
+    window.Echo.private(`room.${channelId}`)
         .listen('.message.new', (e) => {
-            console.log('📩 Reverb Message:', e);
+            console.log('✅ LISTENER FIRED:', e);
 
-            // IGNORE messages sent by 'user' (You) 
-            // because DeepChat already showed them when you hit Enter.
+            // 1. Skip my own messages (Optimistic UI handled them)
             if (e.role === 'user') return;
 
-            if (elementRef.value) {
-                // 3. Inject directly into DeepChat
-                elementRef.value.pushNewMessage(e);
+            // 2. USE SIGNALS INSTEAD OF ELEMENT REF
+            if (deepChatSignals) {
+                console.log('Injecting via Signals...');
+                
+                // signals.onResponse() injects the message into the chat UI
+                // e contains { text: "...", role: "ai", timestamp: "..." }
+                deepChatSignals.onResponse(e); 
+            } else {
+                console.error('❌ DeepChat Signals not initialized yet');
             }
         })
         .error((error) => {
-            console.error('Reverb Error:', error);
+            console.error('Reverb Subscription Error:', error);
         });
 }
 
 function leaveChannel(roomId) {
     if (window.Echo && roomId) {
-        window.Echo.leave(`room.${roomId}`);
+        // FIX: Strip '+' here too so we leave the correct channel
+        const channelId = roomId.replace(/\+/g, '');
+        window.Echo.leave(`room.${channelId}`);
     }
 }
+
 
 // --- Handler: Select Room ---
 async function selectRoom(id) {
@@ -338,79 +353,39 @@ async function fetchMessages(roomId) {
     }
 }
 
-async function createRoom() {
-    if (!newRoomName.value.trim()) return;
-
-    const tempId = `new-${Date.now()}`;
-    const name = newRoomName.value;
-
-    try {
-        // 1. OPTIONAL: Call your backend to create the room strictly
-        // const { data } = await axios.post(props.routes.createRoom, { name });
-        // const finalId = data.room.id;
-
-        // 2. FOR NOW: Optimistic Local Update
-        const newRoom = {
-            id: tempId, // Replace with finalId if using API
-            name: name,
-            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
-            unread: 0,
-            lastMessage: 'Room created'
-        };
-
-        // Add to top of list
-        rooms.value.unshift(newRoom);
-
-        // Select it immediately
-        selectRoom(newRoom.id);
-
-        // Reset Modal
-        newRoomName.value = '';
-        showCreateModal.value = false;
-
-    } catch (e) {
-        console.error("Failed to create room", e);
-        alert("Error creating room");
-    }
-}
-
 // --- DeepChat Configuration ---
 const connectConfig = {
-    websocket: true,
+    websocket: true, // Enable async mode
     handler: (body, signals) => {
-        signals.onOpen();
+        // CAPTURE SIGNALS HERE
+        // This allows us to use 'signals' anywhere in our code (like inside Echo)
+        deepChatSignals = signals; 
+        
+        signals.onOpen(); // Mark connection as open immediately
+
+        // Handle User Sending Message
         signals.newUserMessage.listener = async (msgBody) => {
             const text = msgBody.messages[0].text;
-            const currentId = activeRoomId.value; // e.g. "+1555...+1646..."
+            const currentId = activeRoomId.value;
 
             if (!currentId) return;
 
-            // 1. Parse the Room ID to get From/To
-            let source = null;
-            let destination = null;
-
-            if (currentId.includes('_')) {
-                const parts = currentId.split('_');
-                source = parts[0];      // My DID
-                destination = parts[1]; // Customer
-            } else {
-                console.error("Invalid Room ID Format");
-                return;
-            }
+            // Parse ID (source_dest)
+            const parts = currentId.split('_');
+            if (parts.length !== 2) return;
 
             try {
-                // 2. Send Explicit From/To
+                // Fire and Forget (Optimistic UI)
                 await axios.post(props.routes.sendMessage, {
-                    source: source,
-                    destination: destination,
+                    source: parts[0],
+                    destination: parts[1],
                     message: text,
                     extension_uuid: currentExtensionUuid.value
                 });
-
-                // Success (No response needed in websocket mode)
             } catch (e) {
                 console.error("Send failed", e);
-                // Optional: Show error
+                // Optional: Notify user of failure
+                // signals.onResponse({ error: "Failed to send" });
             }
         };
     }
@@ -440,15 +415,11 @@ function normalizeMessageForDeepChat(row) {
 }
 
 // --- Action: Handle Form Submit ---
-const handleCreateRoom = (form$, form) => {
-    const data = form.requestData; // Get clean data
+const handleCreateRoom = (form$) => {
+    const data = form$.requestData;
 
     const source = data.source;
     let dest = data.destination.replace(/\D/g, ''); // Strip non-digits
-
-    // E.164 Cleanup (Simple +1 prepend if length is 10)
-    if (dest.length === 10) dest = '1' + dest;
-    dest = '+' + dest;
 
     // 1. Construct Composite ID
     const newCompositeId = `${source}_${dest}`;
@@ -480,7 +451,7 @@ const createRoomSchema = computed(() => {
             label: 'From',
             items: myDids.value.map(did => ({
                 value: did.number,
-                label: `${did.label || 'Main'} (${did.number})`
+                label: [did.number, did.label].filter(Boolean).join(' - ')
             })),
             rules: ['required'],
             default: myDids.value.length > 0 ? myDids.value[0].number : null,
@@ -492,7 +463,7 @@ const createRoomSchema = computed(() => {
             inputType: 'tel',
             label: 'To (Customer)',
             placeholder: '+15550000000',
-            rules: ['required', 'min:10'],
+            floating: false
         },
         submit: {
             type: 'button',

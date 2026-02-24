@@ -30,8 +30,13 @@ class MessageSent implements ShouldBroadcastNow
     // 1. Channel Name: 'room.{id}'
     public function broadcastOn(): array
     {
+        // FIX: Strip '+' from the ID before creating the channel name
+        // Input: +1555_+1666
+        // Output: room.1555_1666
+        $cleanId = str_replace('+', '', $this->roomId);
+
         return [
-            new PrivateChannel('room.' . $this->roomId),
+            new PrivateChannel('room.' . $cleanId),
         ];
     }
 
@@ -40,7 +45,7 @@ class MessageSent implements ShouldBroadcastNow
     {
         return 'message.new';
     }
-    
+
     // 3. Data to send: We only send the payload DeepChat needs
     public function broadcastWith(): array
     {

@@ -12,6 +12,7 @@ class MessageObserver
      */
     public function created(Messages $message): void
     {
+        logger("Observer Fired for Message: {$message->message_uuid}");
         $isOutbound = in_array(strtolower($message->direction), ['out', 'outbound', 'outgoing']);
         $role = $isOutbound ? 'user' : 'ai';
 
@@ -28,6 +29,8 @@ class MessageObserver
             'role' => $role,
             'timestamp' => $message->created_at->toIsoString(),
         ];
+
+        logger("Broadcasting to channel: room." . str_replace('+', '', $roomId)); 
 
         // 3. Broadcast
         broadcast(new MessageSent($payload, $roomId));

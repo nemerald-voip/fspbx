@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\MessageSent;
 use App\Factories\MessageProviderFactory;
 use App\Jobs\SendSmsNotificationToSlack;
 use App\Mail\SmsToEmail;
@@ -17,8 +16,8 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
+use libphonenumber\PhoneNumberFormat;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 
@@ -44,15 +43,6 @@ class MessageController extends Controller
      */
     public function index(Request $request)
     {
-
-        $extension = Extensions::where('extension_uuid', auth()->user()->extension_uuid)->select('extension_uuid', 'domain_uuid', 'extension')->first();
-
-        $smsConfigs = SmsDestinations::where('domain_uuid', $extension->domain_uuid ?? null)
-            ->where('chatplan_detail_data', $extension->extension ?? null)
-            ->get();
-
-        logger($smsConfigs);
-
         return Inertia::render(
             $this->viewName,
             [
@@ -110,7 +100,7 @@ class MessageController extends Controller
                     'dids' => $myDids->map(function ($did) {
                         return [
                             'number' => $did->destination,
-                            'label' => $did->description ?? 'Main'
+                            'label' => $did->description ?? null
                         ];
                     })->values()->all() // Ensure clean array
                 ];
@@ -294,36 +284,82 @@ class MessageController extends Controller
         throw new \Exception('extension_uuid not found (auth or session)');
     }
 
-
     public function send(Request $request)
     {
-        $request->validate([
-            'source' => 'required|string',      // My DID
-            'destination' => 'required|string', // Customer
+        // 1. Validate Input
+        $data = $request->validate([
+            'source' => 'required|string',      // My DID (e.g. +1555...)
+            'destination' => 'required|string', // Customer (e.g. +1646...)
             'message' => 'required|string',
             'extension_uuid' => 'required|uuid',
         ]);
 
-        // ... Verify that 'source' is actually assigned to 'extension_uuid' ...
-        // This security check depends on your SmsDestinations logic
-
         $domainUuid = $this->currentDomainUuid();
 
+        // 2. SECURITY CHECK: Verify Extension owns this Source Number
+        // First, find the extension model to get the local extension number (e.g. "101")
+        $extension = Extensions::where('extension_uuid', $data['extension_uuid'])
+            ->where('domain_uuid', $domainUuid)
+            ->firstOrFail();
+
+        // Next, check SmsDestinations to ensure this DID is assigned to this extension
+        // We assume 'destination' column holds the DID and 'chatplan_detail_data' holds the ext number
+        $smsConfig = SmsDestinations::where('domain_uuid', $domainUuid)
+            ->where('destination', $data['source'])
+            ->where('chatplan_detail_data', $extension->extension)
+            ->first();
+
+        if (!$smsConfig) {
+            return response()->json([
+                'message' => 'Unauthorized: The source number is not assigned to this extension.'
+            ], 403);
+        }
+
+        // 3. Save to Database
         $msg = new Messages();
         $msg->domain_uuid = $domainUuid;
-        $msg->extension_uuid = $request->extension_uuid;
+        $msg->extension_uuid = $data['extension_uuid'];
         $msg->direction = 'out';
-        $msg->source = $request->source;           // Explicit Source
-        $msg->destination = $request->destination; // Explicit Destination
-        $msg->message = $request->message;
+        $msg->type = 'sms'; 
         $msg->status = 'queued';
+
+        $countryCode = get_domain_setting('country', $domainUuid) ?? 'US';
+
+        $msg->source = formatPhoneNumber($data['source'],$countryCode,PhoneNumberFormat::E164);
+        $msg->destination = formatPhoneNumber($data['destination'],$countryCode,PhoneNumberFormat::E164);
+
+        $msg->message = $data['message'];
         $msg->created_at = now();
-        $msg->save(); // <--- Observer will trigger broadcast
 
-        // ... Trigger Carrier API (MessageProviderFactory) ...
-        // Note: Use $msg->source as the 'from' number
+        // Save triggers the Observer -> Broadcasts to Reverb
+        $msg->save();
 
-        return response()->json(['success' => true]);
+        // 4. Send via Carrier API
+        try {
+            $carrier = $smsConfig->carrier;
+
+            // Instantiate your provider (Commio, Twilio, etc)
+            $messageProvider = MessageProviderFactory::make($carrier);
+
+            // Execute Send
+            // Assuming your Factory expects the message_uuid to find the record
+            $messageProvider->send($msg->message_uuid);
+
+            // Update Status on Success
+            $msg->status = 'sent';
+            $msg->save();
+        } catch (\Exception $e) {
+            logger("Carrier Send Failed: " . $e->getMessage());
+
+            // Update Status on Failure
+            $msg->status = 'failed';
+            $msg->save();
+
+            // We throw 500 so frontend knows it failed (DeepChat will show error)
+            return response()->json(['message' => 'Carrier failed: ' . $e->getMessage()], 500);
+        }
+
+        return response()->json(['success' => true, 'message' => $msg]);
     }
 
 
