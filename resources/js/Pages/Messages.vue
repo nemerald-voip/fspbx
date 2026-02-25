@@ -37,32 +37,53 @@
                 </div>
 
                 <!-- Room List -->
+                <!-- Update your Room List div -->
                 <div class="flex-1 overflow-y-auto">
                     <div v-for="room in rooms" :key="room.id" @click="selectRoom(room.id)"
-                        class="flex items-center p-4 cursor-pointer transition-colors duration-200 hover:bg-gray-50 border-l-4"
+                        class="group relative flex items-center p-3 cursor-pointer transition-all duration-200 border-l-4 hover:bg-gray-50"
                         :class="[
                             activeRoomId === room.id
-                                ? 'bg-blue-50 border-blue-500'
+                                ? 'bg-blue-50 border-blue-600'
                                 : 'border-transparent'
                         ]">
-                        <!-- Avatar -->
-                        <img :src="room.avatar || 'https://cdn-icons-png.flaticon.com/512/149/149071.png'" alt="avatar"
-                            class="w-10 h-10 rounded-full object-cover mr-4 shadow-sm" />
 
-                        <!-- Room Info -->
-                        <div class="flex-1 min-w-0">
-                            <div class="font-semibold text-gray-900 truncate">
-                                {{ room.name }}
+                        <!-- Avatar -->
+                        <div class="relative flex-shrink-0 mr-3">
+                            <div
+                                class="h-10 w-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 font-bold text-xs shadow-sm group-hover:shadow-md transition-shadow">
+                                <!-- Show Initials or Icon -->
+                                {{ room.name.slice(0, 2) }}
                             </div>
-                            <div class="text-sm text-gray-500 truncate">
-                                {{ room.lastMessage || 'Click to open chat...' }}
-                            </div>
+                            <!-- Online/Unread Dot could go here -->
                         </div>
 
-                        <!-- Unread Badge -->
-                        <div v-if="room.unread > 0"
-                            class="ml-2 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                            {{ room.unread }}
+                        <!-- Content Column -->
+                        <div class="flex-1 min-w-0 overflow-hidden">
+
+                            <!-- Row 1: Name + Time -->
+                            <div class="flex justify-between items-center mb-0.5">
+                                <h3 class="text-sm font-bold text-gray-900 truncate pr-2">
+                                    {{ room.name }}
+                                </h3>
+                                <span class="text-[10px] text-gray-400 flex-shrink-0 font-medium">
+                                    {{ formatDate(room.timestamp) }}
+                                </span>
+                            </div>
+
+                            <!-- Row 2: Badge + Message -->
+                            <div class="flex items-center">
+                                <!-- "Via" Badge -->
+                                <span v-if="room.my_number"
+                                    class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700 mr-2 flex-shrink-0 border border-blue-200">
+                                    {{ room.my_number }}
+                                </span>
+
+                                <!-- Last Message -->
+                                <p class="text-xs text-gray-500 truncate"
+                                    :class="{ 'font-semibold text-gray-800': room.unread > 0 }">
+                                    {{ room.lastMessage }}
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -71,7 +92,7 @@
             <!-- RIGHT COLUMN: Chat Area -->
             <main class="flex-1 relative flex flex-col bg-gray-100">
 
-                <deep-chat ref="elementRef"  :history="currentHistory" :connect="connectConfig"
+                <deep-chat ref="elementRef" :history="currentHistory" :connect="connectConfig"
                     :introMessage="introMessage"
                     style="width: 100%; height: 100%; border: none; background-color: #f3f4f6;" :messageStyles="{
                         default: {
@@ -128,7 +149,7 @@ import MainLayout from "../Layouts/MainLayout.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Multiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.css'
-import Pusher from 'pusher-js';
+// import Pusher from 'pusher-js';
 
 // --- Props (from Laravel/Inertia) ---
 const props = defineProps({
@@ -174,8 +195,8 @@ const extensionList = computed(() => data.value.extensions || []);
 // --- Lifecycle ---
 onMounted(async () => {
 
-        // Enable debug logs to see Subscription Success/Failure
-    Pusher.logToConsole = true; 
+    // Enable debug logs to see Subscription Success/Failure
+    // Pusher.logToConsole = true; 
 
     // 1. Fetch Extensions first
     await getData();
@@ -240,6 +261,8 @@ const onExtensionChange = (selectedOption) => {
     fetchRooms();
 };
 
+// --- Actions ---
+
 async function fetchRooms() {
     loadingRooms.value = true;
     try {
@@ -254,14 +277,16 @@ async function fetchRooms() {
             name: r.name,
             avatar: r.avatar,
             unread: Number(r.unread || 0),
-            lastMessage: r.lastMessage || 'No messages yet'
+            lastMessage: r.lastMessage || 'No messages yet',
+
+            // CAPTURE NEW FIELDS
+            my_number: r.my_number, // The local DID
+            timestamp: r.timestamp  // ISO String
         }));
 
-        // If list is not empty, select first
         if (rooms.value.length > 0) {
             selectRoom(rooms.value[0].id);
         } else {
-            // Clear view if no rooms
             activeRoomId.value = null;
         }
     } catch (e) {
@@ -270,6 +295,46 @@ async function fetchRooms() {
         loadingRooms.value = false;
     }
 }
+
+// --- Helper: Format Date ---
+function formatDate(isoString) {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    const now = new Date();
+
+    // Check if it's today
+    const isToday = date.getDate() === now.getDate() &&
+        date.getMonth() === now.getMonth() &&
+        date.getFullYear() === now.getFullYear();
+
+    if (isToday) {
+        // Show Time: "3:15 PM"
+        return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    } else {
+        // Show Date: "Feb 24"
+        return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+}
+
+// --- Helper: Update Sidebar List ---
+const updateSidebar = (roomId, newMessageText, timestamp = null) => {
+    // 1. Find the room in the list
+    const index = rooms.value.findIndex(r => r.id === roomId);
+
+    if (index !== -1) {
+        const room = rooms.value[index];
+
+        // 2. Update Data
+        room.lastMessage = newMessageText;
+        room.timestamp = timestamp || new Date().toISOString();
+
+        // 3. Move to Top
+        // Remove it from current position
+        rooms.value.splice(index, 1);
+        // Add it to the start
+        rooms.value.unshift(room);
+    }
+};
 
 // --- REVERB WEBSOCKET LOGIC ---
 function joinChannel(roomId) {
@@ -291,13 +356,16 @@ function joinChannel(roomId) {
             // 2. USE SIGNALS INSTEAD OF ELEMENT REF
             if (deepChatSignals) {
                 console.log('Injecting via Signals...');
-                
+
                 // signals.onResponse() injects the message into the chat UI
                 // e contains { text: "...", role: "ai", timestamp: "..." }
-                deepChatSignals.onResponse(e); 
+                deepChatSignals.onResponse(e);
             } else {
                 console.error('❌ DeepChat Signals not initialized yet');
             }
+
+            // Update Sidebar List
+            updateSidebar(roomId, e.text, e.timestamp);
         })
         .error((error) => {
             console.error('Reverb Subscription Error:', error);
@@ -359,8 +427,8 @@ const connectConfig = {
     handler: (body, signals) => {
         // CAPTURE SIGNALS HERE
         // This allows us to use 'signals' anywhere in our code (like inside Echo)
-        deepChatSignals = signals; 
-        
+        deepChatSignals = signals;
+
         signals.onOpen(); // Mark connection as open immediately
 
         // Handle User Sending Message
@@ -382,6 +450,9 @@ const connectConfig = {
                     message: text,
                     extension_uuid: currentExtensionUuid.value
                 });
+
+                // Update Sidebar immediately
+                updateSidebar(currentId, text, new Date().toISOString());
             } catch (e) {
                 console.error("Send failed", e);
                 // Optional: Notify user of failure
