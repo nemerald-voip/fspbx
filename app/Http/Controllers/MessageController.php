@@ -50,6 +50,7 @@ class MessageController extends Controller
                     'roomsIndex'   => route('messages.rooms'),
                     'roomMessages' => route('messages.room.messages', ['roomId' => ':roomId']),
                     'sendMessage'  => route('messages.send'),
+                    'markRead'  => route('messages.mark-read'),
                     'data_route'   => route('messages.data'),
                 ],
             ]
@@ -172,20 +173,51 @@ class MessageController extends Controller
             ->limit($limit)
             ->get();
 
-        // 3. Format Response
-        $rooms = $rows->map(function ($r) {
+        $pairs = $rows->map(function ($r) {
             return [
-                // COMPOSITE ID: +15551234567_+16469998888
-                'id' => "{$r->local_number}_{$r->remote_number}",
+                'to' => $r->local_number,   // Me
+                'from' => $r->remote_number // Customer
+            ];
+        });
 
-                // Display Name (The Customer)
+        // 2. Fetch Unread Counts in Bulk
+        // We want: count(*) where read_at is NULL AND direction is 'in'
+
+        // Efficiently build a query for these specific pairs
+        $unreadCounts = Messages::query()
+            ->selectRaw('source, destination, count(*) as count')
+            ->whereNull('read_at')
+            ->where('direction', 'in')
+            ->where('domain_uuid', $this->currentDomainUuid())
+            ->where(function ($q) use ($pairs) {
+                foreach ($pairs as $pair) {
+                    $q->orWhere(function ($sub) use ($pair) {
+                        $sub->where('destination', $pair['to'])
+                            ->where('source', $pair['from']);
+                    });
+                }
+            })
+            ->groupBy('source', 'destination')
+            ->get();
+
+        // 3. Map Counts Keyed by "MyDID_CustomerDID"
+        $countMap = [];
+        foreach ($unreadCounts as $u) {
+            $key = "{$u->destination}_{$u->source}";
+            $countMap[$key] = $u->count;
+        }
+
+        // 4. Merge into Response
+        $rooms = $rows->map(function ($r) use ($countMap) {
+            $id = "{$r->local_number}_{$r->remote_number}";
+
+            return [
+                'id' => $id,
                 'name' => $r->remote_number,
-
-                // Meta info (My DID) - useful for UI labels "Via +1..."
                 'my_number' => $r->local_number,
-
                 'avatar' => null,
-                'unread' => 0,
+                // LOOKUP COUNT (Default to 0)
+                'unread' => $countMap[$id] ?? 0,
                 'lastMessage' => $r->message,
                 'timestamp' => $r->created_at,
             ];
@@ -262,6 +294,28 @@ class MessageController extends Controller
         ]);
     }
 
+    public function markRead(Request $request)
+    {
+        $request->validate(['roomId' => 'required|string']);
+
+        // Parse Composite ID
+        $parts = explode('_', $request->roomId);
+        if (count($parts) !== 2) return response()->json([], 400);
+
+        $myDid = $parts[0];
+        $customerDid = $parts[1];
+
+        // Update DB
+        Messages::where('domain_uuid', $this->currentDomainUuid())
+            ->where('direction', 'in') // Only mark incoming messages
+            ->where('destination', $myDid)
+            ->where('source', $customerDid)
+            ->whereNull('read_at')
+            ->update(['read_at' => now()]);
+
+        return response()->json(['success' => true]);
+    }
+
 
 
     private function currentDomainUuid(): string
@@ -320,13 +374,13 @@ class MessageController extends Controller
         $msg->domain_uuid = $domainUuid;
         $msg->extension_uuid = $data['extension_uuid'];
         $msg->direction = 'out';
-        $msg->type = 'sms'; 
+        $msg->type = 'sms';
         $msg->status = 'queued';
 
         $countryCode = get_domain_setting('country', $domainUuid) ?? 'US';
 
-        $msg->source = formatPhoneNumber($data['source'],$countryCode,PhoneNumberFormat::E164);
-        $msg->destination = formatPhoneNumber($data['destination'],$countryCode,PhoneNumberFormat::E164);
+        $msg->source = formatPhoneNumber($data['source'], $countryCode, PhoneNumberFormat::E164);
+        $msg->destination = formatPhoneNumber($data['destination'], $countryCode, PhoneNumberFormat::E164);
 
         $msg->message = $data['message'];
         $msg->created_at = now();

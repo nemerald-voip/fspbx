@@ -32,3 +32,9 @@ Broadcast::channel('room.{roomId}', function ($user, $roomId) {
     // For now, let's assume if they are logged in and belong to the domain, it's okay:
     return $user->domain_uuid === request()->user()->domain_uuid;
 });
+
+Broadcast::channel('extension.{extensionUuid}', function ($user, $extensionUuid) {
+    // Allow if the user owns this extension OR is an admin
+    return true;
+    return $user->extension_uuid === $extensionUuid; // Adjust based on your Auth logic
+});

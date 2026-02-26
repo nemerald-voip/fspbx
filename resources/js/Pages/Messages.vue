@@ -37,7 +37,6 @@
                 </div>
 
                 <!-- Room List -->
-                <!-- Update your Room List div -->
                 <div class="flex-1 overflow-y-auto">
                     <div v-for="room in rooms" :key="room.id" @click="selectRoom(room.id)"
                         class="group relative flex items-center p-3 cursor-pointer transition-all duration-200 border-l-4 hover:bg-gray-50"
@@ -47,44 +46,56 @@
                                 : 'border-transparent'
                         ]">
 
-                        <!-- Avatar -->
+                        <!-- 1. Avatar -->
                         <div class="relative flex-shrink-0 mr-3">
                             <div
                                 class="h-10 w-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 font-bold text-xs shadow-sm group-hover:shadow-md transition-shadow">
-                                <!-- Show Initials or Icon -->
                                 {{ room.name.slice(0, 2) }}
                             </div>
-                            <!-- Online/Unread Dot could go here -->
                         </div>
 
-                        <!-- Content Column -->
-                        <div class="flex-1 min-w-0 overflow-hidden">
+                        <!-- 2. Middle Column: Name, Via, Message -->
+                        <div class="flex-1 min-w-0 overflow-hidden mr-2">
 
-                            <!-- Row 1: Name + Time -->
-                            <div class="flex justify-between items-center mb-0.5">
-                                <h3 class="text-sm font-bold text-gray-900 truncate pr-2">
-                                    {{ room.name }}
-                                </h3>
-                                <span class="text-[10px] text-gray-400 flex-shrink-0 font-medium">
-                                    {{ formatDate(room.timestamp) }}
-                                </span>
-                            </div>
+                            <!-- Name -->
+                            <h3 class="text-sm truncate mb-0.5"
+                                :class="room.unread > 0 ? 'font-bold text-gray-900' : 'font-semibold text-gray-700'">
+                                {{ room.name }}
+                            </h3>
 
-                            <!-- Row 2: Badge + Message -->
+                            <!-- Via Badge + Message -->
                             <div class="flex items-center">
-                                <!-- "Via" Badge -->
+                                <!-- Via Badge -->
                                 <span v-if="room.my_number"
                                     class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700 mr-2 flex-shrink-0 border border-blue-200">
                                     {{ room.my_number }}
                                 </span>
 
                                 <!-- Last Message -->
-                                <p class="text-xs text-gray-500 truncate"
-                                    :class="{ 'font-semibold text-gray-800': room.unread > 0 }">
+                                <p class="text-xs truncate"
+                                    :class="room.unread > 0 ? 'font-semibold text-gray-800' : 'text-gray-500'">
                                     {{ room.lastMessage }}
                                 </p>
                             </div>
                         </div>
+
+                        <!-- 3. Right Column: Time & Unread Badge -->
+                        <div class="flex flex-col items-end space-y-1">
+
+                            <!-- Time -->
+                            <span class="text-[10px] font-medium whitespace-nowrap"
+                                :class="room.unread > 0 ? 'text-blue-600' : 'text-gray-400'">
+                                {{ formatDate(room.timestamp) }}
+                            </span>
+
+                            <!-- Red Unread Badge -->
+                            <span v-if="room.unread > 0"
+                                class="flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-[10px] font-bold text-white bg-red-500 rounded-full shadow-sm animate-pulse">
+                                {{ room.unread }}
+                            </span>
+
+                        </div>
+
                     </div>
                 </div>
             </aside>
@@ -169,9 +180,7 @@ const selectedExtension = ref(null); // <--- Holds the full {name, value} object
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
-
-// Reference to DeepChat element to call methods directly
-const elementRef = ref(null);
+let globalEchoChannel = null;
 
 // DIDs State (Populated when extension changes)
 const myDids = ref([]);
@@ -237,6 +246,10 @@ const getData = async () => {
                 selectedExtension.value = firstExt;
                 if (firstExt.dids) myDids.value = firstExt.dids;
             }
+
+            if (currentExtensionUuid.value) {
+                joinExtensionChannel(currentExtensionUuid.value);
+            }
         }
     } catch (error) {
         handleErrorResponse(error);
@@ -254,6 +267,9 @@ const onExtensionChange = (selectedOption) => {
     } else {
         myDids.value = [];
     }
+
+    // Switch Global Channel
+    joinExtensionChannel(currentExtensionUuid.value);
 
     // 3. Clear Chat & Refresh Rooms
     activeRoomId.value = null;
@@ -372,9 +388,27 @@ function joinChannel(roomId) {
         });
 }
 
+const joinExtensionChannel = (extUuid) => {
+    // 1. Cleanup old listener
+    if (globalEchoChannel) {
+        window.Echo.leave(`extension.${globalEchoChannel}`);
+    }
+
+    if (!extUuid || !window.Echo) return;
+
+    console.log(`📡 Listening to Global Extension Channel: ${extUuid}`);
+    globalEchoChannel = extUuid;
+
+    // 2. Subscribe
+    window.Echo.private(`extension.${extUuid}`)
+        .listen('.conversation.updated', (e) => {
+            console.log('🔔 Global Update:', e);
+            handleGlobalUpdate(e);
+        });
+};
+
 function leaveChannel(roomId) {
     if (window.Echo && roomId) {
-        // FIX: Strip '+' here too so we leave the correct channel
         const channelId = roomId.replace(/\+/g, '');
         window.Echo.leave(`room.${channelId}`);
     }
@@ -389,6 +423,19 @@ async function selectRoom(id) {
     if (activeRoomId.value) leaveChannel(activeRoomId.value);
 
     activeRoomId.value = id;
+
+    // Clear Unread Badge Immediately ---
+    const room = rooms.value.find(r => r.id === id);
+    if (room) {
+        room.unread = 0;
+    }
+
+    //Backend Update: Mark messages as read in DB
+    try {
+        await axios.post(props.routes.markRead, { roomId: id });
+    } catch (e) {
+        console.error("Failed to mark as read", e);
+    }
 
     // Load history via API (Rest)
     await fetchMessages(id);
@@ -512,6 +559,47 @@ const handleCreateRoom = (form$) => {
     showCreateModal.value = false;
 }
 
+const handleGlobalUpdate = (e) => {
+    // e = { roomId, lastMessage, timestamp, direction, name, my_number }
+
+    // 1. Find Room
+    const index = rooms.value.findIndex(r => r.id === e.roomId);
+
+    let room;
+
+    if (index !== -1) {
+        // UPDATE EXISTING ROOM
+        room = rooms.value[index];
+        room.lastMessage = e.lastMessage;
+        room.timestamp = e.timestamp;
+
+        // Remove from current position to unshift later
+        rooms.value.splice(index, 1);
+    } else {
+        // CREATE NEW ROOM (Optimistic)
+        // This handles the case where a new customer texts in
+        room = {
+            id: e.roomId,
+            name: e.name,
+            my_number: e.my_number,
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(e.name)}&background=random`,
+            unread: 0,
+            lastMessage: e.lastMessage,
+            timestamp: e.timestamp
+        };
+    }
+
+    // 2. Handle Unread Count
+    // If this room is NOT the one currently open, and it's an INBOUND message, add badge
+    if (activeRoomId.value !== e.roomId && e.direction === 'in') {
+        room.unread = (room.unread || 0) + 1;
+    }
+    // If it IS the active room, we assume DeepChat showed it, so unread stays 0
+
+    // 3. Move/Add to Top
+    rooms.value.unshift(room);
+};
+
 // --- VueForm Schema ---
 // We use a computed property so the 'items' (options) update automatically 
 // when 'myDids' changes.
@@ -552,6 +640,8 @@ const createRoomSchema = computed(() => {
 // Cleanup
 onBeforeUnmount(() => {
     if (activeRoomId.value) leaveChannel(activeRoomId.value);
+    if (globalEchoChannel) window.Echo.leave(`extension.${globalEchoChannel}`);
+
 });
 
 const handleErrorResponse = (error) => {
