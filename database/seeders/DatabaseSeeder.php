@@ -137,6 +137,7 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Extensions', 'permission_name' => 'extension_voicemail_settings'],
             ['application_name' => 'Extensions', 'permission_name' => 'extension_create_user'],
             ['application_name' => 'Extensions', 'permission_name' => 'extension_create_admin'],
+            ['application_name' => 'Voicemail', 'permission_name' => 'voicemail_message_update'],
             ['application_name' => 'Locations', 'permission_name' => 'location_view'],
             ['application_name' => 'Locations', 'permission_name' => 'location_create'],
             ['application_name' => 'Locations', 'permission_name' => 'location_update'],
@@ -231,6 +232,7 @@ class DatabaseSeeder extends Seeder
                 'extension_voicemail_settings',
                 'extension_create_user',
                 'extension_create_admin',
+                'voicemail_message_update',
                 'location_view',
                 'location_create',
                 'location_update',
@@ -277,6 +279,7 @@ class DatabaseSeeder extends Seeder
                 'extension_do_not_disturb',
                 'extension_mobile_app_settings',
                 'extension_voicemail_settings',
+                'voicemail_message_update',
                 'xml_cdr_search_sentiment',
             ],
             'Message Admin' => [

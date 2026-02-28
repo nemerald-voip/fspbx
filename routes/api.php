@@ -35,6 +35,7 @@ use App\Http\Controllers\UserLogsController;
 use App\Http\Controllers\UsersController;
 use App\Http\Controllers\VirtualReceptionistController;
 use App\Http\Controllers\VoicemailController;
+use App\Http\Controllers\VoicemailMessagesController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -175,6 +176,17 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/voicemail/{voicemail}/recorde-name', [VoicemailController::class, 'getRecordedName'])->name('voicemail.recorded_name');
     Route::post('voicemails/{voicemail}/delete-recorded-name', [VoicemailController::class, 'deleteRecordedName'])->name('voicemails.deleteRecordedName');
     Route::post('voicemails/{voicemail}/upload-recorded-name', [VoicemailController::class, 'uploadRecordedName'])->name('voicemails.uploadRecordedName');
+
+    // Voicemail Messages
+    Route::get('voicemails/messages/data', [VoicemailMessagesController::class, 'getData'])->name('voicemails.messages.data');
+    Route::delete('/voicemails/messages/{message}', [VoicemailMessagesController::class, 'destroy'])->name('voicemails.messages.destroy');
+    Route::get('/voicemails/messages/{message}', [VoicemailMessagesController::class, 'getVoicemailMessage'])->name('voicemail.message');
+    Route::post('/voicemails/messages/get-url', [VoicemailMessagesController::class, 'getVoicemailMessageUrl'])->name('voicemail.message.url');
+    Route::get('/voicemails/messages/{message}/download', [VoicemailMessagesController::class, 'downloadVoicemailMessage'])->name('downloadVoicemailMessage');
+    Route::get('/voicemails/messages/{message}/delete', [VoicemailMessagesController::class, 'deleteVoicemailMessage'])->name('deleteVoicemailMessage');
+    Route::post('/voicemails/messages/bulk-delete', [VoicemailMessagesController::class, 'bulkDelete'])->name('voicemails.messages.bulk.delete');
+    Route::post('/voicemails/messages/select-all', [VoicemailMessagesController::class, 'selectAll'])->name('voicemails.messages.select.all');
+    Route::post('/voicemails/messages/status', [VoicemailMessagesController::class, 'updateStatus'])->name('voicemails.messages.update-status');
 
     // Inbound Webhooks
     Route::get('/inbound-webhooks/data', [InboundWebhooksController::class, 'getData'])->name('inbound-webhooks.data');
