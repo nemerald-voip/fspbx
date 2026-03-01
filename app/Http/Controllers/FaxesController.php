@@ -1136,7 +1136,6 @@ class FaxesController extends Controller
                 'fax_uuid' => $data['fax_uuid'],
             );
 
-            $redirect_url = route('faxes.sent.list', $data['fax_uuid']);
             $payload['Attachments'] = array();
 
             // Parse files
