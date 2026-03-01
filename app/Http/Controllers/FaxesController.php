@@ -143,6 +143,80 @@ class FaxesController extends Controller
         );
     }
 
+        /**
+     * Store a newly created resource in storage.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(CreateFaxRequest $request, Faxes $fax)
+    {
+
+        try {
+            DB::beginTransaction();
+
+            $data = $request->validated();
+            // logger($data);
+
+            // Create the fax server
+            $fax = Faxes::create($data);
+
+            // Add allowed emails
+            if (!empty($data['authorized_emails']) && is_array($data['authorized_emails'])) {
+                $emails = array_filter(array_map(function ($item) {
+                    return $item['email'] ?? null;
+                }, $data['authorized_emails']));
+
+                $allowedEmails = [];
+                foreach ($emails as $email) {
+                    if (!empty($email)) {
+                        $allowedEmails[] = ['email' => $email];
+                    }
+                }
+                if (!empty($allowedEmails)) {
+                    $fax->allowed_emails()->createMany($allowedEmails);
+                }
+            }
+
+            // Add allowed domains
+            if (!empty($data['authorized_domains']) && is_array($data['authorized_domains'])) {
+                $domains = array_filter(array_map(function ($item) {
+                    return $item['email'] ?? null;
+                }, $data['authorized_domains']));
+
+                $allowedDomains = [];
+                foreach ($domains as $domain) {
+                    if (!empty($domain)) {
+                        $allowedDomains[] = ['domain' => $domain];
+                    }
+                }
+                if (!empty($allowedDomains)) {
+                    $fax->allowed_domain_names()->createMany($allowedDomains);
+                }
+            }
+
+            // Generate dialplan for the new fax server
+            $this->generateDialPlanXML($fax);
+
+            // Build working directories
+            $this->buildWorkingDirectories($fax);
+
+            DB::commit();
+
+
+            return response()->json([
+                'messages' => ['success' => ['Fax server created successfully']],
+                'fax' => $fax->fresh(['allowed_emails', 'allowed_domain_names']),
+            ], 200);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger('FaxesController@update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return response()->json([
+                'messages' => ['error' => ['An error occurred while updating the fax.', $e->getMessage()]],
+            ], 500);
+        }
+    }
+
     public function getRecentOutbound()
     {
         $period = [
