@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\VoicemailMessages;
+use App\Models\Voicemails;
 use App\Services\FreeswitchEslService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -43,8 +44,26 @@ class VoicemailMessagesController extends Controller
         }
 
         $voicemail_uuid = request()->route('voicemail');
-
         $domain_uuid = session('domain_uuid');
+
+        // Fetch the mailbox with the extension relationship
+        $mailbox = Voicemails::where('voicemail_uuid', $voicemail_uuid)
+            ->where('domain_uuid', $domain_uuid)
+            ->with(['extension' => function ($query) {
+                $query->select('extension_uuid', 'extension', 'effective_caller_id_name');
+            }])
+            ->firstOrFail();
+
+        // Apply the exact logic from your CallRoutingOptionsService
+        if ($mailbox->extension) {
+            // Use extension's name_formatted (e.g., "John Doe - 101")
+            $mailboxLabel = $mailbox->extension->name_formatted;
+        } else {
+            // Fallback for team voicemails (e.g., "7001 - Team voicemail (Sales)")
+            $mailboxLabel = $mailbox->voicemail_id . " - Team voicemail" .
+                ($mailbox->voicemail_description ? ' (' . $mailbox->voicemail_description . ')' : '');
+        }
+
         $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->startOfDay()->setTimeZone('UTC');
         $endPeriod = Carbon::now(get_local_time_zone($domain_uuid))->endOfDay()->setTimeZone('UTC');
 
@@ -52,6 +71,8 @@ class VoicemailMessagesController extends Controller
             $this->viewName,
             [
                 'voicemail_uuid' => $voicemail_uuid,
+
+                'mailbox_label'  => $mailboxLabel,
 
                 'startPeriod' => function () use ($startPeriod) {
                     return $startPeriod;
@@ -388,7 +409,7 @@ class VoicemailMessagesController extends Controller
             "Content-Type" => $type,
             "Content-Length" => $size,
             "Content-Disposition" => ($isDownload ? 'attachment' : 'inline') . "; filename=\"msg_$uuid.wav\"",
-            "Accept-Ranges" => "bytes", 
+            "Accept-Ranges" => "bytes",
         ]);
     }
 

@@ -3,7 +3,17 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Voicemail messages</template>
+            <template #title>
+                <h1 class="text-xl font-bold text-gray-900 flex items-center">
+                    Voicemail messages
+                    <span v-if="props.mailbox_label" class="flex items-center">
+                        <svg class="mx-3 h-5 w-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                        <span class="font-medium text-gray-500">{{ props.mailbox_label }}</span>
+                    </span>
+                </h1>
+            </template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -280,6 +290,7 @@ const isDownloading = ref(false);
 
 const props = defineProps({
     voicemail_uuid: String,
+    mailbox_label: String,
     startPeriod: String,
     endPeriod: String,
     timezone: String,
@@ -419,9 +430,9 @@ const bulkActions = computed(() => {
 
 
 
-const handleSingleItemDeleteRequest = (url) => {
+const handleSingleItemDeleteRequest = (uuid) => {
     showConfirmationModal.value = true;
-    confirmDeleteAction.value = () => executeSingleDelete(url);
+    confirmDeleteAction.value = () => executeBulkDelete([uuid]);
 }
 
 
