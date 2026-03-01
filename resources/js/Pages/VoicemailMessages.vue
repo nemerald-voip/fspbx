@@ -146,33 +146,59 @@
                     <TableField
                         class="block lg:table-cell px-0 lg:px-2 py-2 text-sm border-t border-gray-100 lg:border-none mt-2 lg:mt-0 pt-2 lg:pt-0">
                         <div class="flex items-center justify-between lg:justify-end">
+                            <!-- Mobile Label -->
                             <span class="lg:hidden font-semibold text-gray-400 uppercase text-[10px]">Actions</span>
-                            <div class="flex items-center gap-1">
-                                <PlayCircleIcon
-                                    v-if="currentAudioUuid !== row.voicemail_message_uuid || !isAudioPlaying"
-                                    @click="fetchAndPlayAudio(row.voicemail_message_uuid)"
-                                    class="h-9 w-9 p-1.5 text-blue-500 cursor-pointer" />
-                                <PauseCircleIcon
-                                    v-if="currentAudioUuid === row.voicemail_message_uuid && isAudioPlaying"
-                                    @click="pauseAudio" class="h-9 w-9 p-1.5 text-red-500 cursor-pointer" />
-                                <CloudArrowDownIcon @click="downloadVoicemailMessage(row.voicemail_message_uuid)"
-                                    class="h-9 w-9 p-1.5 text-gray-400 cursor-pointer" />
 
-                                <!-- Status Toggle Button -->
-                                <button v-if="props.permissions.voicemail_message_update"
-                                    @click="executeStatusUpdate([row.voicemail_message_uuid], row.message_status === 'saved' ? null : 'saved')"
-                                    class="h-9 w-9 p-1.5 rounded-full text-gray-400 hover:bg-gray-100 transition-colors duration-200"
-                                    :title="row.message_status === 'saved' ? 'Mark as unread' : 'Mark as read'">
+                            <div class="flex items-center whitespace-nowrap justify-end">
 
-                                    <EnvelopeOpenIcon v-if="row.message_status === 'saved'" class="h-full w-full" />
-                                    <EnvelopeIcon v-else class="h-full w-full text-blue-500" />
-                                </button>
-                                <TrashIcon v-if="props.permissions.voicemail_message_destroy"
-                                    @click="handleSingleItemDeleteRequest(row.voicemail_message_uuid)"
-                                    class="h-9 w-9 p-1.5 text-gray-400 cursor-pointer" />
+                                <!-- Play Button -->
+                                <ejs-tooltip :content="'Listen'" position='TopCenter'
+                                    :target="'#play_tooltip_' + row.voicemail_message_uuid">
+                                    <div :id="'play_tooltip_' + row.voicemail_message_uuid">
+                                        <PlayCircleIcon @click="handlePlayVoicemail(row.voicemail_message_uuid)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-blue-500 hover:bg-blue-200 hover:text-blue-700 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                    </div>
+                                </ejs-tooltip>
+
+                                <!-- Download Button -->
+                                <ejs-tooltip :content="'Download'" position='TopCenter'
+                                    :target="'#download_tooltip_' + row.voicemail_message_uuid">
+                                    <div :id="'download_tooltip_' + row.voicemail_message_uuid">
+                                        <CloudArrowDownIcon v-if="!isDownloading"
+                                            @click="downloadVoicemailMessage(row.voicemail_message_uuid)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+
+                                        <Spinner :show="isDownloading" class="h-9 w-9 py-2" />
+                                    </div>
+                                </ejs-tooltip>
+
+                                <!-- Mark Read/Unread Toggle -->
+                                <ejs-tooltip v-if="props.permissions.voicemail_message_update"
+                                    :content="row.message_status === 'saved' ? 'Mark as unread' : 'Mark as read'"
+                                    position='TopCenter' :target="'#status_tooltip_' + row.voicemail_message_uuid">
+                                    <div :id="'status_tooltip_' + row.voicemail_message_uuid">
+                                        <button
+                                            @click="executeStatusUpdate([row.voicemail_message_uuid], row.message_status === 'saved' ? null : 'saved')"
+                                            class="h-9 w-9 transition duration-500 ease-in-out p-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer flex items-center justify-center">
+                                            <EnvelopeIcon v-if="row.message_status === 'saved'" class="h-full w-full" />
+                                            <EnvelopeOpenIcon v-else class="h-full w-full text-blue-500" />
+                                        </button>
+                                    </div>
+                                </ejs-tooltip>
+
+                                <!-- Delete Button -->
+                                <ejs-tooltip v-if="props.permissions.voicemail_message_destroy" :content="'Delete'"
+                                    position='TopCenter' :target="'#delete_tooltip_' + row.voicemail_message_uuid">
+                                    <div :id="'delete_tooltip_' + row.voicemail_message_uuid">
+                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.voicemail_message_uuid)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                    </div>
+                                </ejs-tooltip>
+
                             </div>
                         </div>
                     </TableField>
+
                 </tr>
             </template>
             <template #empty>
@@ -199,11 +225,13 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
+    <VoicemailPlayerModal :show="showVoicemailPlayerModal" :message-uuid="selectedUuid" :routes="routes"
+        @close="showVoicemailPlayerModal = false" @error="handleErrorResponse" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 
-    <ConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
+    <ConfirmationModal :show="showConfirmationModal" @close="showConfirmationModal = false"
         @confirm="confirmDeleteAction" :header="'Are you sure?'"
         :text="'Confirm deleting selected messages. This action can not be undone.'" :confirm-button-label="'Delete'"
         cancel-button-label="Cancel" />
@@ -211,7 +239,6 @@
 
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import DatePicker from "./components/general/DatePicker.vue";
 import moment from 'moment-timezone';
@@ -229,9 +256,9 @@ import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import Spinner from "@generalComponents/Spinner.vue";
 import Badge from "@generalComponents/Badge.vue";
+import VoicemailPlayerModal from "./components/modal/VoicemailPlayerModal.vue";
 import {
     PlayCircleIcon,
-    PauseCircleIcon,
     CloudArrowDownIcon,
     MagnifyingGlassIcon,
     EnvelopeIcon,
@@ -239,13 +266,12 @@ import {
 } from "@heroicons/vue/24/solid";
 
 
-const page = usePage()
 const loading = ref(false)
-const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
-const confirmationModalTrigger = ref(false);
-const confirmationModalDestroyPath = ref(null);
+const showConfirmationModal = ref(false);
+const showVoicemailPlayerModal = ref(false);
+const selectedUuid = ref(null);
 const confirmDeleteAction = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
@@ -312,58 +338,16 @@ onMounted(() => {
     handleSearchButtonClick();
 })
 
+const handlePlayVoicemail = (uuid) => {
+    selectedUuid.value = uuid;
+    showVoicemailPlayerModal.value = true;
 
-const currentAudio = ref(null);
-const currentAudioUuid = ref(null);
-const isAudioPlaying = ref(false);
-const itemOptions = ref({})
-
-
-const fetchAndPlayAudio = (uuid) => {
-    // Check if there's already an audio object
-    if (currentAudio.value) {
-        // If the current audio is paused and corresponds to the clicked voicemail, play it
-        if (currentAudio.value.paused && currentAudioUuid.value === uuid) {
-            currentAudio.value.play();
-            isAudioPlaying.value = true;
-            return;
-        }
-
-        // If the current audio does not match the clicked voicemail or it's playing, stop it
-        currentAudio.value.pause();
-        currentAudio.value.currentTime = 0; // Reset the playback position
-        isAudioPlaying.value = false;
+    // Status update logic remains the same
+    const msg = data.value.data.find(m => m.voicemail_message_uuid === uuid);
+    if (msg && msg.message_status !== 'saved') {
+        executeStatusUpdate([uuid], 'saved');
     }
-
-    // Fetch the new audio file
-    axios.post(props.routes.get_message_url, { voicemail_message_uuid: uuid })
-        .then((response) => {
-            if (response.data.success) {
-                isAudioPlaying.value = true;
-                currentAudioUuid.value = uuid;
-
-                currentAudio.value = new Audio(response.data.file_url);
-                currentAudio.value.play();
-
-                // Add an event listener for when the audio ends
-                currentAudio.value.addEventListener("ended", () => {
-                    isAudioPlaying.value = false;
-                });
-            }
-        }).catch((error) => {
-            handleErrorResponse(error);
-        });
 }
-
-
-
-const pauseAudio = () => {
-    // Check if currentAudio has an Audio object before calling pause
-    if (currentAudio.value) {
-        currentAudio.value.pause();
-        isAudioPlaying.value = false;
-    }
-};
 
 const downloadVoicemailMessage = (uuid) => {
     isDownloading.value = true; // Start the spinner
@@ -436,14 +420,14 @@ const bulkActions = computed(() => {
 
 
 const handleSingleItemDeleteRequest = (url) => {
-    confirmationModalTrigger.value = true;
+    showConfirmationModal.value = true;
     confirmDeleteAction.value = () => executeSingleDelete(url);
 }
 
 
 const handleBulkActionRequest = (action) => {
     if (action === 'bulk_delete') {
-        confirmationModalTrigger.value = true;
+        showConfirmationModal.value = true;
         confirmDeleteAction.value = () => executeBulkDelete();
     } else if (action === 'bulk_read') {
         executeStatusUpdate(selectedItems.value, 'saved');
@@ -555,21 +539,6 @@ const renderRequestedPage = (url) => {
 };
 
 
-const getItemOptions = (itemUuid = null) => {
-    const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
-
-    axios.post(props.routes.item_options, payload)
-        .then((response) => {
-            loadingModal.value = false;
-            itemOptions.value = response.data;
-            // console.log(itemOptions.value);
-
-        }).catch((error) => {
-            handleModalClose();
-            handleErrorResponse(error);
-        });
-}
-
 const handleErrorResponse = (error) => {
     if (error.response) {
         // The request was made and the server responded with a status code
@@ -608,7 +577,7 @@ const showNotification = (type, messages = null) => {
 }
 
 const handleModalClose = () => {
-    confirmationModalTrigger.value = false;
+    showConfirmationModal.value = false;
 }
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');

@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\VoicemailMessages;
-use App\Models\Voicemails;
 use App\Services\FreeswitchEslService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -14,6 +13,7 @@ use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class VoicemailMessagesController extends Controller
 {
@@ -70,6 +70,8 @@ class VoicemailMessagesController extends Controller
                     'bulk_delete' => route('voicemails.messages.bulk.delete'),
                     'data_route' => route('voicemails.messages.data'),
                     'update_status' => route('voicemails.messages.update-status'),
+                    'recording_route' => route('voicemails.messages.recording'),
+
                 ],
                 'permissions' => function () {
                     return $this->getUserPermissions();
@@ -312,6 +314,83 @@ class VoicemailMessagesController extends Controller
         }
     }
 
+
+    public function getRecording(Request $request)
+    {
+        $uuid = $request->query('item_uuid');
+
+        $message = VoicemailMessages::where('voicemail_message_uuid', $uuid)
+            ->where('domain_uuid', session('domain_uuid'))
+            ->with('voicemail')
+            ->firstOrFail();
+
+        $fileUrl = route('voicemails.messages.file', ['uuid' => $uuid]);
+
+        return response()->json([
+            'item' => [
+                'xml_cdr_uuid' => $message->voicemail_message_uuid,
+                'start_date' => $message->created_epoch_formatted,
+                'caller_id_name' => $message->caller_id_name,
+                'caller_id_number_formatted' => $message->caller_id_number,
+                'caller_destination_formatted' => $message->voicemail->voicemail_id,
+                'transcription' => $message->message_transcription,
+            ],
+            'audio_url' => $fileUrl,
+            'download_url' => $fileUrl . '?download=true',
+            'filename' => 'voicemail.wav',
+        ]);
+    }
+
+    public function getFile($uuid)
+    {
+        $message = VoicemailMessages::where('voicemail_message_uuid', $uuid)
+            ->where('domain_uuid', session('domain_uuid'))
+            ->with('voicemail')
+            ->firstOrFail();
+
+        $path = session('domain_name') . '/' . $message->voicemail->voicemail_id . '/msg_' . $uuid . '.wav';
+
+        $disk = Storage::disk('voicemail');
+
+        if (!$disk->exists($path)) {
+            abort(404);
+        }
+
+        // Determine if we are downloading or playing
+        $isDownload = request()->has('download');
+
+        // If your storage is LOCAL, this is the most robust way to support seeking
+        if (config("filesystems.disks.voicemail.driver") === 'local') {
+            $fullPath = $disk->path($path);
+
+            $response = new BinaryFileResponse($fullPath);
+
+            if ($isDownload) {
+                $response->setContentDisposition('attachment', "msg_$uuid.wav");
+            } else {
+                $response->setContentDisposition('inline');
+            }
+
+            return $response;
+        }
+
+        // If your storage is S3 or other remote drivers, use this streamed approach:
+        $size = $disk->size($path);
+        $type = $disk->mimeType($path);
+        $stream = $disk->readStream($path);
+
+        return response()->stream(function () use ($stream) {
+            fpassthru($stream);
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        }, 200, [
+            "Content-Type" => $type,
+            "Content-Length" => $size,
+            "Content-Disposition" => ($isDownload ? 'attachment' : 'inline') . "; filename=\"msg_$uuid.wav\"",
+            "Accept-Ranges" => "bytes", 
+        ]);
+    }
 
 
     public function bulkDelete()

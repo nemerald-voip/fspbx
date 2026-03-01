@@ -178,15 +178,17 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('voicemails/{voicemail}/upload-recorded-name', [VoicemailController::class, 'uploadRecordedName'])->name('voicemails.uploadRecordedName');
 
     // Voicemail Messages
-    Route::get('voicemails/messages/data', [VoicemailMessagesController::class, 'getData'])->name('voicemails.messages.data');
-    Route::delete('/voicemails/messages/{message}', [VoicemailMessagesController::class, 'destroy'])->name('voicemails.messages.destroy');
-    Route::get('/voicemails/messages/{message}', [VoicemailMessagesController::class, 'getVoicemailMessage'])->name('voicemail.message');
+    Route::get('/voicemails/messages/data', [VoicemailMessagesController::class, 'getData'])->name('voicemails.messages.data');
+    Route::get('/voicemails/messages/recording', [VoicemailMessagesController::class, 'getRecording'])->name('voicemails.messages.recording');
+    Route::get('/voicemails/messages/{uuid}/file', [VoicemailMessagesController::class, 'getFile'])->name('voicemails.messages.file');
     Route::post('/voicemails/messages/get-url', [VoicemailMessagesController::class, 'getVoicemailMessageUrl'])->name('voicemail.message.url');
-    Route::get('/voicemails/messages/{message}/download', [VoicemailMessagesController::class, 'downloadVoicemailMessage'])->name('downloadVoicemailMessage');
-    Route::get('/voicemails/messages/{message}/delete', [VoicemailMessagesController::class, 'deleteVoicemailMessage'])->name('deleteVoicemailMessage');
     Route::post('/voicemails/messages/bulk-delete', [VoicemailMessagesController::class, 'bulkDelete'])->name('voicemails.messages.bulk.delete');
     Route::post('/voicemails/messages/select-all', [VoicemailMessagesController::class, 'selectAll'])->name('voicemails.messages.select.all');
     Route::post('/voicemails/messages/status', [VoicemailMessagesController::class, 'updateStatus'])->name('voicemails.messages.update-status');
+    Route::get('/voicemails/messages/{message}', [VoicemailMessagesController::class, 'getVoicemailMessage'])->name('voicemail.message');
+    Route::delete('/voicemails/messages/{message}', [VoicemailMessagesController::class, 'destroy'])->name('voicemails.messages.destroy');
+    Route::get('/voicemails/messages/{message}/download', [VoicemailMessagesController::class, 'downloadVoicemailMessage'])->name('downloadVoicemailMessage');
+    Route::get('/voicemails/messages/{message}/delete', [VoicemailMessagesController::class, 'deleteVoicemailMessage'])->name('deleteVoicemailMessage');
 
     // Inbound Webhooks
     Route::get('/inbound-webhooks/data', [InboundWebhooksController::class, 'getData'])->name('inbound-webhooks.data');
