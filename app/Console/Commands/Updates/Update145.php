@@ -57,7 +57,7 @@ class Update145
         $updated = DB::table('v_domain_settings')
             ->where('domain_setting_category', 'aws')
             ->update([
-                'domain_setting_category' => 's3 storage',
+                'domain_setting_category' => 's3_storage',
             ]);
 
         echo "Updated {$updated} domain setting record(s) from category 'aws' to 's3 storage'.\n";
