@@ -693,7 +693,7 @@ class DatabaseSeeder extends Seeder
             ],
             [
                 'default_setting_category'      => 'scheduled_jobs',
-                'default_setting_subcategory'   => 'aws_upload_calls_' . $this->getMacAddress(),
+                'default_setting_subcategory'   => 's3_upload_calls_' . $this->getMacAddress(),
                 'default_setting_name'          => 'boolean',
                 'default_setting_value'         => "true",
                 'default_setting_enabled'       => false,
@@ -900,6 +900,14 @@ class DatabaseSeeder extends Seeder
                 'default_setting_description'   => "Specifies the number of days to retain voicemails before they are automatically deleted.",
             ],
             [
+                'default_setting_category'      => 'scheduled_jobs',
+                'default_setting_subcategory'   => 's3_upload_limit',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "2000",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Specifies the number of candidate recordings to process per run",
+            ],
+            [
                 'default_setting_category'      => 'authentication',
                 'default_setting_subcategory'   => 'email_challenge',
                 'default_setting_name'          => 'boolean',
@@ -965,7 +973,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_description'   => "",
             ],
             [
-                'default_setting_category'      => 'aws',
+                'default_setting_category'      => 's3_storage',
                 'default_setting_subcategory'   => 'access_key',
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
@@ -973,7 +981,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_description'   => "",
             ],
             [
-                'default_setting_category'      => 'aws',
+                'default_setting_category'      => 's3_storage',
                 'default_setting_subcategory'   => 'bucket_name',
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
@@ -981,7 +989,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_description'   => "",
             ],
             [
-                'default_setting_category'      => 'aws',
+                'default_setting_category'      => 's3_storage',
                 'default_setting_subcategory'   => 'region',
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
@@ -989,7 +997,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_description'   => "",
             ],
             [
-                'default_setting_category'      => 'aws',
+                'default_setting_category'      => 's3_storage',
                 'default_setting_subcategory'   => 'secret_key',
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
@@ -997,11 +1005,35 @@ class DatabaseSeeder extends Seeder
                 'default_setting_description'   => "",
             ],
             [
-                'default_setting_category'      => 'aws',
+                'default_setting_category'      => 's3_storage',
                 'default_setting_subcategory'   => 'upload_notification_email',
                 'default_setting_name'          => 'text',
                 'default_setting_value'         => "",
                 'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 's3_storage',
+                'default_setting_subcategory'   => 'endpoint',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 's3_storage',
+                'default_setting_subcategory'   => 'use_path_style_endpoint',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "false",
+                'default_setting_enabled'       => false,
+                'default_setting_description'   => "",
+            ],
+            [
+                'default_setting_category'      => 's3_storage',
+                'default_setting_subcategory'   => 'signature_version',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "",
+                'default_setting_enabled'       => false,
                 'default_setting_description'   => "",
             ],
             [
@@ -1020,7 +1052,7 @@ class DatabaseSeeder extends Seeder
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "enter number in e164 format",
             ],
-                        [
+            [
                 'default_setting_category'      => 'voicemail',
                 'default_setting_subcategory'   => 'sms_notification_include_transcription',
                 'default_setting_name'          => 'boolean',

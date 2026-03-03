@@ -37,7 +37,7 @@ class Kernel extends ConsoleKernel
 
         // Upload call recordings to AWS
         if (isset($jobSettings['aws_upload_calls_' . $this->getMacAddress()]) && $jobSettings['aws_upload_calls_' . $this->getMacAddress()] === "true") {
-            $schedule->command('UploadArchiveFiles')
+            $schedule->command('fs:upload-call-recordings-to-s3-storage')
                 ->dailyAt('01:00')
                 ->timezone('America/Los_Angeles');
         }
@@ -154,7 +154,7 @@ class Kernel extends ConsoleKernel
      * @return void
      */
     protected $commands = [
-        Commands\UploadArchiveFiles::class,
+        Commands\UploadCallRecordingsToS3Storage::class,
         Commands\MigrationShowLastBatch::class,
         Commands\MigrationDeleteLastBatch::class,
         Commands\ClearExportDirectory::class,
