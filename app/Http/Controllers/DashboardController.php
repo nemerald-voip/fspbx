@@ -349,7 +349,7 @@ class DashboardController extends Controller
     {
         $apps = [];
         $user = Auth::user();
-        $extension = $user->extension;
+        $extension = $user->extension ?? null;
 
         $voicemail = null;
         
