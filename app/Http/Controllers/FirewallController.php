@@ -13,11 +13,10 @@ use Symfony\Component\Process\Process;
 use App\Http\Requests\StoreIpBlockRequest;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Symfony\Component\Process\Exception\ProcessFailedException;
+use Illuminate\Support\Carbon;
 
 class FirewallController extends Controller
 {
-
-    // public $model;
     public $filters = [];
     public $sortField;
     public $sortOrder;
@@ -26,13 +25,10 @@ class FirewallController extends Controller
 
     public function __construct()
     {
-        // $this->model = new Messages();
     }
 
     /**
      * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
      */
     public function index(Request $request)
     {
@@ -52,33 +48,25 @@ class FirewallController extends Controller
                     'unblock' => route('firewall.unblock'),
                     'block' => route('firewall.block'),
                     'select_all' => route('firewall.select.all'),
-                    // 'bulk_delete' => route('messages.bulk.delete'),
-                    // 'bulk_update' => route('messages.bulk.update'),
-                    // 'retry' => route('messages.retry'),
                 ]
             ]
         );
     }
 
-
     /**
-     *  Get data
+     * Get data.
      */
     public function getData($paginate = 50)
     {
-
-        // Check if search parameter is present and not empty
         if (!empty(request('filterData.search'))) {
             $this->filters['search'] = request('filterData.search');
         }
 
-        // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'ip'); // Default to 'created_at'
-        $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to descending
+        $this->sortField = request()->get('sortField', 'ip');
+        $this->sortOrder = request()->get('sortOrder', 'asc');
 
         $data = $this->builder($this->filters);
 
-        // Apply pagination manually
         if ($paginate) {
             $data = $this->paginateCollection($data, $paginate);
         }
@@ -87,64 +75,64 @@ class FirewallController extends Controller
     }
 
     /**
-     * @param  array  $filters
-     * @return Builder
+     * Build firewall data collection.
      */
     public function builder(array $filters = [])
     {
+        // Current blocked IPs from iptables
+        $data = $this->getBlockedIps();
 
-        // get a list of blocked IPs from iptables
-        $data =  $this->getBlockedIps();
+        // Only query Event Guard rows for IPs that are actually blocked right now
+        $blockedIps = $data->pluck('ip')->filter()->unique()->values()->all();
 
-        // Apply sorting using sortBy or sortByDesc depending on the sort order
+        // Get only the latest log row per blocked IP
+        $eventGuardLogs = $this->getEventGuardLogs($blockedIps);
+
+        // Merge db data into iptables data
+        $data = $this->combineEventGuardLogs($data, $eventGuardLogs);
+
+        // Apply filters after enrichment
+        if (is_array($filters)) {
+            foreach ($filters as $field => $value) {
+                if (method_exists($this, $method = "filter" . ucfirst($field))) {
+                    $data = $this->$method($data, $value);
+                }
+            }
+        }
+
+        // Sort after merge/filter so UI sorts by final values
         if ($this->sortOrder === 'asc') {
             $data = $data->sortBy($this->sortField);
         } else {
             $data = $data->sortByDesc($this->sortField);
         }
 
-        // Get a list of IPs blocked by Event Guard
-        $eventGuardLogs = $this->getEventGuardLogs();
-
-        $data = $this->combineEventGuardLogs($data, $eventGuardLogs);
-
-        if (is_array($filters)) {
-            foreach ($filters as $field => $value) {
-                if (method_exists($this, $method = "filter" . ucfirst($field))) {
-                    // Pass the collection by reference to modify it directly
-                    $data = $this->$method($data, $value);
-                }
-            }
-        }
-
-        // logger($data);
-
-        return $data->values(); // Ensure re-indexing of the collection
+        return $data->values();
     }
 
     /**
-     * @param $collection
-     * @param $value
-     * @return void
+     * Case-insensitive search across selected fields.
      */
     protected function filterSearch($collection, $value)
     {
         $searchable = $this->searchable;
 
-        // Case-insensitive partial string search in the specified fields
-        $collection = $collection->filter(function ($item) use ($value, $searchable) {
+        return $collection->filter(function ($item) use ($value, $searchable) {
             foreach ($searchable as $field) {
-                if (stripos($item[$field], $value) !== false) {
+                $fieldValue = data_get($item, $field);
+
+                if ($fieldValue !== null && stripos((string) $fieldValue, $value) !== false) {
                     return true;
                 }
             }
+
             return false;
         });
-
-        return $collection;
     }
 
-
+    /**
+     * Parse iptables output and return blocked IP/subnet list.
+     */
     public function getBlockedIps()
     {
         $result = $this->getIptablesRules();
@@ -152,160 +140,177 @@ class FirewallController extends Controller
         $blockedIps = [];
         $currentChain = '';
         $lines = explode("\n", $result);
-
         $hostname = gethostname();
 
         foreach ($lines as $line) {
-            // Detect the start of a new chain
             if (preg_match('/^Chain\s+(\S+)/', $line, $matches)) {
                 $currentChain = $matches[1];
                 continue;
             }
 
-            // Check if the line contains a DROP or REJECT action
             if (strpos($line, 'DROP') !== false || strpos($line, 'REJECT') !== false) {
-                // Split by whitespace
-                $parts = preg_split('/\s+/', $line);
+                $parts = preg_split('/\s+/', trim($line));
 
-                // We expect index 4 because getIptablesRules uses --line-numbers
+                // With --line-numbers:
                 // 0:num, 1:target, 2:prot, 3:opt, 4:source
-                if (isset($parts[4])) {
-                    $source = $parts[4];
+                if (!isset($parts[4])) {
+                    continue;
+                }
 
-                    // --- FIX START: Ignore generic 0.0.0.0/0 (Anywhere) rules ---
-                    if ($source === '0.0.0.0/0') {
-                        continue;
+                $source = $parts[4];
+
+                // Ignore generic catch-all rules
+                if ($source === '0.0.0.0/0') {
+                    continue;
+                }
+
+                $isIp = filter_var($source, FILTER_VALIDATE_IP);
+                $isCidr = false;
+
+                if (!$isIp && strpos($source, '/') !== false) {
+                    [$cidrIp] = explode('/', $source, 2);
+                    if (filter_var($cidrIp, FILTER_VALIDATE_IP)) {
+                        $isCidr = true;
                     }
-                    // --- FIX END ---
+                }
 
-                    // Check if it is a valid IP OR a valid CIDR subnet
-                    $isIp = filter_var($source, FILTER_VALIDATE_IP);
-                    $isCidr = false;
-
-                    if (!$isIp && strpos($source, '/') !== false) {
-                        $cidrParts = explode('/', $source);
-                        if (filter_var($cidrParts[0], FILTER_VALIDATE_IP)) {
-                            $isCidr = true;
-                        }
-                    }
-
-                    if ($isIp || $isCidr) {
-                        $blockedIps[] = [
-                            'uuid' => Str::uuid()->toString(),
-                            'hostname' => $hostname,
-                            'ip' => $source,
-                            'extension' => null,
-                            'user_agent' => null,
-                            'filter' => $currentChain,
-                            'status' => 'blocked',
-                        ];
-                    }
+                if ($isIp || $isCidr) {
+                    $blockedIps[] = [
+                        'uuid' => (string) Str::uuid(),
+                        'hostname' => $hostname,
+                        'ip' => $source,
+                        'extension' => null,
+                        'user_agent' => null,
+                        'date' => null,
+                        'filter' => $currentChain,
+                        'status' => 'blocked',
+                    ];
                 }
             }
         }
 
-        return collect($blockedIps)->unique();
+        return collect($blockedIps)->unique('ip');
     }
 
+    /**
+     * Run iptables command.
+     */
     public function getIptablesRules()
     {
-        // Get the full iptables output including all chains
-        $process = new Process(['sudo', 'iptables', '-L', '-n', '--line-numbers']);
+        $process = new Process([
+            'sudo',
+            '-n',
+            'iptables',
+            '-L',
+            '-n',
+            '--line-numbers',
+        ]);
+
+        $process->setTimeout(10);
+
         $process->run();
 
         if (!$process->isSuccessful()) {
             throw new ProcessFailedException($process);
         }
 
-        $output = $process->getOutput();
-        return $output;
+        return $process->getOutput();
     }
 
-    public function getEventGuardLogs()
+    /**
+     * Get only the latest Event Guard log per IP for the given blocked IPs.
+     *
+     * PostgreSQL DISTINCT ON keeps the first row per ip_address based on ORDER BY.
+     */
+    public function getEventGuardLogs(array $ips = [])
     {
-        $logs = EventGuardLogs::select(
-            'event_guard_log_uuid',
-            'hostname',
-            'log_date',
-            'filter',
-            'ip_address',
-            'extension',
-            'user_agent',
-            'log_status'
-        )
-            ->get();
+        if (empty($ips)) {
+            return collect();
+        }
 
-        return $logs;
+        return EventGuardLogs::query()
+            ->selectRaw("
+                DISTINCT ON (ip_address)
+                event_guard_log_uuid,
+                hostname,
+                log_date,
+                filter,
+                ip_address,
+                extension,
+                user_agent,
+                log_status
+            ")
+            ->whereIn('ip_address', $ips)
+            ->orderBy('ip_address')
+            ->orderByDesc('log_date')
+            ->get()
+            ->keyBy('ip_address');
     }
-
 
     /**
      * Paginate a given collection.
-     *
-     * @param \Illuminate\Support\Collection $items
-     * @param int $perPage
-     * @param int|null $page
-     * @param array $options
-     * @return \Illuminate\Pagination\LengthAwarePaginator
      */
     public function paginateCollection($items, $perPage = 50, $page = null, $options = [])
     {
         $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
         $items = $items instanceof Collection ? $items : Collection::make($items);
 
+        $pageItems = $items->forPage($page, $perPage)->values();
+
+        $pageItems = $pageItems->map(function ($item) {
+            $item['date'] = !empty($item['date'])
+                ? Carbon::parse($item['date'])->format('M j, Y g:i A')
+                : null;
+
+            return $item;
+        });
+
         $paginator = new LengthAwarePaginator(
-            $items->forPage($page, $perPage),
+            $pageItems,
             $items->count(),
             $perPage,
             $page,
             $options
         );
 
-        // Manually set the path to the current route with proper parameters
         $paginator->setPath(url()->current());
 
         return $paginator;
     }
 
-
     /**
-     * Combine event guard logs with blocked IPs data
-     *
-     * @param  Collection  $data
-     * @param  Collection  $eventGuardLogs
-     * @return Collection
+     * Merge Event Guard data into blocked IP collection.
      */
     protected function combineEventGuardLogs($data, $eventGuardLogs)
     {
-        // Group event guard logs by IP address for easy lookup
-        $groupedLogs = $eventGuardLogs->groupBy('ip_address');
-
-        // Add additional fields from event guard logs to the data array
-        return $data->map(function ($item) use ($groupedLogs) {
+        return $data->map(function ($item) use ($eventGuardLogs) {
             $ip = $item['ip'];
-            if (isset($groupedLogs[$ip])) {
-                $log = $groupedLogs[$ip]->first();
+
+            if (isset($eventGuardLogs[$ip])) {
+                $log = $eventGuardLogs[$ip];
+
                 $item['uuid'] = $log->event_guard_log_uuid;
+                $item['hostname'] = $log->hostname ?: $item['hostname'];
                 $item['extension'] = $log->extension;
                 $item['user_agent'] = $log->user_agent;
-                $item['date'] = $log->log_date_formatted;
-                // Add any other fields you need here
+                $item['date'] = $log->log_date;
+                $item['filter'] = $log->filter ?: $item['filter'];
+                $item['status'] = $log->log_status ?: $item['status'];
             }
+
             return $item;
         });
     }
 
-
     public function destroy()
     {
         try {
-            // Unblock the IPs in fail2ban
-            foreach (request('items') as $ip) {
-                $fail2banProcess = new Process(['sudo', 'fail2ban-client', 'unban', 'ip', $ip]);
+            foreach (request('items', []) as $ip) {
+                $fail2banProcess = new Process(['sudo', '-n', 'fail2ban-client', 'unban', 'ip', $ip]);
+                $fail2banProcess->setTimeout(10);
                 $fail2banProcess->run();
 
                 if (!$fail2banProcess->isSuccessful()) {
-                    // logger()->error("Failed to unban IP $ip in fail2ban: " . $fail2banProcess->getErrorOutput());
                     throw new ProcessFailedException($fail2banProcess);
                 } else {
                     logger("IP $ip is succesfully unbanned in fail2ban");
@@ -316,131 +321,147 @@ class FirewallController extends Controller
 
             $lines = explode("\n", $result);
             $rulesToDelete = [];
-
             $currentChain = null;
 
             foreach ($lines as $line) {
-                // Detect the start of a new chain
                 if (preg_match('/^Chain\s+(\S+)/', $line, $matches)) {
                     $currentChain = $matches[1];
                     continue;
                 }
 
-                // Check each IP in the provided list
-                foreach (request('items') as $ip) {
-                    // Check if the line contains the IP address and a DROP/REJECT action
-                    if (strpos($line, $ip) !== false && (strpos($line, 'DROP') !== false || strpos($line, 'REJECT') !== false)) {
-                        // Extract the line number (first column)
-                        $parts = preg_split('/\s+/', $line);
+                foreach (request('items', []) as $ip) {
+                    if (
+                        strpos($line, $ip) !== false &&
+                        (strpos($line, 'DROP') !== false || strpos($line, 'REJECT') !== false)
+                    ) {
+                        $parts = preg_split('/\s+/', trim($line));
+
                         if (isset($parts[0]) && is_numeric($parts[0]) && $currentChain) {
-                            $rulesToDelete[] = ['chain' => $currentChain, 'line' => $parts[0]];
+                            $rulesToDelete[] = [
+                                'chain' => $currentChain,
+                                'line' => $parts[0],
+                                'ip' => $ip,
+                            ];
                         }
                     }
                 }
             }
 
-            if (!empty($rulesToDelete)) {
-                foreach ($rulesToDelete as $rule) {
-                    // Delete the rule from the specified chain
-                    $deleteProcess = new Process(['sudo', 'iptables', '-D', $rule['chain'], $rule['line']]);
-                    $deleteProcess->run();
+            // Delete from highest line number first per chain
+            $rulesToDelete = collect($rulesToDelete)
+                ->groupBy('chain')
+                ->flatMap(function ($rules) {
+                    return $rules->sortByDesc('line')->values();
+                })
+                ->values()
+                ->all();
 
-                    if (!$deleteProcess->isSuccessful()) {
-                        throw new ProcessFailedException($deleteProcess);
-                    } else {
-                        logger("IP $ip is succesfully unbanned in iptables");
-                    }
+            foreach ($rulesToDelete as $rule) {
+                $deleteProcess = new Process([
+                    'sudo',
+                    '-n',
+                    'iptables',
+                    '-D',
+                    $rule['chain'],
+                    $rule['line']
+                ]);
+
+                $deleteProcess->setTimeout(10);
+                $deleteProcess->run();
+
+                if (!$deleteProcess->isSuccessful()) {
+                    throw new ProcessFailedException($deleteProcess);
+                } else {
+                    logger("IP {$rule['ip']} is succesfully unbanned in iptables");
                 }
             }
 
-            // Delete corresponding EventGuardLogs entries
-            EventGuardLogs::whereIn('ip_address', request('items'))->delete();
+            EventGuardLogs::whereIn('ip_address', request('items', []))->delete();
 
-            // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['Request to unblock IP addresses was successful']]
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage() . PHP_EOL);
+
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => [$e->getMessage()]]
-            ], 500); // 500 Internal Server Error for any other errors
+            ], 500);
         }
     }
 
     /**
      * Store a newly created resource in storage.
-     *
-     * @param  \App\Http\Requests\StoreIpBlockRequest  $request
-     * @return JsonResponse
      */
     public function store(StoreIpBlockRequest $request): JsonResponse
     {
         try {
             $inputs = $request->validated();
-
-            // Can be "192.168.1.50" OR "192.168.1.0/24"
             $ipOrSubnet = $inputs['ip_address'];
 
-            // Ensure the chain exists
             $this->ensureChainExists('fs_pbx_deny_access');
 
-            // Add the IP to the fs_pbx_deny_access chain
-            $blockProcess = new Process(['sudo', 'iptables', '-A', 'fs_pbx_deny_access', '-s', $ipOrSubnet, '-j', 'DROP']);
+            $blockProcess = new Process([
+                'sudo',
+                '-n',
+                'iptables',
+                '-A',
+                'fs_pbx_deny_access',
+                '-s',
+                $ipOrSubnet,
+                '-j',
+                'DROP'
+            ]);
+
+            $blockProcess->setTimeout(10);
             $blockProcess->run();
 
             if (!$blockProcess->isSuccessful()) {
                 throw new ProcessFailedException($blockProcess);
             }
 
-            // Save the current iptables rules
-            $saveProcess = new Process(['sudo', 'iptables-save']);
+            $saveProcess = new Process(['sudo', '-n', 'iptables-save']);
+            $saveProcess->setTimeout(10);
             $saveProcess->run();
 
             if (!$saveProcess->isSuccessful()) {
                 throw new ProcessFailedException($saveProcess);
             }
 
-            // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['New item created']]
             ], 201);
         } catch (\Exception $e) {
-            // Log the error message
             logger($e->getMessage());
 
-            // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => ['Failed to create new item']]
-            ], 500);  // 500 Internal Server Error for any other errors
+            ], 500);
         }
     }
 
     /**
-     * Ensure that the specified chain exists, and create it if it doesn't.
-     *
-     * @param string $chain
-     * @return void
+     * Ensure a chain exists.
      */
     protected function ensureChainExists($chain)
     {
-        // Check if the chain already exists
-        $checkChainProcess = new Process(['sudo', 'iptables', '-L', $chain]);
+        $checkChainProcess = new Process(['sudo', '-n', 'iptables', '-L', $chain]);
+        $checkChainProcess->setTimeout(10);
         $checkChainProcess->run();
 
-        // If the chain does not exist, create it
         if (!$checkChainProcess->isSuccessful()) {
-            $createChainProcess = new Process(['sudo', 'iptables', '-N', $chain]);
+            $createChainProcess = new Process(['sudo', '-n', 'iptables', '-N', $chain]);
+            $createChainProcess->setTimeout(10);
             $createChainProcess->run();
 
             if (!$createChainProcess->isSuccessful()) {
                 throw new ProcessFailedException($createChainProcess);
             }
 
-            // Insert the chain into the INPUT chain to ensure it's processed
-            $insertChainProcess = new Process(['sudo', 'iptables', '-I', 'INPUT', '-j', $chain]);
+            $insertChainProcess = new Process(['sudo', '-n', 'iptables', '-I', 'INPUT', '-j', $chain]);
+            $insertChainProcess->setTimeout(10);
             $insertChainProcess->run();
 
             if (!$insertChainProcess->isSuccessful()) {
@@ -450,18 +471,14 @@ class FirewallController extends Controller
     }
 
     /**
-     * Get all items
-     *
-     * @return \Illuminate\Http\Response
+     * Select all blocked IPs.
      */
     public function selectAll()
     {
         try {
             $ips = [];
-
-            // Note: This command usually does NOT include --line-numbers based on your previous snippet
-            // So source is usually index 3 (Target, Prot, Opt, Source)
-            $process = new Process(['sudo', 'iptables', '-L', '-n']);
+            $process = new Process(['sudo', '-n', 'iptables', '-L', '-n']);
+            $process->setTimeout(10);
             $process->run();
 
             if (!$process->isSuccessful()) {
@@ -473,34 +490,40 @@ class FirewallController extends Controller
 
             foreach ($lines as $line) {
                 if (strpos($line, 'DROP') !== false || strpos($line, 'REJECT') !== false) {
-                    $parts = preg_split('/\s+/', $line);
+                    $parts = preg_split('/\s+/', trim($line));
 
-                    // Index 3 is Source in standard `iptables -L -n` output
-                    if (isset($parts[3])) {
-                        $source = $parts[3];
+                    // Standard `iptables -L -n` output:
+                    // 0:target, 1:prot, 2:opt, 3:source
+                    if (!isset($parts[3])) {
+                        continue;
+                    }
 
-                        // --- FIX: Ignore 0.0.0.0/0 ---
-                        if ($source === '0.0.0.0/0') {
-                            continue;
-                        }
+                    $source = $parts[3];
 
-                        // Validate IP or CIDR
-                        $isIp = filter_var($source, FILTER_VALIDATE_IP);
-                        $isCidr = (!$isIp && strpos($source, '/') !== false && filter_var(explode('/', $source)[0], FILTER_VALIDATE_IP));
+                    if ($source === '0.0.0.0/0') {
+                        continue;
+                    }
 
-                        if ($isIp || $isCidr) {
-                            $ips[] = $source;
-                        }
+                    $isIp = filter_var($source, FILTER_VALIDATE_IP);
+                    $isCidr = (
+                        !$isIp &&
+                        strpos($source, '/') !== false &&
+                        filter_var(explode('/', $source)[0], FILTER_VALIDATE_IP)
+                    );
+
+                    if ($isIp || $isCidr) {
+                        $ips[] = $source;
                     }
                 }
             }
 
             return response()->json([
                 'messages' => ['success' => ['All items selected']],
-                'items' => array_unique($ips),
+                'items' => array_values(array_unique($ips)),
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => ['Failed to select all items']]
