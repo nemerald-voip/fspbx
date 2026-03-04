@@ -4,11 +4,9 @@ namespace App\Models;
 
 use Laravel\Sanctum\HasApiTokens;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
-use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Contact extends Model
+class SpeedDial extends Model
 {
     use HasApiTokens, HasFactory, \App\Models\Traits\TraitUuid;
 
@@ -45,20 +43,20 @@ class Contact extends Model
      */
     public function phones()
     {
-        return $this->hasMany(ContactPhones::class, 'contact_uuid', 'contact_uuid');
+        return $this->hasMany(SpeedDialPhone::class, 'contact_uuid', 'contact_uuid');
     }
 
     public function primaryPhone()
     {
-        return $this->hasOne(ContactPhones::class, 'contact_uuid', 'contact_uuid')->orderBy('insert_date', 'asc');
+        return $this->hasOne(SpeedDialPhone::class, 'contact_uuid', 'contact_uuid')->orderBy('insert_date', 'asc');
     }
 
     /**
      * Get the Contact Users objects associated with this contact.
      *  returns Eloquent Object
      */
-    public function contact_users()
+    public function speedDialUser()
     {
-        return $this->hasMany(ContactUsers::class, 'contact_uuid', 'contact_uuid');
+        return $this->hasMany(SpeedDialUser::class, 'contact_uuid', 'contact_uuid');
     }
 }

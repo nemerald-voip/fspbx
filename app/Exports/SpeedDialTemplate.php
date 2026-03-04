@@ -6,7 +6,7 @@ use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
-class ContactTemplate implements FromCollection, WithHeadings
+class SpeedDialTemplate implements FromCollection, WithHeadings
 {
     /**
      * Define the headings (columns) for your CSV

@@ -2,19 +2,19 @@
 
 namespace App\Models;
 
+use libphonenumber\PhoneNumberFormat;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class ContactUsers extends Model
+class SpeedDialPhone extends Model
 {
     use HasFactory, \App\Models\Traits\TraitUuid;
 
-    protected $table = "v_contact_users";
+    protected $table = "v_contact_phones";
 
     public $timestamps = false;
 
-    protected $primaryKey = 'contact_user_uuid';
+    protected $primaryKey = 'contact_phone_uuid';
     public $incrementing = false;
     protected $keyType = 'string';
 
@@ -26,29 +26,31 @@ class ContactUsers extends Model
     protected $fillable = [
         'domain_uuid',
         'contact_uuid',
-        'user_uuid',
+        'phone_type_voice',
+        'phone_number',
+        'phone_speed_dial',
         'insert_date',
         'insert_user',
         'update_date',
         'update_user'
     ];
 
+    protected $appends = ['phone_number_formatted'];
+
     /**
-     * Get the Device Lines objects associated with this device.
-     *  returns Eloquent Object
+     * Accessor: Get phone number formatted
      */
-    public function contact()
+    public function getPhoneNumberFormattedAttribute()
     {
-        return $this->hasOne(Contact::class, 'contact_uuid', 'contact_uuid');
+        return formatPhoneNumber($this->phone_number, "US", PhoneNumberFormat::NATIONAL);
     }
 
     /**
      * Get the Device Lines objects associated with this device.
      *  returns Eloquent Object
      */
-    public function user()
+    public function speedDial()
     {
-        return $this->hasOne(User::class, 'user_uuid', 'user_uuid');
+        return $this->hasOne(SpeedDial::class, 'contact_uuid', 'contact_uuid');
     }
-
 }

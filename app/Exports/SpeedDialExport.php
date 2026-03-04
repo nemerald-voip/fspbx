@@ -2,12 +2,12 @@
 
 namespace App\Exports;
 
-use App\Models\Contact;
+use App\Models\SpeedDial;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
-class ContactsExport implements FromCollection, WithHeadings
+class SpeedDialExport implements FromCollection, WithHeadings
 {
     protected $contacts;
     protected $maxUsers;
@@ -19,13 +19,13 @@ class ContactsExport implements FromCollection, WithHeadings
         $sortField = request()->get('sortField', 'contact_organization');
         $sortOrder = request()->get('sortOrder', 'asc');
     
-        $query = Contact::query()
+        $query = SpeedDial::query()
             ->where('domain_uuid', $domainUuid)
             ->with([
                 'primaryPhone' => function ($query) {
                     $query->select('contact_uuid', 'phone_number', 'phone_speed_dial');
                 },
-                'contact_users.user' => function ($query) {
+                'speedDialUser.user' => function ($query) {
                     $query->select('user_uuid', 'username');
                 }
             ])
@@ -53,7 +53,7 @@ class ContactsExport implements FromCollection, WithHeadings
     
         // Determine maximum number of assigned users
         $this->maxUsers = $this->contacts->max(function ($contact) {
-            return $contact->contact_users ? $contact->contact_users->count() : 0;
+            return $contact->speedDialUser ? $contact->speedDialUser->count() : 0;
         });
     }
     
@@ -83,8 +83,8 @@ class ContactsExport implements FromCollection, WithHeadings
 
             // Gather all assigned usernames.
             $usernames = [];
-            if ($contact->contact_users && $contact->contact_users->isNotEmpty()) {
-                foreach ($contact->contact_users as $contactUser) {
+            if ($contact->speedDialUser && $contact->speedDialUser->isNotEmpty()) {
+                foreach ($contact->speedDialUser as $contactUser) {
                     if ($contactUser->user) {
                         $usernames[] = $contactUser->user->username;
                     }

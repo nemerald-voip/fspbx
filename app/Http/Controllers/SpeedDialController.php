@@ -2,38 +2,39 @@
 
 namespace App\Http\Controllers;
 
-use Throwable;
+use App\Exports\SpeedDialExport;
+use App\Exports\SpeedDialTemplate;
+use App\Http\Requests\StoreSpeedDialRequest;
+use App\Http\Requests\UpdateContactRequest;
+use App\Http\Requests\UpdateSpeedDialRequest;
+use App\Imports\SpeedDialImport;
+use App\Models\SpeedDial;
+use App\Models\SpeedDialPhone;
+use App\Models\SpeedDialUser;
 use App\Models\User;
-use Inertia\Inertia;
-use App\Models\Contact;
-use Illuminate\Support\Str;
-use App\Models\ContactUsers;
 use Illuminate\Http\Request;
-use App\Models\ContactPhones;
-use App\Exports\ContactsExport;
-use App\Imports\ContactsImport;
-use App\Exports\ContactTemplate;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Maatwebsite\Excel\Excel as ExcelWriter;
 use Maatwebsite\Excel\Facades\Excel;
 use Maatwebsite\Excel\HeadingRowImport;
-use App\Http\Requests\StoreContactRequest;
-use App\Http\Requests\UpdateContactRequest;
-use Maatwebsite\Excel\Excel as ExcelWriter;
+use Throwable;
 
 
-class ContactsController extends Controller
+class SpeedDialController extends Controller
 {
 
     public $model;
     public $filters = [];
     public $sortField;
     public $sortOrder;
-    protected $viewName = 'Contacts';
+    protected $viewName = 'SpeedDial';
     protected $searchable = ['contact_organization', 'primaryPhone.phone_number', 'primaryPhone.phone_speed_dial',];
 
     public function __construct()
     {
-        $this->model = new Contact();
+        $this->model = new SpeedDial();
     }
 
     public function index()
@@ -49,14 +50,14 @@ class ContactsController extends Controller
                     return $this->getData();
                 },
                 'routes' => [
-                    'current_page' => route('contacts.index'),
-                    'store' => route('contacts.store'),
-                    'select_all' => route('contacts.select.all'),
-                    'bulk_delete' => route('contacts.bulk.delete'),
-                    'item_options' => route('contacts.item.options'),
-                    'import' => route('contacts.import'),
-                    'download_template' => route('contacts.download.template'),
-                    'export' => route('contacts.export'),
+                    'current_page' => route('speed-dial.index'),
+                    'store' => route('speed-dial.store'),
+                    'select_all' => route('speed-dial.select.all'),
+                    'bulk_delete' => route('speed-dial.bulk.delete'),
+                    'item_options' => route('speed-dial.item.options'),
+                    'import' => route('speed-dial.import'),
+                    'download_template' => route('speed-dial.download.template'),
+                    'export' => route('speed-dial.export'),
                 ]
             ]
         );
@@ -93,7 +94,7 @@ class ContactsController extends Controller
         $data->with(['primaryPhone' => function ($query) {
             $query->select('contact_phone_uuid', 'contact_uuid', 'phone_number', 'phone_speed_dial');
         }]);
-        $data->with(['contact_users' => function ($query) {
+        $data->with(['speedDialUser' => function ($query) {
             $query->select('contact_user_uuid', 'contact_uuid', 'user_uuid')->with(['user' => function ($query) {
                 $query->select('user_uuid', 'username');
             }]);
@@ -138,7 +139,7 @@ class ContactsController extends Controller
         });
     }
 
-    public function store(StoreContactRequest $request)
+    public function store(StoreSpeedDialRequest $request)
     {
         try {
             DB::beginTransaction();
@@ -147,14 +148,14 @@ class ContactsController extends Controller
             $validated = $request->validated();
 
             // Create new contact
-            $contact = Contact::create([
+            $contact = SpeedDial::create([
                 'contact_uuid' => Str::uuid(),
                 'contact_organization' => $validated['contact_organization'],
                 'domain_uuid' => session('domain_uuid')
             ]);
 
             // Create phone details
-            ContactPhones::create([
+            SpeedDialPhone::create([
                 'contact_phone_uuid' => Str::uuid(),
                 'contact_uuid' => $contact->contact_uuid,
                 'phone_number' => $validated['destination_number'],
@@ -163,9 +164,9 @@ class ContactsController extends Controller
             ]);
 
             // Create contact users
-            $userIds = collect($validated['contact_users'] ?? [])->pluck('value');
+            $userIds = collect($validated['speed_dial_users'] ?? [])->pluck('value');
             foreach ($userIds as $userId) {
-                ContactUsers::create([
+                SpeedDialUser::create([
                     'contact_user_uuid' => Str::uuid(),
                     'contact_uuid' => $contact->contact_uuid,
                     'user_uuid' => $userId
@@ -193,15 +194,13 @@ class ContactsController extends Controller
      * Update the specified resource in storage.
      *
      * @param  UpdateContactRequest  $request
-     * @param  Destinations  $phone_number
-     * @return JsonResponse
      */
-    public function update(UpdateContactRequest $request, Contact $contact)
+    public function update(UpdateSpeedDialRequest $request, SpeedDial $speed_dial)
     {
-        if (!$contact) {
+        if (!$speed_dial) {
             return response()->json([
                 'success' => false,
-                'errors' => ['model' => ['Contact not found']]
+                'errors' => ['model' => ['Speed Dial not found']]
             ], 404);
         }
 
@@ -212,14 +211,14 @@ class ContactsController extends Controller
             $validated = $request->validated();
 
             // Update contact details
-            $contact->update([
+            $speed_dial->update([
                 'contact_organization' => $validated['contact_organization']
             ]);
 
             // Create or update phone details
-            $contactPhone = ContactPhones::updateOrCreate(
+            $contactPhone = SpeedDialPhone::updateOrCreate(
                 [
-                    'contact_uuid' => $contact->contact_uuid,
+                    'contact_uuid' => $speed_dial->contact_uuid,
                 ],
                 [
                     'phone_number' => $validated['destination_number'],
@@ -229,13 +228,13 @@ class ContactsController extends Controller
             );
 
             // Update contact users
-            $userIds = collect($validated['contact_users'])->pluck('value');
-            $contact->contact_users()->delete(); // Remove existing users
+            $userIds = collect($validated['speed_dial_users'])->pluck('value');
+            $speed_dial->speedDialUser()->delete(); // Remove existing users
 
             foreach ($userIds as $userId) {
-                ContactUsers::create([
+                SpeedDialUser::create([
                     'contact_user_uuid' => Str::uuid(),
-                    'contact_uuid' => $contact->contact_uuid,
+                    'contact_uuid' => $speed_dial->contact_uuid,
                     'user_uuid' => $userId
                 ]);
             }
@@ -255,11 +254,11 @@ class ContactsController extends Controller
         }
     }
 
-    public function destroy(Contact $contact)
+    public function destroy(SpeedDial $speed_dial)
     {
         try {
             DB::beginTransaction();
-            $contact->delete();
+            $speed_dial->delete();
             DB::commit();
             return response()->json(['messages' => ['success' => ['Contact deleted']]], 200);
         } catch (\Exception $e) {
@@ -319,6 +318,11 @@ class ContactsController extends Controller
                         'contact_organization',
 
                     )
+                    ->with(['speedDialUser' => function ($query) {
+                        $query->select('contact_user_uuid', 'contact_uuid', 'user_uuid')->with(['user' => function ($query) {
+                            $query->select('user_uuid', 'username');
+                        }]);
+                    }])
                     ->first();
 
                 // If a model exists, use it; otherwise, create a new one
@@ -327,7 +331,7 @@ class ContactsController extends Controller
                 }
 
                 // Define the update route
-                $updateRoute = route('contacts.update', ['contact' => $item_uuid]);
+                $updateRoute = route('speed-dial.update', ['speed_dial' => $item_uuid]);
             } else {
                 // Create a new model if item_uuid is not provided
                 $contact = $this->model;
@@ -341,9 +345,9 @@ class ContactsController extends Controller
 
             ];
 
-            $contact_users = [];
-            if ($contact->contact_users) {
-                $contact_users = $contact->contact_users->map(function ($user) {
+            $speed_dial_users = [];
+            if ($contact->speedDialUser) {
+                $speed_dial_users = $contact->speedDialUser->map(function ($user) {
                     return [
                         'value' => $user->user_uuid,
                         'name' => ''
@@ -359,7 +363,7 @@ class ContactsController extends Controller
                 'users' => $userOptions,
                 'permissions' => $permissions,
                 'routes' => $routes,
-                'contact_users' => $contact_users,
+                'speed_dial_users' => $speed_dial_users,
                 // Define options for other fields as needed
             ];
             // logger($itemOptions);
@@ -394,14 +398,14 @@ class ContactsController extends Controller
             DB::beginTransaction();
 
             // Fetch contacts to be deleted
-            $contacts = Contact::whereIn('contact_uuid', $items)->get();
+            $contacts = SpeedDial::whereIn('contact_uuid', $items)->get();
 
             foreach ($contacts as $contact) {
                 // Delete related contact phones
-                ContactPhones::where('contact_uuid', $contact->contact_uuid)->delete();
+                SpeedDialPhone::where('contact_uuid', $contact->contact_uuid)->delete();
 
                 // Delete related contact users
-                ContactUsers::where('contact_uuid', $contact->contact_uuid)->delete();
+                SpeedDialUser::where('contact_uuid', $contact->contact_uuid)->delete();
 
                 // Delete contact
                 $contact->delete();
@@ -435,7 +439,7 @@ class ContactsController extends Controller
 
             $headings = (new HeadingRowImport)->toArray(request()->file('file'));
 
-            $import = new ContactsImport;
+            $import = new SpeedDialImport;
             $import->import(request()->file('file'));
 
             if ($import->failures()->isNotEmpty()) {
@@ -448,17 +452,16 @@ class ContactsController extends Controller
 
             return response()->json([
                 'success' => true,
-                'messages' => ['success' => ['Contacts have been successfully uploaded.']]
+                'messages' => ['success' => ['Speed dials have been successfully uploaded.']]
             ], 200);
         } catch (Throwable $e) {
-            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            logger('SpeedDialController@import error: ' .$e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             // Send response in format that Dropzone understands
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => [$e->getMessage()]]
             ], 500);
         }
-
     }
 
 
@@ -497,11 +500,11 @@ class ContactsController extends Controller
     public function downloadTemplate()
     {
         // Download as CSV (third parameter sets the writer type)
-        return Excel::download(new ContactTemplate, 'template.csv', ExcelWriter::CSV);
+        return Excel::download(new SpeedDialTemplate, 'template.csv', ExcelWriter::CSV);
     }
 
     public function export()
     {
-        return Excel::download(new ContactsExport, 'contacts.csv', ExcelWriter::CSV);
+        return Excel::download(new SpeedDialExport, 'contacts.csv', ExcelWriter::CSV);
     }
 }

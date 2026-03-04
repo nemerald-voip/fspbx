@@ -1,53 +1,54 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AccountSettingsController;
+use App\Http\Controllers\ActiveCallsController;
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AppsController;
+use App\Http\Controllers\AppsCredentialsController;
+use App\Http\Controllers\Auth\ForgotPasswordController;
+use App\Http\Controllers\BusinessHoursController;
+use App\Http\Controllers\CallRecordingController;
+use App\Http\Controllers\CallRoutingOptionsController;
 use App\Http\Controllers\CdrsController;
-use App\Http\Controllers\LogsController;
-use App\Http\Controllers\FaxesController;
-use App\Http\Controllers\UsersController;
+use App\Http\Controllers\ContactsController;
+use App\Http\Controllers\CsrfTokenController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DomainController;
-use App\Http\Controllers\GroupsController;
-use App\Http\Controllers\ReportsController;
-use App\Http\Controllers\ContactsController;
+use App\Http\Controllers\DomainGroupsController;
+use App\Http\Controllers\EmailQueueController;
+use App\Http\Controllers\ExtensionsController;
+use App\Http\Controllers\ExtensionStatisticsController;
+use App\Http\Controllers\FaxesController;
 use App\Http\Controllers\FaxInboxController;
 use App\Http\Controllers\FaxQueueController;
 use App\Http\Controllers\FirewallController;
-use App\Http\Controllers\MessageController;
-use App\Http\Controllers\UserLogsController;
-use App\Http\Controllers\CsrfTokenController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\GreetingsController;
-use App\Http\Controllers\VoicemailController;
-use App\Http\Controllers\EmailQueueController;
-use App\Http\Controllers\ExtensionsController;
-use App\Http\Controllers\PolycomLogController;
-use App\Http\Controllers\RecordingsController;
-use App\Http\Controllers\RingGroupsController;
-use App\Http\Controllers\ActiveCallsController;
-use App\Http\Controllers\ActivityLogController;
-use App\Http\Controllers\ProFeaturesController;
-use App\Http\Controllers\WakeupCallsController;
-use App\Http\Controllers\DomainGroupsController;
-use App\Http\Controllers\PhoneNumbersController;
-use App\Http\Controllers\ProvisioningController;
-use App\Http\Controllers\BusinessHoursController;
-use App\Http\Controllers\CallRecordingController;
-use App\Http\Controllers\RegistrationsController;
-use App\Http\Controllers\SystemSettingsController;
-use App\Http\Controllers\AccountSettingsController;
-use App\Http\Controllers\AppsCredentialsController;
+use App\Http\Controllers\GroupsController;
+use App\Http\Controllers\LogsController;
+use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MessageSettingsController;
+use App\Http\Controllers\PhoneNumbersController;
+use App\Http\Controllers\PolycomLogController;
+use App\Http\Controllers\ProFeaturesController;
+use App\Http\Controllers\ProvisioningController;
+use App\Http\Controllers\RecordingsController;
+use App\Http\Controllers\RegistrationsController;
+use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\SansayActiveCallsController;
-use App\Http\Controllers\VoicemailMessagesController;
-use App\Http\Controllers\CallRoutingOptionsController;
-use App\Http\Controllers\WhitelistedNumbersController;
-use App\Http\Controllers\Auth\ForgotPasswordController;
-use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\SansayRegistrationsController;
+use App\Http\Controllers\SpeedDialController;
+use App\Http\Controllers\SystemSettingsController;
+use App\Http\Controllers\UserLogsController;
+use App\Http\Controllers\UsersController;
 use App\Http\Controllers\VirtualReceptionistController;
-use App\Http\Controllers\DeviceCloudProvisioningController;
+use App\Http\Controllers\VoicemailController;
+use App\Http\Controllers\VoicemailMessagesController;
+use App\Http\Controllers\WakeupCallsController;
+use App\Http\Controllers\WhitelistedNumbersController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -281,14 +282,8 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/apps/users/{extension}/status', [AppsController::class, 'SetStatus'])->name('appsSetStatus');
     Route::get('/apps/email', [AppsController::class, 'emailUser'])->name('emailUser');
 
-    // Contacts
-    Route::resource('contacts', ContactsController::class);
-    Route::post('/contacts/item-options', [ContactsController::class, 'getItemOptions'])->name('contacts.item.options');
-    Route::post('/contacts/bulk-delete', [ContactsController::class, 'bulkDelete'])->name('contacts.bulk.delete');
-    Route::post('/contacts/select-all', [ContactsController::class, 'selectAll'])->name('contacts.select.all');
-    Route::post('/contacts/import', [ContactsController::class, 'import'])->name('contacts.import');
-    Route::get('/contacts/template/download', [ContactsController::class, 'downloadTemplate'])->name('contacts.download.template');
-    Route::get('/contacts-export', [ContactsController::class, 'export'])->name('contacts.export');
+    // Speed Dial
+    Route::get('speed-dial', [SpeedDialController::class, 'index'])->name('speed-dial.index');
 
     // SMS for testing
     // Route::get('/sms/ringotelwebhook', [SmsWebhookController::class,"messageFromRingotel"]);

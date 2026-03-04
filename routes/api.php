@@ -35,6 +35,7 @@ use App\Http\Controllers\VirtualReceptionistController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\Api\ProvisioningTemplateController;
 use App\Http\Controllers\HotelHousekeepingDefinitionController;
+use App\Http\Controllers\SpeedDialController;
 
 /*
 |--------------------------------------------------------------------------
@@ -247,6 +248,26 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
 
     // Account Settings
     Route::put('account-settings/update', [AccountSettingsController::class, 'update'])->name('account-settings.update');
+
+    // Contacts
+    // Route::resource('contacts', ContactsController::class);
+    // Route::post('/contacts/item-options', [ContactsController::class, 'getItemOptions'])->name('contacts.item.options');
+    // Route::post('/contacts/bulk-delete', [ContactsController::class, 'bulkDelete'])->name('contacts.bulk.delete');
+    // Route::post('/contacts/select-all', [ContactsController::class, 'selectAll'])->name('contacts.select.all');
+    // Route::post('/contacts/import', [ContactsController::class, 'import'])->name('contacts.import');
+    // Route::get('/contacts/template/download', [ContactsController::class, 'downloadTemplate'])->name('contacts.download.template');
+    // Route::get('/contacts-export', [ContactsController::class, 'export'])->name('contacts.export');
+
+    // Speed Dial
+    Route::post('speed-dial', [SpeedDialController::class, 'store'])->name('speed-dial.store');
+    Route::put('speed-dial/{speed_dial}', [SpeedDialController::class, 'update'])->name('speed-dial.update');
+    Route::get('/speed-dial/data', [SpeedDialController::class, 'getData'])->name('speed-dial.data');
+    Route::post('/speed-dial/item-options', [SpeedDialController::class, 'getItemOptions'])->name('speed-dial.item.options');
+    Route::post('/speed-dial/bulk-delete', [SpeedDialController::class, 'bulkDelete'])->name('speed-dial.bulk.delete');
+    Route::post('/speed-dial/select-all', [SpeedDialController::class, 'selectAll'])->name('speed-dial.select.all');
+    Route::post('/speed-dial/import', [SpeedDialController::class, 'import'])->name('speed-dial.import');
+    Route::get('/speed-dial/template/download', [SpeedDialController::class, 'downloadTemplate'])->name('speed-dial.download.template');
+    Route::get('/speed-dial-export', [SpeedDialController::class, 'export'])->name('speed-dial.export');
 
     // System Settings
     Route::put('system-settings/update', [SystemSettingsController::class, 'update'])->name('system-settings.update');
