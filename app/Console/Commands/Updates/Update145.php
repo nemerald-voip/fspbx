@@ -41,7 +41,7 @@ class Update145
         $updated = DB::table('v_default_settings')
             ->where('default_setting_category', 'aws')
             ->update([
-                'default_setting_category' => 's3 storage',
+                'default_setting_category' => 's3_storage',
             ]);
 
         echo "Updated {$updated} default setting record(s) from category 'aws' to 's3 storage'.\n";
