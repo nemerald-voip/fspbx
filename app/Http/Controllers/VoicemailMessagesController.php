@@ -49,8 +49,9 @@ class VoicemailMessagesController extends Controller
         // Fetch the mailbox with the extension relationship
         $mailbox = Voicemails::where('voicemail_uuid', $voicemail_uuid)
             ->where('domain_uuid', $domain_uuid)
-            ->with(['extension' => function ($query) {
-                $query->select('extension_uuid', 'extension', 'effective_caller_id_name');
+            ->with(['extension' => function ($query) use ($domain_uuid) {
+                $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
+                    ->where('domain_uuid', $domain_uuid);
             }])
             ->firstOrFail();
 
