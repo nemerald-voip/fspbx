@@ -49,8 +49,9 @@ class VoicemailMessagesController extends Controller
         // Fetch the mailbox with the extension relationship
         $mailbox = Voicemails::where('voicemail_uuid', $voicemail_uuid)
             ->where('domain_uuid', $domain_uuid)
-            ->with(['extension' => function ($query) {
-                $query->select('extension_uuid', 'extension', 'effective_caller_id_name');
+            ->with(['extension' => function ($query) use ($domain_uuid) {
+                $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
+                    ->where('domain_uuid', $domain_uuid);
             }])
             ->firstOrFail();
 
@@ -64,7 +65,7 @@ class VoicemailMessagesController extends Controller
                 ($mailbox->voicemail_description ? ' (' . $mailbox->voicemail_description . ')' : '');
         }
 
-        $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->startOfDay()->setTimeZone('UTC');
+        $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->subDays(30)->startOfDay()->setTimeZone('UTC');
         $endPeriod = Carbon::now(get_local_time_zone($domain_uuid))->endOfDay()->setTimeZone('UTC');
 
         return Inertia::render(
