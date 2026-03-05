@@ -66,6 +66,7 @@
                 <TableColumnHeader v-if="showGlobal" header="Domain"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
+                <TableColumnHeader header="Duration" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                 <TableColumnHeader header="Timestamp" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <!-- <TableColumnHeader header="Contact" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
@@ -121,6 +122,8 @@
 
                     <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.context" />
+
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 font-mono" :text="formatDuration(row.start_epoch)" />
 
                     <TableField class=" px-2 py-2 text-sm text-gray-500" :text="row.created" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.cid_name" />
@@ -228,7 +231,7 @@ const notificationMessages = ref(null);
 const notificationShow = ref(null);
 const isActionConfirmationModalVisible = ref(false);
 const actionLabel = ref('');
-const intervalId = ref(null);
+const refreshTimeoutId = ref(null);
 
 const props = defineProps({
     data: Object,
@@ -260,8 +263,34 @@ const bulkActions = computed(() => {
     return actions;
 });
 
+const currentTime = ref(Date.now());
+const dataFetchedTime = ref(Date.now());
+const durationIntervalId = ref(null);
+
+const formatDuration = (startEpoch) => {
+    if (!startEpoch) return '00:00:00';
+    
+    // Choose the reference time based on the auto-refresh state
+    const referenceTime = isRefreshing.value ? currentTime.value : dataFetchedTime.value;
+    
+    let diffInSeconds = Math.floor((referenceTime - startEpoch) / 1000);
+    
+    // Fallback just in case
+    if (diffInSeconds < 0) diffInSeconds = 0; 
+
+    const hours = Math.floor(diffInSeconds / 3600);
+    const minutes = Math.floor((diffInSeconds % 3600) / 60);
+    const seconds = diffInSeconds % 60;
+
+    const pad = (num) => num.toString().padStart(2, '0');
+    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}`;
+};
+
 onMounted(() => {
-    // console.log(props.data);
+    // Tick every second to update durations
+    durationIntervalId.value = setInterval(() => {
+        currentTime.value = Date.now();
+    }, 1000);
 });
 
 const handleSingleItemActionRequest = (uuid, action) => {
@@ -385,11 +414,15 @@ const handleSearchButtonClick = () => {
         onSuccess: (page) => {
             loading.value = false;
             handleClearSelection();
+            dataFetchedTime.value = Date.now();
         }
     });
 };
 
 const handleRefresh = () => {
+    // Safety check: if they toggled it off while a request was pending, abort.
+    if (!isRefreshing.value) return; 
+
     router.visit(props.routes.current_page, {
         data: {
             filterData: filterData._rawValue,
@@ -402,6 +435,21 @@ const handleRefresh = () => {
         ],
         onSuccess: (page) => {
             handleClearSelection();
+            dataFetchedTime.value = Date.now();
+            
+            // Queue up the next refresh ONLY after this one succeeds
+            if (isRefreshing.value) {
+                refreshTimeoutId.value = setTimeout(() => {
+                    handleRefresh();
+                }, 5000);
+            }
+        },
+        onError: () => {
+             if (isRefreshing.value) {
+                refreshTimeoutId.value = setTimeout(() => {
+                    handleRefresh();
+                }, 5000);
+            }
         }
     });
 };
@@ -424,6 +472,7 @@ const renderRequestedPage = (url) => {
         only: ["data"],
         onSuccess: (page) => {
             loading.value = false;
+            dataFetchedTime.value = Date.now();
         }
     });
 };
@@ -468,21 +517,24 @@ const toggleRefreshing = () => {
     isRefreshing.value = !isRefreshing.value;
 
     if (isRefreshing.value) {
-        // Start calling handleSearchButtonClick every few seconds
-        intervalId.value = setInterval(() => {
-            handleRefresh();
-        }, 5000); // Run every 5 seconds
+        // Start the loop by firing the first manual refresh
+        handleRefresh();
     } else {
-        // Stop the interval when refreshing is disabled
-        clearInterval(intervalId.value);
-        intervalId.value = null;
+        // Stop the loop by clearing the pending timeout
+        if (refreshTimeoutId.value) {
+            clearTimeout(refreshTimeoutId.value);
+            refreshTimeoutId.value = null;
+        }
     }
 };
 
 // Make sure to clear the interval when the component is destroyed
 onUnmounted(() => {
-    if (intervalId.value) {
-        clearInterval(intervalId.value);
+    if (refreshTimeoutId.value) {
+        clearTimeout(refreshTimeoutId.value);
+    }
+    if (durationIntervalId.value) {
+        clearInterval(durationIntervalId.value);
     }
 });
 

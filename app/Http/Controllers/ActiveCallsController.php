@@ -86,7 +86,17 @@ class ActiveCallsController extends Controller
                     }
                 }
             }
-            return $call; // Return the modified call data
+
+if (isset($call['created'])) {
+                try {
+                    // Carbon handles the server's timezone automatically based on your config/app.php
+                    $call['start_epoch'] = \Carbon\Carbon::parse($call['created'])->timestamp * 1000;
+                } catch (\Exception $e) {
+                    $call['start_epoch'] = null;
+                }
+            }
+
+            return $call; 
         });
 
         // Apply pagination manually
