@@ -8,6 +8,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Pagination\Paginator;
 use App\Services\FreeswitchEslService;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Carbon\Carbon;
 
 class ActiveCallsController extends Controller
 {
@@ -53,6 +54,7 @@ class ActiveCallsController extends Controller
      */
     public function getData(FreeswitchEslService $eslService, $paginate = 50)
     {
+
         // Check if search parameter is present and not empty
         if (!empty(request('filterData.search'))) {
             $this->filters['search'] = request('filterData.search');
@@ -67,36 +69,56 @@ class ActiveCallsController extends Controller
 
         $data = $this->builder($this->filters, $eslService);
 
-        // Use map to replace the gateway UUID with the gateway name
         $data = $data->map(function ($call) {
-            // Ensure 'application_data' exists and contains 'sofia/gateway'
+            // Replace gateway UUID with gateway name (unchanged)
             if (isset($call['application_data']) && strpos($call['application_data'], 'sofia/gateway') !== false) {
-                // Extract the gateway UUID from 'application_data'
                 preg_match('/sofia\/gateway\/([a-z0-9\-]+)\//', $call['application_data'], $matches);
 
                 if (isset($matches[1])) {
                     $gatewayUuid = $matches[1];
-
-                    // Find the gateway name by UUID
                     $gateway = Gateways::where('gateway_uuid', $gatewayUuid)->first();
 
                     if ($gateway) {
-                        // Replace the UUID with the gateway name
                         $call['application_data'] = str_replace($gatewayUuid, $gateway->gateway, $call['application_data']);
                     }
                 }
             }
 
-if (isset($call['created'])) {
-                try {
-                    // Carbon handles the server's timezone automatically based on your config/app.php
-                    $call['start_epoch'] = \Carbon\Carbon::parse($call['created'])->timestamp * 1000;
-                } catch (\Exception $e) {
-                    $call['start_epoch'] = null;
-                }
+            // ----- NEW: Duration & timestamp based on created_epoch -----
+            $createdEpoch = isset($call['created_epoch']) ? (int) $call['created_epoch'] : null;
+
+            // Duration start for JS (ms)
+            $call['start_epoch'] = $createdEpoch ? $createdEpoch * 1000 : null;
+
+            // Decide which timezone to display timestamps in
+            $showGlobal = request('filterData.showGlobal') === 'true';
+
+            // Global: viewer = logged-in user timezone
+            $userTz = auth()->user()->time_zone ?? 'UTC';
+
+            if ($showGlobal) {
+                $displayTz = $userTz;
+            } else {
+                // Local: tenant timezone (domain from session)
+                $displayTz = get_local_time_zone(session('domain_uuid')) ?? $userTz;
             }
 
-            return $call; 
+            $call['display_timezone'] = $displayTz;
+
+            // Build a reliable display timestamp (no ambiguous parsing)
+            $call['created_display'] = $createdEpoch
+                ? Carbon::createFromTimestamp($createdEpoch, 'UTC')
+                    ->setTimezone($displayTz)
+                    ->format('Y-m-d H:i:s')
+                : null;
+
+            $call['app_full'] =
+            trim(($call['application'] ?? '') . ($call['application_data'] ? ': ' . $call['application_data'] : ''));
+
+            // short preview (keep it small)
+            $call['app_preview'] = mb_strimwidth($call['app_full'], 0, 90, '…');
+
+            return $call;
         });
 
         // Apply pagination manually
@@ -227,32 +249,30 @@ if (isset($call['created'])) {
         }
     }
 
-/**
- * Get all item IDs without pagination
- *
- * @return \Illuminate\Http\JsonResponse
- */
-public function selectAll()
-{
-    try {
-        // Fetch all active calls without pagination
-        $allCalls = $this->builder($this->filters);
+    /**
+     * Get all item IDs without pagination
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function selectAll(FreeswitchEslService $eslService)
+    {
+        try {
+            $allCalls = $this->builder($this->filters, $eslService);
 
-        // Extract only the UUIDs from the collection
-        $uuids = $allCalls->pluck('uuid'); 
+            $uuids = $allCalls->pluck('uuid');
 
-        return response()->json([
-            'messages' => ['success' => ['All items selected']],
-            'items' => $uuids,  // Returning only the UUIDs
-        ], 200);
-    } catch (\Exception $e) {
-        logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            return response()->json([
+                'messages' => ['success' => ['All items selected']],
+                'items' => $uuids,
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
-        return response()->json([
-            'success' => false,
-            'errors' => ['server' => ['Failed to select all items']]
-        ], 500); // 500 Internal Server Error for any other errors
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to select all items']]
+            ], 500);
+        }
     }
-}
 
 }
