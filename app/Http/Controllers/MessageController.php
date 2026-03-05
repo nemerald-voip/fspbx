@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Factories\MessageProviderFactory;
 use App\Jobs\SendSmsNotificationToSlack;
 use App\Mail\SmsToEmail;
+use App\Models\Contact;
+use App\Models\ContactPhone;
 use App\Models\DomainSettings;
 use App\Models\Extensions;
 use App\Models\Messages;
@@ -25,11 +27,7 @@ class MessageController extends Controller
 {
 
     public $model;
-    public $filters = [];
-    public $sortField;
-    public $sortOrder;
     protected $viewName = 'Messages';
-    protected $searchable = ['source', 'destination', 'message'];
 
     public function __construct()
     {
@@ -52,6 +50,7 @@ class MessageController extends Controller
                     'sendMessage'  => route('messages.send'),
                     'markRead'  => route('messages.mark-read'),
                     'data_route'   => route('messages.data'),
+                    'contactStore' => route('contacts.store'),
                 ],
             ]
         );
@@ -173,6 +172,25 @@ class MessageController extends Controller
             ->limit($limit)
             ->get();
 
+        // Extract all remote numbers
+        $remoteNumbers = $rows->pluck('remote_number')->unique();
+
+        // Query the ContactPhone table (Polymorphic)
+        $phones = ContactPhone::whereIn('phone_number', $remoteNumbers)
+            ->with('phoneable') // Loads Contact or Organization
+            ->get();
+
+        // Build Map: Number => Name
+        $directory = [];
+        foreach ($phones as $phone) {
+            $owner = $phone->phoneable;
+            if ($owner) {
+                // Check if it's a Contact (has full_name) or Org (has name)
+                $name = ($owner instanceof Contact) ? $owner->full_name : $owner->name;
+                $directory[$phone->phone_number] = $name;
+            }
+        }
+
         $pairs = $rows->map(function ($r) {
             return [
                 'to' => $r->local_number,   // Me
@@ -232,6 +250,139 @@ class MessageController extends Controller
         return $number; // Add formatting logic here if desired
     }
 
+    // --- FETCH CONTACT FOR SIDE PANEL ---
+    public function getContact(Request $request, $phoneNumber)
+    {
+        // Find the phone record
+        $phone = ContactPhone::where('phone_number', $phoneNumber)->first();
+
+        if (!$phone || !$phone->phoneable) {
+            return response()->json(['contact' => null]);
+        }
+
+        $contact = $phone->phoneable;
+
+        // Load related data for the form
+        $contact->load(['emails', 'addresses', 'organization', 'phones']);
+
+        // Flatten data for the VueForm (optional, but helps with mapping)
+        $data = $contact->toArray();
+
+        // Extract specific fields for the form if needed
+        $data['phone_number'] = $phoneNumber; // The specific number we clicked on
+
+        // Grab values from related tables to populate form fields
+        $data['email'] = $contact->emails->where('label', 'work')->first()->email_address ?? null;
+        $data['website'] = $contact->organization->website ?? null; // Example
+        $data['address'] = $contact->addresses->first()->street ?? null; // Simplified
+
+        // Map organization name string
+        $data['organization'] = $contact->organization->name ?? null;
+
+        return response()->json(['contact' => $data]);
+    }
+
+    // --- NEW: STORE CONTACT FROM SIDE PANEL ---
+    public function storeContact(Request $request)
+    {
+        $data = $request->validate([
+            'phone_number' => 'required|string',
+            'first_name'   => 'nullable|string',
+            'last_name'    => 'nullable|string',
+            'email'        => 'nullable|email',
+            'website'      => 'nullable|string',
+            'organization' => 'nullable|string', // String input from form
+            'department'   => 'nullable|string',
+            'address'      => 'nullable|string',
+            'notes'        => 'nullable|string',
+            'mobile_number' => 'nullable|string',
+            'fax_number'   => 'nullable|string',
+        ]);
+
+        $domainUuid = $this->currentDomainUuid();
+
+        DB::beginTransaction();
+        try {
+            // 1. Handle Organization
+            $orgId = null;
+            if (!empty($data['organization'])) {
+                $org = Organization::firstOrCreate(
+                    ['domain_uuid' => $domainUuid, 'name' => $data['organization']],
+                    ['website' => $data['website']]
+                );
+                $orgId = $org->organization_uuid;
+            }
+
+            // 2. Find or Create Contact via Phone Number linkage
+            // Logic: Does this phone number already exist?
+            $existingPhone = ContactPhone::where('phone_number', $data['phone_number'])->first();
+
+            if ($existingPhone && $existingPhone->phoneable_type === Contact::class) {
+                $contact = $existingPhone->phoneable;
+                // Update existing
+                $contact->update([
+                    'first_name' => $data['first_name'],
+                    'last_name' => $data['last_name'],
+                    'organization_uuid' => $orgId,
+                    'department' => $data['department'],
+                    'notes' => $data['notes'],
+                ]);
+            } else {
+                // Create New Contact
+                $contact = Contact::create([
+                    'domain_uuid' => $domainUuid,
+                    'first_name' => $data['first_name'],
+                    'last_name' => $data['last_name'],
+                    'organization_uuid' => $orgId,
+                    'department' => $data['department'],
+                    'notes' => $data['notes'],
+                ]);
+
+                // Create the Phone Link
+                $contact->phones()->create([
+                    'phone_number' => $data['phone_number'],
+                    'label' => 'work' // Default for the chat ID
+                ]);
+            }
+
+            // 3. Handle Email (Update/Create 'work' email)
+            if (!empty($data['email'])) {
+                $contact->emails()->updateOrCreate(
+                    ['label' => 'work'],
+                    ['email_address' => $data['email']]
+                );
+            }
+
+            // 4. Handle Address (Update/Create 'main' address)
+            if (!empty($data['address'])) {
+                $contact->addresses()->updateOrCreate(
+                    ['label' => 'main'],
+                    ['street' => $data['address'], 'domain_uuid' => $domainUuid]
+                );
+            }
+
+            // 5. Handle Extra Phones (Mobile/Fax)
+            if (!empty($data['mobile_number'])) {
+                $contact->phones()->updateOrCreate(
+                    ['label' => 'mobile'],
+                    ['phone_number' => $data['mobile_number']]
+                );
+            }
+            if (!empty($data['fax_number'])) {
+                $contact->phones()->updateOrCreate(
+                    ['label' => 'fax'],
+                    ['phone_number' => $data['fax_number']]
+                );
+            }
+
+            DB::commit();
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            logger($e);
+            return response()->json(['message' => 'Failed to save contact'], 500);
+        }
+    }
 
     /**
      * Fetch messages for a specific room (Conversation between Extension and External Number)

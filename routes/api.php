@@ -250,7 +250,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::put('account-settings/update', [AccountSettingsController::class, 'update'])->name('account-settings.update');
 
     // Contacts
-    // Route::resource('contacts', ContactsController::class);
+    Route::post('contacts', [SpeedDialController::class, 'store'])->name('contacts.store');
     // Route::post('/contacts/item-options', [ContactsController::class, 'getItemOptions'])->name('contacts.item.options');
     // Route::post('/contacts/bulk-delete', [ContactsController::class, 'bulkDelete'])->name('contacts.bulk.delete');
     // Route::post('/contacts/select-all', [ContactsController::class, 'selectAll'])->name('contacts.select.all');
