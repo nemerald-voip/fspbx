@@ -78,6 +78,31 @@ class UploadCallRecordingsToS3Storage extends Command
                 return;
             }
 
+            // Capture original path details before any processing
+            $originalRecordPath = $rec->record_path;
+            $originalRecordName = $rec->record_name;
+            $recordingFile = rtrim($originalRecordPath, '/') . '/' . $originalRecordName;
+
+            // 1. Check if file exists. 
+            // If it is missing, it might be because a sibling CDR record sharing the same file
+            // was processed just moments ago, uploaded the file, and deleted the local copy.
+            if (!file_exists($recordingFile)) {
+                // Refresh the model from the DB to see if it was updated by a batch update
+                $rec->refresh();
+
+                if (str_contains($rec->record_path, 'S3')) {
+                    // This was already handled by a previous iteration (shared file).
+                    // We can consider this a success or just skip silently.
+                    return;
+                }
+
+                $failed[] = [
+                    'msg' => 'Recording file not found.',
+                    'name' => $originalRecordName,
+                ];
+                return;
+            }
+
             $timeZone = $timeZonesByDomain['domains'][$rec->domain_uuid] ?? $timeZonesByDomain['default'];
 
             $clientKey = $this->s3StorageConfigService->getSettingsHash($settings);
@@ -87,16 +112,6 @@ class UploadCallRecordingsToS3Storage extends Command
             }
 
             $s3 = $s3Clients[$clientKey];
-
-            $recordingFile = rtrim($rec->record_path, '/') . '/' . $rec->record_name;
-
-            if (!file_exists($recordingFile)) {
-                $failed[] = [
-                    'msg' => 'Recording file not found.',
-                    'name' => $rec->record_name,
-                ];
-                return;
-            }
 
             $mp3File = $this->convertToMp3IfNeeded($recordingFile);
 
@@ -113,18 +128,39 @@ class UploadCallRecordingsToS3Storage extends Command
 
                 $objectKey = $this->buildObjectKey($rec, $settings, $mp3File, $timeZone);
 
+                $localSize = filesize($mp3File);
+
                 $s3->putObject([
                     'Bucket'     => $settings['bucket'],
                     'SourceFile' => $mp3File,
                     'Key'        => $objectKey,
                 ]);
 
-                $originalRecordName = $rec->record_name;
+                // Verify it exists and size matches
+                $head = $s3->headObject([
+                    'Bucket' => $settings['bucket'],
+                    'Key'    => $objectKey,
+                ]);
 
-                $rec->record_path = 'S3';
-                $rec->record_name = $objectKey;
-                $rec->save();
+                $remoteSize = (int) ($head['ContentLength'] ?? 0);
 
+                if ($remoteSize !== (int) $localSize) {
+                    throw new \RuntimeException(
+                        "Upload verification failed (size mismatch). Local={$localSize}, Remote={$remoteSize}"
+                    );
+                }
+
+                // 2. MASS UPDATE
+                // Update ALL CDRs that match this filename and path. 
+                // This covers the current $rec AND any other CDRs sharing this file.
+                CDR::where('record_name', $originalRecordName)
+                    ->where('record_path', $originalRecordPath)
+                    ->update([
+                        'record_path' => 'S3',
+                        'record_name' => $objectKey
+                    ]);
+
+                // Cleanup local files
                 if ($mp3File !== $recordingFile && file_exists($mp3File)) {
                     unlink($mp3File);
                 }
@@ -209,6 +245,8 @@ class UploadCallRecordingsToS3Storage extends Command
 
         $process = new Process([
             'ffmpeg',
+            '-nostdin',        // never prompt / read from stdin
+            '-y',              // overwrite output if it exists
             '-i',
             $recordingFile,
             '-b:a',
