@@ -96,8 +96,15 @@ class UploadCallRecordingsToS3Storage extends Command
                     return;
                 }
 
+                // The file is truly missing locally and not on S3.
+                CDR::where('xml_cdr_uuid', $rec->xml_cdr_uuid)
+                    ->update([
+                        'record_path' => null,
+                        'record_name' => null
+                    ]);
+
                 $failed[] = [
-                    'msg' => 'Recording file not found.',
+                    'msg' => 'Recording file not found. DB entries cleared.',
                     'name' => $originalRecordName,
                 ];
                 return;
