@@ -9,8 +9,8 @@ return new class extends Migration
 {
     public function up()
     {
-        if (!Schema::hasTable('emails')) {
-            Schema::create('emails', function (Blueprint $table) {
+        if (!Schema::hasTable('contact_emails')) {
+            Schema::create('contact_emails', function (Blueprint $table) {
                 $table->uuid('email_uuid')->primary()->default(DB::raw('uuid_generate_v4()'));
 
                 // Creates 'emailable_type' (string) and 'emailable_id' (uuid)
@@ -26,6 +26,6 @@ return new class extends Migration
 
     public function down()
     {
-        Schema::dropIfExists('emails');
+        Schema::dropIfExists('contact_emails');
     }
 };

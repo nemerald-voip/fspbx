@@ -10,20 +10,29 @@
             <!-- LEFT COLUMN: Sidebar -->
             <aside class="w-80 bg-white border-r border-gray-200 flex flex-col">
                 <!-- Header -->
-                <div class="p-5 border-b border-gray-100 flex justify-between items-center">
+                <div class="p-4 border-b border-gray-100 flex justify-between items-center">
                     <h2 class="text-xl font-bold text-gray-800">Messages</h2>
                     <!-- Optional: Loading Indicator -->
-                    <span v-if="loadingRooms" class="text-xs text-gray-400">Loading...</span>
+                    <div class="flex items-center space-x-2">
 
-                    <!-- New Room Button -->
-                    <button @click="showCreateModal = true"
-                        class="p-2 bg-blue-100 text-blue-600 rounded-full hover:bg-blue-200 transition-colors"
-                        title="New Chat">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                            stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                        </svg>
-                    </button>
+                        <span v-if="loadingRooms"
+                            class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></span>
+
+                        <button @click="showCreateModal = true"
+                            class="p-2 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors"
+                            title="New Chat">
+
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
+
+                            </svg>
+
+                        </button>
+
+                    </div>
 
                 </div>
 
@@ -50,6 +59,7 @@
                         <div class="relative flex-shrink-0 mr-3">
                             <div
                                 class="h-10 w-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 font-bold text-xs shadow-sm group-hover:shadow-md transition-shadow">
+
                                 {{ room.name.slice(0, 2) }}
                             </div>
                         </div>
@@ -100,8 +110,31 @@
                 </div>
             </aside>
 
-            <!-- RIGHT COLUMN: Chat Area -->
-            <main class="flex-1 relative flex flex-col bg-gray-100">
+            <!-- Chat Area -->
+            <main class="flex-1 relative flex flex-col bg-gray-100 min-w-0">
+
+                <!-- Chat Toolbar -->
+                <div
+                    class="h-16 border-b border-gray-200 bg-white flex justify-between items-center px-6 shadow-sm z-10">
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg">{{ currentRoomName }}</h3>
+                        <span class="text-xs text-gray-500 font-mono" v-if="activeRoomId">
+                            {{ activeRoomId.split('_')[1] }}
+                        </span>
+                    </div>
+
+                    <!-- Toggle Contact Panel Button -->
+                    <button v-if="activeRoomId" @click="toggleContactPanel"
+                        class="p-2 rounded-full hover:bg-gray-100 text-gray-500 transition-colors focus:outline-none"
+                        :class="{ 'bg-blue-100 text-blue-600 ring-2 ring-blue-200': showContactPanel }"
+                        title="Contact Details">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </button>
+                </div>
 
                 <deep-chat ref="elementRef" :history="currentHistory" :connect="connectConfig"
                     :introMessage="introMessage"
@@ -126,6 +159,102 @@
                     }">
                 </deep-chat>
             </main>
+
+            <!-- COL 3: CONTACT INFO PANEL -->
+            <aside v-if="showContactPanel && activeRoomId"
+                class="w-96 bg-white border-l border-gray-200 flex flex-col overflow-hidden transition-all duration-300 ease-in-out z-20 shadow-xl">
+
+                <!-- Panel Header -->
+                <div
+                    class="flex-shrink-0 h-16 px-6 border-b border-gray-100 flex justify-between items-center bg-white">
+                    <h2 class="text-lg font-bold text-gray-800">
+                        {{ isEditingContact ? 'Edit Contact' : 'Contact Details' }}
+                    </h2>
+                    <div class="flex items-center space-x-3">
+                        <!-- Edit/Cancel Button -->
+                        <button @click="showContactEditForm" class="text-sm font-medium transition-colors"
+                            :class="isEditingContact ? 'text-red-500 hover:text-red-700' : 'text-blue-600 hover:text-blue-800'">
+                            {{ isEditingContact ? 'Cancel' : 'Edit' }}
+                        </button>
+
+                        <!-- Close Panel -->
+                        <button @click="showContactPanel = false" class="text-gray-400 hover:text-gray-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SCROLLABLE CONTENT AREA -->
+                <div class="flex-1 overflow-y-auto p-6">
+
+                    <!-- VIEW MODE -->
+                    <div v-if="!isEditingContact" class="space-y-6">
+
+                        <!-- Identity Header -->
+                        <div class="text-center">
+                            <div
+                                class="w-20 h-20 mx-auto bg-gray-100 rounded-full flex items-center justify-center text-2xl font-bold text-gray-500 mb-3 border border-gray-200">
+                                {{ contactInitials }}
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900">{{ contactFullName }}</h3>
+
+                            <!-- Job Title / Org / Dept -->
+                            <div v-if="contactData?.title" class="text-sm font-semibold text-gray-700 mt-1">
+                                {{ contactData?.title }}
+                            </div>
+                            <div v-if="contactData?.organization" class="text-sm text-gray-500 font-medium">
+                                {{ contactData?.organization }}
+                            </div>
+                            <div v-if="contactData?.department" class="text-xs text-gray-400 mt-0.5">
+                                {{ contactData?.department }}
+                            </div>
+                        </div>
+
+                        <!-- Contact Info Section (Phones/Emails same as before) -->
+                        <div class="border-t border-gray-100 pt-4 space-y-4">
+                            <!-- ... (Phone/Mobile/Email items remain the same) ... -->
+                        </div>
+
+                        <!-- Address Section (UPDATED) -->
+                        <div v-if="formattedAddress" class="border-t border-gray-100 pt-4">
+                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Location</h4>
+                            <div class="flex items-start">
+                                <div class="mt-0.5 w-5 text-gray-400">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
+                                        fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                            d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <p class="ml-3 text-sm text-gray-700 whitespace-pre-line">{{ formattedAddress }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Notes Section -->
+                        <div v-if="contactData?.notes" class="border-t border-gray-100 pt-4">
+                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Notes</h4>
+                            <div
+                                class="bg-yellow-50 p-3 rounded text-sm text-gray-700 whitespace-pre-line border border-yellow-100 shadow-sm">
+                                {{ contactData?.notes }}
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- EDIT MODE (Form) -->
+                    <div v-else>
+                        <Vueform ref="contactForm$" :float-placeholders="false" :schema="contactFormSchema"
+                            :endpoint="submitContactForm" @response="handleContactResponse"
+                            @success="handleContactSuccess" @error="handleContactError" :display-errors="false" />
+                    </div>
+
+                </div>
+            </aside>
         </div>
 
         <!-- VueForm CREATE ROOM MODAL -->
@@ -135,11 +264,28 @@
                 <h3 class="text-lg font-bold text-gray-900 mb-4">Start New Conversation</h3>
 
                 <!-- VueForm Component -->
-                <Vueform :endpoint="false" :schema="createRoomSchema" @submit="handleCreateRoom" />
+                <Vueform :endpoint="false" :float-placeholders="false" :schema="createRoomSchema"
+                    @submit="handleCreateRoom" />
 
                 <!-- Close Button (Optional, if not included in form actions) -->
                 <div class="mt-4 flex justify-center">
                     <button @click="showCreateModal = false"
+                        class="text-sm text-gray-400 hover:text-gray-600">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VueForm CREATE ORG MODAL -->
+        <div v-if="showOrgModal"
+            class="fixed inset-0 z-20 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+            <div class="bg-white rounded-lg shadow-2xl w-96 p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">Add Organization</h3>
+
+                <Vueform :endpoint="false" :float-placeholders="false" :schema="createOrgSchema"
+                    @submit="handleCreateOrg" />
+
+                <div class="mt-4 flex justify-center">
+                    <button @click="showOrgModal = false"
                         class="text-sm text-gray-400 hover:text-gray-600">Cancel</button>
                 </div>
             </div>
@@ -153,7 +299,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref, onBeforeUnmount } from "vue";
+import { computed, onMounted, ref, onBeforeUnmount, nextTick } from "vue";
 import axios from 'axios';
 import 'deep-chat'; // Registers the web component
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -181,6 +327,11 @@ const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
 let globalEchoChannel = null;
+const showContactPanel = ref(true); // Toggle for right sidebar
+const contactData = ref(null);
+const isEditingContact = ref(false);
+const showOrgModal = ref(false);
+const contactForm$ = ref(null);
 
 // DIDs State (Populated when extension changes)
 const myDids = ref([]);
@@ -442,6 +593,14 @@ async function selectRoom(id) {
 
     // Listen for new messages (Reverb)
     joinChannel(id);
+
+    // Always switch back to "View Mode" (clean profile) when changing users
+    isEditingContact.value = false;
+
+    // If the panel is open, load the new user's data immediately
+    if (showContactPanel.value) {
+        loadContactData();
+    }
 }
 
 // --- API: Fetch Messages ---
@@ -637,6 +796,332 @@ const createRoomSchema = computed(() => {
     }
 });
 
+
+
+// --- VueForm Schema ---
+const contactFormSchema = ref({
+    // Row 1: Names
+
+    first_name: { type: 'text', label: 'First Name', columns: 6 },
+    last_name: { type: 'text', label: 'Last Name', columns: 6 },
+
+    // Row 2: Title & Department
+    container_job: {
+        type: 'group',
+        schema: {
+            title: { type: 'text', label: 'Job Title', columns: 6 },
+            department: { type: 'text', label: 'Department', columns: 6 },
+        }
+    },
+
+    //  Organization (Split into Select + Add Button)
+    container_org_row: {
+        type: 'group',
+        schema: {
+            organization_uuid: {
+                type: 'select',
+                label: 'Organization',
+                search: true,
+                native: false,
+                inputType: 'search',
+                autocomplete: 'off',
+                placeholder: 'Search or Select...',
+                columns: 10, // Take up most space
+
+                // Fetch from Backend
+                items: props.routes.organizationsIndex,
+
+                // Dynamic Props (Preload initial value if editing)
+                onLoad: (el$) => {
+                    // If we have an initial value loaded from DB, make sure it's in the list
+                    // so the label shows up correctly instead of the UUID
+                    // if (contactData.value.organization_initial) {
+                    //     el$.updateItems([contactData.value.organization_initial]);
+                    //     el$.update(contactData.value.organization_initial.value);
+                    // }
+                }
+            },
+            add_org_btn: {
+                type: 'button',
+                buttonLabel: '+',
+                label: '&nbsp;', // Empty label to align with input
+                columns: 2,
+                buttonClass: 'w-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-2 rounded border border-gray-300',
+                onClick: () => { showOrgModal.value = true; }
+            }
+        }
+    },
+
+    divider1: { type: 'static', content: '<div class="h-4"></div>' }, // Spacer
+
+    // Row 4: Contact Methods
+    website: { type: 'text', label: 'Website', columns: 12 },
+    email: { type: 'text', inputType: 'email', label: 'Email', columns: 12 },
+    phone_number: { type: 'text', label: 'Primary Phone', columns: 12, },
+
+    mobile_number: { type: 'text', label: 'Mobile', columns: 12 },
+    fax_number: { type: 'text', label: 'Fax', columns: 12 },
+
+
+    divider2: { type: 'static', content: '<hr class="my-4 border-gray-100">' },
+
+    // Row 5: Address (Granular)
+    address_label: { type: 'static', content: '<label class="text-xs font-bold text-gray-500 uppercase">Address</label>' },
+    address_street: { type: 'text', placeholder: 'Street Address', columns: 12 },
+    container_addr: {
+        type: 'group',
+        schema: {
+            address_city: { type: 'text', placeholder: 'City', columns: 5 },
+            address_state: { type: 'text', placeholder: 'State', columns: 3 },
+            address_zip: { type: 'text', placeholder: 'Zip', columns: 4 },
+        }
+    },
+
+    // Row 6: Notes
+    notes: { type: 'textarea', label: 'Notes', rows: 3 },
+
+    // Actions
+    divider3: { type: 'static', content: '<div class="h-4"></div>' },
+    save: {
+        type: 'button',
+        buttonLabel: 'Save Changes',
+        submits: true,
+        buttonClass: 'w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded shadow-sm',
+    }
+});
+
+const createOrgSchema = ref({
+    // Basic Info
+    name: { type: 'text', label: 'Organization Name', rules: ['required'] },
+
+    // Internet
+    email: { type: 'text', inputType: 'email', label: 'Email' },
+    website: { type: 'text', label: 'Website' },
+
+    // Address (Grouped for layout)
+    address_label: { type: 'static', content: '<label class="text-xs font-bold text-gray-500 uppercase mt-2 block">Address</label>' },
+    address_street: { type: 'text', placeholder: 'Street' },
+
+    container_addr: {
+        type: 'group',
+        schema: {
+            address_city: { type: 'text', placeholder: 'City', columns: 5 },
+            address_state: { type: 'text', placeholder: 'State', columns: 3 },
+            address_zip: { type: 'text', placeholder: 'Zip', columns: 4 },
+        }
+    },
+
+    // Notes
+    notes: { type: 'textarea', label: 'Notes', rows: 2 },
+
+    // Submit
+    submit: {
+        type: 'button',
+        submits: true,
+        buttonLabel: 'Create Organization',
+        buttonClass: 'w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded mt-2',
+    }
+});
+
+// --- Computed Helper for View Mode Address ---
+const formattedAddress = computed(() => {
+    const s = contactData.value?.address_street;
+    const c = contactData.value?.address_city;
+    const st = contactData.value?.address_state;
+    const z = contactData.value?.address_zip;
+
+    if (!s && !c && !st && !z) return null;
+
+    let line2 = [c, st, z].filter(Boolean).join(', ');
+    return [s, line2].filter(Boolean).join('\n');
+});
+
+// --- Actions ---
+
+const toggleContactPanel = async () => {
+    showContactPanel.value = !showContactPanel.value;
+    isEditingContact.value = false; // Reset to View Mode
+    if (showContactPanel.value && activeRoomId.value) {
+        await loadContactData();
+    }
+};
+
+
+const loadContactData = async () => {
+    // 1. Safety check: Do we have a room selected?
+    if (!activeRoomId.value) return;
+
+    // 2. Extract customer number from the ID "MyDID_CustomerDID"
+    const parts = activeRoomId.value.split('_');
+    if (parts.length < 2) return;
+
+    const customerNumber = parts[1];
+
+    try {
+        contactData.value = null
+        // 3. Construct the URL using the route passed from Laravel
+        // We replace the placeholder ':phoneNumber' with the actual number
+        const url = props.routes.contactShow.replace(':phoneNumber', encodeURIComponent(customerNumber));
+
+        const { data } = await axios.get(url);
+
+        console.log(data);
+
+        // Prepare the data object
+        // If contact exists, use it. If not, create a shell with just the phone number.
+        const incomingData = data.contact ? data.contact : { phone_number: customerNumber };
+
+        // 2. Update View Mode (The read-only display)
+        contactData.value = incomingData;
+
+        // 3. Update Form (The edit mode inputs)
+        // We use optional chaining (?.) because the form might not be rendered if we are in View Mode
+        // .update() ensures all fields (including hidden/selects) are populated correctly
+        contactForm$.value?.update(incomingData);
+    } catch (e) {
+        console.error("Error loading contact", e);
+    }
+};
+
+const showContactEditForm = async () => {
+    isEditingContact.value = !isEditingContact.value
+    console.log(contactData.value)
+    await nextTick();
+
+    contactForm$.value.update({ phone_number: "+16467052267" });
+
+}
+
+const handleSaveContact = async (form$) => {
+    const data = form$.requestData;
+
+    try {
+        await axios.post(props.routes.contactStore || '/contacts', data);
+
+        // Notify user (Optional: use your notification system)
+        showNotification('success', { request: ['Contact saved successfully'] });
+
+        // Refresh rooms to update the name in the sidebar if it changed
+        fetchRooms();
+
+        await loadContactData(); // Reload data to reflect changes
+
+        isEditingContact.value = false; // Switch back to View Mode
+
+    } catch (e) {
+        handleErrorResponse(e);
+    }
+};
+
+const submitContactForm = async (FormData, form$) => {
+    const requestData = form$.requestData
+    return await form$.$vueform.services.axios.post(props.routes.contactStore, requestData)
+}
+
+// Computed helper for the View Mode Avatar
+const contactInitials = computed(() => {
+    const first = contactData.value?.first_name ?? '';
+    const last = contactData.value?.last_name ?? '';
+    if (first || last) return (first.slice(0, 1) + last.slice(0, 1)).toUpperCase();
+    return '#';
+});
+
+// Computed helper for Full Name
+const contactFullName = computed(() => {
+    const first = contactData.value?.first_name ?? '';
+    const last = contactData.value?.last_name ?? '';
+    return `${first} ${last}`.trim() || 'Unknown Contact';
+});
+
+const handleCreateOrg = async (form$) => {
+    const data = form$.requestData;
+
+    try {
+        // 1. Create on Backend
+        const response = await axios.post(props.routes.organizationsStore, data);
+        const newOrg = response.data; // { value: 'uuid', label: 'Name' }
+
+        // 2. Close Modal
+        showOrgModal.value = false;
+
+        // 3. Inject into Contact Form
+        if (contactForm$.value) {
+            const orgSelect = contactForm$.value.el$('organization_uuid');
+
+            // Add the new option to the list so it can be selected
+            orgSelect.updateItems([newOrg]);
+
+            // Select it
+            orgSelect.update(newOrg.value);
+        }
+
+        showNotification('success', { request: ['Organization created'] });
+
+    } catch (e) {
+        handleErrorResponse(e);
+    }
+};
+
+const handleContactResponse = (response, contactForm$) => {
+    Object.values(contactForm$.elements$).forEach(el$ => clearErrorsRecursive(el$))
+    if (response.data.errors) {
+        Object.keys(response.data.errors).forEach((elName) => {
+            if (contactForm$.el$(elName)) {
+                contactForm$.el$(elName).messageBag.append(response.data.errors[elName][0])
+            }
+        })
+    }
+}
+
+const handleContactSuccess = (response, contactForm$) => {
+    // emit('success', 'success', response.data.messages)
+
+    showNotification('success', response.data.messages);
+
+    // Refresh rooms to update the name in the sidebar if it changed
+    fetchRooms();
+
+    loadContactData(); // Reload data to reflect changes
+
+    isEditingContact.value = false; // Switch back to View Mode
+}
+
+const handleContactError = (error, details, contactForm$) => {
+    contactForm$.messageBag.clear()
+
+    switch (details.type) {
+        case 'prepare':
+            console.log(error)
+            contactForm$.messageBag.append('Could not prepare form')
+            break
+        case 'submit':
+            handleErrorResponse(error)
+            console.log(error)
+            break
+        case 'cancel':
+            console.log(error)
+            contactForm$.messageBag.append('Request cancelled')
+            break
+        case 'other':
+            console.log(error)
+            contactForm$.messageBag.append('Couldn\'t submit form')
+            break
+    }
+}
+
+function clearErrorsRecursive(el$) {
+    // clear this element’s errors
+    el$.messageBag?.clear()
+
+    // if it has child elements, recurse into each
+    if (el$.children$) {
+        Object.values(el$.children$).forEach(childEl$ => {
+            clearErrorsRecursive(childEl$)
+        })
+    }
+}
+
+
 // Cleanup
 onBeforeUnmount(() => {
     if (activeRoomId.value) leaveChannel(activeRoomId.value);
@@ -690,5 +1175,13 @@ const showNotification = (type, messages = null) => {
     /* rounded-lg */
     border-color: #d1d5db;
     /* border-gray-300 */
+}
+
+div[data-lastpass-icon-root] {
+    display: none !important
+}
+
+div[data-lastpass-root] {
+    display: none !important
 }
 </style>

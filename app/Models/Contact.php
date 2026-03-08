@@ -2,11 +2,12 @@
 
 namespace App\Models;
 
+use App\Models\Traits\TraitUuid;
 use Illuminate\Database\Eloquent\Model;
 
 class Contact extends Model
 {
-    use \App\Traits\HasContactInfo;
+    use \App\Traits\HasContactInfo, TraitUuid;
 
     protected $primaryKey = 'contact_uuid';
     protected $keyType = 'string';
@@ -27,7 +28,7 @@ class Contact extends Model
     }
 
     public function phones() {
-        return $this->hasMany(ContactPhone::class, 'contact_uuid');
+        return $this->morphMany(ContactPhone::class, 'phoneable');
     }
 
     public function addresses() {

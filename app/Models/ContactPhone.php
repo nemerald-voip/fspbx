@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Traits\TraitUuid;
 use Illuminate\Database\Eloquent\Model;
 
 class ContactPhone extends Model
 {
+    use TraitUuid;
+    
     protected $primaryKey = 'phone_uuid';
     protected $keyType = 'string';
     public $incrementing = false;

@@ -1,41 +1,43 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AccountSettingsController;
+use App\Http\Controllers\Api\EmergencyCallController;
+use App\Http\Controllers\Api\HolidayHoursController;
+use App\Http\Controllers\Api\LocationsController;
+use App\Http\Controllers\Api\ProvisioningTemplateController;
+use App\Http\Controllers\BusinessHoursController;
+use App\Http\Controllers\CallTranscriptionController;
 use App\Http\Controllers\CdrsController;
-use App\Http\Controllers\FaxesController;
-use App\Http\Controllers\TokenController;
-use App\Http\Controllers\UsersController;
+use App\Http\Controllers\CharPmsWebhookController;
+use App\Http\Controllers\ContactController;
+use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DomainController;
-use App\Http\Controllers\GroupsController;
-use App\Http\Controllers\FaxInboxController;
-use App\Http\Controllers\MessageController;
-use App\Http\Controllers\UserLogsController;
-use App\Http\Controllers\EmailLogsController;
-use App\Http\Controllers\HotelRoomController;
-use App\Http\Controllers\VoicemailController;
-use App\Http\Controllers\ExtensionsController;
-use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\DomainGroupsController;
-use App\Http\Controllers\PhoneNumbersController;
-use App\Http\Controllers\Api\LocationsController;
-use App\Http\Controllers\BusinessHoursController;
-use App\Http\Controllers\CharPmsWebhookController;
-use App\Http\Controllers\PaymentGatewayController;
-use App\Http\Controllers\SystemSettingsController;
-use App\Http\Controllers\AccountSettingsController;
+use App\Http\Controllers\EmailLogsController;
+use App\Http\Controllers\ExtensionsController;
+use App\Http\Controllers\ExtensionStatisticsController;
+use App\Http\Controllers\FaxesController;
+use App\Http\Controllers\FaxInboxController;
+use App\Http\Controllers\GroupsController;
+use App\Http\Controllers\HotelHousekeepingDefinitionController;
+use App\Http\Controllers\HotelRoomController;
 use App\Http\Controllers\HotelRoomStatusController;
 use App\Http\Controllers\InboundWebhooksController;
+use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MessageSettingsController;
-use App\Http\Controllers\Api\HolidayHoursController;
-use App\Http\Controllers\Api\EmergencyCallController;
-use App\Http\Controllers\CallTranscriptionController;
-use App\Http\Controllers\ExtensionStatisticsController;
-use App\Http\Controllers\VirtualReceptionistController;
-use App\Http\Controllers\DeviceCloudProvisioningController;
-use App\Http\Controllers\Api\ProvisioningTemplateController;
-use App\Http\Controllers\HotelHousekeepingDefinitionController;
+use App\Http\Controllers\OrganizationController;
+use App\Http\Controllers\PaymentGatewayController;
+use App\Http\Controllers\PhoneNumbersController;
+use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\SpeedDialController;
+use App\Http\Controllers\SystemSettingsController;
+use App\Http\Controllers\TokenController;
+use App\Http\Controllers\UserLogsController;
+use App\Http\Controllers\UsersController;
+use App\Http\Controllers\VirtualReceptionistController;
+use App\Http\Controllers\VoicemailController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -250,13 +252,18 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::put('account-settings/update', [AccountSettingsController::class, 'update'])->name('account-settings.update');
 
     // Contacts
-    Route::post('contacts', [SpeedDialController::class, 'store'])->name('contacts.store');
+    Route::post('contacts', [ContactController::class, 'store'])->name('contacts.store');
+    Route::get('contacts/{phoneNumber}', [ContactController::class, 'show'])->name('contacts.show');
     // Route::post('/contacts/item-options', [ContactsController::class, 'getItemOptions'])->name('contacts.item.options');
     // Route::post('/contacts/bulk-delete', [ContactsController::class, 'bulkDelete'])->name('contacts.bulk.delete');
     // Route::post('/contacts/select-all', [ContactsController::class, 'selectAll'])->name('contacts.select.all');
     // Route::post('/contacts/import', [ContactsController::class, 'import'])->name('contacts.import');
     // Route::get('/contacts/template/download', [ContactsController::class, 'downloadTemplate'])->name('contacts.download.template');
     // Route::get('/contacts-export', [ContactsController::class, 'export'])->name('contacts.export');
+
+    //Organizations
+    Route::get('/organizations', [OrganizationController::class, 'index'])->name('organizations.index');
+    Route::post('/organizations', [OrganizationController::class, 'store'])->name('organizations.store');
 
     // Speed Dial
     Route::post('speed-dial', [SpeedDialController::class, 'store'])->name('speed-dial.store');

@@ -9,8 +9,8 @@ return new class extends Migration
 {
     public function up()
     {
-        if (!Schema::hasTable('addresses')) {
-            Schema::create('addresses', function (Blueprint $table) {
+        if (!Schema::hasTable('contact_addresses')) {
+            Schema::create('contact_addresses', function (Blueprint $table) {
                 $table->uuid('address_uuid')->primary()->default(DB::raw('uuid_generate_v4()'));
                 $table->uuid('domain_uuid')->index();
 
@@ -32,6 +32,6 @@ return new class extends Migration
 
     public function down()
     {
-        Schema::dropIfExists('addresses');
+        Schema::dropIfExists('contact_addresses');
     }
 };

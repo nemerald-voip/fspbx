@@ -51,6 +51,9 @@ class MessageController extends Controller
                     'markRead'  => route('messages.mark-read'),
                     'data_route'   => route('messages.data'),
                     'contactStore' => route('contacts.store'),
+                    'contactShow'  => route('contacts.show', ['phoneNumber' => ':phoneNumber']),
+                    'organizationsIndex' => route('organizations.index'),
+                    'organizationsStore' => route('organizations.store'),
                 ],
             ]
         );
