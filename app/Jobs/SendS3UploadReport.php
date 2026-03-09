@@ -83,6 +83,7 @@ class SendS3UploadReport implements ShouldQueue
                 }
             }
         }
+        $attributes['hostname'] = gethostname() ?: php_uname('n');
         $this->attributes = $attributes;
     }
 
