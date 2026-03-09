@@ -36,13 +36,12 @@
 
                 </div>
 
-                <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                <div v-if="props.permissions.messages_view_as" class="px-4 py-3 bg-gray-50 border-b border-gray-200">
                     <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">
                         Viewing as:
                     </label>
-                    <Multiselect v-model="selectedExtension" :options="extensionList" :searchable="true"
-                        :close-on-select="true" :show-labels="false" placeholder="Select Extension" label="name"
-                        track-by="value" class="custom-multiselect" @select="onExtensionChange" />
+                    <Vueform :endpoint="false" :schema="extensionSelectSchema" v-model="extensionFormModel"
+                        :float-placeholders="false" />
                 </div>
 
                 <!-- Room List -->
@@ -408,14 +407,13 @@ import axios from 'axios';
 import 'deep-chat'; // Registers the web component
 import MainLayout from "../Layouts/MainLayout.vue";
 import Notification from "./components/notifications/Notification.vue";
-import Multiselect from 'vue-multiselect'
-import 'vue-multiselect/dist/vue-multiselect.css'
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 // import Pusher from 'pusher-js';
 
 // --- Props (from Laravel/Inertia) ---
 const props = defineProps({
     routes: { type: Object, required: true },
+    permissions: { type: Object, default: () => ({}) }
 })
 
 // --- State ---
@@ -426,7 +424,6 @@ const loadingRooms = ref(false);
 const currentHistory = ref([]); // Messages for the active room
 const showCreateModal = ref(false);
 const currentExtensionUuid = ref(null);
-const selectedExtension = ref(null); // <--- Holds the full {name, value} object
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
@@ -438,6 +435,7 @@ const showOrgModal = ref(false);
 const contactForm$ = ref(null);
 const showDeleteContactModal = ref(false);
 const localOrgs = ref([]);
+const extensionFormModel = ref({ extension: null });
 
 // DIDs State (Populated when extension changes)
 const myDids = ref([]);
@@ -482,25 +480,17 @@ const getData = async () => {
         // If currentExtensionUuid is empty, try to set it to the logged-in user's extension
         if (!currentExtensionUuid.value) {
             const defaultId = data.value.extension_uuid;
-
-            // Find the extension object in the list
             const exists = (data.value.extensions || []).find(e => e.value === defaultId);
 
             if (exists) {
-                // 1. Set the UUID
                 currentExtensionUuid.value = defaultId;
-
-                // 2. Set the Multiselect Object
-                selectedExtension.value = exists;
-
-                // 3. CRITICAL: Populate DIDs for the "From" dropdown
+                extensionFormModel.value = { extension: defaultId }; // <-- NEW
                 if (exists.dids) myDids.value = exists.dids;
 
             } else if (data.value.extensions?.length > 0) {
-                // Fallback: Select the first one available
                 const firstExt = data.value.extensions[0];
                 currentExtensionUuid.value = firstExt.value;
-                selectedExtension.value = firstExt;
+                extensionFormModel.value = { extension: firstExt.value }; // <-- NEW
                 if (firstExt.dids) myDids.value = firstExt.dids;
             }
 
@@ -514,11 +504,14 @@ const getData = async () => {
 }
 
 // When user selects from Dropdown
-const onExtensionChange = (selectedOption) => {
+const onExtensionChange = (uuid) => {
     // 1. Update the string UUID
-    currentExtensionUuid.value = selectedOption ? selectedOption.value : null;
+    currentExtensionUuid.value = uuid || null;
 
-    // 2. CRITICAL: Update the DIDs list for the "Create Room" form
+    // 2. Find the full extension object from the list
+    const selectedOption = extensionList.value.find(e => e.value === uuid);
+
+    // 3. Update the DIDs list for the "Create Room" form
     if (selectedOption && selectedOption.dids) {
         myDids.value = selectedOption.dids;
     } else {
@@ -528,9 +521,10 @@ const onExtensionChange = (selectedOption) => {
     // Switch Global Channel
     joinExtensionChannel(currentExtensionUuid.value);
 
-    // 3. Clear Chat & Refresh Rooms
+    // Clear Chat & Refresh Rooms
     activeRoomId.value = null;
     currentHistory.value = [];
+    showContactPanel.value = false;
     fetchRooms();
 };
 
@@ -1033,6 +1027,26 @@ const createOrgSchema = ref({
     }
 });
 
+// Add this next to your other schemas
+const extensionSelectSchema = computed(() => {
+    return {
+        extension: {
+            type: 'select',
+            search: true,
+            native: false, // Uses the custom dropdown UI
+            placeholder: 'Select Extension',
+            items: extensionList.value.map(ext => ({
+                value: ext.value,
+                label: ext.name
+            })),
+            // When the user picks a new extension, fire our function
+            onChange: (newValue) => {
+                onExtensionChange(newValue);
+            }
+        }
+    }
+});
+
 // --- Computed Helper for View Mode Address ---
 const formattedAddress = computed(() => {
     const s = contactData.value?.address_street;
@@ -1294,20 +1308,6 @@ const showNotification = (type, messages = null) => {
 </script>
 
 <style>
-.multiselect__content-wrapper {
-    z-index: 50 !important;
-}
-
-/* Optional: Match your Tailwind styles closer */
-.custom-multiselect .multiselect__tags {
-    min-height: 42px;
-    padding-top: 10px;
-    border-radius: 0.5rem;
-    /* rounded-lg */
-    border-color: #d1d5db;
-    /* border-gray-300 */
-}
-
 div[data-lastpass-icon-root] {
     display: none !important
 }

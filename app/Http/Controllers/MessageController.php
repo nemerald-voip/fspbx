@@ -41,6 +41,10 @@ class MessageController extends Controller
      */
     public function index(Request $request)
     {
+        if (!userCheckPermission("messages_view")) {
+            return redirect('/');
+        }
+
         return Inertia::render(
             $this->viewName,
             [
@@ -52,10 +56,13 @@ class MessageController extends Controller
                     'data_route'   => route('messages.data'),
                     'contactStore' => route('contacts.store'),
                     'contactShow'  => route('contacts.show', ['phoneNumber' => ':phoneNumber']),
-                    'contactDestroy' => route('contacts.destroy',['contact' => ':contact']),
+                    'contactDestroy' => route('contacts.destroy', ['contact' => ':contact']),
                     'organizationsIndex' => route('organizations.index'),
                     'organizationsStore' => route('organizations.store'),
                 ],
+                'permissions' => function () {
+                    return $this->getUserPermissions();
+                },
             ]
         );
     }
@@ -66,16 +73,21 @@ class MessageController extends Controller
             $extension_uuid = auth()->user()->extension_uuid;
             $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
 
-            // 1. Fetch All Extensions (Query #1)
-            $extensions = Extensions::where('domain_uuid', $domain_uuid)
-                ->orderBy('extension')
-                ->get([
-                    'extension_uuid',
-                    'extension',
-                    'effective_caller_id_name',
-                    // add other fields needed for name_formatted accessor
-                ]);
+            // 1. Build Base Extension Query
+            $extQuery = Extensions::where('domain_uuid', $domain_uuid)
+                ->orderBy('extension');
 
+            // 2. SECURITY: If they don't have 'view_as' permission, ONLY fetch their own extension
+            if (!userCheckPermission('messages_view_as')) {
+                $extQuery->where('extension_uuid', $extension_uuid);
+            }
+
+            // 3. Execute Query
+            $extensions = $extQuery->get([
+                'extension_uuid',
+                'extension',
+                'effective_caller_id_name',
+            ]);
             // 2. Fetch All SMS Destinations for this Domain (Query #2)
             // We select 'chatplan_detail_data' because that links to the extension number
             $allDids = SmsDestinations::where('domain_uuid', $domain_uuid)
@@ -493,17 +505,6 @@ class MessageController extends Controller
         return (string) $domain;
     }
 
-    private function currentExtensionUuid(): string
-    {
-        // Prefer auth user
-        $user = auth()->user();
-        if ($user && !empty($user->extension_uuid)) {
-            return (string) $user->extension_uuid;
-        }
-
-        throw new \Exception('extension_uuid not found (auth or session)');
-    }
-
     public function send(Request $request)
     {
         // 1. Validate Input
@@ -782,5 +783,13 @@ class MessageController extends Controller
         }
 
         return $data;
+    }
+
+    public function getUserPermissions()
+    {
+        $permissions = [];
+        $permissions['messages_view_as'] = userCheckPermission('messages_view_as');
+
+        return $permissions;
     }
 }
