@@ -130,6 +130,8 @@ Route::group(['middleware' => 'auth'], function () {
 
     //Extension Statistics
     Route::get('/extension-statistics', [ExtensionStatisticsController::class, 'index'])->name('extension-statistics.index');
+    Route::get('/extension-statistics/data', [ExtensionStatisticsController::class, 'getData'])->name('extension-statistics.data');
+    Route::get('/extension-statistics-export', [ExtensionStatisticsController::class, 'export'])->name('extension-statistics.export');
 
     //Domains
     Route::get('domains/extensions', [DomainController::class, 'countExtensionsInDomains']);
