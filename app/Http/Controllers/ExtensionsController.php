@@ -1139,10 +1139,29 @@ class ExtensionsController extends Controller
 
 
     public function update(UpdateExtensionRequest $request, $id)
-    {
+    {    
         try {
             DB::beginTransaction();
             $data = $request->validated();
+
+   $canManageVoicemail = userCheckPermission('extension_voicemail_settings');
+
+    if (!$canManageVoicemail) {
+        unset(
+            $data['voicemail_enabled'],
+            $data['voicemail_id'],
+            $data['greeting_id'],
+            $data['voicemail_file'],
+            $data['voicemail_local_after_email'],
+            $data['voicemail_transcription_enabled'],
+            $data['voicemail_description'],
+            $data['voicemail_destinations'],
+            $data['voicemail_password'],
+            $data['voicemail_tutorial'],
+            $data['voicemail_recording_instructions'],
+            $data['voicemail_sms_to']
+        );
+    }
 
             $currentDomain = session('domain_uuid');
 
@@ -1194,19 +1213,20 @@ class ExtensionsController extends Controller
 
             $extension->update($data);
 
-            // Update related models
+        // Update related voicemail only when user has permission
+        if ($canManageVoicemail) {
             if ($extension->voicemail) {
                 $data['voicemail_id'] = $extension->extension;
                 $extension->voicemail->update($data);
             } else {
-                // If enabling voicemail and no voicemail exists, create one
-                if ($data['voicemail_enabled'] == 'true') {
+                if (($data['voicemail_enabled'] ?? 'false') == 'true') {
                     $data['extension_uuid'] = $extension->extension_uuid;
                     $data['domain_uuid'] = $currentDomain;
-                    $voicemail = Voicemails::create($data);
-                    // logger($voicemail);
+                    $data['voicemail_id'] = $extension->extension;
+                    Voicemails::create($data);
                 }
             }
+        }
 
             $extension->advSettings()->updateOrCreate(
                 ['extension_uuid' => $extension->extension_uuid],
@@ -1215,7 +1235,8 @@ class ExtensionsController extends Controller
 
             // Handle voicemail_destinations (copies)
             if (
-                isset($data['voicemail_destinations'])
+                $canManageVoicemail
+                && isset($data['voicemail_destinations'])
                 && is_array($data['voicemail_destinations'])
                 && $extension->voicemail
             ) {
