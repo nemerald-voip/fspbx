@@ -6,7 +6,6 @@ use App\Models\Contact;
 use App\Models\ContactPhone;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class ContactController extends Controller
 {
@@ -158,5 +157,32 @@ class ContactController extends Controller
     private function currentDomainUuid()
     { /* ... */
         return session('domain_uuid');
+    }
+
+
+    public function destroy($uuid)
+    {
+        try {
+            $domainUuid = $this->currentDomainUuid();
+
+            // Find the contact, ensuring it belongs to the current domain
+            $contact = \App\Models\Contact::where('domain_uuid', $domainUuid)
+                ->where('contact_uuid', $uuid)
+                ->firstOrFail();
+
+            // Delete the contact. 
+            $contact->delete();
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            logger('ContactController@destroy error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            // Handle any other exception that may occur
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to save contact']]
+            ], 500);
+        }
     }
 }

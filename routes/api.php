@@ -254,6 +254,8 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // Contacts
     Route::post('contacts', [ContactController::class, 'store'])->name('contacts.store');
     Route::get('contacts/{phoneNumber}', [ContactController::class, 'show'])->name('contacts.show');
+    Route::delete('/contacts/{contact}', [ContactController::class, 'destroy'])->name('contacts.destroy');
+
     // Route::post('/contacts/item-options', [ContactsController::class, 'getItemOptions'])->name('contacts.item.options');
     // Route::post('/contacts/bulk-delete', [ContactsController::class, 'bulkDelete'])->name('contacts.bulk.delete');
     // Route::post('/contacts/select-all', [ContactsController::class, 'selectAll'])->name('contacts.select.all');

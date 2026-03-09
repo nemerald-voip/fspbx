@@ -52,6 +52,7 @@ class MessageController extends Controller
                     'data_route'   => route('messages.data'),
                     'contactStore' => route('contacts.store'),
                     'contactShow'  => route('contacts.show', ['phoneNumber' => ':phoneNumber']),
+                    'contactDestroy' => route('contacts.destroy',['contact' => ':contact']),
                     'organizationsIndex' => route('organizations.index'),
                     'organizationsStore' => route('organizations.store'),
                 ],
@@ -180,7 +181,10 @@ class MessageController extends Controller
 
         // Query the ContactPhone table (Polymorphic)
         $phones = ContactPhone::whereIn('phone_number', $remoteNumbers)
-            ->with('phoneable') // Loads Contact or Organization
+            ->whereHasMorph('phoneable', [\App\Models\Contact::class, \App\Models\Organization::class], function ($query) use ($domainUuid) {
+                $query->where('domain_uuid', $domainUuid);
+            })
+            ->with('phoneable')
             ->get();
 
         // Build Map: Number => Name
@@ -188,8 +192,14 @@ class MessageController extends Controller
         foreach ($phones as $phone) {
             $owner = $phone->phoneable;
             if ($owner) {
-                // Check if it's a Contact (has full_name) or Org (has name)
-                $name = ($owner instanceof Contact) ? $owner->full_name : $owner->name;
+                // Handle name depending on whether it's a Contact or Organization
+                $name = ($owner instanceof \App\Models\Contact) ? $owner->full_name : $owner->name;
+
+                // If full_name is empty (no first/last name), fallback to the phone number
+                if (trim($name) === '') {
+                    $name = $phone->phone_number;
+                }
+
                 $directory[$phone->phone_number] = $name;
             }
         }
@@ -229,15 +239,17 @@ class MessageController extends Controller
         }
 
         // 4. Merge into Response
-        $rooms = $rows->map(function ($r) use ($countMap) {
+        $rooms = $rows->map(function ($r) use ($countMap, $directory) {
             $id = "{$r->local_number}_{$r->remote_number}";
+
+            // Look up the name in the directory. If not found, use the formatted phone number.
+            $displayName = $directory[$r->remote_number] ?? $this->formatPhoneNumber($r->remote_number);
 
             return [
                 'id' => $id,
-                'name' => $r->remote_number,
+                'name' => $displayName, // <--- FIXED: Now uses the Contact Name!
                 'my_number' => $r->local_number,
                 'avatar' => null,
-                // LOOKUP COUNT (Default to 0)
                 'unread' => $countMap[$id] ?? 0,
                 'lastMessage' => $r->message,
                 'timestamp' => $r->created_at,

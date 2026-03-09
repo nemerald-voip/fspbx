@@ -162,7 +162,7 @@
 
             <!-- COL 3: CONTACT INFO PANEL -->
             <aside v-if="showContactPanel && activeRoomId"
-                class="w-96 bg-white border-l border-gray-200 flex flex-col overflow-hidden transition-all duration-300 ease-in-out z-20 shadow-xl">
+                class="w-96 bg-white border-l border-gray-200 flex flex-col overflow-hidden transition-all duration-300 ease-in-out z-15 shadow-xl">
 
                 <!-- Panel Header -->
                 <div
@@ -172,7 +172,7 @@
                     </h2>
                     <div class="flex items-center space-x-3">
                         <!-- Edit/Cancel Button -->
-                        <button @click="showContactEditForm" class="text-sm font-medium transition-colors"
+                        <button @click="toggleContactEditForm" class="text-sm font-medium transition-colors"
                             :class="isEditingContact ? 'text-red-500 hover:text-red-700' : 'text-blue-600 hover:text-blue-800'">
                             {{ isEditingContact ? 'Cancel' : 'Edit' }}
                         </button>
@@ -206,17 +206,108 @@
                             <div v-if="contactData?.title" class="text-sm font-semibold text-gray-700 mt-1">
                                 {{ contactData?.title }}
                             </div>
+
+                            <!-- FIXED: Organization Name Extraction -->
                             <div v-if="contactData?.organization" class="text-sm text-gray-500 font-medium">
-                                {{ contactData?.organization }}
+                                {{ contactData.organization.name || contactData.organization }}
                             </div>
+
                             <div v-if="contactData?.department" class="text-xs text-gray-400 mt-0.5">
                                 {{ contactData?.department }}
                             </div>
                         </div>
 
-                        <!-- Contact Info Section (Phones/Emails same as before) -->
+                        <!-- Contact Info Section -->
                         <div class="border-t border-gray-100 pt-4 space-y-4">
-                            <!-- ... (Phone/Mobile/Email items remain the same) ... -->
+                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Contact Details
+                            </h4>
+
+                            <!-- Primary Phone -->
+                            <div v-if="contactData?.phone_number" class="flex items-start">
+                                <div class="mt-0.5 w-5 text-gray-400 flex-shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
+                                        fill="currentColor">
+                                        <path
+                                            d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium text-gray-900">{{ contactData?.phone_number }}</p>
+                                    <p class="text-xs text-gray-500">Primary Phone</p>
+                                </div>
+                            </div>
+
+                            <!-- Mobile -->
+                            <div v-if="contactData?.mobile_number" class="flex items-start">
+                                <div class="mt-0.5 w-5 text-gray-400 flex-shrink-0">
+                                    <!-- Mobile device icon -->
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
+                                        fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                            d="M7 2a2 2 0 00-2 2v12a2 2 0 002 2h6a2 2 0 002-2V4a2 2 0 00-2-2H7zm3 14a1 1 0 100-2 1 1 0 000 2z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium text-gray-900">{{ contactData?.mobile_number }}</p>
+                                    <p class="text-xs text-gray-500">Mobile</p>
+                                </div>
+                            </div>
+
+                            <!-- Fax -->
+                            <div v-if="contactData?.fax_number" class="flex items-start">
+                                <div class="mt-0.5 w-5 text-gray-400 flex-shrink-0">
+                                    <!-- Printer/Fax icon -->
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
+                                        fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                            d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium text-gray-900">{{ contactData?.fax_number }}</p>
+                                    <p class="text-xs text-gray-500">Fax</p>
+                                </div>
+                            </div>
+
+                            <!-- Email -->
+                            <div v-if="contactData?.email" class="flex items-start">
+                                <div class="mt-0.5 w-5 text-gray-400 flex-shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
+                                        fill="currentColor">
+                                        <path
+                                            d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3 break-all">
+                                    <a :href="`mailto:${contactData?.email}`"
+                                        class="text-sm font-medium text-blue-600 hover:underline">
+                                        {{ contactData?.email }}
+                                    </a>
+                                    <p class="text-xs text-gray-500">Email</p>
+                                </div>
+                            </div>
+
+                            <!-- Website -->
+                            <div v-if="contactData?.website" class="flex items-start">
+                                <div class="mt-0.5 w-5 text-gray-400 flex-shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
+                                        fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                            d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.002 6.002 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.56-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.002 6.002 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.56.5.948.737 1.182.233.23.389.262.465.262.076 0 .232-.032.465-.262.238-.234.497-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.002 6.002 0 01-5.322 4.882zM4.083 11a6.002 6.002 0 005.322 4.882c-.454-1.147-.748-2.572-.837-4.118H4.083z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3 break-all">
+                                    <a :href="contactData?.website" target="_blank"
+                                        class="text-sm font-medium text-blue-600 hover:underline">
+                                        {{ contactData?.website }}
+                                    </a>
+                                    <p class="text-xs text-gray-500">Website</p>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Address Section (UPDATED) -->
@@ -247,12 +338,19 @@
                     </div>
 
                     <!-- EDIT MODE (Form) -->
-                    <div v-else>
+                    <div v-else class="flex flex-col h-full">
                         <Vueform ref="contactForm$" :float-placeholders="false" :schema="contactFormSchema"
                             :endpoint="submitContactForm" @response="handleContactResponse"
                             @success="handleContactSuccess" @error="handleContactError" :display-errors="false" />
-                    </div>
 
+                        <!-- Delete Button below the form -->
+                        <div v-if="contactData?.contact_uuid" class="mt-6 pt-4 pb-6 border-t border-gray-100">
+                            <button @click="showDeleteContactModal = true"
+                                class="w-full text-center text-sm font-medium text-red-500 hover:text-red-700 py-2">
+                                Delete Contact
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </aside>
         </div>
@@ -296,6 +394,12 @@
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 
+    <!-- DELETE CONTACT CONFIRMATION MODAL -->
+    <ConfirmationModal :show="showDeleteContactModal" @close="showDeleteContactModal = false"
+        @confirm="handleDeleteContact" header="Delete Contact?"
+        :text="`Are you sure you want to delete ${contactFullName}? This action cannot be undone, but your chat history will remain.`"
+        confirm-button-label="Delete" cancel-button-label="Cancel" />
+
 </template>
 
 <script setup>
@@ -306,6 +410,7 @@ import MainLayout from "../Layouts/MainLayout.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Multiselect from 'vue-multiselect'
 import 'vue-multiselect/dist/vue-multiselect.css'
+import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 // import Pusher from 'pusher-js';
 
 // --- Props (from Laravel/Inertia) ---
@@ -320,7 +425,6 @@ const rooms = ref([]);
 const loadingRooms = ref(false);
 const currentHistory = ref([]); // Messages for the active room
 const showCreateModal = ref(false);
-const newRoomName = ref('');
 const currentExtensionUuid = ref(null);
 const selectedExtension = ref(null); // <--- Holds the full {name, value} object
 const notificationType = ref(null);
@@ -332,6 +436,8 @@ const contactData = ref(null);
 const isEditingContact = ref(false);
 const showOrgModal = ref(false);
 const contactForm$ = ref(null);
+const showDeleteContactModal = ref(false);
+const localOrgs = ref([]);
 
 // DIDs State (Populated when extension changes)
 const myDids = ref([]);
@@ -829,16 +935,20 @@ const contactFormSchema = ref({
                 columns: 10, // Take up most space
 
                 // Fetch from Backend
-                items: props.routes.organizationsIndex,
+                items: async (query) => {
+                    try {
+                        // 1. Fetch from server
+                        const res = await axios.get(props.routes.organizationsIndex, { params: { query } });
+                        const fetchedOrgs = res.data || [];
 
-                // Dynamic Props (Preload initial value if editing)
-                onLoad: (el$) => {
-                    // If we have an initial value loaded from DB, make sure it's in the list
-                    // so the label shows up correctly instead of the UUID
-                    // if (contactData.value.organization_initial) {
-                    //     el$.updateItems([contactData.value.organization_initial]);
-                    //     el$.update(contactData.value.organization_initial.value);
-                    // }
+                        // 2. Combine server results with our locally known Orgs
+                        const combined = [...localOrgs.value, ...fetchedOrgs];
+
+                        // 3. Deduplicate so we don't show the same Org twice
+                        return Array.from(new Map(combined.map(item => [item.value, item])).values());
+                    } catch (e) {
+                        return localOrgs.value;
+                    }
                 }
             },
             add_org_btn: {
@@ -965,11 +1075,20 @@ const loadContactData = async () => {
 
         const { data } = await axios.get(url);
 
-        console.log(data);
-
         // Prepare the data object
         // If contact exists, use it. If not, create a shell with just the phone number.
         const incomingData = data.contact ? data.contact : { phone_number: customerNumber };
+
+        // If the contact belongs to an organization, we grab its UUID and Name
+        // and push it into localOrgs so the Vueform Select dropdown shows the Name instead of the UUID.
+        // if (incomingData.organization && incomingData.organization.organization_uuid) {
+        //     localOrgs.value = [{
+        //         value: incomingData.organization.organization_uuid,
+        //         label: incomingData.organization.name
+        //     }];
+        // } else {
+        //     localOrgs.value = null
+        // }
 
         // 2. Update View Mode (The read-only display)
         contactData.value = incomingData;
@@ -983,35 +1102,16 @@ const loadContactData = async () => {
     }
 };
 
-const showContactEditForm = async () => {
+const toggleContactEditForm = async () => {
     isEditingContact.value = !isEditingContact.value
-    console.log(contactData.value)
-    await nextTick();
 
-    contactForm$.value.update({ phone_number: "+16467052267" });
+    if (isEditingContact.value) {
+        await nextTick();
+        contactForm$.value.update(contactData.value);
+    }
+
 
 }
-
-const handleSaveContact = async (form$) => {
-    const data = form$.requestData;
-
-    try {
-        await axios.post(props.routes.contactStore || '/contacts', data);
-
-        // Notify user (Optional: use your notification system)
-        showNotification('success', { request: ['Contact saved successfully'] });
-
-        // Refresh rooms to update the name in the sidebar if it changed
-        fetchRooms();
-
-        await loadContactData(); // Reload data to reflect changes
-
-        isEditingContact.value = false; // Switch back to View Mode
-
-    } catch (e) {
-        handleErrorResponse(e);
-    }
-};
 
 const submitContactForm = async (FormData, form$) => {
     const requestData = form$.requestData
@@ -1033,6 +1133,31 @@ const contactFullName = computed(() => {
     return `${first} ${last}`.trim() || 'Unknown Contact';
 });
 
+// --- Action: Delete Contact ---
+const handleDeleteContact = async () => {
+    // Ensure we actually have a saved contact to delete
+    if (!contactData.value?.contact_uuid) return;
+
+    try {
+        const url = props.routes.contactDestroy.replace(':contact', contactData.value.contact_uuid);
+        await axios.delete(url);
+
+        showNotification('success', { request: ['Contact deleted successfully'] });
+
+        showDeleteContactModal.value = false;
+        isEditingContact.value = false;
+
+        // Reload data (This will fetch null, and reset the panel to just show the raw phone number)
+        await loadContactData();
+
+        // Refresh the sidebar so the name reverts back to the phone number
+        await fetchRooms();
+
+    } catch (e) {
+        handleErrorResponse(e);
+    }
+};
+
 const handleCreateOrg = async (form$) => {
     const data = form$.requestData;
 
@@ -1044,14 +1169,20 @@ const handleCreateOrg = async (form$) => {
         // 2. Close Modal
         showOrgModal.value = false;
 
-        // 3. Inject into Contact Form
+        // 3. Inject into Contact Form safely
         if (contactForm$.value) {
-            const orgSelect = contactForm$.value.el$('organization_uuid');
+            // Add to our local list so it's guaranteed to be in the dropdown
+            localOrgs.value.push(newOrg);
 
-            // Add the new option to the list so it can be selected
-            orgSelect.updateItems([newOrg]);
+            // Get the specific field element
+            console.log(contactForm$.value.elements$['container_org_row'].children$['organization_uuid'])
+            const orgSelect = contactForm$.value.elements$['container_org_row'].children$['organization_uuid'];
 
-            // Select it
+
+            // Force the element to re-run the `items` async function
+            await orgSelect.updateItems();
+
+            // Set the value (the label will now appear correctly!)
             orgSelect.update(newOrg.value);
         }
 
