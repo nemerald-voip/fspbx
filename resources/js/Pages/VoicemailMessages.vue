@@ -117,16 +117,22 @@
                                 <input v-if="row.voicemail_message_uuid" v-model="selectedItems" type="checkbox"
                                     :value="row.voicemail_message_uuid"
                                     class="h-5 w-5 lg:h-4 lg:w-4 mt-1 lg:mt-0 rounded border-gray-300 text-indigo-600">
-                                <div class="ml-4 text-sm"
+
+                                <div class="ml-4 flex-1 min-w-0 text-sm"
                                     :class="[row.message_status !== 'saved' ? 'font-bold text-gray-900' : 'text-gray-700']">
-                                    <div class="flex items-center gap-3">
-                                        <div class="flex flex-col">
-                                            <span>{{ row.caller_id_name }}</span>
-                                            <span class="text-xs opacity-70">{{ row.caller_id_number }}</span>
+                                    <div class="flex items-start justify-between gap-3 w-full">
+                                        <div class="flex flex-col min-w-0">
+                                            <span class="truncate">{{ row.caller_id_name }}</span>
+                                            <span class="text-xs opacity-70 truncate">{{ row.caller_id_number }}</span>
                                         </div>
-                                        <Badge v-if="row.message_status !== 'saved'" :text="'New'"
-                                            :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
-                                            class="px-2 py-0.5 text-[10px]" />
+
+                                        <Badge
+                                            v-if="row.message_status !== 'saved'"
+                                            :text="'New'"
+                                            :backgroundColor="'bg-blue-100'"
+                                            :textColor="'text-blue-800'"
+                                            class="shrink-0 px-2 py-0.5 text-[10px]"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -134,7 +140,7 @@
 
                         <!-- Date -->
                         <TableField
-                            class="flex lg:table-cell items-center gap-2 lg:gap-0 px-0 lg:px-2 py-2 text-sm lg:text-gray-900"
+                            class="flex lg:table-cell items-center gap-2 px-0 lg:px-2 py-2 text-sm"
                             :class="row.message_status !== 'saved' ? 'font-bold text-gray-900' : 'text-gray-500'">
                             <span class="lg:hidden font-semibold text-gray-400 uppercase text-[10px]">Date:</span>
                             <span>{{ row.created_epoch_formatted }}</span>
@@ -212,16 +218,17 @@
                 </tr>
             </template>
             <template #empty>
-                <!-- Conditional rendering for 'no records' message -->
-                <div v-if="data.data.length === 0" class="text-center my-5 ">
+                <div v-if="data.data.length === 0" class="text-center my-6">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
                     <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
                     <p class="mt-1 text-sm text-gray-500">
-                        Adjust your search and try again.
+                        Adjust your search or filters and try again.
+                    </p>
+                    <p class="mt-4 text-lg font-extrabold text-red-600">
+                        Note: voicemail messages from only the last 30 days are shown by default. To view older messages, expand the date range above.
                     </p>
                 </div>
             </template>
-
             <template #loading>
                 <Loading :show="loading" />
             </template>
@@ -330,19 +337,20 @@ const selectPageItems = computed({
     }
 });
 
-const startLocal = moment.utc(props.startPeriod).tz(props.timezone)
-const endLocal = moment.utc(props.endPeriod).tz(props.timezone)
+const getDefaultDateRange = () => {
+    const startLocal = moment.utc(props.startPeriod).tz(props.timezone);
+    const endLocal = moment.utc(props.endPeriod).tz(props.timezone);
 
-const dateRange = [
-    startLocal.clone().startOf('day').toISOString(), // UTC instant for local start-of-day
-    endLocal.clone().endOf('day').toISOString(),     // UTC instant for local end-of-day
-]
+    return [
+        startLocal.clone().startOf('day').toISOString(),
+        endLocal.clone().endOf('day').toISOString(),
+    ];
+};
 
 const filterData = ref({
     voicemail_uuid: props.voicemail_uuid,
     search: null,
-    dateRange: dateRange,
-
+    dateRange: getDefaultDateRange(),
 });
 
 onMounted(() => {
@@ -534,7 +542,8 @@ const handleSearchButtonClick = () => {
 
 const handleFiltersReset = () => {
     filterData.value.search = null;
-    // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
+    filterData.value.dateRange = getDefaultDateRange();
+    handleClearSelection();
     handleSearchButtonClick();
 }
 
