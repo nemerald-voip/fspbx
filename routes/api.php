@@ -156,7 +156,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/extensions/password', [ExtensionsController::class, 'updatePassword'])->name('extensions.password.update');
 
     // Extension statistics
-    Route::get('/extension-statistics/data', [ExtensionStatisticsController::class, 'getData'])->name('extension-statistics.data');
+    //Route::get('/extension-statistics/data', [ExtensionStatisticsController::class, 'getData'])->name('extension-statistics.data');
 
     // Voicemails
     Route::post('voicemails', [VoicemailController::class, 'store'])->name('voicemails.store');
