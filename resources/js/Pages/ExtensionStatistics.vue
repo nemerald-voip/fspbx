@@ -291,32 +291,53 @@ const handleUpdateDateRange = (newDateRange) => {
     filterData.value.dateRange = newDateRange;
 }
 
-const exportCsv = () => {
+const exportCsv = async () => {
     isExporting.value = true;
 
-    axios.get(props.routes.export, {
-        params: {
-            filter: filterData.value,
-        },
-        responseType: 'blob',
-    })
-        .then((response) => {
-            const blob = new Blob([response.data], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'extension_statistics.csv';
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            window.URL.revokeObjectURL(url);
-        })
-        .catch((error) => {
-            handleErrorResponse(error);
-        })
-        .finally(() => {
-            isExporting.value = false;
+    try {
+        const response = await axios.get(props.routes.export, {
+            params: {
+                filter: filterData.value,
+            },
+            responseType: 'blob',
         });
+
+        const contentType = response.headers['content-type'] || '';
+
+        // If backend returned JSON/error payload as blob instead of CSV
+        if (contentType.includes('application/json')) {
+            const text = await response.data.text();
+            const json = JSON.parse(text);
+
+            showNotification('error', json.errors || json.messages || { request: ['Export failed'] });
+            return;
+        }
+
+        const blob = new Blob([response.data], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'extension_statistics.csv';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+    } catch (error) {
+        // Handle blob error responses cleanly
+        if (error.response?.data instanceof Blob) {
+            try {
+                const text = await error.response.data.text();
+                const json = JSON.parse(text);
+                showNotification('error', json.errors || json.messages || { request: ['Export failed'] });
+            } catch {
+                showNotification('error', { request: ['Export failed. Server returned a non-JSON error response.'] });
+            }
+        } else {
+            handleErrorResponse(error);
+        }
+    } finally {
+        isExporting.value = false;
+    }
 };
 
 const handleModalClose = () => {
@@ -337,9 +358,14 @@ const showNotification = (type, messages = null) => {
 
 const handleErrorResponse = (error) => {
     if (error.response) {
+        if (error.response.data instanceof Blob) {
+            showNotification('error', { request: ['The server returned a file/blob error response instead of JSON.'] });
+            return;
+        }
+
         showNotification('error', error.response.data.errors || { request: [error.message] });
     } else if (error.request) {
-        showNotification('error', { request: [error.request] });
+        showNotification('error', { request: ['No response received from server.'] });
         console.log(error.request);
     } else {
         showNotification('error', { request: [error.message] });
