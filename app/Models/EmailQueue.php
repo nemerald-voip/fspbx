@@ -19,4 +19,14 @@ class EmailQueue extends Model
     protected $keyType = 'string';
 
     protected $guarded = ['email_queue_uuid'];
+
+
+
+    /**
+     * Get domain that this model belongs to
+     */
+    public function domain()
+    {
+        return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
+    }
 }

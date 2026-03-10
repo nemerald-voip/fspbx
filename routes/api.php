@@ -15,6 +15,7 @@ use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\EmailLogsController;
+use App\Http\Controllers\EmailQueueController;
 use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\FaxesController;
@@ -284,6 +285,12 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // Route::post('/contacts/import', [ContactsController::class, 'import'])->name('contacts.import');
     // Route::get('/contacts/template/download', [ContactsController::class, 'downloadTemplate'])->name('contacts.download.template');
     // Route::get('/contacts-export', [ContactsController::class, 'export'])->name('contacts.export');
+
+    // Email Queue
+    Route::get('/emailqueue/data', [EmailQueueController::class, 'getData'])->name('emailqueue.data');
+    Route::post('/emailqueue/select-all', [EmailQueueController::class, 'selectAll'])->name('emailqueue.select.all');
+    Route::post('/emailqueue/bulk-delete', [EmailQueueController::class, 'bulkDelete'])->name('emailqueue.bulk.delete');
+    Route::post('/emailqueue/update-status', [EmailQueueController::class, 'updateStatus'])->name('emailqueue.update-status');
 
     //Organizations
     Route::get('/organizations', [OrganizationController::class, 'index'])->name('organizations.index');

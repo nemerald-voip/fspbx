@@ -2,95 +2,335 @@
 
 namespace App\Http\Controllers;
 
-use Inertia\Inertia;
 use App\Models\EmailQueue;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Session;
+use Inertia\Inertia;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class EmailQueueController extends Controller
 {
-    public function index(Request $request)
+    public $model;
+    protected $viewName = 'EmailQueue';
+
+    public function __construct()
     {
-        if ($request->hasHeader('X-Inertia')) {
-            return Inertia::location(route($request->route()->getName()));
-        }
-        
-        // Check permissions
-        if (! userCheckPermission("email_queue_view")) {
+        $this->model = new EmailQueue();
+    }
+
+    public function index()
+    {
+        if (!userCheckPermission('email_queue_view')) {
             return redirect('/');
         }
 
-        $statuses = ['all' => 'Show All', 'sent' => 'Sent', 'waiting' => 'Waiting', 'null' => 'Blank'];
-        $scopes = ['global', 'local'];
-        $selectedStatus = $request->get('status') ?: 'all';
-        $searchString = $request->get('search');
-        $selectedScope = $request->get('scope', 'local');
+        $domain_uuid = session('domain_uuid');
 
-        $emailQueuesQuery = EmailQueue::query();
-        $domainUuid = Session::get('domain_uuid');
-        if (in_array($selectedScope, $scopes) && $selectedScope == 'local') {
-            $emailQueuesQuery
-                ->where('domain_uuid', $domainUuid);
-        } else {
-            $emailQueuesQuery
-                ->join('v_domains','v_domains.domain_uuid','=','v_email_queue.domain_uuid');
+        $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))
+            ->subDays(30)
+            ->startOfDay()
+            ->setTimeZone('UTC');
+
+        $endPeriod = Carbon::now(get_local_time_zone($domain_uuid))
+            ->endOfDay()
+            ->setTimeZone('UTC');
+
+        return Inertia::render($this->viewName, [
+            'startPeriod' => fn() => $startPeriod,
+            'endPeriod' => fn() => $endPeriod,
+            'timezone' => fn() => get_local_time_zone($domain_uuid),
+            'statusOptions' => fn() => $this->getStatusOptions(),
+            'routes' => [
+                'current_page' => route('emailqueue.index'),
+                'data_route' => route('emailqueue.data'),
+                'select_all' => route('emailqueue.select.all'),
+                'bulk_delete' => route('emailqueue.bulk.delete'),
+                'update_status' => route('emailqueue.update-status'),
+            ],
+            'permissions' => fn() => $this->getUserPermissions(),
+        ]);
+    }
+
+    public function getData()
+    {
+        $params = request()->all();
+        $params['paginate'] = 50;
+        $params['domain_uuid'] = session('domain_uuid');
+
+        $showGlobal = filter_var(data_get($params, 'filter.showGlobal'), FILTER_VALIDATE_BOOLEAN);
+
+        if (!empty(data_get($params, 'filter.dateRange'))) {
+            $params['filter']['startPeriod'] = Carbon::parse(data_get($params, 'filter.dateRange.0'))->toIso8601String();
+            $params['filter']['endPeriod'] = Carbon::parse(data_get($params, 'filter.dateRange.1'))->toIso8601String();
+            unset($params['filter']['dateRange']);
         }
-        if (array_key_exists($selectedStatus, $statuses) && $selectedStatus != 'all') {
-            if ($selectedStatus === 'null') {
-                $emailQueuesQuery
-                    ->where(function ($q) {
-                        $q->where('email_status', '')
-                            ->orWhereNull('email_status');
+
+        unset($params['filter']['showGlobal']);
+
+        $data = QueryBuilder::for(EmailQueue::class, request()->merge($params))
+            ->with([
+                'domain' => function ($query) {
+                    $query->select('domain_uuid', 'domain_name', 'domain_description');
+                }
+            ])
+            ->select([
+                'email_queue_uuid',
+                'domain_uuid',
+                'hostname',
+                'email_date',
+                'email_from',
+                'email_to',
+                'email_subject',
+                'email_status',
+            ])
+            ->when(!$showGlobal, function ($query) use ($params) {
+                $query->where('domain_uuid', $params['domain_uuid']);
+            })
+            ->when($showGlobal, function ($query) {
+                $domainUuids = collect(Session::get('domains', []))->pluck('domain_uuid');
+                $query->whereIn('domain_uuid', $domainUuids);
+            })
+            ->allowedFilters([
+                AllowedFilter::callback('startPeriod', function ($query, $value) {
+                    $query->where('email_date', '>=', $value);
+                }),
+
+                AllowedFilter::callback('endPeriod', function ($query, $value) {
+                    $query->where('email_date', '<=', $value);
+                }),
+
+                AllowedFilter::callback('status', function ($query, $value) {
+                    if (blank($value) || $value === 'all') {
+                        return;
+                    }
+
+                    if ($value === 'blank') {
+                        $query->where(function ($q) {
+                            $q->whereNull('email_status')
+                                ->orWhere('email_status', '');
+                        });
+
+                        return;
+                    }
+
+                    $query->where('email_status', $value);
+                }),
+
+                AllowedFilter::callback('search', function ($query, $value) {
+                    if (blank($value)) {
+                        return;
+                    }
+
+                    $query->where(function ($q) use ($value) {
+                        $q->where('hostname', 'ILIKE', "%{$value}%")
+                            ->orWhere('email_from', 'ILIKE', "%{$value}%")
+                            ->orWhere('email_to', 'ILIKE', "%{$value}%")
+                            ->orWhere('email_subject', 'ILIKE', "%{$value}%");
                     });
-            } else {
-                $emailQueuesQuery
-                    ->where('email_status', $selectedStatus);
-            }
-        }
-        if ($searchString) {
-            $emailQueuesQuery->where(function ($query) use ($searchString) {
-                return $query
-                    ->where('hostname', 'ilike', '%'.strtolower($searchString).'%')
-                    ->orWhere('email_from', 'ilike', '%'.strtolower($searchString).'%')
-                    ->orWhere('email_to', 'ilike', '%'.strtolower($searchString).'%')
-                    ->orWhere('email_subject', 'ilike', '%'.strtolower($searchString).'%');
+                }),
+            ])
+            ->allowedSorts(['email_date', 'email_from', 'email_to', 'email_status', 'hostname'])
+            ->defaultSort('-email_date')
+            ->paginate($params['paginate'])
+            ->through(function ($item) {
+                $timezone = get_local_time_zone(session('domain_uuid'));
+
+                return [
+                    'email_queue_uuid' => $item->email_queue_uuid,
+                    'domain_uuid' => $item->domain_uuid,
+                    'hostname' => $item->hostname,
+                    'email_from' => $item->email_from,
+                    'email_to' => $item->email_to,
+                    'email_subject' => $item->email_subject
+                        ? (@iconv_mime_decode($item->email_subject, 0, 'UTF-8') ?: $item->email_subject)
+                        : null,
+                    'email_status' => blank($item->email_status) ? 'blank' : $item->email_status,
+                    'email_date' => $item->email_date,
+                    'email_date_formatted' => $item->email_date
+                        ? Carbon::parse($item->email_date)->setTimezone($timezone)->format('M j, Y g:i A')
+                        : null,
+                    'domain' => $item->domain ? [
+                        'domain_uuid' => $item->domain->domain_uuid,
+                        'domain_name' => $item->domain->domain_name,
+                        'domain_description' => $item->domain->domain_description,
+                    ] : null,
+                ];
             });
-        }
 
-        $emailQueues = $emailQueuesQuery->orderBy('email_date', 'desc')->paginate()->onEachSide(1);
-
-        $domain_uuid = Session::get('domain_uuid');
-        $time_zone = get_local_time_zone($domain_uuid);
-        foreach ($emailQueues as $emailQueue) {
-            // Try to convert the date to human redable format
-            $emailQueue->email_date = Carbon::parse($emailQueue->email_date)->setTimezone($time_zone);
-            // decode a MIME header field to its original character set and content. 
-            $emailQueue->email_subject = iconv_mime_decode($emailQueue->email_subject);
-        }
-
-
-        return view('layouts.emailqueue.list', compact('emailQueues', 'searchString', 'statuses', 'selectedStatus', 'selectedScope'));
+        return response()->json($data);
     }
 
-    public function delete($id)
+    public function updateStatus(Request $request)
     {
-        EmailQueue::query()->where('email_queue_uuid', $id)->delete();
+        try {
+            $items = $request->get('items', []);
+            $status = $request->get('status');
 
-        return response()->json([
-            'status' => 200,
-            'success' => [
-                'message' => 'Selected email queue has been deleted'
-            ]
-        ]);
+            if (empty($items)) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['server' => ['No email queue items were provided.']]
+                ], 400);
+            }
+
+            EmailQueue::whereIn('email_queue_uuid', $items)
+                ->when(!$request->boolean('showGlobal'), function ($query) {
+                    $query->where('domain_uuid', session('domain_uuid'));
+                })
+                ->update([
+                    'email_status' => $status,
+                ]);
+
+            return response()->json([
+                'messages' => ['server' => ['Status updated successfully.']],
+            ], 200);
+        } catch (\Exception $e) {
+            logger('EmailQueueController@updateStatus error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Server returned an error while updating status.']]
+            ], 500);
+        }
     }
 
-    public function updateStatus(EmailQueue $emailQueue, $status = null)
+    public function bulkDelete(Request $request)
     {
-        $emailQueue->update([
-            'email_status' => $status,
-        ]);
+        try {
+            $items = $request->get('items', []);
 
-        return redirect()->back();
+            if (empty($items)) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['server' => ['No email queue items were provided.']]
+                ], 400);
+            }
+
+            EmailQueue::whereIn('email_queue_uuid', $items)
+                ->when(!$request->boolean('showGlobal'), function ($query) {
+                    $query->where('domain_uuid', session('domain_uuid'));
+                })
+                ->delete();
+
+            return response()->json([
+                'messages' => ['server' => ['All selected items have been deleted successfully.']],
+            ], 200);
+        } catch (\Exception $e) {
+            logger('EmailQueueController@bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Server returned an error while deleting the selected items.']]
+            ], 500);
+        }
+    }
+
+    public function selectAll()
+    {
+        try {
+            $params = request()->all();
+            $params['domain_uuid'] = session('domain_uuid');
+
+            $showGlobal = filter_var(data_get($params, 'filter.showGlobal'), FILTER_VALIDATE_BOOLEAN);
+
+            if (!empty(data_get($params, 'filter.dateRange'))) {
+                $params['filter']['startPeriod'] = Carbon::parse(data_get($params, 'filter.dateRange.0'))->toIso8601String();
+                $params['filter']['endPeriod'] = Carbon::parse(data_get($params, 'filter.dateRange.1'))->toIso8601String();
+                unset($params['filter']['dateRange']);
+            }
+
+            unset($params['filter']['showGlobal']);
+
+            $data = QueryBuilder::for(EmailQueue::class, request()->merge($params))
+                ->select([
+                    'email_queue_uuid',
+                    'domain_uuid',
+                    'hostname',
+                    'email_date',
+                    'email_from',
+                    'email_to',
+                    'email_subject',
+                    'email_status',
+                ])
+                ->when(!$showGlobal, function ($query) use ($params) {
+                    $query->where('domain_uuid', $params['domain_uuid']);
+                })
+                ->when($showGlobal, function ($query) {
+                    $domainUuids = collect(Session::get('domains', []))->pluck('domain_uuid');
+                    $query->whereIn('domain_uuid', $domainUuids);
+                })
+                ->allowedFilters([
+                    AllowedFilter::callback('startPeriod', function ($query, $value) {
+                        $query->where('email_date', '>=', $value);
+                    }),
+
+                    AllowedFilter::callback('endPeriod', function ($query, $value) {
+                        $query->where('email_date', '<=', $value);
+                    }),
+
+                    AllowedFilter::callback('status', function ($query, $value) {
+                        if (blank($value) || $value === 'all') {
+                            return;
+                        }
+
+                        if ($value === 'blank') {
+                            $query->where(function ($q) {
+                                $q->whereNull('email_status')
+                                    ->orWhere('email_status', '');
+                            });
+
+                            return;
+                        }
+
+                        $query->where('email_status', $value);
+                    }),
+
+                    AllowedFilter::callback('search', function ($query, $value) {
+                        if (blank($value)) {
+                            return;
+                        }
+
+                        $query->where(function ($q) use ($value) {
+                            $q->where('hostname', 'ILIKE', "%{$value}%")
+                                ->orWhere('email_from', 'ILIKE', "%{$value}%")
+                                ->orWhere('email_to', 'ILIKE', "%{$value}%")
+                                ->orWhere('email_subject', 'ILIKE', "%{$value}%");
+                        });
+                    }),
+                ])
+                ->pluck('email_queue_uuid');
+
+            return response()->json([
+                'messages' => ['success' => ['All items selected']],
+                'items' => $data,
+            ], 200);
+        } catch (\Exception $e) {
+            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to select all items']]
+            ], 500);
+        }
+    }
+
+    public function getStatusOptions()
+    {
+        return [
+            ['name' => 'Show All', 'value' => 'all'],
+            ['name' => 'Sent', 'value' => 'sent'],
+            ['name' => 'Waiting', 'value' => 'waiting'],
+            ['name' => 'Blank', 'value' => 'blank'],
+        ];
+    }
+
+    public function getUserPermissions()
+    {
+        return [
+            'email_queue_update' => userCheckPermission('email_queue_edit'),
+            'email_queue_delete' => userCheckPermission('email_queue_delete'),
+        ];
     }
 }
