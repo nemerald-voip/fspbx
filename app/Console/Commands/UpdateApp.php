@@ -34,7 +34,6 @@ use App\Console\Commands\Updates\Update0969;
 use App\Console\Commands\Updates\Update0970;
 use App\Services\GitHubApiService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Artisan;
 use Symfony\Component\Process\Process;
 
 class UpdateApp extends Command
