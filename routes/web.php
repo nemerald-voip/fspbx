@@ -63,8 +63,8 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/extensions/callerid', [ExtensionsController::class, 'callerID'])->withoutMiddleware(['auth', 'web'])->name('callerID');
-Route::post('/extensions/{extension}/callerid/update/', [ExtensionsController::class, 'updateCallerID'])->withoutMiddleware(['auth', 'web'])->name('updateCallerID');
+Route::get('/extensions/callerid', [ExtensionsController::class, 'callerID'])->withoutMiddleware(['auth'])->name('callerID');
+Route::post('/extensions/{extension}/callerid/update/', [ExtensionsController::class, 'updateCallerID'])->withoutMiddleware(['auth'])->name('updateCallerID');
 
 //Polycom log handling
 Route::put('/polycom/log/{name}', [PolycomLogController::class, 'store'])->withoutMiddleware(['auth', 'web'])->name('log.store');
