@@ -113,7 +113,7 @@ install_esl_php84_via_installer() {
     print_error "ESL installer failed."
     exit 1
   fi
-
+}
 # ---------------- MAIN ----------------
 require_root
 export DEBIAN_FRONTEND=noninteractive
