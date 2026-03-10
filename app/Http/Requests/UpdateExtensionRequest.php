@@ -204,16 +204,16 @@ class UpdateExtensionRequest extends FormRequest
             'follow_me_destinations.*.prompt'      => ['required_with:follow_me_destinations', 'string'],
 
 
-            'voicemail_enabled' => ['required', 'in:true,false,1,0'],
+            'voicemail_enabled' => ['sometimes', 'in:true,false,1,0'],
             'voicemail_id' => ['sometimes', 'required'],
-            'greeting_id' => 'sometimes|required|string',
-            'voicemail_file'        => ['nullable'],
-            'voicemail_local_after_email'        => ['sometimes', 'required', 'in:true,false,1,0'],
+            'greeting_id' => ['sometimes', 'required', 'string'],
+            'voicemail_file' => ['nullable'],
+            'voicemail_local_after_email' => ['sometimes', 'required', 'in:true,false,1,0'],
             'voicemail_transcription_enabled' => ['sometimes', 'required', 'in:true,false,1,0'],
             'voicemail_description' => ['nullable', 'string'],
             'voicemail_destinations' => ['nullable', 'array'],
-            'voicemail_password' => ['numeric'],
-            'voicemail_tutorial'        => ['sometimes', 'required', 'in:true,false,1,0'],
+            'voicemail_password' => ['nullable', 'numeric'],
+            'voicemail_tutorial' => ['sometimes', 'required', 'in:true,false,1,0'],
             'voicemail_recording_instructions' => ['sometimes', 'required', 'in:true,false,1,0'],
 
 
