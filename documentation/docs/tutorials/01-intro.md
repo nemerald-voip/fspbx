@@ -37,7 +37,7 @@ Key Features
 
 -   **Security** -- Advanced firewall and event guard integration, IP reputation filtering, TLS/SRTP support.
 
--   **Billing & Tax** -- Stripe and Lago integrations with Ceretax for telecom tax compliance.
+-   **Billing & Tax** -- Integration with Stripe and Ceretax for invoicing and telecom tax compliance.
 
 -   **API Integrations** -- third-party API services (AI speech, SMS backends, cloud storage, hotel PMS).
 

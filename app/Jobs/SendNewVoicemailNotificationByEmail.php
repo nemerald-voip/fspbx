@@ -156,7 +156,11 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
             $attachment_path = null; // Initialize attachment path as null
 
             // Get voicemail file path
-            $base_path = ($message->domain?->domain_name ?? '') . '/' . $message->voicemail->voicemail_id . '/msg_' . $message->voicemail_message_uuid;
+            $base_path =
+                (($message->domain?->domain_name) ?? '') . '/' .
+                (($message->voicemail?->voicemail_id) ?? '') . '/msg_' .
+                $message->voicemail_message_uuid;
+
             $wav_path = $base_path . '.wav';
             $mp3_path = $base_path . '.mp3';
 

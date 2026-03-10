@@ -22,7 +22,9 @@ use App\Http\Controllers\ExtensionsController;
 use App\Http\Controllers\ExtensionStatisticsController;
 use App\Http\Controllers\FaxesController;
 use App\Http\Controllers\FaxInboxController;
+use App\Http\Controllers\FaxLogController;
 use App\Http\Controllers\FaxQueueController;
+use App\Http\Controllers\FaxSentController;
 use App\Http\Controllers\FirewallController;
 use App\Http\Controllers\GreetingsController;
 use App\Http\Controllers\GroupsController;
@@ -129,6 +131,8 @@ Route::group(['middleware' => 'auth'], function () {
 
     //Extension Statistics
     Route::get('/extension-statistics', [ExtensionStatisticsController::class, 'index'])->name('extension-statistics.index');
+    Route::get('/extension-statistics/data', [ExtensionStatisticsController::class, 'getData'])->name('extension-statistics.data');
+    Route::get('/extension-statistics-export', [ExtensionStatisticsController::class, 'export'])->name('extension-statistics.export');
 
     //Domains
     Route::get('domains/extensions', [DomainController::class, 'countExtensionsInDomains']);
@@ -154,9 +158,9 @@ Route::group(['middleware' => 'auth'], function () {
     //Fax
     Route::get('faxes', [FaxesController::class, 'index'])->name('faxes.index');
     Route::get('/fax/{fax}/inbox', [FaxInboxController::class, 'index'])->name('fax-inbox.index');
-    Route::get('/faxes/sent/{id}', [FaxesController::class, 'sent'])->name('faxes.sent.list');
+    Route::get('/fax/{fax}/sent', [FaxSentController::class, 'index'])->name('faxes.sent.index');
     Route::get('/faxes/active/{id}', [FaxesController::class, 'active'])->name('faxes.active.list');
-    Route::get('/faxes/log/{id}', [FaxesController::class, 'log'])->name('faxes.log.list');
+    Route::get('/fax/{fax}/log', [FaxLogController::class, 'index'])->name('faxes.log.index');
 
     // Domain Groups
     Route::get('domain-groups', [DomainGroupsController::class, 'index'])->name('domain-groups.index');
@@ -176,13 +180,6 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Voicemail Messages
     Route::get('/voicemails/{voicemail}/messages/', [VoicemailMessagesController::class, 'index'])->name('voicemails.messages.index');
-    Route::delete('/voicemails/messages/{message}', [VoicemailMessagesController::class, 'destroy'])->name('voicemails.messages.destroy');
-    Route::get('/voicemails/messages/{message}', [VoicemailMessagesController::class, 'getVoicemailMessage'])->name('voicemail.message');
-    Route::post('/voicemails/messages/get-url', [VoicemailMessagesController::class, 'getVoicemailMessageUrl'])->name('voicemail.message.url');
-    Route::get('/voicemails/messages/{message}/download', [VoicemailMessagesController::class, 'downloadVoicemailMessage'])->name('downloadVoicemailMessage');
-    Route::get('/voicemails/messages/{message}/delete', [VoicemailMessagesController::class, 'deleteVoicemailMessage'])->name('deleteVoicemailMessage');
-    Route::post('/voicemails/messages/bulk-delete', [VoicemailMessagesController::class, 'bulkDelete'])->name('voicemails.messages.bulk.delete');
-    Route::post('/voicemails/messages/select-all', [VoicemailMessagesController::class, 'selectAll'])->name('voicemails.messages.select.all');
 
     // Virtual Receptionist
     Route::resource('virtual-receptionists', VirtualReceptionistController::class);
@@ -228,6 +225,8 @@ Route::group(['middleware' => 'auth'], function () {
     //Phone Numbers
     Route::get('phone-numbers', [PhoneNumbersController::class, 'index'])->name('phone-numbers.index');
     Route::get('/phone-numbers-export', [PhoneNumbersController::class, 'export'])->name('phone-numbers.export');
+    Route::post('/phone-numbers/import', [PhoneNumbersController::class, 'importPreview'])->name('phone-numbers.import.preview');
+    Route::post('/phone-numbers/import/commit', [PhoneNumbersController::class, 'importCommit'])->name('phone-numbers.import.commit');
 
     //Wakeup Calls
     Route::resource('wakeup-calls', WakeupCallsController::class);

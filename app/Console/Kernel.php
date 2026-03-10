@@ -33,13 +33,24 @@ class Kernel extends ConsoleKernel
                 ->toArray();
         });
 
-        // Schedule jobs based on the retrieved settings
+        $scheduledJobsTimezone = $this->getScheduledJobsTimezone($jobSettings);
+        $s3UploadTime = $this->getScheduledJobTime($jobSettings, 's3_upload_calls_time', '01:00');
+        $backupTime = $this->getScheduledJobTime($jobSettings, 'backup_time', '02:00');
 
         // Upload call recordings to AWS
-        if (isset($jobSettings['aws_upload_calls_' . $this->getMacAddress()]) && $jobSettings['aws_upload_calls_' . $this->getMacAddress()] === "true") {
-            $schedule->command('UploadArchiveFiles')
-                ->dailyAt('01:00')
-                ->timezone('America/Los_Angeles');
+        if (
+            isset($jobSettings['s3_upload_calls_' . $this->getMacAddress()])
+            && $jobSettings['s3_upload_calls_' . $this->getMacAddress()] === "true"
+        ) {
+            $schedule->command('fs:upload-call-recordings-to-s3-storage')
+                ->dailyAt($s3UploadTime)
+                ->timezone($scheduledJobsTimezone);
+        }
+
+        if (isset($jobSettings['backup']) && $jobSettings['backup'] === "true") {
+            $schedule->command('app:backup')
+                ->dailyAt($backupTime)
+                ->timezone($scheduledJobsTimezone);
         }
 
         // Clear the export directory
@@ -69,13 +80,6 @@ class Kernel extends ConsoleKernel
             ])->daily();
         }
 
-        if (isset($jobSettings['backup']) && $jobSettings['backup'] === "true") {
-            // Schedule the backup command to run at 2 AM daily
-            $schedule->command('app:backup')
-                ->dailyAt('02:00')
-                ->timezone('America/Los_Angeles');
-        }
-
         // Check fax service status
         if (isset($jobSettings['check_fax_service_status']) && $jobSettings['check_fax_service_status'] === "true") {
             $schedule->job(new \App\Jobs\CheckFaxServiceStatus())->everyThirtyMinutes();
@@ -99,7 +103,7 @@ class Kernel extends ConsoleKernel
                 (new DeleteOldFaxes((int)$daysKeepFax))
                     ->delay(now()->addSeconds(random_int(60, 600)))
             )
-            ->daily();
+                ->daily();
         }
 
         if (isset($jobSettings['delete_old_call_recordings']) && $jobSettings['delete_old_call_recordings'] === "true") {
@@ -110,7 +114,7 @@ class Kernel extends ConsoleKernel
                 (new DeleteOldCallRecordings((int)$daysKeepRecordings))
                     ->delay(now()->addSeconds(random_int(60, 600)))
             )
-            ->daily();
+                ->daily();
         }
 
         if (isset($jobSettings['delete_old_voicemails']) && $jobSettings['delete_old_voicemails'] === "true") {
@@ -121,9 +125,9 @@ class Kernel extends ConsoleKernel
                 (new DeleteOldVoicemails((int)$daysKeepVoicemails))
                     ->delay(now()->addSeconds(random_int(60, 600)))
             )
-            ->daily();
+                ->daily();
         }
-    
+
         if (isset($jobSettings['delete_old_email_logs']) && $jobSettings['delete_old_email_logs'] === "true") {
             // Retrieve the retention days for email logs or default to 90 days.
             $daysKeepEmailLogs = $jobSettings['days_keep_email_logs'] ?? 90;
@@ -132,7 +136,7 @@ class Kernel extends ConsoleKernel
                 (new DeleteOldEmailLogs((int)$daysKeepEmailLogs))
                     ->delay(now()->addSeconds(random_int(60, 3600)))
             )
-            ->daily();
+                ->daily();
         }
 
         if (isset($jobSettings['delete_old_transcriptions']) && $jobSettings['delete_old_transcriptions'] === "true") {
@@ -143,9 +147,8 @@ class Kernel extends ConsoleKernel
                 (new DeleteOldTranscriptions((int)$daysKeepTranscriptions))
                     ->delay(now()->addSeconds(random_int(60, 3600)))
             )
-            ->daily();
+                ->daily();
         }
-
     }
 
     /**
@@ -154,7 +157,7 @@ class Kernel extends ConsoleKernel
      * @return void
      */
     protected $commands = [
-        Commands\UploadArchiveFiles::class,
+        Commands\UploadCallRecordingsToS3Storage::class,
         Commands\MigrationShowLastBatch::class,
         Commands\MigrationDeleteLastBatch::class,
         Commands\ClearExportDirectory::class,
@@ -178,5 +181,24 @@ class Kernel extends ConsoleKernel
         $macAddress = trim($process->output());
 
         return $macAddress ?: null;
+    }
+
+    protected function getScheduledJobsTimezone(array $jobSettings): string
+    {
+        $timezone = $jobSettings['scheduled_jobs_timezone']
+            ?? config('app.timezone', 'UTC');
+
+        return in_array($timezone, timezone_identifiers_list(), true)
+            ? $timezone
+            : config('app.timezone', 'UTC');
+    }
+
+    protected function getScheduledJobTime(array $jobSettings, string $key, string $default): string
+    {
+        $time = $jobSettings[$key] ?? $default;
+
+        return preg_match('/^(?:[01]\d|2[0-3]):[0-5]\d$/', $time)
+            ? $time
+            : $default;
     }
 }

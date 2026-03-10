@@ -218,8 +218,27 @@
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 
-    <UploadModal :show="showUploadModal" @close="showUploadModal = false" :header="'Upload File'" @upload="uploadFile"
-        @download-template="downloadTemplateFile" :is-submitting="isUploadingFile" :errors="uploadErrors" />
+<UploadModal 
+    v-if="showUploadModal" 
+    :show="showUploadModal" 
+    @close="showUploadModal = false" 
+    :header="'Upload File'" 
+    @upload="uploadFile"
+    @download-template="downloadTemplateFile" 
+    :is-submitting="isUploadingFile" 
+    :errors="uploadErrors" 
+/>
+
+<ImportPhoneNumbersModal 
+    v-if="showImportPreviewModal"
+    :show="showImportPreviewModal" 
+    :options="itemOptions"
+    :import-data="importPreviewData"
+    :loading="isCommittingImport"
+    @close="showImportPreviewModal = false"
+    @success="handleImportSuccess" 
+/>
+
 </template>
 
 <script setup>
@@ -245,6 +264,7 @@ import BulkUpdatePhoneNumberForm from "./components/forms/BulkUpdatePhoneNumberF
 import Badge from "@generalComponents/Badge.vue";
 import { DocumentArrowUpIcon, DocumentArrowDownIcon } from "@heroicons/vue/24/outline";
 import UploadModal from "./components/modal/UploadModal.vue";
+import ImportPhoneNumbersModal from "./components/modal/ImportPhoneNumbersModal.vue";
 
 const page = usePage()
 const loading = ref(false)
@@ -265,6 +285,10 @@ const uploadErrors = ref(null);
 const showUploadModal = ref(false);
 const isUploadingFile = ref(null);
 let tooltipCopyContent = ref('Copy to Clipboard');
+
+const showImportPreviewModal = ref(false);
+const importPreviewData = ref([]);
+const isCommittingImport = ref(false);
 
 const data = ref({
     data: [],
@@ -328,7 +352,13 @@ const renderRequestedPage = (url) => {
 };
 
 
-const itemOptions = ref({})
+const itemOptions = ref({
+    routing_types: [],
+    routes: {},
+    faxes: [],
+    domains: [],
+    music_on_hold_options: []
+});
 
 const exportPhoneNumbersCsv = () => {
     axios.get(props.routes.export, {
@@ -380,10 +410,17 @@ const handleEditRequest = (itemUuid) => {
     getItemOptions(itemUuid);
 }
 
+const handleImportSuccess = (messages) => {
+    showNotification('success', messages);
+    showImportPreviewModal.value = false;
+    importPreviewData.value = [];
+    handleSearchButtonClick(); // Refresh table
+};
 
 const handleImportButtonClick = () => {
     uploadErrors.value = null;
     showUploadModal.value = true;
+    getItemOptions();
 };
 
 const uploadFile = (file) => {
@@ -394,12 +431,14 @@ const uploadFile = (file) => {
 
     axios.post(props.routes.import, formData)
         .then((response) => {
-            showNotification('success', response.data.messages);
-            handleModalClose();
-            handleSearchButtonClick();
+            handleModalClose(); 
+            // Delay opening the new modal so the old one is fully destroyed
+            setTimeout(() => {
+                importPreviewData.value = response.data.data;
+                showImportPreviewModal.value = true;
+            }, 300);
         })
         .catch((error) => {
-            handleClearSelection();
             handleErrorResponse(error);
             if (error.response) {
                 uploadErrors.value = error.response.data.errors;
@@ -409,6 +448,24 @@ const uploadFile = (file) => {
             isUploadingFile.value = false;
         });
 }
+
+const handleImportCommit = (items) => {
+    isCommittingImport.value = true;
+    
+    axios.post(route('phone-numbers.import.commit'), { items: items })
+        .then((response) => {
+            showNotification('success', response.data.messages);
+            showImportPreviewModal.value = false;
+            importPreviewData.value = [];
+            handleSearchButtonClick(); // Refresh table
+        })
+        .catch((error) => {
+            handleErrorResponse(error);
+        })
+        .finally(() => {
+            isCommittingImport.value = false;
+        });
+};
 
 function normalizeSearchQuery(query) {
     if (!query) return query;
@@ -616,6 +673,7 @@ const handleModalClose = () => {
     showUpdateModal.value = false;
     confirmationModalTrigger.value = false;
     showBulkUpdateModal.value = false;
+    showUploadModal.value = false;
 }
 
 const hideNotification = () => {

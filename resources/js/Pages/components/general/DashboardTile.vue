@@ -47,6 +47,7 @@ import {
     CalendarDaysIcon,
     HeartIcon
 } from "@heroicons/vue/24/solid";
+import { ClockIcon } from "@heroicons/vue/24/outline";
 import VoicemailIcon from "../icons/VoicemailIcon.vue"
 import FaxIcon from "../icons/FaxIcon.vue"
 import CallHistoryIcon from "../icons/CallHistoryIcon.vue"
@@ -81,6 +82,7 @@ const iconMap = {
     IvrIcon: IvrIcon,
     SupportAgent: SupportAgent,
     HeartIcon: HeartIcon,
+    ClockIcon: ClockIcon,
 }
 
 const styleMap = {
@@ -96,7 +98,8 @@ const styleMap = {
     AlternativeRouteIcon: { bgColor: 'bg-cyan-50', textColor: 'text-cyan-700', hoverTextColor: 'group-hover:text-cyan-900' },
     IvrIcon: { bgColor: 'bg-blue-50', textColor: 'text-blue-700', hoverTextColor: 'group-hover:text-blue-900' },
     SupportAgent: { bgColor: 'bg-orange-50', textColor: 'text-orange-700', hoverTextColor: 'group-hover:text-orange-900' },
-    HeartIcon: { bgColor: 'bg-rose-50', textColor: 'text-rose-700', hoverTextColor: 'group-hover:text-rose-900' }
+    HeartIcon: { bgColor: 'bg-rose-50', textColor: 'text-rose-700', hoverTextColor: 'group-hover:text-rose-900' },
+    ClockIcon: { bgColor: 'bg-blue-50', textColor: 'text-blue-700', hoverTextColor: 'group-hover:text-blue-900' },
 };
 
 // Computed property to get the correct icon component

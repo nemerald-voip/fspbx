@@ -238,37 +238,23 @@ class RingotelApiService
     {
         $this->ensureApiTokenExists();
 
-        // Build codecs array based on enabled flags
+        // Build codecs array based on enabled flags, preserving user order
         $codecs = [];
-
-        if ($params['g711u_enabled']) {
-            $codecs[] = [
-                'codec' => 'G.711 Ulaw',
-                'frame' => 20,
-            ];
+        
+        if (!empty($params['codecs']) && is_array($params['codecs'])) {
+            foreach ($params['codecs'] as $codecItem) {
+                if (!empty($codecItem['enabled'])) {
+                    $codecName = $codecItem['name'];
+                    if (strtolower($codecName) === 'opus') {
+                        $codecName = 'OPUS';
+                    }
+                    $codecs[] = [
+                        'codec' => $codecName,
+                        'frame' => (int) ($codecItem['frame'] ?? 20),
+                    ];
+                }
+            }
         }
-
-        if ($params['g711a_enabled']) {
-            $codecs[] = [
-                'codec' => 'G.711 Alaw',
-                'frame' => 20,
-            ];
-        }
-
-        if ($params['g729_enabled']) {
-            $codecs[] = [
-                'codec' => 'G.729',
-                'frame' => 20,
-            ];
-        }
-
-        if ($params['opus_enabled']) {
-            $codecs[] = [
-                'codec' => 'OPUS',
-                'frame' => 20,
-            ];
-        }
-
         // Build data array
         $data = array(
             'method' => 'createBranch',
@@ -373,35 +359,22 @@ class RingotelApiService
     public function updateConnection($params)
     {
         $this->ensureApiTokenExists();
-        // Build codecs array based on enabled flags
+        // Build codecs array based on enabled flags, preserving user order
         $codecs = [];
-
-        if ($params['g711u_enabled']) {
-            $codecs[] = [
-                'codec' => 'G.711 Ulaw',
-                'frame' => 20,
-            ];
-        }
-
-        if ($params['g711a_enabled']) {
-            $codecs[] = [
-                'codec' => 'G.711 Alaw',
-                'frame' => 20,
-            ];
-        }
-
-        if ($params['g729_enabled']) {
-            $codecs[] = [
-                'codec' => 'G.729',
-                'frame' => 20,
-            ];
-        }
-
-        if ($params['opus_enabled']) {
-            $codecs[] = [
-                'codec' => 'OPUS',
-                'frame' => 20,
-            ];
+        
+        if (!empty($params['codecs']) && is_array($params['codecs'])) {
+            foreach ($params['codecs'] as $codecItem) {
+                if (!empty($codecItem['enabled'])) {
+                    $codecName = $codecItem['name'];
+                    if (strtolower($codecName) === 'opus') {
+                        $codecName = 'OPUS';
+                    }
+                    $codecs[] = [
+                        'codec' => $codecName,
+                        'frame' => (int) ($codecItem['frame'] ?? 20),
+                    ];
+                }
+            }
         }
 
         // Build data array

@@ -28,11 +28,11 @@ On Yealink phones (and most SIP phones), add a BLF with:
 
 ```
 Type: BLF
-Value: vm$EXT
+Value: vm<EXT> Example:vm100
 Label: Team VM
 ```
 
-> Replace **$EXT** with the voicmemail extension you want to monitor. Example - **vm100** for voicemail extension 100. 
+> Replace **\<EXT\>** with the voicemail extension you want to monitor. Example - **vm100** for voicemail extension 100. 
 
 This creates a SIP subscription to:
 

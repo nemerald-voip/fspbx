@@ -1,6 +1,6 @@
 <template>
     <VueDatePicker v-model="dateRange" :range="true" :multi-calendars="{ static: false }" :preset-dates="presetDates"
-        :enable-time-picker="false" auto-apply @update:model-value="handleDate" :timezone="timezone">
+        :enable-time-picker="false" :week-start="0" auto-apply @update:model-value="handleDate" :timezone="timezone">
         <template #preset-date-range-button="{ label, value, presetDate }">
             <span role="button" :tabindex="0" @click="presetDate(value)" @keyup.enter.prevent="presetDate(value)"
                 @keyup.space.prevent="presetDate(value)">
@@ -42,7 +42,7 @@ const today = new Date();
 
 const presetDates = ref([
     { label: 'Today', value: [startOfDay(today), endOfDay(today)] },
-    { label: 'This Week', value: [startOfWeek(startOfDay(today)), endOfWeek(endOfDay(today))] },
+    { label: 'This Week', value: [startOfWeek(startOfDay(today), { weekStartsOn: 0 }), endOfWeek(endOfDay(today), { weekStartsOn: 0 })] },
     { label: 'Past 7 Days', value: [subDays(startOfDay(today), 6), endOfDay(today)] },
     { label: 'Past 30 Days', value: [subDays(startOfDay(today), 29), endOfDay(today)] },
     { label: 'This Month', value: [startOfMonth(startOfDay(today)), endOfMonth(endOfDay(today))] },

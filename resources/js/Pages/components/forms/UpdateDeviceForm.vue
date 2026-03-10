@@ -70,7 +70,7 @@
                                                 <FormTab name="page0" label="Device Settings" :elements="[
                                                     'h4',
                                                     'device_address',
-                                                    'device_clean',
+                                                    'uuid_clean',
                                                     'device_template',
                                                     'device_profile_uuid',
                                                     'domain_uuid',
@@ -243,7 +243,13 @@
                                                                 :default="options.default_line_options?.register_expires" />
                                                             <HiddenElement name="user_id" :meta="true"
                                                                 :default="null" />
+                                                            <HiddenElement name="auth_id" :meta="true"
+                                                                :default="null" />
+                                                            <HiddenElement name="password" :meta="true"
+                                                                :default="null" />
                                                             <HiddenElement name="shared_line" :meta="true"
+                                                                :default="null" />
+                                                            <HiddenElement name="external_line" :meta="true"
                                                                 :default="null" />
 
 
@@ -330,13 +336,36 @@
                                                                         :floating="false"
                                                                         :default="options.default_line_options?.server_address" />
 
-                                                                    <TextElement name="server_address_primary"
-                                                                        label="Primary Server Address"
-                                                                        placeholder="Enter primary server address"
+                                                                    <TextElement name="user_id"
+                                                                        label="User ID"
+                                                                        placeholder="Enter user Id"
                                                                         :floating="false"
-                                                                        :default="options.default_line_options?.server_address_primary"
-                                                                        :conditions="[() => options?.permissions?.manage_device_line_primary_server]" />
+                                                                        :default="options.default_line_options?.user_id"
+                                                                        :conditions="[
+                                                                            () => options?.permissions?.manage_device_line_user_id,
+                                                                            () => form$.el$(`device_lines.${index}.line_type_id`)?.value === 'externalline'
+                                                                        ]" />
 
+                                                                    <TextElement name="auth_id" id="auth_id2"
+                                                                        label="Auth ID"
+                                                                        placeholder="Enter auth Id"
+                                                                        :floating="false"
+                                                                        :default="options.default_line_options?.auth_id"
+                                                                        :conditions="[
+                                                                            () => options?.permissions?.manage_device_line_auth_id,
+                                                                            () => form$.el$(`device_lines.${index}.line_type_id`)?.value === 'externalline'
+                                                                        ]" />
+
+                                                                    <TextElement name="password"
+                                                                        label="SIP Password"
+                                                                        placeholder="Enter sip password"
+                                                                        :floating="false"
+                                                                        :default="options.default_line_options?.password"
+                                                                        :conditions="[
+                                                                            () => options?.permissions?.manage_device_line_password,
+                                                                            () => form$.el$(`device_lines.${index}.line_type_id`)?.value === 'externalline'
+                                                                        ]" />
+                                                                        
                                                                     <TextElement name="server_address_secondary"
                                                                         label="Secondary Server Address"
                                                                         placeholder="Enter secondary server address"
@@ -445,7 +474,7 @@
 
                                                             <SelectElement name="key_value_select" label="Value"
                                                                 label-prop="name" value-prop="extension" :search="true"
-                                                                :native="false" :submit="false"
+                                                                :native="false" :submit="false" allow-absent
                                                                 :create="['blf', 'speed_dial', 'park']
                                                                     .includes(form$?.data?.device_keys?.[index]?.key_type)" :append-new-option="false"
                                                                 input-type="search" autocomplete="off" :columns="{

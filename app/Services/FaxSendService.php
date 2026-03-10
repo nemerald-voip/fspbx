@@ -35,6 +35,7 @@ class FaxSendService
     public static function send(array $payload)
     {
         $instance = new self();
+        $payload['fax_instance_uuid'] = (string) Str::uuid();
 
         $payload['slack_message'] = "*EmailToFax Notification*\n";
         $payload['slack_message'] .= "*From:* {$payload['from']}\n";
@@ -158,7 +159,6 @@ class FaxSendService
                         if ($setting->default_setting_value == 'true') {
                             $notify_in_transit = true;
                         }
-                        
                 }
             }
 
@@ -314,7 +314,7 @@ class FaxSendService
         if (preg_match($re, $subject, $matches)) {
             // if string of digits that may represent a phone number is found then check if it's a valid phone number
             $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
-            try {
+           try {
                 $phoneNumberObject = $phoneNumberUtil->parse($matches[0], 'US');
                 if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
                     $fax_caller_id_number = $phoneNumberUtil
@@ -341,15 +341,11 @@ class FaxSendService
                             ->first();
                     }
                 } else {
-                    $payload['slack_message'] .= ":warning: *Failed to process fax:* Invalid Caller ID is submitted in the subject line: " . $matches[0] . " _Fax aborted._";
-                    logger($payload['slack_message']);
-                    SendFaxNotificationToSlack::dispatch($payload['slack_message'])->onQueue('faxes');
+                    logger("Invalid Caller ID in subject: {$matches[0]} (continuing with fallback)");
                 }
             } catch (NumberParseException $e) {
-                $payload['slack_message'] .= ":warning: *Failed to process fax:* Invalid Caller ID is submitted in the subject line: " . $matches[0] . " _Fax aborted._";
-                logger($payload['slack_message']);
-                SendFaxNotificationToSlack::dispatch($payload['slack_message'])->onQueue('faxes');
-            }
+                logger("Invalid Caller ID in subject: {$matches[0]} (parse error, continuing with fallback)");
+            } 
         }
 
         // If the subject line didn't have a valid Fax number we are going to use the first match by email
@@ -419,7 +415,7 @@ class FaxSendService
         $page_height = $payload['page_height'] ?? 11;
 
         $tif_files = [];
-        $fax_instance_uuid = $faxServer->fax_uuid;
+        $fax_instance_uuid = $payload['fax_instance_uuid'] ?? (string) Str::uuid();
 
         foreach ($attachments as $attachment) {
             $uuid_filename = Str::uuid()->toString();
@@ -575,6 +571,35 @@ class FaxSendService
         }
 
         $success = !empty($final_tif_path) && file_exists($final_tif_path);
+
+        // Generate PDF from final TIF (to keep parity with the old script)
+        if (!empty($final_tif_path) && file_exists($final_tif_path)) {
+            $final_pdf_path = preg_replace('/\.tif$/', '.pdf', $final_tif_path);
+
+            $process = new Process([
+                "tiff2pdf",
+                "-u",
+                "i",
+                "-p",
+                $fax_page_size,
+                "-w",
+                (string) $page_width,
+                "-l",
+                (string) $page_height,
+                "-f",
+                "-o",
+                $final_pdf_path,
+                $final_tif_path,
+            ], null, ['HOME' => '/tmp']);
+
+            try {
+                $process->mustRun();
+            } catch (\Symfony\Component\Process\Exception\ProcessFailedException $e) {
+                logger("tiff2pdf failed: " . $e->getMessage());
+                // don't fail the fax; just log it
+            }
+        }
+
         if (!$success) {
             $message = "Couldn't process any of the attached files. Supported types: .pdf, .tif, .tiff";
             Log::alert($message);

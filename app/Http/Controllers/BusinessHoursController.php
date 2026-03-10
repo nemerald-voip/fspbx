@@ -758,7 +758,7 @@ class BusinessHoursController extends Controller
 
             return response()->json([
                 'messages' => ['success' => ['Business Hours duplicated successfully', 'New Extension: ' . $newBusinessHour->extension]],
-                'business_hour_uuid' => $newBusinessHour->business_hour_uuid
+                'business_hour_uuid' => $newBusinessHour->uuid
             ], 201);
         } catch (\Throwable $e) {
             DB::rollBack();

@@ -812,7 +812,7 @@ import FaxIcon from "../icons/FaxIcon.vue"
 import ParkIcon from "../icons/ParkIcon.vue"
 import MergeIcon from "../icons/MergeIcon.vue"
 
-const emit = defineEmits(['close'])
+const emit = defineEmits(['close', 'success', 'error'])
 
 const props = defineProps({
     item: Object,

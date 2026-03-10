@@ -46,7 +46,9 @@ const RestartIcon = defineAsyncComponent(() => import('../icons/RestartIcon.vue'
 const LinkOffIcon = defineAsyncComponent(() => import('../icons/LinkOffIcon.vue'));
 const SyncIcon = defineAsyncComponent(() => import('../icons/SyncIcon.vue'));
 const PencilSquareIcon = defineAsyncComponent(() => import('@heroicons/vue/20/solid/PencilSquareIcon'));
-const TrashIcon = defineAsyncComponent(() => import('@heroicons/vue/20/solid/TrashIcon'));
+const TrashIcon = defineAsyncComponent(() => import('@heroicons/vue/24/solid/TrashIcon'));
+const EnvelopeIcon = defineAsyncComponent(() => import('@heroicons/vue/24/solid/EnvelopeIcon'));
+const EnvelopeOpenIcon = defineAsyncComponent(() => import('@heroicons/vue/24/solid/EnvelopeOpenIcon'));
 
 // Define props to accept actions from the parent component
 const props = defineProps({
@@ -60,7 +62,9 @@ const iconMap = {
     PencilSquareIcon,
     TrashIcon,
     LinkOffIcon,
-    SyncIcon
+    SyncIcon,
+    EnvelopeIcon,
+    EnvelopeOpenIcon,
 };
 
 const getIconComponent = (iconKey) => {

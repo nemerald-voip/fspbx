@@ -114,15 +114,13 @@ class Faxes extends Model
                         $this->fax_extension = Faxes::where('fax_caller_id_number', $this->fax_caller_id_number)->first();
                     }
                 } else {
-                    $payload['slack_message'] .= ":warning: *Failed to process fax:* Invalid Caller ID is submitted in the subject line: " . $matches[0] . " _Fax aborted._";
-                    logger($payload['slack_message']);
-                    SendFaxNotificationToSlack::dispatch($payload['slack_message'])->onQueue('faxes');
+                    $warning = "Invalid Caller ID in subject: {$matches[0]} (continuing with fallback)";
+                    logger($warning);
                 }
             } catch (NumberParseException $e) {
                 // Process invalid Fax Caller ID
-                $payload['slack_message'] .= ":warning: *Failed to process fax:* Invalid Caller ID is submitted in the subject line: " . $matches[0] . " _Fax aborted._";
-                logger($payload['slack_message']);
-                SendFaxNotificationToSlack::dispatch($payload['slack_message'])->onQueue('faxes');
+                $warning = "Invalid Caller ID in subject: {$matches[0]} (parse error, continuing with fallback)";
+                logger($warning);
             }
         }
 
@@ -144,26 +142,7 @@ class Faxes extends Model
 
         $this->domain = $this->fax_extension->domain;
 
-        $this->fax_caller_id_number = $this->fax_extension->fax_caller_id_number;
-        $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
-        try {
-            $phoneNumberObject = $phoneNumberUtil->parse($this->fax_caller_id_number, 'US');
-            if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                $this->fax_caller_id_number = $phoneNumberUtil
-                    ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::E164);
-            } else {
-                $this->message .= "Invalid Caller ID is set up for fax server " . $this->fax_extension->fax_extension . ": " . $this->fax_caller_id_number;
-                Log::alert($this->message);
-                SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
-                return "abort(404). Invalid caller ID";
-            }
-        } catch (NumberParseException $e) {
-            // Process invalid Fax Caller ID
-            $this->message .= "Invalid Caller ID is set up for fax server " . $this->fax_extension->fax_extension . ": " . $this->fax_caller_id_number;
-            Log::alert($this->message);
-            SendFaxNotificationToSlack::dispatch($this->message)->onQueue('faxes');
-            return "abort(404). Invalid caller ID";
-        }
+        $this->fax_caller_id_number = formatPhoneNumber($this->fax_extension->fax_caller_id_number, 'US', PhoneNumberFormat::E164);
 
         // If subject contains word "body" we will add a cover page to this fax
         if (preg_match("/body/i", $subject)) {
@@ -345,7 +324,6 @@ class Faxes extends Model
         $fax_queue->fax_command = 'originate ' . $this->dial_string;
         $fax_queue->save();
         // }
-
 
         // Log::alert("----------Webhook Job ends-----------");
 

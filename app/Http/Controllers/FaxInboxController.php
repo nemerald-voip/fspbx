@@ -195,7 +195,7 @@ class FaxInboxController extends Controller
                 'items' => $data,
             ], 200);
         } catch (\Exception $e) {
-            logger('FaxInboxComputer@selectAll error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            logger('FaxInboxController@selectAll error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             // Handle any other exception that may occur
             return response()->json([
                 'success' => false,

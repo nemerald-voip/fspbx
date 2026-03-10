@@ -253,7 +253,9 @@
 
 
     <CallDetailsModal :show="showDetailsModal" :item="itemOptions?.item" :loading="loadingModal"
-        :customClass="'sm:max-w-4xl'" @close="handleModalClose">
+        :customClass="'sm:max-w-4xl'" @close="handleModalClose" 
+        @success="showNotification" 
+        @error="handleErrorResponse">
     </CallDetailsModal>
 
     <CallRecordingModal :show="showCallRecordingModal" :cdr_uuid="selectedUuid" :routes="routes"

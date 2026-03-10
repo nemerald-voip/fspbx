@@ -205,9 +205,9 @@ if (!class_exists('cdr_import')) {
 					if (isset($this->fields)) {
 						foreach ($this->fields as $field) {
 							$field = preg_replace('#[^a-zA-Z0-9_\-]#', '', $field);
-							if (isset($row[$field]) && !empty($row[$field])) {
-								$array['xml_cdr'][0][$field] = $row[$field];
-							}
+                            if (array_key_exists($field, $row) && $row[$field] !== null && $row[$field] !== '') {
+                                $array['xml_cdr'][0][$field] = $row[$field];
+                            }
 						}
 					}
 

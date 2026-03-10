@@ -91,7 +91,7 @@
                                                     'lines_container',
                                                     'keys_title',
                                                     'add_key',
-                                                    'device_lines',
+                                                    'device_keys',
                                                     'advanced',
                                                     'keys_container2',
                                                     'submit_keys',
@@ -174,7 +174,13 @@
                                                                 :default="options.default_line_options?.register_expires" />
                                                             <HiddenElement name="user_id" :meta="true"
                                                                 :default="null" />
+                                                            <HiddenElement name="auth_id" :meta="true"
+                                                                :default="null" />
+                                                            <HiddenElement name="password" :meta="true"
+                                                                :default="null" />
                                                             <HiddenElement name="shared_line" :meta="true"
+                                                                :default="null" />
+                                                            <HiddenElement name="external_line" :meta="true"
                                                                 :default="null" />
 
 
@@ -262,6 +268,36 @@
                                                                         :floating="false"
                                                                         :default="options.default_line_options?.server_address" />
 
+                                                                    <TextElement name="user_id"
+                                                                        label="User ID"
+                                                                        placeholder="Enter user Id"
+                                                                        :floating="false"
+                                                                        :default="options.default_line_options?.user_id"
+                                                                        :conditions="[
+                                                                            () => options?.permissions?.manage_device_line_user_id,
+                                                                            () => form$.el$(`device_lines.${index}.line_type_id`)?.value === 'externalline'
+                                                                        ]" />
+
+                                                                    <TextElement name="auth_id"
+                                                                        label="Auth ID"
+                                                                        placeholder="Enter auth Id"
+                                                                        :floating="false"
+                                                                        :default="options.default_line_options?.auth_id"
+                                                                        :conditions="[
+                                                                            () => options?.permissions?.manage_device_line_auth_id,
+                                                                            () => form$.el$(`device_lines.${index}.line_type_id`)?.value === 'externalline'
+                                                                        ]" />
+
+                                                                    <TextElement name="password"
+                                                                        label="SIP Password"
+                                                                        placeholder="Enter sip password"
+                                                                        :floating="false"
+                                                                        :default="options.default_line_options?.password"
+                                                                        :conditions="[
+                                                                            () => options?.permissions?.manage_device_line_password,
+                                                                            () => form$.el$(`device_lines.${index}.line_type_id`)?.value === 'externalline'
+                                                                        ]" />
+
                                                                     <TextElement name="server_address_primary"
                                                                         label="Primary Server Address"
                                                                         placeholder="Enter primary server address"
@@ -332,37 +368,19 @@
 
 
                                                 <GroupElement name="keys_container" />
-                                                <ListElement name="device_lines" :sort="true" size="sm"
+                                                    <ListElement name="device_keys" :sort="true" size="sm"
                                                     :controls="{ add: options.permissions.device_key_create, remove: options.permissions.device_key_destroy, sort: options.permissions.device_key_up }"
                                                     :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
                                                     <template #default="{ index }">
-                                                        <ObjectElement :name="index">
-                                                            <HiddenElement name="device_line_uuid" :meta="true" />
-                                                            <HiddenElement name="domain_uuid" :meta="true"
-                                                                :default="options.default_line_options?.domain_uuid" />
-                                                            <HiddenElement name="server_address" :meta="true"
-                                                                :default="options.default_line_options?.server_address" />
-                                                            <HiddenElement name="server_address_primary" :meta="true"
-                                                                :default="options.default_line_options?.server_address_primary" />
-                                                            <HiddenElement name="server_address_secondary" :meta="true"
-                                                                :default="options.default_line_options?.server_address_secondary" />
-                                                            <HiddenElement name="outbound_proxy_primary" :meta="true"
-                                                                :default="options.default_line_options?.outbound_proxy_primary" />
-                                                            <HiddenElement name="outbound_proxy_secondary" :meta="true"
-                                                                :default="options.default_line_options?.outbound_proxy_secondary" />
-                                                            <HiddenElement name="sip_port" :meta="true"
-                                                                :default="options.default_line_options?.sip_port" />
-                                                            <HiddenElement name="sip_transport" :meta="true"
-                                                                :default="options.default_line_options?.sip_transport" />
-                                                            <HiddenElement name="register_expires" :meta="true"
-                                                                :default="options.default_line_options?.register_expires" />
-                                                            <HiddenElement name="user_id" :meta="true"
-                                                                :default="null" />
-                                                            <HiddenElement name="shared_line" :meta="true"
+                                                        <ObjectElement :name="index"
+                                                            :key="form$?.data?.device_keys?.[index]?.key_uuid">
+
+                                                            <HiddenElement name="key_uuid" :meta="true"
+                                                                :default="Math.random().toString(36).slice(2)" />
+                                                            <HiddenElement name="_generated_label" :meta="true"
                                                                 :default="null" />
 
-
-                                                            <TextElement name="key_number" label="Key" :rules="[
+                                                            <TextElement name="key_index" label="Key" :rules="[
                                                                 'nullable',
                                                                 'numeric',
                                                             ]" autocomplete="off" :columns="{
@@ -372,10 +390,10 @@
                                                                 },
                                                             }" :default="nextKeyNumber" />
 
-                                                            <SelectElement name="line_type_id" label="Function"
-                                                                :items="options.line_key_types" :search="true"
-                                                                label-prop="name" :native="false" input-type="search"
-                                                                autocomplete="off" :columns="{
+                                                            <SelectElement name="key_type" label="Type"
+                                                                :items="keyTypes" :search="true" label-prop="name"
+                                                                :native="false" input-type="search" autocomplete="off"
+                                                                :columns="{
 
                                                                     sm: {
                                                                         container: 3,
@@ -383,42 +401,59 @@
                                                                 }" placeholder="Choose Function" :floating="false"
                                                                 @change="(newValue, oldValue, el$) => {
 
-                                                                    if (newValue == 'sharedline') {
-                                                                        el$.form$.el$('device_lines').children$[index].children$['shared_line'].update('1');
-                                                                    } else {
-                                                                        el$.form$.el$('device_lines').children$[index].children$['shared_line'].update(null);
+                                                                    let key_value_select = el$.form$.el$('device_keys.' + index + '.key_value_select')
+
+                                                                    // only clear when this isn’t the very first time (i.e. oldValue was set)
+                                                                    if (oldValue !== null && oldValue !== undefined) {
+                                                                        key_value_select.clear();
                                                                     }
 
+                                                                    key_value_select.updateItems()
 
                                                                 }" />
 
-                                                            <SelectElement name="auth_id" label="Ext/Number"
-                                                                :items="options.extensions" label-prop="name"
-                                                                :search="true" :native="false" input-type="search"
-                                                                autocomplete="off" :columns="{
+                                                            <SelectElement name="key_value_select" label="Value"
+                                                                label-prop="name" value-prop="extension" :search="true"
+                                                                :native="false" :submit="false"
+                                                                :create="['blf', 'speed_dial', 'park']
+                                                                    .includes(form$?.data?.device_keys?.[index]?.key_type)" :append-new-option="false"
+                                                                input-type="search" autocomplete="off" :columns="{
 
                                                                     sm: {
                                                                         container: 4,
                                                                     },
                                                                 }" placeholder="Choose Ext/Number" :floating="false"
-                                                                @change="(newValue, oldValue, el$) => {
+                                                                :items="(query, input) => getKeyValueSelectItems(query, input, index)"
+                                                                @change="(newValue, oldValue, el$) => updateLabel(newValue, oldValue, el$, index)"
+                                                                :conditions="[
+                                                                    ['device_keys.*.key_type', ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']]
+                                                                ]" />
 
-                                                                    el$.form$.el$('device_lines').children$[index].children$['display_name'].update(newValue);
-                                                                    el$.form$.el$('device_lines').children$[index].children$['user_id'].update(newValue);
+                                                            <TextElement name="key_value_text" label="Value" :columns="{
+                                                                sm: {
+                                                                    container: 4,
+                                                                },
+                                                            }" placeholder="Enter Value" :floating="false" :disabled="[
+                                                                ['device_keys.*.key_type', '']
+                                                            ]" :conditions="[
+                                                                ['device_keys.*.key_type', '!=', ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']]
+                                                            ]" />
 
+                                                            <HiddenElement name="key_value" :meta="true"
+                                                                :default="null" />
 
-                                                                }" />
+                                                            <TextElement name="key_label" label="Label" :columns="{
 
-                                                            <TextElement name="display_name" label="Display Name"
-                                                                :columns="{
-
-                                                                    default: {
-                                                                        container: 10,
-                                                                    },
-                                                                    sm: {
-                                                                        container: 3,
-                                                                    },
-                                                                }" placeholder="Display Name" :floating="false" />
+                                                                default: {
+                                                                    container: 10,
+                                                                },
+                                                                sm: {
+                                                                    container: 3,
+                                                                },
+                                                            }" :placeholder="form$?.data?.device_keys?.[index]?._generated_label ?? 'Enter Value'"
+                                                                :floating="false" :disabled="[
+                                                                    ['device_keys.*.key_type', ['', 'line']]
+                                                                ]" />
 
                                                             <StaticElement label="&nbsp;" name="key_advanced" :columns="{
 
@@ -432,72 +467,12 @@
                                                                 :conditions="[() => options?.permissions?.device_key_advanced]">
 
 
-                                                                <Cog8ToothIcon @click="showLineAdvSettings(index)"
-                                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                                                <!-- <Cog8ToothIcon @click="showLineAdvSettings(index)"
+                                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" /> -->
 
                                                             </StaticElement>
 
-                                                            <FormChildModal :show="advModalIndex === index"
-                                                                header="Advanced Line Settings" :loading="false"
-                                                                @close="closeAdvSettings">
-                                                                <div class="px-5 grid gap-y-4">
-                                                                    <TextElement name="server_address" label="Domain"
-                                                                        placeholder="Enter domain name"
-                                                                        :floating="false"
-                                                                        :default="options.default_line_options?.server_address" />
 
-                                                                    <TextElement name="server_address_primary"
-                                                                        label="Primary Server Address"
-                                                                        placeholder="Enter primary server address"
-                                                                        :floating="false"
-                                                                        :default="options.default_line_options?.server_address_primary"
-                                                                        :conditions="[() => options?.permissions?.manage_device_line_primary_server]" />
-
-                                                                    <TextElement name="server_address_secondary"
-                                                                        label="Secondary Server Address"
-                                                                        placeholder="Enter secondary server address"
-                                                                        :floating="false"
-                                                                        :default="options.default_line_options?.server_address_secondary"
-                                                                        :conditions="[() => options?.permissions?.manage_device_line_secondary_server]" />
-
-                                                                    <TextElement name="outbound_proxy_primary"
-                                                                        label="Primary Proxy Address"
-                                                                        placeholder="Enter primary proxy address"
-                                                                        :floating="false"
-                                                                        :default="options.default_line_options?.outbound_proxy_primary"
-                                                                        :conditions="[() => options?.permissions?.manage_device_line_primary_proxy]" />
-
-                                                                    <TextElement name="outbound_proxy_secondary"
-                                                                        label="Secondary Proxy Address"
-                                                                        placeholder="Enter secondary Proxy address"
-                                                                        :floating="false"
-                                                                        :default="options.default_line_options?.outbound_proxy_secondary"
-                                                                        :conditions="[() => options?.permissions?.manage_device_line_secondary_proxy]" />
-
-                                                                    <TextElement name="sip_port" label="SIP Port"
-                                                                        placeholder="Enter SIP port" :floating="false"
-                                                                        :default="options.default_line_options?.sip_port" />
-
-                                                                    <SelectElement name="sip_transport"
-                                                                        label="SIP Transport"
-                                                                        :items="options.sip_transport_types"
-                                                                        :search="true" label-prop="name" :native="false"
-                                                                        input-type="search" autocomplete="off"
-                                                                        placeholder="Select SIP Transport"
-                                                                        :floating="false"
-                                                                        :default="options.default_line_options?.sip_transport" />
-
-                                                                    <TextElement name="register_expires"
-                                                                        label="Register Expires (Seconds)"
-                                                                        placeholder="Enter expiry time (seconds)"
-                                                                        :floating="false"
-                                                                        :default="options.default_line_options?.register_expires" />
-
-                                                                    <ButtonElement name="close_advanced"
-                                                                        button-label="Close" align="center" :full="true"
-                                                                        @click="closeAdvSettings" />
-                                                                </div>
-                                                            </FormChildModal>
 
 
                                                         </ObjectElement>
@@ -526,7 +501,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, reactive } from "vue";
 
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 
@@ -547,6 +522,30 @@ const form$ = ref(null)
 const advModalIndex = ref(null)
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
+
+const keyValueOptionsByIndex = reactive({})
+
+const parkLabelFromValue = (value, base = 5900) => {
+    const n = parseInt(value, 10)
+    if (Number.isFinite(n) && n > base) {
+        return `Park ${n - base}`
+    }
+
+    // Fallback: last 1–2 digits
+    const m = String(value).match(/(\d{1,2})$/)
+    return m ? `Park ${parseInt(m[1], 10)}` : ''
+}
+
+const nameOnlyFromOption = (opt) => {
+    if (!opt) return null
+
+    const s = String(opt.name ?? '').trim()
+    if (!s) return null
+
+    // Split on first " - " and keep the remainder
+    const parts = s.split(' - ')
+    return (parts.length > 1 ? parts.slice(1).join(' - ') : s).trim()
+}
 
 
 function showLineAdvSettings(index) {
@@ -570,6 +569,131 @@ const nextLineNumber = computed(() => {
     }, 0)
     return maxLine + 1
 })
+
+const nextKeyNumber = computed(() => {
+    const deviceKeys = form$?.value?.el$('device_keys')
+    const children = deviceKeys?.children$Array ?? []
+    const maxLine = children.reduce((max, child) => {
+        const n = parseInt(child?.value?.key_index, 10)
+        return Number.isFinite(n) && n > max ? n : max
+    }, 0)
+    return maxLine + 1
+})
+
+const keyTypes = [
+    { value: '', name: 'N/A' },
+    { value: 'line', name: 'Line' },
+    { value: 'blf', name: 'BLF' },
+    { value: 'speed_dial', name: 'Speed Dial' },
+    { value: 'check_voicemail', name: 'Check Voicemail' },
+    { value: 'park', name: 'Park & Retrieve' },
+]
+
+const getKeyValueSelectItems = async (query, input, index) => {
+    const form$ = input.$parent.el$.form$
+    const keyTypeEl = form$.el$('device_keys.' + index + '.key_type')
+    const keyType = keyTypeEl?.value
+
+    // line => Line 1..N based on device_lines count
+    if (keyType === 'line') {
+        const deviceLinesEl = form$.el$('device_lines')
+        const count = deviceLinesEl?.children$Array?.length ?? deviceLinesEl?.value?.length ?? 0
+
+        return Array.from({ length: count }, (_, i) => {
+            const displayName = form$.el$(`device_lines.${i}.display_name`)?.value ?? ''
+            return {
+                extension: `${i + 1}`,
+                name: `Line ${i + 1}${displayName ? ' - ' + displayName : ''}`,
+            }
+        })
+    }
+
+    // check_voicemail => fetch voicemails
+    if (keyType === 'check_voicemail') {
+        try {
+            const axios = keyTypeEl.$vueform.services.axios
+            const response = await axios.post(
+                props.options.routes.get_routing_options,
+                { category: 'voicemails' }
+            )
+            keyValueOptionsByIndex[index] = response.data.options ?? []
+            return response.data.options ?? []
+        } catch (error) {
+            emit('error', error)
+            return []
+        }
+    }
+
+    if (keyType === 'blf' || keyType === 'speed_dial') {
+        try {
+            const axios = keyTypeEl.$vueform.services.axios
+            const response = await axios.post(
+                props.options.routes.get_routing_options,
+                { category: 'extensions' }
+            )
+            keyValueOptionsByIndex[index] = response.data.options ?? []
+            return response.data.options ?? []
+        } catch (error) {
+            emit('error', error)
+            return []
+        }
+    }
+
+    if (keyType === 'park') {
+        const base = 5901
+
+        return Array.from({ length: 10 }, (_, i) => {
+            const ext = String(base + i)
+            return {
+                extension: ext,
+                name: `Park ${i + 1} (${ext})`,
+            }
+        })
+    }
+
+    return []
+}
+
+const updateLabel = (newValue, oldValue, el$, index) => {
+    // Update key_value field
+    el$?.form$?.el$('device_keys').children$[index].children$['key_value'].update(newValue)
+
+    const keyLabelEl = el$?.form$?.el$('device_keys').children$[index].children$['key_label']
+
+    // Get the Hidden Element instance
+    const generatedLabelEl = el$?.form$?.el$('device_keys').children$[index].children$['_generated_label']
+
+    const keyType = el$?.form$.el$('device_keys.' + index + '.key_type')?.value
+    let label = null
+
+    if (keyType === 'park') {
+        label = parkLabelFromValue(newValue, 5900)
+    }
+
+    if (keyType === 'check_voicemail') {
+        const selected = (keyValueOptionsByIndex[index] ?? []).find(o => String(o.extension) === String(newValue))
+        label = selected?.extension ? `VM ${selected.extension}` : null
+    }
+
+    if (keyType === 'blf' || keyType === 'speed_dial') {
+        const selected = (keyValueOptionsByIndex[index] ?? [])
+            .find(o => String(o.extension) === String(newValue))
+
+        label = nameOnlyFromOption(selected)
+
+        // Clear the actual input value
+        keyLabelEl.update(null)
+
+        // Save the placeholder text to the hidden element
+        generatedLabelEl.update(label)
+
+        return
+    }
+
+    generatedLabelEl.update(null)
+
+    keyLabelEl.update(label)
+}
 
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 

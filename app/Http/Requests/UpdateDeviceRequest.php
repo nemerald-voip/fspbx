@@ -84,6 +84,8 @@ class UpdateDeviceRequest extends FormRequest
             'device_lines.*.domain_uuid' => ['nullable'],
             'device_lines.*.device_line_uuid' => ['nullable'],
             'device_lines.*.user_id' => ['nullable'],
+            'device_lines.*.auth_id' => ['nullable'],
+            'device_lines.*.password' => ['nullable'],
 
             'device_keys' => [
                 'nullable',

@@ -43,7 +43,7 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
     |--------------------------------------------------------------------------
     */
     Route::get('/domains/{domain_uuid}/extensions', [ExtensionController::class, 'index'])
-        ->middleware('user.authorize:extension_domain');
+        ->middleware('user.authorize:extension_view');
 
     Route::get('/domains/{domain_uuid}/extensions/{extension_uuid}', [ExtensionController::class, 'show'])
         ->middleware('user.authorize:extension_view');

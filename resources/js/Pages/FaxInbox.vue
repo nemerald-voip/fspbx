@@ -306,10 +306,6 @@ const handleFiltersReset = () => {
         endLocal.clone().endOf('day').toISOString(),     // UTC instant for local end-of-day
     ]
     filterData.value.search = null;
-    filterData.value.direction = null;
-    filterData.value.entity = null;
-    filterData.value.entityType = null;
-    filterData.value.statuses = [];
 
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();

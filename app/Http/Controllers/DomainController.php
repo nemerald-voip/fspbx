@@ -204,7 +204,6 @@ class DomainController extends Controller
      */
     public function switchDomainFusionPBX($domain_uuid)
     {
-        logger('here');
         $domain = Domain::where('domain_uuid', $domain_uuid)->first();
 
         // If current domain is not the same as requested domain proceed with the change

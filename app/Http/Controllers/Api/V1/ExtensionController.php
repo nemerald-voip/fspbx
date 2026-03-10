@@ -29,7 +29,7 @@ class ExtensionController extends Controller
      *
      * Access rules:
      * - Caller must have access to the target domain (domain scope).
-     * - Caller must have the `extension_domain` permission.
+     * - Caller must have the `extension_view` permission.
      *
      * Pagination (cursor-based):
      * - Both `limit` and `starting_after` are optional.

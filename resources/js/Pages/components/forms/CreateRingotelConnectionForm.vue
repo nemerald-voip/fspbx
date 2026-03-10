@@ -116,96 +116,34 @@
 
                             <div class="grid grid-cols-6 gap-6">
                                 <div class="col-span-6">
-                                    <fieldset>
-                                        <div class="space-y-5">
-                                            <div class="flex gap-3">
-                                                <div class="flex h-6 shrink-0 items-center">
-                                                    <div class="group grid size-4 grid-cols-1">
-                                                        <input v-model="form.g711u_enabled" type="checkbox"
-                                                            class="col-start-1 row-start-1 appearance-none rounded border border-gray-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 indeterminate:border-indigo-600 indeterminate:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:checked:bg-gray-100 forced-colors:appearance-auto" />
-                                                        <svg class="pointer-events-none col-start-1 row-start-1 size-3.5 self-center justify-self-center stroke-white group-has-[:disabled]:stroke-gray-950/25"
-                                                            viewBox="0 0 14 14" fill="none">
-                                                            <path class="opacity-0 group-has-[:checked]:opacity-100"
-                                                                d="M3 8L6 11L11 3.5" stroke-width="2" stroke-linecap="round"
-                                                                stroke-linejoin="round" />
-                                                            <path class="opacity-0 group-has-[:indeterminate]:opacity-100"
-                                                                d="M3 7H11" stroke-width="2" stroke-linecap="round"
-                                                                stroke-linejoin="round" />
-                                                        </svg>
-                                                    </div>
-                                                </div>
-                                                <div class="text-sm/6">
-                                                    <label for="comments" class="font-medium text-gray-900">G.711
-                                                        Ulaw</label>
-
-                                                </div>
-                                            </div>
-                                            <div class="flex gap-3">
-                                                <div class="flex h-6 shrink-0 items-center">
-                                                    <div class="group grid size-4 grid-cols-1">
-                                                        <input v-model="form.g711a_enabled" type="checkbox"
-                                                            class="col-start-1 row-start-1 appearance-none rounded border border-gray-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 indeterminate:border-indigo-600 indeterminate:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:checked:bg-gray-100 forced-colors:appearance-auto" />
-                                                        <svg class="pointer-events-none col-start-1 row-start-1 size-3.5 self-center justify-self-center stroke-white group-has-[:disabled]:stroke-gray-950/25"
-                                                            viewBox="0 0 14 14" fill="none">
-                                                            <path class="opacity-0 group-has-[:checked]:opacity-100"
-                                                                d="M3 8L6 11L11 3.5" stroke-width="2" stroke-linecap="round"
-                                                                stroke-linejoin="round" />
-                                                            <path class="opacity-0 group-has-[:indeterminate]:opacity-100"
-                                                                d="M3 7H11" stroke-width="2" stroke-linecap="round"
-                                                                stroke-linejoin="round" />
-                                                        </svg>
-                                                    </div>
-                                                </div>
-                                                <div class="text-sm/6">
-                                                    <label for="candidates" class="font-medium text-gray-900">G.711
-                                                        Alaw</label>
-
-                                                </div>
-                                            </div>
-                                            <div class="flex gap-3">
-                                                <div class="flex h-6 shrink-0 items-center">
-                                                    <div class="group grid size-4 grid-cols-1">
-                                                        <input v-model="form.g729_enabled" type="checkbox"
-                                                            class="col-start-1 row-start-1 appearance-none rounded border border-gray-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 indeterminate:border-indigo-600 indeterminate:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:checked:bg-gray-100 forced-colors:appearance-auto" />
-                                                        <svg class="pointer-events-none col-start-1 row-start-1 size-3.5 self-center justify-self-center stroke-white group-has-[:disabled]:stroke-gray-950/25"
-                                                            viewBox="0 0 14 14" fill="none">
-                                                            <path class="opacity-0 group-has-[:checked]:opacity-100"
-                                                                d="M3 8L6 11L11 3.5" stroke-width="2" stroke-linecap="round"
-                                                                stroke-linejoin="round" />
-                                                            <path class="opacity-0 group-has-[:indeterminate]:opacity-100"
-                                                                d="M3 7H11" stroke-width="2" stroke-linecap="round"
-                                                                stroke-linejoin="round" />
-                                                        </svg>
-                                                    </div>
-                                                </div>
-                                                <div class="text-sm/6">
-                                                    <label for="offers" class="font-medium text-gray-900">G.729</label>
-
-                                                </div>
-                                            </div>
-                                            <div class="flex gap-3">
-                                                <div class="flex h-6 shrink-0 items-center">
-                                                    <div class="group grid size-4 grid-cols-1">
-                                                        <input v-model="form.opus_enabled" type="checkbox"
-                                                            class="col-start-1 row-start-1 appearance-none rounded border border-gray-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 indeterminate:border-indigo-600 indeterminate:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:checked:bg-gray-100 forced-colors:appearance-auto" />
-                                                        <svg class="pointer-events-none col-start-1 row-start-1 size-3.5 self-center justify-self-center stroke-white group-has-[:disabled]:stroke-gray-950/25"
-                                                            viewBox="0 0 14 14" fill="none">
-                                                            <path class="opacity-0 group-has-[:checked]:opacity-100"
-                                                                d="M3 8L6 11L11 3.5" stroke-width="2" stroke-linecap="round"
-                                                                stroke-linejoin="round" />
-                                                            <path class="opacity-0 group-has-[:indeterminate]:opacity-100"
-                                                                d="M3 7H11" stroke-width="2" stroke-linecap="round"
-                                                                stroke-linejoin="round" />
-                                                        </svg>
-                                                    </div>
-                                                </div>
-                                                <div class="text-sm/6">
-                                                    <label for="offers" class="font-medium text-gray-900">Opus</label>
-
-                                                </div>
+                            <fieldset>
+                                <div class="space-y-3">
+                                    <div v-for="(codec, index) in form.codecs" :key="codec.name"
+                                        draggable="true"
+                                        @dragstart="handleDragStart(index, $event)"
+                                        @dragover.prevent
+                                        @dragenter.prevent
+                                        @drop="handleDrop(index)"
+                                        class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-md shadow-sm cursor-move hover:bg-gray-50 transition-colors duration-150"
+                                    >
+                                        <svg class="w-5 h-5 text-gray-400 cursor-grab" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                                        </svg>
+                                        <div class="flex h-6 shrink-0 items-center">
+                                            <div class="group grid size-4 grid-cols-1">
+                                                <input v-model="codec.enabled" type="checkbox" class="col-start-1 row-start-1 appearance-none rounded border border-gray-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 indeterminate:border-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:checked:bg-gray-100 forced-colors:appearance-auto" />
+                                                <svg class="pointer-events-none col-start-1 row-start-1 size-3.5 self-center justify-self-center stroke-white group-has-[:disabled]:stroke-gray-950/25" viewBox="0 0 14 14" fill="none">
+                                                    <path class="opacity-0 group-has-[:checked]:opacity-100" d="M3 8L6 11L11 3.5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                                </svg>
                                             </div>
                                         </div>
-                                    </fieldset>
+                                        <div class="text-sm">
+                                            <label class="font-medium text-gray-900 cursor-move">{{ codec.name }}</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="mt-2 text-xs text-gray-500">Drag to reorder the priority of the codecs.</p>
+                            </fieldset>
 
                                 </div>
 
@@ -488,7 +426,6 @@
 import { reactive, ref } from "vue";
 import { usePage } from '@inertiajs/vue3';
 
-
 import ComboBox from "../general/ComboBox.vue";
 import InputField from "../general/InputField.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
@@ -499,9 +436,7 @@ import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import Toggle from "@generalComponents/Toggle.vue";
 import SettingsApplications from "@icons/SettingsApplications.vue"
 
-
 const props = defineProps({
-    // items: Object,
     options: Object,
     isSubmitting: Boolean,
     errors: Object,
@@ -509,8 +444,27 @@ const props = defineProps({
 
 const page = usePage();
 
+// 1. Get the default order from settings (fallback if not set yet)
+const defaultOrderString = props.options.settings.codec_priority || "G.711 Ulaw, G.711 Alaw, G.722, G.729, Opus";
+const defaultOrder = defaultOrderString.split(',').map(s => s.trim());
+
+// 2. Map the boolean enabled states from the default settings
+const settingMap = {
+    'G.711 Ulaw': props.options.settings.g711u_enabled === "true",
+    'G.711 Alaw': props.options.settings.g711a_enabled === "true",
+    'G.722': props.options.settings.g722_enabled === "true",
+    'G.729': props.options.settings.g729_enabled === "true",
+    'Opus': props.options.settings.opus_enabled === "true",
+};
+
+// 3. Build the initial codecs array in the correct order
+const initialCodecs = defaultOrder.map(codec => ({
+    name: codec,
+    enabled: settingMap[codec] ?? false,
+    frame: 20
+}));
+
 const form = reactive({
-    // items: props.items,
     org_id: props.options.orgId,
     connection_name: props.options.settings.suggested_connection_name,
     protocol: props.options.settings.mobile_app_conn_protocol,
@@ -520,22 +474,21 @@ const form = reactive({
     disable_srtp: props.options.settings.disable_srtp === "true",
     proxy: props.options.settings.mobile_app_proxy,
     multitenant: props.options.settings.multitenant_mode === "true",
-    g711u_enabled: props.options.settings.g711u_enabled === "true",
-    g711a_enabled: props.options.settings.g711a_enabled === "true",
-    g729_enabled: props.options.settings.g729_enabled === "true",
-    opus_enabled: props.options.settings.opus_enabled === "true",
+    
+    codecs: initialCodecs,
+    
     registration_ttl: props.options.settings.registration_ttl,
     max_registrations: props.options.settings.max_registrations,
     app_opus_codec: props.options.settings.app_opus_codec === "true",
     one_push: props.options.settings.one_push === "true",
-    show_call_settings: props.options.settings.show_call_settings === "true",
-    allow_call_recording: props.options.settings.allow_call_recording === "true",
-    allow_state_change: props.options.settings.allow_state_change === "true",
-    allow_video_calls: props.options.settings.allow_video_calls === "true",
-    allow_internal_chat: props.options.settings.allow_internal_chat === "true",
-    disable_iphone_recents: props.options.settings.disable_iphone_recents === "true",
+    show_call_settings: props.options.settings.show_call_settings === "true", 
+    allow_call_recording: props.options.settings.allow_call_recording === "true", 
+    allow_state_change: props.options.settings.allow_state_change === "true", 
+    allow_video_calls: props.options.settings.allow_video_calls === "true", 
+    allow_internal_chat: props.options.settings.allow_internal_chat === "true", 
+    disable_iphone_recents: props.options.settings.disable_iphone_recents === "true", 
     call_delay: props.options.settings.call_delay,
-    desktop_app_delay: props.options.settings.desktop_app_delay === "true",
+    desktop_app_delay: props.options.settings.desktop_app_delay === "true", 
     pbx_features: props.options.settings.pbx_features === "true",
     voicemail_extension: props.options.settings.voicemail_extension,
     dnd_on_code: props.options.settings.dnd_on_code,
@@ -547,20 +500,33 @@ const form = reactive({
 
 const emits = defineEmits(['submit', 'cancel']);
 
-
-// Initialize activeTab with the currently active tab from props
 const activeTab = ref(props.options.conn_navigation.find(item => item.slug)?.slug || props.options.conn_navigation[0].slug);
 
+// Drag and drop logic
+const draggedIndex = ref(null);
+
+const handleDragStart = (index, event) => {
+    draggedIndex.value = index;
+    if (event?.dataTransfer) {
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', index);
+    }
+};
+
+const handleDrop = (index) => {
+    if (draggedIndex.value === null) return;
+    const item = form.codecs.splice(draggedIndex.value, 1)[0];
+    form.codecs.splice(index, 0, item);
+    draggedIndex.value = null;
+};
 
 const submitForm = () => {
-    // console.log(form);
-    emits('submit', form); // Emit the event with the form data
+    emits('submit', form); 
 }
 
 const handleUpdateProtocolField = (selected) => {
     form.protocol = selected.value;
 }
-
 
 const iconComponents = {
     'Cog6ToothIcon': Cog6ToothIcon,
@@ -571,7 +537,4 @@ const iconComponents = {
 const setActiveTab = (tabSlug) => {
     activeTab.value = tabSlug;
 };
-
-
-
 </script>

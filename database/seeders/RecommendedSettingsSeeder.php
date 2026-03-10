@@ -268,6 +268,14 @@ class RecommendedSettingsSeeder extends Seeder
             ],
             [
                 'default_setting_category'      => 'mobile_apps',
+                'default_setting_subcategory'   => 'g722_enabled',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => 'false',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Enable G722 codec",
+            ],
+            [
+                'default_setting_category'      => 'mobile_apps',
                 'default_setting_subcategory'   => 'g729_enabled',
                 'default_setting_name'          => 'boolean',
                 'default_setting_value'         => 'false',
@@ -281,6 +289,14 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_value'         => 'false',
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "Enable OPUS codec",
+            ],
+            [
+                'default_setting_category'      => 'mobile_apps',
+                'default_setting_subcategory'   => 'codec_priority',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => 'G.711 Ulaw, G.711 Alaw, G.722, G.729, Opus',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Default priority order for audio codecs",
             ],
             [
                 'default_setting_category'      => 'mobile_apps',
@@ -581,7 +597,7 @@ class RecommendedSettingsSeeder extends Seeder
             ],
             [
                 'default_setting_category'      => 'scheduled_jobs',
-                'default_setting_subcategory'   => 'aws_upload_calls_' . $this->getMacAddress(),
+                'default_setting_subcategory'   => 's3_upload_calls_' . $this->getMacAddress(),
                 'default_setting_name'          => 'boolean',
                 'default_setting_value'         => "true",
                 'default_setting_enabled'       => false,
@@ -746,6 +762,14 @@ class RecommendedSettingsSeeder extends Seeder
                 'default_setting_value'         => "modern",
                 'default_setting_enabled'       => true,
                 'default_setting_description'   => "modern: enables the new, optimized queue handling with improved performance and stability. legacy: uses the original queue behavior for backward compatibility.",
+            ],
+            [
+                'default_setting_category'      => 'theme',
+                'default_setting_subcategory'   => 'footer',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "© Copyright 2008 - 2024 FS PBX. All rights reserved.",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "",
             ],
 
             // Add more settings here...

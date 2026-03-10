@@ -28,13 +28,15 @@
                     Create
                 </button>
 
-                <button v-if="page.props.permissions.extension_import || page.props.auth.can.extension_import" type="button"
-                    @click.prevent="handleImportButtonClick()"
+                <button v-if="page.props.permissions.extension_import || page.props.auth.can.extension_import"
+                    type="button" @click.prevent="handleImportButtonClick()"
                     class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     <DocumentArrowUpIcon class="h-5 w-5" aria-hidden="true" />
                     Import CSV
                 </button>
-                <button type="button" v-if="page.props.permissions.extension_export || page.props.auth.can.extension_export" @click.prevent="exportExtensionsCsv()"
+                <button type="button"
+                    v-if="page.props.permissions.extension_export || page.props.auth.can.extension_export"
+                    @click.prevent="exportExtensionsCsv()"
                     class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     <DocumentArrowDownIcon class="h-5 w-5" aria-hidden="true" />
                     Export CSV
@@ -324,6 +326,7 @@ const uploadErrors = ref(null);
 
 const props = defineProps({
     routes: Object,
+    permissions: Object,
 });
 
 const data = ref({
@@ -377,29 +380,47 @@ const bulkActions = computed(() => {
     return actions;
 });
 
+const advancedActions = computed(() => {
+    const actions = [
+        {
+            category: "Advanced",
+            actions: [
+                { id: 'duplicate', label: 'Duplicate', icon: 'DocumentDuplicateIcon' },
+            ],
+        },
+        {
+            category: "Users",
+            actions: [],
+        },
+        {
+            category: "Contact Center",
+            actions: [
+                { id: 'make_cc_agent', label: 'Make Agent', icon: 'SupportAgent' },
+                { id: 'make_cc_admin', label: 'Make Admin', icon: 'KeyIcon' },
+            ],
+        },
+    ];
 
-const advancedActions = computed(() => [
-    {
-        category: "Advanced",
-        actions: [
-            { id: 'duplicate', label: 'Duplicate', icon: 'DocumentDuplicateIcon' },
-        ],
-    },
-    {
-        category: "Users",
-        actions: [
-            { id: 'make_user', label: 'Make User', icon: 'UserPlusIcon' },
-            { id: 'make_admin', label: 'Make Admin', icon: 'KeyIcon' },
-        ],
-    },
-    {
-        category: "Contact Center",
-        actions: [
-            { id: 'make_cc_agent', label: 'Make Agent', icon: 'SupportAgent' },
-            { id: 'make_cc_admin', label: 'Make Admin', icon: 'KeyIcon' },
-        ],
-    },
-]);
+    // Only show if permission allows
+    if (props.permissions?.create_user) {
+        actions[1].actions.push({
+            id: 'make_user',
+            label: 'Make User',
+            icon: 'UserPlusIcon',
+        });
+    }
+
+    if (props.permissions?.create_admin) {
+        actions[1].actions.push({
+            id: 'make_admin',
+            label: 'Make Admin',
+            icon: 'KeyIcon',
+        });
+    }
+
+    // Optional: hide empty categories (like "Users" if no permissions)
+    return actions.filter(category => category.actions.length > 0);
+});
 
 
 onMounted(async () => {
@@ -553,7 +574,7 @@ const handleAdvancedActionRequest = (action, extension_uuid) => {
 
         return;
     }
-    
+
     let role = null;
     let url = null;
 

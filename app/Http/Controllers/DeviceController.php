@@ -14,7 +14,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use App\Services\DeviceActionService;
-use App\Services\LineKeyTypesService;
 use Spatie\QueryBuilder\QueryBuilder;
 use App\Services\FreeswitchEslService;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -82,7 +81,7 @@ class DeviceController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function duplicate(Request $request)
+   public function duplicate(Request $request)
     {
         // 1. Validate Input
         $request->validate([
@@ -101,11 +100,9 @@ class DeviceController extends Controller
             DB::beginTransaction();
 
             // 3. Sanitize MAC Address
-            // Allow: 00-00, 00:00, 0000. Strip non-hex chars and lowercase.
             $rawMac = $request->input('new_mac_address');
             $cleanMac = strtolower(preg_replace('/[^0-9a-f]/i', '', $rawMac));
 
-            // Basic length check
             if (strlen($cleanMac) !== 12) {
                 throw new \Exception("Invalid MAC Address format. It must contain 12 hexadecimal characters.");
             }
@@ -121,14 +118,14 @@ class DeviceController extends Controller
 
             // 4. Fetch Original
             $original = $this->model::where('device_uuid', $request->uuid)
-                ->with(['lines', 'settings'])
+                ->with(['lines', 'settings', 'keys']) 
                 ->firstOrFail();
 
             // 5. Replicate Parent
             $newDevice = $original->replicate();
             $newDevice->device_uuid = Str::uuid();
             $newDevice->device_label = $original->device_label . ' (Copy)';
-            $newDevice->device_address = $cleanMac; // Set the new sanitized MAC
+            $newDevice->device_address = $cleanMac; 
 
             $newDevice->save();
 
@@ -152,6 +149,16 @@ class DeviceController extends Controller
                 }
             }
 
+            // 8. Replicate Keys
+            if ($original->keys) {
+                foreach ($original->keys as $key) {
+                    $newKey = $key->replicate();
+                    $newKey->device_key_uuid = Str::uuid(); 
+                    $newKey->device_uuid = $newDevice->device_uuid;
+                    $newKey->save();
+                }
+            }
+
             DB::commit();
 
             return response()->json([
@@ -160,9 +167,7 @@ class DeviceController extends Controller
             ], 201);
         } catch (\Throwable $e) {
             DB::rollBack();
-            // logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
-            // Return the specific error message if it's one of our validations
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => [$e->getMessage()]]
@@ -404,18 +409,21 @@ class DeviceController extends Controller
                             'outbound_proxy_primary' => $line['outbound_proxy_primary'],
                             'outbound_proxy_secondary' => $line['outbound_proxy_secondary'],
                             'display_name' => $line['display_name'],
-                            'user_id' => $extension ? $extension->extension : null,
-                            'auth_id' => $extension ? $extension->extension : $line['auth_id'],
+                            'user_id' => $line['user_id'] ? $line['user_id'] : $extension->extension ?? null,
+                            'auth_id' => $line['auth_id'] ? $line['auth_id'] : $extension->extension ?? null,
+                            'password' => $line['password'] ? $line['password'] : $extension->password ?? null,
                             'label' => $line['display_name'],
-                            'password' => $extension ? $extension->password : null,
                             'sip_port' => $line['sip_port'],
                             'sip_transport' => $line['sip_transport'],
                             'register_expires' => $line['register_expires'],
                             'shared_line' => $line['line_type_id'] == 'sharedline' ? '1' : '',
+                            'external_line' => $line['line_type_id'] === 'externalline',
                             'device_line_uuid' => $line['device_line_uuid'] ?? null,
                             'domain_uuid' => $device->domain_uuid,
                             'enabled' => 'true',
                         ];
+
+      //                  logger($deviceLineData);
 
                         $deviceLines = new DeviceLines();
                         $deviceLines->fill($deviceLineData);
@@ -718,7 +726,6 @@ class DeviceController extends Controller
                     'update_route' => route('devices.update', ['device' => $itemUuid]),
                     'cloud_provisioning_status_route' => route('cloud-provisioning.status', ['device' => $itemUuid]),
                     'cloud_provisioning_reset_route' => route('cloud-provisioning.reset', ['device' => $itemUuid]),
-                    'get_routing_options' => route('routing.options'),
                 ]);
             } else {
                 // New device defaults
@@ -766,6 +773,7 @@ class DeviceController extends Controller
                 'cloud_provisioning_register_route' => route('cloud-provisioning.register'),
                 'cloud_provisioning_deregister_route' => route('cloud-provisioning.deregister'),
                 'bulk_update_route' => route('devices.bulk.update'),
+                'get_routing_options' => route('routing.options'),
             ]);
 
 
@@ -777,8 +785,10 @@ class DeviceController extends Controller
                         'line_number',
                         'user_id',
                         'auth_id',
+                        'password',
                         'display_name',
                         'shared_line',
+                        'external_line',
                         'server_address',
                         'server_address_primary',
                         'server_address_secondary',
@@ -803,6 +813,14 @@ class DeviceController extends Controller
                             // Use the mapped value, or default to 'line'
                             $line->line_type_id = $vendorLineTypes[$deviceDto->device_vendor] ?? 'line';
                         }
+
+                        if ($line->external_line) {
+                            $line->line_type_id = 'externalline';
+                        }
+
+                        if (!$line->external_line) {
+                            $line->password = null;
+                        }
                         return $line;
                     });
 
@@ -810,21 +828,11 @@ class DeviceController extends Controller
 
             }
 
-            $lineKeyTypes = [];
-            if ($deviceDto) {
-                if ($deviceDto->device_vendor == 'yealink') {
-                    $lineKeyTypes = LineKeyTypesService::getYealinkKeyTypes();
-                } else if ($deviceDto->device_vendor == 'polycom') {
-                    $lineKeyTypes = LineKeyTypesService::getPolycomKeyTypes();
-                } else {
-                    $lineKeyTypes = LineKeyTypesService::getGenericKeyTypes();
-                }
-            } else {
-                $lineKeyTypes = [
-                    ['value' => 'line', 'name' => 'Line'],
-                    ['value' => 'sharedline', 'name' => 'Shared Line'],
-                ];
-            }
+            $lineKeyTypes = [
+                ['value' => 'line', 'name' => 'Line'],
+                ['value' => 'sharedline', 'name' => 'Shared Line'],
+                ['value' => 'externalline', 'name' => 'External Line'],
+            ];
 
             $sipTransportTypes = [
                 ['value' => 'udp', 'name' => 'UDP'],
@@ -1123,6 +1131,9 @@ class DeviceController extends Controller
         $permissions['manage_device_line_secondary_server'] = userCheckPermission('device_line_server_address_secondary');
         $permissions['manage_device_line_primary_proxy'] = userCheckPermission('device_line_outbound_proxy_primary');
         $permissions['manage_device_line_secondary_proxy'] = userCheckPermission('device_line_outbound_proxy_secondary');
+        $permissions['manage_device_line_user_id'] = userCheckPermission('device_line_user_id');
+        $permissions['manage_device_line_auth_id'] = userCheckPermission('device_line_auth_id');
+        $permissions['manage_device_line_password'] = userCheckPermission('device_line_password');
         $permissions['is_superadmin'] = isSuperAdmin();
 
         return $permissions;

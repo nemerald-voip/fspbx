@@ -3,7 +3,17 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Voicemail messages</template>
+            <template #title>
+                <h1 class="text-xl font-bold text-gray-900 flex items-center">
+                    Voicemail messages
+                    <span v-if="props.mailbox_label" class="flex items-center">
+                        <svg class="mx-3 h-5 w-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                        <span class="font-medium text-gray-500">{{ props.mailbox_label }}</span>
+                    </span>
+                </h1>
+            </template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -19,6 +29,11 @@
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
                         placeholder="Search" />
                 </div>
+
+                <div class="relative z-10 min-w-64 -mt-0.5 mb-2 scale-y-95 shrink-0 sm:mr-4">
+                    <DatePicker :dateRange="filterData.dateRange" :timezone="props.timezone"
+                        @update:date-range="handleUpdateDateRange" />
+                </div>
             </template>
 
             <template #action>
@@ -30,21 +45,25 @@
             <template #navigation>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    @pagination-change-page="renderRequestedPage" :bulk-actions="bulkActions"
+                    @bulk-action="handleBulkActionRequest" :has-selected-items="selectedItems.length > 0" />
             </template>
-            <template #table-header>
 
+            <template #table-header>
                 <TableColumnHeader
-                    class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
-                    <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
-                        class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
-                        :has-selected-items="selectedItems.length > 0" />
-                    <span class="pl-4">Caller ID</span>
+                    class="hidden lg:table-cell whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center justify-start">
+                        <input type="checkbox" v-model="selectPageItems"
+                            class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                        <span class="pl-4">Caller ID</span>
+                    </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Date" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Transcription" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Date"
+                    class="hidden lg:table-cell px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Transcription"
+                    class="hidden lg:table-cell px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="" class="hidden lg:table-cell px-2 py-3.5" />
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
@@ -66,81 +85,150 @@
             </template>
 
             <template #table-body>
-                <tr v-for="row in data.data" :key="row.voicemail_message_uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.voicemail_id">
-                        <div class="flex items-center">
-                            <input v-if="row.voicemail_message_uuid" v-model="selectedItems" type="checkbox"
-                                name="action_box[]" :value="row.voicemail_message_uuid"
-                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="ml-9 text-sm font-semibold text-gray-700"
-                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.voicemail_update, }"
-                                @click="page.props.auth.can.voicemail_update && handleEditRequest(row.voicemail_message_uuid)">
-                                <div class="flex flex-col">
-                                    <span>
-                                        {{ row.caller_id_name }}
-                                    </span>
-                                    <span>
-                                        {{ row.caller_id_number }}
-                                    </span>
+                <!-- Mobile-only Selection & Bulk Action Bar -->
+                <tr class="block lg:hidden bg-gray-50 border-b border-gray-200 mb-4 rounded-t-lg">
+                    <td class="block p-3">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" v-model="selectPageItems"
+                                    class="h-5 w-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                                <span class="text-sm font-semibold text-gray-900">
+                                    {{ selectPageItems ? 'Deselect All' : 'Select All' }}
+                                </span>
+                            </div>
 
+                            <!-- Bulk Actions (Delete button) for Mobile -->
+                            <div v-if="selectedItems.length > 0" class="flex items-center">
+                                <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
+                                    :has-selected-items="true" />
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+                <tr v-for="row in data.data" :key="row.voicemail_message_uuid"
+                    class="block lg:table-row border-b lg:border-none mb-4 lg:mb-0 bg-white shadow-sm lg:shadow-none rounded-lg lg:rounded-none p-4 lg:p-0">
+
+                    <!-- TOP SECTION: Caller ID & Date (Side by side on tablets, stacked on phones) -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:contents">
+                        <!-- Caller ID -->
+                        <TableField
+                            class="block lg:table-cell whitespace-nowrap px-0 lg:px-4 py-2 text-sm text-gray-500">
+                            <div class="flex items-start lg:items-center">
+                                <input v-if="row.voicemail_message_uuid" v-model="selectedItems" type="checkbox"
+                                    :value="row.voicemail_message_uuid"
+                                    class="h-5 w-5 lg:h-4 lg:w-4 mt-1 lg:mt-0 rounded border-gray-300 text-indigo-600">
+
+                                <div class="ml-4 flex-1 min-w-0 text-sm"
+                                    :class="[row.message_status !== 'saved' ? 'font-bold text-gray-900' : 'text-gray-700']">
+                                    <div class="flex items-start justify-between gap-3 w-full">
+                                        <div class="flex flex-col min-w-0">
+                                            <span class="truncate">{{ row.caller_id_name }}</span>
+                                            <span class="text-xs opacity-70 truncate">{{ row.caller_id_number }}</span>
+                                        </div>
+
+                                        <Badge
+                                            v-if="row.message_status !== 'saved'"
+                                            :text="'New'"
+                                            :backgroundColor="'bg-blue-100'"
+                                            :textColor="'text-blue-800'"
+                                            class="shrink-0 px-2 py-0.5 text-[10px]"
+                                        />
+                                    </div>
                                 </div>
                             </div>
+                        </TableField>
+
+                        <!-- Date -->
+                        <TableField
+                            class="flex lg:table-cell items-center gap-2 px-0 lg:px-2 py-2 text-sm"
+                            :class="row.message_status !== 'saved' ? 'font-bold text-gray-900' : 'text-gray-500'">
+                            <span class="lg:hidden font-semibold text-gray-400 uppercase text-[10px]">Date:</span>
+                            <span>{{ row.created_epoch_formatted }}</span>
+                        </TableField>
+                    </div>
+
+                    <!-- TRANSCRIPTION SECTION: Always full width on mobile/tablet -->
+                    <TableField
+                        class="block lg:table-cell px-0 lg:px-4 py-2 text-sm border-t border-gray-100 lg:border-none mt-2 lg:mt-0 pt-2 lg:pt-0">
+                        <span
+                            class="lg:hidden font-semibold text-gray-400 uppercase text-[10px] block mb-1">Transcription</span>
+                        <div
+                            :class="['text-gray-600 leading-relaxed max-w-3xl', row.message_status !== 'saved' ? 'font-medium text-gray-800' : '']">
+                            {{ row.message_transcription }}
                         </div>
                     </TableField>
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.created_epoch_formatted" />
+                    <!-- ACTIONS SECTION -->
+                    <TableField
+                        class="block lg:table-cell px-0 lg:px-2 py-2 text-sm border-t border-gray-100 lg:border-none mt-2 lg:mt-0 pt-2 lg:pt-0">
+                        <div class="flex items-center justify-between lg:justify-end">
+                            <!-- Mobile Label -->
+                            <span class="lg:hidden font-semibold text-gray-400 uppercase text-[10px]">Actions</span>
 
-
-                    <TableField class="px-4 py-2 text-sm text-gray-500">
-                        <div>{{ row.message_transcription }}</div>
-                    </TableField>
-
-                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
-                        <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
 
-                                <PlayCircleIcon v-if="currentAudioUuid !== row.voicemail_message_uuid || !isAudioPlaying
-                                    " @click="fetchAndPlayAudio(row.voicemail_message_uuid)"
-                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-blue-500 hover:bg-blue-200 hover:text-blue-700 active:bg-blue-300 active:duration-150 cursor-pointer" />
-                                <PauseCircleIcon v-if="currentAudioUuid === row.voicemail_message_uuid && isAudioPlaying"
-                                    @click="pauseAudio"
-                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+                                <!-- Play Button -->
+                                <ejs-tooltip :content="'Listen'" position='TopCenter'
+                                    :target="'#play_tooltip_' + row.voicemail_message_uuid">
+                                    <div :id="'play_tooltip_' + row.voicemail_message_uuid">
+                                        <PlayCircleIcon @click="handlePlayVoicemail(row.voicemail_message_uuid)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-blue-500 hover:bg-blue-200 hover:text-blue-700 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                    </div>
+                                </ejs-tooltip>
 
-                                <CloudArrowDownIcon v-if="!isDownloading"
-                                    @click="downloadVoicemailMessage(row.voicemail_message_uuid)"
-                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                <!-- Download Button -->
+                                <ejs-tooltip :content="'Download'" position='TopCenter'
+                                    :target="'#download_tooltip_' + row.voicemail_message_uuid">
+                                    <div :id="'download_tooltip_' + row.voicemail_message_uuid">
+                                        <CloudArrowDownIcon v-if="!isDownloading"
+                                            @click="downloadVoicemailMessage(row.voicemail_message_uuid)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
 
-                                <!-- Spinner -->
-                                <Spinner :show="isDownloading"
-                                    class="ml-0 mr-0 h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                        <Spinner :show="isDownloading" class="h-9 w-9 py-2" />
+                                    </div>
+                                </ejs-tooltip>
 
+                                <!-- Mark Read/Unread Toggle -->
+                                <ejs-tooltip v-if="props.permissions.voicemail_message_update"
+                                    :content="row.message_status === 'saved' ? 'Mark as unread' : 'Mark as read'"
+                                    position='TopCenter' :target="'#status_tooltip_' + row.voicemail_message_uuid">
+                                    <div :id="'status_tooltip_' + row.voicemail_message_uuid">
+                                        <button
+                                            @click="executeStatusUpdate([row.voicemail_message_uuid], row.message_status === 'saved' ? null : 'saved')"
+                                            class="h-9 w-9 transition duration-500 ease-in-out p-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer flex items-center justify-center">
+                                            <EnvelopeIcon v-if="row.message_status === 'saved'" class="h-full w-full" />
+                                            <EnvelopeOpenIcon v-else class="h-full w-full text-blue-500" />
+                                        </button>
+                                    </div>
+                                </ejs-tooltip>
 
-                                <ejs-tooltip v-if="page.props.auth.can.voicemail_destroy" :content="'Delete'"
-                                    position='TopCenter' target="#delete_tooltip_target">
-                                    <div id="delete_tooltip_target">
-                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
+                                <!-- Delete Button -->
+                                <ejs-tooltip v-if="props.permissions.voicemail_message_destroy" :content="'Delete'"
+                                    position='TopCenter' :target="'#delete_tooltip_' + row.voicemail_message_uuid">
+                                    <div :id="'delete_tooltip_' + row.voicemail_message_uuid">
+                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.voicemail_message_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
 
-
                             </div>
-                        </template>
+                        </div>
                     </TableField>
+
                 </tr>
             </template>
             <template #empty>
-                <!-- Conditional rendering for 'no records' message -->
-                <div v-if="data.data.length === 0" class="text-center my-5 ">
+                <div v-if="data.data.length === 0" class="text-center my-6">
                     <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
                     <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
                     <p class="mt-1 text-sm text-gray-500">
-                        Adjust your search and try again.
+                        Adjust your search or filters and try again.
+                    </p>
+                    <p class="mt-4 text-lg font-extrabold text-red-600">
+                        Note: voicemail messages from only the last 30 days are shown by default. To view older messages, expand the date range above.
                     </p>
                 </div>
             </template>
-
             <template #loading>
                 <Loading :show="loading" />
             </template>
@@ -154,20 +242,23 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
+    <VoicemailPlayerModal :show="showVoicemailPlayerModal" :message-uuid="selectedUuid" :routes="routes"
+        @close="showVoicemailPlayerModal = false" @error="handleErrorResponse" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 
-    <ConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
-        @confirm="confirmDeleteAction" :header="'Are you sure?'" :text="'Confirm deleting selected messages. This action can not be undone.'"
-        :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+    <ConfirmationModal :show="showConfirmationModal" @close="showConfirmationModal = false"
+        @confirm="confirmDeleteAction" :header="'Are you sure?'"
+        :text="'Confirm deleting selected messages. This action can not be undone.'" :confirm-button-label="'Delete'"
+        cancel-button-label="Cancel" />
 </template>
 
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
-import { router } from "@inertiajs/vue3";
+import DatePicker from "./components/general/DatePicker.vue";
+import moment from 'moment-timezone';
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
@@ -181,24 +272,23 @@ import Notification from "./components/notifications/Notification.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
 import Spinner from "@generalComponents/Spinner.vue";
+import Badge from "@generalComponents/Badge.vue";
+import VoicemailPlayerModal from "./components/modal/VoicemailPlayerModal.vue";
 import {
     PlayCircleIcon,
-    PauseCircleIcon,
     CloudArrowDownIcon,
     MagnifyingGlassIcon,
+    EnvelopeIcon,
+    EnvelopeOpenIcon,
 } from "@heroicons/vue/24/solid";
-import { DocumentArrowDownIcon } from "@heroicons/vue/24/outline";
 
 
-
-const page = usePage()
 const loading = ref(false)
-const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
-const selectPageItems = ref(false);
-const confirmationModalTrigger = ref(false);
-const confirmationModalDestroyPath = ref(null);
+const showConfirmationModal = ref(false);
+const showVoicemailPlayerModal = ref(false);
+const selectedUuid = ref(null);
 const confirmDeleteAction = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
@@ -207,102 +297,76 @@ const isDownloading = ref(false);
 
 const props = defineProps({
     voicemail_uuid: String,
-    data: Object,
+    mailbox_label: String,
+    startPeriod: String,
+    endPeriod: String,
+    timezone: String,
     routes: Object,
-    itemData: Object,
     permissions: Object,
 });
 
+const data = ref({
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: 0,
+    to: 0,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
+});
+
+const selectPageItems = computed({
+    get() {
+        // Returns true if we have data and every item on the current page is in selectedItems
+        return data.value.data.length > 0 &&
+            data.value.data.every(item => selectedItems.value.includes(item.voicemail_message_uuid));
+    },
+    set(value) {
+        if (value) {
+            // Add all items on current page to selection (avoiding duplicates)
+            const currentPageIds = data.value.data.map(item => item.voicemail_message_uuid);
+            const newSelection = new Set([...selectedItems.value, ...currentPageIds]);
+            selectedItems.value = Array.from(newSelection);
+        } else {
+            // Remove only the items on the current page from selection
+            const currentPageIds = data.value.data.map(item => item.voicemail_message_uuid);
+            selectedItems.value = selectedItems.value.filter(id => !currentPageIds.includes(id));
+        }
+    }
+});
+
+const getDefaultDateRange = () => {
+    const startLocal = moment.utc(props.startPeriod).tz(props.timezone);
+    const endLocal = moment.utc(props.endPeriod).tz(props.timezone);
+
+    return [
+        startLocal.clone().startOf('day').toISOString(),
+        endLocal.clone().endOf('day').toISOString(),
+    ];
+};
 
 const filterData = ref({
     voicemail_uuid: props.voicemail_uuid,
     search: null,
+    dateRange: getDefaultDateRange(),
 });
 
-const currentAudio = ref(null);
-const currentAudioUuid = ref(null);
-const isAudioPlaying = ref(false);
-const itemOptions = ref({})
+onMounted(() => {
+    handleSearchButtonClick();
+})
 
-// const fetchAndPlayAudio = (uuid) => {
-//     // Check if there's already an audio object and it is paused
-//     if (currentAudio.value && currentAudio.value.paused) {
-//         currentAudio.value.play();
-//         isAudioPlaying.value = true;
-//         return;
-//     }
+const handlePlayVoicemail = (uuid) => {
+    selectedUuid.value = uuid;
+    showVoicemailPlayerModal.value = true;
 
-//     axios.post(props.routes.get_message_url, { voicemail_message_uuid: uuid })
-//         .then((response) => {
-//             // Stop the currently playing audio (if any)
-//             if (currentAudio.value) {
-//                 currentAudio.value.pause();
-//                 currentAudio.value.currentTime = 0; // Reset the playback position
-//             }
-//             if (response.data.success) {
-//                 isAudioPlaying.value = true;
-//                 currentAudioUuid.value = uuid;
-
-//                 console.log(response.data.file_url);
-//                 currentAudio.value = new Audio(response.data.file_url);
-//                 currentAudio.value.play();
-
-//                 // Add an event listener for when the audio ends
-//                 currentAudio.value.addEventListener("ended", () => {
-//                     isAudioPlaying.value = false;
-//                 });
-//             }
-
-//         }).catch((error) => {
-//             handleErrorResponse(error);
-//         });
-// }
-
-const fetchAndPlayAudio = (uuid) => {
-    // Check if there's already an audio object
-    if (currentAudio.value) {
-        // If the current audio is paused and corresponds to the clicked voicemail, play it
-        if (currentAudio.value.paused && currentAudioUuid.value === uuid) {
-            currentAudio.value.play();
-            isAudioPlaying.value = true;
-            return;
-        }
-
-        // If the current audio does not match the clicked voicemail or it's playing, stop it
-        currentAudio.value.pause();
-        currentAudio.value.currentTime = 0; // Reset the playback position
-        isAudioPlaying.value = false;
+    // Status update logic remains the same
+    const msg = data.value.data.find(m => m.voicemail_message_uuid === uuid);
+    if (msg && msg.message_status !== 'saved') {
+        executeStatusUpdate([uuid], 'saved');
     }
-
-    // Fetch the new audio file
-    axios.post(props.routes.get_message_url, { voicemail_message_uuid: uuid })
-        .then((response) => {
-            if (response.data.success) {
-                isAudioPlaying.value = true;
-                currentAudioUuid.value = uuid;
-                
-                currentAudio.value = new Audio(response.data.file_url);
-                currentAudio.value.play();
-
-                // Add an event listener for when the audio ends
-                currentAudio.value.addEventListener("ended", () => {
-                    isAudioPlaying.value = false;
-                });
-            }
-        }).catch((error) => {
-            handleErrorResponse(error);
-        });
 }
-
-
-
-const pauseAudio = () => {
-    // Check if currentAudio has an Audio object before calling pause
-    if (currentAudio.value) {
-        currentAudio.value.pause();
-        isAudioPlaying.value = false;
-    }
-};
 
 const downloadVoicemailMessage = (uuid) => {
     isDownloading.value = true; // Start the spinner
@@ -339,16 +403,26 @@ const downloadVoicemailMessage = (uuid) => {
         });
 };
 
+const handleUpdateDateRange = (newDateRange) => {
+    filterData.value.dateRange = newDateRange;
+}
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
-    const actions = [
-        // {
-        //     id: 'bulk_update',
-        //     label: 'Edit',
-        //     icon: 'PencilSquareIcon'
-        // }
-    ];
+    const actions = [];
+
+    if (props.permissions.voicemail_message_update) {
+        actions.push({
+            id: 'bulk_read',
+            label: 'Mark as read',
+            icon: 'EnvelopeOpenIcon'
+        });
+        actions.push({
+            id: 'bulk_unread',
+            label: 'Mark as unread',
+            icon: 'EnvelopeIcon'
+        });
+    }
 
     // Conditionally add the delete action if permission is granted
     if (props.permissions.voicemail_message_destroy) {
@@ -362,53 +436,54 @@ const bulkActions = computed(() => {
     return actions;
 });
 
-onMounted(() => {
-});
 
 
-
-const handleSingleItemDeleteRequest = (url) => {
-    confirmationModalTrigger.value = true;
-    confirmDeleteAction.value = () => executeSingleDelete(url);
+const handleSingleItemDeleteRequest = (uuid) => {
+    showConfirmationModal.value = true;
+    confirmDeleteAction.value = () => executeBulkDelete([uuid]);
 }
 
-const executeSingleDelete = (url) => {
-    router.delete(url, {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: (page) => {
-            if (page.props.flash.error) {
-                showNotification('error', page.props.flash.error);
-            }
-            if (page.props.flash.message) {
-                showNotification('success', page.props.flash.message);
-            }
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onFinish: () => {
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onError: (errors) => {
-            console.log(errors);
-        },
-    });
-}
 
 const handleBulkActionRequest = (action) => {
     if (action === 'bulk_delete') {
-        confirmationModalTrigger.value = true;
+        showConfirmationModal.value = true;
         confirmDeleteAction.value = () => executeBulkDelete();
+    } else if (action === 'bulk_read') {
+        executeStatusUpdate(selectedItems.value, 'saved');
+    } else if (action === 'bulk_unread') {
+        executeStatusUpdate(selectedItems.value, null);
     }
+}
 
+const executeStatusUpdate = (items, status) => {
+    loading.value = true;
+    axios.post(props.routes.update_status, {
+        items: items,
+        status: status
+    })
+        .then((response) => {
+            showNotification('success', response.data.messages);
 
+            // Optimistically update the local data so the badges/bold text change immediately
+            data.value.data.forEach(row => {
+                if (items.includes(row.voicemail_message_uuid)) {
+                    row.message_status = status;
+                }
+            });
+
+            if (items.length > 1) handleClearSelection();
+        })
+        .catch((error) => {
+            handleErrorResponse(error);
+        })
+        .finally(() => {
+            loading.value = false;
+        });
 }
 
 
-
-const executeBulkDelete = () => {
-    axios.post(props.routes.bulk_delete, { items: selectedItems.value })
+const executeBulkDelete = (items = selectedItems.value) => {
+    axios.post(props.routes.bulk_delete, { items })
         .then((response) => {
             handleModalClose();
             showNotification('success', response.data.messages);
@@ -424,8 +499,8 @@ const executeBulkDelete = () => {
 
 const handleSelectAll = () => {
     axios.post(props.routes.select_all, {
-            filter: filterData.value,
-        
+        filter: filterData.value,
+
     })
         .then((response) => {
             selectedItems.value = response.data.items;
@@ -440,61 +515,49 @@ const handleSelectAll = () => {
 };
 
 
-const handleSearchButtonClick = () => {
+const getData = (page = 1) => {
     loading.value = true;
-    router.visit(props.routes.current_page, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-        ],
-        onSuccess: (page) => {
-            loading.value = false;
-            handleClearSelection();
+
+    axios.get(props.routes.data_route, {
+        params: {
+            filter: filterData.value,
+            page,
         }
-    });
+    })
+        .then((response) => {
+            data.value = response.data;
+            // console.log(data.value);
+
+        }).catch((error) => {
+
+            handleErrorResponse(error);
+        }).finally(() => {
+            loading.value = false
+        })
+}
+
+const handleSearchButtonClick = () => {
+    getData()
 };
 
 const handleFiltersReset = () => {
     filterData.value.search = null;
-    // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
+    filterData.value.dateRange = getDefaultDateRange();
+    handleClearSelection();
     handleSearchButtonClick();
 }
 
 
 const renderRequestedPage = (url) => {
     loading.value = true;
-    router.visit(url, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
-    });
+    // Extract the page number from the url, e.g. "?page=3"
+    const urlObj = new URL(url, window.location.origin);
+    const pageParam = urlObj.searchParams.get("page") ?? 1;
+
+    // Now call getData with the page number
+    getData(pageParam);
 };
 
-
-const getItemOptions = (itemUuid = null) => {
-    const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
-
-    axios.post(props.routes.item_options, payload)
-        .then((response) => {
-            loadingModal.value = false;
-            itemOptions.value = response.data;
-            // console.log(itemOptions.value);
-
-        }).catch((error) => {
-            handleModalClose();
-            handleErrorResponse(error);
-        });
-}
 
 const handleErrorResponse = (error) => {
     if (error.response) {
@@ -515,16 +578,6 @@ const handleErrorResponse = (error) => {
     }
 }
 
-const handleSelectPageItems = () => {
-    if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.voicemail_message_uuid);
-    } else {
-        selectedItems.value = [];
-    }
-};
-
-
-
 const handleClearSelection = () => {
     selectedItems.value = [],
         selectPageItems.value = false;
@@ -544,7 +597,7 @@ const showNotification = (type, messages = null) => {
 }
 
 const handleModalClose = () => {
-    confirmationModalTrigger.value = false;
+    showConfirmationModal.value = false;
 }
 
 registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');

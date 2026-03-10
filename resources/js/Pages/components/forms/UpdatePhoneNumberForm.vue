@@ -71,6 +71,7 @@
                                             <FormTabs view="vertical" @select="handleTabSelected">
                                                 <FormTab name="page0" label="Settings" :elements="[
                                                     'h4',
+                                                    'uuid_clean',
                                                     'destination_enabled',
                                                     'destination_prefix',
                                                     'destination_number',
@@ -103,6 +104,24 @@
                                             <FormElements>
 
                                                 <StaticElement name="h4" tag="h4" content="Settings" />
+
+                                                <StaticElement name="uuid_clean" :conditions="[() => options.permissions.is_superadmin]">
+                                                    <div class="mb-1">
+                                                        <div class="text-sm font-medium text-gray-600 mb-1">                                                            Unique ID
+                                                        </div>
+                                                        <div class="flex items-center group">
+                                                            <span class="text-sm text-gray-900 select-all font-normal">
+                                                                {{ options.item.destination_uuid }}
+                                                            </span>
+                                                            <button type="button"
+                                                                @click="handleCopyToClipboard(options.item.destination_uuid)"
+                                                                class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                                                title="Copy to clipboard">
+                                                                <ClipboardDocumentIcon class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </StaticElement>
 
                                                 <ToggleElement name="destination_enabled" text="Status"
                                                     true-value="true" false-value="false" />
@@ -276,7 +295,7 @@ import { ref } from "vue";
 
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
-
+import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 
 const props = defineProps({
     show: Boolean,
@@ -289,6 +308,13 @@ const form$ = ref(null)
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
 
+const handleCopyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        emit('success', 'success', { message: ['Copied to clipboard.'] });
+    }).catch((error) => {
+        emit('error', { response: { data: { errors: { request: ['Failed to copy to clipboard.'] } } } });
+    });
+}
 
 const formatTarget = (name, value) => {
     return { [name]: value?.extension ?? null } // must return an object

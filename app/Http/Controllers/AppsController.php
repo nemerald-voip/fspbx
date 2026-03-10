@@ -471,6 +471,20 @@ class AppsController extends Controller
             // Send API request to update organization
             $organization = $this->ringotelApiService->updateOrganization($inputs);
 
+            DomainSettings::updateOrCreate(
+            [
+                'domain_uuid' => $inputs['domain_uuid'],
+                'domain_setting_category' => 'mobile_apps',
+                'domain_setting_subcategory' => 'dont_send_user_credentials',
+            ],
+            [
+                'domain_setting_name' => 'boolean',
+                'domain_setting_value' => $inputs['dont_send_user_credentials'],
+                'domain_setting_enabled' => true,
+                'domain_setting_description' => "Don't include user credentials in the welcome email",
+            ]
+        );
+
             // Return a JSON response indicating success
             return response()->json([
                 'messages' => ['success' => ['Organization successfully updated']]

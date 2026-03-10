@@ -7,6 +7,13 @@ use App\Http\Controllers\Api\LocationsController;
 use App\Http\Controllers\Api\ProvisioningTemplateController;
 use App\Http\Controllers\BusinessHoursController;
 use App\Http\Controllers\CallTranscriptionController;
+use App\Http\Controllers\AccountSettingsController;
+use App\Http\Controllers\Api\EmergencyCallController;
+use App\Http\Controllers\Api\HolidayHoursController;
+use App\Http\Controllers\Api\LocationsController;
+use App\Http\Controllers\Api\ProvisioningTemplateController;
+use App\Http\Controllers\BusinessHoursController;
+use App\Http\Controllers\CallTranscriptionController;
 use App\Http\Controllers\CdrsController;
 use App\Http\Controllers\CharPmsWebhookController;
 use App\Http\Controllers\ContactController;
@@ -157,7 +164,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/extensions/password', [ExtensionsController::class, 'updatePassword'])->name('extensions.password.update');
 
     // Extension statistics
-    Route::get('/extension-statistics/data', [ExtensionStatisticsController::class, 'getData'])->name('extension-statistics.data');
+    //Route::get('/extension-statistics/data', [ExtensionStatisticsController::class, 'getData'])->name('extension-statistics.data');
 
     // Voicemails
     Route::post('voicemails', [VoicemailController::class, 'store'])->name('voicemails.store');
@@ -177,6 +184,19 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/voicemail/{voicemail}/recorde-name', [VoicemailController::class, 'getRecordedName'])->name('voicemail.recorded_name');
     Route::post('voicemails/{voicemail}/delete-recorded-name', [VoicemailController::class, 'deleteRecordedName'])->name('voicemails.deleteRecordedName');
     Route::post('voicemails/{voicemail}/upload-recorded-name', [VoicemailController::class, 'uploadRecordedName'])->name('voicemails.uploadRecordedName');
+
+    // Voicemail Messages
+    Route::get('/voicemails/messages/data', [VoicemailMessagesController::class, 'getData'])->name('voicemails.messages.data');
+    Route::get('/voicemails/messages/recording', [VoicemailMessagesController::class, 'getRecording'])->name('voicemails.messages.recording');
+    Route::get('/voicemails/messages/{uuid}/file', [VoicemailMessagesController::class, 'getFile'])->name('voicemails.messages.file');
+    Route::post('/voicemails/messages/get-url', [VoicemailMessagesController::class, 'getVoicemailMessageUrl'])->name('voicemail.message.url');
+    Route::post('/voicemails/messages/bulk-delete', [VoicemailMessagesController::class, 'bulkDelete'])->name('voicemails.messages.bulk.delete');
+    Route::post('/voicemails/messages/select-all', [VoicemailMessagesController::class, 'selectAll'])->name('voicemails.messages.select.all');
+    Route::post('/voicemails/messages/status', [VoicemailMessagesController::class, 'updateStatus'])->name('voicemails.messages.update-status');
+    Route::get('/voicemails/messages/{message}', [VoicemailMessagesController::class, 'getVoicemailMessage'])->name('voicemail.message');
+    Route::delete('/voicemails/messages/{message}', [VoicemailMessagesController::class, 'destroy'])->name('voicemails.messages.destroy');
+    Route::get('/voicemails/messages/{message}/download', [VoicemailMessagesController::class, 'downloadVoicemailMessage'])->name('downloadVoicemailMessage');
+    Route::get('/voicemails/messages/{message}/delete', [VoicemailMessagesController::class, 'deleteVoicemailMessage'])->name('deleteVoicemailMessage');
 
     // Inbound Webhooks
     Route::get('/inbound-webhooks/data', [InboundWebhooksController::class, 'getData'])->name('inbound-webhooks.data');
@@ -205,7 +225,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/phone-numbers/bulk-delete', [PhoneNumbersController::class, 'bulkDelete'])->name('phone-numbers.bulk.delete');
     Route::post('phone-numbers/item-options', [PhoneNumbersController::class, 'getItemOptions'])->name('phone-numbers.item.options');
     Route::get('/phone-numbers/template/download', [PhoneNumbersController::class, 'downloadTemplate'])->name('phone-numbers.template.download');
-    Route::post('/phone-numbers/import', [PhoneNumbersController::class, 'import'])->name('phone-numbers.import');
+    //    Route::post('/phone-numbers/import', [PhoneNumbersController::class, 'import'])->name('phone-numbers.import');
 
     //Cloud Provisioning
     Route::get('/cloud-provisioning/{device}/status', [DeviceCloudProvisioningController::class, 'status'])->name('cloud-provisioning.status');
@@ -235,10 +255,16 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::get('/fax/inbox/{file}/download', [FaxInboxController::class, 'download'])->name('fax-inbox.fax.download');
     Route::post('/fax/inbox/bulk-delete', [FaxInboxController::class, 'bulkDelete'])->name('fax-inbox.bulk.delete');
     Route::post('/fax/inbox/select-all', [FaxInboxController::class, 'selectAll'])->name('fax-inbox.select.all');
-    Route::get('/fax/sent/{file}/download', [FaxesController::class, 'downloadSentFaxFile'])->name('downloadSentFaxFile');
-    Route::get('/fax/sent/{faxQueue}/{status?}', [FaxesController::class, 'updateStatus'])->name('faxes.file.updateStatus');
     Route::post('/faxes/send', [FaxesController::class, 'sendFax'])->name('faxes.new.fax.send');
     Route::get('/fax/inbox/data', [FaxInboxController::class, 'getData'])->name('fax-inbox.data');
+    Route::get('/fax/sent/data', [FaxSentController::class, 'getData'])->name('fax-sent.data');
+    Route::get('/fax/sent/{file}/download', [FaxSentController::class, 'download'])->name('fax-sent.fax.download');
+    Route::post('/fax/sent/bulk-delete', [FaxSentController::class, 'bulkDelete'])->name('fax-sent.bulk.delete');
+    Route::post('/fax/sent/select-all', [FaxSentController::class, 'selectAll'])->name('fax-sent.select.all');
+    Route::get('/fax/log/data', [FaxLogController::class, 'getData'])->name('fax-logs.data');
+    Route::post('/fax/log/bulk-delete', [FaxLogController::class, 'bulkDelete'])->name('fax-logs.bulk.delete');
+    Route::post('/fax/log/select-all', [FaxLogController::class, 'selectAll'])->name('fax-logs.select.all');
+    // Route::get('/fax/sent/{faxQueue}/{status?}', [FaxesController::class, 'updateStatus'])->name('faxes.file.updateStatus');
 
     // Call Detail Records
     Route::get('/call-detail-records/data', [CdrsController::class, 'getData'])->name('cdrs.data');

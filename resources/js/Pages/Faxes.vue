@@ -317,7 +317,7 @@
                         </template>
 
                         <template v-if="page.props.auth.can.fax_sent_view">
-                            <a :href="`/faxes/sent/${row.fax_uuid}`"
+                            <a :href="`/fax/${row.fax_uuid}/sent`"
                                 class="inline-flex items-center px-2 py-1 rounded text-gray-700 hover:bg-gray-100 transition text-xs font-medium"
                                 title="Sent">
                                 <DocumentArrowUpIcon class="w-4 h-4 mr-1" />
@@ -326,7 +326,7 @@
                         </template>
 
                         <template v-if="page.props.auth.can.fax_log_view">
-                            <a :href="`/faxes/log/${row.fax_uuid}`"
+                            <a :href="`/fax/${row.fax_uuid}/log`"
                                 class="inline-flex items-center px-2 py-1 rounded text-gray-700 hover:bg-gray-100 transition text-xs font-medium"
                                 title="Logs">
                                 <DocumentTextIcon class="w-4 h-4 mr-1" />

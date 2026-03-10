@@ -42,6 +42,7 @@ class DeviceLines extends Model
         'sip_transport',
         'register_expires',
         'shared_line',
+        'external_line',
         'enabled',
         'label',
         'insert_date',

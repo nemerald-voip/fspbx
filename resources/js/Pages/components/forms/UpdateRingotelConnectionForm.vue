@@ -25,10 +25,7 @@
                             <div class="flex justify-between items-center">
                                 <h3 class="text-base font-semibold leading-6 text-gray-900">Connection Details</h3>
 
-                                <!-- <Toggle label="Status" v-model="" /> -->
-
-                                <!-- <p class="mt-1 text-sm text-gray-500"></p> -->
-                            </div>
+                                </div>
 
                             <div class="grid grid-cols-6 gap-6">
                                 <div class="col-span-6 sm:col-span-3">
@@ -117,96 +114,33 @@
                             <div class="grid grid-cols-6 gap-6">
                                 <div class="col-span-6">
                                     <fieldset>
-                                        <div class="space-y-5">
-                                            <div class="flex gap-3">
+                                        <div class="space-y-3">
+                                            <div v-for="(codec, index) in form.codecs" :key="codec.name"
+                                                draggable="true"
+                                                @dragstart="handleDragStart(index, $event)"
+                                                @dragover.prevent
+                                                @dragenter.prevent
+                                                @drop="handleDrop(index)"
+                                                class="flex items-center gap-3 p-3 bg-white border border-gray-200 rounded-md shadow-sm cursor-move hover:bg-gray-50 transition-colors duration-150"
+                                            >
+                                                <svg class="w-5 h-5 text-gray-400 cursor-grab" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                                                </svg>
                                                 <div class="flex h-6 shrink-0 items-center">
                                                     <div class="group grid size-4 grid-cols-1">
-                                                        <input v-model="form.g711u_enabled" type="checkbox"
-                                                            class="col-start-1 row-start-1 appearance-none rounded border border-gray-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 indeterminate:border-indigo-600 indeterminate:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:checked:bg-gray-100 forced-colors:appearance-auto" />
-                                                        <svg class="pointer-events-none col-start-1 row-start-1 size-3.5 self-center justify-self-center stroke-white group-has-[:disabled]:stroke-gray-950/25"
-                                                            viewBox="0 0 14 14" fill="none">
-                                                            <path class="opacity-0 group-has-[:checked]:opacity-100"
-                                                                d="M3 8L6 11L11 3.5" stroke-width="2" stroke-linecap="round"
-                                                                stroke-linejoin="round" />
-                                                            <path class="opacity-0 group-has-[:indeterminate]:opacity-100"
-                                                                d="M3 7H11" stroke-width="2" stroke-linecap="round"
-                                                                stroke-linejoin="round" />
+                                                        <input v-model="codec.enabled" type="checkbox" class="col-start-1 row-start-1 appearance-none rounded border border-gray-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 indeterminate:border-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:checked:bg-gray-100 forced-colors:appearance-auto" />
+                                                        <svg class="pointer-events-none col-start-1 row-start-1 size-3.5 self-center justify-self-center stroke-white group-has-[:disabled]:stroke-gray-950/25" viewBox="0 0 14 14" fill="none">
+                                                            <path class="opacity-0 group-has-[:checked]:opacity-100" d="M3 8L6 11L11 3.5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                                         </svg>
                                                     </div>
                                                 </div>
-                                                <div class="text-sm/6">
-                                                    <label for="comments" class="font-medium text-gray-900">G.711
-                                                        Ulaw</label>
-
-                                                </div>
-                                            </div>
-                                            <div class="flex gap-3">
-                                                <div class="flex h-6 shrink-0 items-center">
-                                                    <div class="group grid size-4 grid-cols-1">
-                                                        <input v-model="form.g711a_enabled" type="checkbox"
-                                                            class="col-start-1 row-start-1 appearance-none rounded border border-gray-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 indeterminate:border-indigo-600 indeterminate:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:checked:bg-gray-100 forced-colors:appearance-auto" />
-                                                        <svg class="pointer-events-none col-start-1 row-start-1 size-3.5 self-center justify-self-center stroke-white group-has-[:disabled]:stroke-gray-950/25"
-                                                            viewBox="0 0 14 14" fill="none">
-                                                            <path class="opacity-0 group-has-[:checked]:opacity-100"
-                                                                d="M3 8L6 11L11 3.5" stroke-width="2" stroke-linecap="round"
-                                                                stroke-linejoin="round" />
-                                                            <path class="opacity-0 group-has-[:indeterminate]:opacity-100"
-                                                                d="M3 7H11" stroke-width="2" stroke-linecap="round"
-                                                                stroke-linejoin="round" />
-                                                        </svg>
-                                                    </div>
-                                                </div>
-                                                <div class="text-sm/6">
-                                                    <label for="candidates" class="font-medium text-gray-900">G.711
-                                                        Alaw</label>
-
-                                                </div>
-                                            </div>
-                                            <div class="flex gap-3">
-                                                <div class="flex h-6 shrink-0 items-center">
-                                                    <div class="group grid size-4 grid-cols-1">
-                                                        <input v-model="form.g729_enabled" type="checkbox"
-                                                            class="col-start-1 row-start-1 appearance-none rounded border border-gray-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 indeterminate:border-indigo-600 indeterminate:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:checked:bg-gray-100 forced-colors:appearance-auto" />
-                                                        <svg class="pointer-events-none col-start-1 row-start-1 size-3.5 self-center justify-self-center stroke-white group-has-[:disabled]:stroke-gray-950/25"
-                                                            viewBox="0 0 14 14" fill="none">
-                                                            <path class="opacity-0 group-has-[:checked]:opacity-100"
-                                                                d="M3 8L6 11L11 3.5" stroke-width="2" stroke-linecap="round"
-                                                                stroke-linejoin="round" />
-                                                            <path class="opacity-0 group-has-[:indeterminate]:opacity-100"
-                                                                d="M3 7H11" stroke-width="2" stroke-linecap="round"
-                                                                stroke-linejoin="round" />
-                                                        </svg>
-                                                    </div>
-                                                </div>
-                                                <div class="text-sm/6">
-                                                    <label for="offers" class="font-medium text-gray-900">G.729</label>
-
-                                                </div>
-                                            </div>
-                                            <div class="flex gap-3">
-                                                <div class="flex h-6 shrink-0 items-center">
-                                                    <div class="group grid size-4 grid-cols-1">
-                                                        <input v-model="form.opus_enabled" type="checkbox"
-                                                            class="col-start-1 row-start-1 appearance-none rounded border border-gray-300 bg-white checked:border-indigo-600 checked:bg-indigo-600 indeterminate:border-indigo-600 indeterminate:bg-indigo-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:border-gray-300 disabled:bg-gray-100 disabled:checked:bg-gray-100 forced-colors:appearance-auto" />
-                                                        <svg class="pointer-events-none col-start-1 row-start-1 size-3.5 self-center justify-self-center stroke-white group-has-[:disabled]:stroke-gray-950/25"
-                                                            viewBox="0 0 14 14" fill="none">
-                                                            <path class="opacity-0 group-has-[:checked]:opacity-100"
-                                                                d="M3 8L6 11L11 3.5" stroke-width="2" stroke-linecap="round"
-                                                                stroke-linejoin="round" />
-                                                            <path class="opacity-0 group-has-[:indeterminate]:opacity-100"
-                                                                d="M3 7H11" stroke-width="2" stroke-linecap="round"
-                                                                stroke-linejoin="round" />
-                                                        </svg>
-                                                    </div>
-                                                </div>
-                                                <div class="text-sm/6">
-                                                    <label for="offers" class="font-medium text-gray-900">Opus</label>
-
+                                                <div class="text-sm">
+                                                    <label class="font-medium text-gray-900 cursor-move">{{ codec.name }}</label>
                                                 </div>
                                             </div>
                                         </div>
+                                        <p class="mt-2 text-xs text-gray-500">Drag to reorder the priority of the codecs.</p>
                                     </fieldset>
-
                                 </div>
 
                             </div>
@@ -279,10 +213,7 @@
                             <div class="flex justify-between items-center">
                                 <h3 class="text-base font-semibold leading-6 text-gray-900">Features</h3>
 
-                                <!-- <Toggle label="Status" v-model="" /> -->
-
-                                <!-- <p class="mt-1 text-sm text-gray-500"></p> -->
-                            </div>
+                                </div>
 
 
 
@@ -509,6 +440,33 @@ const props = defineProps({
 
 const page = usePage();
 
+const availableCodecs = ['G.711 Ulaw', 'G.711 Alaw', 'G.722', 'G.729', 'Opus'];
+// Safely ensure it is an array
+const apiCodecsArray = Array.isArray(props.selectedConnection?.provision?.codecs) 
+    ? props.selectedConnection.provision.codecs 
+    : [];
+
+const initialCodecs = [];
+
+// 1. Map existing codecs from API to preserve order (safely parsing codec strings)
+apiCodecsArray.forEach(c => {
+    const codecString = c?.codec || c; 
+    if (typeof codecString === 'string') {
+        const match = availableCodecs.find(ac => ac.toLowerCase() === codecString.toLowerCase());
+        if (match) {
+            initialCodecs.push({ name: match, enabled: true, frame: c?.frame || 20 });
+        }
+    }
+});
+
+// 2. Append remaining un-enabled codecs
+availableCodecs.forEach(ac => {
+    if (!initialCodecs.some(ic => ic.name === ac)) {
+        initialCodecs.push({ name: ac, enabled: false, frame: 20 });
+    }
+});
+
+
 const form = reactive({
     org_id: props.options?.orgId ?? null,
     conn_id: props.selectedConnection?.id ?? null,
@@ -520,10 +478,7 @@ const form = reactive({
     disable_srtp: props.selectedConnection?.provision?.nosrtp ?? false,
     proxy: props.selectedConnection?.provision?.proxy?.paddr ?? '',
     multitenant: props.options?.settings?.multitenant_mode === "true",
-    g711u_enabled: props.selectedConnection?.provision?.codecs?.some(codec => codec.codec === "G.711 Ulaw") ?? false,
-    g711a_enabled: props.selectedConnection?.provision?.codecs?.some(codec => codec.codec === "G.711 Alaw") ?? false,
-    g729_enabled: props.selectedConnection?.provision?.codecs?.some(codec => codec.codec === "G.729") ?? false,
-    opus_enabled: props.selectedConnection?.provision?.codecs?.some(codec => codec.codec === "Opus") ?? false,
+    codecs: initialCodecs,
     registration_ttl: String(props.selectedConnection?.provision?.regexpires ?? ''),
     max_registrations: String(props.selectedConnection?.provision?.maxregs ?? ''),
     app_opus_codec: !props.selectedConnection?.provision?.app?.g711 ?? false,
@@ -552,6 +507,23 @@ const emits = defineEmits(['submit', 'cancel']);
 // Initialize activeTab with the currently active tab from props
 const activeTab = ref(props.options.conn_navigation.find(item => item.slug)?.slug || props.options.conn_navigation[0].slug);
 
+// Drag and drop logic
+const draggedIndex = ref(null);
+
+const handleDragStart = (index, event) => {
+    draggedIndex.value = index;
+    if (event?.dataTransfer) {
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', index); // REQUIRED for Firefox/Safari
+    }
+};
+
+const handleDrop = (index) => {
+    if (draggedIndex.value === null) return; // Prevent splicing error if empty drop
+    const item = form.codecs.splice(draggedIndex.value, 1)[0];
+    form.codecs.splice(index, 0, item);
+    draggedIndex.value = null;
+};
 
 const submitForm = () => {
     // console.log(form);
@@ -572,7 +544,5 @@ const iconComponents = {
 const setActiveTab = (tabSlug) => {
     activeTab.value = tabSlug;
 };
-
-
 
 </script>
