@@ -130,80 +130,6 @@ else
     exit 1
 fi
 
-sudo apt install -y imagemagick php8.1-imagick
-if [ $? -eq 0 ]; then
-    print_success "Imagemagick and PHP Imagick installed successfully."
-else
-    print_error "Error occurred during Imagemagick and PHP Imagick installation."
-    exit 1
-fi
-
-sudo apt-get install -y php8.1-zip
-if [ $? -eq 0 ]; then
-    print_success "PHP 8.1-zip installed successfully."
-else
-    print_error "Error occurred during PHP 8.1-zip installation."
-    exit 1
-fi
-
-# Install predis (php-redis)
-apt -y install php8.1-redis
-if [ $? -eq 0 ]; then
-    print_success "Predis (php-redis) installed successfully."
-else
-    print_error "Error occurred during Predis (php-redis) installation."
-    exit 1
-fi
-
-# Update PHP configuration settings in php.ini
-sudo sed 's#post_max_size = .*#post_max_size = 80M#g' -i /etc/php/8.1/fpm/php.ini
-if [ $? -eq 0 ]; then
-    print_success "post_max_size updated to 80M in php.ini."
-else
-    print_error "Error occurred while updating post_max_size in php.ini."
-    exit 1
-fi
-
-sudo sed 's#upload_max_filesize = .*#upload_max_filesize = 80M#g' -i /etc/php/8.1/fpm/php.ini
-if [ $? -eq 0 ]; then
-    print_success "upload_max_filesize updated to 80M in php.ini."
-else
-    print_error "Error occurred while updating upload_max_filesize in php.ini."
-    exit 1
-fi
-
-sudo sed 's#memory_limit = .*#memory_limit = 512M#g' -i /etc/php/8.1/fpm/php.ini
-if [ $? -eq 0 ]; then
-    print_success "memory_limit updated to 512M in php.ini."
-else
-    print_error "Error occurred while updating memory_limit in php.ini."
-    exit 1
-fi
-
-sudo sed 's#;max_input_vars = .*#max_input_vars = 8000#g' -i /etc/php/8.1/fpm/php.ini
-if [ $? -eq 0 ]; then
-    print_success "max_input_vars updated to 8000 in php.ini."
-else
-    print_error "Error occurred while updating max_input_vars in php.ini."
-    exit 1
-fi
-
-sudo sed 's#; max_input_vars = .*#max_input_vars = 8000#g' -i /etc/php/8.1/fpm/php.ini
-if [ $? -eq 0 ]; then
-    print_success "max_input_vars (with space) updated to 8000 in php.ini."
-else
-    print_error "Error occurred while updating max_input_vars (with space) in php.ini."
-    exit 1
-fi
-
-sudo sed -i 's/^\(;*\)\s*session.gc_maxlifetime\s*=.*/\1session.gc_maxlifetime = 7200/' /etc/php/8.1/fpm/php.ini
-if [ $? -eq 0 ]; then
-    print_success "session.gc_maxlifetime updated to 7200 in php.ini."
-else
-    print_error "Error occurred while updating session.gc_maxlifetime in php.ini."
-    exit 1
-fi
-
 # Include the install_esl_extension.sh script
 sh /var/www/fspbx/install/install_esl_extension.sh
 if [ $? -eq 0 ]; then
@@ -367,6 +293,15 @@ else
     exit 1
 fi
 
+# Install nginx snippet for Laravel Reverb
+cp install/nginx_reverb.conf /etc/nginx/snippets/fspbx-reverb.conf
+if [ $? -eq 0 ]; then
+    print_success "Copied new Nginx snippet config for Laravel Reverb."
+else
+    print_error "Error occurred while copying new Nginx  snippet config for Laravel Reverb."
+    exit 1
+fi
+
 # FS PBX internal vhost (new in 1.0.2)
 cp install/nginx_fspbx_internal.conf /etc/nginx/sites-available/fspbx_internal.conf
 if [ $? -eq 0 ]; then
@@ -462,16 +397,6 @@ else
     print_error "Error occurred while installing Composer dependencies."
     exit 1
 fi
-
-# Regenerate Composer autoload files without interaction
-# composer dump-autoload --no-interaction
-# if [ $? -eq 0 ]; then
-#     print_success "Composer autoload files regenerated successfully."
-# else
-#     print_error "Error occurred while regenerating Composer autoload files."
-#     exit 1
-# fi
-
 
 # Generate application key
 php artisan key:generate
@@ -922,6 +847,15 @@ if [ $? -eq 0 ]; then
     print_success "FS ELS Emergency Listener configuration file copied to Supervisor successfully."
 else
     print_error "Error occurred while copying FS ELS Emergency Listener configuration file to Supervisor."
+    exit 1
+fi
+
+# Copy Laravel Reverb configuration to Supervisor
+sudo cp install/reverb.conf /etc/supervisor/conf.d/
+if [ $? -eq 0 ]; then
+    print_success "Laravel Reverb configuration file copied to Supervisor successfully."
+else
+    print_error "Error occurred while copying Laravel Reverb configuration file to Supervisor."
     exit 1
 fi
 

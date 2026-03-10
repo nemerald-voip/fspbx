@@ -29,7 +29,7 @@ use App\Http\Controllers\FirewallController;
 use App\Http\Controllers\GreetingsController;
 use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\LogsController;
-use App\Http\Controllers\MessagesController;
+use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\PolycomLogController;
@@ -41,6 +41,7 @@ use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\SansayActiveCallsController;
 use App\Http\Controllers\SansayRegistrationsController;
+use App\Http\Controllers\SpeedDialController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\UserLogsController;
 use App\Http\Controllers\UsersController;
@@ -280,26 +281,19 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/apps/users/{extension}/status', [AppsController::class, 'SetStatus'])->name('appsSetStatus');
     Route::get('/apps/email', [AppsController::class, 'emailUser'])->name('emailUser');
 
-    // Contacts
-    Route::resource('contacts', ContactsController::class);
-    Route::post('/contacts/item-options', [ContactsController::class, 'getItemOptions'])->name('contacts.item.options');
-    Route::post('/contacts/bulk-delete', [ContactsController::class, 'bulkDelete'])->name('contacts.bulk.delete');
-    Route::post('/contacts/select-all', [ContactsController::class, 'selectAll'])->name('contacts.select.all');
-    Route::post('/contacts/import', [ContactsController::class, 'import'])->name('contacts.import');
-    Route::get('/contacts/template/download', [ContactsController::class, 'downloadTemplate'])->name('contacts.download.template');
-    Route::get('/contacts-export', [ContactsController::class, 'export'])->name('contacts.export');
+    // Speed Dial
+    Route::get('speed-dial', [SpeedDialController::class, 'index'])->name('speed-dial.index');
 
     // SMS for testing
     // Route::get('/sms/ringotelwebhook', [SmsWebhookController::class,"messageFromRingotel"]);
 
     // Messages
     // Route::resource('messages', MessagesController::class);
-    Route::get('/messages', [MessagesController::class, 'index'])->name('messages.index');
-    Route::post('/messages/store', [MessagesController::class, 'store'])->name('messages.store');
-    Route::post('/messages/retry', [MessagesController::class, 'retry'])->name('messages.retry');
-    Route::post('/messages/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('messages.bulk.update');
-    Route::post('/messages/bulk-delete', [DeviceController::class, 'bulkDelete'])->name('messages.bulk.delete');
-    Route::post('/messages/select-all', [DeviceController::class, 'selectAll'])->name('messages.select.all');
+    Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
+    // Route::post('/messages/retry', [MessagesController::class, 'retry'])->name('messages.retry');
+    // Route::post('/messages/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('messages.bulk.update');
+    // Route::post('/messages/bulk-delete', [DeviceController::class, 'bulkDelete'])->name('messages.bulk.delete');
+    // Route::post('/messages/select-all', [DeviceController::class, 'selectAll'])->name('messages.select.all');
 
 
 

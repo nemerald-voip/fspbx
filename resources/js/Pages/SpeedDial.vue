@@ -3,7 +3,7 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Contacts</template>
+            <template #title>Speed Dial</template>
 
             <template #filters>
                 <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -45,17 +45,16 @@
             <template #navigation>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    @pagination-change-page="renderRequestedPage" :bulk-actions="bulkActions"
+                    @bulk-action="handleBulkActionRequest" :has-selected-items="selectedItems.length > 0" />
             </template>
             <template #table-header>
 
                 <TableColumnHeader
-                    class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
-                        :has-selected-items="selectedItems.length > 0" />
-                    <span class="pl-4">Contact Name</span>
+                    <span class="pl-4">Speed Dial Name</span>
                 </TableColumnHeader>
 
                 <TableColumnHeader header="Destination Number"
@@ -91,7 +90,7 @@
                         <div class="flex items-center">
                             <input v-if="row.contact_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
                                 :value="row.contact_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="ml-9"
+                            <div class="ml-4"
                                 :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.contact_edit, }"
                                 @click="page.props.auth.can.contact_edit && handleEditRequest(row.contact_uuid)">
                                 {{ row.contact_organization }}
@@ -111,8 +110,8 @@
                     </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <div v-if="row.contact_users.length" class="flex flex-wrap gap-1">
-                            <Badge v-for="user in row.contact_users" :key="user.user_uuid" :text="user.user.username"
+                        <div v-if="row.speed_dial_user.length" class="flex flex-wrap gap-1">
+                            <Badge v-for="user in row.speed_dial_user" :key="user.user_uuid" :text="user.user.username"
                                 backgroundColor="bg-gray-100" textColor="text-gray-700" ringColor="ring-gray-400/20"
                                 class="px-2 py-1 text-xs font-semibold" />
                         </div>
@@ -166,18 +165,18 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="createModalTrigger" :header="'Create New Contact'"
+    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="createModalTrigger" :header="'Create New Speed Dial'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <CreateContactForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
+            <CreateSpeedDialForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
                 @submit="handleCreateRequest" @cancel="handleModalClose" />
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="editModalTrigger" :header="'Edit Contact Details'"
+    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="editModalTrigger" :header="'Edit Speed Dial Details'"
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
-            <UpdateContactForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
+            <UpdateSpeedDialForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
                 @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleErrorResponse"
                 @success="showNotification('success', { request: [$event] })" />
         </template>
@@ -221,8 +220,8 @@ import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
-import CreateContactForm from "./components/forms/CreateContactForm.vue";
-import UpdateContactForm from "./components/forms/UpdateContactForm.vue";
+import CreateSpeedDialForm from "./components/forms/CreateSpeedDialForm.vue";
+import UpdateSpeedDialForm from "./components/forms/UpdateSpeedDialForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { DocumentArrowUpIcon, DocumentArrowDownIcon } from "@heroicons/vue/24/outline";

@@ -9,6 +9,7 @@ use App\Http\Controllers\BusinessHoursController;
 use App\Http\Controllers\CallTranscriptionController;
 use App\Http\Controllers\CdrsController;
 use App\Http\Controllers\CharPmsWebhookController;
+use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DomainController;
@@ -25,10 +26,13 @@ use App\Http\Controllers\HotelHousekeepingDefinitionController;
 use App\Http\Controllers\HotelRoomController;
 use App\Http\Controllers\HotelRoomStatusController;
 use App\Http\Controllers\InboundWebhooksController;
+use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MessageSettingsController;
+use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\RingGroupsController;
+use App\Http\Controllers\SpeedDialController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\TokenController;
 use App\Http\Controllers\UserLogsController;
@@ -269,6 +273,33 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // Account Settings
     Route::put('account-settings/update', [AccountSettingsController::class, 'update'])->name('account-settings.update');
 
+    // Contacts
+    Route::post('contacts', [ContactController::class, 'store'])->name('contacts.store');
+    Route::get('contacts/{phoneNumber}', [ContactController::class, 'show'])->name('contacts.show');
+    Route::delete('/contacts/{contact}', [ContactController::class, 'destroy'])->name('contacts.destroy');
+
+    // Route::post('/contacts/item-options', [ContactsController::class, 'getItemOptions'])->name('contacts.item.options');
+    // Route::post('/contacts/bulk-delete', [ContactsController::class, 'bulkDelete'])->name('contacts.bulk.delete');
+    // Route::post('/contacts/select-all', [ContactsController::class, 'selectAll'])->name('contacts.select.all');
+    // Route::post('/contacts/import', [ContactsController::class, 'import'])->name('contacts.import');
+    // Route::get('/contacts/template/download', [ContactsController::class, 'downloadTemplate'])->name('contacts.download.template');
+    // Route::get('/contacts-export', [ContactsController::class, 'export'])->name('contacts.export');
+
+    //Organizations
+    Route::get('/organizations', [OrganizationController::class, 'index'])->name('organizations.index');
+    Route::post('/organizations', [OrganizationController::class, 'store'])->name('organizations.store');
+
+    // Speed Dial
+    Route::post('speed-dial', [SpeedDialController::class, 'store'])->name('speed-dial.store');
+    Route::put('speed-dial/{speed_dial}', [SpeedDialController::class, 'update'])->name('speed-dial.update');
+    Route::get('/speed-dial/data', [SpeedDialController::class, 'getData'])->name('speed-dial.data');
+    Route::post('/speed-dial/item-options', [SpeedDialController::class, 'getItemOptions'])->name('speed-dial.item.options');
+    Route::post('/speed-dial/bulk-delete', [SpeedDialController::class, 'bulkDelete'])->name('speed-dial.bulk.delete');
+    Route::post('/speed-dial/select-all', [SpeedDialController::class, 'selectAll'])->name('speed-dial.select.all');
+    Route::post('/speed-dial/import', [SpeedDialController::class, 'import'])->name('speed-dial.import');
+    Route::get('/speed-dial/template/download', [SpeedDialController::class, 'downloadTemplate'])->name('speed-dial.download.template');
+    Route::get('/speed-dial-export', [SpeedDialController::class, 'export'])->name('speed-dial.export');
+
     // System Settings
     Route::put('system-settings/update', [SystemSettingsController::class, 'update'])->name('system-settings.update');
     Route::get('system-settings/payment_gateways', [SystemSettingsController::class, 'getPaymentGatewayData'])->name('system-settings.payment_gateways');
@@ -288,6 +319,15 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
 
     // Virtual Receptionist
     Route::post('virtual-receptionists/duplicate', [VirtualReceptionistController::class, 'duplicate'])->name('virtual-receptionists.duplicate');
+
+    // Messages
+    Route::get('/messages/rooms', [MessageController::class, 'rooms'])->name('messages.rooms');
+    Route::get('/messages/rooms/{roomId}/messages', [MessageController::class, 'roomMessages'])->name('messages.room.messages');
+    Route::post('/messages/send', [MessageController::class, 'send'])->name('messages.send');
+    Route::get('/messages/logs', [MessageController::class, 'logs'])->name('messages.logs');
+    Route::get('/messages/data', [MessageController::class, 'getData'])->name('messages.data');
+    Route::post('/messages/mark-read', [MessageController::class, 'markRead'])->name('messages.mark-read');
+
 
     // Message Settings
     Route::get('/message-settings/data', [MessageSettingsController::class, 'getData'])->name('messages.settings.data');

@@ -52,6 +52,7 @@ class LogsController extends Controller
                     'dashboard_route' => route('dashboard'),
                     'email_logs' => route('email-logs.index'),
                     'inbound_webhooks' => route('inbound-webhooks.index'),
+                    'message_logs' => route('messages.logs'),
 
                 ],
                 'permissions' => function () {

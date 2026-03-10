@@ -2,25 +2,23 @@
 
 namespace App\Imports;
 
-use App\Models\Contact;
-use App\Models\ContactPhones;
-use App\Models\ContactUsers;
+use App\Models\SpeedDial;
+use App\Models\SpeedDialPhone;
+use App\Models\SpeedDialUser;
 use App\Models\User;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Concerns\Importable;
-use Maatwebsite\Excel\Concerns\SkipsErrors;
-use Maatwebsite\Excel\Concerns\SkipsOnError;
-use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
-use Maatwebsite\Excel\Concerns\SkipsOnFailure;
+use Maatwebsite\Excel\Concerns\SkipsErrors;
+use Maatwebsite\Excel\Concerns\SkipsFailures;
+use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithGroupedHeadingRow;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
-use Maatwebsite\Excel\Concerns\WithGroupedHeadingRow;
 
-class ContactsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, WithValidation, WithGroupedHeadingRow
+class SpeedDialImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, WithValidation, WithGroupedHeadingRow
 {
     use Importable, SkipsErrors, SkipsFailures;
 
@@ -30,19 +28,19 @@ class ContactsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, Wi
             '*.contact_name' => [
                 'required',
                 'string',
-                Rule::unique('App\Models\Contact', 'contact_organization')
+                Rule::unique('App\Models\SpeedDial', 'contact_organization')
                     ->where('domain_uuid', Session::get('domain_uuid'))
             ],
             '*.destination_number' => [
                 'required',
                 'numeric',
-                Rule::unique('App\Models\ContactPhones', 'phone_number')
+                Rule::unique('App\Models\SpeedDialPhone', 'phone_number')
                     ->where('domain_uuid', Session::get('domain_uuid'))
             ],
             '*.speed_dial_code' => [
                 'nullable',
                 'numeric',
-                Rule::unique('App\Models\ContactPhones', 'phone_speed_dial')
+                Rule::unique('App\Models\SpeedDialPhone', 'phone_speed_dial')
                     ->where('domain_uuid', Session::get('domain_uuid'))
             ],
             // '*.phone_type_voice' => [
@@ -112,8 +110,8 @@ class ContactsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, Wi
             $domain_uuid = session('domain_uuid');
             $user_uuid = session('user_uuid');
 
-            // Create contact
-            $contact = Contact::create([
+            // Create speed dial
+            $contact = SpeedDial::create([
                 'contact_organization' => $row['contact_name'],
                 'domain_uuid' => $domain_uuid,
                 'insert_date' => now(),
@@ -123,7 +121,7 @@ class ContactsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, Wi
             // logger($contact);
 
             //Create contact Phone
-            $contact->contactPhone = new ContactPhones();
+            $contact->contactPhone = new SpeedDialPhone();
 
             $contact->contactPhone->fill([
                 'contact_uuid' => $contact->contact_uuid,
@@ -148,7 +146,7 @@ class ContactsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, Wi
                         ->first();
             
                     if ($user) {
-                        $contact->contactUser = new ContactUsers();
+                        $contact->contactUser = new SpeedDialUser();
             
                         $contact->contactUser->fill([
                             'contact_uuid' => $contact->contact_uuid,

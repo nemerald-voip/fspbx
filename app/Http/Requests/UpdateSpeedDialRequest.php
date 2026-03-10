@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\FormRequest;
 
-class UpdateContactRequest extends FormRequest
+class UpdateSpeedDialRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -32,7 +32,7 @@ class UpdateContactRequest extends FormRequest
                 'nullable',
                 'string',
             ],
-            'contact_users' => 'present',
+            'speed_dial_users' => 'present',
         ];
     }
 

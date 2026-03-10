@@ -25,13 +25,13 @@
                     <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
                         <div>
                             <h3 class="text-base font-semibold leading-6 text-gray-900">General</h3>
-                            <p class="mt-1 text-sm text-gray-500">Update contact details.</p>
+                            <p class="mt-1 text-sm text-gray-500">Update speed dial details.</p>
                         </div>
 
                         <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
 
                             <div class="col-span-3 sm:col-span-3">
-                                <LabelInputRequired target="contact_organization" label="Contact Name" class="truncate" />
+                                <LabelInputRequired target="contact_organization" label="Speed Dial Name" class="truncate" />
                                 <InputField v-model="form.contact_organization" type="text" name="contact_organization"
                                     id="contact_organization" class="mt-2" :error="!!errors?.contact_organization" />
                                 <div v-if="errors?.contact_organization" class="mt-2 text-xs text-red-600">
@@ -93,7 +93,7 @@
                                     </Popover>
                                 </div>
 
-                                <ComboBox :options="options.users" :selectedItem="options.contact_users" :search="true"
+                                <ComboBox :options="options.users" :selectedItem="options.speed_dial_users" :search="true"
                                     multiple placeholder="Choose Assigned User(s)" @update:model-value="handleUserUpdate"
                                     :error="errors?.user_uuid && errors.user_uuid.length > 0" />
                                 <div v-if="errors?.user_uuid" class="mt-2 text-xs text-red-600">
@@ -151,7 +151,7 @@ const form = reactive({
     contact_organization: props.options.contact.contact_organization,
     destination_number: props.options.contact?.primary_phone?.phone_number ?? null,
     phone_speed_dial: props.options.contact?.primary_phone?.phone_speed_dial ?? null,
-    contact_users: props.options.contact_users ?? null,
+    speed_dial_users: props.options.speed_dial_users ?? null,
     _token: page.props.csrf_token,
 })
 
@@ -164,7 +164,7 @@ const iconComponents = {
 };
 
 const handleUserUpdate = (newSelectedItem) => {
-    form.contact_users = newSelectedItem ? newSelectedItem : null;
+    form.speed_dial_users = newSelectedItem ? newSelectedItem : null;
 };
 
 

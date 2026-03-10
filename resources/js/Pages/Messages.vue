@@ -1,603 +1,1278 @@
 <template>
-    <MainLayout />
 
-    <div class="m-3">
-        <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Messages</template>
+    <div class="flex flex-col h-screen overflow-hidden">
 
-            <template #filters>
-                <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
-                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+        <MainLayout />
+
+        <!-- Main Layout: Full Screen Flex Container -->
+        <div class="flex-1 min-h-0 flex w-full mx-auto m-4 border rounded-xl overflow-hidden shadow-xl bg-white">
+
+            <!-- LEFT COLUMN: Sidebar -->
+            <aside class="w-80 bg-white border-r border-gray-200 flex flex-col">
+                <!-- Header -->
+                <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                    <h2 class="text-xl font-bold text-gray-800">Messages</h2>
+                    <!-- Optional: Loading Indicator -->
+                    <div class="flex items-center space-x-2">
+
+                        <span v-if="loadingRooms"
+                            class="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></span>
+
+                        <button @click="showCreateModal = true"
+                            class="p-2 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition-colors"
+                            title="New Chat">
+
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 4v16m8-8H4" />
+
+                            </svg>
+
+                        </button>
+
                     </div>
-                    <input type="text" v-model="filterData.search" name="mobile-search-candidate"
-                        id="mobile-search-candidate"
-                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
-                        placeholder="Search" />
-                    <input type="text" v-model="filterData.search" name="desktop-search-candidate"
-                        id="desktop-search-candidate"
-                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
-                        placeholder="Search" />
+
                 </div>
-            </template>
 
-            <template #action>
-                <button v-if="page.props.auth.can.device_create" type="button" @click.prevent="handleCreateButtonClick()"
-                    class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    Create
-                </button>
+                <div v-if="props.permissions.messages_view_as" class="px-4 py-3 bg-gray-50 border-b border-gray-200">
+                    <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">
+                        Viewing as:
+                    </label>
+                    <Vueform :endpoint="false" :schema="extensionSelectSchema" v-model="extensionFormModel"
+                        :float-placeholders="false" />
+                </div>
 
-                <button v-if="!showGlobal && page.props.auth.can.device_view_global" type="button"
-                    @click.prevent="handleShowGlobal()"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Show global
-                </button>
+                <!-- Room List -->
+                <div class="flex-1 overflow-y-auto">
+                    <div v-for="room in rooms" :key="room.id" @click="selectRoom(room.id)"
+                        class="group relative flex items-center p-3 cursor-pointer transition-all duration-200 border-l-4 hover:bg-gray-50"
+                        :class="[
+                            activeRoomId === room.id
+                                ? 'bg-blue-50 border-blue-600'
+                                : 'border-transparent'
+                        ]">
 
-                <button v-if="showGlobal && page.props.auth.can.device_view_global" type="button"
-                    @click.prevent="handleShowLocal()"
-                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Show local
-                </button>
-            </template>
+                        <!-- 1. Avatar -->
+                        <div class="relative flex-shrink-0 mr-3">
+                            <div
+                                class="h-10 w-10 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center text-gray-600 font-bold text-xs shadow-sm group-hover:shadow-md transition-shadow">
 
-            <template #navigation>
-                <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
-                    :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
-            </template>
-            <template #table-header>
-                <TableColumnHeader header="Date"
-                    class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
-                    <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
-                        class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
-                        :has-selected-items="selectedItems.length > 0" />
-                    <span class="pl-4">Date</span>
-                </TableColumnHeader>
-
-                <TableColumnHeader v-if="showGlobal" header="Domain"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-
-
-                <TableColumnHeader header="In/Out" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Source" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Destination" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Message" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Type" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-            </template>
-
-            <template v-if="selectPageItems" v-slot:current-selection>
-                <td colspan="6">
-                    <div class="text-sm text-center m-2">
-                        <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
-                        <button v-if="!selectAll && selectedItems.length != data.total"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
-                            @click="handleSelectAll">
-                            Select all {{ data.total }} items
-                        </button>
-                        <button v-if="selectAll"
-                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
-                            @click="handleClearSelection">
-                            Clear selection
-                        </button>
-                    </div>
-                </td>
-            </template>
-
-            <template #table-body>
-                <tr v-for="row in data.data" :key="row.message_uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 " :text="row.created_at_formatted">
-                        <div class="flex items-center">
-                            <input v-if="row.message_uuid" v-model="selectedItems" type="checkbox"
-                                name="action_box[]" :value="row.message_uuid"
-                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="ml-9">
-                                {{ row.created_at_formatted ??  row.created_at}}
+                                {{ room.name.slice(0, 2) }}
                             </div>
+                        </div>
+
+                        <!-- 2. Middle Column: Name, Via, Message -->
+                        <div class="flex-1 min-w-0 overflow-hidden mr-2">
+
+                            <!-- Name -->
+                            <h3 class="text-sm truncate mb-0.5"
+                                :class="room.unread > 0 ? 'font-bold text-gray-900' : 'font-semibold text-gray-700'">
+                                {{ room.name }}
+                            </h3>
+
+                            <!-- Via Badge + Message -->
+                            <div class="flex items-center">
+                                <!-- Via Badge -->
+                                <span v-if="room.my_number"
+                                    class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-700 mr-2 flex-shrink-0 border border-blue-200">
+                                    {{ room.my_number }}
+                                </span>
+
+                                <!-- Last Message -->
+                                <p class="text-xs truncate"
+                                    :class="room.unread > 0 ? 'font-semibold text-gray-800' : 'text-gray-500'">
+                                    {{ room.lastMessage }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- 3. Right Column: Time & Unread Badge -->
+                        <div class="flex flex-col items-end space-y-1">
+
+                            <!-- Time -->
+                            <span class="text-[10px] font-medium whitespace-nowrap"
+                                :class="room.unread > 0 ? 'text-blue-600' : 'text-gray-400'">
+                                {{ formatDate(room.timestamp) }}
+                            </span>
+
+                            <!-- Red Unread Badge -->
+                            <span v-if="room.unread > 0"
+                                class="flex items-center justify-center min-w-[1.25rem] h-5 px-1.5 text-[10px] font-bold text-white bg-red-500 rounded-full shadow-sm animate-pulse">
+                                {{ room.unread }}
+                            </span>
 
                         </div>
-                    </TableField>
 
-                    <TableField v-if="showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.domain?.domain_description">
-                        <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft' target="#domain_tooltip_target">
-                            <div id="domain_tooltip_target">
-                                {{ row.domain?.domain_description }}
-                            </div>
-                        </ejs-tooltip>
-                    </TableField>
-
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.direction" />
-
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.source_formatted ?? row.source" />
-
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.destination_formatted ?? row.destination" />
-
-                    <TableField class=" px-2 py-2 text-sm text-gray-500" :text="row.message" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.type" />
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.status">
-                        <Badge :text="row.status" :backgroundColor="determineColor(row.status).backgroundColor"
-                            :textColor="determineColor(row.status).textColor"
-                            :ringColor="determineColor(row.status).ringColor" />
-
-                    </TableField>
-
-                    <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
-                        <template #action-buttons>
-                            <div class="flex items-center whitespace-nowrap">
-                                <!-- <ejs-tooltip v-if="page.props.auth.can.device_update" :content="'Edit'" position='TopCenter'
-                                    target="#destination_tooltip_target">
-                                    <div id="destination_tooltip_target">
-                                        <PencilSquareIcon @click="handleEditRequest(row.device_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-
-                                    </div>
-                                </ejs-tooltip> -->
-
-                                <ejs-tooltip :content="'Retry'" position='TopCenter' target="#restart_tooltip_target">
-                                    <div id="restart_tooltip_target">
-                                        <RestartIcon @click="handleRetry(row.message_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-                                    </div>
-                                </ejs-tooltip>
-
-                                <!-- <ejs-tooltip v-if="page.props.auth.can.device_destroy" :content="'Delete'" position='TopCenter'
-                                    target="#delete_tooltip_target">
-                                    <div id="delete_tooltip_target">
-                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-                                    </div>
-                                </ejs-tooltip> -->
-                            </div>
-                        </template>
-                    </TableField>
-                </tr>
-            </template>
-            <template #empty>
-                <!-- Conditional rendering for 'no records' message -->
-                <div v-if="data.data.length === 0" class="text-center my-5 ">
-                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
-                    <p class="mt-1 text-sm text-gray-500">
-                        Adjust your search and try again.
-                    </p>
+                    </div>
                 </div>
-            </template>
+            </aside>
 
-            <template #loading>
-                <Loading :show="loading" />
-            </template>
+            <!-- Chat Area -->
+            <main class="flex-1 relative flex flex-col bg-gray-100 min-w-0">
 
-            <template #footer>
-                <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
-                    :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
-            </template>
-        </DataTable>
-        <div class="px-4 sm:px-6 lg:px-8"></div>
+                <!-- Chat Toolbar -->
+                <div
+                    class="h-16 border-b border-gray-200 bg-white flex justify-between items-center px-6 shadow-sm z-10">
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg">{{ currentRoomName }}</h3>
+                        <span class="text-xs text-gray-500 font-mono" v-if="activeRoomId">
+                            {{ activeRoomId.split('_')[1] }}
+                        </span>
+                    </div>
+
+                    <!-- Toggle Contact Panel Button -->
+                    <button v-if="activeRoomId" @click="toggleContactPanel"
+                        class="p-2 rounded-full hover:bg-gray-100 text-gray-500 transition-colors focus:outline-none"
+                        :class="{ 'bg-blue-100 text-blue-600 ring-2 ring-blue-200': showContactPanel }"
+                        title="Contact Details">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </button>
+                </div>
+
+                <deep-chat ref="elementRef" :history="currentHistory" :connect="connectConfig"
+                    :introMessage="introMessage"
+                    style="width: 100%; height: 100%; border: none; background-color: #f3f4f6;" :messageStyles="{
+                        default: {
+                            shared: {
+                                bubble: { maxWidth: '80%', padding: '10px 15px', borderRadius: '12px' }
+                            },
+                            user: {
+                                bubble: { backgroundColor: '#3b82f6', color: 'white' }
+                            },
+                            ai: {
+                                bubble: { backgroundColor: '#ffffff', color: '#1f2937' }
+                            }
+                        }
+                    }" :textInput="{
+                        placeholder: { text: 'Type a message...' },
+                        styles: {
+                            container: { backgroundColor: 'white', borderTop: '1px solid #e5e7eb', maxHeight: '100px', },
+                            text: { color: '#374151' }
+                        }
+                    }">
+                </deep-chat>
+            </main>
+
+            <!-- COL 3: CONTACT INFO PANEL -->
+            <aside v-if="showContactPanel && activeRoomId"
+                class="w-96 bg-white border-l border-gray-200 flex flex-col overflow-hidden transition-all duration-300 ease-in-out z-15 shadow-xl">
+
+                <!-- Panel Header -->
+                <div
+                    class="flex-shrink-0 h-16 px-6 border-b border-gray-100 flex justify-between items-center bg-white">
+                    <h2 class="text-lg font-bold text-gray-800">
+                        {{ isEditingContact ? 'Edit Contact' : 'Contact Details' }}
+                    </h2>
+                    <div class="flex items-center space-x-3">
+                        <!-- Edit/Cancel Button -->
+                        <button @click="toggleContactEditForm" class="text-sm font-medium transition-colors"
+                            :class="isEditingContact ? 'text-red-500 hover:text-red-700' : 'text-blue-600 hover:text-blue-800'">
+                            {{ isEditingContact ? 'Cancel' : 'Edit' }}
+                        </button>
+
+                        <!-- Close Panel -->
+                        <button @click="showContactPanel = false" class="text-gray-400 hover:text-gray-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SCROLLABLE CONTENT AREA -->
+                <div class="flex-1 overflow-y-auto p-6">
+
+                    <!-- VIEW MODE -->
+                    <div v-if="!isEditingContact" class="space-y-6">
+
+                        <!-- Identity Header -->
+                        <div class="text-center">
+                            <div
+                                class="w-20 h-20 mx-auto bg-gray-100 rounded-full flex items-center justify-center text-2xl font-bold text-gray-500 mb-3 border border-gray-200">
+                                {{ contactInitials }}
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900">{{ contactFullName }}</h3>
+
+                            <!-- Job Title / Org / Dept -->
+                            <div v-if="contactData?.title" class="text-sm font-semibold text-gray-700 mt-1">
+                                {{ contactData?.title }}
+                            </div>
+
+                            <!-- FIXED: Organization Name Extraction -->
+                            <div v-if="contactData?.organization" class="text-sm text-gray-500 font-medium">
+                                {{ contactData.organization.name || contactData.organization }}
+                            </div>
+
+                            <div v-if="contactData?.department" class="text-xs text-gray-400 mt-0.5">
+                                {{ contactData?.department }}
+                            </div>
+                        </div>
+
+                        <!-- Contact Info Section -->
+                        <div class="border-t border-gray-100 pt-4 space-y-4">
+                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Contact Details
+                            </h4>
+
+                            <!-- Primary Phone -->
+                            <div v-if="contactData?.phone_number" class="flex items-start">
+                                <div class="mt-0.5 w-5 text-gray-400 flex-shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
+                                        fill="currentColor">
+                                        <path
+                                            d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium text-gray-900">{{ contactData?.phone_number }}</p>
+                                    <p class="text-xs text-gray-500">Primary Phone</p>
+                                </div>
+                            </div>
+
+                            <!-- Mobile -->
+                            <div v-if="contactData?.mobile_number" class="flex items-start">
+                                <div class="mt-0.5 w-5 text-gray-400 flex-shrink-0">
+                                    <!-- Mobile device icon -->
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
+                                        fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                            d="M7 2a2 2 0 00-2 2v12a2 2 0 002 2h6a2 2 0 002-2V4a2 2 0 00-2-2H7zm3 14a1 1 0 100-2 1 1 0 000 2z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium text-gray-900">{{ contactData?.mobile_number }}</p>
+                                    <p class="text-xs text-gray-500">Mobile</p>
+                                </div>
+                            </div>
+
+                            <!-- Fax -->
+                            <div v-if="contactData?.fax_number" class="flex items-start">
+                                <div class="mt-0.5 w-5 text-gray-400 flex-shrink-0">
+                                    <!-- Printer/Fax icon -->
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
+                                        fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                            d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3">
+                                    <p class="text-sm font-medium text-gray-900">{{ contactData?.fax_number }}</p>
+                                    <p class="text-xs text-gray-500">Fax</p>
+                                </div>
+                            </div>
+
+                            <!-- Email -->
+                            <div v-if="contactData?.email" class="flex items-start">
+                                <div class="mt-0.5 w-5 text-gray-400 flex-shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
+                                        fill="currentColor">
+                                        <path
+                                            d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3 break-all">
+                                    <a :href="`mailto:${contactData?.email}`"
+                                        class="text-sm font-medium text-blue-600 hover:underline">
+                                        {{ contactData?.email }}
+                                    </a>
+                                    <p class="text-xs text-gray-500">Email</p>
+                                </div>
+                            </div>
+
+                            <!-- Website -->
+                            <div v-if="contactData?.website" class="flex items-start">
+                                <div class="mt-0.5 w-5 text-gray-400 flex-shrink-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
+                                        fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                            d="M4.083 9h1.946c.089-1.546.383-2.97.837-4.118A6.002 6.002 0 004.083 9zM10 2a8 8 0 100 16 8 8 0 000-16zm0 2c-.076 0-.232.032-.465.262-.238.234-.497.623-.737 1.182-.389.907-.673 2.142-.766 3.556h3.936c-.093-1.414-.377-2.649-.766-3.556-.24-.56-.5-.948-.737-1.182C10.232 4.032 10.076 4 10 4zm3.971 5c-.089-1.546-.383-2.97-.837-4.118A6.002 6.002 0 0115.917 9h-1.946zm-2.003 2H8.032c.093 1.414.377 2.649.766 3.556.24.56.5.948.737 1.182.233.23.389.262.465.262.076 0 .232-.032.465-.262.238-.234.497-.623.737-1.182.389-.907.673-2.142.766-3.556zm1.166 4.118c.454-1.147.748-2.572.837-4.118h1.946a6.002 6.002 0 01-5.322 4.882zM4.083 11a6.002 6.002 0 005.322 4.882c-.454-1.147-.748-2.572-.837-4.118H4.083z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div class="ml-3 break-all">
+                                    <a :href="contactData?.website" target="_blank"
+                                        class="text-sm font-medium text-blue-600 hover:underline">
+                                        {{ contactData?.website }}
+                                    </a>
+                                    <p class="text-xs text-gray-500">Website</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Address Section (UPDATED) -->
+                        <div v-if="formattedAddress" class="border-t border-gray-100 pt-4">
+                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Location</h4>
+                            <div class="flex items-start">
+                                <div class="mt-0.5 w-5 text-gray-400">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20"
+                                        fill="currentColor">
+                                        <path fill-rule="evenodd"
+                                            d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z"
+                                            clip-rule="evenodd" />
+                                    </svg>
+                                </div>
+                                <p class="ml-3 text-sm text-gray-700 whitespace-pre-line">{{ formattedAddress }}</p>
+                            </div>
+                        </div>
+
+                        <!-- Notes Section -->
+                        <div v-if="contactData?.notes" class="border-t border-gray-100 pt-4">
+                            <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Notes</h4>
+                            <div
+                                class="bg-yellow-50 p-3 rounded text-sm text-gray-700 whitespace-pre-line border border-yellow-100 shadow-sm">
+                                {{ contactData?.notes }}
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- EDIT MODE (Form) -->
+                    <div v-else class="flex flex-col h-full">
+                        <Vueform ref="contactForm$" :float-placeholders="false" :schema="contactFormSchema"
+                            :endpoint="submitContactForm" @response="handleContactResponse"
+                            @success="handleContactSuccess" @error="handleContactError" :display-errors="false" />
+
+                        <!-- Delete Button below the form -->
+                        <div v-if="contactData?.contact_uuid" class="mt-6 pt-4 pb-6 border-t border-gray-100">
+                            <button @click="showDeleteContactModal = true"
+                                class="w-full text-center text-sm font-medium text-red-500 hover:text-red-700 py-2">
+                                Delete Contact
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </div>
+
+        <!-- VueForm CREATE ROOM MODAL -->
+        <div v-if="showCreateModal"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+            <div class="bg-white rounded-lg shadow-2xl w-96 p-6 transform transition-all scale-100">
+                <h3 class="text-lg font-bold text-gray-900 mb-4">Start New Conversation</h3>
+
+                <!-- VueForm Component -->
+                <Vueform :endpoint="false" :float-placeholders="false" :schema="createRoomSchema"
+                    @submit="handleCreateRoom" />
+
+                <!-- Close Button (Optional, if not included in form actions) -->
+                <div class="mt-4 flex justify-center">
+                    <button @click="showCreateModal = false"
+                        class="text-sm text-gray-400 hover:text-gray-600">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- VueForm CREATE ORG MODAL -->
+        <div v-if="showOrgModal"
+            class="fixed inset-0 z-20 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+            <div class="bg-white rounded-lg shadow-2xl w-96 p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">Add Organization</h3>
+
+                <Vueform :endpoint="false" :float-placeholders="false" :schema="createOrgSchema"
+                    @submit="handleCreateOrg" />
+
+                <div class="mt-4 flex justify-center">
+                    <button @click="showOrgModal = false"
+                        class="text-sm text-gray-400 hover:text-gray-600">Cancel</button>
+                </div>
+            </div>
+        </div>
+
     </div>
-
-
-    <NotificationSimple :show="restartRequestNotificationErrorTrigger" :isSuccess="false" :header="'Warning'"
-        :text="'Please select at least one device'" @update:show="restartRequestNotificationErrorTrigger = false" />
-    <NotificationSimple :show="restartRequestNotificationSuccessTrigger" :isSuccess="true" :header="'Success'"
-        :text="'Restart request has been submitted'" @update:show="restartRequestNotificationSuccessTrigger = false" />
-
-
-    <AddEditItemModal :show="createModalTrigger" :header="'Add New'" :loading="loadingModal" @close="handleModalClose">
-        <template #modal-body>
-            <CreateDeviceForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
-                @submit="handleCreateRequest" @cancel="handleModalClose" />
-        </template>
-    </AddEditItemModal>
-
-    <AddEditItemModal :show="editModalTrigger" :header="'Edit Device'" :loading="loadingModal" @close="handleModalClose">
-        <template #modal-body>
-            <UpdateDeviceForm :item="itemData" :options="itemOptions" :errors="formErrors"
-                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"
-                @domain-selected="getItemOptions" />
-        </template>
-    </AddEditItemModal>
-
-    <AddEditItemModal :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="loadingModal"
-        @close="handleModalClose">
-        <template #modal-body>
-            <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
-                :is-submitting="bulkUpdateFormSubmiting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose"
-                @domain-selected="getItemOptions" />
-        </template>
-    </AddEditItemModal>
-
-    <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
-        @confirm="confirmDeleteAction" />
-
-    <ConfirmationModal :show="confirmationRetryTrigger" @close="confirmationRetryTrigger = false"
-        @confirm="confirmRetryAction" :header="'Are you sure?'" :text="'Confirm resending selected messages.'"
-        :confirm-button-label="'Retry'" cancel-button-label="Cancel" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
+
+    <!-- DELETE CONTACT CONFIRMATION MODAL -->
+    <ConfirmationModal :show="showDeleteContactModal" @close="showDeleteContactModal = false"
+        @confirm="handleDeleteContact" header="Delete Contact?"
+        :text="`Are you sure you want to delete ${contactFullName}? This action cannot be undone, but your chat history will remain.`"
+        confirm-button-label="Delete" cancel-button-label="Cancel" />
+
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
-import { usePage } from '@inertiajs/vue3'
+import { computed, onMounted, ref, onBeforeUnmount, nextTick } from "vue";
 import axios from 'axios';
-import { router } from "@inertiajs/vue3";
-import DataTable from "./components/general/DataTable.vue";
-import TableColumnHeader from "./components/general/TableColumnHeader.vue";
-import TableField from "./components/general/TableField.vue";
-import Paginator from "./components/general/Paginator.vue";
-import NotificationSimple from "./components/notifications/Simple.vue";
-import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
-import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
-import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
-import Loading from "./components/general/Loading.vue";
-import Badge from "./components/general/Badge.vue";
-import { registerLicense } from '@syncfusion/ej2-base';
-import { MagnifyingGlassIcon, } from "@heroicons/vue/24/solid";
-import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
-import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
-import BulkActionButton from "./components/general/BulkActionButton.vue";
+import 'deep-chat'; // Registers the web component
 import MainLayout from "../Layouts/MainLayout.vue";
-import RestartIcon from "./components/icons/RestartIcon.vue";
-import CreateDeviceForm from "./components/forms/CreateDeviceForm.vue";
-import UpdateDeviceForm from "./components/forms/UpdateDeviceForm.vue";
 import Notification from "./components/notifications/Notification.vue";
+import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
+// import Pusher from 'pusher-js';
 
-const page = usePage()
-const loading = ref(false)
-const loadingModal = ref(false)
-const selectAll = ref(false);
-const selectedItems = ref([]);
-const selectPageItems = ref(false);
-const restartRequestNotificationSuccessTrigger = ref(false);
-const restartRequestNotificationErrorTrigger = ref(false);
-const createModalTrigger = ref(false);
-const editModalTrigger = ref(false);
-const bulkUpdateModalTrigger = ref(false);
-const confirmationModalTrigger = ref(false);
-const confirmationRetryTrigger = ref(false);
-const confirmationModalDestroyPath = ref(null);
-const createFormSubmiting = ref(null);
-const updateFormSubmiting = ref(null);
-const confirmDeleteAction = ref(null);
-const confirmRetryAction = ref(null);
-const bulkUpdateFormSubmiting = ref(null);
-const formErrors = ref(null);
+// --- Props (from Laravel/Inertia) ---
+const props = defineProps({
+    routes: { type: Object, required: true },
+    permissions: { type: Object, default: () => ({}) }
+})
+
+// --- State ---
+const data = ref([]);
+const activeRoomId = ref(null);
+const rooms = ref([]);
+const loadingRooms = ref(false);
+const currentHistory = ref([]); // Messages for the active room
+const showCreateModal = ref(false);
+const currentExtensionUuid = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
-let tooltipCopyContent = ref('Copy to Clipboard');
+let globalEchoChannel = null;
+const showContactPanel = ref(true); // Toggle for right sidebar
+const contactData = ref(null);
+const isEditingContact = ref(false);
+const showOrgModal = ref(false);
+const contactForm$ = ref(null);
+const showDeleteContactModal = ref(false);
+const localOrgs = ref([]);
+const extensionFormModel = ref({ extension: null });
 
-const props = defineProps({
-    data: Object,
-    showGlobal: Boolean,
-    routes: Object,
+// DIDs State (Populated when extension changes)
+const myDids = ref([]);
+
+// Global Variable to store DeepChat signals ---
+let deepChatSignals = null;
+
+// --- Computed ---
+const currentRoomName = computed(() => {
+    return rooms.value.find(r => r.id === activeRoomId.value)?.name || 'Chat';
 });
 
-
-const filterData = ref({
-    search: null,
-    showGlobal: props.showGlobal,
+const introMessage = computed(() => {
+    return activeRoomId.value
+        ? { text: `Conversation with ${currentRoomName.value}` }
+        : { text: 'Select a conversation to start chatting.' };
 });
 
-const showGlobal = ref(props.showGlobal);
+const extensionList = computed(() => data.value.extensions || []);
 
-// Computed property for bulk actions based on permissions
-const bulkActions = computed(() => {
-    const actions = [
-        {
-            id: 'bulk_retry',
-            label: 'Retry',
-            icon: 'RestartIcon'
-        },
-        {
-            id: 'bulk_delete',
-            label: 'Delete',
-            icon: 'TrashIcon'
+// --- Lifecycle ---
+onMounted(async () => {
+
+    // Enable debug logs to see Subscription Success/Failure
+    // Pusher.logToConsole = true; 
+
+    // 1. Fetch Extensions first
+    await getData();
+
+    // 2. Fetch Rooms (only after we have the Extension ID)
+    await fetchRooms();
+});
+
+// --- Actions ---
+
+const getData = async () => {
+    try {
+        const response = await axios.get(props.routes.data_route);
+        data.value = response.data;
+
+        // AUTO-SELECT LOGIC:
+        // If currentExtensionUuid is empty, try to set it to the logged-in user's extension
+        if (!currentExtensionUuid.value) {
+            const defaultId = data.value.extension_uuid;
+            const exists = (data.value.extensions || []).find(e => e.value === defaultId);
+
+            if (exists) {
+                currentExtensionUuid.value = defaultId;
+                extensionFormModel.value = { extension: defaultId }; // <-- NEW
+                if (exists.dids) myDids.value = exists.dids;
+
+            } else if (data.value.extensions?.length > 0) {
+                const firstExt = data.value.extensions[0];
+                currentExtensionUuid.value = firstExt.value;
+                extensionFormModel.value = { extension: firstExt.value }; // <-- NEW
+                if (firstExt.dids) myDids.value = firstExt.dids;
+            }
+
+            if (currentExtensionUuid.value) {
+                joinExtensionChannel(currentExtensionUuid.value);
+            }
         }
-    ];
-
-    return actions;
-});
-
-onMounted(() => {
-    // console.log(props.data);
-});
-
-const handleEditRequest = (itemUuid) => {
-    editModalTrigger.value = true
-    formErrors.value = null;
-    loadingModal.value = true
-
-    router.get(props.routes.current_page,
-        {
-            itemUuid: itemUuid,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: [
-                'itemData',
-                'itemOptions',
-            ],
-            onSuccess: (page) => {
-                loadingModal.value = false;
-            },
-            onFinish: () => {
-                loadingModal.value = false;
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
-
-        });
-}
-
-const handleCreateRequest = (form) => {
-    createFormSubmiting.value = true;
-    formErrors.value = null;
-
-    axios.post(props.routes.store, form)
-        .then((response) => {
-            createFormSubmiting.value = false;
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-            handleModalClose();
-            handleClearSelection();
-        }).catch((error) => {
-            createFormSubmiting.value = false;
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        });
-
-};
-
-const handleUpdateRequest = (form) => {
-    updateFormSubmiting.value = true;
-    formErrors.value = null;
-
-    axios.put(props.itemData.update_url, form)
-        .then((response) => {
-            updateFormSubmiting.value = false;
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-            handleModalClose();
-            handleClearSelection();
-        }).catch((error) => {
-            updateFormSubmiting.value = false;
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        });
-
-};
-
-const handleSingleItemDeleteRequest = (url) => {
-    confirmationModalTrigger.value = true;
-    confirmDeleteAction.value = () => executeSingleDelete(url);
-}
-
-const executeSingleDelete = (url) => {
-    router.delete(url, {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: (page) => {
-            if (page.props.flash.error) {
-                showNotification('error', page.props.flash.error);
-            }
-            if (page.props.flash.message) {
-                showNotification('success', page.props.flash.message);
-            }
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onFinish: () => {
-            confirmationModalTrigger.value = false;
-            confirmationModalDestroyPath.value = null;
-        },
-        onError: (errors) => {
-            console.log(errors);
-        },
-    });
-}
-
-const handleBulkActionRequest = (action) => {
-    if (action === 'bulk_delete') {
-        confirmationModalTrigger.value = true;
-        confirmDeleteAction.value = () => executeBulkDelete();
-    }
-
-    if (action === 'bulk_retry') {
-        confirmationRetryTrigger.value = true;
-        confirmRetryAction.value = () => executeBulkRetry();
+    } catch (error) {
+        handleErrorResponse(error);
     }
 }
 
-const executeBulkRetry = () => {
-    axios.post(props.routes.retry,
-        { 'items': selectedItems.value },
-    )
-        .then((response) => {
-            showNotification('success', response.data.messages);
-            handleModalClose();
-            handleClearSelection();
-        }).catch((error) => {
-            handleClearSelection();
-            handleModalClose();
-            handleFormErrorResponse(error);
-        });
-}
+// When user selects from Dropdown
+const onExtensionChange = (uuid) => {
+    // 1. Update the string UUID
+    currentExtensionUuid.value = uuid || null;
 
-const executeBulkDelete = () => {
-    axios.post(`${props.routes.bulk_delete}`, { items: selectedItems.value })
-        .then((response) => {
-            handleModalClose();
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-        })
-        .catch((error) => {
-            handleClearSelection();
-            handleModalClose();
-            handleErrorResponse(error);
-        });
-}
+    // 2. Find the full extension object from the list
+    const selectedOption = extensionList.value.find(e => e.value === uuid);
 
-const handleBulkUpdateRequest = (form) => {
-    bulkUpdateFormSubmiting.value = true
-    axios.post(`${props.routes.bulk_update}`, form)
-        .then((response) => {
-            bulkUpdateFormSubmiting.value = false;
-            handleModalClose();
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-        })
-        .catch((error) => {
-            bulkUpdateFormSubmiting.value = false;
-            handleFormErrorResponse(error);
-        });
-}
-
-const handleCreateButtonClick = () => {
-    createModalTrigger.value = true
-    formErrors.value = null;
-    loadingModal.value = true
-    getItemOptions();
-}
-
-const handleSelectAll = () => {
-    axios.post(props.routes.select_all, filterData._rawValue)
-        .then((response) => {
-            selectedItems.value = response.data.items;
-            selectAll.value = true;
-            showNotification('success', response.data.messages);
-
-        }).catch((error) => {
-            handleClearSelection();
-            handleErrorResponse(error);
-        });
-
-};
-
-
-const handleRetry = (message_uuid) => {
-    axios.post(props.routes.retry,
-        { 'items': [message_uuid] },
-    )
-        .then((response) => {
-            showNotification('success', response.data.messages);
-
-            handleClearSelection();
-        }).catch((error) => {
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        });
-}
-
-
-const handleShowGlobal = () => {
-    filterData.value.showGlobal = true;
-    showGlobal.value = true;
-    handleSearchButtonClick();
-}
-
-const handleShowLocal = () => {
-    filterData.value.showGlobal = false;
-    showGlobal.value = false;
-    handleSearchButtonClick();
-}
-
-const handleSearchButtonClick = () => {
-    loading.value = true;
-    router.visit(props.routes.current_page, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-            'showGlobal',
-        ],
-        onSuccess: (page) => {
-            loading.value = false;
-            handleClearSelection();
-        }
-    });
-};
-
-const handleFiltersReset = () => {
-    filterData.value.search = null;
-    // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
-    handleSearchButtonClick();
-}
-
-
-const renderRequestedPage = (url) => {
-    loading.value = true;
-    router.visit(url, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
-    });
-};
-
-
-const getItemOptions = (domain_uuid) => {
-    router.get(props.routes.current_page,
-        {
-            'domain_uuid': domain_uuid,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: [
-                'itemOptions',
-            ],
-            onSuccess: (page) => {
-                loadingModal.value = false;
-            },
-            onFinish: () => {
-                loadingModal.value = false;
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
-
-        });
-}
-
-const handleFormErrorResponse = (error) => {
-    if (error.request?.status == 419) {
-        showNotification('error', { request: ["Session expired. Reload the page"] });
-    } else if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        // console.log(error.response.data);
-        showNotification('error', error.response.data.errors || { request: [error.message] });
-        formErrors.value = error.response.data.errors;
-    } else if (error.request) {
-        // The request was made but no response was received
-        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-        // http.ClientRequest in node.js
-        showNotification('error', { request: [error.request] });
-        console.log(error.request);
+    // 3. Update the DIDs list for the "Create Room" form
+    if (selectedOption && selectedOption.dids) {
+        myDids.value = selectedOption.dids;
     } else {
-        // Something happened in setting up the request that triggered an Error
-        showNotification('error', { request: [error.message] });
-        console.log(error.message);
+        myDids.value = [];
     }
 
+    // Switch Global Channel
+    joinExtensionChannel(currentExtensionUuid.value);
+
+    // Clear Chat & Refresh Rooms
+    activeRoomId.value = null;
+    currentHistory.value = [];
+    showContactPanel.value = false;
+    fetchRooms();
+};
+
+// --- Actions ---
+
+async function fetchRooms() {
+    loadingRooms.value = true;
+    try {
+        const { data } = await axios.get(props.routes.roomsIndex, {
+            params: {
+                extension_uuid: currentExtensionUuid.value
+            }
+        });
+
+        rooms.value = (data.rooms || []).map(r => ({
+            id: String(r.id),
+            name: r.name,
+            avatar: r.avatar,
+            unread: Number(r.unread || 0),
+            lastMessage: r.lastMessage || 'No messages yet',
+
+            // CAPTURE NEW FIELDS
+            my_number: r.my_number, // The local DID
+            timestamp: r.timestamp  // ISO String
+        }));
+
+        if (rooms.value.length > 0) {
+            selectRoom(rooms.value[0].id);
+        } else {
+            activeRoomId.value = null;
+        }
+    } catch (e) {
+        console.error("Error fetching rooms:", e);
+    } finally {
+        loadingRooms.value = false;
+    }
 }
+
+// --- Helper: Format Date ---
+function formatDate(isoString) {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    const now = new Date();
+
+    // Check if it's today
+    const isToday = date.getDate() === now.getDate() &&
+        date.getMonth() === now.getMonth() &&
+        date.getFullYear() === now.getFullYear();
+
+    if (isToday) {
+        // Show Time: "3:15 PM"
+        return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    } else {
+        // Show Date: "Feb 24"
+        return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+}
+
+// --- Helper: Update Sidebar List ---
+const updateSidebar = (roomId, newMessageText, timestamp = null) => {
+    // 1. Find the room in the list
+    const index = rooms.value.findIndex(r => r.id === roomId);
+
+    if (index !== -1) {
+        const room = rooms.value[index];
+
+        // 2. Update Data
+        room.lastMessage = newMessageText;
+        room.timestamp = timestamp || new Date().toISOString();
+
+        // 3. Move to Top
+        // Remove it from current position
+        rooms.value.splice(index, 1);
+        // Add it to the start
+        rooms.value.unshift(room);
+    }
+};
+
+// --- REVERB WEBSOCKET LOGIC ---
+function joinChannel(roomId) {
+    leaveChannel(activeRoomId.value);
+
+    if (!window.Echo) return;
+
+    const channelId = roomId.replace(/\+/g, '');
+
+    console.log(`🔌 Joining Reverb channel: room.${channelId}`);
+
+    window.Echo.private(`room.${channelId}`)
+        .listen('.message.new', (e) => {
+            console.log('✅ LISTENER FIRED:', e);
+
+            // 1. Skip my own messages (Optimistic UI handled them)
+            if (e.role === 'user') return;
+
+            // 2. USE SIGNALS INSTEAD OF ELEMENT REF
+            if (deepChatSignals) {
+                console.log('Injecting via Signals...');
+
+                // signals.onResponse() injects the message into the chat UI
+                // e contains { text: "...", role: "ai", timestamp: "..." }
+                deepChatSignals.onResponse(e);
+            } else {
+                console.error('❌ DeepChat Signals not initialized yet');
+            }
+
+            // Update Sidebar List
+            updateSidebar(roomId, e.text, e.timestamp);
+        })
+        .error((error) => {
+            console.error('Reverb Subscription Error:', error);
+        });
+}
+
+const joinExtensionChannel = (extUuid) => {
+    // 1. Cleanup old listener
+    if (globalEchoChannel) {
+        window.Echo.leave(`extension.${globalEchoChannel}`);
+    }
+
+    if (!extUuid || !window.Echo) return;
+
+    console.log(`📡 Listening to Global Extension Channel: ${extUuid}`);
+    globalEchoChannel = extUuid;
+
+    // 2. Subscribe
+    window.Echo.private(`extension.${extUuid}`)
+        .listen('.conversation.updated', (e) => {
+            console.log('🔔 Global Update:', e);
+            handleGlobalUpdate(e);
+        });
+};
+
+function leaveChannel(roomId) {
+    if (window.Echo && roomId) {
+        const channelId = roomId.replace(/\+/g, '');
+        window.Echo.leave(`room.${channelId}`);
+    }
+}
+
+
+// --- Handler: Select Room ---
+async function selectRoom(id) {
+    if (activeRoomId.value === id) return;
+
+    // Leave old
+    if (activeRoomId.value) leaveChannel(activeRoomId.value);
+
+    activeRoomId.value = id;
+
+    // Clear Unread Badge Immediately ---
+    const room = rooms.value.find(r => r.id === id);
+    if (room) {
+        room.unread = 0;
+    }
+
+    //Backend Update: Mark messages as read in DB
+    try {
+        await axios.post(props.routes.markRead, { roomId: id });
+    } catch (e) {
+        console.error("Failed to mark as read", e);
+    }
+
+    // Load history via API (Rest)
+    await fetchMessages(id);
+
+    // Listen for new messages (Reverb)
+    joinChannel(id);
+
+    // Always switch back to "View Mode" (clean profile) when changing users
+    isEditingContact.value = false;
+
+    // If the panel is open, load the new user's data immediately
+    if (showContactPanel.value) {
+        loadContactData();
+    }
+}
+
+// --- API: Fetch Messages ---
+async function fetchMessages(roomId) {
+    // Clear history temporarily while loading
+    currentHistory.value = [];
+
+    if (!roomId) return;
+
+    const url = props.routes.roomMessages.replace(':roomId', roomId);
+
+    try {
+        const { data } = await axios.get(url, { params: { 'page[size]': 50 } });
+        const rawMessages = data.messages || [];
+
+        // DeepChat expects: { text: '...', role: 'user' | 'ai' }
+        // We need to reverse because API usually sends Newest -> Oldest, 
+        // but Chat UI needs Oldest -> Newest (top to bottom)
+        currentHistory.value = rawMessages.map(m => normalizeMessageForDeepChat(m)).reverse();
+
+    } catch (e) {
+        console.error("Error fetching messages:", e);
+        currentHistory.value = [{ text: "Error loading history.", role: "ai" }];
+    }
+}
+
+// --- DeepChat Configuration ---
+const connectConfig = {
+    websocket: true, // Enable async mode
+    handler: (body, signals) => {
+        // CAPTURE SIGNALS HERE
+        // This allows us to use 'signals' anywhere in our code (like inside Echo)
+        deepChatSignals = signals;
+
+        signals.onOpen(); // Mark connection as open immediately
+
+        // Handle User Sending Message
+        signals.newUserMessage.listener = async (msgBody) => {
+            const text = msgBody.messages[0].text;
+            const currentId = activeRoomId.value;
+
+            if (!currentId) return;
+
+            // Parse ID (source_dest)
+            const parts = currentId.split('_');
+            if (parts.length !== 2) return;
+
+            try {
+                // Fire and Forget (Optimistic UI)
+                await axios.post(props.routes.sendMessage, {
+                    source: parts[0],
+                    destination: parts[1],
+                    message: text,
+                    extension_uuid: currentExtensionUuid.value
+                });
+
+                // Update Sidebar immediately
+                updateSidebar(currentId, text, new Date().toISOString());
+            } catch (e) {
+                console.error("Send failed", e);
+                // Optional: Notify user of failure
+                // signals.onResponse({ error: "Failed to send" });
+            }
+        };
+    }
+};
+
+// --- Helper: Normalize Data ---
+function normalizeMessageForDeepChat(row) {
+    // 1. Check if backend sent 'text' (New Controller) OR 'message' (Raw DB)
+    const content = row.text || row.message || '';
+
+    // 2. Check if backend sent 'role' directly
+    let role = row.role;
+
+    // 3. Fallback: Calculate role if missing (Old DB rows)
+    if (!role) {
+        const dir = String(row.direction || '').toLowerCase();
+        const isOutbound = ['out', 'outbound', 'outgoing'].includes(dir);
+        role = isOutbound ? 'user' : 'ai';
+    }
+
+    return {
+        text: content,
+        role: role,
+        // Optional: formatting
+        // timestamp: row.timestamp 
+    };
+}
+
+// --- Action: Handle Form Submit ---
+const handleCreateRoom = (form$) => {
+    const data = form$.requestData;
+
+    const source = data.source;
+    let dest = data.destination.replace(/\D/g, ''); // Strip non-digits
+
+    // 1. Construct Composite ID
+    const newCompositeId = `${source}_${dest}`;
+
+    // 2. Optimistic UI Update
+    const newRoom = {
+        id: newCompositeId,
+        name: dest,
+        my_number: source,
+        avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(dest)}&background=random`,
+        unread: 0,
+        lastMessage: 'Draft'
+    };
+
+    rooms.value.unshift(newRoom);
+    selectRoom(newRoom.id);
+
+    // 3. Reset & Close
+    showCreateModal.value = false;
+}
+
+const handleGlobalUpdate = (e) => {
+    // e = { roomId, lastMessage, timestamp, direction, name, my_number }
+
+    // 1. Find Room
+    const index = rooms.value.findIndex(r => r.id === e.roomId);
+
+    let room;
+
+    if (index !== -1) {
+        // UPDATE EXISTING ROOM
+        room = rooms.value[index];
+        room.lastMessage = e.lastMessage;
+        room.timestamp = e.timestamp;
+
+        // Remove from current position to unshift later
+        rooms.value.splice(index, 1);
+    } else {
+        // CREATE NEW ROOM (Optimistic)
+        // This handles the case where a new customer texts in
+        room = {
+            id: e.roomId,
+            name: e.name,
+            my_number: e.my_number,
+            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(e.name)}&background=random`,
+            unread: 0,
+            lastMessage: e.lastMessage,
+            timestamp: e.timestamp
+        };
+    }
+
+    // 2. Handle Unread Count
+    // If this room is NOT the one currently open, and it's an INBOUND message, add badge
+    if (activeRoomId.value !== e.roomId && e.direction === 'in') {
+        room.unread = (room.unread || 0) + 1;
+    }
+    // If it IS the active room, we assume DeepChat showed it, so unread stays 0
+
+    // 3. Move/Add to Top
+    rooms.value.unshift(room);
+};
+
+// --- VueForm Schema ---
+// We use a computed property so the 'items' (options) update automatically 
+// when 'myDids' changes.
+const createRoomSchema = computed(() => {
+    return {
+        source: {
+            type: 'select',
+            label: 'From',
+            items: myDids.value.map(did => ({
+                value: did.number,
+                label: [did.number, did.label].filter(Boolean).join(' - ')
+            })),
+            rules: ['required'],
+            default: myDids.value.length > 0 ? myDids.value[0].number : null,
+            search: true,
+            native: false, // Use custom select UI
+        },
+        destination: {
+            type: 'text',
+            inputType: 'tel',
+            label: 'To (Customer)',
+            placeholder: '+15550000000',
+            floating: false
+        },
+        submit: {
+            type: 'button',
+            submits: true,
+            buttonLabel: 'Start Chat',
+            align: 'center',
+            buttonClass: 'bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded mt-2',
+
+            disabled: myDids.value.length === 0,
+        }
+
+    }
+});
+
+
+
+// --- VueForm Schema ---
+const contactFormSchema = ref({
+    // Row 1: Names
+
+    first_name: { type: 'text', label: 'First Name', columns: 6 },
+    last_name: { type: 'text', label: 'Last Name', columns: 6 },
+
+    // Row 2: Title & Department
+    container_job: {
+        type: 'group',
+        schema: {
+            title: { type: 'text', label: 'Job Title', columns: 6 },
+            department: { type: 'text', label: 'Department', columns: 6 },
+        }
+    },
+
+    //  Organization (Split into Select + Add Button)
+    container_org_row: {
+        type: 'group',
+        schema: {
+            organization_uuid: {
+                type: 'select',
+                label: 'Organization',
+                search: true,
+                native: false,
+                inputType: 'search',
+                autocomplete: 'off',
+                placeholder: 'Search or Select...',
+                columns: 10, // Take up most space
+
+                // Fetch from Backend
+                items: async (query) => {
+                    try {
+                        // 1. Fetch from server
+                        const res = await axios.get(props.routes.organizationsIndex, { params: { query } });
+                        const fetchedOrgs = res.data || [];
+
+                        // 2. Combine server results with our locally known Orgs
+                        const combined = [...localOrgs.value, ...fetchedOrgs];
+
+                        // 3. Deduplicate so we don't show the same Org twice
+                        return Array.from(new Map(combined.map(item => [item.value, item])).values());
+                    } catch (e) {
+                        return localOrgs.value;
+                    }
+                }
+            },
+            add_org_btn: {
+                type: 'button',
+                buttonLabel: '+',
+                label: '&nbsp;', // Empty label to align with input
+                columns: 2,
+                buttonClass: 'w-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-2 rounded border border-gray-300',
+                onClick: () => { showOrgModal.value = true; }
+            }
+        }
+    },
+
+    divider1: { type: 'static', content: '<div class="h-4"></div>' }, // Spacer
+
+    // Row 4: Contact Methods
+    website: { type: 'text', label: 'Website', columns: 12 },
+    email: { type: 'text', inputType: 'email', label: 'Email', columns: 12 },
+    phone_number: { type: 'text', label: 'Primary Phone', columns: 12, },
+
+    mobile_number: { type: 'text', label: 'Mobile', columns: 12 },
+    fax_number: { type: 'text', label: 'Fax', columns: 12 },
+
+
+    divider2: { type: 'static', content: '<hr class="my-4 border-gray-100">' },
+
+    // Row 5: Address (Granular)
+    address_label: { type: 'static', content: '<label class="text-xs font-bold text-gray-500 uppercase">Address</label>' },
+    address_street: { type: 'text', placeholder: 'Street Address', columns: 12 },
+    container_addr: {
+        type: 'group',
+        schema: {
+            address_city: { type: 'text', placeholder: 'City', columns: 5 },
+            address_state: { type: 'text', placeholder: 'State', columns: 3 },
+            address_zip: { type: 'text', placeholder: 'Zip', columns: 4 },
+        }
+    },
+
+    // Row 6: Notes
+    notes: { type: 'textarea', label: 'Notes', rows: 3 },
+
+    // Actions
+    divider3: { type: 'static', content: '<div class="h-4"></div>' },
+    save: {
+        type: 'button',
+        buttonLabel: 'Save Changes',
+        submits: true,
+        buttonClass: 'w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded shadow-sm',
+    }
+});
+
+const createOrgSchema = ref({
+    // Basic Info
+    name: { type: 'text', label: 'Organization Name', rules: ['required'] },
+
+    // Internet
+    email: { type: 'text', inputType: 'email', label: 'Email' },
+    website: { type: 'text', label: 'Website' },
+
+    // Address (Grouped for layout)
+    address_label: { type: 'static', content: '<label class="text-xs font-bold text-gray-500 uppercase mt-2 block">Address</label>' },
+    address_street: { type: 'text', placeholder: 'Street' },
+
+    container_addr: {
+        type: 'group',
+        schema: {
+            address_city: { type: 'text', placeholder: 'City', columns: 5 },
+            address_state: { type: 'text', placeholder: 'State', columns: 3 },
+            address_zip: { type: 'text', placeholder: 'Zip', columns: 4 },
+        }
+    },
+
+    // Notes
+    notes: { type: 'textarea', label: 'Notes', rows: 2 },
+
+    // Submit
+    submit: {
+        type: 'button',
+        submits: true,
+        buttonLabel: 'Create Organization',
+        buttonClass: 'w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded mt-2',
+    }
+});
+
+// Add this next to your other schemas
+const extensionSelectSchema = computed(() => {
+    return {
+        extension: {
+            type: 'select',
+            search: true,
+            native: false, // Uses the custom dropdown UI
+            placeholder: 'Select Extension',
+            items: extensionList.value.map(ext => ({
+                value: ext.value,
+                label: ext.name
+            })),
+            // When the user picks a new extension, fire our function
+            onChange: (newValue) => {
+                onExtensionChange(newValue);
+            }
+        }
+    }
+});
+
+// --- Computed Helper for View Mode Address ---
+const formattedAddress = computed(() => {
+    const s = contactData.value?.address_street;
+    const c = contactData.value?.address_city;
+    const st = contactData.value?.address_state;
+    const z = contactData.value?.address_zip;
+
+    if (!s && !c && !st && !z) return null;
+
+    let line2 = [c, st, z].filter(Boolean).join(', ');
+    return [s, line2].filter(Boolean).join('\n');
+});
+
+// --- Actions ---
+
+const toggleContactPanel = async () => {
+    showContactPanel.value = !showContactPanel.value;
+    isEditingContact.value = false; // Reset to View Mode
+    if (showContactPanel.value && activeRoomId.value) {
+        await loadContactData();
+    }
+};
+
+
+const loadContactData = async () => {
+    // 1. Safety check: Do we have a room selected?
+    if (!activeRoomId.value) return;
+
+    // 2. Extract customer number from the ID "MyDID_CustomerDID"
+    const parts = activeRoomId.value.split('_');
+    if (parts.length < 2) return;
+
+    const customerNumber = parts[1];
+
+    try {
+        contactData.value = null
+        // 3. Construct the URL using the route passed from Laravel
+        // We replace the placeholder ':phoneNumber' with the actual number
+        const url = props.routes.contactShow.replace(':phoneNumber', encodeURIComponent(customerNumber));
+
+        const { data } = await axios.get(url);
+
+        // Prepare the data object
+        // If contact exists, use it. If not, create a shell with just the phone number.
+        const incomingData = data.contact ? data.contact : { phone_number: customerNumber };
+
+        // If the contact belongs to an organization, we grab its UUID and Name
+        // and push it into localOrgs so the Vueform Select dropdown shows the Name instead of the UUID.
+        // if (incomingData.organization && incomingData.organization.organization_uuid) {
+        //     localOrgs.value = [{
+        //         value: incomingData.organization.organization_uuid,
+        //         label: incomingData.organization.name
+        //     }];
+        // } else {
+        //     localOrgs.value = null
+        // }
+
+        // 2. Update View Mode (The read-only display)
+        contactData.value = incomingData;
+
+        // 3. Update Form (The edit mode inputs)
+        // We use optional chaining (?.) because the form might not be rendered if we are in View Mode
+        // .update() ensures all fields (including hidden/selects) are populated correctly
+        contactForm$.value?.update(incomingData);
+    } catch (e) {
+        console.error("Error loading contact", e);
+    }
+};
+
+const toggleContactEditForm = async () => {
+    isEditingContact.value = !isEditingContact.value
+
+    if (isEditingContact.value) {
+        await nextTick();
+        contactForm$.value.update(contactData.value);
+    }
+
+
+}
+
+const submitContactForm = async (FormData, form$) => {
+    const requestData = form$.requestData
+    return await form$.$vueform.services.axios.post(props.routes.contactStore, requestData)
+}
+
+// Computed helper for the View Mode Avatar
+const contactInitials = computed(() => {
+    const first = contactData.value?.first_name ?? '';
+    const last = contactData.value?.last_name ?? '';
+    if (first || last) return (first.slice(0, 1) + last.slice(0, 1)).toUpperCase();
+    return '#';
+});
+
+// Computed helper for Full Name
+const contactFullName = computed(() => {
+    const first = contactData.value?.first_name ?? '';
+    const last = contactData.value?.last_name ?? '';
+    return `${first} ${last}`.trim() || 'Unknown Contact';
+});
+
+// --- Action: Delete Contact ---
+const handleDeleteContact = async () => {
+    // Ensure we actually have a saved contact to delete
+    if (!contactData.value?.contact_uuid) return;
+
+    try {
+        const url = props.routes.contactDestroy.replace(':contact', contactData.value.contact_uuid);
+        await axios.delete(url);
+
+        showNotification('success', { request: ['Contact deleted successfully'] });
+
+        showDeleteContactModal.value = false;
+        isEditingContact.value = false;
+
+        // Reload data (This will fetch null, and reset the panel to just show the raw phone number)
+        await loadContactData();
+
+        // Refresh the sidebar so the name reverts back to the phone number
+        await fetchRooms();
+
+    } catch (e) {
+        handleErrorResponse(e);
+    }
+};
+
+const handleCreateOrg = async (form$) => {
+    const data = form$.requestData;
+
+    try {
+        // 1. Create on Backend
+        const response = await axios.post(props.routes.organizationsStore, data);
+        const newOrg = response.data; // { value: 'uuid', label: 'Name' }
+
+        // 2. Close Modal
+        showOrgModal.value = false;
+
+        // 3. Inject into Contact Form safely
+        if (contactForm$.value) {
+            // Add to our local list so it's guaranteed to be in the dropdown
+            localOrgs.value.push(newOrg);
+
+            // Get the specific field element
+            console.log(contactForm$.value.elements$['container_org_row'].children$['organization_uuid'])
+            const orgSelect = contactForm$.value.elements$['container_org_row'].children$['organization_uuid'];
+
+
+            // Force the element to re-run the `items` async function
+            await orgSelect.updateItems();
+
+            // Set the value (the label will now appear correctly!)
+            orgSelect.update(newOrg.value);
+        }
+
+        showNotification('success', { request: ['Organization created'] });
+
+    } catch (e) {
+        handleErrorResponse(e);
+    }
+};
+
+const handleContactResponse = (response, contactForm$) => {
+    Object.values(contactForm$.elements$).forEach(el$ => clearErrorsRecursive(el$))
+    if (response.data.errors) {
+        Object.keys(response.data.errors).forEach((elName) => {
+            if (contactForm$.el$(elName)) {
+                contactForm$.el$(elName).messageBag.append(response.data.errors[elName][0])
+            }
+        })
+    }
+}
+
+const handleContactSuccess = (response, contactForm$) => {
+    // emit('success', 'success', response.data.messages)
+
+    showNotification('success', response.data.messages);
+
+    // Refresh rooms to update the name in the sidebar if it changed
+    fetchRooms();
+
+    loadContactData(); // Reload data to reflect changes
+
+    isEditingContact.value = false; // Switch back to View Mode
+}
+
+const handleContactError = (error, details, contactForm$) => {
+    contactForm$.messageBag.clear()
+
+    switch (details.type) {
+        case 'prepare':
+            console.log(error)
+            contactForm$.messageBag.append('Could not prepare form')
+            break
+        case 'submit':
+            handleErrorResponse(error)
+            console.log(error)
+            break
+        case 'cancel':
+            console.log(error)
+            contactForm$.messageBag.append('Request cancelled')
+            break
+        case 'other':
+            console.log(error)
+            contactForm$.messageBag.append('Couldn\'t submit form')
+            break
+    }
+}
+
+function clearErrorsRecursive(el$) {
+    // clear this element’s errors
+    el$.messageBag?.clear()
+
+    // if it has child elements, recurse into each
+    if (el$.children$) {
+        Object.values(el$.children$).forEach(childEl$ => {
+            clearErrorsRecursive(childEl$)
+        })
+    }
+}
+
+
+// Cleanup
+onBeforeUnmount(() => {
+    if (activeRoomId.value) leaveChannel(activeRoomId.value);
+    if (globalEchoChannel) window.Echo.leave(`extension.${globalEchoChannel}`);
+
+});
 
 const handleErrorResponse = (error) => {
     if (error.response) {
@@ -618,30 +1293,6 @@ const handleErrorResponse = (error) => {
     }
 }
 
-const handleSelectPageItems = () => {
-    if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.device_uuid);
-    } else {
-        selectedItems.value = [];
-    }
-};
-
-
-
-const handleClearSelection = () => {
-    selectedItems.value = [],
-        selectPageItems.value = false;
-    selectAll.value = false;
-}
-
-const handleModalClose = () => {
-    createModalTrigger.value = false;
-    editModalTrigger.value = false;
-    confirmationModalTrigger.value = false;
-    confirmationRetryTrigger.value = false;
-    bulkUpdateModalTrigger.value = false;
-}
-
 const hideNotification = () => {
     notificationShow.value = false;
     notificationType.value = null;
@@ -654,36 +1305,14 @@ const showNotification = (type, messages = null) => {
     notificationShow.value = true;
 }
 
-const determineColor = (status) => {
-  switch (status) {
-    case 'success':
-    case 'emailed':
-    case 'delivered':
-      return {
-        backgroundColor: 'bg-green-50',
-        textColor: 'text-green-700',
-        ringColor: 'ring-green-600/20'
-      };
-    case 'queued':
-      return {
-        backgroundColor: 'bg-blue-50',
-        textColor: 'text-blue-700',
-        ringColor: 'ring-blue-600/20'
-      };
-    default:
-      return {
-        backgroundColor: 'bg-yellow-50',
-        textColor: 'text-yellow-700',
-        ringColor: 'ring-yellow-600/20'
-      };
-  }
-};
-
-registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
-
 </script>
 
 <style>
-@import "@syncfusion/ej2-base/styles/tailwind.css";
-@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";
+div[data-lastpass-icon-root] {
+    display: none !important
+}
+
+div[data-lastpass-root] {
+    display: none !important
+}
 </style>
