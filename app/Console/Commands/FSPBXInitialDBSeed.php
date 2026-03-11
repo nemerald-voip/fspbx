@@ -249,6 +249,28 @@ class FSPBXInitialDBSeed extends Command
         return rtrim($env) . "\n";
     }
 
+    private function removeDuplicateEnvKeys(string $env, string $key): string
+    {
+        $lines = preg_split("/\r\n|\n|\r/", $env);
+        $seen = false;
+        $result = [];
+
+        foreach ($lines as $line) {
+            if (preg_match('/^(?:\s*#\s*)?' . preg_quote($key, '/') . '\s*=/', $line)) {
+                if ($seen) {
+                    continue;
+                }
+
+                $seen = true;
+            }
+
+            $result[] = $line;
+        }
+
+        return implode("\n", $result);
+    }
+
+
     private function getEnvValue(string $env, string $key): ?string
     {
         if (preg_match('/^' . preg_quote($key, '/') . '=(.*)$/m', $env, $matches)) {
