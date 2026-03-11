@@ -249,6 +249,15 @@ class FSPBXInitialDBSeed extends Command
         return rtrim($env) . "\n";
     }
 
+    private function getEnvValue(string $env, string $key): ?string
+    {
+        if (preg_match('/^' . preg_quote($key, '/') . '=(.*)$/m', $env, $matches)) {
+            return trim($matches[1], "\"'");
+        }
+
+        return null;
+    }
+
     private function restartSupervisorJobs()
     {
         $this->info("Restarting Supervisor processes...");
