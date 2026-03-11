@@ -150,6 +150,9 @@ class FSPBXInitialDBSeed extends Command
         // Step 17: Restart FreeSWITCH
         $this->restartFreeSwitch();
 
+        // Step 17a: Restart Supervisor
+        $this->restartSupervisorJobs();
+
         DefaultSettings::where('default_setting_category', 'switch')->delete();
         $this->runUpgradeDefaults();
         $this->runUpgradeDomains();
@@ -244,6 +247,21 @@ class FSPBXInitialDBSeed extends Command
         }
 
         return rtrim($env) . "\n";
+    }
+
+    private function restartSupervisorJobs()
+    {
+        $this->info("Restarting Supervisor processes...");
+
+        $process = new Process(['/usr/bin/supervisorctl', 'restart', 'all']);
+        $process->setTimeout(300);
+        $process->run();
+
+        if (!$process->isSuccessful()) {
+            throw new ProcessFailedException($process);
+        }
+
+        $this->info("Supervisor processes restarted successfully.");
     }
 
     private function runUpgradeSchema()
