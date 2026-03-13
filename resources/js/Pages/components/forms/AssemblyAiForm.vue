@@ -31,14 +31,22 @@
                                 </template>
                             </StaticElement>
 
-                            <SelectElement name="speech_model" :items="[
-                                { value: 'best', label: 'Best' },
-                                { value: 'slam-1', label: 'Slam-1' },
-                                { value: 'universal', label: 'Universal' },
-                            ]" :search="true" :native="false" label="Speech Model" input-type="search"
-                                autocomplete="off" :columns="{ lg: { wrapper: 5 } }"
-                                description="The speech model to use for the transcription. When null, the 'universal' model is used." 
-                                  :conditions="[() => !canEdit ]" />
+                        <TagsElement 
+                            name="speech_models" 
+                            :close-on-select="false" 
+                            :search="true" 
+                            :items="[
+                                { value: 'universal-3-pro', label: 'Universal 3 Pro' },
+                                { value: 'universal-2', label: 'Universal 2' },
+                            ]" 
+                            label="Speech Models" 
+                            input-type="search"
+                            autocomplete="off" 
+                            :floating="false"
+                            :columns="{ lg: { wrapper: 5 } }"
+                            description="The Speech Models parameter lets you specify which model to use for transcription. You can provide multiple models in priority order, and AssemblyAI system will automatically route to the best available model based on your request." 
+                            :conditions="[() => !canEdit ]" 
+                        />
                             <TextElement name="language_code" label="Language Code"
                                 description="The language of your audio file. Default: en_us." placeholder="Optional"
                                 :floating="false" :columns="{ lg: { wrapper: 5 } }" 
