@@ -340,13 +340,15 @@ class UploadCallRecordingsToS3Storage extends Command
 
     protected function getCallRecordingIds(int $limit): array
     {
+        $minimumAgeMinutes = 360;
+
         return CDR::query()
             ->whereNotNull('record_name')
             ->where('record_name', '<>', '')
             ->where('record_path', 'not like', '%S3%')
             ->where('record_path', 'not like', '%NFS%')
             ->where('hangup_cause', '<>', 'LOSE_RACE')
-            ->where('start_stamp', '<=', now())
+            ->where('start_stamp', '<=', now()->subMinutes($minimumAgeMinutes))
             ->orderBy('start_stamp', 'asc')
             ->limit($limit)
             ->pluck('xml_cdr_uuid')
