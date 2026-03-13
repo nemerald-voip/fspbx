@@ -42,7 +42,7 @@
                                     <GroupElement name="bulk_group" :columns="{ lg: 12, md: 12, sm: 12 }" class="bg-gray-50 p-4 rounded-lg border border-gray-200 mb-6 flex items-start">
                                         
                                         <SelectElement name="bulk_type" label="Action" :floating="false"
-                                            :items="options.routing_types || []" label-prop="name" value-prop="value"
+                                            :items="props.options?.routing_types || []" label-prop="name" value-prop="value"
                                             :search="true" :native="false" input-type="search" autocomplete="off"
                                             placeholder="Select Action..." :columns="{ lg: 3, md: 3, sm: 12 }"
                                             @change="(newValue, oldValue, el$) => {
@@ -63,12 +63,10 @@
                                                 
                                                 let typeEl = formInst.el$('bulk_group.bulk_type');
                                                 if (!typeEl || !typeEl.value) return [];
-                                                
-                                                try {
-                                                    let response = await axios.post(options.routes.get_routing_options, { category: typeEl.value });
-                                                    return response.data.options || [];
-                                                } catch (error) { return []; }
-                                            }" />
+
+                                                return await fetchRoutingOptions(typeEl.value, props.options?.routes?.get_routing_options);
+                                            }" 
+                                        />
 
                                         <TextElement name="bulk_description" label="Description" :floating="false"
                                             placeholder="e.g. Main Office" 
@@ -106,7 +104,7 @@
                                                     :columns="{ lg: 3, md: 3, sm: 12 }" />
 
                                                 <SelectElement name="routing_type" :floating="false"
-                                                    :items="options.routing_types || []" label-prop="name" value-prop="value"
+                                                    :items="props.options?.routing_types || []" label-prop="name" value-prop="value"
                                                     :search="true" :native="false" input-type="search" autocomplete="off"
                                                     placeholder="Select Action..."
                                                     :columns="{ lg: 3, md: 3, sm: 12 }" 
@@ -128,12 +126,10 @@
                                                         
                                                         let typeEl = formInst.el$('items.' + index + '.routing_type');
                                                         if (!typeEl || !typeEl.value) return [];
-                                                        
-                                                        try {
-                                                            let response = await axios.post(options.routes.get_routing_options, { category: typeEl.value });
-                                                            return response.data.options || [];
-                                                        } catch (error) { return []; }
-                                                    }" />
+
+                                                        return await fetchRoutingOptions(typeEl.value, props.options?.routes?.get_routing_options);
+                                                    }" 
+                                                />
 
                                                 <TextElement name="destination_description" :floating="false"
                                                     placeholder="Description" 
@@ -183,13 +179,34 @@ const props = defineProps({
 const emit = defineEmits(['close', 'success']);
 const form$ = ref(null);
 
-// Bulk Apply Logic
-const handleBulkApply = () => {
+// --- CACHING LOGIC ---
+const routingOptionsCache = {};
+
+const fetchRoutingOptions = (category, url) => {
+    if (!category || !url) return [];
+
+    if (routingOptionsCache[category]) {
+        return routingOptionsCache[category];
+    }
+
+    routingOptionsCache[category] = axios.post(url, { category: category })
+        .then(response => {
+            return response.data.options || [];
+        })
+        .catch(error => {
+            console.error("Error fetching routing options:", error);
+            delete routingOptionsCache[category]; // Clear failure so it retries
+            return [];
+        });
+
+    return routingOptionsCache[category];
+};
+
+
+const handleBulkApply = async () => {
     if (!form$.value) return;
     const f = form$.value;
     
-    // 1. Safely retrieve the Bulk Values
-    // Checking both potential element paths to guarantee we grab the value
     const bulkTypeEl = f.el$('bulk_type') || f.el$('bulk_group.bulk_type');
     const bulkType = bulkTypeEl ? bulkTypeEl.value : null;
 
@@ -199,48 +216,34 @@ const handleBulkApply = () => {
     const bulkDescEl = f.el$('bulk_description') || f.el$('bulk_group.bulk_description');
     const bulkDesc = bulkDescEl ? bulkDescEl.value : null;
 
-    // Determine how many items are in the list
     const items = f.data.items || [];
-    const numItems = items.length;
+    if (items.length === 0) return;
 
-    if (numItems === 0) return;
-
-    // Push out the Actions (Type) and Description first
-    for (let i = 0; i < numItems; i++) {
-        if (bulkDesc !== null && bulkDesc !== undefined && bulkDesc !== '') {
-            let descEl = f.el$('items.' + i + '.destination_description');
-            if (descEl) descEl.update(bulkDesc);
-        }
-        
-        if (bulkType !== null && bulkType !== undefined && bulkType !== '') {
-            let typeEl = f.el$('items.' + i + '.routing_type');
-            if (typeEl) typeEl.update(bulkType);
-        }
+    if (bulkType && props.options?.routes?.get_routing_options) {
+        await fetchRoutingOptions(bulkType, props.options.routes.get_routing_options);
     }
 
-    // Wait for Targets to load, then push the Target Value
-    if (bulkType !== null && bulkType !== undefined && bulkType !== '') {
-        
-        // Give Vueform a moment to register the new Action values internally
+    const newItems = items.map(item => {
+        const updatedItem = { ...item };
+        if (bulkDesc !== null && bulkDesc !== '') updatedItem.destination_description = bulkDesc;
+        if (bulkType !== null && bulkType !== '') updatedItem.routing_type = bulkType;
+        return updatedItem;
+    });
+
+    f.el$('items').update(newItems);
+
+    if (bulkType !== null && bulkExt !== null && bulkExt !== '') {
         setTimeout(() => {
-            for (let i = 0; i < numItems; i++) {
-                let targetEl = f.el$('items.' + i + '.routing_extension');
-                if (targetEl) {
-                    
-                    targetEl.updateItems().then(() => {
-                        
-                        if (bulkExt !== null && bulkExt !== undefined && bulkExt !== '') {
-                            targetEl.update(bulkExt);
-                        }
-                        
-                    }).catch(err => console.error("Error updating items:", err));
-                }
-            }
+            const finalItems = newItems.map(item => ({
+                ...item,
+                routing_extension: bulkExt
+            }));
+            
+            f.el$('items').update(finalItems);
         }, 100);
     }
 };
 
-// -- Manual Submit Trigger --
 const manualSubmit = async () => {
     if (!form$.value) return;
     
