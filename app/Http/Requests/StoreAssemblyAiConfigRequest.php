@@ -74,6 +74,11 @@ class StoreAssemblyAiConfigRequest extends FormRequest
             $payload['custom_spelling'] = [];
         }
 
+        // Add this for speech_models:
+        if (!isset($payload['speech_models']) || !is_array($payload['speech_models'])) {
+            $payload['speech_models'] = [];
+        }
+
         // Normalize integer fields (convert numeric strings to actual integers)
         $intFields = [
             'speaker_options.min_speakers_expected',
@@ -113,7 +118,9 @@ class StoreAssemblyAiConfigRequest extends FormRequest
             'domain_uuid' => ['nullable', 'uuid'],
 
             // 1) General & Language
-            'speech_model'     => ['nullable', Rule::in(['best', 'slam-1', 'universal'])],
+ //           'speech_model'     => ['nullable', Rule::in(['best', 'slam-1', 'universal'])],
+            'speech_models'    => ['nullable', 'array'],
+            'speech_models.*'  => ['string', Rule::in(['universal-3-pro', 'universal-2'])],
             'language_code'    => ['nullable', 'string', 'max:64'], // e.g. en_us
             'keyterms_prompt'  => ['nullable', 'string', 'max:5000'],
             'multichannel'     => ['nullable', 'boolean'],
