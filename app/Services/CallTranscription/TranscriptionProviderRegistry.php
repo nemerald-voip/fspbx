@@ -35,7 +35,7 @@ class TranscriptionProviderRegistry
 
                 // Whitelist option keys you want to pass through to the provider client
                 $allow = [
-                    'speech_model','language_code','keyterms_prompt','multichannel',
+                    'speech_models','language_code','keyterms_prompt','multichannel',
                     'language_detection','language_confidence_threshold','language_detection_options',
                     'language_codes',
                     'speaker_labels','speaker_options','speakers_expected',

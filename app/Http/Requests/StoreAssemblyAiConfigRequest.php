@@ -118,7 +118,6 @@ class StoreAssemblyAiConfigRequest extends FormRequest
             'domain_uuid' => ['nullable', 'uuid'],
 
             // 1) General & Language
- //           'speech_model'     => ['nullable', Rule::in(['best', 'slam-1', 'universal'])],
             'speech_models'    => ['nullable', 'array'],
             'speech_models.*'  => ['string', Rule::in(['universal-3-pro', 'universal-2'])],
             'language_code'    => ['nullable', 'string', 'max:64'], // e.g. en_us
