@@ -48,7 +48,7 @@
 
             <template #table-header>
                 <TableColumnHeader
-                    class="hidden lg:table-cell whitespace-nowrap px-4 py-1.5 min-w-[300px] text-left text-sm font-semibold text-gray-900">
+                    class="hidden lg:table-cell whitespace-nowrap px-4 py-1.5 lg:min-w-[300px] text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center justify-start">
                         <input type="checkbox" v-model="selectPageItems"
                             class="h-4 w-4 rounded border-gray-300 text-indigo-600">
@@ -56,14 +56,14 @@
                     </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader class="hidden lg:table-cell min-w-[150px] px-4 py-3.5 text-sm font-semibold text-gray-900">
+                <TableColumnHeader class="hidden lg:table-cell lg:min-w-[150px] px-4 py-3.5 text-sm font-semibold text-gray-900">
                     <div class="flex items-center justify-center w-full">
                         Status
                     </div>
                 </TableColumnHeader>
                 
                 <TableColumnHeader header="Date"
-                    class="hidden lg:table-cell whitespace-nowrap px-4 py-3.5 min-w-[220px] text-left text-sm font-semibold text-gray-900" />
+                    class="hidden lg:table-cell whitespace-nowrap px-4 py-3.5 lg:min-w-[220px] text-left text-sm font-semibold text-gray-900" />
                 
                 <TableColumnHeader header="Transcription"
                     class="hidden lg:table-cell w-full px-4 py-3.5 text-left text-sm font-semibold text-gray-900" />
@@ -111,44 +111,42 @@
                 <tr v-for="row in data.data" :key="row.voicemail_message_uuid"
                     class="block lg:table-row border-b lg:border-none mb-4 lg:mb-0 bg-white shadow-sm lg:shadow-none rounded-lg lg:rounded-none p-4 lg:p-0">
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 lg:contents">
-                        <TableField
-                            class="block lg:table-cell whitespace-nowrap px-0 lg:px-4 py-2 min-w-[300px] text-sm text-gray-500">
-                            <div class="flex items-start lg:items-center">
-                                <input v-if="row.voicemail_message_uuid" v-model="selectedItems" type="checkbox"
-                                    :value="row.voicemail_message_uuid"
-                                    class="h-5 w-5 lg:h-4 lg:w-4 mt-1 lg:mt-0 rounded border-gray-300 text-indigo-600">
+                    <TableField
+                        class="block lg:table-cell whitespace-nowrap px-0 lg:px-4 py-2 lg:min-w-[300px] text-sm text-gray-500">
+                        <div class="flex items-start lg:items-center">
+                            <input v-if="row.voicemail_message_uuid" v-model="selectedItems" type="checkbox"
+                                :value="row.voicemail_message_uuid"
+                                class="h-5 w-5 lg:h-4 lg:w-4 mt-1 lg:mt-0 rounded border-gray-300 text-indigo-600">
 
-                                <div class="ml-4 flex-1 min-w-0 text-sm"
-                                    :class="[row.message_status !== 'saved' ? 'font-bold text-gray-900' : 'text-gray-700']">
-                                    <div class="flex flex-col min-w-0">
-                                        <span class="truncate">{{ row.caller_id_name }}</span>
-                                        <span class="text-xs opacity-70 truncate">{{ row.caller_id_number }}</span>
-                                    </div>
+                            <div class="ml-4 flex-1 min-w-0 text-sm"
+                                :class="[row.message_status !== 'saved' ? 'font-bold text-gray-900' : 'text-gray-700']">
+                                <div class="flex flex-col min-w-0">
+                                    <span class="truncate">{{ row.caller_id_name }}</span>
+                                    <span class="text-xs opacity-70 truncate">{{ row.caller_id_number }}</span>
                                 </div>
                             </div>
-                        </TableField>
+                        </div>
+                    </TableField>
 
-                        <TableField class="block lg:table-cell min-w-[150px] px-0 lg:px-4 py-2 text-sm align-middle">
-                            <span class="lg:hidden font-semibold text-gray-400 uppercase text-[10px] block mb-1">Status:</span>
-                            <div class="flex items-center justify-start lg:justify-center w-full">
-                                <Badge
-                                    v-if="row.message_status !== 'saved'"
-                                    :text="'New'"
-                                    :backgroundColor="'bg-blue-100'"
-                                    :textColor="'text-blue-800'"
-                                    class="inline-flex px-2 py-0.5 text-[10px]"
-                                />
-                            </div>
-                        </TableField>
+                    <TableField class="block lg:table-cell lg:min-w-[150px] px-0 lg:px-4 py-2 text-sm align-middle border-t border-gray-100 lg:border-none mt-2 lg:mt-0 pt-2 lg:pt-0">
+                        <span class="lg:hidden font-semibold text-gray-400 uppercase text-[10px] block mb-1">Status:</span>
+                        <div class="flex items-center justify-start lg:justify-center w-full">
+                            <Badge
+                                v-if="row.message_status !== 'saved'"
+                                :text="'New'"
+                                :backgroundColor="'bg-blue-100'"
+                                :textColor="'text-blue-800'"
+                                class="inline-flex px-2 py-0.5 text-[10px]"
+                            />
+                        </div>
+                    </TableField>
 
-                        <TableField
-                            class="flex lg:table-cell items-center gap-2 px-0 lg:px-4 py-2 min-w-[220px] text-sm whitespace-nowrap"
-                            :class="row.message_status !== 'saved' ? 'font-bold text-gray-900' : 'text-gray-500'">
-                            <span class="lg:hidden font-semibold text-gray-400 uppercase text-[10px] block mb-1">Date:</span>
-                            <span>{{ row.created_epoch_formatted }}</span>
-                        </TableField>
-                    </div>
+                    <TableField
+                        class="flex lg:table-cell items-center gap-2 px-0 lg:px-4 py-2 lg:min-w-[220px] text-sm whitespace-nowrap border-t border-gray-100 lg:border-none mt-2 lg:mt-0 pt-2 lg:pt-0"
+                        :class="row.message_status !== 'saved' ? 'font-bold text-gray-900' : 'text-gray-500'">
+                        <span class="lg:hidden font-semibold text-gray-400 uppercase text-[10px] block mb-1">Date:</span>
+                        <span>{{ row.created_epoch_formatted }}</span>
+                    </TableField>
 
                     <TableField
                         class="block lg:table-cell px-0 lg:px-4 py-2 text-sm border-t border-gray-100 lg:border-none mt-2 lg:mt-0 pt-2 lg:pt-0">
