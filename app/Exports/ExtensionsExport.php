@@ -58,19 +58,26 @@ class ExtensionsExport implements FromCollection, WithHeadings
 
         // Build a map: extension → email (no join; clean and fast)
         $exts = $rows->pluck('extension')->filter()->values();
-        $emailMap = collect();
+        $voicemailMap = collect();
+
         if ($exts->isNotEmpty()) {
             $emailMap = DB::table('v_voicemails')
                 ->select('voicemail_id', 'voicemail_mail_to')
                 ->where('domain_uuid', $domainUuid)
                 ->whereIn('voicemail_id', $exts)
                 ->pluck('voicemail_mail_to', 'voicemail_id'); // [ext => email]
+
+            $voicemailMap = DB::table('v_voicemails')
+                ->where('domain_uuid', $domainUuid)
+                ->whereIn('voicemail_id', $exts)
+                ->pluck('voicemail_id', 'voicemail_id'); // [ext => ext]
         }
 
-$this->rows = $rows->map(function ($r) use ($emailMap) {
+$this->rows = $rows->map(function ($r) use ($emailMap, $voicemailMap) {
     $email = (string) ($emailMap->get($r->extension) ?? '');
     $cid   = formatPhoneNumber($r->outbound_caller_id_number);
     $emergencycid   = formatPhoneNumber($r->emergency_caller_id_number);
+    $voicemailEnabled = $voicemailMap->has($r->extension) ? 'true' : 'false';
 
     return [
         'extension'           => $r->extension,
@@ -79,6 +86,7 @@ $this->rows = $rows->map(function ($r) use ($emailMap) {
         'email'               => $email,
         'outbound_caller_id_number' => $cid,
         'emergency_caller_id_number' => $emergencycid,
+        'voicemail_enabled' => $voicemailEnabled,
         'description'         => $r->description,
     ];
 });
@@ -93,6 +101,7 @@ $this->rows = $rows->map(function ($r) use ($emailMap) {
         'email',
         'outbound_caller_id_number',
         'emergency_caller_id_number',
+        'voicemail_enabled',
         'description',
     ];
     }

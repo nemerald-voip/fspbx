@@ -946,58 +946,19 @@ class ExtensionsController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
-public function store(StoreExtensionRequest $request)
-{
-    $data = $request->validated();
-    $domain_uuid = session('domain_uuid');
+    public function store(StoreExtensionRequest $request)
+    {
+        $data = $request->validated();
 
-    // Check domain setting first, then fall back to default setting
-    $voicemailEnabledSetting = DomainSettings::query()
-        ->where('domain_uuid', $domain_uuid)
-        ->where('domain_setting_category', 'voicemail')
-        ->where('domain_setting_subcategory', 'enabled_default')
-        ->where('domain_setting_enabled', 'true')
-        ->value('domain_setting_value');
-
-    if ($voicemailEnabledSetting === null) {
-        $voicemailEnabledSetting = DefaultSettings::query()
-            ->where('default_setting_category', 'voicemail')
-            ->where('default_setting_subcategory', 'enabled_default')
-            ->where('default_setting_enabled', 'true')
-            ->value('default_setting_value');
-    }
-
-    $voicemailEnabledByDefault = filter_var($voicemailEnabledSetting, FILTER_VALIDATE_BOOLEAN);
-
-    // If voicemail is disabled by default, force voicemail off on create
-    if (!$voicemailEnabledByDefault) {
-        $data['voicemail_enabled'] = 'false';
-        $data['voicemail_id'] = null;
-        $data['greeting_id'] = null;
-        $data['voicemail_file'] = null;
-        $data['voicemail_local_after_email'] = null;
-        $data['voicemail_transcription_enabled'] = null;
-        $data['voicemail_description'] = null;
-        $data['voicemail_password'] = null;
-        $data['voicemail_tutorial'] = null;
-        $data['voicemail_recording_instructions'] = null;
-        $data['voicemail_sms_to'] = null;
-        $data['voicemail_mail_to'] = null;
-    }
-
-    try {
-        DB::beginTransaction();
+        try {
+            DB::beginTransaction();
 
             // 1) Create the extension
             $extension = Extensions::create($data);
 
             // 2) Create the voicemail entry for this extension
-            if (($data['voicemail_enabled'] ?? 'false') == 'true') {
-                $data['extension_uuid'] = $extension->extension_uuid;
-                $data['domain_uuid'] = $domain_uuid;
-                $data['voicemail_id'] = $extension->extension;
-
-                Voicemails::create($data);
+            if (!empty($data['voicemail_id'])) {
+                $voicemail = Voicemails::create($data);
             }
 
             $extension->advSettings()->updateOrCreate(
@@ -1018,7 +979,7 @@ public function store(StoreExtensionRequest $request)
             }
 
             return response()->json([
-                'extension_uuid' => $extension->extension_uuid,
+                'extension_uuid'    => $extension->extension_uuid,
                 'messages' => ['success' => ['Extension has been created']],
             ], 201);
         } catch (\Throwable $e) {
