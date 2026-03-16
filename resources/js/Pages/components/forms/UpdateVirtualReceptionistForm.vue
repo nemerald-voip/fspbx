@@ -155,7 +155,7 @@
                         </div>
 
                         <div v-if="greetingDescription">
-                            <p class="mt-1 text-xs text-gray-500 italic" v-html="`&quot;${decodedGreetingDescription}&quot;`"></p>
+                            <p class="mt-1 text-xs text-gray-500 italic">{{ decodedGreetingDescription }}</p>
 
                         </div>
 
