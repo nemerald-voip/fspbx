@@ -44,9 +44,6 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
             '*.outbound_caller_id_number' => [
                 'nullable'
             ],
-            '*.outbound_caller_id_number' => [
-                'nullable'
-            ],
             '*.description' => [
                 'string',
                 'nullable'
@@ -89,11 +86,17 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
 
     public function prepareForValidation($data, $index)
     {
-        $data['device_address'] = trim(str_replace(':', '', $data['device_address']));
-        $data['device_address'] = trim(str_replace('-', '', $data['device_address']));
-        $data['device_address_modified'] = strtolower(trim($data['device_address']));
-        $data['extension'] = trim($data['extension']);
-        $data['device_address'] = strtolower(trim(implode(":", str_split($data['device_address'], 2))));
+$data['extension'] = trim($data['extension'] ?? '');
+
+if (!empty($data['device_address'])) {
+    $data['device_address'] = trim(str_replace(':', '', $data['device_address']));
+    $data['device_address'] = trim(str_replace('-', '', $data['device_address']));
+    $data['device_address_modified'] = strtolower(trim($data['device_address']));
+    $data['device_address'] = strtolower(trim(implode(":", str_split($data['device_address'], 2))));
+} else {
+    $data['device_address'] = null;
+    $data['device_address_modified'] = null;
+}
         $data['extension'] = trim($data['extension']);
         $data['first_name'] = trim($data['first_name']);
         $data['last_name'] = trim($data['last_name'] ?? '');
