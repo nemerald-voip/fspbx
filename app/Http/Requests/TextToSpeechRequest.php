@@ -40,7 +40,7 @@ class TextToSpeechRequest extends FormRequest
     {
         
         $this->merge([
-            'model' => $this->input('model', 'tts-1-hd'),
+            'model' => $this->input('model', 'gpt-4o-mini-tts-2025-12-15'),
             'response_format' => $this->input('response_format', 'wav'),
         ]);
 

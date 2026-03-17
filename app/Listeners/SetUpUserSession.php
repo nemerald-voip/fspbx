@@ -139,7 +139,7 @@ class SetUpUserSession
                 ])
                 ->whereIn('v_menu_item_groups.group_uuid', $group_uuids)
                 ->distinct()
-                ->orderBy("menu_item_order")
+                ->orderBy("v_menu_items.menu_item_title")
                 ->get([
                     'v_menu_items.menu_item_uuid',
                     'v_menu_items.menu_item_title',

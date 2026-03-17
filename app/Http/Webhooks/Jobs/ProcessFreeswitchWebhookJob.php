@@ -2,18 +2,19 @@
 
 namespace App\Http\Webhooks\Jobs;
 
-use App\Models\Messages;
+use App\Jobs\SendNewVoicemailNotificationByEmail;
+use App\Jobs\SendNewVoicemailNotificationBySms;
 use App\Jobs\TranscribeCdrJob;
+use App\Models\Messages;
+use App\Models\VmNotifyProfile;
+use App\Services\BandwidthMessageProvider;
+use App\Services\CallTranscription\CallTranscriptionService;
+use App\Services\CommioMessageProvider;
+use App\Services\SinchMessageProvider;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
-use App\Services\SinchMessageProvider;
-use App\Services\CommioMessageProvider;
-use App\Services\BandwidthMessageProvider;
-use Spatie\WebhookClient\Models\WebhookCall;
-use App\Jobs\SendNewVoicemailNotificationBySms;
-use App\Jobs\SendNewVoicemailNotificationByEmail;
-use App\Services\CallTranscription\CallTranscriptionService;
 use Spatie\WebhookClient\Jobs\ProcessWebhookJob as SpatieProcessWebhookJob;
+use Spatie\WebhookClient\Models\WebhookCall;
 
 class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
 {
@@ -110,6 +111,21 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
                         SendNewVoicemailNotificationByEmail::dispatch($data);
                         break;
 
+                    case 'voicemail_created':
+                        if (!$this->validateVoicemailCreatedPayload($data)) {
+                            Log::warning('[Webhook] Invalid voicemail_created payload', $payload);
+                            break;
+                        }
+
+                        logger($payload);
+
+                        if (!$this->hasEnabledVmNotifyProfile($data)) {
+                            break;
+                        }
+
+                        HandleVoicemailCreatedJob::dispatch($data);
+                        break;
+
                     case 'transcribe_call':
                         $response = $this->transcribeCall($data);
 
@@ -129,6 +145,30 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
             // Could not obtain lock; this job will be re-queued
             return $this->release(15);
         });
+    }
+
+    private function validateVoicemailCreatedPayload(array $data): bool
+    {
+        return !empty($data['domain_uuid'])
+            && !empty($data['voicemail_uuid'])
+            && !empty($data['voicemail_id'])
+            && !empty($data['voicemail_message_uuid']);
+    }
+
+    private function hasEnabledVmNotifyProfile(array $data): bool
+    {
+        $domainUuid = $data['domain_uuid'] ?? null;
+        $voicemailUuid = $data['voicemail_uuid'] ?? null;
+
+        if (!$domainUuid || !$voicemailUuid) {
+            return false;
+        }
+
+        return VmNotifyProfile::query()
+            ->where('domain_uuid', $domainUuid)
+            ->where('voicemail_uuid', $voicemailUuid)
+            ->where('enabled', true)
+            ->exists();
     }
 
     private function transcribeCall($data)

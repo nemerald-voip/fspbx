@@ -1,208 +1,179 @@
 <template>
-    <div class="mt-8 shadow sm:rounded-md">
-        <div class="space-y-6 bg-gray-50 px-4 py-6 sm:p-6">
-            <div>
-                <h3 class="text-base font-semibold leading-6 text-gray-900">{{ title }}</h3>
-                <p class="mt-1 text-sm text-gray-500">Select a method for creating a new greeting.</p>
-            </div>
+    <TransitionRoot as="div" :show="show">
+        <Dialog as="div" class="relative z-50" @close="closeModal">
+            <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
+                leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+            </TransitionChild>
+            <div class="fixed inset-0 z-50 w-screen overflow-y-auto">
+                <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                    <TransitionChild as="template" enter="ease-out duration-300"
+                        enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                        enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200"
+                        leave-from="opacity-100 translate-y-0 sm:scale-100"
+                        leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
 
-            <div class="grid grid-cols-6 gap-6">
-                <div class="col-span-6 ">
-                    <fieldset>
-                        <div class="mt-3 space-y-6 sm:flex sm:items-center sm:space-x-10 sm:space-y-0">
-                            <div class="flex items-center">
-                                <input id="greeting-ai" name="method" type="radio"
-                                    :checked="selectedGreetingMethod === 'text-to-speech'"
-                                    @click="selectedGreetingMethod = 'text-to-speech'"
-                                    class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600" />
-                                <label for="greeting-ai"
-                                    class="ml-3 block text-sm font-medium leading-6 text-gray-900">Text-to-speech</label>
+                        <DialogPanel
+                            class="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl sm:p-6">
+
+                            <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
+                                {{ header || title }}
+                            </DialogTitle>
+                            <p class="mt-1 mb-6 text-sm text-gray-500">Select a method for creating a new greeting.</p>
+
+                            <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
+                                <button type="button"
+                                    class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                    @click="closeModal">
+                                    <span class="sr-only">Close</span>
+                                    <XMarkIcon class="h-6 w-6" aria-hidden="true" />
+                                </button>
                             </div>
-                            <div class="flex items-center">
-                                <input id="greeting-upload" name="method" type="radio"
-                                    :checked="selectedGreetingMethod === 'upload'"
-                                    @click="selectedGreetingMethod = 'upload'"
-                                    class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600" />
-                                <label for="greeting-upload"
-                                    class="ml-3 block text-sm font-medium leading-6 text-gray-900">Upload</label>
-                            </div>
-                            <div class="flex items-center">
-                                <input id="greeting-call" name="method" type="radio"
-                                    :checked="selectedGreetingMethod === 'phone-call'"
-                                    @click="selectedGreetingMethod = 'phone-call'"
-                                    class="h-4 w-4 border-gray-300 text-indigo-600 focus:ring-indigo-600" />
-                                <label for="greeting-call"
-                                    class="ml-3 block text-sm font-medium leading-6 text-gray-900">Phone call</label>
-                            </div>
-                        </div>
-                    </fieldset>
+
+                            <Vueform ref="form$" :endpoint="false">
+
+                                <!-- Responsive Radio Group -->
+                                <RadiogroupElement name="greeting_method" :items="[
+                                    { value: 'text-to-speech', label: 'Text-to-speech' },
+                                    { value: 'upload', label: 'Upload' },
+                                    { value: 'phone-call', label: 'Phone Call' },
+                                ]" default="text-to-speech" :columns="12" :remove-class="{
+                                    wrapper: ['flex-col', 'space-y-1', 'space-y-2', 'space-y-3', 'space-y-4']
+                                }" :add-class="{
+                                    wrapper: 'flex-col sm:flex-row flex-wrap gap-4 sm:gap-6 sm:space-y-0 mt-2 mb-4'
+                                }" />
+
+                                <!-- Text-to-Speech Fields -->
+                                <TextareaElement name="input" label="Custom greeting message"
+                                    :placeholder="sample_message" :rows="3" :columns="12" :floating="false"
+                                    :error="errors?.input ? errors.input[0] : null"
+                                    :conditions="[['greeting_method', '==', 'text-to-speech']]" />
+
+                                <SelectElement name="voice" label="Voice" :items="voices"
+                                    :search="true" :native="false" input-type="search"
+                                    autocomplete="off" placeholder="Choose Voice" :floating="false"
+                                    :default="props.default_voice" :columns="{
+                                        sm: {
+                                            container: 6,
+                                        },
+                                    }" :error="errors?.voice ? errors.voice[0] : null"
+                                    :conditions="[['greeting_method', '==', 'text-to-speech']]" />
+
+                                <SelectElement name="speed" label="Speed" :items="speeds"
+                                   :search="true" :native="false" input-type="search" :default="'1.00'"
+                                    autocomplete="off" placeholder="Choose Speed" :floating="false" :columns="{
+                                        sm: {
+                                            container: 6,
+                                        },
+                                    }" :error="errors?.speed ? errors.speed[0] : null"
+                                    :conditions="[['greeting_method', '==', 'text-to-speech']]" />
+
+                                <ButtonElement name="generate" label="&nbsp;" @click="generateGreeting"
+                                    :secondary="true" :loading="isFormSubmiting" :submits="false" :full="true"
+                                    :columns="{ container: 12, sm: 4 }"
+                                    :conditions="[['greeting_method', '==', 'text-to-speech']]">
+                                    Generate
+                                </ButtonElement>
+
+                                <StaticElement name="audio_player" v-if="audioUrl" :columns="{ container: 12, sm: 8 }"
+                                    :conditions="[['greeting_method', '==', 'text-to-speech']]">
+                                    
+                                        <audio controls :src="audioUrl" class="w-full h-10"></audio>
+                                </StaticElement>
+
+                                <ButtonElement name="save" v-if="audioUrl" @click="saveGreeting"
+                                    :loading="isSaving" :submits="false" :full="true"
+                                    :columns="{ container: 12, sm: 4 }"
+                                    :conditions="[['greeting_method', '==', 'text-to-speech']]">
+                                    Apply
+                                </ButtonElement>
+
+                                <!-- Upload Fields -->
+                                <FileElement name="upload_file" label="" accept=".wav, .mp3, .m4a"
+                                    description="Supported formats: WAV, MP3, or M4A" :upload-temp-endpoint="false"
+                                    :remove-temp-endpoint="false" :remove-endpoint="false" :drop="true" :add-classes="{
+                                        FilePreview: {
+                                            wrapper: 'bg-teal-50 border border-teal-200 rounded-md p-2 mt-3 shadow-sm',
+                                            filenameStatic: 'font-semibold text-teal-700 truncate',
+                                            remove: 'bg-teal-200 hover:bg-teal-300 text-teal-800 rounded-full p-1 ml-4'
+                                        }
+                                    }" @change="handleVueformFileUpload" :columns="{ container: 12, sm: 8 }"
+                                    :error="errors?.file ? errors.file[0] : null"
+                                    :conditions="[['greeting_method', '==', 'upload']]" />
+
+                                <ButtonElement name="upload_btn" label="&nbsp;" @click="uploadFile"
+                                    :loading="isFormSubmiting" :disabled="!fileToUpload || isFormSubmiting"
+                                    :submits="false" :full="true" :columns="{ container: 12, sm: 4 }"
+                                    :conditions="[['greeting_method', '==', 'upload']]">
+                                    Upload
+                                </ButtonElement>
+
+                                <!-- Phone Call Instructions -->
+                                <StaticElement name="phone_instructions" :columns="12"
+                                    :conditions="[['greeting_method', '==', 'phone-call']]">
+                                    <div class="mt-3">
+                                        <p class="text-sm text-gray-500">
+                                            To record a new greeting using your phone, follow these steps:
+                                        </p>
+                                        <ul class="mt-2 text-sm text-gray-500 list-disc pl-5">
+                                            <li v-for="(instruction, index) in phone_call_instructions" :key="index"
+                                                v-html="instruction" />
+                                        </ul>
+                                    </div>
+                                </StaticElement>
+
+                                <!-- Server Error Alert -->
+                                <StaticElement name="server_error" v-if="errors?.server" :columns="12">
+                                    <div class="rounded-md bg-red-50 p-4 mt-4">
+                                        <div class="flex">
+                                            <div class="flex-shrink-0">
+                                                <XCircleIcon class="h-5 w-5 text-red-400" aria-hidden="true" />
+                                            </div>
+                                            <div class="ml-3">
+                                                <h3 class="text-sm font-medium text-red-800">{{ errors.server[0] }}
+                                                </h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </StaticElement>
+
+                                <!-- Success Message Alert -->
+                                <StaticElement name="success_message" v-if="successMessage" :columns="12">
+                                    <div class="rounded-md bg-green-50 p-4 mt-4">
+                                        <div class="flex">
+                                            <div class="flex-shrink-0">
+                                                <CheckCircleIcon class="h-5 w-5 text-green-400" aria-hidden="true" />
+                                            </div>
+                                            <div class="ml-3">
+                                                <h3 class="text-sm font-medium text-green-800">{{ successMessage }}
+                                                </h3>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </StaticElement>
+
+                            </Vueform>
+
+                        </DialogPanel>
+                    </TransitionChild>
                 </div>
             </div>
-
-            <!-- Text-to-Speech Fields -->
-            <div v-if="selectedGreetingMethod === 'text-to-speech'" class="grid grid-cols-6 gap-6">
-                <div class="col-span-6">
-                    <LabelInputOptional target="custom_greeting_message" label="Custom greeting message"
-                        class="truncate" />
-                    <div class="mt-2">
-                        <Textarea v-model="greetingForm.input" id="custom_greeting_message"
-                            :placeholder="sample_message" name="custom_greeting_message" rows="3"
-                            :error="!!errors?.input" />
-                    </div>
-                    <div v-if="errors?.input" class="mt-2 text-xs text-red-600">
-                        {{ errors.input[0] }}
-                    </div>
-                </div>
-
-                <div class="col-span-3 sm:col-span-2 text-sm font-medium leading-6 text-gray-900">
-                    <!-- <LabelInputOptional label="Voice" class="truncate mb-1" />
-                    <ComboBox :options="voices" :search="true" :placeholder="'Choose voice'"
-                        :selectedItem="default_voice ?? voices[0]?.value" @update:model-value="handleUpdateVoice"
-                        :error="!!errors?.voice" />
-                    <div v-if="errors?.voice" class="mt-2 text-xs text-red-600">
-                        {{ errors.voice[0] }}
-                    </div> -->
-
-                    <Vueform>
-                        <SelectElement name="voice" label-prop="name" :items="voices" :default="default_voice ?? voices[0]?.value" 
-                        @change="handleUpdateVoice"
-                        :search="true" :native="false" label="Voice" input-type="search" autocomplete="off" placeholder="Choose Voice"
-                            :floating="false" />
-                    </Vueform>
-
-                </div>
-
-                <div class="col-span-3 sm:col-span-2 text-sm font-medium leading-6 text-gray-900">
-                    <!-- <LabelInputOptional label="Speed" class="truncate mb-1" />
-                    <ComboBox :options="speeds" :search="true" :placeholder="'Choose Speed'" :selectedItem="'1.00'"
-                        @update:model-value="handleUpdateSpeed" :error="!!errors?.speed" />
-                    <div v-if="errors?.speed" class="mt-2 text-xs text-red-600">
-                        {{ errors.speed[0] }}
-                    </div> -->
-
-                    <Vueform>
-                        <SelectElement name="speed" label-prop="name" :items="speeds" :default="'1.00'" 
-                        @change="handleUpdateSpeed"
-                        :search="true" :native="false" label="Speed" input-type="search" autocomplete="off" placeholder="Choose Speed"
-                            :floating="false" />
-                    </Vueform>
-                </div>
-
-                <div class="content-end col-span-2 text-sm font-medium leading-6 text-gray-900">
-                    <button @click.stop.prevent="generateGreeting" :class="{ 'mb-6': errors?.voice || errors?.speed }"
-                        class="inline-flex justify-center rounded-md bg-white px-5 py-2 gap-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-200">
-                        Generate
-                        <Spinner class="ml-1" :color="'text-gray-700'" :show="isFormSubmiting" />
-                        <!-- <PlayCircleIcon class="h-5 w-5 text-gray-500 hover:text-gray-700" /> -->
-                    </button>
-                </div>
-
-                <div v-if="audioUrl" class="col-span-6 sm:col-span-4 mt-2">
-                    <audio controls :src="audioUrl" class="w-full"></audio>
-                </div>
-
-                <div v-if="audioUrl" class="content-center col-span-2 text-sm font-medium leading-6 text-gray-900">
-                    <button @click.stop.prevent="saveGreeting"
-                        class="inline-flex justify-center rounded-md bg-indigo-600 px-5 py-2 gap-2 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-indigo-300 hover:bg-indigo-500">
-                        Apply
-                        <Spinner class="ml-1" :color="'text-gray-700'" :show="isSaving" />
-                        <!-- <PlayCircleIcon class="h-5 w-5 text-gray-500 hover:text-gray-700" /> -->
-                    </button>
-                </div>
-            </div>
-
-            <!-- Upload Fields -->
-            <div v-if="selectedGreetingMethod === 'upload'" class="grid grid-cols-6 gap-6">
-                <div class="col-span-6 sm:col-span-4">
-                    <div>
-                        <LabelInputOptional target="upload_file" label="Upload file" class="truncate" />
-                        <div class="mt-2 flex rounded-md shadow-sm">
-                            <button type="button" @click="browseFile"
-                                class="relative -ml-px inline-flex items-center gap-x-1.5 rounded-l-md px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                                Browse
-                            </button>
-                            <div class="relative flex flex-grow items-stretch focus-within:z-10">
-                                <input type="text" name="upload_file" id="upload_file" :value="selectedFileName"
-                                    disabled
-                                    class="block w-full rounded-none rounded-r-md border-0 py-1.5 pl-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                                    placeholder="No file selected" />
-                            </div>
-                        </div>
-                        <input ref="fileInput" type="file" name="file" id="file" class="hidden"
-                            @change="handleFileUpload" accept=".wav, .mp3, .m4a" />
-                        <p class="mt-2 text-sm text-gray-500 " id="file_input_help">Supported formats: WAV,
-                            MP3, or M4A</p>
-                    </div>
-                </div>
-
-                <div v-if="fileToUpload" class="content-center col-span-2 text-sm font-medium leading-6 text-gray-900">
-                    <button @click.prevent="uploadFile" :disabled="isFormSubmiting"
-                        class="inline-flex justify-center rounded-md bg-indigo-600 px-5 py-2 gap-2 text-sm font-semibold text-white shadow-sm ring-1 ring-inset ring-indigo-300 hover:bg-indigo-500 disabled:bg-indigo-500">
-                        Upload
-                        <Spinner class="ml-1" :color="'text-gray-700'" :show="isFormSubmiting" />
-                        <!-- <PlayCircleIcon class="h-5 w-5 text-gray-500 hover:text-gray-700" /> -->
-                    </button>
-                </div>
-            </div>
-
-            <!-- Phone Call Instructions -->
-            <div v-if="selectedGreetingMethod === 'phone-call'" class="mt-3">
-                <p class="text-sm text-gray-500">
-                    To record a new greeting using your phone, follow these steps:
-                </p>
-                <ul class="mt-2 text-sm text-gray-500 list-disc pl-5">
-                    <li v-for="(instruction, index) in phone_call_instructions" :key="index" v-html="instruction"></li>
-                </ul>
-            </div>
-
-            <div v-if="errors?.server" class="grid grid-cols-6 gap-6">
-                <div class="col-span-6 rounded-md bg-red-50 p-4">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <XCircleIcon class="h-5 w-5 text-red-400" aria-hidden="true" />
-                        </div>
-                        <div class="ml-3">
-                            <h3 class="text-sm font-medium text-red-800">{{ errors.server[0] }}</h3>
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div v-if="successMessage" class="grid grid-cols-6 gap-6">
-                <div class="col-span-6 rounded-md bg-green-50 p-4">
-                    <div class="flex">
-                        <div class="flex-shrink-0">
-                            <CheckCircleIcon class="h-5 w-5 text-green-400" aria-hidden="true" />
-                        </div>
-                        <div class="ml-3">
-                            <h3 class="text-sm font-medium text-green-800">{{ successMessage }}</h3>
-
-
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-
-
-        </div>
-    </div>
+        </Dialog>
+    </TransitionRoot>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue';
+import { ref } from 'vue';
 import { usePage } from '@inertiajs/vue3';
-
-import ComboBox from '../general/ComboBox.vue';
-import Textarea from '@generalComponents/Textarea.vue';
-import LabelInputOptional from '../general/LabelInputOptional.vue';
-import Spinner from "@generalComponents/Spinner.vue";
-import { XCircleIcon, CheckCircleIcon } from '@heroicons/vue/20/solid'
-
+import axios from 'axios';
+import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
+import { XMarkIcon } from '@heroicons/vue/24/outline';
+import { XCircleIcon, CheckCircleIcon } from '@heroicons/vue/20/solid';
 
 const props = defineProps({
+    show: Boolean, // Required for modal toggle
     title: String,
+    header: String,
     voices: Object,
     default_voice: {
         type: String,
@@ -212,81 +183,61 @@ const props = defineProps({
     routes: Object,
     sample_message: String,
     phone_call_instructions: Object,
+    loading: Boolean,
 });
 
-const emits = defineEmits(['greeting-saved']);
+const form$ = ref(null);
 
+const emit = defineEmits(['close', 'error', 'success', 'refresh-data', 'upload-success']);
 const page = usePage();
 
-const selectedGreetingMethod = ref('text-to-speech');
-const isFormSubmiting = ref(null);
-const isSaving = ref(null);
+// UI State Variables
+const isFormSubmiting = ref(false);
+const isSaving = ref(false);
 const errors = ref(null);
 const successMessage = ref(null);
 const audioUrl = ref(null);
 const applyUrl = ref(null);
 const newGreetingFileName = ref(null);
-const selectedFileName = ref('');
 const fileToUpload = ref(null);
 const voicemail_uuid = ref(null);
 
-const greetingForm = reactive({
-    input: null,
-    voice: props.default_voice ?? props.voices[0].value,
-    speed: '1.0',
-    _token: page.props.csrf_token,
-});
-
-const handleUpdateVoice = (newValue, oldValue, el$) => {
-    greetingForm.voice = newValue
+const closeModal = () => {
+    emit('close');
 };
 
-const handleUpdateSpeed = (newValue, oldValue, el$) => {
-    greetingForm.speed = newValue
-};
-
-const browseFile = () => {
-    document.getElementById('file').click();
-};
-
-const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-        selectedFileName.value = file.name;
-        fileToUpload.value = file;
+const handleVueformFileUpload = (newValue) => {
+    if (newValue instanceof File) {
+        fileToUpload.value = newValue;
+    } else {
+        fileToUpload.value = null; // Clears the button if the user clicks the "X" to remove the file
     }
-    event.target.value = null;
 };
 
 const uploadFile = () => {
+    if (!props.routes?.upload_greeting_route) {
+        errors.value = { server: ["Configuration error: Upload route is missing."] };
+        return;
+    }
+
     isFormSubmiting.value = true;
     successMessage.value = null;
     errors.value = {};
 
-    const formData = new FormData();
-    formData.append('file', fileToUpload.value);
-    formData.append('_token', page.props.csrf_token);
+    const uploadPayload = new FormData();
+    uploadPayload.append('file', fileToUpload.value);
+    uploadPayload.append('_token', page.props.csrf_token);
 
-    axios.post(props.routes.upload_greeting_route, formData, {
-        headers: {
-            'Content-Type': 'multipart/form-data'
-        }
+    axios.post(props.routes.upload_greeting_route, uploadPayload, {
+        headers: { 'Content-Type': 'multipart/form-data' }
     })
         .then(response => {
             isFormSubmiting.value = false;
             if (response.data.success) {
-                emits('greeting-saved', {
-                    greeting_id: response.data.greeting_id,
-                    greeting_name: response.data.greeting_name
-                });
-                selectedFileName.value = '';
                 fileToUpload.value = null;
-                successMessage.value = response.data.messages.success;
-
-                // Dismiss success message after 5 seconds
-                setTimeout(() => {
-                    successMessage.value = null;
-                }, 5000);
+                closeModal()
+                emit('upload-success', response?.data?.greeting_id ?? null)
+                emit('success', response.data.messages)
             }
         })
         .catch(error => {
@@ -295,20 +246,29 @@ const uploadFile = () => {
         });
 };
 
-
 const generateGreeting = () => {
-    // Functionality to generate greeting
+    if (!props.routes?.text_to_speech_route) {
+        errors.value = { server: ["Configuration error: Text-to-speech route is missing."] };
+        return;
+    }
+
     isFormSubmiting.value = true;
     errors.value = null;
-    audioUrl.value = null; // Reset audio URL
+    audioUrl.value = null;
 
-    axios.post(props.routes.text_to_speech_route, greetingForm)
+    const generatePayload = {
+        input: form$.value?.data?.input ?? null,
+        voice: form$.value?.data?.voice ?? null,
+        speed: form$.value?.data?.speed ?? null,
+        _token: page.props.csrf_token
+    };
+
+    axios.post(props.routes.text_to_speech_route, generatePayload)
         .then((response) => {
             isFormSubmiting.value = false;
-            // console.log(response.data);
             if (response.data.success) {
-                audioUrl.value = response.data.file_url; // Set the audio URL
-                applyUrl.value = response.data.apply_url; // Set the audio URL
+                audioUrl.value = response.data.file_url;
+                applyUrl.value = response.data.apply_url;
                 newGreetingFileName.value = response.data.file_name;
                 if (response.data.voicemail_uuid) {
                     voicemail_uuid.value = response.data.voicemail_uuid;
@@ -321,18 +281,15 @@ const generateGreeting = () => {
 };
 
 const saveGreeting = () => {
-    // Functionality to save generated greeting
     isSaving.value = true;
     errors.value = null;
 
-    // Create the payload containing greetingForm.input and newGreetingFileName
     const payload = {
-        input: greetingForm.input,
-        file_name: newGreetingFileName.value, // using .value because it's a ref
-        _token: page.props.csrf_token, // Include CSRF token if needed
+        input: form$.value?.data?.input ?? null,
+        file_name: newGreetingFileName.value,
+        _token: page.props.csrf_token,
     };
 
-    // Add voicemail_id if it exists
     if (voicemail_uuid.value) {
         payload.voicemail_uuid = voicemail_uuid.value;
     }
@@ -340,51 +297,35 @@ const saveGreeting = () => {
     axios.post(applyUrl.value, payload)
         .then((response) => {
             isSaving.value = false;
-            // console.log(response.data);
             if (response.data.success) {
-                // Emit the event with the greeting_id and greeting_name
-                emits('greeting-saved', {
+                emit('greeting-saved', {
                     greeting_id: response.data.greeting_id,
                     greeting_name: response.data.greeting_name,
                     description: response.data.description
                 });
-                audioUrl.value = false;
+                audioUrl.value = null;
                 successMessage.value = response.data.messages.success[0];
-                // Dismiss success message after 5 seconds
-                setTimeout(() => {
-                    successMessage.value = null;
-                }, 5000);
-            }
 
+                setTimeout(() => { successMessage.value = null; closeModal(); }, 2000);
+            }
         }).catch((error) => {
             isSaving.value = false;
             handleFormErrorResponse(error);
         });
 };
 
-
 const handleFormErrorResponse = (error) => {
     if (error.request?.status == 419) {
         errors.value = { request: ["Session expired. Reload the page"] };
     } else if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
         if (error.response.data && error.response.data.errors) {
             errors.value = error.response.data.errors;
         }
-
         if (error.response.data && error.response.data.message) {
             errors.value = { server: [error.response.data.message] };
         }
-    } else if (error.request) {
-        // The request was made but no response was received
-        console.log(error.request);
     } else {
-        // Something happened in setting up the request that triggered an Error
         console.log(error.message);
     }
 }
-
-
-
 </script>

@@ -70,7 +70,11 @@
                                     :urls="{}" :drop="true"
                                     accept=".pdf,.doc,.docx,.rtf,.xls,.xlsx,.csv,.txt,.jpeg,.jpg" :rules="[
                                         'max:5',
-                                    ]" />
+                                    ]" :add-classes="{
+                                        MultifileElement: {
+                                            listItem: '!bg-teal-50 !border !border-teal-200 rounded-md !p-2 mt-2 shadow-sm !text-teal-700 font-semibold [&_.form-bg-passive]:!bg-teal-200 hover:[&_.form-bg-passive]:!bg-teal-300 [&_.form-bg-passive>span]:!bg-teal-800'
+                                        }
+                                    }" />
                                 <ToggleElement name="send_confirmation" text="Send fax confirmation to my email"
                                     description="You will receive a fax confirmation either when it is successfully sent or if it fails to send." />
                                 <ButtonElement name="cancel" button-label="Cancel" :secondary="true" :columns="{

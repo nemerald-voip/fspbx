@@ -13,7 +13,7 @@ class OpenAIService
         $this->apiKey = config('services.openai.api_key');
     }
 
-    public function textToSpeech($model = 'tts-1-hd', $input, $voice = 'alloy', $response_format = 'wav', $speed = '1.0')
+    public function textToSpeech($model = 'gpt-4o-mini-tts-2025-12-15', $input, $voice = 'alloy', $response_format = 'wav', $speed = '1.0')
     {
         if (empty($this->apiKey)) {
             throw new \Exception('OpenAI API key is not configured. Please set the API key in your environment file.');
@@ -29,7 +29,7 @@ class OpenAIService
             'input' => $input,
             'voice' => $voice,
             'response_format' => $response_format,
-            'speed' => $speed,
+            'speed' => (float) $speed,
         ]);
 
         return $this->handleResponse($response);
@@ -60,12 +60,19 @@ class OpenAIService
     public function getVoices()
     {
         return [
-            ['value' => 'alloy', 'name' => 'Alloy'],
-            ['value' => 'echo', 'name' => 'Echo'],
-            ['value' => 'fable', 'name' => 'Fable'],
-            ['value' => 'onyx', 'name' => 'Onyx'],
-            ['value' => 'nova', 'name' => 'Nova'],
-            ['value' => 'shimmer', 'name' => 'Shimmer'],
+            ['value' => 'alloy', 'label' => 'Alloy'],
+            ['value' => 'ash', 'label' => 'Ash'],
+            ['value' => 'ballad', 'label' => 'Ballad'],
+            ['value' => 'coral', 'label' => 'Coral'],
+            ['value' => 'echo', 'label' => 'Echo'],
+            ['value' => 'fable', 'label' => 'Fable'],
+            ['value' => 'onyx', 'label' => 'Onyx'],
+            ['value' => 'nova', 'label' => 'Nova'],
+            ['value' => 'sage', 'label' => 'Sage'],
+            ['value' => 'shimmer', 'label' => 'Shimmer'],
+            ['value' => 'verse', 'label' => 'Verse'],
+            ['value' => 'marin', 'label' => 'Marin'],
+            ['value' => 'cedar', 'label' => 'Cedar'],
         ];
     }
 
@@ -83,7 +90,7 @@ class OpenAIService
             $formattedValue = number_format($i, 2, '.', '');
             $openAiSpeeds[] = [
                 'value' => $formattedValue,
-                'name' => $formattedValue
+                'label' => $formattedValue
             ];
         }
 
