@@ -268,11 +268,33 @@
         :header="'Create Extension'" @close="showCreateModal = false" @error="handleErrorResponse"
         @success="showNotification" @open-edit-form="handleEditButtonClick" @refresh-data="handleSearchButtonClick" />
 
-
-    <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
-        @confirm="confirmDeleteAction" :header="'Confirm Deletion'" :loading="isModalLoading"
-        :text="'This action will permanently delete the selected extension(s). Are you sure you want to proceed?'"
-        :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
+    <ConfirmationModal 
+        :show="showDeleteConfirmationModal" 
+        @close="showDeleteConfirmationModal = false"
+        @confirm="confirmDeleteAction" 
+        :header="'Confirm Deletion'" 
+        :loading="isModalLoading"
+        :confirm-button-label="'Delete'" 
+        cancel-button-label="Cancel" 
+    >
+        <div>
+            <p class="text-sm text-gray-500 mb-5">
+                This action will permanently delete the selected extension(s). Are you sure you want to proceed?
+            </p>
+            
+            <div class="flex items-center bg-gray-50 p-3 rounded-md border border-gray-200">
+                <input 
+                    id="retain_voicemail" 
+                    v-model="retainVoicemail" 
+                    type="checkbox" 
+                    class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 cursor-pointer"
+                >
+                <label for="retain_voicemail" class="ml-3 block text-sm font-medium text-gray-700 cursor-pointer">
+                    Retain voicemail (convert to team inbox)
+                </label>
+            </div>
+        </div>
+    </ConfirmationModal>
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -519,40 +541,47 @@ const handleEditButtonClick = (itemUuid) => {
     getItemOptions(itemUuid);
 }
 
+const retainVoicemail = ref(false);
+
 const handleSingleItemDeleteRequest = (uuid) => {
+    retainVoicemail.value = false;
     showDeleteConfirmationModal.value = true;
     confirmDeleteAction.value = () => executeBulkDelete([uuid]);
 };
 
 const executeBulkDelete = (items = selectedItems.value) => {
-    isModalLoading.value = true
-    axios.post(props.routes.bulk_delete, { items })
-        .then((response) => {
-            showNotification('success', response.data.messages);
-            handleSearchButtonClick();
-        })
-        .catch((error) => {
-            handleErrorResponse(error);
-        })
-        .finally(() => {
-            handleModalClose();
-            isModalLoading.value = false
-        })
-}
+    isModalLoading.value = true;
+    axios.post(props.routes.bulk_delete, { 
+        items,
+        retain_voicemail: retainVoicemail.value 
+    })
+    .then((response) => {
+        showNotification('success', response.data.messages);
+        handleSearchButtonClick();
+        handleClearSelection();
+    })
+    .catch((error) => {
+        handleErrorResponse(error);
+    })
+    .finally(() => {
+        handleModalClose();
+        isModalLoading.value = false;
+    });
+};
 
 const handleBulkActionRequest = (action) => {
     if (action === 'bulk_delete') {
+        retainVoicemail.value = false;
         showDeleteConfirmationModal.value = true;
         confirmDeleteAction.value = () => executeBulkDelete();
     }
     if (action === 'bulk_update') {
         formErrors.value = [];
         getItemOptions();
-        loadingModal.value = true
+        loadingModal.value = true;
         bulkUpdateModalTrigger.value = true;
     }
-
-}
+};
 
 const handleAdvancedActionRequest = (action, extension_uuid) => {
 
