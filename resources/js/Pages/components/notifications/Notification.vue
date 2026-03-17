@@ -1,6 +1,6 @@
 <template>
     <div aria-live="assertive"
-        class="pointer-events-none fixed inset-0 flex items-end px-4 py-6 sm:items-start sm:p-6 z-10">
+        class="pointer-events-none fixed inset-0 flex items-end px-4 py-6 sm:items-start sm:p-6 z-20">
         <div class="flex w-full flex-col items-center space-y-4 sm:items-end">
             <transition enter-active-class="transform ease-out duration-300 transition"
                 enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"

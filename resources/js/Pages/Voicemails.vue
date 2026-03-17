@@ -22,8 +22,7 @@
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.voicemail_create" type="button"
-                    @click.prevent="handleCreateButtonClick()"
+                <button v-if="permissions.voicemail_create" type="button" @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
@@ -81,8 +80,8 @@
                             <input v-if="row.voicemail_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
                                 :value="row.voicemail_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-4"
-                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.voicemail_update, }"
-                                @click="page.props.auth.can.voicemail_update && handleEditButtonClick(row.voicemail_uuid)">
+                                :class="{ 'cursor-pointer hover:text-gray-900': permissions.voicemail_update, }"
+                                @click="permissions.voicemail_update && handleEditButtonClick(row.voicemail_uuid)">
                                 <span v-if="row.extension" class="flex items-center">
                                     <UserIcon class="mr-2 h-5 w-5 text-indigo-500" />
                                     {{ row.extension.name_formatted }}
@@ -101,7 +100,8 @@
                         :text="row.voicemail_description" />
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <Badge :text="row.messages_count" @click="navigateToMessages(row.voicemail_uuid)"
+                        <Badge :text="row.messages_count"
+                            @click="permissions.voicemail_message_index && navigateToMessages(row.voicemail_uuid)"
                             backgroundColor="bg-blue-50" textColor="text-blue-700" ringColor="ring-blue-600/20"
                             class="cursor-pointer" />
 
@@ -119,8 +119,8 @@
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="page.props.auth.can.voicemail_update" :content="'Edit'"
-                                    position='TopCenter' target="#destination_tooltip_target">
+                                <ejs-tooltip v-if="permissions.voicemail_update" :content="'Edit'" position='TopCenter'
+                                    target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditButtonClick(row.voicemail_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
@@ -128,15 +128,15 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip :content="'Check messages'" position='TopCenter'
-                                    target="#restart_tooltip_target">
+                                <ejs-tooltip v-if="permissions.voicemail_message_index" :content="'Check messages'"
+                                    position='TopCenter' target="#restart_tooltip_target">
                                     <div id="restart_tooltip_target">
                                         <EnvelopeIcon @click="navigateToMessages(row.voicemail_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="page.props.auth.can.voicemail_destroy" :content="'Delete'"
+                                <ejs-tooltip v-if="permissions.voicemail_destroy" :content="'Delete'"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.voicemail_uuid)"
@@ -172,22 +172,10 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="createModalTrigger"
-        :header="'Create New Voicemail Extension'" :loading="loadingModal" @close="handleModalClose">
-        <template #modal-body>
-            <CreateVoicemailForm :options="itemOptions" :errors="formErrors" :is-submitting="createFormSubmiting"
-                @submit="handleCreateRequest" @cancel="handleModalClose" />
-        </template>
-    </AddEditItemModal>
 
-    <!-- <AddEditItemModal :customClass="'sm:max-w-4xl'" :show="showUpdateModal" :header="'Edit Voicemail Settings'"
-        :loading="loadingModal" @close="handleModalClose">
-        <template #modal-body>
-            <UpdateVoicemailForm :options="itemOptions" :errors="formErrors" :is-submitting="updateFormSubmiting"
-                @submit="handleUpdateRequest" @cancel="handleModalClose" @error="handleErrorResponse"
-                @success="showNotification" />
-        </template>
-    </AddEditItemModal> -->
+    <CreateVoicemailForm :show="showCreateModel" :options="itemOptions" :loading="loadingModal"
+        :header="'Create New Voicemail Extension'" @close="showCreateModel = false" @error="handleErrorResponse"
+        @success="showNotification" @refresh-data="handleSearchButtonClick" />
 
     <UpdateVoicemailForm :show="showUpdateModal" :options="itemOptions" :loading="loadingModal"
         :header="'Update voicemail - ' + (itemOptions?.item?.voicemail_id ?? 'loading')"
@@ -212,7 +200,6 @@ import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
-import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
@@ -233,7 +220,7 @@ const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
-const createModalTrigger = ref(false);
+const showCreateModel = ref(false);
 const showUpdateModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const showDeleteConfirmationModal = ref(false);
@@ -246,11 +233,10 @@ const formErrors = ref(null);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
-const showNewGreetingModal = ref(false);
 
 const props = defineProps({
     routes: Object,
-    itemData: Object,
+    permissions: Object,
 });
 
 const data = ref({
@@ -313,7 +299,7 @@ const bulkActions = computed(() => {
     ];
 
     // Conditionally add the delete action if permission is granted
-    if (page.props.auth.can.device_destroy) {
+    if (props.permissions.voicemail_destroy) {
         actions.push({
             id: 'bulk_delete',
             label: 'Delete',
@@ -419,7 +405,7 @@ const handleBulkUpdateRequest = (form) => {
 }
 
 const handleCreateButtonClick = () => {
-    createModalTrigger.value = true
+    showCreateModel.value = true
     formErrors.value = null;
     loadingModal.value = true
     getItemOptions();
@@ -533,7 +519,7 @@ const handleClearSelection = () => {
 }
 
 const handleModalClose = () => {
-    createModalTrigger.value = false;
+    showCreateModel.value = false;
     showUpdateModal.value = false;
     showDeleteConfirmationModal.value = false;
     bulkUpdateModalTrigger.value = false;

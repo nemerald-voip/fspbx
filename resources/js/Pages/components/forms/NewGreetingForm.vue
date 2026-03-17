@@ -183,12 +183,11 @@ const props = defineProps({
     routes: Object,
     sample_message: String,
     phone_call_instructions: Object,
-    loading: Boolean,
 });
 
 const form$ = ref(null);
 
-const emit = defineEmits(['close', 'error', 'success', 'refresh-data', 'upload-success']);
+const emit = defineEmits(['close', 'error', 'success', 'saved']);
 const page = usePage();
 
 // UI State Variables
@@ -236,7 +235,7 @@ const uploadFile = () => {
             if (response.data.success) {
                 fileToUpload.value = null;
                 closeModal()
-                emit('upload-success', response?.data?.greeting_id ?? null)
+                emit('saved', response?.data?.greeting_id ?? null)
                 emit('success', response.data.messages)
             }
         })
@@ -298,15 +297,10 @@ const saveGreeting = () => {
         .then((response) => {
             isSaving.value = false;
             if (response.data.success) {
-                emit('greeting-saved', {
-                    greeting_id: response.data.greeting_id,
-                    greeting_name: response.data.greeting_name,
-                    description: response.data.description
-                });
                 audioUrl.value = null;
-                successMessage.value = response.data.messages.success[0];
-
-                setTimeout(() => { successMessage.value = null; closeModal(); }, 2000);
+                closeModal()
+                emit('saved', response?.data?.greeting_id ?? null)
+                emit('success', response.data.messages)
             }
         }).catch((error) => {
             isSaving.value = false;

@@ -58,11 +58,12 @@
                                     voicemail_transcription_enabled: options.item?.voicemail_transcription_enabled ?? 'true',
                                     voicemail_file: options.item?.voicemail_file === 'attach' ? 'attach' : '',
                                     voicemail_local_after_email: options.item?.voicemail_local_after_email ?? 'true',
-                                    voicemail_destinations: options.item?.voicemail_destinations ?? [],
+                                    voicemail_copies: options.voicemail_copies ?? [],
                                     greeting_id: options.item?.greeting_id ?? null,
                                     voicemail_tutorial: options.item?.voicemail_tutorial ?? 'false',
                                     voicemail_recording_instructions: options.item?.voicemail_recording_instructions ?? 'true',
                                     voicemail_sms_to: options.item?.voicemail_sms_to ?? '',
+                                    voicemail_alternate_greet_id: options.item?.voicemail_alternate_greet_id ?? '',
                                 }">
 
                                 <template #empty>
@@ -81,7 +82,7 @@
                                                     'voicemail_transcription_enabled',
                                                     'voicemail_file',
                                                     'voicemail_local_after_email',
-                                                    'voicemail_destinations',
+                                                    'voicemail_copies',
                                                     'divider1',
                                                     'divider2',
                                                     'container_settings',
@@ -93,36 +94,24 @@
                                                     'greeting_id',
                                                     'voicemail_action_buttons',
                                                     'divider13',
+                                                    'voicemail_name_title',
                                                     'name_greeting_title',
                                                     'voicemail_name_action_buttons',
-                                                ]" />
+                                                    'submit_greetings',
+                                                ]" :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <FormTab name="advanced" label="Advanced" :elements="[
-                                                    'keys_container',
-                                                    'keys_title',
-                                                    'add_key',
-                                                    'device_keys',
-                                                    'advanced',
-                                                    'keys_container2',
-                                                    'submit_keys',
+                                                    'voicemail_advanced_title',
+                                                    'voicemail_tutorial',
+                                                    'divider15',
+                                                    'voicemail_recording_instructions',
+                                                    'divider18',
+                                                    'voicemail_sms_to',
+                                                    'voicemail_alternate_greet_id',
+                                                    'container_advanced',
+                                                    'submit_advanced',
 
-                                                ]" />
-                                                <!-- <FormTab name="cloud_provisioning" label="Cloud Provisioning" :elements="[
-                                                    'cloud_provisioning_title',
-                                                    'cloud_provisioning_status',
-                                                    'cloud_provisioning_register',
-                                                    'cloud_provisioning_deregister',
-                                                    'cloud_provisioning_refresh',
-                                                    'cloud_provisioning_retry',
-                                                    'cloud_provisioning_container',
-                                                    'provisioning_loading',
-                                                    'cloud_provisioning_reset',
-                                                    'cloud_container',
-                                                    'submit_cloud',
-
-                                                ]"
-                                                    :conditions="[() => options?.permissions?.manage_device_cloud_provisioning_settings && options.cloud_provider_available]" /> -->
-
+                                                ]" :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                             </FormTabs>
                                         </div>
@@ -131,7 +120,7 @@
                                             class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                                             <FormElements>
 
-                                                <StaticElement name="voicemail_title" tag="h4" content="Voicemail"
+                                                <StaticElement name="voicemail_title" tag="h4" content="Settings"
                                                     description="Customize voicemail preferences" />
                                                 <StaticElement name="uuid_clean"
                                                     :conditions="[() => options?.permissions?.is_superadmin ?? false]">
@@ -207,7 +196,7 @@
                                                     description="Remove voicemail from the cloud once the email is sent."
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
-                                                <TagsElement name="voicemail_destinations" :search="true"
+                                                <TagsElement name="voicemail_copies" :search="true"
                                                     :items="options.all_voicemails"
                                                     label="Copy Voicemail to Other Extensions" input-type="search"
                                                     autocomplete="off"
@@ -231,7 +220,7 @@
                                                 <SelectElement name="greeting_id" :search="true" :native="false"
                                                     label="Select Greeting" :items="fetchGreetings" input-type="search"
                                                     autocomplete="off" placeholder="Select Greeting" :floating="false"
-                                                    :format-data="formatGreeting" :strict="false" :columns="{
+                                                    :strict="false" :columns="{
                                                         sm: {
                                                             container: 6,
                                                         }
@@ -326,6 +315,12 @@
                                                 <StaticElement name="divider13" top="1"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
+
+                                                <StaticElement name="voicemail_name_title" tag="h4"
+                                                    content="Dial-by-name Directory Name"
+                                                    description="Set the recorded name used by the dial-by-name directory to help callers locate this mailbox."
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
+
                                                 <StaticElement name="name_greeting_title" :columns="{
                                                     sm: {
                                                         container: 3,
@@ -336,16 +331,16 @@
                                                     lg: {
                                                         container: 3,
                                                     },
-                                                }" label="Recorded Name" info="Used only in Dial by Name directory"
+                                                }" label="Recorded Name" info=""
                                                     :conditions="[['voicemail_enabled', '==', 'true']]">
                                                     <div class="pt-2 flex items-center  whitespace-nowrap space-x-2">
                                                         <!-- <p>Recorded Name:</p> -->
-                                                        <Badge v-if="recorded_name == 'Custom recording'"
-                                                            :text="recorded_name" backgroundColor="bg-green-50"
+                                                        <Badge v-if="recordedName == 'Custom recording'"
+                                                            :text="recordedName" backgroundColor="bg-green-50"
                                                             textColor="text-green-700" ringColor="ring-green-600/20" />
 
-                                                        <Badge v-if="recorded_name == 'System Default'"
-                                                            :text="recorded_name" backgroundColor="bg-blue-50"
+                                                        <Badge v-if="recordedName == 'System Default'"
+                                                            :text="recordedName" backgroundColor="bg-blue-50"
                                                             textColor="text-blue-700" ringColor="ring-blue-600/20" />
 
                                                     </div>
@@ -360,7 +355,7 @@
                                                         :columns="{
                                                             container: 2,
                                                         }" name="play_name_button" label="&nbsp;" :secondary="true"
-                                                        :conditions="[function () { return recorded_name == 'Custom recording' }]"
+                                                        :conditions="[function () { return recordedName == 'Custom recording' }]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <PlayCircleIcon
                                                             class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
@@ -383,7 +378,7 @@
                                                         label="&nbsp;" :secondary="true" :columns="{
                                                             container: 2,
                                                         }"
-                                                        :conditions="[function () { return recorded_name == 'Custom recording' }]"
+                                                        :conditions="[function () { return recordedName == 'Custom recording' }]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <CloudArrowDownIcon
                                                             class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
@@ -416,7 +411,7 @@
                                                         label="&nbsp;" :secondary="true" :columns="{
                                                             container: 2,
                                                         }"
-                                                        :conditions="[function () { return recorded_name == 'Custom recording' }]"
+                                                        :conditions="[function () { return recordedName == 'Custom recording' }]"
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <TrashIcon
                                                             class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-red-400 hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
@@ -436,16 +431,72 @@
 
                                                 </GroupElement>
 
+                                                <ButtonElement name="submit_greetings" button-label="Save"
+                                                    :submits="true" align="right" />
+
+
+                                                <!-- Voicemail Advanced -->
+                                                <StaticElement name="voicemail_advanced_title" tag="h4"
+                                                    content="Advanced"
+                                                    description="Set advanced settings for this voicemail."
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
+
+
+                                                <ToggleElement name="voicemail_tutorial" text="Play Voicemail Tutorial"
+                                                    true-value="true" false-value="false"
+                                                    description="Provide user with a guided tutorial when accessing voicemail for the first time."
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
+
+                                                <StaticElement name="divider15" tag="hr"
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
+
+                                                <ToggleElement name="voicemail_recording_instructions"
+                                                    text="Play Recording Instructions" true-value="true"
+                                                    false-value="false"
+                                                    description='Play a prompt instructing callers to "Record your message after the tone. Stop speaking to end the recording."'
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
+
+                                                <StaticElement name="divider18" tag="hr" :conditions="[
+                                                    function (form$) {
+                                                        return form$.el$('voicemail_enabled')?.value == 'true' && options.permissions.manage_voicemail_mobile_notifications
+                                                    }
+                                                ]" />
+
+                                                <TextElement name="voicemail_sms_to"
+                                                    label="Mobile Number to Receive Voicemail Notifications" :columns="{
+                                                        sm: {
+                                                            container: 6,
+                                                        },
+                                                    }" :conditions="[
+                                                        function (form$) {
+                                                            return form$.el$('voicemail_enabled')?.value == 'true' && options.permissions.manage_voicemail_mobile_notifications
+                                                        }
+                                                    ]" />
+
+                                                <TextElement name="voicemail_alternate_greet_id"
+                                                    label="Announce Voicemail Extension as"
+                                                    description="The parameter allows you to override the voicemail extension number spoken by the system in the voicemail greeting. This controls system greetings that read back an extension number, not user recorded greetings."
+                                                    :floating="false" placeholder="Enter extension" :columns="{
+                                                        sm: {
+                                                            wrapper: 6,
+                                                        },
+                                                    }" :conditions="[['voicemail_enabled', '==', 'true']]" />
+
+                                                <GroupElement name="container_advanced" />
+
+                                                <ButtonElement name="submit_advanced" button-label="Save"
+                                                    :submits="true" align="right" />
+
                                                 <NewGreetingForm :header="'New Voicemail Greeting'"
                                                     :show="showNewGreetingModal" @close="showNewGreetingModal = false"
                                                     :voices="options.voices" :speeds="options.speeds"
                                                     :default_voice="options.default_voice"
                                                     :phone_call_instructions="options.phone_call_instructions"
                                                     :sample_message="options.sample_message"
-                                                    :routes="getRoutesForGreetingForm" :loading="isModalLoading"
+                                                    :routes="getRoutesForGreetingForm"
                                                     @error="emitErrorToParentFromChild"
                                                     @success="emitSuccessToParentFromChild"
-                                                    @upload-success="handleSuccesfulGreetingUpload" />
+                                                    @saved="handleNewGreetingAdded" />
 
                                                 <NewGreetingForm :header="'New Recorded Name'"
                                                     :show="showNewNameGreetingModal"
@@ -453,10 +504,9 @@
                                                     :speeds="options.speeds" :default_voice="options.default_voice"
                                                     :phone_call_instructions="options.phone_call_instructions_for_name"
                                                     :sample_message="options.sample_message"
-                                                    :routes="getRoutesForNameForm" :loading="isModalLoading"
-                                                    @error="emitErrorToParentFromChild"
+                                                    :routes="getRoutesForNameForm" @error="emitErrorToParentFromChild"
                                                     @success="emitSuccessToParentFromChild"
-                                                    @upload-success="handleSuccesfulNameUpload"  />
+                                                    @saved="handleNewNameAdded" />
 
                                                 <ConfirmationModal :show="showDeleteConfirmationModal"
                                                     @close="showDeleteConfirmationModal = false"
@@ -468,7 +518,7 @@
                                                 <ConfirmationModal :show="showDeleteNameConfirmationModal"
                                                     @close="showDeleteNameConfirmationModal = false"
                                                     @confirm="confirmDeleteNameAction" :header="'Confirm Deletion'"
-                                                    :text="'This action will permanently delete this greeting. Are you sure you want to proceed?'"
+                                                    :text="'This action will permanently delete the custom recorded name. Are you sure you want to proceed?'"
                                                     :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
 
 
@@ -522,14 +572,13 @@ const isNameDownloading = ref(false);
 const currentNameAudio = ref(null);
 const showNewGreetingModal = ref(false);
 const showNewNameGreetingModal = ref(false);
-const recorded_name = ref(props.options?.recorded_name)
+const recordedName = ref(props.options?.recorded_name)
 const showDeleteConfirmationModal = ref(false);
 const showDeleteNameConfirmationModal = ref(false);
-const isModalLoading = ref(false);
 const availableGreetings = ref(null)
 
 
-const emit = defineEmits(['close', 'error', 'success', 'refresh-data', 'open-new-greeting-form'])
+const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
 
 
 const handleCopyToClipboard = (text) => {
@@ -575,26 +624,32 @@ const fetchGreetings = async (query, input) => {
 watch(
     () => props.options?.recorded_name,
     (newVal) => {
-        recorded_name.value = newVal;
+        recordedName.value = newVal;
     },
     { immediate: true } // Forces this to run instantly 
 )
 
 const handleNewGreetingButtonClick = () => {
+    stopGreetingAudio()
     showNewGreetingModal.value = true;
 };
 
 const handleNewNameGreetingButtonClick = () => {
+    stopRecordedNameAudio();
     showNewNameGreetingModal.value = true;
 };
 
-const handleSuccesfulGreetingUpload = async (greeting_id) => {
+const handleNewGreetingAdded = async (greeting_id) => {
     await form$.value.el$('greeting_id').updateItems()
     form$.value.update({
         greeting_id: greeting_id,
     })
-
 };
+
+const handleNewNameAdded = async () => {
+    stopRecordedNameAudio()
+    recordedName.value = 'Custom recording'
+}
 
 const currentAudio = ref(null);
 const isAudioPlaying = ref(false);
@@ -708,6 +763,7 @@ const editGreeting = () => {
 };
 
 const deleteGreeting = () => {
+    stopGreetingAudio()
     // Show the confirmation modal
     showDeleteConfirmationModal.value = true;
 };
@@ -741,10 +797,6 @@ const greetingTranscription = computed(() => {
     return selectedItem?.description || null;
 });
 
-const formatGreeting = (name, value) => {
-    return { [name]: value?.value ?? null } // must return an object
-}
-
 const hasPlayableGreeting = (form$) => {
     const val = form$?.el$('greeting_id')?.value ?? null;
     return val !== '0' && val !== '-1' && val !== null;
@@ -776,8 +828,6 @@ const confirmGreetingDeleteAction = async () => {
                 })
 
                 emit('success', 'success', response.data.messages);
-
-                console.log(response.data.messages)
             }
         })
         .catch((error) => {
@@ -836,7 +886,7 @@ const downloadRecordedName = () => {
 
                 const link = document.createElement('a');
                 link.href = downloadUrl;
-                link.download = response.data.file_name || 'recorded_name.wav';
+                link.download = response.data.file_name || 'recordedName.wav';
 
                 document.body.appendChild(link);
                 link.click();
@@ -853,16 +903,18 @@ const downloadRecordedName = () => {
 
 
 const deleteRecordedName = () => {
-    showDeleteNameConfirmationModal.value = true; // Show confirmation modal
+    stopRecordedNameAudio()
+    showDeleteNameConfirmationModal.value = true
 };
 
 
 const confirmDeleteNameAction = () => {
+    stopRecordedNameAudio();
     axios
         .post(props.options.routes.delete_recorded_name_route, { voicemail_id: form$.value.data.voicemail_id })
         .then((response) => {
             if (response.data.success) {
-                recorded_name.value = 'System Default';
+                recordedName.value = 'System Default';
                 emit('success', 'success', response.data.messages);
             }
         })

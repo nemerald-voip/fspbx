@@ -54,11 +54,11 @@ class VoicemailController extends Controller
                 'routes' => [
                     'current_page' => route('voicemails.index'),
                     'data_route' => route('voicemails.data'),
-                    'store' => route('voicemails.store'),
                     'item_options' => route('voicemails.item.options'),
                     'bulk_delete' => route('voicemails.bulk.delete'),
                     'select_all' => route('voicemails.select.all'),
-                ]
+                ],
+                'permissions' => $this->getUserPermissions(),
             ]
         );
     }
@@ -511,12 +511,7 @@ class VoicemailController extends Controller
             // Extract voicemail_destinations and format it for frontend
             $voicemailCopies = [];
             if ($voicemail->voicemail_destinations) {
-                $voicemailCopies = $voicemail->voicemail_destinations->map(function ($destination) {
-                    return [
-                        'value' => $destination->voicemail_uuid_copy, // Set the value to voicemail_uuid_copy
-                        'name' => ''
-                    ];
-                })->toArray();
+                $voicemailCopies = $voicemail->voicemail_destinations->pluck('voicemail_uuid_copy')->values()->all();
             }
 
             // Define the instructions for recording a voicemail greeting using a phone call
@@ -541,6 +536,10 @@ class VoicemailController extends Controller
             $sampleMessage = 'Thank you for calling. Please, leave us a message and will call you back as soon as possible';
 
             $openAiService = app(\App\Services\OpenAIService::class);
+
+            $routes = array_merge($routes, [
+                'store_route' => route('voicemails.store'),
+            ]);
 
             // Construct the itemOptions object
             $itemOptions = [
@@ -624,6 +623,11 @@ class VoicemailController extends Controller
     public function getUserPermissions()
     {
         $permissions = [];
+
+        $permissions['voicemail_create'] = userCheckPermission('voicemail_add');
+        $permissions['voicemail_update'] = userCheckPermission('voicemail_edit');
+        $permissions['voicemail_destroy'] = userCheckPermission('voicemail_delete');
+        $permissions['voicemail_message_index'] = userCheckPermission('voicemail_message_view');
         $permissions['manage_voicemail_copies'] = userCheckPermission('voicemail_forward');
         $permissions['manage_voicemail_transcription'] = userCheckPermission('voicemail_transcription_enabled');
         $permissions['manage_voicemail_auto_delete'] = userCheckPermission('voicemail_local_after_email');
