@@ -169,8 +169,19 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.device_description" />
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.device_provisioned_date_formatted ?? row.device_provisioned_date" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <ejs-tooltip v-if="row.device_provisioned_ip || row.device_provisioned_agent" 
+                            :content="[row.device_provisioned_ip, row.device_provisioned_agent].filter(Boolean).join(' - ')" 
+                            position='TopLeft' 
+                            :target="`#contact_tooltip_${row.device_uuid}`">
+                            <div :id="`contact_tooltip_${row.device_uuid}`" class="w-fit cursor-help">
+                                {{ row.device_provisioned_date_formatted ?? row.device_provisioned_date }}
+                            </div>
+                        </ejs-tooltip>
+                        <div v-else>
+                            {{ row.device_provisioned_date_formatted ?? row.device_provisioned_date }}
+                        </div>
+                    </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <div class="flex items-center whitespace-nowrap">
