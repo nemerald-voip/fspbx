@@ -824,7 +824,7 @@ const confirmGreetingDeleteAction = async () => {
                 await form$.value.el$('greeting_id').updateItems();
 
                 form$.value.update({
-                    greeting_id: -1,
+                    greeting_id: '-1',
                 })
 
                 emit('success', 'success', response.data.messages);

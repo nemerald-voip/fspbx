@@ -371,7 +371,6 @@ const props = defineProps({
 
 
 // Initialize activeTab with the currently active tab from props
-const activeTab = ref(props.options.navigation.find(item => item.slug)?.slug || props.options.navigation[0].slug);
 const showGreetingForm = ref(false);
 const showEditModal = ref(false);
 const showNameForm = ref(false);
@@ -388,9 +387,6 @@ const submittingKeyUpdate = ref(false);
 const submittingKeyCreate = ref(false);
 
 
-const setActiveTab = (tabSlug) => {
-    activeTab.value = tabSlug;
-};
 
 const toggleGreetingForm = () => {
     showGreetingForm.value = !showGreetingForm.value;

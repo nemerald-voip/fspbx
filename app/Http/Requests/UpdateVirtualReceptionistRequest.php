@@ -61,7 +61,7 @@ class UpdateVirtualReceptionistRequest extends FormRequest
 
     public function prepareForValidation(): void
     {
-        // logger($this);
+        logger($this);
 
         if ($this->has('repeat_prompt') && $this->repeat_prompt == 'NULL') {
             $this->merge([

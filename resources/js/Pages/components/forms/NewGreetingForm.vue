@@ -235,7 +235,7 @@ const uploadFile = () => {
             if (response.data.success) {
                 fileToUpload.value = null;
                 closeModal()
-                emit('saved', response?.data?.greeting_id ?? null)
+                emit('saved', String(response?.data?.greeting_id) ?? null)
                 emit('success', response.data.messages)
             }
         })
@@ -299,7 +299,7 @@ const saveGreeting = () => {
             if (response.data.success) {
                 audioUrl.value = null;
                 closeModal()
-                emit('saved', response?.data?.greeting_id ?? null)
+                emit('saved', String(response?.data?.greeting_id) ?? null)
                 emit('success', response.data.messages)
             }
         }).catch((error) => {

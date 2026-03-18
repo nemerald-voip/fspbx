@@ -66,7 +66,7 @@
                     </button>
                     <button type="button"
                         class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                        @click="emits('cancel')" ref="cancelButtonRef">Cancel
+                        @click="emit('cancel')" ref="cancelButtonRef">Cancel
                     </button>
                 </div>
             </div>
@@ -77,7 +77,7 @@
 </template>
 
 <script setup>
-import { reactive, ref, onMounted } from "vue";
+import { reactive, ref } from "vue";
 import { usePage } from '@inertiajs/vue3';
 
 
@@ -86,8 +86,6 @@ import InputField from "../general/InputField.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import Spinner from "../general/Spinner.vue";
-import { Cog6ToothIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
-import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import Toggle from "@generalComponents/Toggle.vue";
 
 
@@ -105,8 +103,8 @@ const isTargetDisabled = ref(false);
 const disabledTypes = ['check_voicemail', 'company_directory', 'hangup'];
 
 const form = reactive({
-    menu_uuid: props.options?.ivr?.ivr_menu_uuid ?? null,
-    domain_uuid: props.options?.ivr?.domain_uuid ?? null,
+    menu_uuid: props.options?.item?.ivr_menu_uuid ?? null,
+    domain_uuid: props.options?.item?.domain_uuid ?? null,
     status: true,
     key: null,
     action: null,
@@ -117,12 +115,12 @@ const form = reactive({
 });
 
 
-const emits = defineEmits(['submit', 'cancel', 'error','clear-errors']);
+const emit = defineEmits(['submit', 'cancel', 'error']);
 
 
 const submitForm = () => {
     // console.log(form);
-    emits('submit', form); // Emit the event with the form data
+    emit('submit', form); // Emit the event with the form data
 }
 
 const handleUpdateActionField = (selected) => {
@@ -146,7 +144,7 @@ function fetchRoutingTypeOptions(newValue) {
         .then((response) => {
             targets.value = response.data.options; // Assign the returned options to `targets`
         }).catch((error) => {
-            emits('error', error);
+            emit('error', error);
         })
         .finally(() => {
             loading.value = false; // Hide spinner after fetch completes

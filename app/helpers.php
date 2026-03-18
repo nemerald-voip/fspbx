@@ -1210,66 +1210,83 @@ if (! function_exists('getRingBackTonesCollectionGrouped')) {
 }
 
 
-if (!function_exists('getSoundsCollection')) {
-    function getSoundsCollection(string $domain = null): array
+if (!function_exists('getSoundsCollectionGrouped')) {
+    function getSoundsCollectionGrouped(string $domain = null): array
     {
-        $recordings = [];
-        $recordingsCollection = Recordings::query()
-            ->with(['domain' => function ($query) {
-                $query->select('domain_uuid', 'domain_name'); // Select only the fields you need from the domain
-            }])
-            ->select('domain_uuid', 'recording_filename', 'recording_name');
-        if ($domain) {
-            $recordingsCollection->where('domain_uuid', $domain);
-        }
-        $recordingsCollection = $recordingsCollection->orderBy('recording_name')->get();
+        // — None —
+        $none = [
+            [
+                'label' => 'None',
+                'value' => 'silence_stream://100',
+            ],
+        ];
 
-        // logger($recordingsCollection);
-        foreach ($recordingsCollection as $item) {
-            $recordings[] = [
-                'name' => $item->recording_name,
-                'value' => $item->recording_filename
-            ];
-        }
-        // logger($recordings);
+        // — Recordings —
+        $recordings = Recordings::query()
+            ->with(['domain:domain_uuid,domain_name'])
+            ->select('domain_uuid', 'recording_filename', 'recording_name')
+            ->when($domain, fn($q) => $q->where('domain_uuid', $domain))
+            ->orderBy('recording_name')
+            ->get()
+            ->map(fn($item) => [
+                'label' => $item->recording_name,
+                'value' => $item->recording_filename,
+            ])
+            ->toArray();
 
+        // — Default sound language settings —
+        $variables = SwitchVariable::whereIn('var_name', [
+            'default_language',
+            'default_dialect',
+            'default_voice',
+        ])->pluck('var_value', 'var_name');
 
-        $variables = SwitchVariable::whereIn('var_name', ['default_language', 'default_dialect', 'default_voice'])
-            ->pluck('var_value', 'var_name');
-        // Extract values
-        $defaultLanguage = $variables['default_language'] ?? 'en'; // Fallback to 'en' if not found
-        $defaultDialect = $variables['default_dialect'] ?? 'us';  // Fallback to 'us' if not found
-        $defaultVoice = $variables['default_voice'] ?? 'callie';  // Fallback to 'callie' if not found
+        $defaultLanguage = $variables['default_language'] ?? 'en';
+        $defaultDialect = $variables['default_dialect'] ?? 'us';
+        $defaultVoice = $variables['default_voice'] ?? 'callie';
 
-        $sounds = Storage::disk('sounds')->allFiles($defaultLanguage . "/" . $defaultDialect . "/" . $defaultVoice);
+        $basePath = "{$defaultLanguage}/{$defaultDialect}/{$defaultVoice}";
 
-        $sounds = collect($sounds)
-            ->map(function ($file) {
-                // Remove the "en/us/callie" prefix and subdirectories with numbers or specific names like 'flac'
-                $cleanedFile = preg_replace('#^en/us/callie/#', '', $file); // Remove "en/us/callie"
+        // — Sounds —
+        $sounds = collect(Storage::disk('sounds')->allFiles($basePath))
+            ->map(function ($file) use ($basePath) {
+                $cleanedFile = preg_replace('#^' . preg_quote($basePath, '#') . '/#', '', $file);
                 $cleanedFile = preg_replace('#/(\d+|flac)/#', '/', $cleanedFile);
+
                 return [
-                    'name' => $cleanedFile,
+                    'label' => $cleanedFile,
                     'value' => $cleanedFile,
                 ];
             })
-            ->unique('name') // Ensure uniqueness by 'name'
+            ->unique('label')
             ->values()
-            ->all();
+            ->toArray();
 
+        // — Assemble groups —
+        $groups = [];
 
+        if (! empty($none)) {
+            $groups[] = [
+                'label' => '',
+                'items' => $none,
+            ];
+        }
 
-        unset($musicOnHoldCollection, $recordingsCollection, $ringtonesCollection, $item);
-        return [
-            '' => [
-                [
-                    'name' => 'None',
-                    'value' => 'silence_stream://100',
-                ],
-            ],
-            'Recordings' => $recordings,
-            'Sounds' => $sounds,
-        ];
+        if (! empty($recordings)) {
+            $groups[] = [
+                'label' => 'Recordings',
+                'items' => $recordings,
+            ];
+        }
+
+        if (! empty($sounds)) {
+            $groups[] = [
+                'label' => 'Sounds',
+                'items' => $sounds,
+            ];
+        }
+
+        return $groups;
     }
 }
 

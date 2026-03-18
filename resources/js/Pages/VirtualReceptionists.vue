@@ -35,7 +35,7 @@
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
                     @pagination-change-page="renderRequestedPage" :bulk-actions="bulkActions"
-                    @bulk-action="handleBulkActionRequest" :has-selected-items="selectedItems.length > 0"/>
+                    @bulk-action="handleBulkActionRequest" :has-selected-items="selectedItems.length > 0" />
             </template>
             <template #table-header>
 
@@ -151,35 +151,19 @@
         <div class="px-4 sm:px-6 lg:px-8"></div>
     </div>
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showCreateModal" :header="'Create New Virtual Receptionist'"
-        :loading="loadingModal" @close="handleModalClose">
-        <template #modal-body>
-            <CreateVirtualReceptionistForm :options="itemOptions" :errors="formErrors" @refresh-data="getItemOptions"
-                :is-submitting="createFormSubmiting" @submit="handleCreateRequest" @cancel="handleModalClose"
-                @error="handleFormErrorResponse" @success="showNotification('success', $event)"
-                @clear-errors="handleClearErrors" />
-        </template>
-    </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-6xl'" :show="showEditModal"
-        :header="'Edit Virtual Receptionist Settings - ' + itemOptions?.ivr?.ivr_menu_name" :loading="loadingModal"
-        @close="handleModalClose">
-        <template #modal-body>
-            <UpdateVirtualReceptionistForm :options="itemOptions" :errors="formErrors" @refresh-data="getItemOptions"
-                :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"
-                @error="handleFormErrorResponse" @success="showNotification"
-                @clear-errors="handleClearErrors" />
-        </template>
-    </AddEditItemModal>
+    <!-- <CreateVirtualReceptionistForm :options="itemOptions" @refresh-data="getItemOptions" :show="showCreateModal"
+        @close="showCreateModal = false" @submit="handleCreateRequest" @cancel="handleModalClose"
+        @error="handleFormErrorResponse" @success="showNotification('success', $event)" /> -->
 
-    <AddEditItemModal :show="bulkUpdateModalTrigger" :header="'Bulk Edit'" :loading="loadingModal"
-        @close="handleModalClose">
-        <template #modal-body>
-            <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :errors="formErrors"
-                :is-submitting="bulkUpdateFormSubmiting" @submit="handleBulkUpdateRequest" @cancel="handleModalClose"
-                @domain-selected="getItemOptions" />
-        </template>
-    </AddEditItemModal>
+
+
+    <UpdateVirtualReceptionistForm :options="itemOptions" @refresh-data="handleSearchButtonClick" :show="showUpdateModal"
+        @close="showUpdateModal = false"
+        :header="'Edit Virtual Receptionist Settings - ' + itemOptions?.item?.ivr_menu_name" :loading="loadingModal"
+        @error="handleFormErrorResponse"
+        @success="showNotification" />
+
 
     <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="confirmDeleteAction" />
@@ -220,7 +204,7 @@ const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const showCreateModal = ref(false);
-const showEditModal = ref(false);
+const showUpdateModal = ref(false);
 const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationModalDestroyPath = ref(null);
@@ -271,7 +255,7 @@ const bulkActions = computed(() => {
 
 
 const handleEditRequest = (itemUuid) => {
-    showEditModal.value = true
+    showUpdateModal.value = true
     formErrors.value = null;
     loadingModal.value = true
     getItemOptions(itemUuid);
@@ -461,7 +445,7 @@ const getItemOptions = (itemUuid = null) => {
         .then((response) => {
             loadingModal.value = false;
             itemOptions.value = response.data;
-            // console.log(itemOptions.value);
+            console.log(itemOptions.value);
 
         }).catch((error) => {
             handleModalClose();
@@ -582,7 +566,7 @@ const handleClearSelection = () => {
 
 const handleModalClose = () => {
     showCreateModal.value = false;
-    showEditModal.value = false;
+    showUpdateModal.value = false;
     confirmationModalTrigger.value = false;
     bulkUpdateModalTrigger.value = false;
 }
