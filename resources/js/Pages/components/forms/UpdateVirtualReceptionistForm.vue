@@ -69,7 +69,7 @@
                                                     'input_handling_title',
                                                     'repeat_prompt',
                                                     'exit_action',
-                                                    'exit_target_uuid',
+                                                    'exit_target',
                                                     'container_settings',
                                                     'submit_settings',
                                                 ]" />
@@ -93,7 +93,6 @@
                                                     'exit_message',
                                                     'exit_message_actions',
                                                     'direct_dial',
-                                                    'voicemail_play_recording_instructions',
                                                     'container_advanced',
                                                     'submit_advanced',
                                                 ]" />
@@ -161,7 +160,7 @@
                                                     </template>
                                                 </SelectElement>
 
-                                                <GroupElement name="ivr_action_buttons" :columns="{ container: 6 }">
+                                                <GroupElement name="ivr_action_buttons" :columns="{ sm: { container: 6 } }">
                                                     <ButtonElement v-if="!isAudioPlaying" @click="playGreeting"
                                                         name="play_button" label="&nbsp;" :secondary="true"
                                                         :columns="{ container: 2 }" :conditions="[hasPlayableGreeting]"
@@ -191,6 +190,14 @@
                                                         :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
                                                         <Spinner :show="true"
                                                             class="h-8 w-8 ml-0 mr-0 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400" />
+                                                    </ButtonElement>
+
+                                                    <ButtonElement @click="editGreeting" name="edit_button"
+                                                        label="&nbsp;" :secondary="true" :columns="{ container: 2 }"
+                                                        :conditions="[hasPlayableGreeting]"
+                                                        :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                                        <PencilSquareIcon
+                                                            class="h-8 w-8 shrink-0 transition duration-500 ease-in-out py-1 rounded-full ring-1 text-blue-400 hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
                                                     </ButtonElement>
 
                                                     <ButtonElement @click="deleteGreeting" name="delete_button"
@@ -229,14 +236,38 @@
                                                     label-prop="name" :search="true" :native="false"
                                                     label="After Max Attempts, Route To" input-type="search"
                                                     autocomplete="off" placeholder="Choose Action" :strict="false"
-                                                    :columns="{ sm: { container: 6 } }"
-                                                    @change="handleExitActionChange" />
+                                                    :columns="{ sm: { container: 6 } }" @change="(newValue, oldValue, el$) => {
+                                                        let exit_target = el$.form$.el$('exit_target')
 
-                                                <SelectElement name="exit_target_uuid" :items="fetchExitTargets"
-                                                    :search="true" :native="false" label="Target" input-type="search"
-                                                    autocomplete="off" label-prop="name" allow-absent :object="true"
-                                                    :format-data="formatTarget" placeholder="Choose Target"
-                                                    :floating="false" :strict="false"
+                                                        if (oldValue !== null && oldValue !== undefined) {
+                                                            exit_target.clear();
+                                                        }
+
+                                                        exit_target.updateItems()
+                                                    }" />
+
+                                                <SelectElement name="exit_target" :items="async (query, input) => {
+                                                    let exit_action = input.$parent.el$.form$.el$('exit_action');
+
+                                                    if (!exit_action?.value || ['check_voicemail', 'company_directory', 'hangup'].includes(exit_action.value)) {
+                                                        return [];
+                                                    }
+
+                                                    try {
+                                                        let response = await exit_action.$vueform.services.axios.post(
+                                                            options.routes.get_routing_options,
+                                                            { category: exit_action.value }
+                                                        );
+
+                                                        return response.data.options;
+                                                    } catch (error) {
+                                                        emit('error', error);
+                                                        return [];
+                                                    }
+                                                }" :search="true" label-prop="name" :native="false" label="Target"
+                                                    input-type="search" allow-absent :object="true"
+                                                    :format-data="formatTarget" autocomplete="off"
+                                                    placeholder="Choose Target" :strict="false"
                                                     :columns="{ sm: { container: 6 } }" :conditions="[
                                                         ['exit_action', 'not_empty'],
                                                         ['exit_action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
@@ -259,7 +290,7 @@
                                                         @edit-key="handleEditKey" :isDeleting="showKeyDeletingStatus" />
                                                 </StaticElement>
 
-                                                
+
 
                                                 <!-- Advanced -->
                                                 <StaticElement name="advanced_title" tag="h4" content="Advanced"
@@ -358,12 +389,6 @@
                                                     true-value="true" false-value="false"
                                                     description="Allows callers to dial extensions directly." />
 
-                                                <ToggleElement name="voicemail_play_recording_instructions"
-                                                    text="Play Recording Instructions" true-value="true"
-                                                    false-value="false"
-                                                    description='Play a prompt instructing callers to "Record your message after the tone. Stop speaking to end the recording."'
-                                                    :conditions="[() => options.permissions.manage_voicemail_recording_instructions]" />
-
                                                 <GroupElement name="container_advanced" />
                                                 <ButtonElement name="submit_advanced" button-label="Save"
                                                     :submits="true" align="right" />
@@ -403,6 +428,11 @@
                                                             @cancel="handleModalClose" />
                                                     </template>
                                                 </AddEditItemModal>
+
+                                                <UpdateGreetingModal :greeting="selectedGreeting"
+                                                    :show="showEditGreetingModal" :loading="isGreetingUpdating"
+                                                    @confirm="handleGreetingUpdate"
+                                                    @close="showEditGreetingModal = false" />
                                             </FormElements>
                                         </div>
                                     </div>
@@ -432,6 +462,7 @@ import {
     CloudArrowDownIcon,
     TrashIcon,
     PlusIcon,
+    PencilSquareIcon,
 } from "@heroicons/vue/24/solid";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import Spinner from "@generalComponents/Spinner.vue";
@@ -441,6 +472,7 @@ import IvrOptions from "../general/IvrOptions.vue";
 import AddEditItemModal from "../modal/AddEditItemModal.vue";
 import CreateVirtualReceptionistKeyForm from "../forms/CreateVirtualReceptionistKeyForm.vue";
 import UpdateVirtualReceptionistKeyForm from "../forms/UpdateVirtualReceptionistKeyForm.vue";
+import UpdateGreetingModal from "../modal/UpdateGreetingModal.vue";
 
 const props = defineProps({
     show: Boolean,
@@ -459,16 +491,15 @@ const isDownloading = ref(false);
 const isAudioPlaying = ref(false);
 const currentAudio = ref(null);
 const currentAudioGreeting = ref(null);
-
 const currentInvalidInputMessageAudio = ref(null);
+const currentInvalidInputMessageFile = ref(null);
 const isInvalidInputMessageAudioPlaying = ref(false);
-
 const currentExitMessageAudio = ref(null);
+const currentExitMessageFile = ref(null);
 const isExitMessageAudioPlaying = ref(false);
-
 const currentRingBackToneAudio = ref(null);
+const currentRingBackToneFile = ref(null);
 const isRingBackTonePlaying = ref(false);
-
 const localIvrOptions = ref(props.options?.item?.options ?? []);
 const showKeyDeletingStatus = ref(false);
 const selectedKey = ref(null);
@@ -478,6 +509,9 @@ const loadingModal = ref(false);
 const submittingKeyUpdate = ref(false);
 const submittingKeyCreate = ref(false);
 const formErrorsFromAxios = ref({});
+const showEditGreetingModal = ref(false);
+const isGreetingUpdating = ref(false);
+const selectedGreeting = ref(null);
 
 watch(
     () => props.options?.item?.options,
@@ -504,14 +538,14 @@ const defaultFormData = computed(() => ({
     invalid_input_message: props.options?.item?.ivr_menu_invalid_sound ?? '',
     exit_message: props.options?.item?.ivr_menu_exit_sound ?? 'silence_stream://100',
     exit_action: props.options?.item?.exit_action ?? '',
-    exit_target_uuid: props.options?.item?.exit_action && !['check_voicemail', 'company_directory', 'hangup'].includes(props.options?.item?.exit_action)
+    exit_target: props.options?.item?.exit_action &&
+        !['check_voicemail', 'company_directory', 'hangup'].includes(props.options?.item?.exit_action)
         ? {
             value: props.options?.item?.exit_target_uuid ?? null,
             extension: props.options?.item?.exit_target_extension ?? null,
             name: props.options?.item?.exit_target_name ?? null,
         }
         : null,
-    voicemail_play_recording_instructions: props.options?.item?.voicemail_play_recording_instructions ?? 'false',
 }));
 
 const handleCopyToClipboard = (text) => {
@@ -558,13 +592,6 @@ const formatTarget = (name, value) => {
 
 const submitForm = async (FormData, form$) => {
     const requestData = form$.requestData;
-
-    if (requestData.exit_target_uuid && typeof requestData.exit_target_uuid === 'object') {
-        requestData.exit_target_extension = requestData.exit_target_uuid.extension ?? null;
-        requestData.exit_target_uuid = requestData.exit_target_uuid.value ?? null;
-    } else {
-        requestData.exit_target_extension = null;
-    }
 
     return await form$.$vueform.services.axios.put(
         props.options.routes.update_route,
@@ -797,6 +824,61 @@ const confirmGreetingDeleteAction = async () => {
         });
 };
 
+const editGreeting = () => {
+    const greetingId = getSelectedGreetingId();
+
+    if (!greetingId || !availableGreetings.value) return;
+
+    selectedGreeting.value = availableGreetings.value.find(
+        (greeting) => String(greeting.value) === String(greetingId)
+    );
+
+    if (selectedGreeting.value) {
+        showEditGreetingModal.value = true;
+    }
+};
+
+const handleGreetingUpdate = async (updatedGreeting) => {
+    const newName = updatedGreeting?.label?.trim();
+
+    if (!newName) {
+        emit('error', {
+            response: {
+                data: {
+                    errors: {
+                        request: ['Greeting name cannot be empty.']
+                    }
+                }
+            }
+        });
+        return;
+    }
+
+    isGreetingUpdating.value = true;
+
+    try {
+        const response = await axios.post(props.options.routes.update_greeting_route, {
+            file_name: updatedGreeting.value,
+            new_name: newName,
+        });
+
+        form$.value.el$('ivr_menu_greet_long').clear()
+
+        await form$.value.el$('ivr_menu_greet_long').updateItems();
+
+        form$.value.update({
+            ivr_menu_greet_long: updatedGreeting.value,
+        });
+
+        emit('success', 'success', response.data.messages);
+        showEditGreetingModal.value = false;
+    } catch (error) {
+        emit('error', error);
+    } finally {
+        isGreetingUpdating.value = false;
+    }
+};
+
 const getRoutesForGreetingForm = computed(() => {
     const routes = props.options?.routes ?? {};
 
@@ -815,34 +897,6 @@ const emitSuccessToParentFromChild = (message) => {
     emit('success', 'success', message);
 };
 
-const handleExitActionChange = (newValue, oldValue, el$) => {
-    const target = el$.form$.el$('exit_target_uuid');
-
-    if (oldValue !== null && oldValue !== undefined) {
-        target.clear();
-    }
-
-    target.updateItems();
-};
-
-const fetchExitTargets = async (query, input) => {
-    const action = input.$parent.el$.form$.el$('exit_action')?.value;
-
-    if (!action || ['check_voicemail', 'company_directory', 'hangup'].includes(action)) {
-        return [];
-    }
-
-    try {
-        const response = await axios.post(
-            props.options.routes.get_routing_options,
-            { category: action }
-        );
-        return response.data.options;
-    } catch (error) {
-        emit('error', error);
-        return [];
-    }
-};
 
 const getSoundFileUrl = async (fileName) => {
     if (!fileName) return null;
@@ -856,6 +910,8 @@ const stopInvalidInputMessageAudio = () => {
         currentInvalidInputMessageAudio.value.currentTime = 0;
         currentInvalidInputMessageAudio.value = null;
     }
+
+    currentInvalidInputMessageFile.value = null;
     isInvalidInputMessageAudioPlaying.value = false;
 };
 
@@ -865,6 +921,8 @@ const stopExitMessageAudio = () => {
         currentExitMessageAudio.value.currentTime = 0;
         currentExitMessageAudio.value = null;
     }
+
+    currentExitMessageFile.value = null;
     isExitMessageAudioPlaying.value = false;
 };
 
@@ -874,6 +932,8 @@ const stopRingBackToneAudio = () => {
         currentRingBackToneAudio.value.currentTime = 0;
         currentRingBackToneAudio.value = null;
     }
+
+    currentRingBackToneFile.value = null;
     isRingBackTonePlaying.value = false;
 };
 
@@ -888,20 +948,28 @@ const playInvalidInputMessage = async () => {
     stopExitMessageAudio();
     stopRingBackToneAudio();
 
-    if (currentInvalidInputMessageAudio.value && currentInvalidInputMessageAudio.value.paused) {
-        currentInvalidInputMessageAudio.value.play();
-        isInvalidInputMessageAudioPlaying.value = true;
-        return;
-    }
-
     try {
         const fileName = form$.value?.data?.invalid_input_message;
-        const fileUrl = await getSoundFileUrl(fileName);
-        if (!fileUrl) return;
+        if (!fileName) return;
+
+        if (
+            currentInvalidInputMessageAudio.value &&
+            currentInvalidInputMessageFile.value === fileName
+        ) {
+            if (currentInvalidInputMessageAudio.value.paused) {
+                currentInvalidInputMessageAudio.value.play();
+                isInvalidInputMessageAudioPlaying.value = true;
+            }
+            return;
+        }
 
         stopInvalidInputMessageAudio();
 
+        const fileUrl = await getSoundFileUrl(fileName);
+        if (!fileUrl) return;
+
         currentInvalidInputMessageAudio.value = new Audio(fileUrl);
+        currentInvalidInputMessageFile.value = fileName;
         isInvalidInputMessageAudioPlaying.value = true;
 
         currentInvalidInputMessageAudio.value.play().catch(() => {
@@ -928,20 +996,28 @@ const playExitMessage = async () => {
     stopInvalidInputMessageAudio();
     stopRingBackToneAudio();
 
-    if (currentExitMessageAudio.value && currentExitMessageAudio.value.paused) {
-        currentExitMessageAudio.value.play();
-        isExitMessageAudioPlaying.value = true;
-        return;
-    }
-
     try {
         const fileName = form$.value?.data?.exit_message;
-        const fileUrl = await getSoundFileUrl(fileName);
-        if (!fileUrl) return;
+        if (!fileName) return;
+
+        if (
+            currentExitMessageAudio.value &&
+            currentExitMessageFile.value === fileName
+        ) {
+            if (currentExitMessageAudio.value.paused) {
+                currentExitMessageAudio.value.play();
+                isExitMessageAudioPlaying.value = true;
+            }
+            return;
+        }
 
         stopExitMessageAudio();
 
+        const fileUrl = await getSoundFileUrl(fileName);
+        if (!fileUrl) return;
+
         currentExitMessageAudio.value = new Audio(fileUrl);
+        currentExitMessageFile.value = fileName;
         isExitMessageAudioPlaying.value = true;
 
         currentExitMessageAudio.value.play().catch(() => {
@@ -968,24 +1044,30 @@ const playRingBackTone = async () => {
     stopInvalidInputMessageAudio();
     stopExitMessageAudio();
 
-    if (currentRingBackToneAudio.value && currentRingBackToneAudio.value.paused) {
-        currentRingBackToneAudio.value.play();
-        isRingBackTonePlaying.value = true;
-        return;
-    }
-
     try {
         const filePath = form$.value?.data?.ring_back_tone;
         if (!filePath) return;
 
         const fileName = filePath.substring(filePath.lastIndexOf('/') + 1);
-        const response = await axios.post(props.options.routes.greeting_route, { file_name: fileName });
 
-        if (!response.data?.success) return;
+        if (
+            currentRingBackToneAudio.value &&
+            currentRingBackToneFile.value === fileName
+        ) {
+            if (currentRingBackToneAudio.value.paused) {
+                currentRingBackToneAudio.value.play();
+                isRingBackTonePlaying.value = true;
+            }
+            return;
+        }
 
         stopRingBackToneAudio();
 
+        const response = await axios.post(props.options.routes.greeting_route, { file_name: fileName });
+        if (!response.data?.success) return;
+
         currentRingBackToneAudio.value = new Audio(response.data.file_url);
+        currentRingBackToneFile.value = fileName;
         isRingBackTonePlaying.value = true;
 
         currentRingBackToneAudio.value.play().catch(() => {

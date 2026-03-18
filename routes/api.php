@@ -199,6 +199,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // Virtual Receptionist
     Route::post('virtual-receptionists', [VirtualReceptionistController::class, 'store'])->name('virtual-receptionists.store');
     Route::put('virtual-receptionists/{virtual_receptionist}', [VirtualReceptionistController::class, 'update'])->name('virtual-receptionists.update');
+    Route::get('virtual-receptionists/data', [VirtualReceptionistController::class, 'getData'])->name('virtual-receptionists.data');
     Route::post('virtual-receptionists/item-options', [VirtualReceptionistController::class, 'getItemOptions'])->name('virtual-receptionists.item.options');
     Route::post('/virtual-receptionists/bulk-delete', [VirtualReceptionistController::class, 'bulkDelete'])->name('virtual-receptionists.bulk.delete');
     Route::post('/virtual-receptionists/select-all', [VirtualReceptionistController::class, 'selectAll'])->name('virtual-receptionists.select.all');

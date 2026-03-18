@@ -20,7 +20,6 @@ class UpdateVirtualReceptionistRequest extends FormRequest
 
     public function rules(): array
     {
-        //get current UUID from route model binding
         $currentUuid = $this->route('virtual_receptionist');
 
         return [
@@ -43,63 +42,40 @@ class UpdateVirtualReceptionistRequest extends FormRequest
             'invalid_input_message' => 'present',
             'exit_message' => 'present',
             'exit_action' => 'required',
-            'exit_target_extension' => 'nullable',
-            'exit_target_uuid' => [
-                'sometimes', 
+            'exit_target' => [
+                'nullable',
                 function ($attribute, $value, $fail) {
-                    $action = request()->input('exit_action'); 
-                    if ($action && !in_array($action, ["company_directory", "check_voicemail", "hangup"]) && empty($value)) {
+                    $action = request()->input('exit_action');
+
+                    if (
+                        $action &&
+                        !in_array($action, ['company_directory', 'check_voicemail', 'hangup'], true) &&
+                        ($value === null || $value === '')
+                    ) {
                         $fail('The target field is required when action is selected.');
                     }
                 },
             ],
+            'exit_target_uuid' => 'nullable',
             'direct_dial' => 'present',
-            // 'extension' => "uuid",
         ];
     }
 
-
     public function prepareForValidation(): void
     {
-        logger($this);
+        // logger($this);
 
-        if ($this->has('repeat_prompt') && $this->repeat_prompt == 'NULL') {
-            $this->merge([
-                'repeat_prompt' => null,
-            ]);
-        }
-
-        if ($this->has('exit_action') && $this->exit_action == 'NULL') {
-            $this->merge([
-                'exit_action' => null,
-            ]);
-        }
-
-        if ($this->has('exit_target_uuid') && $this->exit_target_uuid == 'NULL') {
-            $this->merge([
-                'exit_target_uuid' => null,
-            ]);
-        }
-
-        if ($this->has('ivr_menu_greet_long') && $this->ivr_menu_greet_long == 'NULL') {
+        if ($this->has('ivr_menu_greet_long') && $this->ivr_menu_greet_long === 'NULL') {
             $this->merge([
                 'ivr_menu_greet_long' => null,
             ]);
         }
 
-        if ($this->has('ivr_menu_enabled')) {
+        if ($this->has('ivr_menu_description') && $this->ivr_menu_description) {
             $this->merge([
-                'ivr_menu_enabled' => $this->ivr_menu_enabled ? 'true' : 'false',
+                'ivr_menu_description' => $this->sanitizeInput($this->ivr_menu_description),
             ]);
         }
-
-        // Sanitize description
-        if ($this->has('ivr_menu_description') && $this->ivr_menu_description) {
-            $sanitizedDescription = $this->sanitizeInput($this->ivr_menu_description);
-            $this->merge(['ivr_menu_description' => $sanitizedDescription]);
-        }
-
-
     }
 
     /**
@@ -137,13 +113,6 @@ class UpdateVirtualReceptionistRequest extends FormRequest
             'ivr_menu_extension' => 'extension',
             'ivr_menu_greet_long' => 'audio prompt',
             'caller_id_prefix' => 'caller id name prefix',
-        ];
-    }
-
-    public function messages(): array
-    {
-        return [
-            'exit_target.required' => 'The Exit Target is required when an Exit Action is selected.', 
         ];
     }
 }
