@@ -83,8 +83,8 @@ class VirtualReceptionistController extends Controller
                 AllowedFilter::callback('search', function ($query, $value) {
                     $query->where(function ($q) use ($value) {
                         $q->where('ivr_menu_name', 'ilike', "%{$value}%")
-                          ->orWhere('ivr_menu_extension', 'ilike', "%{$value}%")
-                          ->orWhere('ivr_menu_description', 'ilike', "%{$value}%");
+                            ->orWhere('ivr_menu_extension', 'ilike', "%{$value}%")
+                            ->orWhere('ivr_menu_description', 'ilike', "%{$value}%");
                     });
                 }),
                 AllowedFilter::exact('ivr_menu_enabled'), // Allows filtering like ?filter[ivr_menu_enabled]=true
@@ -413,32 +413,19 @@ class VirtualReceptionistController extends Controller
                     ->where('ivr_menu_uuid', $itemUuid)
                     ->firstOrFail();
 
+                // Append our computed attributes leveraging the modern Model implementation
+                $ivr->append([
+                    'exit_action',
+                    'exit_target_uuid',
+                    'exit_target_extension',
+                    'exit_target_name',
+                ]);
+
                 $routes = array_merge($routes, [
                     'update_route' => route('virtual-receptionists.update', $ivr),
                     'apply_greeting_route' => route('virtual-receptionist.greeting.apply'),
                 ]);
 
-                $exitAction = null;
-                $exitTargetUuid = null;
-                $exitTargetExtension = null;
-                $exitTargetName = null;
-
-                if (!empty($ivr->ivr_menu_exit_app) || !empty($ivr->ivr_menu_exit_data)) {
-                    $parsedExit = $this->parseExitDestinationAction(
-                        $ivr->ivr_menu_exit_app,
-                        $ivr->ivr_menu_exit_data
-                    );
-
-                    $exitAction = $parsedExit['action'] ?? null;
-                    $exitTargetUuid = $parsedExit['target_uuid'] ?? null;
-                    $exitTargetExtension = $parsedExit['target_extension'] ?? null;
-                    $exitTargetName = $parsedExit['target_name'] ?? null;
-                }
-
-                $ivr->exit_action = $exitAction;
-                $ivr->exit_target_uuid = $exitTargetUuid;
-                $ivr->exit_target_extension = $exitTargetExtension;
-                $ivr->exit_target_name = $exitTargetName;
                 $ivr->repeat_prompt = $ivr->ivr_menu_max_timeouts;
             } else {
                 if ($resp = $this->enforceLimit('ivr_menus', \App\Models\IvrMenus::class, 'domain_uuid', 'ivr_limit_error')) {
@@ -715,6 +702,7 @@ class VirtualReceptionistController extends Controller
             case 'business_hours':
             case 'time_conditions':
             case 'contact_centers':
+            case 'conferences':
             case 'faxes':
             case 'call_flows':
                 return ['action' => 'transfer', 'data' => $target . ' XML ' . session('domain_name')];
@@ -731,76 +719,6 @@ class VirtualReceptionistController extends Controller
             default:
                 return ['action' => null, 'data' => null];
         }
-    }
-
-    protected function parseExitDestinationAction(?string $app, ?string $data): array
-    {
-        if (blank($app) && blank($data)) {
-            return [
-                'action' => null,
-                'target_uuid' => null,
-                'target_extension' => null,
-                'target_name' => null,
-            ];
-        }
-
-        $domainUuid = session('domain_uuid');
-        $domainName = session('domain_name');
-
-        if ($app === 'hangup') {
-            return [
-                'action' => 'hangup',
-                'target_uuid' => null,
-                'target_extension' => null,
-                'target_name' => null,
-            ];
-        }
-
-        if ($app === 'lua' && str_starts_with((string) $data, 'streamfile.lua ')) {
-            $file = trim(str_replace('streamfile.lua ', '', (string) $data));
-
-            return [
-                'action' => 'recordings',
-                'target_uuid' => $file,
-                'target_extension' => $file,
-                'target_name' => $file,
-            ];
-        }
-
-        if ($app === 'transfer') {
-            $normalized = trim((string) $data);
-
-            if ($normalized === '*98 XML ' . $domainName) {
-                return ['action' => 'check_voicemail', 'target_uuid' => null, 'target_extension' => null, 'target_name' => null];
-            }
-
-            if ($normalized === '*411 XML ' . $domainName) {
-                return ['action' => 'company_directory', 'target_uuid' => null, 'target_extension' => null, 'target_name' => null];
-            }
-
-            if (preg_match('/^\*99(.+)\s+XML\s+.+$/', $normalized, $matches)) {
-                $extensionNumber = trim($matches[1]);
-                $voicemail = \App\Models\Voicemails::where('domain_uuid', $domainUuid)->where('voicemail_id', $extensionNumber)->first();
-                return ['action' => 'voicemails', 'target_uuid' => $voicemail?->voicemail_uuid, 'target_extension' => $extensionNumber, 'target_name' => $extensionNumber];
-            }
-
-            if (preg_match('/^(.+)\s+XML\s+.+$/', $normalized, $matches)) {
-                $extensionNumber = trim($matches[1]);
-
-                $extension = \App\Models\Extensions::where('domain_uuid', $domainUuid)->where('extension', $extensionNumber)->first();
-                if ($extension) return ['action' => 'extensions', 'target_uuid' => $extension->extension_uuid, 'target_extension' => $extension->extension, 'target_name' => $extension->name_formatted ?? $extension->extension];
-
-                $ringGroup = \App\Models\RingGroups::where('domain_uuid', $domainUuid)->where('ring_group_extension', $extensionNumber)->first();
-                if ($ringGroup) return ['action' => 'ring_groups', 'target_uuid' => $ringGroup->ring_group_uuid, 'target_extension' => $ringGroup->ring_group_extension, 'target_name' => $ringGroup->name_formatted ?? $ringGroup->ring_group_extension];
-
-                $ivr = \App\Models\IvrMenus::where('domain_uuid', $domainUuid)->where('ivr_menu_extension', $extensionNumber)->first();
-                if ($ivr) return ['action' => 'ivrs', 'target_uuid' => $ivr->ivr_menu_uuid, 'target_extension' => $ivr->ivr_menu_extension, 'target_name' => $ivr->ivr_menu_name];
-
-                return ['action' => null, 'target_uuid' => null, 'target_extension' => $extensionNumber, 'target_name' => $extensionNumber];
-            }
-        }
-
-        return ['action' => null, 'target_uuid' => null, 'target_extension' => null, 'target_name' => null];
     }
 
     public function selectAll()

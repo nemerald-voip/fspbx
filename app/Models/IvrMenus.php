@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use App\Services\CallRoutingOptionsService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class IvrMenus extends Model
 {
@@ -40,6 +42,70 @@ class IvrMenus extends Model
         'ivr_menu_cid_prefix',
     ];
 
+    /**
+     * Cache the results to prevent repeated processing of the action details
+     */
+    protected array $exitOptionDetailsCache = [];
+
+    /**
+     * Compute and assign the exit options based on the IVR Menu exit application + data
+     */
+    protected function exitOptionDetails(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->computeExitOptionDetails()
+        )->shouldCache();
+    }
+
+    protected function computeExitOptionDetails(): array
+    {
+        if (!empty($this->exitOptionDetailsCache)) {
+            return $this->exitOptionDetailsCache;
+        }
+
+        if (empty($this->ivr_menu_exit_app) && empty($this->ivr_menu_exit_data)) {
+            return $this->exitOptionDetailsCache = [
+                'type' => null,
+                'extension' => null,
+                'option' => null,
+                'name' => null
+            ];
+        }
+
+        $service = new CallRoutingOptionsService($this->domain_uuid ?? session('domain_uuid'));
+
+        // Combine action and data to feed into the CallRoutingOptionsService
+        $actionString = trim("{$this->ivr_menu_exit_app} {$this->ivr_menu_exit_data}");
+
+        return $this->exitOptionDetailsCache = $service->reverseEngineerIVROption($actionString) ?? [
+            'type' => null,
+            'extension' => null,
+            'option' => null,
+            'name' => null
+        ];
+    }
+
+    public function getExitActionAttribute(): ?string
+    {
+        return $this->exit_option_details['type'] ?? null;
+    }
+
+    public function getExitTargetUuidAttribute(): ?string
+    {
+        return $this->exit_option_details['option'] ?? null;
+    }
+
+    public function getExitTargetExtensionAttribute(): ?string
+    {
+        return $this->exit_option_details['extension'] ?? null;
+    }
+
+    public function getExitTargetNameAttribute(): ?string
+    {
+        return $this->exit_option_details['name'] ?? null;
+    }
+
+
     public function options()
     {
         return $this->hasMany(IvrMenuOptions::class, 'ivr_menu_uuid', 'ivr_menu_uuid');
@@ -73,7 +139,7 @@ class IvrMenus extends Model
             ->merge(
                 Extensions::where('domain_uuid', $domainUuid)->pluck('extension')
             )
-            ->map(fn ($value) => (string) $value)
+            ->map(fn($value) => (string) $value)
             ->unique()
             ->values();
 
