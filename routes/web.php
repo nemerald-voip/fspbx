@@ -164,7 +164,6 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Domain Groups
     Route::get('domain-groups', [DomainGroupsController::class, 'index'])->name('domain-groups.index');
-    Route::post('ring-groups/duplicate', [RingGroupsController::class, 'duplicate'])->name('ring-groups.duplicate');
 
     // Ring Groups
     Route::get('ring-groups', [RingGroupsController::class, 'index'])->name('ring-groups.index');
@@ -192,19 +191,6 @@ Route::group(['middleware' => 'auth'], function () {
 
     // System Settings
     Route::get('system-settings', [SystemSettingsController::class, 'index'])->name('system-settings.index');
-
-    // Greetings
-    Route::post('/greetings/url', [GreetingsController::class, 'getGreetingUrl'])->name('greeting.url');
-    Route::get('/greetings/serve/{file_name}', [GreetingsController::class, 'serveGreetingFile'])->name('greeting.file.serve');
-    Route::post('/greetings/text-to-speech', [GreetingsController::class, 'textToSpeech'])->name('greetings.textToSpeech');
-    Route::post('/greetings/apply', [GreetingsController::class, 'applyAIGreetingFile'])->name('greeting.file.apply');
-    Route::post('greetings/delete-greeting', [GreetingsController::class, 'deleteGreetingFile'])->name('greetings.file.delete');
-    Route::post('greetings/update-greeting', [GreetingsController::class, 'updateGreetingFile'])->name('greetings.file.update');
-    Route::post('greetings/upload-greeting', [GreetingsController::class, 'uploadGreeting'])->name('greetings.file.upload');
-    Route::post('/ivr/message/url', [GreetingsController::class, 'getIvrMessageUrl'])->name('ivr.message.url');
-    Route::get('/ivr/message/serve/{file_name}', [GreetingsController::class, 'serveIvrMessageFile'])
-        ->name('ivr.message.file.serve')
-        ->where('file_name', '(.*)');
 
     // Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

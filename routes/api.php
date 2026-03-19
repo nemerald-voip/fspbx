@@ -22,6 +22,7 @@ use App\Http\Controllers\FaxesController;
 use App\Http\Controllers\FaxInboxController;
 use App\Http\Controllers\FaxLogController;
 use App\Http\Controllers\FaxSentController;
+use App\Http\Controllers\GreetingsController;
 use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\HotelHousekeepingDefinitionController;
 use App\Http\Controllers\HotelRoomController;
@@ -101,14 +102,36 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
 
 
     // Ring Groups
-    Route::post('ring-groups', [RingGroupsController::class, 'store'])->name('ring-groups.store');
+    Route::get('ring-groups', [RingGroupsController::class, 'store'])->name('ring-groups.store');
     Route::get('ring-groups/data', [RingGroupsController::class, 'getData'])->name('ring-groups.data');
     Route::put('ring-groups/{ring_group}', [RingGroupsController::class, 'update'])->name('ring-groups.update');
     Route::delete('ring-groups/{ring_group}', [RingGroupsController::class, 'destroy'])->name('ring-groups.destroy');
     Route::post('ring-groups/item-options', [RingGroupsController::class, 'getItemOptions'])->name('ring-groups.item.options');
     Route::post('ring-groups/bulk-delete', [RingGroupsController::class, 'bulkDelete'])->name('ring-groups.bulk.delete');
     Route::post('ring-groups/select-all', [RingGroupsController::class, 'selectAll'])->name('ring-groups.select.all');
+    Route::post('ring-groups/duplicate', [RingGroupsController::class, 'duplicate'])->name('ring-groups.duplicate');
+    Route::post('ring-groups/{ring_group}/get-greeting', [RingGroupsController::class, 'getGreeting'])->name('ring-groups.getGreeting');
+    Route::post('ring-groups/{ring_group}/upload-greeting', [RingGroupsController::class, 'uploadGreeting'])->name('ring-groups.uploadGreeting');
+    Route::post('ring-groups/{ring_group}/delete-greeting', [RingGroupsController::class, 'deleteGreeting'])->name('ring-groups.deleteGreeting');
 
+    // Ring Group AI Text-to-Speech & File Serving
+    Route::post('ring-groups/{ring_group}/text-to-speech', [RingGroupsController::class, 'textToSpeech'])->name('ring-groups.textToSpeech');
+    Route::post('ring-groups/apply-greeting', [RingGroupsController::class, 'applyGreetingFile'])->name('ring-groups.applyGreeting');
+    // Route::get('ring-groups/serve-greeting/{domain}/{file}', [RingGroupsController::class, 'serveGreetingFile'])->name('ring-groups.serveGreeting');
+
+    // Greetings
+    Route::get('greetings', [GreetingsController::class, 'greetings'])->name('greetings.greetings');
+    Route::post('/greetings/url', [GreetingsController::class, 'getGreetingUrl'])->name('greeting.url');
+    Route::get('/greetings/serve/{file_name}', [GreetingsController::class, 'serveGreetingFile'])->name('greeting.file.serve');
+    Route::post('/greetings/text-to-speech', [GreetingsController::class, 'textToSpeech'])->name('greetings.textToSpeech');
+    Route::post('/greetings/apply', [GreetingsController::class, 'applyAIGreetingFile'])->name('greeting.file.apply');
+    Route::post('greetings/delete-greeting', [GreetingsController::class, 'deleteGreetingFile'])->name('greetings.file.delete');
+    Route::post('greetings/update-greeting', [GreetingsController::class, 'updateGreetingFile'])->name('greetings.file.update');
+    Route::post('greetings/upload-greeting', [GreetingsController::class, 'uploadGreeting'])->name('greetings.file.upload');
+    Route::post('/ivr/message/url', [GreetingsController::class, 'getIvrMessageUrl'])->name('ivr.message.url');
+    Route::get('/ivr/message/serve/{file_name}', [GreetingsController::class, 'serveIvrMessageFile'])
+        ->name('ivr.message.file.serve')
+        ->where('file_name', '(.*)');
 
     // Business Hours
     Route::post('business-hours', [BusinessHoursController::class, 'store'])->name('business-hours.store');
