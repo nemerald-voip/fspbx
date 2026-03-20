@@ -169,8 +169,29 @@
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                         :text="row.device_description" />
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.device_provisioned_date_formatted ?? row.device_provisioned_date" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <div v-if="row.device_provisioned_ip || row.device_provisioned_agent" 
+                            class="group relative inline-block cursor-help focus:outline-none" 
+                            tabindex="0">
+                            
+                            <span>{{ row.device_provisioned_date_formatted ?? row.device_provisioned_date }}</span>
+                            
+                            <div class="invisible opacity-0 group-hover:visible group-hover:opacity-100 group-focus:visible group-focus:opacity-100 transition-opacity duration-300 absolute z-50 bottom-full left-1/2 -translate-x-1/2 pb-2">
+                                
+                                <div class="px-3 py-2 text-xs leading-relaxed text-white bg-gray-900 rounded shadow-lg whitespace-nowrap cursor-text select-text">
+                                    <div v-if="row.device_provisioned_ip">IP: {{ row.device_provisioned_ip }}</div>
+                                    <div v-if="row.device_provisioned_agent">Agent: {{ row.device_provisioned_agent }}</div>
+                                    
+                                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                                </div>
+                                
+                            </div>
+                            
+                        </div>
+                        <div v-else>
+                            {{ row.device_provisioned_date_formatted ?? row.device_provisioned_date }}
+                        </div>
+                    </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <div class="flex items-center whitespace-nowrap">
