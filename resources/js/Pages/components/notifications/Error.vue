@@ -22,7 +22,7 @@
                                 </ul>
                             </div>
                             <div class="ml-4 flex flex-shrink-0">
-                                <button type="button" @click="show = false"
+                                <button type="button" @click="closeNotification"
                                         class="inline-flex rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                                     <span class="sr-only">Close</span>
                                     <XMarkIcon class="h-5 w-5" aria-hidden="true"/>
@@ -46,14 +46,22 @@ const props = defineProps({
     isSuccess: Boolean,
     header: String,
     errors: Object,
+    autoDismiss: {
+        type: Boolean,
+        default: true,
+    },
 });
 
 let timeoutId = ref(null);
 
 const emit = defineEmits(["update:show"]);
 
+const closeNotification = () => {
+    emit("update:show", false);
+};
+
 watchEffect(() => {
-    if (props.show) {
+    if (props.show && props.autoDismiss) {
         nextTick(() => {
             timeoutId.value = setTimeout(() => {
                 emit("update:show", false);
