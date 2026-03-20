@@ -160,12 +160,18 @@ class UploadCallRecordingsToS3Storage extends Command
                 // 2. MASS UPDATE
                 // Update ALL CDRs that match this filename and path. 
                 // This covers the current $rec AND any other CDRs sharing this file.
-                CDR::where('record_name', $originalRecordName)
-                    ->where('record_path', $originalRecordPath)
-                    ->update([
-                        'record_path' => 'S3',
-                        'record_name' => $objectKey
-                    ]);
+$recordingStart = Carbon::parse($rec->start_stamp);
+
+CDR::where('record_name', $originalRecordName)
+    ->where('record_path', $originalRecordPath)
+    ->whereBetween('start_stamp', [
+        $recordingStart->copy()->subDay(),
+        $recordingStart->copy()->addDay(),
+    ])
+    ->update([
+        'record_path' => 'S3',
+        'record_name' => $objectKey
+    ]);
 
                 // Cleanup local files
                 if ($mp3File !== $recordingFile && file_exists($mp3File)) {
@@ -345,6 +351,8 @@ class UploadCallRecordingsToS3Storage extends Command
         return CDR::query()
             ->whereNotNull('record_name')
             ->where('record_name', '<>', '')
+            ->whereNotNull('record_path')
+            ->where('record_path', '<>', '')
             ->where('record_path', 'not like', '%S3%')
             ->where('record_path', 'not like', '%NFS%')
             ->where('hangup_cause', '<>', 'LOSE_RACE')
