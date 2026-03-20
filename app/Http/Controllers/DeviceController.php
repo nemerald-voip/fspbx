@@ -250,7 +250,7 @@ class DeviceController extends Controller
             ])
 
             ->with(['lines' => function ($query) use ($currentDomain) {
-                $query->select('device_line_uuid', 'line_number', 'device_uuid', 'auth_id', 'domain_uuid')
+                $query->select('device_line_uuid', 'line_number', 'device_uuid', 'auth_id', 'domain_uuid', 'external_line')
                     ->with([
                         'extension' => function ($q) use ($currentDomain) {
                             $q->select('extension_uuid', 'extension', 'effective_caller_id_name')
@@ -398,9 +398,14 @@ class DeviceController extends Controller
                     $device->lines()->delete();
 
                     foreach ($inputs['device_lines'] as $index => $line) {
-                        $extension = Extensions::where('extension', $line['auth_id'])
-                            ->where('domain_uuid', $inputs['domain_uuid'])
-                            ->first();
+                        $isExternalLine = ($line['line_type_id'] ?? null) === 'externalline';
+
+                        $extension = null;
+                        if (!$isExternalLine && !empty($line['auth_id'])) {
+                            $extension = Extensions::where('extension', $line['auth_id'])
+                                ->where('domain_uuid', $inputs['domain_uuid'])
+                                ->first();
+                        }
 
                         $deviceLineData = [
                             'device_uuid' => $device->device_uuid,
@@ -411,15 +416,21 @@ class DeviceController extends Controller
                             'outbound_proxy_primary' => $line['outbound_proxy_primary'],
                             'outbound_proxy_secondary' => $line['outbound_proxy_secondary'],
                             'display_name' => $line['display_name'],
-                            'user_id' => $line['user_id'] ? $line['user_id'] : $extension->extension ?? null,
-                            'auth_id' => $line['auth_id'] ? $line['auth_id'] : $extension->extension ?? null,
-                            'password' => $line['password'] ? $line['password'] : $extension->password ?? null,
+                            'user_id' => $isExternalLine
+                                ? ($line['user_id'] ?? null)
+                                : ($extension->extension ?? ($line['user_id'] ?? null)),
+                            'auth_id' => $isExternalLine
+                                ? ($line['auth_id'] ?? null)
+                                : ($extension->extension ?? ($line['auth_id'] ?? null)),
+                            'password' => $isExternalLine
+                                ? ($line['password'] ?? null)
+                                : ($extension->password ?? null),
                             'label' => $line['display_name'],
                             'sip_port' => $line['sip_port'],
                             'sip_transport' => $line['sip_transport'],
                             'register_expires' => $line['register_expires'],
                             'shared_line' => $line['line_type_id'] == 'sharedline' ? '1' : '',
-                            'external_line' => $line['line_type_id'] === 'externalline',
+                            'external_line' => $isExternalLine,
                             'device_line_uuid' => $line['device_line_uuid'] ?? null,
                             'domain_uuid' => $device->domain_uuid,
                             'enabled' => 'true',

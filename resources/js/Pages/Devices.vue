@@ -161,7 +161,7 @@
                                     <span v-if="row.lines.length > 1" class="font-semibold">
                                         Line {{ line.line_number }}:
                                     </span>
-                                    <span>{{ line.extension?.name_formatted || line.auth_id }}</span>
+                                    <span>{{ line.external_line ? line.auth_id : (line.extension?.name_formatted || line.auth_id) }}</span>
                                 </div>
                             </div>
                         </template>
