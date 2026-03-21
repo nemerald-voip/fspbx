@@ -2,12 +2,12 @@
 
 namespace App\Observers;
 
-use App\Models\Extensions;
-use Illuminate\Support\Arr;
-use App\Events\ExtensionCreated;
 use App\Events\ExtensionDeleted;
 use App\Events\ExtensionUpdated;
 use App\Jobs\FireFollowMePresenceJob;
+use App\Jobs\SendSystemStatusNotificationToSlackJob;
+use App\Models\Extensions;
+use Illuminate\Support\Arr;
 
 class ExtensionObserver
 {
@@ -19,7 +19,34 @@ class ExtensionObserver
      */
     public function created(Extensions $extension)
     {
-        ExtensionCreated::dispatch($extension);
+        $user = auth()->user();
+
+        // No authenticated user = likely system / CLI / job-created record
+        if (!$user) {
+            return;
+        }
+
+        if (isSuperadmin($user)) {
+            return;
+        }
+
+        $extension->loadMissing('domain');
+        $user->loadMissing('user_adv_fields', 'domain');
+
+        $name =" ({$user->name_formatted})";
+
+        $message = sprintf(
+            '*New Extension*: extension %s was created by%s %s in domain %s',
+            $extension->extension,
+            $name,
+            $user->user_email,
+            $extension->domain->domain_name ?? $user->domain->domain_name ?? 'Unknown domain',
+        );
+
+        SendSystemStatusNotificationToSlackJob::dispatch($message)
+            ->onQueue('slack')
+            ->afterCommit();
+    
     }
 
     /**

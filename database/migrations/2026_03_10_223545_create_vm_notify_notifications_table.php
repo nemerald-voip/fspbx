@@ -37,12 +37,17 @@ return new class extends Migration
 
                 $table->string('mailbox')->nullable();
                 $table->unsignedInteger('message_length_seconds')->nullable();
+                $table->string('message_file_path')->nullable();
+                $table->string('message_ext')->nullable();
 
                 $table->timestamp('message_left_at')->nullable();
 
 
                 $table->timestamp('started_at')->nullable();
                 $table->timestamp('completed_at')->nullable();
+
+                $table->timestamp('success_email_sent_at')->nullable();
+                $table->timestamp('failure_email_sent_at')->nullable();
 
                 $table->timestamps();
 

@@ -2,15 +2,13 @@
 
 namespace App\Http\Webhooks\Jobs;
 
+use App\Jobs\CreateVoicemailEscalationNotificationsJob;
+use App\Jobs\HandleVoicemailEscalationAttemptEventJob;
 use App\Jobs\SendNewVoicemailNotificationByEmail;
 use App\Jobs\SendNewVoicemailNotificationBySms;
 use App\Jobs\TranscribeCdrJob;
-use App\Models\Messages;
 use App\Models\VmNotifyProfile;
-use App\Services\BandwidthMessageProvider;
 use App\Services\CallTranscription\CallTranscriptionService;
-use App\Services\CommioMessageProvider;
-use App\Services\SinchMessageProvider;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Spatie\WebhookClient\Jobs\ProcessWebhookJob as SpatieProcessWebhookJob;
@@ -83,6 +81,8 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
             'send_vm_sms_notification'   => 'messages',
             'send_vm_email_notification' => 'emails',
             // 'transcribe_call'            => 'transcriptions',
+            'voicemail_created'          => 'voicemails',
+            'vm_notify_attempt_event'    => 'voicemails',
             default                      => 'default',
         };
     }
@@ -103,7 +103,6 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
 
                 switch ($event) {
                     case 'send_vm_sms_notification':
-                        // $response = $this->sendSystemSms($data);
                         SendNewVoicemailNotificationBySms::dispatch($data);
                         break;
 
@@ -117,20 +116,20 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
                             break;
                         }
 
-                        logger($payload);
-
                         if (!$this->hasEnabledVmNotifyProfile($data)) {
                             break;
                         }
 
-                        HandleVoicemailCreatedJob::dispatch($data);
+                        CreateVoicemailEscalationNotificationsJob::dispatch($data);
+                        break;
+
+                    case 'vm_notify_attempt_event':
+                        HandleVoicemailEscalationAttemptEventJob::dispatch($data)->onQueue('voicemails');
                         break;
 
                     case 'transcribe_call':
                         $response = $this->transcribeCall($data);
-
                         break;
-                    // Add more event types as needed
 
                     default:
                         Log::warning("[Webhook] Unknown event type: $event", $payload);

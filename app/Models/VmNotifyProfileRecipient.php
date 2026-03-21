@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class VmNotifyProfileRecipient extends Model
 {
+    use \App\Models\Traits\TraitUuid;
+    
     protected $table = 'vm_notify_profile_recipients';
     protected $primaryKey = 'vm_notify_profile_recipient_uuid';
     public $incrementing = false;

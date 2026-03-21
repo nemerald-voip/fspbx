@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class VmNotifyLog extends Model
 {
+    use \App\Models\Traits\TraitUuid;
+    
     protected $table = 'vm_notify_logs';
     protected $primaryKey = 'vm_notify_log_uuid';
     public $incrementing = false;

@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class VmNotifyProfile extends Model
 {
+    use \App\Models\Traits\TraitUuid;
+    
     protected $table = 'vm_notify_profiles';
     protected $primaryKey = 'vm_notify_profile_uuid';
     public $incrementing = false;
@@ -19,13 +21,11 @@ class VmNotifyProfile extends Model
         'description',
         'enabled',
         'outbound_cid_mode',
-        'fixed_caller_id_number',
-        'fixed_caller_id_name',
-        'internal_caller_id_name',
+        'caller_id_number',
+        'caller_id_name',
         'retry_count',
         'retry_delay_minutes',
         'priority_delay_minutes',
-        'email_from',
         'email_success',
         'email_fail',
         'email_attach',

@@ -48,7 +48,8 @@
 
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
-                                @error="handleError" @response="handleResponse" :display-errors="false" :default="{
+                                :float-placeholders="true" @error="handleError" @response="handleResponse"
+                                :display-errors="false" :default="{
                                     voicemail_id: options.item?.voicemail_id ?? '',
                                     voicemail_password: options.item?.voicemail_password ?? null,
                                     voicemail_mail_to: options.item?.voicemail_mail_to,
@@ -64,6 +65,33 @@
                                     voicemail_recording_instructions: options.item?.voicemail_recording_instructions ?? 'true',
                                     voicemail_sms_to: options.item?.voicemail_sms_to ?? '',
                                     voicemail_alternate_greet_id: options.item?.voicemail_alternate_greet_id ?? '',
+
+                                    // VM escalation
+                                    vm_notify_profile: {
+                                        enabled: options.vm_notify_profile?.enabled ?? false,
+                                        name: options.vm_notify_profile?.name ?? '',
+                                        description: options.vm_notify_profile?.description ?? '',
+                                        outbound_cid_mode: options.vm_notify_profile?.outbound_cid_mode ?? 'default',
+                                        caller_id_number: options.vm_notify_profile?.caller_id_number ?? '',
+                                        caller_id_name: options.vm_notify_profile?.caller_id_name ?? '',
+                                        retry_count: options.vm_notify_profile?.retry_count ?? 2,
+                                        retry_delay_minutes: options.vm_notify_profile?.retry_delay_minutes ?? 5,
+                                        priority_delay_minutes: options.vm_notify_profile?.priority_delay_minutes ?? 1,
+                                        email_success: options.vm_notify_profile?.email_success ?? [],
+                                        email_fail: options.vm_notify_profile?.email_fail ?? [],
+                                        email_attach: options.vm_notify_profile?.email_attach ?? false,
+                                        selected_recipients: [],
+                                        recipients: (options.vm_notify_profile?.recipients ?? []).map((recipient) => ({
+                                            vm_notify_profile_recipient_uuid: recipient.vm_notify_profile_recipient_uuid ?? null,
+                                            recipient_type: recipient.recipient_type ?? null,
+                                            extension_uuid: recipient.extension_uuid ?? null,
+                                            phone_number: recipient.phone_number ?? null,
+                                            display_name: recipient.display_name ?? null,
+                                            priority: recipient.priority ?? 0,
+                                            sort_order: recipient.sort_order ?? 0,
+                                            enabled: recipient.enabled ?? true,
+                                        })),
+                                    },
                                 }">
 
                                 <template #empty>
@@ -111,6 +139,11 @@
                                                     'container_advanced',
                                                     'submit_advanced',
 
+                                                ]" :conditions="[['voicemail_enabled', '==', 'true']]" />
+
+                                                <FormTab name="escalation" label="Escalation" :elements="[
+                                                    'vm_notify_profile',
+                                                    'submit_escalation',
                                                 ]" :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                             </FormTabs>
@@ -521,6 +554,202 @@
                                                     :text="'This action will permanently delete the custom recorded name. Are you sure you want to proceed?'"
                                                     :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
 
+
+                                                <!-- Escalation -->
+                                                <ObjectElement name="vm_notify_profile">
+                                                    <StaticElement name="voicemail_escalation_title" tag="h4"
+                                                        content="Voicemail Escalation"
+                                                        description="Call designated recipients when a new voicemail arrives until someone accepts responsibility."
+                                                        :conditions="[['voicemail_enabled', '==', 'true']]" />
+
+                                                    <ToggleElement name="enabled" text="Enable Voicemail Escalation"
+                                                        :conditions="[['voicemail_enabled', '==', 'true']]" />
+
+                                                    <TextElement name="name" label="Rule Name"
+                                                        placeholder="Enter escalation rule name" :floating="false"
+                                                        :columns="{ sm: { container: 6 } }"
+                                                        :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
+
+                                                    <TextElement name="description" label="Description"
+                                                        placeholder="Enter description" :floating="false"
+                                                        :columns="{ sm: { container: 6 } }"
+                                                        :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
+
+                                                    <SelectElement name="outbound_cid_mode"
+                                                        label="Outbound Caller ID Mode" :items="[
+                                                            { value: 'default', label: 'Default' },
+                                                            { value: 'mailbox', label: 'Mailbox' },
+                                                        ]" :search="true" :native="false" input-type="search"
+                                                        autocomplete="off" placeholder="Select Caller ID Mode"
+                                                        :floating="false" :columns="{ sm: { wrapper: 6 } }"
+                                                        :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
+
+                                                    <StaticElement name="caller_id_note" tag="blockquote"
+                                                        content="<div>Think of this as the Caller ID of the Voicemail Notification, not the Caller ID for the original caller. This is the caller ID that will be displayed on the recipient&#39;s phone (if supported). <br><strong>Default</strong>: Transmits the Caller ID set below. <br><strong>Mailbox</strong>: Transmits the CID of the extension associated with the mailbox that you are monitoring.</div>"
+                                                        :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
+
+
+                                                    <TextElement name="caller_id_number" label="Caller ID Number"
+                                                        placeholder="Enter caller ID number" :floating="false"
+                                                        :columns="{ sm: { container: 6 } }" :conditions="[
+                                                            ['voicemail_enabled', '==', 'true'],
+                                                            ['vm_notify_profile.enabled', '==', true],
+                                                            ['vm_notify_profile.outbound_cid_mode', '==', 'default']
+                                                        ]" />
+
+                                                    <TextElement name="caller_id_name" label="Caller ID Name"
+                                                        placeholder="Defaults to mailbox name if blank"
+                                                        :floating="false" :columns="{ sm: { container: 6 } }"
+                                                        :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
+
+                                                    <StaticElement name="divider_vm_notify_1" tag="hr"
+                                                        :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
+
+                                                    <TextElement name="retry_count" input-type="number"
+                                                        label="Retry Count" placeholder="2" :floating="false"
+                                                        info="How many times to cycle through calling everyone in the Recipients list again before stopping, if no one accepts the voicemail after the first cycle. A 0 setting means do not retry – only call everyone once then stop. The default setting is 2, meaning the system will make a maximum of 3 total attempts."
+                                                        :columns="{ sm: { container: 4 } }"
+                                                        :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
+
+                                                    <TextElement name="retry_delay_minutes" input-type="number"
+                                                        label="Retry Delay (Minutes)" placeholder="5" :floating="false"
+                                                        info='How long to wait (in minutes) before retrying, after calling all recipients, if no one accepts the voicemail. (Default = 5 Min.)'
+                                                        :columns="{ sm: { container: 4 } }"
+                                                        :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
+
+                                                    <TextElement name="priority_delay_minutes" input-type="number"
+                                                        label="Priority Delay (Minutes)" placeholder="1"
+                                                        :floating="false"
+                                                        info="How long to wait (in minutes) after trying to call all recipients with the same priority setting before moving on to call the next priority group. This only has an effect if you have recipients with different priority levels."
+                                                        :columns="{ sm: { container: 4 } }"
+                                                        :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
+
+                                                    <GroupElement name="container_vm_notify_1"
+                                                        :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
+
+                                                    <StaticElement name="divider_vm_notify_2" tag="hr"
+                                                        :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
+
+                                                    <GroupElement name="container_vm_notify_2"
+                                                        :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
+
+                                                    <StaticElement name="recipients_title" tag="h4" content="Recipients"
+                                                        description="Add internal extensions or external phone numbers. Recipients with the same priority are called at the same time."
+                                                        :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
+
+                                                    <TagsElement name="selected_recipients" :close-on-select="false"
+                                                        :items="availableEscalationRecipients" :create="true"
+                                                        :search="true" :groups="true" :native="false"
+                                                        label="Add Recipient(s)" input-type="search" autocomplete="off"
+                                                        placeholder="Search by name or extension, or enter external number"
+                                                        :floating="false" :hide-selected="false" :object="true"
+                                                        :group-hide-empty="true" :append-new-option="false"
+                                                        :submit="false"
+                                                        description="Choose internal extensions or enter an external number manually."
+                                                        :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
+
+                                                    <ButtonElement @click="addSelectedEscalationRecipients"
+                                                        name="add_selected_recipients"
+                                                        button-label="Add Selected Recipients" :secondary="true"
+                                                        align="center" :full="false"
+                                                        :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
+
+                                                    <ListElement name="recipients" :sort="true"
+                                                        :controls="{ add: false, remove: true, sort: true }"
+                                                        :add-classes="{
+                                                            ListElement: {
+                                                                listItem: 'bg-white p-3 mb-3 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow'
+                                                            }
+                                                        }"
+                                                        :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]">
+                                                        <template #default="{ index }">
+                                                            <!-- sm:items-center forces the 3 columns to vertically center nicely -->
+                                                            <ObjectElement :name="index"
+                                                                :add-classes="{ ElementLayout: { innerWrapper: 'sm:items-center' } }">
+                                                                <HiddenElement name="vm_notify_profile_recipient_uuid"
+                                                                    :meta="true" />
+                                                                <HiddenElement name="recipient_type" :meta="true" />
+                                                                <HiddenElement name="extension_uuid" :meta="true" />
+                                                                <HiddenElement name="phone_number" :meta="true" />
+                                                                <HiddenElement name="sort_order" :meta="true" />
+
+                                                                <!-- 1. Formatted Recipient Display -->
+                                                                <StaticElement name="recipient_label" tag="div"
+                                                                    :columns="{ default: { container: 12 }, sm: { container: 5 } }"
+                                                                    :content="(el$) => {
+                                                                        const row = el$.parent.value;
+                                                                        const label = getEscalationRecipientLabel(row);
+                                                                        const isInternal = row.recipient_type === 'extension';
+
+                                                                        const icon = isInternal
+                                                                            ? `<svg class='w-5 h-5 text-indigo-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z'></path></svg>`
+                                                                            : `<svg class='w-5 h-5 text-emerald-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z'></path></svg>`;
+
+                                                                        return `
+                        <div class='flex items-center space-x-3'>
+                            <div class='flex-shrink-0 w-10 h-10 ${isInternal ? 'bg-indigo-50 border-indigo-100' : 'bg-emerald-50 border-emerald-100'} rounded-full flex items-center justify-center border'>
+                                ${icon}
+                            </div>
+                            <div class='flex flex-col min-w-0'>
+                                <span class='text-base font-bold text-gray-900 truncate'>${label}</span>
+                                <span class='text-xs font-medium text-gray-500'>${isInternal ? 'Internal Extension' : 'External Number'}</span>
+                            </div>
+                        </div>
+                    `;
+                                                                    }" />
+
+                                                                <!-- 2. Inline Priority Input -->
+                                                                <TextElement name="priority" input-type="number"
+                                                                    label="Priority" :columns="{
+                                                                        default: { container: 6, label: 4, wrapper: 5 },
+                                                                        sm: { container: 4, label: 4, wrapper: 5 }
+                                                                    }" :add-classes="{
+
+                                                                        ElementLabel: {
+                                                                            container: 'items-center !pt-0 !pb-0', // Centers the text vertically
+                                                                            wrapper: 'font-medium text-sm text-gray-500 whitespace-nowrap'
+                                                                        },
+                                                                        TextElement: { input: 'text-center py-1' }
+                                                                    }" />
+
+                                                                <!-- 3. Right-aligned Active Toggle -->
+                                                                <ToggleElement name="enabled" text="Active"
+                                                                    :columns="{ default: { container: 6 }, sm: { container: 3 } }"
+                                                                    size="md" :add-classes="{
+                                                                        ElementLayout: {
+                                                                            container: 'flex items-center justify-end mt-3 sm:mt-0',
+                                                                            innerWrapper: 'flex items-center'
+                                                                        }
+                                                                    }" />
+                                                            </ObjectElement>
+                                                        </template>
+                                                    </ListElement>
+                                                    <StaticElement name="divider_vm_notify_3" tag="hr"
+                                                        :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
+
+                                                    <TagsElement name="email_success"
+                                                        label="Success Notification Emails" :create="true"
+                                                        :search="true" allow-absent placeholder="Add email address"
+                                                        :floating="false"
+                                                        description="Send an email when someone accepts responsibility for the voicemail."
+                                                        :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
+
+                                                    <TagsElement name="email_fail" label="Failure Notification Emails"
+                                                        :create="true" :search="true" allow-absent
+                                                        :add-option-on="['enter', 'space', 'tab', ';', ',']"
+                                                        placeholder="Add email address" :floating="false"
+                                                        description="Send an email when no one accepts responsibility for the voicemail."
+                                                        :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
+
+                                                    <ToggleElement name="email_attach"
+                                                        text="Attach Voicemail to Completion Emails"
+                                                        :conditions="[['voicemail_enabled', '==', 'true'], ['vm_notify_profile.enabled', '==', true]]" />
+
+                                                </ObjectElement>
+
+                                                <ButtonElement name="submit_escalation" button-label="Save"
+                                                    :submits="true" align="right"
+                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                             </FormElements>
                                         </div>
@@ -964,6 +1193,78 @@ const emitErrorToParentFromChild = (error) => {
 const emitSuccessToParentFromChild = (message) => {
     emit('success', 'success', message);
 }
+
+const escalationMemberOptions = computed(() => {
+    return props.options?.escalation_member_options ?? props.options?.member_options ?? [];
+});
+
+const allEscalationMemberOptions = computed(() => {
+    return escalationMemberOptions.value.flatMap(group => group.groupOptions ?? []);
+});
+
+const availableEscalationRecipients = computed(() => {
+    const recipientsField = form$.value?.el$('vm_notify_profile.recipients');
+    const currentRecipients = recipientsField?.value || [];
+
+    const selectedKeys = currentRecipients.map((recipient) => {
+        if (recipient.extension_uuid) {
+            return `extension:${recipient.extension_uuid}`;
+        }
+
+        return `phone:${recipient.phone_number}`;
+    });
+
+    return escalationMemberOptions.value.map(group => ({
+        label: group.groupLabel,
+        items: (group.groupOptions ?? []).filter(option => {
+            const key = option.type === 'extension'
+                ? `extension:${option.value}`
+                : `phone:${option.destination ?? option.label}`;
+
+            return !selectedKeys.includes(key);
+        }),
+    }));
+});
+
+const getEscalationRecipientLabel = (row) => {
+    if (row.recipient_type === 'extension') {
+        const match = allEscalationMemberOptions.value.find(
+            (option) => String(option.value) === String(row.extension_uuid)
+        );
+
+        return match?.label ?? row.display_name ?? row.extension_uuid ?? 'Extension';
+    }
+
+    return row.display_name || row.phone_number || 'External Number';
+};
+
+const addSelectedEscalationRecipients = () => {
+    const selectedItems = form$.value?.el$('vm_notify_profile.selected_recipients')?.value ?? [];
+    const currentRecipients = form$.value?.el$('vm_notify_profile.recipients')?.value ?? [];
+
+    const normalizedRecipients = selectedItems.map((item, index) => {
+        const isInternal = item.type === 'extension' || !!item.destination;
+
+        return {
+            vm_notify_profile_recipient_uuid: null,
+            recipient_type: isInternal ? 'extension' : 'external_number',
+            extension_uuid: isInternal ? item.value : null,
+            phone_number: isInternal ? null : item.label,
+            display_name: item.label ?? item.destination ?? null,
+            priority: 0,
+            sort_order: currentRecipients.length + index,
+            enabled: true,
+        };
+    });
+
+    form$.value.update({
+        vm_notify_profile: {
+            ...form$.value.data.vm_notify_profile,
+            recipients: [...currentRecipients, ...normalizedRecipients],
+            selected_recipients: [],
+        },
+    });
+};
 
 const handleClose = () => {
     stopGreetingAudio()

@@ -31,9 +31,7 @@ class EventServiceProvider extends ServiceProvider
             \App\Listeners\SetUpUserSession::class,
             \App\Listeners\LogSuccessfulLogin::class,
         ],
-        ExtensionCreated::class => [
-            NotifySuperadminListener::class,
-        ],
+
         ExtensionUpdated::class => [
             UpdateUserWhenExtensionIsUpdated::class
         ],

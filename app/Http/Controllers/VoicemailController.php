@@ -3,23 +3,27 @@
 namespace App\Http\Controllers;
 
 use App\Data\VoicemailData;
-use Inertia\Inertia;
-use App\Models\Domain;
-use App\Models\Voicemails;
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
-use App\Services\OpenAIService;
-use App\Models\VoicemailGreetings;
-use Illuminate\Support\Facades\DB;
-use App\Models\VoicemailDestinations;
-use Spatie\QueryBuilder\QueryBuilder;
-use Spatie\QueryBuilder\AllowedFilter;
-use Illuminate\Support\Facades\Process;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Response;
-use App\Http\Requests\TextToSpeechRequest;
 use App\Http\Requests\StoreVoicemailRequest;
+use App\Http\Requests\TextToSpeechRequest;
 use App\Http\Requests\UpdateVoicemailRequest;
+use App\Models\Domain;
+use App\Models\Extensions;
+use App\Models\VmNotifyProfile;
+use App\Models\VmNotifyProfileRecipient;
+use App\Models\VoicemailDestinations;
+use App\Models\VoicemailGreetings;
+use App\Models\Voicemails;
+use App\Services\OpenAIService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Process;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
+use Illuminate\Support\Arr;
 
 class VoicemailController extends Controller
 {
@@ -191,55 +195,111 @@ class VoicemailController extends Controller
         $inputs = $request->validated();
 
         try {
-            // Retrieve the item by ID from the route parameter
-            $voicemail = $this->model->findOrFail($uuid);
+            DB::transaction(function () use ($inputs, $uuid) {
+                $voicemail = $this->model->findOrFail($uuid);
 
-            // Set system fields
-            $voicemail->insert_date = date('Y-m-d H:i:s');
-            $voicemail->insert_user = session('user_uuid');
+                // Update voicemail
+                $voicemail->insert_date = date('Y-m-d H:i:s');
+                $voicemail->insert_user = session('user_uuid');
+                $voicemail->fill($inputs);
+                $voicemail->save();
 
-            // Update the voicemail with the new inputs
-            $voicemail->fill($inputs);
-
-            // Save the updated voicemail to the database
-            $voicemail->save();
-
-            // Check if voicemail_copies is present and is an array
-            if (isset($inputs['voicemail_copies']) && is_array($inputs['voicemail_copies'])) {
-                // Delete existing voicemail copies for this voicemail
+                // Update voicemail copies
                 VoicemailDestinations::where('voicemail_uuid', $voicemail->voicemail_uuid)->delete();
 
-                // Prepare data for new VoicemailDestinations
-                foreach ($inputs['voicemail_copies'] as $copyUuid) {
-                    // Create a new VoicemailDestinations instance and set the fields
-                    $voicemailDestination = new VoicemailDestinations();
-                    $voicemailDestination->voicemail_uuid = $voicemail->voicemail_uuid; // Set the parent voicemail UUID
-                    $voicemailDestination->voicemail_uuid_copy = $copyUuid; // Set the copy UUID
-
-                    // Save the VoicemailDestinations instance
-                    $voicemailDestination->save();
+                foreach (($inputs['voicemail_copies'] ?? []) as $copyUuid) {
+                    VoicemailDestinations::create([
+                        'voicemail_uuid' => $voicemail->voicemail_uuid,
+                        'voicemail_uuid_copy' => $copyUuid,
+                    ]);
                 }
-            }
 
-            //clear the destinations session array
-            if (isset($_SESSION['destinations']['array'])) {
-                unset($_SESSION['destinations']['array']);
-            }
+                // Update voicemail escalation profile
+                $profileInputs = $inputs['vm_notify_profile'] ?? null;
 
-            // Return a JSON response indicating success
+                if (is_array($profileInputs)) {
+                    $profile = VmNotifyProfile::where('domain_uuid', $voicemail->domain_uuid)
+                        ->where('voicemail_uuid', $voicemail->voicemail_uuid)
+                        ->first();
+
+                    $enabled = (bool) ($profileInputs['enabled'] ?? false);
+                    $recipients = $profileInputs['recipients'] ?? [];
+
+                    $shouldCreateProfile =
+                        $enabled
+                        || !blank($profileInputs['name'] ?? null)
+                        || !blank($profileInputs['description'] ?? null)
+                        || !blank($profileInputs['caller_id_number'] ?? null)
+                        || !blank($profileInputs['caller_id_name'] ?? null)
+                        || !empty($profileInputs['email_success'] ?? [])
+                        || !empty($profileInputs['email_fail'] ?? [])
+                        || !empty($recipients);
+
+                    if ($profile || $shouldCreateProfile) {
+                        $profile = $profile ?: new VmNotifyProfile([
+                            'domain_uuid' => $voicemail->domain_uuid,
+                            'voicemail_uuid' => $voicemail->voicemail_uuid,
+                        ]);
+
+                        $profile->fill(Arr::except($profileInputs, [
+                            'vm_notify_profile_uuid',
+                            'recipients',
+                            'selected_recipients',
+                        ]));
+
+                        if (blank($profile->name)) {
+                            $profile->name = 'Mailbox ' . $voicemail->voicemail_id . ' Escalation';
+                        }
+
+                        $profile->domain_uuid = $voicemail->domain_uuid;
+                        $profile->voicemail_uuid = $voicemail->voicemail_uuid;
+                        $profile->save();
+
+                        // Only sync recipients if recipients were actually submitted
+                        if (array_key_exists('recipients', $profileInputs) && is_array($recipients)) {
+                            VmNotifyProfileRecipient::where('vm_notify_profile_uuid', $profile->vm_notify_profile_uuid)->delete();
+
+                            foreach ($recipients as $index => $recipient) {
+                                $recipientType = $recipient['recipient_type'] ?? null;
+
+                                if (
+                                    ($recipientType === 'extension' && blank($recipient['extension_uuid'] ?? null)) ||
+                                    ($recipientType === 'external_number' && blank($recipient['phone_number'] ?? null))
+                                ) {
+                                    continue;
+                                }
+
+                                VmNotifyProfileRecipient::create([
+                                    'domain_uuid' => $voicemail->domain_uuid,
+                                    'vm_notify_profile_uuid' => $profile->vm_notify_profile_uuid,
+                                    'recipient_type' => $recipientType,
+                                    'extension_uuid' => $recipient['extension_uuid'] ?? null,
+                                    'phone_number' => $recipient['phone_number'] ?? null,
+                                    'display_name' => $recipient['display_name'] ?? null,
+                                    'priority' => $recipient['priority'] ?? 0,
+                                    'sort_order' => $index,
+                                    'enabled' => (bool) ($recipient['enabled'] ?? true),
+                                ]);
+                            }
+                        }
+                    }
+                }
+
+                if (isset($_SESSION['destinations']['array'])) {
+                    unset($_SESSION['destinations']['array']);
+                }
+            });
+
             return response()->json([
                 'messages' => ['success' => ['Item updated successfully']]
-            ], 200);  // 200 OK for successful update
+            ], 200);
         } catch (\Exception $e) {
-            // Log the error message
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
-            // report($e);
 
-            // Handle any other exception that may occur
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => ['Failed to update item']]
-            ], 500);  // 500 Internal Server Error for any other errors
+            ], 500);
         }
     }
 
@@ -455,6 +515,32 @@ class VoicemailController extends Controller
                 ];
             })->toArray();
 
+            $extensions = Extensions::where('v_extensions.domain_uuid', $domain_uuid)
+                ->leftJoin('extension_advanced_settings', 'v_extensions.extension_uuid', '=', 'extension_advanced_settings.extension_uuid')
+                ->select(
+                    'v_extensions.extension_uuid',
+                    'v_extensions.extension',
+                    'v_extensions.effective_caller_id_name',
+                    'extension_advanced_settings.suspended'
+                )
+                ->orderBy('v_extensions.extension', 'asc')
+                ->get();
+
+            $escalationMemberOptions = [
+                [
+                    'groupLabel' => 'Extensions',
+                    'groupOptions' => $extensions->map(function ($extension) {
+                        return [
+                            'value' => $extension->extension_uuid,
+                            'label' => $extension->name_formatted,
+                            'destination' => $extension->extension,
+                            'type' => 'extension',
+                            'suspended' => $extension->suspended === 'true',
+                        ];
+                    })->toArray(),
+                ],
+            ];
+
 
             $routes = [];
 
@@ -468,7 +554,23 @@ class VoicemailController extends Controller
                     'greetings' => function ($query) use ($domain_uuid) {
                         $query->select('voicemail_id', 'greeting_id', 'greeting_name', 'greeting_description')
                             ->where('domain_uuid', $domain_uuid);
-                    }
+                    },
+                    'extension' => function ($query) use ($domain_uuid) {
+                        $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
+                            ->where('domain_uuid', $domain_uuid);
+                    },
+                    'vmNotifyProfile' => function ($query) {
+                        $query->orderBy('created_at', 'asc');
+                    },
+                    'vmNotifyProfile.recipients' => function ($query) {
+                        $query->orderByRaw('COALESCE(priority, 0) asc')
+                            ->orderByRaw('COALESCE(sort_order, 0) asc')
+                            ->orderBy('created_at', 'asc');
+                    },
+                    'vmNotifyProfile.recipients.extension' => function ($query) use ($domain_uuid) {
+                        $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
+                            ->where('domain_uuid', $domain_uuid);
+                    },
                 ])->where('voicemail_uuid', $item_uuid)->first();
 
 
@@ -514,6 +616,41 @@ class VoicemailController extends Controller
                 $voicemailCopies = $voicemail->voicemail_destinations->pluck('voicemail_uuid_copy')->values()->all();
             }
 
+            $vmNotifyProfile = null;
+
+            if ($voicemail->vmNotifyProfile) {
+                $profile = $voicemail->vmNotifyProfile;
+
+                $vmNotifyProfile = [
+                    'vm_notify_profile_uuid' => $profile->vm_notify_profile_uuid,
+                    'enabled' => (bool) $profile->enabled,
+                    'name' => $profile->name,
+                    'description' => $profile->description,
+                    'outbound_cid_mode' => $profile->outbound_cid_mode,
+                    'caller_id_number' => $profile->caller_id_number,
+                    'caller_id_name' => $profile->caller_id_name,
+                    'retry_count' => $profile->retry_count,
+                    'retry_delay_minutes' => $profile->retry_delay_minutes,
+                    'priority_delay_minutes' => $profile->priority_delay_minutes,
+                    'email_success' => $profile->email_success ?? [],
+                    'email_fail' => $profile->email_fail ?? [],
+                    'email_attach' => (bool) $profile->email_attach,
+                    'recipients' => $profile->recipients->map(function ($recipient) {
+                        return [
+                            'vm_notify_profile_recipient_uuid' => $recipient->vm_notify_profile_recipient_uuid,
+                            'recipient_type' => $recipient->recipient_type,
+                            'extension_uuid' => $recipient->extension_uuid,
+                            'phone_number' => $recipient->phone_number,
+                            'display_name' => $recipient->display_name
+                                ?? ($recipient->extension ? $recipient->extension->name_formatted : $recipient->phone_number),
+                            'priority' => $recipient->priority,
+                            'sort_order' => $recipient->sort_order,
+                            'enabled' => (bool) $recipient->enabled,
+                        ];
+                    })->values()->toArray(),
+                ];
+            }
+
             // Define the instructions for recording a voicemail greeting using a phone call
             $phoneCallInstructions = [
                 'Dial <strong>*98</strong> from your phone.',
@@ -555,6 +692,8 @@ class VoicemailController extends Controller
                 'phone_call_instructions_for_name' => $phoneCallInstructionsForName,
                 'sample_message' => $sampleMessage,
                 'recorded_name' => Storage::disk('voicemail')->exists(session('domain_name') . '/' . $voicemail->voicemail_id . '/recorded_name.wav') ? 'Custom recording' : 'System Default',
+                'escalation_member_options' => $escalationMemberOptions,
+                'vm_notify_profile' => $vmNotifyProfile,
                 // Define options for other fields as needed
             ];
 

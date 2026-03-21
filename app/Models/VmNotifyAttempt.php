@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class VmNotifyAttempt extends Model
 {
+    use \App\Models\Traits\TraitUuid;
+    
     protected $table = 'vm_notify_attempts';
     protected $primaryKey = 'vm_notify_attempt_uuid';
     public $incrementing = false;

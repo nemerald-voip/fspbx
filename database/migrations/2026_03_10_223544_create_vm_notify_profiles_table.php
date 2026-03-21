@@ -21,15 +21,13 @@ return new class extends Migration
                 $table->boolean('enabled')->default(true)->index();
 
                 $table->string('outbound_cid_mode')->default('default');
-                $table->string('fixed_caller_id_number')->nullable();
-                $table->string('fixed_caller_id_name')->nullable();
-                $table->string('internal_caller_id_name')->nullable();
+                $table->string('caller_id_number')->nullable();
+                $table->string('caller_id_name')->nullable();
 
                 $table->unsignedInteger('retry_count')->nullable();
                 $table->unsignedInteger('retry_delay_minutes')->nullable();
                 $table->unsignedInteger('priority_delay_minutes')->nullable();
 
-                $table->string('email_from')->nullable();
                 $table->json('email_success')->nullable();
                 $table->json('email_fail')->nullable();
                 $table->boolean('email_attach')->default(false);
