@@ -23,7 +23,6 @@ class HandleVoicemailEscalationAttemptEventJob implements ShouldQueue
 
     public function handle(): void
     {
-        logger('HandleVoicemailEscalationAttemptEventJob');
         // Allow only 2 tasks every 1 second
         Redis::throttle('voicemail')->allow(2)->every(1)->then(function () {
             $attemptUuid = $this->data['vm_notify_attempt_uuid'] ?? null;
@@ -118,14 +117,20 @@ class HandleVoicemailEscalationAttemptEventJob implements ShouldQueue
 
     protected function log(VmNotifyNotification $notification, string $level, string $message, VmNotifyAttempt $attempt, array $context = []): void
     {
+        $destination = $attempt->destination ?? 'unknown';
+        $retry = $attempt->retry_number ?? 0;
+        $priority = $attempt->priority ?? 0;
+
         VmNotifyLog::create([
             'domain_uuid' => $notification->domain_uuid,
             'vm_notify_notification_uuid' => $notification->vm_notify_notification_uuid,
             'level' => $level,
-            'message' => $message,
+            'message' => "{$message} Destination: {$destination}. Retry: {$retry}. Priority: {$priority}.",
             'context' => array_merge($context, [
                 'vm_notify_attempt_uuid' => $attempt->vm_notify_attempt_uuid,
-                'destination' => $attempt->destination,
+                'destination' => $destination,
+                'retry_number' => $retry,
+                'priority' => $priority,
             ]),
         ]);
     }

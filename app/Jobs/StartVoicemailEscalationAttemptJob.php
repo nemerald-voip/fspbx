@@ -29,7 +29,6 @@ class StartVoicemailEscalationAttemptJob implements ShouldQueue
 
     public function handle(FreeswitchEslService $eslService): void
     {
-        logger('StartVoicemailEscalationAttemptJob');
         // Allow only 2 tasks every 1 second
         Redis::throttle('voicemail')->allow(2)->every(1)->then(function () use ($eslService) {
             $attempt = VmNotifyAttempt::query()
@@ -102,11 +101,16 @@ class StartVoicemailEscalationAttemptJob implements ShouldQueue
 
             $callerIdName = $profile->caller_id_name ?: ('VMNFY-' . ($notification->mailbox ?: 'Mailbox'));
 
+            $destinationNumber = $attempt->destination ?? $recipient->extension?->extension;
+
             $originationVars = [
+                'sip_call_id' => $attempt->call_uuid, 
                 'ignore_early_media' => 'true',
-                'origination_uuid' => $attempt->call_uuid,
                 'origination_caller_id_name' => $callerIdName,
                 'origination_caller_id_number' => $callerIdNumber,
+                // 'context' => $domain->domain_name,
+                // 'destination_number' => $destinationNumber,
+                // 'domain_name' => $domain->domain_name,
                 'vm_notify_attempt_uuid' => $attempt->vm_notify_attempt_uuid,
                 'vm_notify_notification_uuid' => $notification->vm_notify_notification_uuid,
                 'vm_notify_profile_uuid' => $profile->vm_notify_profile_uuid,
@@ -119,12 +123,6 @@ class StartVoicemailEscalationAttemptJob implements ShouldQueue
                 'vm_notify_caller_id_number' => $notification->caller_id_number,
                 'vm_notify_message_path' => $notification->message_file_path,
             ];
-
-            logger([
-                'vm_notify_attempt_uuid' => $attempt->vm_notify_attempt_uuid,
-                'message_file_path' => $notification->message_file_path,
-                'originate_vars' => $originationVars,
-            ]);
 
             $origination = $this->buildOriginateCommand($originationVars, $endpoint);
 
@@ -171,13 +169,17 @@ class StartVoicemailEscalationAttemptJob implements ShouldQueue
                 return null;
             }
 
-            return "user/{$extension}@{$domainName}";
+            return "loopback/{$extension}/{$domainName}/XML";;
         }
 
         if ($recipient->recipient_type === 'external_number') {
-            // Replace this with your actual outbound route / gateway strategy.
-            // This is intentionally conservative until you wire in your outbound logic.
-            return null;
+            if (blank($recipient->phone_number)) {
+                return null;
+            }
+
+            // Sends the call back into the XML dialplan, using the domain context.
+            // It will hit "user_exists = false" and fall into the gateway bridge.
+            return "loopback/{$recipient->phone_number}/{$domainName}/XML";
         }
 
         return null;
@@ -198,13 +200,20 @@ class StartVoicemailEscalationAttemptJob implements ShouldQueue
 
     protected function log(VmNotifyAttempt $attempt, string $level, string $message, array $context = []): void
     {
+        $destination = $attempt->destination ?? 'unknown';
+        $retry = $attempt->retry_number ?? 0;
+        $priority = $attempt->priority ?? 0;
+
         VmNotifyLog::create([
             'domain_uuid' => $attempt->domain_uuid,
             'vm_notify_notification_uuid' => $attempt->vm_notify_notification_uuid,
             'level' => $level,
-            'message' => $message,
+            'message' => "{$message} Destination: {$destination}. Retry: {$retry}. Priority: {$priority}.",
             'context' => array_merge($context, [
                 'vm_notify_attempt_uuid' => $attempt->vm_notify_attempt_uuid,
+                'destination' => $destination,
+                'retry_number' => $retry,
+                'priority' => $priority,
             ]),
         ]);
     }

@@ -29,7 +29,6 @@ class SendVoicemailEscalationCompletionEmailJob implements ShouldQueue
 
     public function handle(): void
     {
-        logger('SendVoicemailEscalationCompletionEmailJob');
         // Allow only 2 tasks every 1 second
         Redis::throttle('emails')->allow(2)->every(1)->then(function () {
             $notification = VmNotifyNotification::query()

@@ -29,7 +29,6 @@ class AdvanceVoicemailEscalationNotificationJob implements ShouldQueue
 
     public function handle(): void
     {
-        logger('AdvanceVoicemailEscalationNotificationJob');
         // Allow only 2 tasks every 1 second
         Redis::throttle('voicemail')->allow(2)->every(1)->then(function () {
 
@@ -146,12 +145,23 @@ class AdvanceVoicemailEscalationNotificationJob implements ShouldQueue
 
     protected function log(VmNotifyNotification $notification, string $level, string $message, array $context = []): void
     {
+        $retry = (int) ($context['current_retry'] ?? $notification->current_retry ?? 0);
+        $priority = $context['priority'] ?? $context['final_priority'] ?? $notification->current_priority ?? null;
+
+        $messageWithState = $message . " Retry: {$retry}.";
+        if ($priority !== null) {
+            $messageWithState .= " Priority: {$priority}.";
+        }
+
         VmNotifyLog::create([
             'domain_uuid' => $notification->domain_uuid,
             'vm_notify_notification_uuid' => $notification->vm_notify_notification_uuid,
             'level' => $level,
-            'message' => $message,
-            'context' => $context,
+            'message' => $messageWithState,
+            'context' => array_merge($context, [
+                'retry_number' => $retry,
+                'priority' => $priority,
+            ]),
         ]);
     }
 }

@@ -36,7 +36,7 @@
         </tr>
         <tr>
             <td><strong>Left At:</strong></td>
-            <td>{{ $notification->message_left_at ?? '—' }}</td>
+            <td>{{ optional($notification->message_left_at)?->copy()->timezone($tenantTimeZone)->format('Y-m-d g:i:s A T') ?? '—' }}</td>
         </tr>
         <tr>
             <td><strong>Accepted By:</strong></td>
@@ -84,17 +84,37 @@
 
     @if($notification->logs->count())
         <h3 style="margin-top: 24px;">Notification Log</h3>
-        <ul style="padding-left: 20px;">
-            @foreach($notification->logs as $log)
-                <li>
-                    [{{ $log->created_at }}] {{ strtoupper($log->level ?? 'info') }} — {{ $log->message }}
-                </li>
-            @endforeach
-        </ul>
+        <table cellpadding="8" cellspacing="0" border="1" style="border-collapse: collapse; width: 100%;">
+            <thead>
+                <tr>
+                    <th align="left">Time</th>
+                    <th align="left">Level</th>
+                    <th align="left">Message</th>
+                    <th align="left">Destination</th>
+                    <th align="left">Retry</th>
+                    <th align="left">Priority</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($notification->logs as $log)
+                    @php
+                        $context = is_array($log->context) ? $log->context : [];
+                    @endphp
+                    <tr>
+                        <td>{{ optional($log->created_at)?->copy()->timezone($tenantTimeZone)->format('Y-m-d g:i:s A T') ?? '—' }}</td>
+                        <td>{{ strtoupper($log->level ?? 'info') }}</td>
+                        <td>{{ $log->message }}</td>
+                        <td>{{ $context['destination'] ?? '—' }}</td>
+                        <td>{{ $context['retry_number'] ?? '—' }}</td>
+                        <td>{{ $context['priority'] ?? '—' }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
     @endif
 
     <p style="margin-top: 24px; color: #6B7280; font-size: 12px;">
-        This email was generated automatically by FS PBX Voicemail Escalation.
+           This email was generated automatically by {{ config('app.name', 'FS PBX') }} Voicemail Escalation.
     </p>
 </body>
 </html>

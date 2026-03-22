@@ -28,7 +28,6 @@ class CreateVoicemailEscalationNotificationsJob implements ShouldQueue
 
     public function handle(): void
     {
-        logger('CreateVoicemailEscalationNotificationsJob');
         // Allow only 2 tasks every 1 second
         Redis::throttle('voicemail')->allow(2)->every(1)->then(function () {
 
@@ -101,7 +100,7 @@ class CreateVoicemailEscalationNotificationsJob implements ShouldQueue
                     'domain_uuid' => $domainUuid,
                     'vm_notify_notification_uuid' => $notification->vm_notify_notification_uuid,
                     'level' => 'info',
-                    'message' => 'Escalation notification created from voicemail webhook.',
+                    'message' => 'Escalation notification created from voicemail webhook. Retry: 0. Priority: ' . ($notification->current_priority ?? 0) . '.',
                     'context' => [
                         'voicemail_uuid' => $voicemailUuid,
                         'voicemail_message_uuid' => $voicemailMessageUuid,
@@ -111,6 +110,8 @@ class CreateVoicemailEscalationNotificationsJob implements ShouldQueue
                         'message_length' => $this->data['message_length'] ?? null,
                         'start_epoch' => $this->data['start_epoch'] ?? null,
                         'file_path' => $this->data['file_path'] ?? null,
+                        'retry_number' => 0,
+                        'priority' => $notification->current_priority ?? 0,
                     ],
                 ]);
 

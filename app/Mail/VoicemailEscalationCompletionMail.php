@@ -14,6 +14,7 @@ class VoicemailEscalationCompletionMail extends Mailable
     public VmNotifyNotification $notification;
     public string $statusLabel;
     public string $subjectLine;
+    public string $tenantTimeZone;
 
     public function __construct(VmNotifyNotification $notification)
     {
@@ -22,6 +23,8 @@ class VoicemailEscalationCompletionMail extends Mailable
         $this->subjectLine = $notification->status === 'accepted'
             ? 'Voicemail escalation accepted for mailbox ' . ($notification->mailbox ?? 'Unknown')
             : 'Voicemail escalation failed for mailbox ' . ($notification->mailbox ?? 'Unknown');
+
+        $this->tenantTimeZone = get_local_time_zone($notification->domain_uuid) ?? 'UTC';
     }
 
     public function build()
