@@ -55,7 +55,6 @@ class Update160
     {
         return [
             'fs-cdr-service',
-            'fs-esl-listener-emergency',
         ];
     }
 
