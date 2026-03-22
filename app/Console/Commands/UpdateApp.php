@@ -189,11 +189,11 @@ class UpdateApp extends Command
     }
 
 
-    protected function executeCommand($command, $timeout = 60)
+    protected function executeCommand($command, $timeout = 60, $failOnError = true)
     {
         $process = Process::fromShellCommandline($command);
-        $process->setTimeout($timeout); // Set the timeout
-        $process->setTty(true); // Enable TTY mode to preserve color output
+        $process->setTimeout($timeout);
+        $process->setTty(true);
         $process->run(function ($type, $buffer) {
             if (Process::ERR === $type) {
                 $this->error($buffer);
@@ -204,7 +204,10 @@ class UpdateApp extends Command
 
         if (!$process->isSuccessful()) {
             $this->error("Command '$command' failed.");
-            exit(1);
+
+            if ($failOnError) {
+                exit(1);
+            }
         }
     }
 
@@ -251,6 +254,6 @@ class UpdateApp extends Command
 
         $escapedPrograms = implode(' ', array_map('escapeshellarg', $programs));
 
-        $this->executeCommand("supervisorctl restart {$escapedPrograms}", 120);
+        $this->executeCommand("supervisorctl restart {$escapedPrograms}", 120, false);
     }
 }
