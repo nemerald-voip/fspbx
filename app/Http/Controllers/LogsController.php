@@ -53,6 +53,7 @@ class LogsController extends Controller
                     'email_logs' => route('email-logs.index'),
                     'inbound_webhooks' => route('inbound-webhooks.index'),
                     'message_logs' => route('messages.logs'),
+                    'message_retry' => route('messages.retry'),
 
                 ],
                 'permissions' => function () {

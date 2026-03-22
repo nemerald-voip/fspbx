@@ -268,7 +268,6 @@ Route::group(['middleware' => 'auth'], function () {
     // Messages
     // Route::resource('messages', MessagesController::class);
     Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
-    // Route::post('/messages/retry', [MessagesController::class, 'retry'])->name('messages.retry');
     // Route::post('/messages/bulk-update', [DeviceController::class, 'bulkUpdate'])->name('messages.bulk.update');
     // Route::post('/messages/bulk-delete', [DeviceController::class, 'bulkDelete'])->name('messages.bulk.delete');
     // Route::post('/messages/select-all', [DeviceController::class, 'selectAll'])->name('messages.select.all');

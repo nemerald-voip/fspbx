@@ -238,7 +238,7 @@ class ProcessSinchWebhookJob extends SpatieProcessWebhookJob
         $messageModel->media = is_array($this->media) ? json_encode($this->media) : $this->media;
         $messageModel->direction = "in";
         $messageModel->type = $this->type ?? 'sms';
-        $messageModel->status = $status;
+        $messageModel->status = mb_substr((string) $status, 0, 250);
         $messageModel->save();
 
         return $messageModel;

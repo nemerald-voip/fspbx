@@ -372,7 +372,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::get('/messages/logs', [MessageController::class, 'logs'])->name('messages.logs');
     Route::get('/messages/data', [MessageController::class, 'getData'])->name('messages.data');
     Route::post('/messages/mark-read', [MessageController::class, 'markRead'])->name('messages.mark-read');
-
+    Route::post('/messages/retry', [MessageController::class, 'retry'])->name('messages.retry');
 
     // Message Settings
     Route::get('/message-settings/data', [MessageSettingsController::class, 'getData'])->name('messages.settings.data');

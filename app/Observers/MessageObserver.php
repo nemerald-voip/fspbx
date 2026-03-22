@@ -2,6 +2,7 @@
 
 namespace App\Observers;
 
+use Throwable;
 use App\Models\Messages;
 use App\Events\MessageSent;
 use App\Events\ConversationUpdated;
@@ -13,40 +14,51 @@ class MessageObserver
      */
     public function created(Messages $message): void
     {
-        logger("Observer Fired for Message: {$message->message_uuid}");
-        $isOutbound = in_array(strtolower($message->direction), ['out', 'outbound', 'outgoing']);
-        $role = $isOutbound ? 'user' : 'ai';
+        try {
+            // logger("Observer Fired for Message: {$message->message_uuid}");
 
-        // 1. Identify Local & Remote (Assuming E.164 consistency)
-        $local = $isOutbound ? $message->source : $message->destination;
-        $remote = $isOutbound ? $message->destination : $message->source;
+            $isOutbound = in_array(strtolower($message->direction), ['out', 'outbound', 'outgoing']);
+            $role = $isOutbound ? 'user' : 'ai';
 
-        // 2. Active Chat Window (DeepChat)
-        // e.g. +15551234567_+16469998888
-        $roomId = "{$local}_{$remote}";
+            // 1. Identify Local & Remote
+            $local = $isOutbound ? $message->source : $message->destination;
+            $remote = $isOutbound ? $message->destination : $message->source;
 
-        $payload = [
-            'text' => $message->message,
-            'role' => $role,
-            'timestamp' => $message->created_at->toIsoString(),
-        ];
+            // 2. Active Chat Window
+            $roomId = "{$local}_{$remote}";
 
-        logger("Broadcasting to channel: room." . str_replace('+', '', $roomId)); 
+            $payload = [
+                'text' => $message->message,
+                'role' => $role,
+                'timestamp' => $message->created_at->toIsoString(),
+            ];
 
-        // 3. Broadcast
-        broadcast(new MessageSent($payload, $roomId));
+            // logger("Broadcasting to channel: room." . str_replace('+', '', $roomId));
 
-        // 4. Global Sidebar Update
-        // Broadcasts to 'extension.{uuid}'
-        $sidebarPayload = [
-            'roomId' => $roomId,
-            'lastMessage' => $message->message,
-            'timestamp' => $message->created_at->toIsoString(),
-            'name' => $remote,       // Display Name (Customer)
-            'my_number' => $local,   // Context
-            'direction' => $isOutbound ? 'out' : 'in',
-        ];
+            // 3. Broadcast message update
+            try {
+                broadcast(new MessageSent($payload, $roomId));
+            } catch (Throwable $e) {
+                logger('Error broadcasting MessageSent: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            }
 
-        broadcast(new ConversationUpdated($sidebarPayload, $message->extension_uuid));
+            // 4. Global Sidebar Update
+            $sidebarPayload = [
+                'roomId' => $roomId,
+                'lastMessage' => $message->message,
+                'timestamp' => $message->created_at->toIsoString(),
+                'name' => $remote,
+                'my_number' => $local,
+                'direction' => $isOutbound ? 'out' : 'in',
+            ];
+
+            try {
+                broadcast(new ConversationUpdated($sidebarPayload, $message->extension_uuid));
+            } catch (Throwable $e) {
+                logger('Error broadcasting ConversationUpdated: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+            }
+        } catch (Throwable $e) {
+            logger('Error in MessageObserver: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+        }
     }
 }

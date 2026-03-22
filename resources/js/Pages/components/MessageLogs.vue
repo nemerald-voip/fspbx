@@ -63,8 +63,8 @@
                         </thead>
 
                         <tbody v-if="!isDataLoading && data.data?.length" class="divide-y divide-gray-200 bg-white">
-                            <template v-for="row in data.data" :key="row.id">
-                                <tr @click="toggleExpand(row.id)" class="hover:bg-gray-50 cursor-pointer">
+                            <template v-for="row in data.data" :key="row.message_uuid">
+                                <tr @click="toggleExpand(row.message_uuid)" class="hover:bg-gray-50 cursor-pointer">
                                     <td class="whitespace-nowrap px-6 py-2 text-sm font-medium text-gray-500">
                                         {{ row.created_at_formatted ?? row.created_at }}
                                     </td>
@@ -77,28 +77,61 @@
                                     <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
                                         {{ row.destination_formatted }}
                                     </td>
-                                    <td class="px-6 py-2 text-sm text-gray-500">
-                                        {{ row.message }}
+                                    <td class="px-6 py-2 text-sm text-gray-500" :title="row.message">
+                                        {{ row.message && row.message.length > 50 ? row.message.substring(0, 50) + '...'
+                                            : row.message }}
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
                                         {{ row.type }}
                                     </td>
-                                    <td class="px-6 py-2 text-sm text-gray-500">
-                                        <Badge :text="row.status"
+                                    <td class="px-6 py-2 text-sm text-gray-500" :title="row.status">
+                                        <!-- Pass the original status to the functions to keep correct colors, but truncate the visual text -->
+                                        <Badge
+                                            :text="row.status && row.status.length > 50 ? row.status.substring(0, 50) + '...' : row.status"
                                             :backgroundColor="determineColor(row.status).backgroundColor"
                                             :textColor="determineColor(row.status).textColor"
                                             :ringColor="determineColor(row.status).ringColor" />
+                                    </td>
+
+                                    <!-- ACTION COLUMN WITH RETRY ICON -->
+                                    <td class="whitespace-nowrap px-6 py-2 text-sm font-medium select-none" @click.stop>
+                                        <div class="flex items-center gap-4">
+                                            <!-- RETRY ICON -->
+                                            <div class="relative group flex items-center justify-center cursor-pointer">
+                                                <RestartIcon @click="handleRetry(row.message_uuid)"
+                                                    class="h-7 w-7 transition duration-300 ease-in-out p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600 rounded-full" />
+
+                                                <!-- TOOLTIP -->
+                                                <div
+                                                    class="absolute bottom-full mb-1 hidden group-hover:block whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 z-10 shadow-lg">
+                                                    Retry Message
+                                                    <!-- Little down arrow -->
+                                                    <div
+                                                        class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </td>
 
 
                                 </tr>
 
                                 <!-- EXPANDED DETAILS -->
-                                <tr v-if="expandedRow === row.id">
-                                    <td :colspan="5" class="bg-gray-50 px-6 py-4">
-                                        <div class="text-gray-500 text-sm mb-1">Payload</div>
-                                        <pre
-                                            class="text-gray-700 text-sm whitespace-pre-wrap break-words">{{ row.payload }}</pre>
+                                <tr v-if="expandedRow === row.message_uuid">
+                                    <td :colspan="8" class="bg-gray-50 px-6 py-4 shadow-inner">
+                                        <!-- Showing full Status -->
+                                        <div class="mb-4">
+                                            <div class="text-gray-900 font-semibold text-sm mb-1">Full Status</div>
+                                            <pre
+                                                class="text-gray-700 text-sm whitespace-pre-wrap break-words">{{ row.status }}</pre>
+                                        </div>
+                                        <!-- Showing full Message -->
+                                        <div>
+                                            <div class="text-gray-900 font-semibold text-sm mb-1">Full Message</div>
+                                            <pre
+                                                class="text-gray-700 text-sm whitespace-pre-wrap break-words">{{ row.message }}</pre>
+                                        </div>
                                     </td>
                                 </tr>
                             </template>
@@ -134,6 +167,12 @@
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
+
+    <!-- CONFIRMATION MODAL -->
+    <ConfirmationModal :show="showRetryConfirmationModal" @close="handleModalClose" @confirm="confirmRetryAction"
+        :header="'Are you sure?'"
+        :text="'Are you sure you want to retry sending the selected messages? This action will attempt to resend them immediately.'"
+        :confirm-button-label="'Retry'" cancel-button-label="Cancel" />
 </template>
 
 
@@ -147,16 +186,15 @@ import {
     MagnifyingGlassIcon,
 } from "@heroicons/vue/24/solid";
 import Badge from "@generalComponents/Badge.vue";
+import RestartIcon from "./icons/RestartIcon.vue";
+import ConfirmationModal from "./modal/ConfirmationModal.vue";
 
 
 
 const isDataLoading = ref(false)
-const viewModalTrigger = ref(false);
-const loadingModal = ref(false)
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
-const isExporting = ref(null);
 const data = ref({
     data: [],
     prev_page_url: null,
@@ -168,8 +206,12 @@ const data = ref({
     last_page: 1,
     links: [],
 });
+const selectedItems = ref([]);
+const selectPageItems = ref(false);
+const selectAll = ref(false);
 const expandedRow = ref(null)
-
+const showRetryConfirmationModal = ref(false);
+const confirmRetryAction = ref(null);
 
 const props = defineProps({
     startPeriod: String,
@@ -241,28 +283,28 @@ const handleFiltersReset = () => {
 }
 
 const determineColor = (status) => {
-  switch (status) {
-    case 'success':
-    case 'emailed':
-    case 'delivered':
-      return {
-        backgroundColor: 'bg-green-50',
-        textColor: 'text-green-700',
-        ringColor: 'ring-green-600/20'
-      };
-    case 'queued':
-      return {
-        backgroundColor: 'bg-blue-50',
-        textColor: 'text-blue-700',
-        ringColor: 'ring-blue-600/20'
-      };
-    default:
-      return {
-        backgroundColor: 'bg-yellow-50',
-        textColor: 'text-yellow-700',
-        ringColor: 'ring-yellow-600/20'
-      };
-  }
+    switch (status) {
+        case 'success':
+        case 'emailed':
+        case 'delivered':
+            return {
+                backgroundColor: 'bg-green-50',
+                textColor: 'text-green-700',
+                ringColor: 'ring-green-600/20'
+            };
+        case 'queued':
+            return {
+                backgroundColor: 'bg-blue-50',
+                textColor: 'text-blue-700',
+                ringColor: 'ring-blue-600/20'
+            };
+        default:
+            return {
+                backgroundColor: 'bg-yellow-50',
+                textColor: 'text-yellow-700',
+                ringColor: 'ring-yellow-600/20'
+            };
+    }
 };
 
 const renderRequestedPage = (url) => {
@@ -278,6 +320,52 @@ const renderRequestedPage = (url) => {
 
 const handleUpdateDateRange = (newDateRange) => {
     filterData.value.dateRange = newDateRange;
+}
+
+const handleBulkActionRequest = (action) => {
+    if (action === 'bulk_retry') {
+        showRetryConfirmationModal.value = true;
+        confirmRetryAction.value = () => executeBulkRetry();
+    }
+}
+
+const handleClearSelection = () => {
+    selectedItems.value = [];
+    selectPageItems.value = false;
+    selectAll.value = false;
+}
+
+const handleRetry = (uuid) => {
+    // Single message sent in array format to bulk endpoint
+    axios.post(props.routes.message_retry, { 'items': [uuid] })
+        .then((response) => {
+            showNotification('success', response.data.messages);
+            handleClearSelection();
+        }).catch((error) => {
+            handleClearSelection();
+            handleErrorResponse(error);
+        }).finally(() => {
+            fetchData(data.value.current_page || 1);
+        });
+}
+
+const executeBulkRetry = () => {
+    axios.post(props.routes.retry, { 'items': selectedItems.value })
+        .then((response) => {
+            showNotification('success', response.data.messages);
+            handleModalClose();
+            handleClearSelection();
+        }).catch((error) => {
+            handleClearSelection();
+            handleModalClose();
+            handleErrorResponse(error);
+        }).finally(() => {
+            fetchData(data.value.current_page || 1);
+        });
+}
+
+const handleModalClose = () => {
+    showRetryConfirmationModal.value = false;
 }
 
 

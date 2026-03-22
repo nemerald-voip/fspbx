@@ -649,7 +649,7 @@ class MessageController extends Controller
                                 ->post('/')
                                 ->throw()
                                 ->json();
-
+                                
                             $this->updateMessageStatus($item, $response);
                         } catch (\Throwable $e) {
                             logger("Error delivering SMS to Ringotel: {$e->getMessage()}");
@@ -714,12 +714,12 @@ class MessageController extends Controller
             } else {
                 $message->status = 'failed';
                 $errorDetail = json_encode($response['result']);
-                SendSmsNotificationToSlack::dispatch("*Commio Inbound SMS Failed*.From: " . $this->source . " To: " . $this->extension . "\nRingotel API Error: No message ID received. Details: " . $errorDetail)->onQueue('messages');
+                SendSmsNotificationToSlack::dispatch("*Commio Inbound SMS Failed*.From: " . $message->source . " To: " . $message->extension . "\nRingotel API Error: No message ID received. Details: " . $errorDetail)->onQueue('messages');
             }
         } else {
             $message->status = 'failed';
             $errorDetail = isset($response['error']) ? json_encode($response['error']) : 'Unknown error';
-            SendSmsNotificationToSlack::dispatch("*Commio Inbound SMS Failed*.From: " . $this->source . " To: " . $this->extension . "\nRingotel API Failure: " . $errorDetail)->onQueue('messages');
+            SendSmsNotificationToSlack::dispatch("*Commio Inbound SMS Failed*.From: " . $message->source . " To: " . $message->extension . "\nRingotel API Failure: " . $errorDetail)->onQueue('messages');
         }
         $message->save();
     }
