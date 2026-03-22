@@ -14,10 +14,13 @@
                                 </div>
                                 <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left">
                                     <DialogTitle as="h3" class="text-base font-semibold leading-6 text-gray-900">{{ header }}</DialogTitle>
-                                    <div class="mt-2">
-                                        <p class="text-sm text-gray-500">{{ text }}</p>
+                                    
+                                    <div class="mt-2 text-left">
+                                        <slot>
+                                            <p class="text-sm text-gray-500">{{ text }}</p>
+                                        </slot>
                                     </div>
-                                </div>
+                                    </div>
                             </div>
                             <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
                                 <button type="button" :class="`inline-flex w-full justify-center rounded-md bg-${color}-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-${color}-500 sm:ml-3 sm:w-auto focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-${color}-500`" @click="emit('confirm')">

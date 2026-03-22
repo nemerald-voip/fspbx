@@ -931,7 +931,7 @@ class ExtensionsController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
-    public function store(StoreExtensionRequest $request)
+public function store(StoreExtensionRequest $request)
     {
         $data = $request->validated();
 
@@ -941,9 +941,24 @@ class ExtensionsController extends Controller
             // 1) Create the extension
             $extension = Extensions::create($data);
 
-            // 2) Create the voicemail entry for this extension
+            // 2) Create or link the voicemail entry for this extension
             if (!empty($data['voicemail_id'])) {
-                $voicemail = Voicemails::create($data);
+                // Prepare necessary linking data
+                $data['extension_uuid'] = $extension->extension_uuid;
+                $data['domain_uuid'] = $extension->domain_uuid;
+
+                // Look for an orphaned/existing voicemail box
+                $existingVoicemail = Voicemails::where('domain_uuid', $extension->domain_uuid)
+                    ->where('voicemail_id', $data['voicemail_id'])
+                    ->first();
+
+                if ($existingVoicemail) {
+                    // Box exists! Just re-attach it to this extension and update its settings
+                    $existingVoicemail->update($data);
+                } else {
+                    // Box doesn't exist, create a brand new one
+                    Voicemails::create($data);
+                }
             }
 
             $extension->advSettings()->updateOrCreate(
@@ -1199,16 +1214,25 @@ class ExtensionsController extends Controller
 
             $extension->update($data);
 
-            // Update related voicemail only when user has permission
+// Update related voicemail only when user has permission
             if ($canManageVoicemail) {
-                if ($extension->voicemail) {
-                    $data['voicemail_id'] = $extension->extension;
-                    $extension->voicemail->update($data);
+                // Ensure IDs are strictly enforced
+                $data['voicemail_id'] = $extension->extension;
+                $data['extension_uuid'] = $extension->extension_uuid;
+                $data['domain_uuid'] = $currentDomain;
+
+                // Look for the voicemail box by ID instead of relationship, 
+                // just in case it exists but was unlinked (orphaned)
+                $voicemail = Voicemails::where('domain_uuid', $currentDomain)
+                    ->where('voicemail_id', $extension->extension)
+                    ->first();
+
+                if ($voicemail) {
+                    // Re-link and update
+                    $voicemail->update($data);
                 } else {
+                    // Create new only if enabled
                     if (($data['voicemail_enabled'] ?? 'false') == 'true') {
-                        $data['extension_uuid'] = $extension->extension_uuid;
-                        $data['domain_uuid'] = $currentDomain;
-                        $data['voicemail_id'] = $extension->extension;
                         Voicemails::create($data);
                     }
                 }
@@ -1440,6 +1464,8 @@ class ExtensionsController extends Controller
         $domain_uuid = session('domain_uuid');
         $uuids = $request->input('items', []);
 
+        $retainVoicemail = filter_var($request->input('retain_voicemail', false), FILTER_VALIDATE_BOOLEAN);
+
         try {
             DB::beginTransaction();
 
@@ -1448,26 +1474,27 @@ class ExtensionsController extends Controller
                 'extension_users',
                 'mobile_app',
                 'advSettings',
-            ])
-                ->with([
-                    'deviceLines' => function ($q) use ($domain_uuid) {
-                        $q->where('domain_uuid', $domain_uuid)
-                            ->select('device_line_uuid', 'device_uuid', 'auth_id', 'domain_uuid', 'password');
-                    }
-                ])
-                ->with(['voicemail' => function ($query) use ($domain_uuid) {
+                'deviceLines' => function ($q) use ($domain_uuid) {
+                    $q->where('domain_uuid', $domain_uuid)
+                        ->select('device_line_uuid', 'device_uuid', 'auth_id', 'domain_uuid', 'password');
+                },
+                'voicemail' => function ($query) use ($domain_uuid) {
                     $query->where('domain_uuid', $domain_uuid);
-                }])
-                ->where('domain_uuid', $domain_uuid)
-                ->whereIn('extension_uuid', $uuids)
-                ->get();
-
-
+                }
+            ])
+            ->where('domain_uuid', $domain_uuid)
+            ->whereIn('extension_uuid', $uuids)
+            ->get();
 
             foreach ($extensions as $extension) {
-                // 1. Delete voicemail
+                // 1. Delete or Retain voicemail
                 if ($extension->voicemail) {
-                    $extension->voicemail->delete();
+                    if ($retainVoicemail) {
+                        // Unlink the voicemail so it becomes a standalone team inbox
+                        $extension->voicemail->update(['extension_uuid' => null]);
+                    } else {
+                        $extension->voicemail->delete();
+                    }
                 }
 
                 // 2. Delete followMe and destinations
@@ -1488,14 +1515,11 @@ class ExtensionsController extends Controller
 
                 // 5. Mobile app users: dispatch job, then delete
                 if ($extension->mobile_app) {
-                    // Prepare payload for API/job (this data is NOT saved to DB, just sent to the API)
                     $mobileAppPayload = [
                         'mobile_app_user_uuid' => $extension->mobile_app_user_uuid,
                         'user_id'   => $extension->mobile_app->user_id,
                         'org_id'    => $extension->mobile_app->org_id,
                     ];
-
-                    // Dispatch job
                     DeleteAppUser::dispatch($mobileAppPayload)->onQueue('default');
                 }
 
@@ -1507,13 +1531,13 @@ class ExtensionsController extends Controller
                 // 7. Delete the extension itself
                 $extension->delete();
 
-                // 7. Clear FusionPBX cache for this extension
+                // 8. Clear FusionPBX cache for this extension
                 if ($extension->extension && $extension->user_context) {
                     FusionCache::clear("directory:" . $extension->extension . "@" . $extension->user_context);
                 }
             }
 
-            // 8. Clear the destinations session array if present
+            // 9. Clear the destinations session array if present
             if (isset($_SESSION['destinations']['array'])) {
                 unset($_SESSION['destinations']['array']);
             }

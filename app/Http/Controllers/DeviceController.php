@@ -202,6 +202,8 @@ class DeviceController extends Controller
                 'device_description',
                 'device_provisioned_method',
                 'device_provisioned_date',
+                'device_provisioned_ip',
+                'device_provisioned_agent',
 
             ])
             // allow ?filter[username]=foo or ?filter[user_email]=bar

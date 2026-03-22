@@ -150,6 +150,9 @@ class DashboardController extends Controller
                 ->count();
         }
 
+        $user = Auth::user();
+        $extension = $user->extension;
+
         if (!userCheckPermission("voicemail_view") && $extension) {
             // My VM count
             $user = Auth::user();
@@ -161,7 +164,7 @@ class DashboardController extends Controller
                     ->withCount('messages')
                     ->first();
                 $counts['my_voicemails'] = $voicemail?->messages_count ?? 0;
-                
+
             }
         }
 
@@ -360,9 +363,10 @@ class DashboardController extends Controller
         if (userCheckPermission("extension_view")) {
             $apps[] = ['name' => 'Extensions', 'href' => route('extensions.index'), 'icon' => 'ContactPhoneIcon', 'slug' => 'extensions'];
         }
-        if (userCheckPermission("voicemail_view") && userCheckPermission("voicemail_domain")) {
+        if (userCheckPermission("voicemail_view")) {
             $apps[] = ['name' => 'Voicemails', 'href' => route('voicemails.index'), 'icon' => 'VoicemailIcon', 'slug' => 'voicemails'];
         }
+
         if (!userCheckPermission("voicemail_view") && $voicemail) {
             $apps[] = ['name' => 'My VMs', 'href' => $voicemail->messages_route, 'icon' => 'VoicemailIcon', 'slug' => 'my_voicemails'];
         }
