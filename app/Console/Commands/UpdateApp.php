@@ -158,7 +158,6 @@ class UpdateApp extends Command
         $this->executeCommand('php artisan route:cache');
         $this->executeCommand('php artisan queue:restart');
         $this->runArtisanCommand('horizon:terminate');
-        $this->runArtisanCommand('reverb:restart');
 
         //Seed the db
         $this->executeCommand('php artisan db:seed --force');
