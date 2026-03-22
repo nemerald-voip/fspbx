@@ -16,6 +16,7 @@ use App\Console\Commands\Updates\Update131;
 use App\Console\Commands\Updates\Update140;
 use App\Console\Commands\Updates\Update145;
 use App\Console\Commands\Updates\Update150;
+use App\Console\Commands\Updates\Update160;
 use App\Console\Commands\Updates\Update0917;
 use App\Console\Commands\Updates\Update0918;
 use App\Console\Commands\Updates\Update0924;
@@ -108,8 +109,11 @@ class UpdateApp extends Command
             '1.4.0' => Update140::class,
             '1.4.5' => Update145::class,
             '1.5.0' => Update150::class,
+            '1.6.0' => Update160::class,
             // Add more versions as needed
         ];
+
+        $supervisorProgramsToRestart = [];
 
         foreach ($updateSteps as $version => $updateClass) {
             if (version_compare($currentVersion, $version, '<')) {
@@ -120,6 +124,13 @@ class UpdateApp extends Command
                     // If the update fails, stop further updates and exit with failure
                     $this->error("Update to version $version failed. Stopping further updates.");
                     exit(1);
+                }
+
+                if (method_exists($updateInstance, 'getSupervisorProgramsToRestart')) {
+                    $supervisorProgramsToRestart = array_unique(array_merge(
+                        $supervisorProgramsToRestart,
+                        $updateInstance->getSupervisorProgramsToRestart()
+                    ));
                 }
 
                 // If the update is successful, call the version:set command
@@ -146,6 +157,8 @@ class UpdateApp extends Command
 
         $this->executeCommand('php artisan route:cache');
         $this->executeCommand('php artisan queue:restart');
+        $this->runArtisanCommand('horizon:terminate');
+        $this->runArtisanCommand('reverb:restart');
 
         //Seed the db
         $this->executeCommand('php artisan db:seed --force');
@@ -167,6 +180,10 @@ class UpdateApp extends Command
 
         // Change ownership of the current directory
         $this->changeDirectoryOwnership($currentDirectory);
+
+        if (!empty($supervisorProgramsToRestart)) {
+            $this->restartSupervisorPrograms($supervisorProgramsToRestart);
+        }
 
         $this->info('Update completed successfully!');
     }
@@ -220,5 +237,20 @@ class UpdateApp extends Command
 
         // Execute the chown command
         $this->executeCommand("chown -R www-data:www-data $directory");
+    }
+
+    protected function restartSupervisorPrograms(array $programs)
+    {
+        $programs = array_values(array_filter(array_unique($programs)));
+
+        if (empty($programs)) {
+            return;
+        }
+
+        $this->info('Restarting Supervisor programs: ' . implode(', ', $programs));
+
+        $escapedPrograms = implode(' ', array_map('escapeshellarg', $programs));
+
+        $this->executeCommand("supervisorctl restart {$escapedPrograms}", 120);
     }
 }
