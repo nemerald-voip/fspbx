@@ -19,10 +19,10 @@ class Update160
     public function __construct()
     {
         $this->filePath1 = base_path('public/app/switch/resources/scripts/intercept.lua');
-        $this->filePath2 = '/usr/share/freeswitch/scripts/app/switch/resources/scripts/intercept.lua';
+        $this->filePath2 = '/usr/share/freeswitch/scripts/intercept.lua';
 
         $this->filePath3 = base_path('public/app/switch/resources/scripts/app/ring_groups/index.lua');
-        $this->filePath4 = '/usr/share/freeswitch/scripts/app/switch/resources/scripts/app/ring_groups/index.lua';
+        $this->filePath4 = '/usr/share/freeswitch/scripts/app/ring_groups/index.lua';
     }
 
     /**
