@@ -170,9 +170,8 @@ class RingGroupsController extends Controller
                     'extension_advanced_settings.suspended'
                 )
                 ->orderBy('v_extensions.extension', 'asc');
-            //
 
-            // IMPORTANT — THIS MUST STILL EXIST
+
             $ringGroupsQuery = RingGroups::where('domain_uuid', $domain_uuid)
                 ->select('ring_group_uuid', 'ring_group_extension', 'ring_group_name')
                 ->orderBy('ring_group_extension', 'asc');
@@ -210,6 +209,16 @@ class RingGroupsController extends Controller
                         ];
                     })->toArray(),
                 ]
+            ];
+
+            $routes = [
+                'get_routing_options' => route('routing.options'),
+                'update_greeting_route' => route('greetings.file.update'),
+                'greeting_route' => route('greetings.greetings'),
+                'serve_greeting_route' => route('greeting.file.serve', ['file_name' => ':file_name']),
+                'delete_greeting_route' => route('greetings.file.delete'),
+                'upload_greeting_route' => route('greetings.file.upload'),
+                'text_to_speech_route' => route('greetings.textToSpeech'),
             ];
 
             // Check if item_uuid exists to find an existing model
@@ -263,8 +272,11 @@ class RingGroupsController extends Controller
                     'forward_target_extension',
                 ]);
 
-                // Define the update route
-                $updateRoute = route('ring-groups.update', ['ring_group' => $item_uuid]);
+
+                $routes = array_merge($routes, [
+                    'update_route' => route('ring-groups.update', $item),
+                ]);
+
             } else {
 
                 // Check for limits
@@ -282,7 +294,10 @@ class RingGroupsController extends Controller
                 $item = $this->model;
                 $item->ring_group_extension = $item->generateUniqueSequenceNumber();
 
-                $storeRoute  = route('ring-groups.store');
+                $routes = array_merge($routes, [
+                    'store_route' => route('ring-groups.store'),
+
+                ]);
             }
 
             $permissions = $this->getUserPermissions();
@@ -291,12 +306,6 @@ class RingGroupsController extends Controller
             $routingTypes = $routingOptionsService->routingTypes;
             $forwardingTypes = $routingOptionsService->forwardingTypes;
 
-            $routes = [
-                'store_route' => $storeRoute ?? null,
-                'update_route' => $updateRoute ?? null,
-                'get_routing_options' => route('routing.options'),
-
-            ];
 
             // Transform greetings into the desired array format
             $greetingsArray = Recordings::where('domain_uuid', session('domain_uuid'))
@@ -309,19 +318,6 @@ class RingGroupsController extends Controller
                         'description' => $greeting->recording_description,
                     ];
                 })->toArray();
-
-
-            $routes = array_merge($routes, [
-                'text_to_speech_route' => route('greetings.textToSpeech'),
-                'greeting_route' => route('greeting.url'),
-                'delete_greeting_route' => route('greetings.file.delete'),
-                'update_greeting_route' => route('greetings.file.update'),
-                'upload_greeting_route' => route('greetings.file.upload'),
-                // 'update_route' => route('virtual-receptionists.update', $ivr),
-                'apply_greeting_route' => route('virtual-receptionist.greeting.apply'),
-
-            ]);
-
 
             // Define the instructions for recording a voicemail greeting using a phone call
             $phoneCallInstructions = [
@@ -503,7 +499,6 @@ class RingGroupsController extends Controller
                         $ringGroup->destinations()->insert($rows);
                     }
                 }
-
             });
 
             return response()->json([
@@ -574,7 +569,6 @@ class RingGroupsController extends Controller
             ], 500);
         }
     }
-
 
     public function selectAll()
     {

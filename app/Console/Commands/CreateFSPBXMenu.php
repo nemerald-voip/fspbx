@@ -42,7 +42,7 @@ class CreateFSPBXMenu extends Command
     {
         $this->shouldUpdate = $this->option('update');
         $menuName = 'fspbx';
-        $menuDescription = 'FS PBX Recommended Menu';
+        $menuDescription = 'FS PBX Default Menu';
 
         // Check if the menu already exists
         $menu = Menu::where('menu_name', $menuName)->first();
@@ -125,7 +125,6 @@ class CreateFSPBXMenu extends Command
                     ['title' => 'Virtual Receptionists', 'link' => '/virtual-receptionists', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Messages', 'link' => '/messages', 'groups' => ['superadmin']],
                     ['title' => 'Music on Hold', 'link' => '/app/music_on_hold/music_on_hold.php','groups' => ['superadmin']],
-                    ['title' => 'Operator Panel', 'link' => '/app/basic_operator_panel/index.php', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Recordings', 'link' => '/app/recordings/recordings.php', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Ring Groups', 'link' => '/ring-groups', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Streams', 'link' => '/app/streams/streams.php', 'groups' => ['superadmin']],

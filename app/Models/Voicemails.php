@@ -88,7 +88,6 @@ class Voicemails extends Model
     public function extension()
     {
         return $this->hasOne(Extensions::class, 'extension', 'voicemail_id');
-
     }
 
     /**
@@ -172,6 +171,13 @@ class Voicemails extends Model
         }
     }
 
+    public function vmNotifyProfile()
+    {
+        return $this->hasOne(VmNotifyProfile::class,
+            'voicemail_uuid',
+            'voicemail_uuid'
+        );
+    }
 
 
     /**

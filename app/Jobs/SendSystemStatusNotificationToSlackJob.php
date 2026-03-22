@@ -2,9 +2,7 @@
 
 namespace App\Jobs;
 
-use Illuminate\Http\Request;
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
@@ -13,9 +11,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
 use App\Notifications\SendSlackNotification;
-use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 
-class SendSystemStatusNotificationToSlack implements ShouldQueue
+class SendSystemStatusNotificationToSlackJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -72,15 +69,6 @@ class SendSystemStatusNotificationToSlack implements ShouldQueue
         $this->request['slack_message'] = $message;
     }
 
-    /**
-     * Get the middleware the job should pass through.
-     *
-     * @return array
-     */
-    public function middleware()
-    {
-        return [(new RateLimitedWithRedis('slack'))];
-    }
 
     /**
      * Execute the job.

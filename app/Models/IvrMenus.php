@@ -2,15 +2,16 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Services\CallRoutingOptionsService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class IvrMenus extends Model
 {
     use HasFactory, \App\Models\Traits\TraitUuid;
 
-    protected $table = "v_ivr_menus";
+    protected $table = 'v_ivr_menus';
 
     public $timestamps = false;
 
@@ -18,14 +19,9 @@ class IvrMenus extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
-    /*
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     *
-     */
     protected $fillable = [
         'domain_uuid',
+        'dialplan_uuid',
         'ivr_menu_name',
         'ivr_menu_extension',
         'ivr_menu_description',
@@ -33,6 +29,7 @@ class IvrMenus extends Model
         'ivr_menu_enabled',
         'ivr_menu_digit_len',
         'ivr_menu_timeout',
+        'ivr_menu_pin_number',
         'ivr_menu_ringback',
         'ivr_menu_invalid_sound',
         'ivr_menu_exit_sound',
@@ -45,40 +42,69 @@ class IvrMenus extends Model
         'ivr_menu_cid_prefix',
     ];
 
-    protected static function booted()
+    /**
+     * Cache the results to prevent repeated processing of the action details
+     */
+    protected array $exitOptionDetailsCache = [];
+
+    /**
+     * Compute and assign the exit options based on the IVR Menu exit application + data
+     */
+    protected function exitOptionDetails(): Attribute
     {
-        static::saving(function ($model) {
-            // Remove attributes before saving to database
-            unset($model->exit_target_uuid);
-            unset($model->exit_action);
-            unset($model->exit_action_display);
-            unset($model->exit_target_name);
-            unset($model->exit_target_extension);
-            unset($model->destroy_route);
-        });
-
-        static::retrieved(function ($model) {
-            if (!empty($model->ivr_menu_exit_app)) {
-                $callRoutingOptionsService = new CallRoutingOptionsService();
-
-                $optionDetails = $callRoutingOptionsService->reverseEngineerIVROption($model->ivr_menu_exit_app .' ' . $model->ivr_menu_exit_data);
-
-                if ($optionDetails) {
-                    $model->exit_target_uuid = $optionDetails['option'] ?? null;
-                    $model->exit_action = $optionDetails['type'] ?? null;
-                    $model->exit_action_display = $optionDetails['type'] !== null
-                        ? $callRoutingOptionsService->getFriendlyTypeName($optionDetails['type'])
-                        : null;
-                    $model->exit_target_name = $optionDetails['name'] ?? null;
-                    $model->exit_target_extension = $optionDetails['extension'] ?? null;
-                }
-            }
-
-            $model->destroy_route = route('virtual-receptionists.destroy', $model);
-
-            return $model;
-        });
+        return Attribute::make(
+            get: fn() => $this->computeExitOptionDetails()
+        )->shouldCache();
     }
+
+    protected function computeExitOptionDetails(): array
+    {
+        if (!empty($this->exitOptionDetailsCache)) {
+            return $this->exitOptionDetailsCache;
+        }
+
+        if (empty($this->ivr_menu_exit_app) && empty($this->ivr_menu_exit_data)) {
+            return $this->exitOptionDetailsCache = [
+                'type' => null,
+                'extension' => null,
+                'option' => null,
+                'name' => null
+            ];
+        }
+
+        $service = new CallRoutingOptionsService($this->domain_uuid ?? session('domain_uuid'));
+
+        // Combine action and data to feed into the CallRoutingOptionsService
+        $actionString = trim("{$this->ivr_menu_exit_app} {$this->ivr_menu_exit_data}");
+
+        return $this->exitOptionDetailsCache = $service->reverseEngineerIVROption($actionString) ?? [
+            'type' => null,
+            'extension' => null,
+            'option' => null,
+            'name' => null
+        ];
+    }
+
+    public function getExitActionAttribute(): ?string
+    {
+        return $this->exit_option_details['type'] ?? null;
+    }
+
+    public function getExitTargetUuidAttribute(): ?string
+    {
+        return $this->exit_option_details['option'] ?? null;
+    }
+
+    public function getExitTargetExtensionAttribute(): ?string
+    {
+        return $this->exit_option_details['extension'] ?? null;
+    }
+
+    public function getExitTargetNameAttribute(): ?string
+    {
+        return $this->exit_option_details['name'] ?? null;
+    }
+
 
     public function options()
     {
@@ -95,47 +121,34 @@ class IvrMenus extends Model
         return $this->ivr_menu_extension . ' - ' . $this->ivr_menu_name;
     }
 
-        /**
+    /**
      * Generates a unique sequence number.
-     *
-     * @return int|null The generated sequence number, or null if unable to generate.
      */
-    public function generateUniqueSequenceNumber()
+    public function generateUniqueSequenceNumber(): ?string
     {
-        // Virtual Receptionists will have extensions in the range between 9150 and 9199 by default
         $rangeStart = 9150;
         $rangeEnd = 9199;
-
         $domainUuid = session('domain_uuid');
 
-        // Fetch all used extensions from Dialplans, Voicemails, and Extensions
         $usedExtensions = Dialplans::where('domain_uuid', $domainUuid)
             ->where('dialplan_number', 'not like', '*%')
             ->pluck('dialplan_number')
             ->merge(
-                Voicemails::where('domain_uuid', $domainUuid)
-                    ->pluck('voicemail_id')
+                Voicemails::where('domain_uuid', $domainUuid)->pluck('voicemail_id')
             )
             ->merge(
-                Extensions::where('domain_uuid', $domainUuid)
-                    ->pluck('extension')
+                Extensions::where('domain_uuid', $domainUuid)->pluck('extension')
             )
-            ->unique();
+            ->map(fn($value) => (string) $value)
+            ->unique()
+            ->values();
 
-        // Find the first available extension
         for ($ext = $rangeStart; $ext <= $rangeEnd; $ext++) {
-            if (!$usedExtensions->contains($ext)) {
-                // This is your unique extension
-                $uniqueExtension = $ext;
-                break;
+            if (!$usedExtensions->contains((string) $ext)) {
+                return (string) $ext;
             }
         }
 
-        if (isset($uniqueExtension)) {
-            return (string) $uniqueExtension;
-        }
-
-        // Return null if unable to generate a unique sequence number
         return null;
     }
 }

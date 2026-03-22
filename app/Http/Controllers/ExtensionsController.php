@@ -442,6 +442,7 @@ class ExtensionsController extends Controller
                                 'voicemail_description',
                                 'voicemail_tutorial',
                                 'voicemail_recording_instructions',
+                                'voicemail_alternate_greet_id',
                             )
                             ->with([
                                 'voicemail_destinations' => function ($q) {
@@ -511,6 +512,7 @@ class ExtensionsController extends Controller
                     'forward_user_not_registered_target_extension',
                 ]);
 
+
             $extensionDto = ExtensionDetailData::from([
                 ...$extension->toArray(),
                 'follow_me_destinations' => $extension->followMe
@@ -536,44 +538,26 @@ class ExtensionsController extends Controller
                 ? $extension->voicemail->voicemail_destinations->pluck('voicemail_uuid_copy')->values()->all()
                 : [];
 
-            $voicemailGreetings = $extension->voicemail && $extension->voicemail->greetings
-                ? $extension->voicemail->greetings
-                ->sortBy('greeting_id')
-                ->map(function ($greeting) {
-                    return [
-                        'value' => $greeting->greeting_id,
-                        'label' => $greeting->greeting_name,
-                        'description' => $greeting->greeting_description,
-                    ];
-                })->toArray()
-                : [];
-
-            // Add the default options at the beginning of the array
-            array_unshift(
-                $voicemailGreetings,
-                ['value' => '0', 'label' => 'None'],
-                ['value' => '-1', 'label' => 'System Default']
-            );
 
             if ($extension->voicemail) {
                 $voicemailDto = VoicemailData::from([
                     ...$extension->voicemail->toArray(),
-                    'voicemail_destinations' => $voicemailDestinations,
-                    'greetings' => $voicemailGreetings,
+                    'voicemail_copies' => $voicemailDestinations,
                 ]);
             } else {
                 $voicemailDto = VoicemailData::from([
                     'voicemail_enabled' => 'false',
                     'voicemail_id' => $extension->extension,
-                    'voicemail_password' => get_domain_setting('password_complexity') == 'true' ? $attributes['voicemail_password'] = str_pad(mt_rand(0, 9999), 4, '0', STR_PAD_LEFT) : $extension->extension,
+                    'voicemail_password' => get_domain_setting('password_complexity') == 'true'
+                        ? str_pad(mt_rand(0, 9999), 4, '0', STR_PAD_LEFT)
+                        : $extension->extension,
                     'voicemail_transcription_enabled' => 'true',
                     'voicemail_file' => 'attach',
                     'voicemail_local_after_email' => 'true',
                     'greeting_id' => '-1',
-                    'voicemail_transcription_enabled' => 'true',
                     'voicemail_recording_instructions' => 'true',
                     'voicemail_tutorial' => 'false',
-                    'greetings' => $voicemailGreetings,
+                    'voicemail_alternate_greet_id' => null,
                 ]);
             }
 
@@ -588,7 +572,7 @@ class ExtensionsController extends Controller
                     'recorded_name_route' => route('voicemail.recorded_name', $extension->voicemail),
                     'delete_recorded_name_route' => route('voicemails.deleteRecordedName', $extension->voicemail),
                     'upload_recorded_name_route' => route('voicemails.uploadRecordedName', $extension->voicemail),
-                    // 'update_route' => route('voicemails.update', $extension->voicemail),
+                    'get_greetings_route' => route('voicemails.getGreetings', $extension->voicemail),
                 ]);
             }
 
@@ -787,6 +771,7 @@ class ExtensionsController extends Controller
         return response()->json([
             'item'        => $extensionDto,
             'voicemail' => $voicemailDto ?? null,
+            'voicemail_copies' => $voicemailDestinations ?? [],
             'all_voicemails' => $allVoicemails ?? null,
             'all_devices' => $allDevices ?? null,
             'permissions' => $permissions,
@@ -1170,11 +1155,12 @@ public function store(StoreExtensionRequest $request)
                     $data['voicemail_local_after_email'],
                     $data['voicemail_transcription_enabled'],
                     $data['voicemail_description'],
-                    $data['voicemail_destinations'],
+                    $data['voicemail_copies'],
                     $data['voicemail_password'],
                     $data['voicemail_tutorial'],
                     $data['voicemail_recording_instructions'],
-                    $data['voicemail_sms_to']
+                    $data['voicemail_sms_to'],
+                    $data['voicemail_alternate_greet_id']
                 );
             }
 
@@ -1260,11 +1246,11 @@ public function store(StoreExtensionRequest $request)
             // Handle voicemail_destinations (copies)
             if (
                 $canManageVoicemail
-                && isset($data['voicemail_destinations'])
-                && is_array($data['voicemail_destinations'])
+                && isset($data['voicemail_copies'])
+                && is_array($data['voicemail_copies'])
                 && $extension->voicemail
             ) {
-                $extension->voicemail->syncCopies($data['voicemail_destinations']);
+                $extension->voicemail->syncCopies($data['voicemail_copies']);
             }
 
             // update mobile app
