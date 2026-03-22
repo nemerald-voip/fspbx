@@ -282,7 +282,7 @@
 
                                                                 }" />
 
-                                                            <SelectElement name="auth_id" label="Ext/Number"
+                                                            <SelectElement v-if="!isExternalLine(index)" name="auth_id" label="Ext/Number"
                                                                 :items="options.extensions" label-prop="name"
                                                                 :search="true" :native="false" input-type="search"
                                                                 autocomplete="off" :columns="{
@@ -290,7 +290,9 @@
                                                                     sm: {
                                                                         container: 4,
                                                                     },
-                                                                }" placeholder="Choose Ext/Number" :floating="false"
+                                                                }"
+                                                                placeholder="Choose Ext/Number"
+                                                                :floating="false"
                                                                 @change="(newValue, oldValue, el$) => {
 
                                                                     el$.form$.el$('device_lines').children$[index].children$['display_name'].update(newValue);
@@ -298,6 +300,20 @@
 
 
                                                                 }" />
+
+                                                            <StaticElement v-else name="external_auth_hint"
+                                                                label="Ext/Number"
+                                                                :columns="{
+
+                                                                    sm: {
+                                                                        container: 4,
+                                                                    },
+                                                                }">
+                                                                <div
+                                                                    class="flex h-9 items-center rounded-md bg-gray-100 px-3 text-sm text-gray-900 ring-1 ring-inset ring-gray-300">
+                                                                    Edit in Advanced Settings
+                                                                </div>
+                                                            </StaticElement>
 
                                                             <TextElement name="display_name" label="Display Name"
                                                                 :columns="{
@@ -940,6 +956,10 @@ function showLineAdvSettings(index) {
 
 function closeAdvSettings() {
     advModalIndex.value = null
+}
+
+function isExternalLine(index) {
+    return form$?.value?.el$(`device_lines.${index}.line_type_id`)?.value === 'externalline'
 }
 
 const nextLineNumber = computed(() => {

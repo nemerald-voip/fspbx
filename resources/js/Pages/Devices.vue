@@ -161,7 +161,7 @@
                                     <span v-if="row.lines.length > 1" class="font-semibold">
                                         Line {{ line.line_number }}:
                                     </span>
-                                    <span>{{ line.extension?.name_formatted || line.auth_id }}</span>
+                                    <span>{{ line.external_line ? line.auth_id : (line.extension?.name_formatted || line.auth_id) }}</span>
                                 </div>
                             </div>
                         </template>
@@ -281,16 +281,16 @@
 
     <CreateDeviceForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading"
         :header="'Create New Device'" @close="showCreateModal = false" @error="handleErrorResponse"
-        @success="showNotification" @refresh-data="handleSearchButtonClick" />
+        @success="showNotification" @refresh-data="refreshCurrentPage" />
 
     <UpdateDeviceForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"
         :header="'Update Device - ' + (itemOptions?.item?.device_address_formatted ?? 'loading')"
         @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
-        @refresh-data="handleSearchButtonClick" />
+        @refresh-data="refreshCurrentPage" />
 
     <BulkUpdateDeviceForm :items="selectedItems" :options="itemOptions" :show="showBulkUpdateModal"
         :header="'Bulk Update'" :loading="isModalLoading" @close="handleModalClose"
-        @refresh-data="handleSearchButtonClick" />
+        @refresh-data="refreshCurrentPage" />
 
 
     <CloudProvisioningSettings :show="showCloudProvisioningSettings" @close="showCloudProvisioningSettings = false"
@@ -373,6 +373,7 @@ const page = usePage()
 const itemOptions = ref({})
 const loading = ref(false)
 const isModalLoading = ref(false)
+const currentPage = ref(1)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
@@ -456,7 +457,7 @@ const submitDuplicateRequest = () => {
         .then((response) => {
             showDuplicateModal.value = false;
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+            refreshCurrentPage();
         })
         .catch((error) => {
             handleFormErrorResponse(error);
@@ -586,7 +587,7 @@ const executeBulkDelete = (items = selectedItems.value) => {
         .then((response) => {
             handleModalClose();
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+            refreshCurrentPage();
         })
         .catch((error) => {
             handleClearSelection();
@@ -646,25 +647,27 @@ const handleRestart = (device_uuid) => {
 
 const handleShowGlobal = () => {
     filterData.value.showGlobal = true;
-    handleSearchButtonClick();
+    getData(1);
 }
 
 const handleShowLocal = () => {
     filterData.value.showGlobal = false;
-    handleSearchButtonClick();
+    getData(1);
 }
 
 const getData = (page = 1) => {
     loading.value = true;
+    currentPage.value = Number(page) || 1;
 
     axios.get(props.routes.data_route, {
         params: {
             filter: filterData.value,
-            page,
+            page: currentPage.value,
         }
     })
         .then((response) => {
             data.value = response.data;
+            currentPage.value = response.data.current_page ?? currentPage.value;
             // console.log(data.value);
 
         }).catch((error) => {
@@ -676,14 +679,18 @@ const getData = (page = 1) => {
 }
 
 const handleSearchButtonClick = () => {
-    getData()
+    getData(1)
+};
+
+const refreshCurrentPage = () => {
+    getData(currentPage.value)
 };
 
 
 const handleFiltersReset = () => {
     filterData.value.search = null;
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
-    handleSearchButtonClick();
+    getData(1);
 }
 
 
