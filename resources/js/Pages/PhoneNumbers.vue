@@ -201,16 +201,16 @@
 
     <CreatePhoneNumberForm :show="showCreateModal" :header="'Add New Phone Number'" :loading="loadingModal"
         :options="itemOptions" @close="showCreateModal = false" @success="showNotification" @error="handleErrorResponse"
-        @refresh-data="handleSearchButtonClick" />
+        @refresh-data="refreshCurrentPage" />
 
     <UpdatePhoneNumberForm :show="showUpdateModal"
         :header="'Update Phone Number Settings - ' + itemOptions?.item?.destination_number_formatted ?? 'loading'"
         :loading="loadingModal" @close="showUpdateModal = false" :options="itemOptions" @success="showNotification"
-        @error="handleErrorResponse" @refresh-data="handleSearchButtonClick" />
+        @error="handleErrorResponse" @refresh-data="refreshCurrentPage" />
 
     <BulkUpdatePhoneNumberForm :show="showBulkUpdateModal" :header="'Bulk Update'" :loading="loadingModal"
         @close="showBulkUpdateModal = false" :items="selectedItems" :options="itemOptions" @success="showNotification"
-        @error="handleErrorResponse" @refresh-data="handleSearchButtonClick" />
+        @error="handleErrorResponse" @refresh-data="refreshCurrentPage" />
 
     <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
         @confirm="confirmDeleteAction" />
@@ -269,6 +269,7 @@ import ImportPhoneNumbersModal from "./components/modal/ImportPhoneNumbersModal.
 const page = usePage()
 const loading = ref(false)
 const loadingModal = ref(false)
+const currentPage = ref(1)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
@@ -312,20 +313,26 @@ onMounted(() => {
 })
 
 const handleSearchButtonClick = () => {
-    getData()
+    getData(1)
+};
+
+const refreshCurrentPage = () => {
+    getData(currentPage.value)
 };
 
 const getData = (page = 1) => {
     loading.value = true;
+    currentPage.value = Number(page) || 1;
 
     axios.get(props.routes.data_route, {
         params: {
             filter: filterData.value,
-            page,
+            page: currentPage.value,
         }
     })
         .then((response) => {
             data.value = response.data;
+            currentPage.value = response.data.current_page ?? currentPage.value;
             // console.log(data.value);
 
         }).catch((error) => {
@@ -414,7 +421,7 @@ const handleImportSuccess = (messages) => {
     showNotification('success', messages);
     showImportPreviewModal.value = false;
     importPreviewData.value = [];
-    handleSearchButtonClick(); // Refresh table
+    refreshCurrentPage();
 };
 
 const handleImportButtonClick = () => {
@@ -457,7 +464,7 @@ const handleImportCommit = (items) => {
             showNotification('success', response.data.messages);
             showImportPreviewModal.value = false;
             importPreviewData.value = [];
-            handleSearchButtonClick(); // Refresh table
+            refreshCurrentPage();
         })
         .catch((error) => {
             handleErrorResponse(error);
@@ -534,7 +541,7 @@ const executeBulkDelete = (items = selectedItems.value) => {
         .then((response) => {
             handleModalClose();
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+            refreshCurrentPage();
         })
         .catch((error) => {
             handleClearSelection();
@@ -580,18 +587,18 @@ const handleCopyToClipboard = (text) => {
 
 const handleShowGlobal = () => {
     filterData.value.showGlobal = true;
-    handleSearchButtonClick();
+    getData(1);
 }
 
 const handleShowLocal = () => {
     filterData.value.showGlobal = false;
-    handleSearchButtonClick();
+    getData(1);
 }
 
 
 const handleFiltersReset = () => {
     filterData.value.search = null;
-    handleSearchButtonClick();
+    getData(1);
 }
 
 

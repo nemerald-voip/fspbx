@@ -189,7 +189,7 @@
         :loading="loadingModal" @close="handleModalClose">
         <template #modal-body>
             <CreateRingGroupForm :options="itemOptions" @close="handleModalClose" @error="handleErrorResponse"
-                @success="showNotification" @refresh-data="handleSearchButtonClick"
+                @success="showNotification" @refresh-data="refreshCurrentPage"
                 @open-edit-form="handleEditButtonClick" />
         </template>
     </AddEditItemModal>
@@ -199,7 +199,7 @@
         @close="handleModalClose">
         <template #modal-body>
             <UpdateRingGroupForm :options="itemOptions" @close="handleModalClose" @error="handleErrorResponse"
-                @success="showNotification" @refresh-data="handleSearchButtonClick" />
+                @success="showNotification" @refresh-data="refreshCurrentPage" />
         </template>
     </AddEditItemModal>
 
@@ -247,6 +247,7 @@ import AdvancedActionButton from "./components/general/AdvancedActionButton.vue"
 const page = usePage()
 const loading = ref(false)
 const loadingModal = ref(false)
+const currentPage = ref(1)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
@@ -287,20 +288,26 @@ onMounted(() => {
 })
 
 const handleSearchButtonClick = () => {
-    getData()
+    getData(1)
+};
+
+const refreshCurrentPage = () => {
+    getData(currentPage.value)
 };
 
 const getData = (page = 1) => {
     loading.value = true;
+    currentPage.value = Number(page) || 1;
 
     axios.get(props.routes.data_route, {
         params: {
             filter: filterData.value,
-            page,
+            page: currentPage.value,
         }
     })
         .then((response) => {
             data.value = response.data;
+            currentPage.value = response.data.current_page ?? currentPage.value;
             // console.log(data.value);
 
         }).catch((error) => {
@@ -330,7 +337,7 @@ const handleAdvancedActionRequest = async (action, uuid) => {
             loading.value = true;
             const response = await axios.post(url, { uuid: uuid });
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+            refreshCurrentPage();
         } catch (error) {
             handleErrorResponse(error);
         } finally {
@@ -381,7 +388,7 @@ const executeBulkDelete = (items = selectedItems.value) => {
         .then((response) => {
             handleModalClose();
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+            refreshCurrentPage();
         })
         .catch((error) => {
             handleModalClose();
@@ -410,7 +417,7 @@ const handleBulkUpdateRequest = (form) => {
             bulkUpdateFormSubmiting.value = false;
             handleModalClose();
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+            refreshCurrentPage();
         })
         .catch((error) => {
             bulkUpdateFormSubmiting.value = false;
@@ -443,7 +450,7 @@ const handleSelectAll = () => {
 const handleFiltersReset = () => {
     filterData.value.search = null;
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
-    handleSearchButtonClick();
+    getData(1);
 }
 
 
