@@ -50,8 +50,6 @@ class BandwidthOutboundSMS extends Model
                 'Content-Type'  => 'application/json',
             ])
             ->post($url, $data);
-
-            logger($response);
     
         if ($response->successful() && $response->status() === 202) {
             $result = $response->json();
