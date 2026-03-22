@@ -262,11 +262,11 @@
     <UpdateExtensionForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"
         :header="'Update Extension - ' + (itemOptions?.item?.name_formatted ?? 'loading')"
         @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
-        @refresh-data="handleSearchButtonClick" />
+        @refresh-data="refreshCurrentPage" />
 
     <CreateExtensionForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading"
         :header="'Create Extension'" @close="showCreateModal = false" @error="handleErrorResponse"
-        @success="showNotification" @open-edit-form="handleEditButtonClick" @refresh-data="handleSearchButtonClick" />
+        @success="showNotification" @open-edit-form="handleEditButtonClick" @refresh-data="refreshCurrentPage" />
 
     <ConfirmationModal 
         :show="showDeleteConfirmationModal" 
@@ -330,6 +330,7 @@ import { DocumentArrowUpIcon, DocumentArrowDownIcon, DevicePhoneMobileIcon } fro
 const page = usePage()
 const loading = ref(false)
 const isModalLoading = ref(false)
+const currentPage = ref(1)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
@@ -476,7 +477,7 @@ const uploadFile = (file) => {
         .then((response) => {
             showNotification('success', response.data.messages);
             handleModalClose();
-            handleSearchButtonClick();
+            refreshCurrentPage();
         })
         .catch((error) => {
             handleClearSelection();
@@ -557,7 +558,7 @@ const executeBulkDelete = (items = selectedItems.value) => {
     })
     .then((response) => {
         showNotification('success', response.data.messages);
-        handleSearchButtonClick();
+        refreshCurrentPage();
         handleClearSelection();
     })
     .catch((error) => {
@@ -592,7 +593,7 @@ const handleAdvancedActionRequest = (action, extension_uuid) => {
         axios.post(url, { uuid: extension_uuid })
             .then((response) => {
                 showNotification('success', response.data.messages);
-                handleSearchButtonClick();
+                refreshCurrentPage();
             })
             .catch((error) => {
                 handleErrorResponse(error);
@@ -663,15 +664,17 @@ const handleSelectAll = () => {
 
 const getData = (page = 1) => {
     loading.value = true;
+    currentPage.value = Number(page) || 1;
 
     axios.get(props.routes.data_route, {
         params: {
             filter: filterData.value,
-            page,
+            page: currentPage.value,
         }
     })
         .then((response) => {
             data.value = response.data;
+            currentPage.value = response.data.current_page ?? currentPage.value;
             // console.log(data.value);
 
         }).catch((error) => {
@@ -683,13 +686,17 @@ const getData = (page = 1) => {
 }
 
 const handleSearchButtonClick = () => {
-    getData()
+    getData(1)
+};
+
+const refreshCurrentPage = () => {
+    getData(currentPage.value)
 };
 
 const handleFiltersReset = () => {
     filterData.value.search = null;
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
-    handleSearchButtonClick();
+    getData(1);
 }
 
 

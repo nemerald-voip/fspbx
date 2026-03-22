@@ -174,12 +174,12 @@
     </div>
     <CreateDomainForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading"
         :header="'Create New Domain'" @close="showCreateModal = false" @error="handleErrorResponse"
-        @success="showNotification" @refresh-data="handleSearchButtonClick" />
+        @success="showNotification" @refresh-data="refreshCurrentPage" />
 
     <UpdateDomainForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"
         :header="'Update Domain - ' + (itemOptions?.item?.domain_name ?? 'loading')"
         @close="showUpdateModal = false" @error="handleErrorResponse" @success="showNotification"
-        @refresh-data="handleSearchButtonClick" />
+        @refresh-data="refreshCurrentPage" />
 
     <!-- <BulkUpdateDomainForm :items="selectedItems" :options="itemOptions" :show="showBulkUpdateModal"
         :header="'Bulk Update'" :loading="isModalLoading" @close="handleModalClose"
@@ -219,6 +219,7 @@ const page = usePage()
 const itemOptions = ref({})
 const loading = ref(false)
 const isModalLoading = ref(false)
+const currentPage = ref(1)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
@@ -362,7 +363,7 @@ const executeBulkDelete = (items = selectedItems.value) => {
         .then((response) => {
             handleModalClose();
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+            refreshCurrentPage();
         })
         .catch((error) => {
             handleClearSelection();
@@ -402,11 +403,12 @@ const handleSortRequest = (sort) => {
     sortData.value.name = sort.field
     sortData.value.order = sort.order
 
-    getData();
+    getData(1);
 };
 
 const getData = (page = 1) => {
     loading.value = true;
+    currentPage.value = Number(page) || 1;
 
     let sort = sortData.value.name;
     if (sortData.value.order === 'desc') {
@@ -416,12 +418,13 @@ const getData = (page = 1) => {
     axios.get(props.routes.data_route, {
         params: {
             filter: filterData.value,
-            page,
+            page: currentPage.value,
             sort: sort, 
         }
     })
         .then((response) => {
             data.value = response.data;
+            currentPage.value = response.data.current_page ?? currentPage.value;
         }).catch((error) => {
             handleErrorResponse(error);
         }).finally(() => {
@@ -430,14 +433,18 @@ const getData = (page = 1) => {
 }
 
 const handleSearchButtonClick = () => {
-    getData()
+    getData(1)
+};
+
+const refreshCurrentPage = () => {
+    getData(currentPage.value)
 };
 
 
 const handleFiltersReset = () => {
     filterData.value.search = null;
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
-    handleSearchButtonClick();
+    getData(1);
 }
 
 
