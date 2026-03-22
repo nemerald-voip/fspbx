@@ -66,8 +66,12 @@
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <!-- <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
                         :has-selected-items="selectedItems.length > 0" /> -->
-                    <span class="pl-4">MAC Address</span>
-                </TableColumnHeader>
+                    <div class="pl-4 flex items-center cursor-pointer select-none"
+                        @click="handleSortRequest('device_address')">
+                        <span class="mr-2">MAC Address</span>
+                        <ChevronUpIcon v-if="sortData.name === 'device_address' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'device_address' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>                </TableColumnHeader>
                 <TableColumnHeader v-if="filterData.showGlobal" header="Domain"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
@@ -76,11 +80,21 @@
                 <TableColumnHeader header="Profile" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader v-if="!filterData.showGlobal" header="Assigned extension"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Description"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Last Contact"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Cloud" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('device_description')">
+                        <span class="mr-2">Description</span>
+                        <ChevronUpIcon v-if="sortData.name === 'device_description' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'device_description' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('device_provisioned_date')">
+                        <span class="mr-2">Last Contact</span>
+                        <ChevronUpIcon v-if="sortData.name === 'device_provisioned_date' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'device_provisioned_date' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                                <TableColumnHeader header="Cloud" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
@@ -356,7 +370,7 @@ import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon, CloudIcon } from "@heroicons/vue/24/solid";
+import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon, CloudIcon, ChevronUpIcon, ChevronDownIcon } from "@heroicons/vue/24/solid";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
@@ -423,6 +437,11 @@ const filterData = ref({
     showGlobal: false,
 });
 
+const sortData = ref({
+    name: 'device_address',
+    order: 'asc',
+});
+
 const advancedActions = computed(() => [
     {
         category: "Advanced",
@@ -431,6 +450,17 @@ const advancedActions = computed(() => [
         ],
     },
 ]);
+
+const handleSortRequest = (column) => {
+    if (sortData.value.name === column) {
+        sortData.value.order = sortData.value.order === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortData.value.name = column;
+        sortData.value.order = 'asc';
+    }
+    getData();
+};
+
 
 const handleAdvancedActionRequest = (action, uuid) => {
     if (action === 'duplicate') {
@@ -659,10 +689,17 @@ const getData = (page = 1) => {
     loading.value = true;
     currentPage.value = Number(page) || 1;
 
+        let sort = sortData.value.name;
+    if (sortData.value.order === 'desc') {
+        sort = `-${sort}`;
+    }
+
+
     axios.get(props.routes.data_route, {
         params: {
             filter: filterData.value,
             page: currentPage.value,
+            sort,
         }
     })
         .then((response) => {

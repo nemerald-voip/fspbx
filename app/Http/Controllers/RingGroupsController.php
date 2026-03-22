@@ -121,8 +121,7 @@ class RingGroupsController extends Controller
                     });
                 }),
             ])
-            ->allowedSorts(['ring_group_extension'])
-            ->defaultSort('ring_group_extension')
+            ->allowedSorts(['ring_group_name' , 'ring_group_extension' , 'ring_group_description'])            ->defaultSort('ring_group_extension')
             ->paginate($perPage);
 
         // logger($items);
