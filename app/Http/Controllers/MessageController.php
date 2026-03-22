@@ -524,9 +524,13 @@ class MessageController extends Controller
             ->firstOrFail();
 
         // Next, check SmsDestinations to ensure this DID is assigned to this extension
-        // We assume 'destination' column holds the DID and 'chatplan_detail_data' holds the ext number
+        $countryCode = get_domain_setting('country', $domainUuid) ?? 'US';
+
+        $normalizedSource = formatPhoneNumber($data['source'], $countryCode, PhoneNumberFormat::E164);
+        $normalizedDestination = formatPhoneNumber($data['destination'], $countryCode, PhoneNumberFormat::E164);
+
         $smsConfig = SmsDestinations::where('domain_uuid', $domainUuid)
-            ->where('destination', $data['source'])
+            ->where('destination', $normalizedSource)
             ->where('chatplan_detail_data', $extension->extension)
             ->first();
 
@@ -536,18 +540,14 @@ class MessageController extends Controller
             ], 403);
         }
 
-        // 3. Save to Database
         $msg = new Messages();
         $msg->domain_uuid = $domainUuid;
         $msg->extension_uuid = $data['extension_uuid'];
         $msg->direction = 'out';
         $msg->type = 'sms';
         $msg->status = 'queued';
-
-        $countryCode = get_domain_setting('country', $domainUuid) ?? 'US';
-
-        $msg->source = formatPhoneNumber($data['source'], $countryCode, PhoneNumberFormat::E164);
-        $msg->destination = formatPhoneNumber($data['destination'], $countryCode, PhoneNumberFormat::E164);
+        $msg->source = $normalizedSource;
+        $msg->destination = $normalizedDestination;
 
         $msg->message = $data['message'];
         $msg->created_at = now();
@@ -563,7 +563,6 @@ class MessageController extends Controller
             $messageProvider = MessageProviderFactory::make($carrier);
 
             // Execute Send
-            // Assuming your Factory expects the message_uuid to find the record
             $messageProvider->send($msg->message_uuid);
 
             // Update Status on Success
@@ -600,7 +599,7 @@ class MessageController extends Controller
                     ->where('destination', $item->destination)
                     ->first();
 
-                if (!$extension && !$messageSettings && !$messageSettings->email) {
+                if (!$extension && (!$messageSettings || !$messageSettings->email)) {
                     throw new Exception('No assigned destination found.');
                 }
 
@@ -608,9 +607,12 @@ class MessageController extends Controller
                 if ($item->direction == "out") {
 
                     //Get message config
-                    $phoneNumberSmsConfig = $this->getPhoneNumberSmsConfig($extension->extension, $item->domain_uuid);
+                    $phoneNumberSmsConfig = $this->getPhoneNumberSmsConfig(
+                        $item->source,
+                        $extension->extension,
+                        $item->domain_uuid
+                    );
                     $carrier =  $phoneNumberSmsConfig->carrier;
-                    // logger($carrier);
 
                     //Determine message provider
                     $messageProvider = MessageProviderFactory::make($carrier);
@@ -649,7 +651,7 @@ class MessageController extends Controller
                                 ->post('/')
                                 ->throw()
                                 ->json();
-                                
+
                             $this->updateMessageStatus($item, $response);
                         } catch (\Throwable $e) {
                             logger("Error delivering SMS to Ringotel: {$e->getMessage()}");
@@ -670,7 +672,7 @@ class MessageController extends Controller
                         // This method should return a boolean indicating whether the message was sent successfully.
                         Mail::to($messageSettings->email)->send(new SmsToEmail($attributes));
 
-                        if ($item->status = "queued") {
+                        if ($item->status == "queued") {
                             $item->status = 'emailed';
                         }
                         $item->save();
@@ -692,14 +694,17 @@ class MessageController extends Controller
     }
 
 
-    private function getPhoneNumberSmsConfig($from, $domainUuid)
+    private function getPhoneNumberSmsConfig($sourceNumber, $extensionNumber, $domainUuid)
     {
         $phoneNumberSmsConfig = SmsDestinations::where('domain_uuid', $domainUuid)
-            ->where('chatplan_detail_data', $from)
+            ->where('destination', $sourceNumber)
+            ->where('chatplan_detail_data', $extensionNumber)
             ->first();
 
         if (!$phoneNumberSmsConfig) {
-            throw new \Exception("SMS configuration not found for extension " . $from);
+            throw new \Exception(
+                "SMS configuration not found for source {$sourceNumber} on extension {$extensionNumber}"
+            );
         }
 
         return $phoneNumberSmsConfig;
