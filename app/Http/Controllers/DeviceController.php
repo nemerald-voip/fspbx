@@ -21,6 +21,7 @@ use App\Http\Requests\StoreDeviceRequest;
 use App\Http\Requests\UpdateDeviceRequest;
 use App\Http\Requests\BulkUpdateDeviceRequest;
 use App\Services\DeviceCloudProvisioningService;
+use Spatie\QueryBuilder\AllowedSort;
 
 /**
  * The DeviceController class is responsible for handling device-related operations, such as listing, creating, and storing devices.
@@ -272,8 +273,7 @@ class DeviceController extends Controller
                 $query->select('template_uuid', 'domain_uuid', 'vendor', 'name', 'version', 'revision');
             }])
 
-            ->allowedSorts(['device_address'])
-            ->defaultSort('device_address')
+            ->allowedSorts(['device_address', 'device_description', 'device_provisioned_date'])            ->defaultSort('device_address')
             ->paginate($perPage);
 
         // wrap in DTO
