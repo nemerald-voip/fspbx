@@ -31,10 +31,10 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
     protected string $domain_uuid;
     protected bool $defaultVoicemailEnabled;
 
-    public function __construct(string $domain_uuid)
+    public function __construct()
     {
-        $this->domain_uuid = $domain_uuid;
-        $this->defaultVoicemailEnabled = $this->resolveDefaultVoicemailEnabled($domain_uuid);
+        $this->domain_uuid = session('domain_uuid');
+        $this->defaultVoicemailEnabled = $this->resolveDefaultVoicemailEnabled($this->domain_uuid);
     }
 
     public function rules(): array
@@ -155,7 +155,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
                 $voicemailEnabled = $this->resolveRowVoicemailEnabled($row);
 
                 $extension = Extensions::create([
-                    'domain_uuid' => session('domain_uuid'),
+                    'domain_uuid' => $this->domain_uuid,
                     'extension' => $row['extension'],
                     'password' => generate_password(),
                     'directory_first_name' => $row['first_name'],
@@ -186,7 +186,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
 
                     $extension->voicemail = new Voicemails();
                     $extension->voicemail->fill([
-                        'domain_uuid' => session('domain_uuid'),
+                        'domain_uuid' => $this->domain_uuid,
                         'voicemail_id' => $row['extension'],
                         'voicemail_password' => $voicemail_password,
                         'voicemail_mail_to' => $row['email'] ?? null,
@@ -205,7 +205,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
 
                     $device = new Devices();
                     $device->fill([
-                        'domain_uuid' => session('domain_uuid'),
+                        'domain_uuid' => $this->domain_uuid,
                         'device_address' => $deviceAddressNoColons,
                         'device_label' => $row['extension'],
                         'device_vendor' => $row['device_vendor'] ?? null,
@@ -218,7 +218,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
 
                     $device->lines = new DeviceLines();
                     $device->lines->fill([
-                        'domain_uuid' => session('domain_uuid'),
+                        'domain_uuid' => $this->domain_uuid,
                         'device_uuid' => $device->device_uuid,
                         'line_number' => '1',
                         'server_address' => Session::get('domain_name'),
