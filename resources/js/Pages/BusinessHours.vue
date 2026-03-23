@@ -41,17 +41,31 @@
 
                 <TableColumnHeader
                     class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
-                    <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
+                    <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems" @click.stop
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
 
-                    <span class="pl-4">Name</span>
+                    <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('name')">
+                        <span class="mr-2">Name</span>
+                        <ChevronUpIcon v-if="sortData.name === 'name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Extension"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('extension')">
+                        <span class="mr-2">Extension</span>
+                        <ChevronUpIcon v-if="sortData.name === 'extension' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'extension' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
 
-                <TableColumnHeader header="Description"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('description')">
+                        <span class="mr-2">Description</span>
+                        <ChevronUpIcon v-if="sortData.name === 'description' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'description' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
@@ -194,7 +208,7 @@ import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
+import { ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkUpdateDeviceForm from "./components/forms/BulkUpdateDeviceForm.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -231,6 +245,11 @@ const props = defineProps({
 
 const filterData = ref({
     search: null,
+});
+
+const sortData = ref({
+    name: 'extension',
+    order: 'asc',
 });
 
 const itemOptions = ref({})
@@ -341,6 +360,17 @@ const handleSelectAll = () => {
 
 };
 
+const handleSortRequest = (column) => {
+    if (sortData.value.name === column) {
+        sortData.value.order = sortData.value.order === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortData.value.name = column;
+        sortData.value.order = 'asc';
+    }
+
+    handleSearchButtonClick();
+};
+
 
 
 const handleSearchButtonClick = () => {
@@ -348,6 +378,8 @@ const handleSearchButtonClick = () => {
     router.visit(props.routes.current_page, {
         data: {
             filterData: filterData._rawValue,
+            sortField: sortData.value.name,
+            sortOrder: sortData.value.order,
         },
         preserveScroll: true,
         preserveState: true,
@@ -373,6 +405,8 @@ const renderRequestedPage = (url) => {
     router.visit(url, {
         data: {
             filterData: filterData._rawValue,
+            sortField: sortData.value.name,
+            sortOrder: sortData.value.order,
         },
         preserveScroll: true,
         preserveState: true,

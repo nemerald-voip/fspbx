@@ -57,29 +57,77 @@
             <template #table-header>
                 <TableColumnHeader header="User"
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
-                    <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
+                    <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems" @click.stop
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                 </TableColumnHeader>
 
-                <TableColumnHeader v-if="showGlobal" header="Domain"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader v-if="showGlobal" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('context')">
+                        <span class="mr-2">Domain</span>
+                        <ChevronUpIcon v-if="sortData.name === 'context' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'context' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
 
-                <TableColumnHeader header="Timestamp"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('created_epoch')">
+                        <span class="mr-2">Timestamp</span>
+                        <ChevronUpIcon v-if="sortData.name === 'created_epoch' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'created_epoch' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
 
-                <TableColumnHeader header="Duration"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('duration')">
+                        <span class="mr-2">Duration</span>
+                        <ChevronUpIcon v-if="sortData.name === 'duration' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'duration' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
 
                 <!-- <TableColumnHeader header="Contact" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
-                <TableColumnHeader header="Caller Name"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Caller Number"
-                    class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Destination"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="App" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Codec" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="SRTP" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('cid_name')">
+                        <span class="mr-2">Caller Name</span>
+                        <ChevronUpIcon v-if="sortData.name === 'cid_name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'cid_name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('cid_num')">
+                        <span class="mr-2">Caller Number</span>
+                        <ChevronUpIcon v-if="sortData.name === 'cid_num' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'cid_num' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('dest')">
+                        <span class="mr-2">Destination</span>
+                        <ChevronUpIcon v-if="sortData.name === 'dest' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'dest' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('application')">
+                        <span class="mr-2">App</span>
+                        <ChevronUpIcon v-if="sortData.name === 'application' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'application' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('read_codec')">
+                        <span class="mr-2">Codec</span>
+                        <ChevronUpIcon v-if="sortData.name === 'read_codec' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'read_codec' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('secure')">
+                        <span class="mr-2">SRTP</span>
+                        <ChevronUpIcon v-if="sortData.name === 'secure' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'secure' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
@@ -263,7 +311,7 @@ import Paginator from "./components/general/Paginator.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { MagnifyingGlassIcon, } from "@heroicons/vue/24/solid";
+import { ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import MainLayout from "../Layouts/MainLayout.vue";
 import Notification from "./components/notifications/Notification.vue";
@@ -300,6 +348,11 @@ const props = defineProps({
 const filterData = ref({
     search: null,
     showGlobal: props.showGlobal,
+});
+
+const sortData = ref({
+    name: 'created_epoch',
+    order: 'desc',
 });
 
 const showGlobal = ref(props.showGlobal);
@@ -466,11 +519,24 @@ const handleShowLocal = () => {
     handleSearchButtonClick();
 }
 
+const handleSortRequest = (column) => {
+    if (sortData.value.name === column) {
+        sortData.value.order = sortData.value.order === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortData.value.name = column;
+        sortData.value.order = column === 'created_epoch' ? 'desc' : 'asc';
+    }
+
+    handleSearchButtonClick();
+};
+
 const handleSearchButtonClick = () => {
     loading.value = true;
     router.visit(props.routes.current_page, {
         data: {
             filterData: filterData._rawValue,
+            sortField: sortData.value.name,
+            sortOrder: sortData.value.order,
         },
         preserveScroll: true,
         preserveState: true,
@@ -493,6 +559,8 @@ const handleRefresh = () => {
     router.visit(props.routes.current_page, {
         data: {
             filterData: filterData._rawValue,
+            sortField: sortData.value.name,
+            sortOrder: sortData.value.order,
         },
         preserveScroll: true,
         preserveState: true,
@@ -533,6 +601,8 @@ const renderRequestedPage = (url) => {
     router.visit(url, {
         data: {
             filterData: filterData._rawValue,
+            sortField: sortData.value.name,
+            sortOrder: sortData.value.order,
         },
         preserveScroll: true,
         preserveState: true,

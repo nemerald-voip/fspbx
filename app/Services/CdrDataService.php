@@ -158,7 +158,16 @@ class CdrDataService
             ->whereNull('cc_member_session_uuid')
             ->whereNull('originating_leg_uuid')
             // Sorting
-            ->allowedSorts(['start_epoch', 'caller_id_number', 'destination_number']) // add more if needed
+            ->allowedSorts([
+                'direction',
+                'caller_id_name',
+                'caller_id_number',
+                'caller_destination',
+                'destination_number',
+                'start_epoch',
+                'duration',
+                'rtp_audio_in_mos',
+            ])
             ->defaultSort('-start_epoch');
 
         if ($params['paginate']) {

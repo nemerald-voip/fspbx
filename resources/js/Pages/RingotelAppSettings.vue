@@ -39,16 +39,31 @@
 
                 <TableColumnHeader
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
-                    <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
+                    <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems" @click.stop
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
                         :has-selected-items="selectedItems.length > 0" />
-                    <span class="pl-4">Tenant</span>
+                    <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('domain_description')">
+                        <span class="mr-2">Tenant</span>
+                        <ChevronUpIcon v-if="sortData.name === 'domain_description' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'domain_description' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Tenant Domain"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('domain_name')">
+                        <span class="mr-2">Tenant Domain</span>
+                        <ChevronUpIcon v-if="sortData.name === 'domain_name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'domain_name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('ringotel_status')">
+                        <span class="mr-2">Status</span>
+                        <ChevronUpIcon v-if="sortData.name === 'ringotel_status' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'ringotel_status' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
@@ -222,7 +237,7 @@ import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { MagnifyingGlassIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
+import { ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -276,6 +291,11 @@ const props = defineProps({
 const filterData = ref({
     search: null,
     showGlobal: props.showGlobal,
+});
+
+const sortData = ref({
+    name: 'domain_name',
+    order: 'asc',
 });
 
 const itemOptions = ref({})
@@ -468,6 +488,17 @@ const handleSelectAll = () => {
 
 };
 
+const handleSortRequest = (column) => {
+    if (sortData.value.name === column) {
+        sortData.value.order = sortData.value.order === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortData.value.name = column;
+        sortData.value.order = 'asc';
+    }
+
+    handleSearchButtonClick();
+};
+
 
 
 const handleSearchButtonClick = () => {
@@ -475,6 +506,8 @@ const handleSearchButtonClick = () => {
     router.visit(props.routes.current_page, {
         data: {
             filterData: filterData._rawValue,
+            sortField: sortData.value.name,
+            sortOrder: sortData.value.order,
         },
         preserveScroll: true,
         preserveState: true,
@@ -500,6 +533,8 @@ const renderRequestedPage = (url) => {
     router.visit(url, {
         data: {
             filterData: filterData._rawValue,
+            sortField: sortData.value.name,
+            sortOrder: sortData.value.order,
         },
         preserveScroll: true,
         preserveState: true,

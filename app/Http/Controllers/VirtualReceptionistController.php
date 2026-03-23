@@ -89,7 +89,12 @@ class VirtualReceptionistController extends Controller
                 }),
                 AllowedFilter::exact('ivr_menu_enabled'), // Allows filtering like ?filter[ivr_menu_enabled]=true
             ])
-            ->allowedSorts(['ivr_menu_extension', 'ivr_menu_name'])
+            ->allowedSorts([
+                'ivr_menu_extension',
+                'ivr_menu_name',
+                'ivr_menu_description',
+                'ivr_menu_enabled',
+            ])
             ->defaultSort('ivr_menu_extension')
             ->paginate($perPage);
 

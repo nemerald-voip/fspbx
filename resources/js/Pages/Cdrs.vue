@@ -92,29 +92,66 @@
                     </TableColumnHeader>
                     <TableColumnHeader v-if="showGlobal" header="Domain"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                    <TableColumnHeader header="Caller ID Name"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
-                    <TableColumnHeader header="Caller ID Number"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900"></TableColumnHeader>
-                    <TableColumnHeader header="Dialed Number"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                        <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('caller_id_name')">
+                            <span class="mr-2">Caller ID Name</span>
+                            <ChevronUpIcon v-if="sortData.name === 'caller_id_name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                            <ChevronDownIcon v-else-if="sortData.name === 'caller_id_name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        </div>
                     </TableColumnHeader>
-                    <TableColumnHeader header="Recipient"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                        <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('caller_id_number')">
+                            <span class="mr-2">Caller ID Number</span>
+                            <ChevronUpIcon v-if="sortData.name === 'caller_id_number' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                            <ChevronDownIcon v-else-if="sortData.name === 'caller_id_number' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        </div>
                     </TableColumnHeader>
-                    <TableColumnHeader header="Date" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                        <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('caller_destination')">
+                            <span class="mr-2">Dialed Number</span>
+                            <ChevronUpIcon v-if="sortData.name === 'caller_destination' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                            <ChevronDownIcon v-else-if="sortData.name === 'caller_destination' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        </div>
                     </TableColumnHeader>
-                    <TableColumnHeader header="Time" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                        <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('destination_number')">
+                            <span class="mr-2">Recipient</span>
+                            <ChevronUpIcon v-if="sortData.name === 'destination_number' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                            <ChevronDownIcon v-else-if="sortData.name === 'destination_number' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        </div>
                     </TableColumnHeader>
-                    <TableColumnHeader header="Duration"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                        <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('start_epoch')">
+                            <span class="mr-2">Date</span>
+                            <ChevronUpIcon v-if="sortData.name === 'start_epoch' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                            <ChevronDownIcon v-else-if="sortData.name === 'start_epoch' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        </div>
+                    </TableColumnHeader>
+                    <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                        <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('start_epoch')">
+                            <span class="mr-2">Time</span>
+                            <ChevronUpIcon v-if="sortData.name === 'start_epoch' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                            <ChevronDownIcon v-else-if="sortData.name === 'start_epoch' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        </div>
+                    </TableColumnHeader>
+                    <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                        <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('duration')">
+                            <span class="mr-2">Duration</span>
+                            <ChevronUpIcon v-if="sortData.name === 'duration' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                            <ChevronDownIcon v-else-if="sortData.name === 'duration' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        </div>
                     </TableColumnHeader>
                     <TableColumnHeader header="Status"
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     </TableColumnHeader>
 
-                    <TableColumnHeader v-if="permissions.cdr_mos_view" header="MOS"
-                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader v-if="permissions.cdr_mos_view" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                        <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('rtp_audio_in_mos')">
+                            <span class="mr-2">MOS</span>
+                            <ChevronUpIcon v-if="sortData.name === 'rtp_audio_in_mos' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                            <ChevronDownIcon v-else-if="sortData.name === 'rtp_audio_in_mos' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                        </div>
+                    </TableColumnHeader>
 
                     <TableColumnHeader header="Rec" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
@@ -286,6 +323,8 @@ import CallDetailsModal from "./components/modal/CallDetailsModal.vue"
 import CallRecordingModal from "./components/modal/CallRecordingModal.vue"
 import Notification from "./components/notifications/Notification.vue";
 import {
+    ChevronDownIcon,
+    ChevronUpIcon,
     PlayCircleIcon,
     PauseCircleIcon,
     CloudArrowDownIcon,
@@ -357,6 +396,11 @@ const filterData = ref({
     status: null,
 });
 
+const sortData = ref({
+    name: 'start_epoch',
+    order: 'desc',
+});
+
 
 const showGlobal = ref(props.showGlobal);
 const itemOptions = ref({});
@@ -412,12 +456,18 @@ const handleCallRecordingButtonClick = (uuid) => {
 const getData = (page = 1) => {
     loading.value = true;
 
+    let sort = sortData.value.name;
+    if (sortData.value.order === 'desc') {
+        sort = `-${sort}`;
+    }
+
     // console.log(filterData.value);
 
     axios.get(props.routes.data_route, {
         params: {
             filter: filterData.value,
             page,
+            sort,
         }
     })
         .then((response) => {
@@ -477,6 +527,17 @@ const handleSearchButtonClick = () => {
     getData();
 };
 
+const handleSortRequest = (column) => {
+    if (sortData.value.name === column) {
+        sortData.value.order = sortData.value.order === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortData.value.name = column;
+        sortData.value.order = column === 'start_epoch' ? 'desc' : 'asc';
+    }
+
+    getData(1);
+};
+
 const handleFiltersReset = () => {
     filterData.value.dateRange = [
         startLocal.clone().startOf('day').toISOString(), // UTC instant for local start-of-day
@@ -513,6 +574,7 @@ const exportCsv = () => {
 
     axios.post(props.routes.export, {
         filter: filterData._rawValue,
+        sort: sortData.value.order === 'desc' ? `-${sortData.value.name}` : sortData.value.name,
     })
         .then(response => {
             showNotification('success', response.data.messages);
