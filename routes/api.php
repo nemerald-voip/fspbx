@@ -102,7 +102,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
 
 
     // Ring Groups
-    Route::get('ring-groups', [RingGroupsController::class, 'store'])->name('ring-groups.store');
+    Route::post('ring-groups', [RingGroupsController::class, 'store'])->name('ring-groups.store');
     Route::get('ring-groups/data', [RingGroupsController::class, 'getData'])->name('ring-groups.data');
     Route::put('ring-groups/{ring_group}', [RingGroupsController::class, 'update'])->name('ring-groups.update');
     Route::delete('ring-groups/{ring_group}', [RingGroupsController::class, 'destroy'])->name('ring-groups.destroy');

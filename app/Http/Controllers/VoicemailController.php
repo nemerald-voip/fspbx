@@ -18,6 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -36,6 +37,12 @@ class VoicemailController extends Controller
     public function __construct()
     {
         $this->model = new Voicemails();
+    }
+
+    protected function voicemailEscalationTablesAvailable(): bool
+    {
+        return Schema::hasTable('vm_notify_profiles')
+            && Schema::hasTable('vm_notify_profile_recipients');
     }
 
     /**
@@ -217,7 +224,7 @@ class VoicemailController extends Controller
                 // Update voicemail escalation profile
                 $profileInputs = $inputs['vm_notify_profile'] ?? null;
 
-                if (is_array($profileInputs)) {
+                if ($this->voicemailEscalationTablesAvailable() && is_array($profileInputs)) {
                     $profile = VmNotifyProfile::where('domain_uuid', $voicemail->domain_uuid)
                         ->where('voicemail_uuid', $voicemail->voicemail_uuid)
                         ->first();
@@ -546,8 +553,7 @@ class VoicemailController extends Controller
 
             // Check if item_uuid exists to find an existing model
             if ($item_uuid) {
-                // Find existing voicemail by item_uuid
-                $voicemail = Voicemails::with([
+                $relations = [
                     'voicemail_destinations' => function ($query) {
                         $query->select('voicemail_destination_uuid', 'voicemail_uuid', 'voicemail_uuid_copy');
                     },
@@ -559,19 +565,27 @@ class VoicemailController extends Controller
                         $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
                             ->where('domain_uuid', $domain_uuid);
                     },
-                    'vmNotifyProfile' => function ($query) {
+                ];
+
+                if ($this->voicemailEscalationTablesAvailable()) {
+                    $relations['vmNotifyProfile'] = function ($query) {
                         $query->orderBy('created_at', 'asc');
-                    },
-                    'vmNotifyProfile.recipients' => function ($query) {
-                        $query->orderByRaw('COALESCE(priority, 0) asc')
-                            ->orderByRaw('COALESCE(sort_order, 0) asc')
+                    };
+                    $relations['vmNotifyProfile.recipients'] = function ($query) {
+                        $query->orderBy('priority', 'asc')
+                            ->orderBy('sort_order', 'asc')
                             ->orderBy('created_at', 'asc');
-                    },
-                    'vmNotifyProfile.recipients.extension' => function ($query) use ($domain_uuid) {
+                    };
+                    $relations['vmNotifyProfile.recipients.extension'] = function ($query) use ($domain_uuid) {
                         $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
                             ->where('domain_uuid', $domain_uuid);
-                    },
-                ])->where('voicemail_uuid', $item_uuid)->first();
+                    };
+                }
+
+                // Find existing voicemail by item_uuid
+                $voicemail = Voicemails::with($relations)
+                    ->where('voicemail_uuid', $item_uuid)
+                    ->first();
 
 
                 // If voicemail doesn't exist throw an error

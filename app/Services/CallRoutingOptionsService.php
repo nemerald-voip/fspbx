@@ -16,6 +16,7 @@ use App\Models\{
     RingGroups,
     Voicemails
 };
+use Illuminate\Support\Collection;
 
 class CallRoutingOptionsService
 {
@@ -118,6 +119,10 @@ class CallRoutingOptionsService
 
     protected function buildOptions($model, string $extensionField, string $nameField = ''): array
     {
+        if ($model === Voicemails::class) {
+            return $this->buildVoicemailOptions();
+        }
+
         // Create an instance of the model
         $modelInstance = new $model;
 
@@ -130,15 +135,6 @@ class CallRoutingOptionsService
                 ->where('dialplan_xml', '~*', '(year|yday|mon|mday|week|mweek|wday|hour|minute|minute-of-day|time-of-day|date-time)=[^>]*');
         }
 
-        // Check if the model is Voicemails and eager load extensions
-        if ($model === Voicemails::class) {
-            $domainUuid = $this->domainUuid;
-            $query->with(['extension' => function ($query) use ($domainUuid) {
-                $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
-                    ->where('domain_uuid', $domainUuid);
-            }]);
-        }
-
         $query->select($modelInstance->getKeyName(), $extensionField, $nameField)->where('domain_uuid', $this->domainUuid);
 
         $rows = $query->orderBy($extensionField)->get();
@@ -149,16 +145,6 @@ class CallRoutingOptionsService
         foreach ($rows as $row) {
 
             $name = $row->$extensionField . ($nameField ? " - " . $row->$nameField : '');
-            if ($model === Voicemails::class) {
-                if ($row->extension) {
-                    // Use extension's name_formatted if extension exists
-                    $name = $row->extension->name_formatted;
-                } else {
-                    // Fallback to voicemail_id - "Team voicemail" if extension does not exist
-                    $name =  $row->voicemail_id . " - Team voicemail" . ($row->voicemail_description ? ' ('. $row->voicemail_description . ')': '');
-                }
-            }
-
             if ($model === Recordings::class) {
                 $name = $row->$nameField;
             }
@@ -171,6 +157,70 @@ class CallRoutingOptionsService
         }
         // logger($options);
         return $options;
+    }
+
+    protected function buildVoicemailOptions(): array
+    {
+        return $this->getVoicemailRows()
+            ->map(function ($row) {
+                return [
+                    'value' => $row->voicemail_uuid,
+                    'extension' => $row->voicemail_id,
+                    'name' => $this->formatVoicemailName($row, true),
+                ];
+            })
+            ->all();
+    }
+
+    protected function getVoicemailRows(): Collection
+    {
+        return Voicemails::query()
+            ->leftJoin('v_extensions', function ($join) {
+                $join->on('v_extensions.extension', '=', 'v_voicemails.voicemail_id')
+                    ->on('v_extensions.domain_uuid', '=', 'v_voicemails.domain_uuid');
+            })
+            ->where('v_voicemails.domain_uuid', $this->domainUuid)
+            ->orderBy('v_voicemails.voicemail_id')
+            ->get([
+                'v_voicemails.voicemail_uuid',
+                'v_voicemails.voicemail_id',
+                'v_voicemails.voicemail_description',
+                'v_extensions.extension_uuid',
+                'v_extensions.effective_caller_id_name',
+            ]);
+    }
+
+    protected function findVoicemailByMailboxId(string $mailboxId): ?object
+    {
+        return Voicemails::query()
+            ->leftJoin('v_extensions', function ($join) {
+                $join->on('v_extensions.extension', '=', 'v_voicemails.voicemail_id')
+                    ->on('v_extensions.domain_uuid', '=', 'v_voicemails.domain_uuid');
+            })
+            ->where('v_voicemails.domain_uuid', $this->domainUuid)
+            ->where('v_voicemails.voicemail_id', $mailboxId)
+            ->first([
+                'v_voicemails.voicemail_uuid',
+                'v_voicemails.voicemail_id',
+                'v_voicemails.voicemail_description',
+                'v_extensions.extension_uuid',
+                'v_extensions.effective_caller_id_name',
+            ]);
+    }
+
+    protected function formatVoicemailName(object $voicemail, bool $includeDescriptionFallback = false): string
+    {
+        if (! empty($voicemail->effective_caller_id_name)) {
+            return trim($voicemail->voicemail_id . ' - ' . $voicemail->effective_caller_id_name);
+        }
+
+        $name = $voicemail->voicemail_id . ' - Team voicemail';
+
+        if ($includeDescriptionFallback && ! empty($voicemail->voicemail_description)) {
+            $name .= ' (' . $voicemail->voicemail_description . ')';
+        }
+
+        return $name;
     }
 
     protected function otherOptions(): array
@@ -387,13 +437,7 @@ class CallRoutingOptionsService
 
             // Check if destination is voicemail
             if ((substr($destination, 0, 3) == '*99') !== false) {
-                $voicemail = Voicemails::where('domain_uuid', $domainUuid)
-                    ->where('voicemail_id', substr($destination, 3))
-                    ->with(['extension' => function ($query) use ($domainUuid) {
-                        $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
-                            ->where('domain_uuid', $domainUuid);
-                    }])
-                    ->first();
+                $voicemail = $this->findVoicemailByMailboxId(substr($destination, 3));
 
 
                 if ($voicemail) {
@@ -401,7 +445,7 @@ class CallRoutingOptionsService
                         'type' => 'voicemails',
                         'extension' => $voicemail->voicemail_id,
                         'option' => $voicemail->voicemail_uuid,
-                        'name' => $voicemail->extension ? $voicemail->extension->name_formatted : $voicemail->voicemail_id . ' - Team Voicemail',
+                        'name' => $this->formatVoicemailName($voicemail),
                     ];
                 }
             }
@@ -462,20 +506,14 @@ class CallRoutingOptionsService
 
         // Check if destination is voicemail
         if ((substr($extension, 0, 3) == '*99') !== false) {
-            $voicemail = Voicemails::where('domain_uuid', $domainUuid)
-                ->where('voicemail_id', substr($extension, 3))
-                ->with(['extension' => function ($query) use ($domainUuid){
-                    $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
-                        ->where('domain_uuid', $domainUuid);
-                }])
-                ->first();
+            $voicemail = $this->findVoicemailByMailboxId(substr($extension, 3));
 
             if (!$voicemail) return null;
             return [
                 'type' => 'voicemails',
                 'extension' => $voicemail->voicemail_id,
                 'option' => $voicemail->voicemail_uuid,
-                'name' => $voicemail->extension->name_formatted ?? $voicemail->voicemail_id,
+                'name' => $this->formatVoicemailName($voicemail),
             ];
         }
 
