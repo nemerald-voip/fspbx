@@ -815,20 +815,10 @@ class DeviceController extends Controller
                     ->map(function ($line) use ($deviceDto) {
                         if ($line->shared_line) {
                             $line->line_type_id = 'sharedline';
-                        } else {
-                            $vendorLineTypes = [
-                                'yealink'     => '15',
-                                'polycom'     => 'line',
-                                'grandstream' => 'line',
-                                // Add more vendors here as needed
-                            ];
-
-                            // Use the mapped value, or default to 'line'
-                            $line->line_type_id = $vendorLineTypes[$deviceDto->device_vendor] ?? 'line';
-                        }
-
-                        if ($line->external_line) {
+                        } elseif ($line->external_line) {
                             $line->line_type_id = 'externalline';
+                        } else {
+                            $line->line_type_id = 'line';
                         }
 
                         if (!$line->external_line) {
@@ -836,8 +826,6 @@ class DeviceController extends Controller
                         }
                         return $line;
                     });
-
-                // logger($lines);
 
             }
 
