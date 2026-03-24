@@ -297,6 +297,10 @@
         :header="'Create Extension'" @close="showCreateModal = false" @error="handleErrorResponse"
         @success="showNotification" @open-edit-form="handleEditButtonClick" @refresh-data="refreshCurrentPage" />
 
+    <BulkUpdateExtensionForm :items="selectedItems" :options="itemOptions" :show="bulkUpdateModalTrigger"
+        :header="'Bulk Update'" :loading="isModalLoading" @close="handleModalClose"
+        @error="handleErrorResponse" @success="showNotification" @refresh-data="refreshCurrentPage" />
+
     <ConfirmationModal 
         :show="showDeleteConfirmationModal" 
         @close="showDeleteConfirmationModal = false"
@@ -349,6 +353,7 @@ import AdvancedActionButton from "./components/general/AdvancedActionButton.vue"
 import MainLayout from "../Layouts/MainLayout.vue";
 import CreateExtensionForm from "./components/forms/CreateExtensionForm.vue";
 import UpdateExtensionForm from "./components/forms/UpdateExtensionForm.vue";
+import BulkUpdateExtensionForm from "./components/forms/BulkUpdateExtensionForm.vue";
 import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { MicrophoneIcon } from "@heroicons/vue/24/outline";
@@ -417,13 +422,15 @@ const toggleExpand = (extension_uuid) => {
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
-    const actions = [
-        // {
-        //     id: 'bulk_update',
-        //     label: 'Edit',
-        //     icon: 'PencilSquareIcon'
-        // }
-    ];
+    const actions = [];
+
+    if (page.props.auth.can.extension_update) {
+        actions.push({
+            id: 'bulk_update',
+            label: 'Edit',
+            icon: 'PencilSquareIcon'
+        });
+    }
 
     // Conditionally add the delete action if permission is granted
     if (page.props.auth.can.extension_destroy) {
@@ -611,9 +618,7 @@ const handleBulkActionRequest = (action) => {
         confirmDeleteAction.value = () => executeBulkDelete();
     }
     if (action === 'bulk_update') {
-        formErrors.value = [];
         getItemOptions();
-        loadingModal.value = true;
         bulkUpdateModalTrigger.value = true;
     }
 };
