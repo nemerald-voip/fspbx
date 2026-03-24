@@ -135,7 +135,7 @@
                     </button>
                 </div>
 
-                <deep-chat ref="elementRef" :history="currentHistory" :connect="connectConfig"
+                <deep-chat ref="elementRef" :history="currentHistory" :connect="connectConfig" :images="true"
                     :introMessage="introMessage"
                     style="width: 100%; height: 100%; border: none; background-color: #f3f4f6;" :messageStyles="{
                         default: {
@@ -633,19 +633,25 @@ function joinChannel(roomId) {
                 role = ['out', 'outbound', 'outgoing'].includes(dir) ? 'user' : 'ai';
             }
 
+            // Determine what string to look for in our local tracker
+            let matchText = rawText;
+            if (!matchText && e.media && e.media.length > 0) {
+                matchText = '📷 Image';
+            }
+
             // --- SMART DEDUPLICATION ---
             if (role === 'user') {
                 // Did we JUST send this message from this specific Vue window?
-                const localIndex = locallySentMessages.value.indexOf(rawText);
+                const localIndex = locallySentMessages.value.indexOf(matchText);
 
                 if (localIndex !== -1) {
                     // YES: DeepChat already drew the blue bubble when we clicked Send.
                     // Remove it from our tracker and abort so it doesn't duplicate.
                     locallySentMessages.value.splice(localIndex, 1);
 
-                    // (Still update the sidebar timestamp with the real server time)
-                    updateSidebar(roomId, rawText || '📷 Image', e.timestamp);
-                    return;
+                    // Update the sidebar timestamp with the real server time
+                    updateSidebar(roomId, matchText, e.timestamp);
+                    return; // ABORT INJECTING INTO DEEP CHAT
                 }
             }
 
@@ -662,7 +668,7 @@ function joinChannel(roomId) {
             }
 
             // Update Sidebar List
-            updateSidebar(roomId, rawText || '📷 Image', e.timestamp);
+            updateSidebar(roomId, matchText, e.timestamp);
         })
         .error((error) => {
             console.error('Reverb Subscription Error:', error);
@@ -762,40 +768,71 @@ const connectConfig = {
     websocket: true, // Enable async mode
     handler: (body, signals) => {
         // CAPTURE SIGNALS HERE
-        // This allows us to use 'signals' anywhere in our code (like inside Echo)
         deepChatSignals = signals;
 
         signals.onOpen(); // Mark connection as open immediately
 
         // Handle User Sending Message
         signals.newUserMessage.listener = async (msgBody) => {
-            const text = msgBody.messages[0].text;
+
+            // 1. SAFELY EXTRACT TEXT AND FILES
+            const messageObj = msgBody.messages[0] || {};
+            const text = messageObj.text || '';
+            const files = messageObj.files || []; // <--- This prevents the ReferenceError
+
             const currentId = activeRoomId.value;
 
             if (!currentId) return;
 
             // ADD TO OUR TRACKER to prevent WebSocket duplication
-            locallySentMessages.value.push(text);
+            // Fallback to '📷 Image' if there is no text
+            locallySentMessages.value.push(text || '📷 Image');
 
             // Parse ID (source_dest)
             const parts = currentId.split('_');
             if (parts.length !== 2) return;
 
             try {
-                // Fire and Forget (Optimistic UI)
-                await axios.post(props.routes.sendMessage, {
-                    source: parts[0],
-                    destination: parts[1],
-                    message: text,
-                    extension_uuid: currentExtensionUuid.value
-                });
+                // 2. BUILD FORMDATA (Required for file uploads)
+                const formData = new FormData();
+                formData.append('source', parts[0]);
+                formData.append('destination', parts[1]);
+                formData.append('extension_uuid', currentExtensionUuid.value);
+
+                // Append text if it exists
+                if (text) {
+                    formData.append('message', text);
+                }
+
+                // 3. APPEND FILES (if any exist)
+                if (files.length > 0) {
+                    for (const fileObj of files) {
+                        let fileToUpload = fileObj.file;
+                        
+                        // If DeepChat only gave us a preview URL (base64 or blob), convert it to a real File
+                        if (!fileToUpload && fileObj.src) {
+                            const res = await fetch(fileObj.src);
+                            const blob = await res.blob();
+                            fileToUpload = new File([blob], fileObj.name || 'attachment.png', { type: blob.type });
+                        }
+
+                        // Append as an array 'media[]' and explicitly provide the filename
+                        if (fileToUpload) {
+                            formData.append('media[]', fileToUpload, fileObj.name || 'attachment.png');
+                        }
+                    }
+                }
+
+                // 4. FIRE AND FORGET WITH FORMDATA
+                await axios.post(props.routes.sendMessage, formData);
 
                 // Update Sidebar immediately
-                updateSidebar(currentId, text, new Date().toISOString());
+                updateSidebar(currentId, text || '📷 Image', new Date().toISOString());
+
             } catch (e) {
                 console.error("Send failed", e);
                 // Optional: Notify user of failure
-                // signals.onResponse({ error: "Failed to send" });
+                signals.onResponse({ error: "Failed to send" });
             }
         };
     }

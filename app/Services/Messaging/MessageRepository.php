@@ -18,6 +18,17 @@ class MessageRepository
         array $media = [],
         ?string $providerEvent = null,
     ): Messages {
+        messaging_webhook_debug('storeInbound called', [
+            'domain_uuid' => $domainUuid,
+            'extension_uuid' => $extensionUuid,
+            'source' => $source,
+            'destination' => $destination,
+            'type' => $type,
+            'provider' => $providerName,
+            'reference_id' => $providerReferenceId,
+            'media_count' => count($media),
+        ]);
+
         $message = Messages::create([
             'domain_uuid'    => $domainUuid,
             'extension_uuid' => $extensionUuid,
@@ -26,8 +37,8 @@ class MessageRepository
             'message'        => $text,
             'direction'      => 'in',
             'type'           => $type,
-            'reference_id'   => $providerReferenceId, // legacy
-            'status'         => 'received',           // legacy
+            'reference_id'   => $providerReferenceId,
+            'status'         => 'received',
             'media'          => $media,
             'delivery_meta'  => [
                 'provider' => [
@@ -41,6 +52,24 @@ class MessageRepository
             ],
         ]);
 
+        if (!empty($media)) {
+            $message->media = $this->attachMediaAccessPaths(
+                messageUuid: $message->message_uuid,
+                media: $message->media ?? []
+            );
+
+            $message->save();
+
+            messaging_webhook_debug('Media access paths attached', [
+                'message_uuid' => $message->message_uuid,
+                'media' => $message->media,
+            ]);
+        }
+
+        messaging_webhook_debug('storeInbound created message', [
+            'message_uuid' => $message->message_uuid,
+        ]);
+
         return $message;
     }
 
@@ -51,10 +80,19 @@ class MessageRepository
         ?string $description = null,
         ?string $providerEvent = null,
     ): void {
+        messaging_webhook_debug('applyProviderStatus called', [
+            'provider' => $provider,
+            'reference_id' => $referenceId,
+            'status' => $status,
+            'provider_event' => $providerEvent,
+        ]);
+
         $message = Messages::where('reference_id', $referenceId)->first();
 
         if (!$message) {
-            logger("Message not found for provider status update: {$referenceId}");
+            messaging_webhook_debug('applyProviderStatus message not found', [
+                'reference_id' => $referenceId,
+            ]);
             return;
         }
 
@@ -68,18 +106,27 @@ class MessageRepository
         data_set($meta, 'provider.updated_at', now()->toIso8601String());
 
         $message->delivery_meta = $meta;
-
-        // keep old fields alive for now
         $message->status = $status;
-
         $message->save();
+
+        messaging_webhook_debug('applyProviderStatus updated message', [
+            'message_uuid' => $message->message_uuid,
+        ]);
     }
 
     public function markRingotelStatus(string $messageUuid, string $status, ?string $error = null): void
     {
+        messaging_webhook_debug('markRingotelStatus called', [
+            'message_uuid' => $messageUuid,
+            'status' => $status,
+        ]);
+
         $message = Messages::find($messageUuid);
 
         if (!$message) {
+            messaging_webhook_debug('markRingotelStatus message not found', [
+                'message_uuid' => $messageUuid,
+            ]);
             return;
         }
 
@@ -95,9 +142,18 @@ class MessageRepository
 
     public function markEmailStatus(string $messageUuid, string $status, ?string $to = null, ?string $error = null): void
     {
+        messaging_webhook_debug('markEmailStatus called', [
+            'message_uuid' => $messageUuid,
+            'status' => $status,
+            'to' => $to,
+        ]);
+
         $message = Messages::find($messageUuid);
 
         if (!$message) {
+            messaging_webhook_debug('markEmailStatus message not found', [
+                'message_uuid' => $messageUuid,
+            ]);
             return;
         }
 
@@ -110,5 +166,43 @@ class MessageRepository
 
         $message->delivery_meta = $meta;
         $message->save();
+    }
+
+    protected function attachMediaAccessPaths(string $messageUuid, array $media): array
+    {
+        return collect($media)
+            ->values()
+            ->map(function ($item, $index) use ($messageUuid) {
+                if (!is_array($item)) {
+                    return $item;
+                }
+
+                $storedName = $item['stored_name'] ?? basename($item['object_key'] ?? 'attachment');
+
+                $item['access_path'] = $this->buildMediaAccessPath(
+                    messageUuid: $messageUuid,
+                    index: $index,
+                    storedName: $storedName,
+                );
+
+                $item['mime_type'] = $this->normalizeMimeType($item['mime_type'] ?? null);
+
+                return $item;
+            })
+            ->all();
+    }
+
+    protected function buildMediaAccessPath(string $messageUuid, int $index, string $storedName): string
+    {
+        return "/messages/media/{$messageUuid}/{$index}/{$storedName}";
+    }
+
+    protected function normalizeMimeType(?string $mimeType): ?string
+    {
+        if (!$mimeType) {
+            return $mimeType;
+        }
+
+        return trim(explode(';', $mimeType)[0]);
     }
 }

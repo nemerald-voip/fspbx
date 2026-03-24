@@ -2,6 +2,7 @@
 
 namespace App\Services\Messaging\Providers;
 
+use App\Services\Messaging\Data\DownloadedMediaData;
 use Spatie\WebhookClient\Models\WebhookCall;
 
 interface MessagingWebhookParser
@@ -11,5 +12,5 @@ interface MessagingWebhookParser
      */
     public function parse(WebhookCall $webhookCall): iterable;
 
-    public function downloadMedia(string $url): string;
+    public function downloadMedia(string $url): DownloadedMediaData;
 }

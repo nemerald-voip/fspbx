@@ -12,12 +12,21 @@ class MessageMediaObjectStorageService
         protected S3StorageConfigService $s3StorageConfigService
     ) {}
 
-    public function storeBinaryForDomain(
+    public function storeBinary(
         string $domainUuid,
         string $binary,
         string $originalName,
-        string $provider = 'unknown'
+        string $provider = 'unknown',
+        ?string $mimeType = null
     ): array {
+        messaging_webhook_debug('storeBinary started', [
+            'domain_uuid' => $domainUuid,
+            'original_name' => $originalName,
+            'provider' => $provider,
+            'provided_mime_type' => $mimeType,
+            'binary_size' => strlen($binary),
+        ]);
+
         $settings = $this->getSettingsForDomain($domainUuid);
 
         if (!$settings) {
@@ -26,11 +35,19 @@ class MessageMediaObjectStorageService
 
         $s3 = $this->getClientForSettings($settings);
 
-        $mimeType = $this->guessMimeType($binary, $originalName);
+        $mimeType = $mimeType ?: $this->guessMimeType($binary, $originalName);
         $extension = $this->resolveExtension($originalName, $mimeType);
         $storedName = (string) Str::uuid() . ($extension ? '.' . $extension : '');
         $objectKey = $this->buildObjectKey($storedName);
         $size = strlen($binary);
+
+        messaging_webhook_debug('Prepared object storage payload', [
+            'mime_type' => $mimeType,
+            'extension' => $extension,
+            'stored_name' => $storedName,
+            'object_key' => $objectKey,
+            'size' => $size,
+        ]);
 
         $params = [
             'Bucket' => $settings['bucket'],
@@ -42,12 +59,23 @@ class MessageMediaObjectStorageService
 
         $s3->putObject($params);
 
+        messaging_webhook_debug('Object uploaded', [
+            'bucket' => $settings['bucket'],
+            'object_key' => $objectKey,
+        ]);
+
+
         $head = $s3->headObject([
             'Bucket' => $settings['bucket'],
             'Key' => $objectKey,
         ]);
 
         $remoteSize = (int) ($head['ContentLength'] ?? 0);
+
+        messaging_webhook_debug('Object verification complete', [
+            'local_size' => $size,
+            'remote_size' => $remoteSize,
+        ]);
 
         if ($remoteSize !== $size) {
             throw new \RuntimeException(
@@ -64,8 +92,23 @@ class MessageMediaObjectStorageService
             'stored_name' => $storedName,
             'mime_type' => $mimeType,
             'size' => $size,
-            'access_path' => null, // filled in after the Message row exists
+            'access_path' => null,
         ];
+    }
+
+    public function storeBinaryForDomain(
+        string $domainUuid,
+        string $binary,
+        string $originalName,
+        string $provider = 'unknown'
+    ): array {
+        return $this->storeBinary(
+            domainUuid: $domainUuid,
+            binary: $binary,
+            originalName: $originalName,
+            provider: $provider,
+            mimeType: null,
+        );
     }
 
     public function generateTemporaryDownloadUrl(
@@ -107,7 +150,15 @@ class MessageMediaObjectStorageService
     {
         $storageSettings = $this->s3StorageConfigService->getSettingsMapForDomains([$domainUuid]);
 
-        return $storageSettings['domains'][$domainUuid] ?? $storageSettings['default'] ?? null;
+        $settings = $storageSettings['domains'][$domainUuid] ?? $storageSettings['default'] ?? null;
+
+        messaging_webhook_debug('Resolved S3 settings for domain', [
+            'domain_uuid' => $domainUuid,
+            'settings_found' => (bool) $settings,
+            'bucket' => $settings['bucket'] ?? null,
+        ]);
+
+        return $settings;
     }
 
     protected function getClientForSettings(array $settings)

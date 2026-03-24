@@ -16,9 +16,18 @@ class RingotelInboundDeliveryService
 
     public function deliver(string $messageUuid, string $orgId, string $extension): bool
     {
+        messaging_webhook_debug('Ringotel delivery started', [
+            'message_uuid' => $messageUuid,
+            'org_id' => $orgId,
+            'extension' => $extension,
+        ]);
+
         $message = Messages::find($messageUuid);
 
         if (!$message) {
+            messaging_webhook_debug('Ringotel delivery message not found', [
+                'message_uuid' => $messageUuid,
+            ]);
             return false;
         }
 
@@ -26,13 +35,28 @@ class RingotelInboundDeliveryService
 
         try {
             if ($message->type === 'mms') {
-                foreach ($this->buildMediaUrls($message) as $url) {
+                $mediaUrls = $this->buildMediaUrls($message);
+
+                if (empty($mediaUrls)) {
+                    throw new \Exception('MMS message has no accessible media URLs.');
+                }
+
+                foreach ($mediaUrls as $url) {
+                    messaging_webhook_debug('Sending MMS media to Ringotel', [
+                        'message_uuid' => $messageUuid,
+                        'url' => $url,
+                    ]);
+
                     $response = $this->ringotel->message([
                         'orgid' => $orgId,
                         'from' => $message->source,
                         'to' => $extension,
                         'content' => $url,
                         'type' => 7,
+                    ]);
+
+                    messaging_webhook_debug('Ringotel MMS response received', [
+                        'response' => $response,
                     ]);
 
                     if (!isset($response['messageid'])) {
@@ -46,6 +70,10 @@ class RingotelInboundDeliveryService
                     'to' => $extension,
                     'content' => $message->message,
                     'type' => 1,
+                ]);
+
+                messaging_webhook_debug('Ringotel SMS response received', [
+                    'response' => $response,
                 ]);
 
                 if (!isset($response['messageid'])) {

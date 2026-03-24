@@ -18,6 +18,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use libphonenumber\PhoneNumberFormat;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -271,8 +272,8 @@ class MessageController extends Controller
                 'my_number' => $r->local_number,
                 'avatar' => null,
                 'unread' => $countMap[$id] ?? 0,
-                'lastMessage' => $lastMessageText, 
-                'timestamp' => $timestamp,       
+                'lastMessage' => $lastMessageText,
+                'timestamp' => $timestamp,
             ];
         })->sortByDesc('timestamp')->values();
 
@@ -514,25 +515,25 @@ class MessageController extends Controller
         return (string) $domain;
     }
 
-    public function send(Request $request)
+    public function send(Request $request, \App\Services\MessageMediaObjectStorageService $mediaService)
     {
         // 1. Validate Input
         $data = $request->validate([
-            'source' => 'required|string',      // My DID (e.g. +1555...)
-            'destination' => 'required|string', // Customer (e.g. +1646...)
-            'message' => 'required|string',
+            'source'         => 'required|string',      // My DID (e.g. +1555...)
+            'destination'    => 'required|string',      // Customer (e.g. +1646...)
+            'message'        => 'nullable|string',      // Nullable! Allows image-only messages
             'extension_uuid' => 'required|uuid',
+            'media'          => 'nullable|array',       // Array of files from Vue
+            'media.*'        => 'file|max:20480',       // Limit files to 20MB (Adjust as needed)
         ]);
 
         $domainUuid = $this->currentDomainUuid();
 
         // 2. SECURITY CHECK: Verify Extension owns this Source Number
-        // First, find the extension model to get the local extension number (e.g. "101")
         $extension = Extensions::where('extension_uuid', $data['extension_uuid'])
             ->where('domain_uuid', $domainUuid)
             ->firstOrFail();
 
-        // Next, check SmsDestinations to ensure this DID is assigned to this extension
         $countryCode = get_domain_setting('country', $domainUuid) ?? 'US';
 
         $normalizedSource = formatPhoneNumber($data['source'], $countryCode, PhoneNumberFormat::E164);
@@ -550,16 +551,52 @@ class MessageController extends Controller
         }
 
         $msg = new Messages();
+
+        // PRE-GENERATE UUID: We need this to construct the exact 'access_path' for the JSON array
+        // BEFORE saving it to the database so Reverb gets the complete payload.
+        $msg->message_uuid = (string) Str::uuid();
+
         $msg->domain_uuid = $domainUuid;
         $msg->extension_uuid = $data['extension_uuid'];
         $msg->direction = 'out';
-        $msg->type = 'sms';
         $msg->status = 'queued';
         $msg->source = $normalizedSource;
         $msg->destination = $normalizedDestination;
-
-        $msg->message = $data['message'];
+        $msg->message = $data['message'] ?? ''; // Fallback to empty string if null
         $msg->created_at = now();
+
+        // 3. Process Media Attachments
+        $mediaPayload = [];
+        if ($request->hasFile('media')) {
+            $msg->type = 'mms'; // Set type to MMS
+
+            foreach ($request->file('media') as $index => $file) {
+                // Process the file using your existing S3 service
+                $mediaData = $mediaService->storeBinary(
+                    $domainUuid,
+                    $file->get(), // Pass raw binary
+                    $file->getClientOriginalName(),
+                    $smsConfig->carrier ?? 'unknown',
+                    $file->getMimeType()
+                );
+
+                // Build access path to match your example DB record
+                // Output: /messages/media/662fdd32.../0/cae8c791...png
+                $mediaData['access_path'] = sprintf(
+                    '/messages/media/%s/%d/%s',
+                    $msg->message_uuid,
+                    $index,
+                    $mediaData['stored_name']
+                );
+
+                $mediaPayload[] = $mediaData;
+            }
+
+            $msg->media = $mediaPayload;
+        } else {
+            $msg->type = 'sms';
+            $msg->media = null;
+        }
 
         // Save triggers the Observer -> Broadcasts to Reverb
         $msg->save();
@@ -571,7 +608,7 @@ class MessageController extends Controller
             // Instantiate your provider (Commio, Twilio, etc)
             $messageProvider = MessageProviderFactory::make($carrier);
 
-            // Execute Send
+            // Execute Send (This factory class will grab the media out of the DB internally)
             $messageProvider->send($msg->message_uuid);
 
             // Update Status on Success
@@ -584,7 +621,6 @@ class MessageController extends Controller
             $msg->status = 'failed';
             $msg->save();
 
-            // We throw 500 so frontend knows it failed (DeepChat will show error)
             return response()->json(['message' => 'Carrier failed: ' . $e->getMessage()], 500);
         }
 
