@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\V1\ExtensionController;
 use App\Http\Controllers\Api\V1\RingGroupController;
 use App\Http\Controllers\Api\V1\VoicemailController;
 use App\Http\Controllers\Api\V1\PhoneNumberController;
+use App\Http\Controllers\Api\V1\CdrController;
 
 /*
 |--------------------------------------------------------------------------
@@ -116,4 +117,27 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
 
     Route::delete('/domains/{domain_uuid}/phone-numbers/{destination_uuid}', [PhoneNumberController::class, 'destroy'])
         ->middleware('user.authorize:ring_group_delete');
+
+     /*
+    |--------------------------------------------------------------------------
+    | Call Detail Records (domain-scoped)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/domains/{domain_uuid}/call-detail-records/data', [CdrController::class, 'getData'])
+        ->middleware('user.authorize:xml_cdr_view');
+
+    Route::get('/domains/{domain_uuid}/call-detail-records/entities', [CdrController::class, 'getEntities'])
+        ->middleware('user.authorize:xml_cdr_view');
+
+    Route::post('/domains/{domain_uuid}/call-detail-records/item-options', [CdrController::class, 'getItemOptions'])
+        ->middleware('user.authorize:xml_cdr_view');
+
+    Route::get('/domains/{domain_uuid}/call-detail-records/recording-options', [CdrController::class, 'getRecordingOptions'])
+        ->middleware('user.authorize:xml_cdr_view');
+
+    Route::post('/domains/{domain_uuid}/call-detail-records/recordings/transcribe', [CdrController::class, 'transcribe'])
+        ->middleware('user.authorize:transcription_create');
+
+    Route::post('/domains/{domain_uuid}/call-detail-records/recordings/summarize', [CdrController::class, 'summarize'])
+        ->middleware('user.authorize:transcription_summary');
 });
