@@ -3,6 +3,7 @@
 namespace App\Services\Messaging;
 
 use App\Models\Messages;
+use libphonenumber\PhoneNumberFormat;
 
 class MessageRepository
 {
@@ -18,11 +19,18 @@ class MessageRepository
         array $media = [],
         ?string $providerEvent = null,
     ): Messages {
+        $countryCode = get_domain_setting('country', $domainUuid) ?? 'US';
+
+        $normalizedSource = $this->normalizePhoneNumberForStorage($source, $countryCode);
+        $normalizedDestination = $this->normalizePhoneNumberForStorage($destination, $countryCode);
+
         messaging_webhook_debug('storeInbound called', [
             'domain_uuid' => $domainUuid,
             'extension_uuid' => $extensionUuid,
             'source' => $source,
+            'normalized_source' => $normalizedSource,
             'destination' => $destination,
+            'normalized_destination' => $normalizedDestination,
             'type' => $type,
             'provider' => $providerName,
             'reference_id' => $providerReferenceId,
@@ -32,8 +40,8 @@ class MessageRepository
         $message = Messages::create([
             'domain_uuid'    => $domainUuid,
             'extension_uuid' => $extensionUuid,
-            'source'         => $source,
-            'destination'    => $destination,
+            'source'         => $normalizedSource,
+            'destination'    => $normalizedDestination,
             'message'        => $text,
             'direction'      => 'in',
             'type'           => $type,
@@ -204,5 +212,16 @@ class MessageRepository
         }
 
         return trim(explode(';', $mimeType)[0]);
+    }
+
+    protected function normalizePhoneNumberForStorage(?string $number, string $countryCode): ?string
+    {
+        if (!$number) {
+            return $number;
+        }
+
+        $formatted = formatPhoneNumber($number, $countryCode, PhoneNumberFormat::E164);
+
+        return $formatted ?: $number;
     }
 }
