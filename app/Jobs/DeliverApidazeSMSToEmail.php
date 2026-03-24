@@ -2,16 +2,15 @@
 
 namespace App\Jobs;
 
-use App\Models\Telnyx\TelnyxInboundSMS;
+use App\Models\Apidaze\ApidazeInboundSMS;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Redis;
 
-class DeliverTelnyxSMSToEmail implements ShouldQueue
+class DeliverApidazeSMSToEmail implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -73,15 +72,6 @@ class DeliverTelnyxSMSToEmail implements ShouldQueue
         $this->email = $data['email'];
     }
 
-    /**
-     * Get the middleware the job should pass through.
-     *
-     * @return array
-     */
-    public function middleware()
-    {
-        return [(new RateLimitedWithRedis('emails'))];
-    }
 
     /**
      * Execute the job.
@@ -93,7 +83,7 @@ class DeliverTelnyxSMSToEmail implements ShouldQueue
         // Allow only 2 tasks every 1 second
         Redis::throttle('emails')->allow(2)->every(1)->then(function () {
 
-            $sms = new TelnyxInboundSMS();
+            $sms = new ApidazeInboundSMS();
             $sms->org_id = $this->org_id;
             $sms->message_uuid = $this->message_uuid;
             $sms->email = $this->email;

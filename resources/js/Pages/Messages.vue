@@ -40,7 +40,7 @@
                     <label class="block text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wider">
                         Viewing as:
                     </label>
-                    <Vueform :endpoint="false" :schema="extensionSelectSchema" v-model="extensionFormModel"
+                    <Vueform ref="extensionForm$" :endpoint="false" :schema="extensionSelectSchema"
                         :float-placeholders="false" />
                 </div>
 
@@ -435,10 +435,11 @@ const showOrgModal = ref(false);
 const contactForm$ = ref(null);
 const showDeleteContactModal = ref(false);
 const localOrgs = ref([]);
-const extensionFormModel = ref({ extension: null });
+const extensionForm$ = ref(null);
 
 // DIDs State (Populated when extension changes)
 const myDids = ref([]);
+const locallySentMessages = ref([]);
 
 // Global Variable to store DeepChat signals ---
 let deepChatSignals = null;
@@ -476,26 +477,36 @@ const getData = async () => {
         const response = await axios.get(props.routes.data_route);
         data.value = response.data;
 
-        // AUTO-SELECT LOGIC:
-        // If currentExtensionUuid is empty, try to set it to the logged-in user's extension
+        // 1. POPULATE THE DROPDOWN ITEMS
+        extensionSelectSchema.value.extension.items = extensionList.value.map(ext => ({
+            value: ext.value,
+            label: ext.name
+        }));
+
+        // 2. AUTO-SELECT LOGIC
         if (!currentExtensionUuid.value) {
-            const defaultId = data.value.extension_uuid;
-            const exists = (data.value.extensions || []).find(e => e.value === defaultId);
+            let defaultId = data.value.extension_uuid;
+            let exists = extensionList.value.find(e => e.value === defaultId);
+
+            // If the default doesn't exist, fallback to the first one
+            if (!exists && extensionList.value.length > 0) {
+                defaultId = extensionList.value[0].value;
+                exists = extensionList.value[0];
+            }
 
             if (exists) {
                 currentExtensionUuid.value = defaultId;
-                extensionFormModel.value = { extension: defaultId }; // <-- NEW
                 if (exists.dids) myDids.value = exists.dids;
 
-            } else if (data.value.extensions?.length > 0) {
-                const firstExt = data.value.extensions[0];
-                currentExtensionUuid.value = firstExt.value;
-                extensionFormModel.value = { extension: firstExt.value }; // <-- NEW
-                if (firstExt.dids) myDids.value = firstExt.dids;
-            }
+                // 3. FORCE VUEFORM TO SHOW THE SELECTED VALUE
+                // We wrap this in nextTick so Vueform has time to register the new items
+                nextTick(() => {
+                    if (extensionForm$.value) {
+                        extensionForm$.value.update({ extension: defaultId });
+                    }
+                });
 
-            if (currentExtensionUuid.value) {
-                joinExtensionChannel(currentExtensionUuid.value);
+                joinExtensionChannel(defaultId);
             }
         }
     } catch (error) {
@@ -606,33 +617,52 @@ const updateSidebar = (roomId, newMessageText, timestamp = null) => {
 // --- REVERB WEBSOCKET LOGIC ---
 function joinChannel(roomId) {
     leaveChannel(activeRoomId.value);
-
     if (!window.Echo) return;
 
     const channelId = roomId.replace(/\+/g, '');
-
     console.log(`🔌 Joining Reverb channel: room.${channelId}`);
 
     window.Echo.private(`room.${channelId}`)
         .listen('.message.new', (e) => {
             console.log('✅ LISTENER FIRED:', e);
 
-            // 1. Skip my own messages (Optimistic UI handled them)
-            if (e.role === 'user') return;
+            const rawText = e.text || e.message || '';
+            let role = e.role;
+            if (!role) {
+                const dir = String(e.direction || '').toLowerCase();
+                role = ['out', 'outbound', 'outgoing'].includes(dir) ? 'user' : 'ai';
+            }
 
-            // 2. USE SIGNALS INSTEAD OF ELEMENT REF
+            // --- SMART DEDUPLICATION ---
+            if (role === 'user') {
+                // Did we JUST send this message from this specific Vue window?
+                const localIndex = locallySentMessages.value.indexOf(rawText);
+
+                if (localIndex !== -1) {
+                    // YES: DeepChat already drew the blue bubble when we clicked Send.
+                    // Remove it from our tracker and abort so it doesn't duplicate.
+                    locallySentMessages.value.splice(localIndex, 1);
+
+                    // (Still update the sidebar timestamp with the real server time)
+                    updateSidebar(roomId, rawText || '📷 Image', e.timestamp);
+                    return;
+                }
+            }
+
+            // --- INJECT THE MESSAGE ---
+            // If we made it here, it's either from the Customer (ai) 
+            // OR it's an Outbound message from your Cell Phone (user).
             if (deepChatSignals) {
                 console.log('Injecting via Signals...');
-
-                // signals.onResponse() injects the message into the chat UI
-                // e contains { text: "...", role: "ai", timestamp: "..." }
-                deepChatSignals.onResponse(e);
+                // Run it through our normalizer to get the Image/Timestamp HTML
+                const formattedMessage = normalizeMessageForDeepChat(e);
+                deepChatSignals.onResponse(formattedMessage);
             } else {
                 console.error('❌ DeepChat Signals not initialized yet');
             }
 
             // Update Sidebar List
-            updateSidebar(roomId, e.text, e.timestamp);
+            updateSidebar(roomId, rawText || '📷 Image', e.timestamp);
         })
         .error((error) => {
             console.error('Reverb Subscription Error:', error);
@@ -744,6 +774,9 @@ const connectConfig = {
 
             if (!currentId) return;
 
+            // ADD TO OUR TRACKER to prevent WebSocket duplication
+            locallySentMessages.value.push(text);
+
             // Parse ID (source_dest)
             const parts = currentId.split('_');
             if (parts.length !== 2) return;
@@ -769,25 +802,82 @@ const connectConfig = {
 };
 
 // --- Helper: Normalize Data ---
+function formatMessageTimestamp(isoString) {
+    if (!isoString) return '';
+    const date = new Date(isoString);
+    const now = new Date();
+
+    const isToday = date.getDate() === now.getDate() &&
+        date.getMonth() === now.getMonth() &&
+        date.getFullYear() === now.getFullYear();
+
+    const time = date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+    if (isToday) {
+        return `Today, ${time}`;
+    }
+
+    // Check if it's from a previous year
+    if (date.getFullYear() !== now.getFullYear()) {
+        const fullDate = date.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+        return `${fullDate}, ${time}`;
+    }
+
+    // Default for earlier this year (e.g., "Feb 24, 3:15 PM")
+    const shortDate = date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    return `${shortDate}, ${time}`;
+}
+
+// --- Helper: Normalize Data ---
 function normalizeMessageForDeepChat(row) {
-    // 1. Check if backend sent 'text' (New Controller) OR 'message' (Raw DB)
-    const content = row.text || row.message || '';
-
-    // 2. Check if backend sent 'role' directly
+    // 1. Calculate Role
     let role = row.role;
-
-    // 3. Fallback: Calculate role if missing (Old DB rows)
     if (!role) {
         const dir = String(row.direction || '').toLowerCase();
         const isOutbound = ['out', 'outbound', 'outgoing'].includes(dir);
         role = isOutbound ? 'user' : 'ai';
     }
 
+    // 2. Format Timestamp using our new Smart Formatter
+    const rawTime = row.timestamp || row.created_at;
+    const timeString = formatMessageTimestamp(rawTime);
+
+    // 3. Handle Images
+    let filesArray = undefined;
+
+    if (row.media && Array.isArray(row.media) && row.media.length > 0) {
+        // Map over the media items and extract the access_path
+        filesArray = row.media.map(mediaItem => {
+            return {
+                src: mediaItem.access_path, // This maps to your MessageMediaController route
+                type: 'image',
+                name: mediaItem.original_name || 'image.png'
+            };
+        });
+    }
+
+    // 4. Handle Text Content
+    const content = row.text || row.message || '';
+
+    // If there is an image but NO text, return just the image with the timestamp under it
+    if (filesArray && !content) {
+        return {
+            role: role,
+            files: filesArray,
+            html: timeString ? `<div style="font-size: 10px; opacity: 0.7; text-align: right; margin-top: 4px; white-space: nowrap;">${timeString}</div>` : ''
+        };
+    }
+
+    // If there is Text, construct an HTML bubble with the text and the smart date
     return {
-        text: content,
         role: role,
-        // Optional: formatting
-        // timestamp: row.timestamp 
+        files: filesArray,
+        html: `
+            <div style="display: flex; flex-direction: column;">
+                <div style="white-space: pre-wrap; line-height: 1.4;">${content}</div>
+                ${timeString ? `<div style="font-size: 10px; opacity: 0.7; text-align: right; margin-top: 6px; white-space: nowrap;">${timeString}</div>` : ''}
+            </div>
+        `
     };
 }
 
@@ -819,9 +909,13 @@ const handleCreateRoom = (form$) => {
 }
 
 const handleGlobalUpdate = (e) => {
-    // e = { roomId, lastMessage, timestamp, direction, name, my_number }
+    // 1. Check if the message text is empty but media exists
+    let displayText = e.lastMessage || '';
+    if (displayText.trim() === '' && e.media && e.media.length > 0) {
+        displayText = '📷 Image';
+    }
 
-    // 1. Find Room
+    // 2. Find Room
     const index = rooms.value.findIndex(r => r.id === e.roomId);
 
     let room;
@@ -829,33 +923,28 @@ const handleGlobalUpdate = (e) => {
     if (index !== -1) {
         // UPDATE EXISTING ROOM
         room = rooms.value[index];
-        room.lastMessage = e.lastMessage;
+        room.lastMessage = displayText; // <-- Use our new variable
         room.timestamp = e.timestamp;
 
-        // Remove from current position to unshift later
         rooms.value.splice(index, 1);
     } else {
-        // CREATE NEW ROOM (Optimistic)
-        // This handles the case where a new customer texts in
+        // CREATE NEW ROOM 
         room = {
             id: e.roomId,
             name: e.name,
             my_number: e.my_number,
             avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(e.name)}&background=random`,
             unread: 0,
-            lastMessage: e.lastMessage,
+            lastMessage: displayText, // <-- Use our new variable
             timestamp: e.timestamp
         };
     }
 
-    // 2. Handle Unread Count
-    // If this room is NOT the one currently open, and it's an INBOUND message, add badge
+    // 3. Handle Unread Count
     if (activeRoomId.value !== e.roomId && e.direction === 'in') {
         room.unread = (room.unread || 0) + 1;
     }
-    // If it IS the active room, we assume DeepChat showed it, so unread stays 0
 
-    // 3. Move/Add to Top
     rooms.value.unshift(room);
 };
 
@@ -1028,19 +1117,16 @@ const createOrgSchema = ref({
 });
 
 // Add this next to your other schemas
-const extensionSelectSchema = computed(() => {
-    return {
-        extension: {
-            type: 'select',
-            search: true,
-            native: false, // Uses the custom dropdown UI
-            placeholder: 'Select Extension',
-            items: extensionList.value.map(ext => ({
-                value: ext.value,
-                label: ext.name
-            })),
-            // When the user picks a new extension, fire our function
-            onChange: (newValue) => {
+const extensionSelectSchema = ref({
+    extension: {
+        type: 'select',
+        search: true,
+        native: false,
+        placeholder: 'Select Extension',
+        items: [], // Starts empty, we will fill it manually after API loads
+        onChange: (newValue) => {
+            // Prevent accidental fires during initialization
+            if (newValue && newValue !== currentExtensionUuid.value) {
                 onExtensionChange(newValue);
             }
         }

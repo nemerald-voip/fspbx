@@ -120,6 +120,11 @@
                                 <!-- EXPANDED DETAILS -->
                                 <tr v-if="expandedRow === row.message_uuid">
                                     <td :colspan="8" class="bg-gray-50 px-6 py-4 shadow-inner">
+                                        <div class="mb-4">
+                                            <div class="text-gray-900 font-semibold text-sm mb-1">Message ID:</div>
+                                            <pre
+                                                class="text-gray-700 text-sm whitespace-pre-wrap break-words">{{ row.message_uuid }}</pre>
+                                        </div>
                                         <!-- Showing full Status -->
                                         <div class="mb-4">
                                             <div class="text-gray-900 font-semibold text-sm mb-1">Full Status</div>

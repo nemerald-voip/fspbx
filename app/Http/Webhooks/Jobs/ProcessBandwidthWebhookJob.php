@@ -2,17 +2,20 @@
 
 namespace App\Http\Webhooks\Jobs;
 
-use App\Models\Messages;
-use App\Models\Extensions;
+use App\Jobs\DeliverBandwidthInboundSMS;
+use App\Jobs\DeliverBandwidthSMSToEmail;
+use App\Jobs\SendSmsNotificationToSlack;
 use App\Models\DomainSettings;
+use App\Models\Extensions;
+use App\Models\Messages;
 use App\Models\SmsDestinations;
+use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 use Illuminate\Support\Facades\Redis;
 use libphonenumber\PhoneNumberFormat;
-use App\Jobs\DeliverBandwidthInboundSMS;
-use App\Jobs\SendSmsNotificationToSlack;
-use Spatie\WebhookClient\Models\WebhookCall;
-use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 use Spatie\WebhookClient\Jobs\ProcessWebhookJob as SpatieProcessWebhookJob;
+use Spatie\WebhookClient\Models\WebhookCall;
+use App\Services\MessageMediaObjectStorageService;
+use Illuminate\Support\Facades\Http;
 
 class ProcessBandwidthWebhookJob extends SpatieProcessWebhookJob
 {
@@ -28,6 +31,7 @@ class ProcessBandwidthWebhookJob extends SpatieProcessWebhookJob
     protected $email;
     protected $type;
     protected $ext;
+    protected $reference_id;
 
     /**
      * The number of times the job may be attempted.
@@ -87,32 +91,27 @@ class ProcessBandwidthWebhookJob extends SpatieProcessWebhookJob
         $this->webhookCall = $webhookCall;
     }
 
-    public function handle()
+    public function handle(MessageMediaObjectStorageService $mediaStorage)
     {
-        // $this->webhookCall // contains an instance of `WebhookCall`
-
-        // Allow only 2 tasks every 1 second
-        Redis::throttle('messages')->allow(2)->every(1)->then(function () {
-
+        Redis::throttle('messages')->allow(2)->every(1)->then(function () use ($mediaStorage) {
             try {
-                $this->handleIncomingMessageType();
+                $this->handleIncomingMessageType($mediaStorage);
                 return true;
             } catch (\Exception $e) {
                 logger('ProcessBandwidthWebhook@handle error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
                 return $this->handleError($e);
             }
         }, function () {
-            // Could not obtain lock; this job will be re-queued
             return $this->release(5);
         });
     }
 
-    private function handleIncomingMessageType()
+    private function handleIncomingMessageType(MessageMediaObjectStorageService $mediaStorage)
     {
         foreach ($this->webhookCall->payload as $payload) {
             if (isset($payload['type'])) {
                 if ($payload['type'] == 'message-received') {
-                    $this->processMessage($payload);
+                    $this->processMessage($payload, $mediaStorage);
                 } elseif ($payload['type'] == 'message-delivered') {
                     $this->handleDeliveryStatusUpdate($payload);
                 } elseif ($payload['type'] == 'message-failed') {
@@ -122,57 +121,103 @@ class ProcessBandwidthWebhookJob extends SpatieProcessWebhookJob
         }
     }
 
-    private function processMessage($payload)
+    private function processMessage($payload, MessageMediaObjectStorageService $mediaStorage)
     {
-        //convert all numbers to e.164 format
         $this->source = formatPhoneNumber($payload['message']['from'], 'US', PhoneNumberFormat::E164);
         $this->destinations = $payload['message']['to'];
+        $this->reference_id = $payload['message']['id'] ?? null;
 
         foreach ($this->destinations as $destination) {
-
             $this->curentDestination = formatPhoneNumber($destination, 'US', PhoneNumberFormat::E164);
 
             $this->message = isset($payload['message']['text']) ? $payload['message']['text'] : '';
-            $this->media =  isset($payload['message']['media']) ? $payload['message']['media'] : '';
 
-            // Decide type
-            if (!empty($this->media) && is_array($this->media) && count($this->media) > 0) {
-                $type = 'mms';
-            } else {
-                $type = 'sms';
-            }
+            $rawMediaUrls = isset($payload['message']['media']) && is_array($payload['message']['media'])
+                ? $payload['message']['media']
+                : [];
 
-            $this->type = $type;
+            $this->type = !empty($rawMediaUrls) ? 'mms' : 'sms';
 
             $this->messageConfig = $this->getPhoneNumberSmsConfig($this->curentDestination);
+            $this->domain_uuid = $this->messageConfig->domain_uuid;
+
+            $this->media = $this->type === 'mms'
+                ? $this->extractAndStoreBandwidthMmsFiles($rawMediaUrls, $mediaStorage)
+                : [];
 
             $this->handleSms();
         }
     }
 
+    private function extractAndStoreBandwidthMmsFiles(array $mediaUrls, MessageMediaObjectStorageService $mediaStorage): array
+    {
+        $storedFiles = [];
+
+        foreach ($mediaUrls as $mediaUrl) {
+            if ($this->shouldSkipBandwidthMediaUrl($mediaUrl)) {
+                continue;
+            }
+
+            $response = Http::withBasicAuth(
+                config('bandwidth.api_token'),
+                config('bandwidth.api_secret')
+            )->timeout(30)->get($mediaUrl);
+
+            if (!$response->successful()) {
+                logger('Failed to download Bandwidth MMS attachment: ' . $mediaUrl);
+                continue;
+            }
+
+            $binary = $response->body();
+
+            if ($binary === '' || $binary === null) {
+                logger('Downloaded empty Bandwidth MMS attachment: ' . $mediaUrl);
+                continue;
+            }
+
+            $path = parse_url($mediaUrl, PHP_URL_PATH);
+            $originalName = $path ? basename($path) : 'attachment';
+
+            $storedFiles[] = $mediaStorage->storeBinaryForDomain(
+                domainUuid: $this->domain_uuid,
+                binary: $binary,
+                originalName: $originalName,
+                provider: 'bandwidth'
+            );
+        }
+
+        return $storedFiles;
+    }
+
+    private function shouldSkipBandwidthMediaUrl(string $mediaUrl): bool
+    {
+        $path = parse_url($mediaUrl, PHP_URL_PATH) ?? '';
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
+        return $extension === 'smil';
+    }
+
     private function handleSms()
     {
-        $this->domain_uuid = $this->messageConfig->domain_uuid;
-
         $this->extension_uuid = $this->getExtensionUuid();
 
-        if (!$this->extension_uuid && (is_null($this->messageConfig->email) ||  $this->messageConfig->email == "")) {
+        if (!$this->extension_uuid && (is_null($this->messageConfig->email) || $this->messageConfig->email == "")) {
             throw new \Exception('Phone number *' . $this->curentDestination . '*  doesnt have an assigned extension or email');
         }
 
-        if (!is_null($this->messageConfig->email) &&  $this->messageConfig->email != "") {
-            $this->email = $this->messageConfig->email;
-        } else {
-            $this->email = "";
-        }
+        $this->email = !is_null($this->messageConfig->email) && $this->messageConfig->email != ""
+            ? $this->messageConfig->email
+            : "";
 
-        if (!is_null($this->messageConfig->chatplan_detail_data) &&  $this->messageConfig->chatplan_detail_data != "") {
-            $this->ext = $this->messageConfig->chatplan_detail_data;
-        } else {
-            $this->ext = "";
-        }
+        $this->ext = !is_null($this->messageConfig->chatplan_detail_data) && $this->messageConfig->chatplan_detail_data != ""
+            ? $this->messageConfig->chatplan_detail_data
+            : "";
 
         $message = $this->storeMessage('queued');
+
+        if (!empty($this->media)) {
+            $this->attachMediaAccessPaths($message);
+        }
 
         if ($this->ext != "") {
             DeliverBandwidthInboundSMS::dispatch([
@@ -193,14 +238,34 @@ class ProcessBandwidthWebhookJob extends SpatieProcessWebhookJob
         return true;
     }
 
+    private function attachMediaAccessPaths(Messages $message): void
+    {
+        if (empty($this->media)) {
+            return;
+        }
+
+        foreach ($this->media as $index => &$item) {
+            $item['access_path'] = route('messages.media.show', [
+                'message_uuid' => $message->message_uuid,
+                'index' => $index,
+                'file_name' => $item['stored_name'] ?? ('file_' . $index),
+            ], false);
+        }
+
+        unset($item);
+
+        $message->media = array_values($this->media);
+        $message->save();
+    }
+
     public function handleDeliveryStatusUpdate($payload)
     {
         $message = Messages::where('reference_id', $payload['message']['id'])
             ->first();
 
         if ($message) {
-                $message->status = 'delivered';
-                $message->save();
+            $message->status = 'delivered';
+            $message->save();
         }
     }
 
@@ -254,13 +319,14 @@ class ProcessBandwidthWebhookJob extends SpatieProcessWebhookJob
         $messageModel = new Messages;
         $messageModel->extension_uuid = (isset($this->extension_uuid)) ? $this->extension_uuid : null;
         $messageModel->domain_uuid = (isset($this->domain_uuid)) ? $this->domain_uuid : null;
-        $messageModel->source =  (isset($this->source)) ? $this->source : "";
-        $messageModel->destination =  (isset($this->curentDestination)) ? $this->curentDestination : "";
-        $messageModel->message =  $this->message;
-        $messageModel->media = is_array($this->media) ? json_encode($this->media) : $this->media;
+        $messageModel->source = (isset($this->source)) ? $this->source : "";
+        $messageModel->destination = (isset($this->curentDestination)) ? $this->curentDestination : "";
+        $messageModel->message = $this->message;
+        $messageModel->media = $this->media;
         $messageModel->direction = "in";
         $messageModel->type = $this->type;
         $messageModel->status = $status;
+        $messageModel->reference_id = $this->reference_id ?? null;
         $messageModel->save();
 
         return $messageModel;

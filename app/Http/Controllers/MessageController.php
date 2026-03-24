@@ -148,6 +148,7 @@ class MessageController extends Controller
             ->selectRaw("
             message_uuid,
             message,
+            media,
             created_at,
             extension_uuid,
             -- LOCAL: The number BELONGING to this system
@@ -180,6 +181,7 @@ class MessageController extends Controller
             remote_number,
             message_uuid,
             message,
+            media,
             created_at
         ")
             ->orderBy('local_number')
@@ -253,18 +255,24 @@ class MessageController extends Controller
         // 4. Merge into Response
         $rooms = $rows->map(function ($r) use ($countMap, $directory) {
             $id = "{$r->local_number}_{$r->remote_number}";
-
-            // Look up the name in the directory. If not found, use the formatted phone number.
             $displayName = $directory[$r->remote_number] ?? $this->formatPhoneNumber($r->remote_number);
+
+            // Tell Carbon this raw string is UTC, then format it to an ISO string
+            $timestamp = Carbon::parse($r->created_at, 'UTC')->toIsoString();
+
+            $lastMessageText = (string) $r->message;
+            if (trim($lastMessageText) === '' && !empty($r->media) && $r->media !== '[]' && $r->media !== 'null') {
+                $lastMessageText = '📷 Image';
+            }
 
             return [
                 'id' => $id,
-                'name' => $displayName, // <--- FIXED: Now uses the Contact Name!
+                'name' => $displayName,
                 'my_number' => $r->local_number,
                 'avatar' => null,
                 'unread' => $countMap[$id] ?? 0,
-                'lastMessage' => $r->message,
-                'timestamp' => $r->created_at,
+                'lastMessage' => $lastMessageText, 
+                'timestamp' => $timestamp,       
             ];
         })->sortByDesc('timestamp')->values();
 
@@ -458,6 +466,7 @@ class MessageController extends Controller
                 'text' => $r->message,
                 'role' => $isOutbound ? 'user' : 'ai',
                 'timestamp' => $r->created_at->toIsoString(),
+                'media' => $r->media,
             ];
         });
 

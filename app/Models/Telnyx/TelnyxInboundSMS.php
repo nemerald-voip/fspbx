@@ -89,7 +89,7 @@ class TelnyxInboundSMS extends Model
         } catch (\Throwable $e) {
             logger("Error delivering SMS/MMS to Ringotel: {$e->getMessage()}");
             SendSmsNotificationToSlack::dispatch(
-                "*Sinch Inbound SMS/MMS Failed*. From: " . $this->source . " To: " . $this->extension .
+                "*Sinch Inbound SMS/MMS Failed*. From: " . $message->source . " To: " . $this->extension .
                 "\nError delivering to Ringotel: {$e->getMessage()}"
             )->onQueue('messages');
             $this->updateMessageStatus($message, null);
@@ -158,7 +158,7 @@ class TelnyxInboundSMS extends Model
         // This method should return a boolean indicating whether the message was sent successfully.
         Mail::to($this->email)->send(new SmsToEmail($attributes));
 
-        if ($message->status = "queued") {
+        if ($message->status == "queued") {
             $message->status = 'emailed';
         }
         $message->save();

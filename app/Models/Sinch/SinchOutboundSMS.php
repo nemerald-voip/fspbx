@@ -3,8 +3,8 @@
 namespace App\Models\Sinch;
 
 use App\Models\Messages;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Http;
 use App\Jobs\SendSmsNotificationToSlack;
 
 /**
@@ -15,102 +15,197 @@ class SinchOutboundSMS extends Model
     public $message_uuid;
 
     /**
-     * Send the outbound SMS message.
-     *
-     * @return bool
+     * Send the outbound SMS/MMS message.
      */
-    public function send()
+    public function send(): bool
     {
-        $message = Messages::find($this->message_uuid);
+        $message = Messages::where('message_uuid', $this->message_uuid)->first();
 
         if (!$message) {
-            logger("Could not find sms entity. SMS From " . $this->from_did . " to " . $this->to_did);
-            return;
+            logger("Could not find message entity for message_uuid {$this->message_uuid}");
+            return false;
         }
 
-        // Logic to send the SMS message using a third-party Sinch API,
-        // This method should return a boolean indicating whether the message was sent successfully.
+        $baseUrl = rtrim(config('sinch.message_broker_url'), '/');
+        $apiKey = config('sinch.api_key');
 
-        $data = array(
-            'from' => preg_replace('/[^0-9]/', '', $message->source),
-            'to' => [
-                preg_replace('/[^0-9]/', '', $message->destination),
-            ],
-            "text" => $message->message,
-            "message_uuid" => $message->message_uuid
-        );
-
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . config('sinch.api_key'),
-            'Content-Type' => 'application/json'
-        ])
-            ->asJson()
-            ->post(config('sinch.message_broker_url') . "/publishMessages", $data);
-
-        // For debugging puporses only
-        // Log::info('Request URL:', [config('sinch.message_broker_url') . "/publishMessages"]);
-        // Log::info('Request Headers:', [
-        //     'Authorization' => 'Bearer ' . config('sinch.api_key'),
-        //     'Content-Type' => 'application/json'
-        // ]);
-        // Log::info('Request Data:', $data);
-
-        // Get result
-        if (isset($response)) {
-            $result = json_decode($response->body());
-            // logger($response->body());
-
-            // Determine if the operation was successful
-            if ($response->successful() && isset($result->success) && $result->success) {
-                $message->status = 'success';
-                if (isset($result->result->referenceId)) {
-                    $message->reference_id = $result->result->referenceId;
-                }
-            } else {
-                if (isset($result->reason, $result->detail)) {
-                    $message->status = $result->detail;
-                } elseif (isset($result->response) && !$result->response->success) {
-                    $message->status = $result->response->detail;
-                } else {
-                    $message->status = 'unknown error';
-                }
-    
-                if (isset($result->errors)) {
-                    logger()->error("Error details:", $result->errors);
-                }
-                $this->handleError($message);
-            }
-    
+        if (empty($baseUrl) || empty($apiKey)) {
+            $message->status = 'Sinch credentials are not configured';
             $message->save();
-        } else {
-            logger()->error('SMS error. No response received from Sinch API.');
-            $message->status = 'failed';
-            $message->save();
+
             $this->handleError($message);
+            return false;
         }
 
-        return true; // Change this to reflect the result of the API call.
+        $mediaUrls = $this->buildMediaUrlsForSinch($message);
+        $hasMedia = !empty($mediaUrls);
+
+        $text = trim((string) ($message->message ?? ''));
+
+        if ($text === '' && !$hasMedia) {
+            $message->status = 'Message has no text or media';
+            $message->save();
+
+            $this->handleError($message);
+            return false;
+        }
+
+        $data = [
+            'from' => preg_replace('/\D+/', '', (string) $message->source),
+            'to' => [
+                preg_replace('/\D+/', '', (string) $message->destination),
+            ],
+            'referenceId' => $message->message_uuid,
+        ];
+
+        if ($text !== '') {
+            $data['text'] = $text;
+        }
+
+        if ($hasMedia) {
+            $data['mediaUrls'] = $mediaUrls;
+        }
+
+        // logger($data);
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $apiKey,
+                'Content-Type' => 'application/json',
+            ])
+                ->asJson()
+                ->timeout(30)
+                ->post($baseUrl . '/publishMessages', $data);
+
+            $result = $response->json();
+
+            // logger($result);
+
+            if ($response->successful() && ($result['success'] ?? false) === true) {
+                $message->status = 'success';
+
+                $referenceId = $this->extractReferenceId($result);
+                if ($referenceId) {
+                    $message->reference_id = $referenceId;
+                }
+
+                $message->save();
+                return true;
+            }
+
+            $message->status = $this->extractErrorMessage($result, $response->body());
+            $message->save();
+
+            $this->handleError($message);
+            return false;
+        } catch (\Throwable $e) {
+            logger('Error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            $message->status = $e->getMessage();
+            $message->save();
+
+            $this->handleError($message);
+            return false;
+        }
     }
 
     /**
-     * Determine if the outbound SMS message was sent successfully.
-     *
-     * @return bool
+     * Determine if the outbound message was sent successfully.
      */
-    public function wasSent()
+    public function wasSent(): bool
     {
-        // Logic to determine if the message was sent successfully using a third-party API.
-
-        return true; // Change this to reflect the result of the API call.
+        return true;
     }
 
-    private function handleError($message)
+    private function buildMediaUrlsForSinch(Messages $message): array
     {
+        $media = is_array($message->media) ? $message->media : [];
 
-        // Log the error or send it to Slack
-        $error = "*Outbound SMS Failed*: From: " . $message->source . " To: " . $message->destination . "\n" . $message->status;
+        if (empty($media)) {
+            return [];
+        }
+
+        $urls = [];
+
+        foreach ($media as $item) {
+            // Backward compatibility if older rows store plain URLs
+            if (is_string($item) && !empty($item)) {
+                $urls[] = $item;
+                continue;
+            }
+
+            if (!is_array($item)) {
+                continue;
+            }
+
+            if (!empty($item['access_path'])) {
+                $urls[] = filter_var($item['access_path'], FILTER_VALIDATE_URL)
+                    ? $item['access_path']
+                    : url($item['access_path']);
+                continue;
+            }
+
+            if (!empty($item['url'])) {
+                $urls[] = $item['url'];
+                continue;
+            }
+        }
+
+        return array_values(array_unique(array_filter($urls)));
+    }
+
+
+
+    private function extractReferenceId(array $result): ?string
+    {
+        return $result['result']['referenceId']
+            ?? $result['referenceId']
+            ?? null;
+    }
+
+    private function extractErrorMessage($result, string $fallbackBody = ''): string
+    {
+        if (is_array($result)) {
+            if (!empty($result['detail'])) {
+                return is_string($result['detail'])
+                    ? $result['detail']
+                    : json_encode($result['detail']);
+            }
+
+            if (!empty($result['reason'])) {
+                return is_string($result['reason'])
+                    ? $result['reason']
+                    : json_encode($result['reason']);
+            }
+
+            if (!empty($result['message'])) {
+                return is_string($result['message'])
+                    ? $result['message']
+                    : json_encode($result['message']);
+            }
+
+            if (!empty($result['errors'])) {
+                return is_string($result['errors'])
+                    ? $result['errors']
+                    : json_encode($result['errors']);
+            }
+
+            if (!empty($result['response']['detail'])) {
+                return is_string($result['response']['detail'])
+                    ? $result['response']['detail']
+                    : json_encode($result['response']['detail']);
+            }
+        }
+
+        return $fallbackBody !== '' ? $fallbackBody : 'unknown error';
+    }
+
+    private function handleError(Messages $message): void
+    {
+        $label = strtoupper($message->type ?? 'sms');
+
+        $error = "*Outbound Sinch {$label} Failed*: From: {$message->source} To: {$message->destination}\n{$message->status}";
 
         SendSmsNotificationToSlack::dispatch($error)->onQueue('messages');
-
     }
 }

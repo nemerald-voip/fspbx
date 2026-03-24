@@ -2,18 +2,21 @@
 
 namespace App\Jobs;
 
-use App\Models\Telnyx\TelnyxInboundSMS;
+use App\Models\Apidaze\ApidazeInboundSMS;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Redis;
 
-class DeliverTelnyxSMSToEmail implements ShouldQueue
+class DeliverApidazeInboundSMS implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    private $org_id;
+    private $extension;
+    private $message_uuid;
 
     /**
      * The number of times the job may be attempted.
@@ -57,9 +60,6 @@ class DeliverTelnyxSMSToEmail implements ShouldQueue
      */
     public $deleteWhenMissingModels = true;
 
-    private $org_id;
-    private $email;
-    private $message_uuid;
 
     /**
      * Create a new job instance.
@@ -70,18 +70,9 @@ class DeliverTelnyxSMSToEmail implements ShouldQueue
     {
         $this->org_id = $data['org_id'];
         $this->message_uuid = $data['message_uuid'];
-        $this->email = $data['email'];
+        $this->extension = $data['extension'];
     }
 
-    /**
-     * Get the middleware the job should pass through.
-     *
-     * @return array
-     */
-    public function middleware()
-    {
-        return [(new RateLimitedWithRedis('emails'))];
-    }
 
     /**
      * Execute the job.
@@ -91,13 +82,14 @@ class DeliverTelnyxSMSToEmail implements ShouldQueue
     public function handle()
     {
         // Allow only 2 tasks every 1 second
-        Redis::throttle('emails')->allow(2)->every(1)->then(function () {
+        Redis::throttle('messages')->allow(2)->every(1)->then(function () {
 
-            $sms = new TelnyxInboundSMS();
+            $sms = new ApidazeInboundSMS();
             $sms->org_id = $this->org_id;
             $sms->message_uuid = $this->message_uuid;
-            $sms->email = $this->email;
-            $sms->smsToEmail();
+            $sms->extension = $this->extension;
+            $sms->send();
+
 
         }, function () {
             // Could not obtain lock; this job will be re-queued

@@ -87,11 +87,12 @@ class MessageSettingsController extends Controller
 
             // Define the options for the 'carrier' field
             $carrierOptions = [
+                ['value' => 'apidaze', 'label' => 'Apidaze'],
                 ['value' => 'bandwidth', 'label' => 'Bandwidth'],
                 ['value' => 'clicksend', 'label' => 'ClickSend'],
-                ['value' => 'thinq', 'label' => 'Commio (ThinQ)'],
                 ['value' => 'sinch', 'label' => 'Sinch'],
                 ['value' => 'telnyx', 'label' => 'Telnyx'],
+                ['value' => 'thinq', 'label' => 'Commio (ThinQ)'],
             ];
 
             // Define the options for the 'chatplan_detail_data' field

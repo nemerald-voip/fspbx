@@ -2,33 +2,36 @@
 
 namespace App\Http\Webhooks\Jobs;
 
-use App\Models\Messages;
-use App\Models\Extensions;
-use App\Models\DomainSettings;
-use App\Models\SmsDestinations;
 use App\Jobs\DeliverSinchInboundSMS;
 use App\Jobs\DeliverSinchSMSToEmail;
+use App\Jobs\SendSmsNotificationToSlack;
+use App\Models\DomainSettings;
+use App\Models\Extensions;
+use App\Models\Messages;
+use App\Models\SmsDestinations;
+use App\Services\MessageMediaObjectStorageService;
+use Illuminate\Queue\Middleware\RateLimitedWithRedis;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redis;
 use libphonenumber\PhoneNumberFormat;
-use App\Jobs\SendSmsNotificationToSlack;
-use Spatie\WebhookClient\Models\WebhookCall;
-use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 use Spatie\WebhookClient\Jobs\ProcessWebhookJob as SpatieProcessWebhookJob;
+use Spatie\WebhookClient\Models\WebhookCall;
 
 class ProcessSinchWebhookJob extends SpatieProcessWebhookJob
 {
-
     protected $messageConfig;
     protected $domain_uuid;
-    protected $message;
-    protected $media;
+    protected $message = '';
+    protected $media = [];
     protected $extension_uuid;
     protected $source;
-    protected $destinations;
+    protected $destinations = [];
     protected $curentDestination;
-    protected $email;
-    protected $type;
-    protected $ext;
+    protected $email = '';
+    protected $type = 'sms';
+    protected $ext = '';
+    protected $reference_id;
+    protected ?Messages $storedMessage = null;
 
     /**
      * The number of times the job may be attempted.
@@ -88,85 +91,80 @@ class ProcessSinchWebhookJob extends SpatieProcessWebhookJob
         $this->webhookCall = $webhookCall;
     }
 
-    public function handle()
+    public function handle(MessageMediaObjectStorageService $mediaStorage)
     {
-        // $this->webhookCall // contains an instance of `WebhookCall`
-
-        // Allow only 2 tasks every 1 second
-        Redis::throttle('messages')->allow(2)->every(1)->then(function () {
-
+        Redis::throttle('messages')->allow(2)->every(1)->then(function () use ($mediaStorage) {
             try {
-                $this->handleIncomingMessageType();
+                $this->handleIncomingMessageType($mediaStorage);
                 return true;
             } catch (\Exception $e) {
                 logger('ProcessSinchWebhook@handle error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
                 return $this->handleError($e);
             }
         }, function () {
-            // Could not obtain lock; this job will be re-queued
             return $this->release(5);
         });
     }
 
-    private function handleIncomingMessageType()
+    private function handleIncomingMessageType(MessageMediaObjectStorageService $mediaStorage)
     {
-        if ($this->webhookCall->payload['deliveryReceipt']) {
+        if (!empty($this->webhookCall->payload['deliveryReceipt'])) {
             $this->handleDeliveryStatusUpdate($this->webhookCall->payload);
         } else {
-            $this->processMessage($this->webhookCall->payload);
-        } 
+            $this->processMessage($this->webhookCall->payload, $mediaStorage);
+        }
     }
 
-    private function processMessage($payload)
+    private function processMessage(array $payload, MessageMediaObjectStorageService $mediaStorage)
     {
-        //convert all numbers to e.164 format
         $this->source = formatPhoneNumber($payload['from'], 'US', PhoneNumberFormat::E164);
-        $this->destinations = $payload['to'];
+        $this->destinations = $payload['to'] ?? [];
+        $this->reference_id = $payload['referenceId'] ?? null;
 
-        foreach($this->destinations as $destination) {
+        foreach ($this->destinations as $destination) {
             $this->curentDestination = formatPhoneNumber($destination, 'US', PhoneNumberFormat::E164);
 
             $this->message = isset($payload['text']) ? $payload['text'] : '';
-            $this->media =  isset($payload['mediaUrls']) ? $payload['mediaUrls'] : '';
+
+            $rawMediaUrls = isset($payload['mediaUrls']) && is_array($payload['mediaUrls'])
+                ? $payload['mediaUrls']
+                : [];
+
+            $this->type = !empty($rawMediaUrls) ? 'mms' : 'sms';
+
             $this->messageConfig = $this->getPhoneNumberSmsConfig($this->curentDestination);
+            $this->domain_uuid = $this->messageConfig->domain_uuid;
 
-            // Decide type
-            if (!empty($this->media) && is_array($this->media) && count($this->media) > 0) {
-                $type = 'mms';
-            } else {
-                $type = 'sms';
-            }
-
-            $this->type = $type;
+            $this->media = $this->type === 'mms'
+                ? $this->extractAndStoreSinchMmsFiles($rawMediaUrls, $mediaStorage)
+                : [];
 
             $this->handleSms();
         }
-
     }
 
     private function handleSms()
     {
-        $this->domain_uuid = $this->messageConfig->domain_uuid;
-
         $this->extension_uuid = $this->getExtensionUuid();
 
-        if (!$this->extension_uuid && (is_null($this->messageConfig->email) ||  $this->messageConfig->email == "")) {
-            throw new \Exception('Phone number *' . $this->curentDestination . '*  doesnt have an assigned extension or email');
+        if (!$this->extension_uuid && (is_null($this->messageConfig->email) || $this->messageConfig->email == "")) {
+            throw new \Exception('Phone number *' . $this->curentDestination . '* doesnt have an assigned extension or email');
         }
 
-        if (!is_null($this->messageConfig->email) &&  $this->messageConfig->email != "") {
-            $this->email = $this->messageConfig->email;
-        } else {
-            $this->email = "";
-        }
+        $this->email = !is_null($this->messageConfig->email) && $this->messageConfig->email != ""
+            ? $this->messageConfig->email
+            : "";
 
-        if (!is_null($this->messageConfig->chatplan_detail_data) &&  $this->messageConfig->chatplan_detail_data != "") {
-            $this->ext = $this->messageConfig->chatplan_detail_data;
-        } else {
-            $this->ext = "";
-        }
+        $this->ext = !is_null($this->messageConfig->chatplan_detail_data) && $this->messageConfig->chatplan_detail_data != ""
+            ? $this->messageConfig->chatplan_detail_data
+            : "";
 
         $message = $this->storeMessage('queued');
+        $this->storedMessage = $message;
+
+        if (!empty($this->media)) {
+            $this->attachMediaAccessPaths($message);
+        }
 
         if ($this->ext != "") {
             DeliverSinchInboundSMS::dispatch([
@@ -187,40 +185,123 @@ class ProcessSinchWebhookJob extends SpatieProcessWebhookJob
         return true;
     }
 
-    public function handleDeliveryStatusUpdate()
+    public function handleDeliveryStatusUpdate(array $payload)
     {
-        $message = Messages::where('reference_id', $this->webhookCall->payload['referenceId'])
-            ->first();
+        $message = Messages::where('reference_id', $payload['referenceId'] ?? null)->first();
 
         if ($message) {
-            $text = $this->webhookCall->payload['text'];
+            $text = $payload['text'] ?? '';
             preg_match('/stat:(\w+)/', $text, $matches);
-            $status = $matches[1] ?? 'UNKNOWN'; // Default to 'UNKNOWN' if not found
+            $status = $matches[1] ?? 'UNKNOWN';
 
-            if ($status === "DELIVRD") {
+            if ($status === 'DELIVRD') {
                 $message->status = 'delivered';
                 $message->save();
             }
         }
     }
 
+    private function extractAndStoreSinchMmsFiles(array $mediaUrls, MessageMediaObjectStorageService $mediaStorage): array
+    {
+        $storedFiles = [];
+
+        foreach ($mediaUrls as $mediaUrl) {
+            if (!is_string($mediaUrl) || empty($mediaUrl)) {
+                continue;
+            }
+
+            if ($this->shouldSkipSinchMediaUrl($mediaUrl)) {
+                continue;
+            }
+
+            $response = Http::timeout(30)->get($mediaUrl);
+
+            if (!$response->successful()) {
+                logger('Failed to download Sinch MMS attachment: ' . $mediaUrl);
+                continue;
+            }
+
+            $binary = $response->body();
+
+            if ($binary === '' || $binary === null) {
+                logger('Downloaded empty Sinch MMS attachment: ' . $mediaUrl);
+                continue;
+            }
+
+            $path = parse_url($mediaUrl, PHP_URL_PATH);
+            $originalName = $path ? basename($path) : 'attachment';
+
+            $storedFiles[] = $mediaStorage->storeBinaryForDomain(
+                domainUuid: $this->domain_uuid,
+                binary: $binary,
+                originalName: $originalName,
+                provider: 'sinch'
+            );
+        }
+
+        if (empty($storedFiles) && !empty($mediaUrls)) {
+            throw new \Exception('Failed to download/store Sinch MMS attachments');
+        }
+
+        return $storedFiles;
+    }
+
+    private function shouldSkipSinchMediaUrl(string $mediaUrl): bool
+    {
+        $path = parse_url($mediaUrl, PHP_URL_PATH) ?? '';
+        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+
+        return $extension === 'smil';
+    }
+
+    private function attachMediaAccessPaths(Messages $message): void
+    {
+        if (empty($this->media)) {
+            return;
+        }
+
+        foreach ($this->media as $index => &$item) {
+            $item['access_path'] = route('messages.media.show', [
+                'message_uuid' => $message->message_uuid,
+                'index' => $index,
+                'file_name' => $item['stored_name'] ?? ('file_' . $index),
+            ], false);
+        }
+
+        unset($item);
+
+        $message->media = array_values($this->media);
+        $message->save();
+    }
 
     private function getPhoneNumberSmsConfig($destination)
     {
-        $model = SmsDestinations::where('destination', $destination)->where('enabled', 'true')->first();
+        $model = SmsDestinations::where('destination', $destination)
+            ->where('enabled', 'true')
+            ->first();
+
         if (!$model) {
             throw new \Exception("SMS configuration not found for phone number " . $destination);
         }
+
         return $model;
     }
-
 
     private function handleError(\Exception $e)
     {
         logger($e->getMessage());
-        $this->storeMessage($e->getMessage());
-        // Log the error or send it to Slack
-        $error = "*Sinch Inbound SMS Failed*: From: " . $this->source . " To: " . $this->curentDestination . "\n" . $e->getMessage();
+
+        if ($this->storedMessage) {
+            $this->storedMessage->status = mb_substr((string) $e->getMessage(), 0, 250);
+            $this->storedMessage->save();
+        } else {
+            $this->storedMessage = $this->storeMessage($e->getMessage());
+        }
+
+        $label = strtoupper($this->type ?? 'sms');
+
+        $error = "*Sinch Inbound {$label} Failed*: From: " . ($this->source ?? 'Unknown') .
+            " To: " . ($this->curentDestination ?? 'Unknown') . "\n" . $e->getMessage();
 
         SendSmsNotificationToSlack::dispatch($error)->onQueue('messages');
 
@@ -230,15 +311,16 @@ class ProcessSinchWebhookJob extends SpatieProcessWebhookJob
     private function storeMessage($status)
     {
         $messageModel = new Messages;
-        $messageModel->extension_uuid = (isset($this->extension_uuid)) ? $this->extension_uuid : null;
-        $messageModel->domain_uuid = (isset($this->domain_uuid)) ? $this->domain_uuid : null;
-        $messageModel->source =  (isset($this->source)) ? $this->source : "";
-        $messageModel->destination =  (isset($this->curentDestination)) ? $this->curentDestination : "";
-        $messageModel->message =  $this->message;
-        $messageModel->media = is_array($this->media) ? json_encode($this->media) : $this->media;
+        $messageModel->extension_uuid = isset($this->extension_uuid) ? $this->extension_uuid : null;
+        $messageModel->domain_uuid = isset($this->domain_uuid) ? $this->domain_uuid : null;
+        $messageModel->source = isset($this->source) ? $this->source : "";
+        $messageModel->destination = isset($this->curentDestination) ? $this->curentDestination : "";
+        $messageModel->message = $this->message ?? '';
+        $messageModel->media = $this->media;
         $messageModel->direction = "in";
         $messageModel->type = $this->type ?? 'sms';
         $messageModel->status = mb_substr((string) $status, 0, 250);
+        $messageModel->reference_id = $this->reference_id ?? null;
         $messageModel->save();
 
         return $messageModel;
@@ -265,11 +347,6 @@ class ProcessSinchWebhookJob extends SpatieProcessWebhookJob
             ->select('extension_uuid')
             ->first();
 
-        if ($extension) {
-            return $extension->extension_uuid;
-        } else {
-            // Handle the case when no extension is found
-            return null;
-        }
+        return $extension?->extension_uuid;
     }
 }
