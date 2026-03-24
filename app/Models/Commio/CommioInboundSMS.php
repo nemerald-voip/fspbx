@@ -122,7 +122,7 @@ class CommioInboundSMS extends Model
         // This method should return a boolean indicating whether the message was sent successfully.
         Mail::to($this->email)->send(new SmsToEmail($attributes));
 
-        if ($message->status = "queued") {
+        if ($message->status == "queued") {
             $message->status = 'emailed';
         }
         $message->save();

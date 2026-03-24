@@ -23,5 +23,6 @@ class VerifyCsrfToken extends Middleware
         'webhook/freeswitch',
         'webhook/stripe',
         'webhook/assemblyai',
+        'webhook/apidaze/sms',
     ];
 }

@@ -160,7 +160,8 @@
                                                     </template>
                                                 </SelectElement>
 
-                                                <GroupElement name="ivr_action_buttons" :columns="{ sm: { container: 6 } }">
+                                                <GroupElement name="ivr_action_buttons"
+                                                    :columns="{ sm: { container: 6 } }">
                                                     <ButtonElement v-if="!isAudioPlaying" @click="playGreeting"
                                                         name="play_button" label="&nbsp;" :secondary="true"
                                                         :columns="{ container: 2 }" :conditions="[hasPlayableGreeting]"
@@ -283,9 +284,7 @@
                                                     description="Manage keypad options for this virtual receptionist." />
 
                                                 <StaticElement name="ivr_keys">
-                                                    <IvrOptions v-model="localIvrOptions"
-                                                        :routingTypes="options.routing_types"
-                                                        :optionsUrl="options.routes.get_routing_options"
+                                                    <IvrOptions :items="props.options?.item?.options ?? []"
                                                         @add-key="handleAddKey" @delete-key="handleDeleteKeyRequest"
                                                         @edit-key="handleEditKey" :isDeleting="showKeyDeletingStatus" />
                                                 </StaticElement>
@@ -481,7 +480,7 @@ const props = defineProps({
     loading: Boolean,
 });
 
-const emit = defineEmits(['close', 'error', 'success', 'refresh-data']);
+const emit = defineEmits(['close', 'error', 'success', 'refresh-data', 'refresh-item',]);
 
 const form$ = ref(null);
 const availableGreetings = ref(null);
@@ -500,7 +499,6 @@ const isExitMessageAudioPlaying = ref(false);
 const currentRingBackToneAudio = ref(null);
 const currentRingBackToneFile = ref(null);
 const isRingBackTonePlaying = ref(false);
-const localIvrOptions = ref(props.options?.item?.options ?? []);
 const showKeyDeletingStatus = ref(false);
 const selectedKey = ref(null);
 const showEditKeyModal = ref(false);
@@ -513,13 +511,6 @@ const showEditGreetingModal = ref(false);
 const isGreetingUpdating = ref(false);
 const selectedGreeting = ref(null);
 
-watch(
-    () => props.options?.item?.options,
-    (newVal) => {
-        localIvrOptions.value = newVal ?? [];
-    },
-    { immediate: true }
-);
 
 const defaultFormData = computed(() => ({
     ivr_menu_uuid: props.options?.item?.ivr_menu_uuid ?? '',
@@ -1097,17 +1088,8 @@ const handleAddKey = () => {
 
 const handleEditKey = (option) => {
     formErrorsFromAxios.value = {};
-
-    const matchedKey = props.options?.item?.options?.find(
-        (ivr) => ivr.ivr_menu_option_uuid === option.ivr_menu_option_uuid
-    );
-
-    if (matchedKey) {
-        selectedKey.value = matchedKey;
-        showEditKeyModal.value = true;
-    } else {
-        emit('error', { response: { data: { errors: { request: ['Matching key not found.'] } } } });
-    }
+    selectedKey.value = option;
+    showEditKeyModal.value = true;
 };
 
 const handleCreateKeyRequest = (payload) => {
@@ -1117,7 +1099,7 @@ const handleCreateKeyRequest = (payload) => {
     axios.post(props.options.routes.create_key_route, payload)
         .then((response) => {
             emit('success', 'success', response.data.messages);
-            emit('refresh-data', props.options?.item?.ivr_menu_uuid);
+            emit('refresh-item', props.options?.item?.ivr_menu_uuid);
             handleModalClose();
         })
         .catch((error) => {
@@ -1136,7 +1118,7 @@ const handleUpdateKeyRequest = (payload) => {
     axios.put(props.options.routes.update_key_route, payload)
         .then((response) => {
             emit('success', 'success', response.data.messages);
-            emit('refresh-data', props.options?.item?.ivr_menu_uuid);
+            emit('refresh-item', props.options?.item?.ivr_menu_uuid);
             handleModalClose();
         })
         .catch((error) => {
@@ -1154,7 +1136,7 @@ const handleDeleteKeyRequest = (key) => {
     axios.post(props.options.routes.delete_key_route, key)
         .then((response) => {
             emit('success', 'success', response.data.messages);
-            emit('refresh-data', props.options?.item?.ivr_menu_uuid);
+            emit('refresh-item', props.options?.item?.ivr_menu_uuid);
         })
         .catch((error) => {
             emit('error', error);

@@ -2,14 +2,14 @@
 
 namespace App\Jobs;
 
-use App\Models\Sinch\SinchInboundSMS;
+use App\Models\Telnyx\TelnyxInboundSMS;
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\Redis;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Redis;
 
 class DeliverTelnyxSMSToEmail implements ShouldQueue
 {
@@ -93,7 +93,7 @@ class DeliverTelnyxSMSToEmail implements ShouldQueue
         // Allow only 2 tasks every 1 second
         Redis::throttle('emails')->allow(2)->every(1)->then(function () {
 
-            $sms = new SinchInboundSMS();
+            $sms = new TelnyxInboundSMS();
             $sms->org_id = $this->org_id;
             $sms->message_uuid = $this->message_uuid;
             $sms->email = $this->email;

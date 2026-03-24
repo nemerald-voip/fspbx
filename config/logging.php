@@ -115,4 +115,6 @@ return [
         ],
     ],
 
+    'messaging_webhook_debug' => env('MESSAGING_WEBHOOK_DEBUG', false),
+
 ];
