@@ -141,6 +141,7 @@ class ProvisioningController extends Controller
                     'device_line_uuid',   // PK on device_lines
                     'device_uuid',        // FK to devices (required for the relation)
                     'line_number',
+                    'user_id',
                     'auth_id',
                     'server_address',
                     'server_address_primary',
@@ -211,6 +212,7 @@ class ProvisioningController extends Controller
         $lines = [];
         foreach ($device->lines as $line) {
             $lines[$line->line_number] = [
+                'user_id'           => $line->user_id ?? null,
                 'auth_id'           => $line->auth_id ?? null,
                 'password'          => $line->password ?? null,
                 'display_name'      => $line->display_name ?? null,
