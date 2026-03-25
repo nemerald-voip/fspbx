@@ -171,24 +171,19 @@ class ClickSendWebhookParser implements MessagingWebhookParser
 
     protected function extractText(array $payload): ?string
     {
-        $originalText = $payload['original_body']
-            ?? $payload['originalmessage']
-            ?? null;
-
-        if (is_string($originalText) && trim($originalText) !== '') {
-            return trim($originalText);
-        }
-
         $body = $payload['body']
             ?? $payload['message']
             ?? $payload['text']
             ?? '';
 
-        if (is_string($body) && filter_var(trim($body), FILTER_VALIDATE_URL)) {
+        $body = is_string($body) ? trim($body) : '';
+
+        // For inbound MMS, ClickSend may place the media URL in body/message.
+        if ($body !== '' && filter_var($body, FILTER_VALIDATE_URL)) {
             return '';
         }
 
-        return is_string($body) ? trim($body) : '';
+        return $body;
     }
 
     protected function extractMediaUrls(array $payload): array
