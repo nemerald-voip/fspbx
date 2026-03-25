@@ -89,6 +89,7 @@ class MessageSettingsController extends Controller
             $carrierOptions = [
                 ['value' => 'apidaze', 'label' => 'Apidaze'],
                 ['value' => 'bandwidth', 'label' => 'Bandwidth'],
+                ['value' => 'bulkvs', 'label' => 'BulkVS'],
                 ['value' => 'clicksend', 'label' => 'ClickSend'],
                 ['value' => 'sinch', 'label' => 'Sinch'],
                 ['value' => 'telnyx', 'label' => 'Telnyx'],

@@ -9,6 +9,7 @@ return [
         'telnyx' => \App\Services\Messaging\Outbound\Providers\TelnyxOutboundProvider::class,
         'clicksend' => \App\Services\Messaging\Outbound\Providers\ClickSendOutboundProvider::class,
         'apidaze' => \App\Services\Messaging\Outbound\Providers\ApidazeOutboundProvider::class,
+        'bulkvs' => \App\Services\Messaging\Outbound\Providers\BulkVSOutboundProvider::class,
         // 'thinq' => \App\Services\Messaging\Outbound\Providers\CommioOutboundProvider::class,
     ],
 ];
