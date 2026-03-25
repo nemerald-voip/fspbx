@@ -1,8 +1,6 @@
 <?php
 namespace App\Factories;
 
-use App\Services\ApidazeMessageProvider;
-use App\Services\ClickSendMessageProvider;
 use App\Services\CommioMessageProvider;
 use App\Services\Interfaces\MessageProviderInterface;
 use App\Services\TelnyxMessageProvider;
@@ -15,8 +13,6 @@ class MessageProviderFactory
         return match ($carrier) {
             'thinq'     => new CommioMessageProvider(),
             'telnyx'    => new TelnyxMessageProvider(),
-            'clicksend' => new ClickSendMessageProvider(),
-            'apidaze'   => new ApidazeMessageProvider(),
             default     => throw new Exception("Unsupported carrier: {$carrier}"),
         };
     }
