@@ -11,14 +11,17 @@ use App\Models\DomainSettings;
 use App\Models\Extensions;
 use App\Models\Messages;
 use App\Models\MessageSetting;
+use App\Models\Organization;
 use App\Models\SmsDestinations;
+use App\Services\Messaging\Outbound\CreateOutboundMessageService;
+use App\Services\Messaging\Outbound\Data\CreateOutboundMessageData;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
+use App\Services\Messaging\RetryMessageService;
 use Inertia\Inertia;
 use libphonenumber\PhoneNumberFormat;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -515,226 +518,90 @@ class MessageController extends Controller
         return (string) $domain;
     }
 
-    public function send(Request $request, \App\Services\MessageMediaObjectStorageService $mediaService)
+    public function send(Request $request, CreateOutboundMessageService $outbound)
     {
-        // 1. Validate Input
-        $data = $request->validate([
-            'source'         => 'required|string',      // My DID (e.g. +1555...)
-            'destination'    => 'required|string',      // Customer (e.g. +1646...)
-            'message'        => 'nullable|string',      // Nullable! Allows image-only messages
-            'extension_uuid' => 'required|uuid',
-            'media'          => 'nullable|array',       // Array of files from Vue
-            'media.*'        => 'file|max:20480',       // Limit files to 20MB (Adjust as needed)
-        ]);
-
-        $domainUuid = $this->currentDomainUuid();
-
-        // 2. SECURITY CHECK: Verify Extension owns this Source Number
-        $extension = Extensions::where('extension_uuid', $data['extension_uuid'])
-            ->where('domain_uuid', $domainUuid)
-            ->firstOrFail();
-
-        $countryCode = get_domain_setting('country', $domainUuid) ?? 'US';
-
-        $normalizedSource = formatPhoneNumber($data['source'], $countryCode, PhoneNumberFormat::E164);
-        $normalizedDestination = formatPhoneNumber($data['destination'], $countryCode, PhoneNumberFormat::E164);
-
-        $smsConfig = SmsDestinations::where('domain_uuid', $domainUuid)
-            ->where('destination', $normalizedSource)
-            ->where('chatplan_detail_data', $extension->extension)
-            ->first();
-
-        if (!$smsConfig) {
-            return response()->json([
-                'message' => 'Unauthorized: The source number is not assigned to this extension.'
-            ], 403);
-        }
-
-        $msg = new Messages();
-
-        // PRE-GENERATE UUID: We need this to construct the exact 'access_path' for the JSON array
-        // BEFORE saving it to the database so Reverb gets the complete payload.
-        $msg->message_uuid = (string) Str::uuid();
-
-        $msg->domain_uuid = $domainUuid;
-        $msg->extension_uuid = $data['extension_uuid'];
-        $msg->direction = 'out';
-        $msg->status = 'queued';
-        $msg->source = $normalizedSource;
-        $msg->destination = $normalizedDestination;
-        $msg->message = $data['message'] ?? ''; // Fallback to empty string if null
-        $msg->created_at = now();
-
-        // 3. Process Media Attachments
-        $mediaPayload = [];
-        if ($request->hasFile('media')) {
-            $msg->type = 'mms'; // Set type to MMS
-
-            foreach ($request->file('media') as $index => $file) {
-                // Process the file using your existing S3 service
-                $mediaData = $mediaService->storeBinary(
-                    $domainUuid,
-                    $file->get(), // Pass raw binary
-                    $file->getClientOriginalName(),
-                    $smsConfig->carrier ?? 'unknown',
-                    $file->getMimeType()
-                );
-
-                // Build access path to match your example DB record
-                // Output: /messages/media/662fdd32.../0/cae8c791...png
-                $mediaData['access_path'] = sprintf(
-                    '/messages/media/%s/%d/%s',
-                    $msg->message_uuid,
-                    $index,
-                    $mediaData['stored_name']
-                );
-
-                $mediaPayload[] = $mediaData;
-            }
-
-            $msg->media = $mediaPayload;
-        } else {
-            $msg->type = 'sms';
-            $msg->media = null;
-        }
-
-        // Save triggers the Observer -> Broadcasts to Reverb
-        $msg->save();
-
-        // 4. Send via Carrier API
         try {
-            $carrier = $smsConfig->carrier;
+            $data = $request->validate([
+                'source' => ['required', 'string'],
+                'destination' => ['required', 'string'],
+                'message' => ['nullable', 'string'],
+                'extension_uuid' => ['required', 'string'],
+                'media' => ['sometimes', 'array'],
+                'media.*' => ['file'],
+            ]);
 
-            // Instantiate your provider (Commio, Twilio, etc)
-            $messageProvider = MessageProviderFactory::make($carrier);
+            $extension = Extensions::findOrFail($data['extension_uuid']);
+            $domainUuid = session('domain_uuid');
 
-            // Execute Send (This factory class will grab the media out of the DB internally)
-            $messageProvider->send($msg->message_uuid);
+            $countryCode = get_domain_setting('country', $domainUuid) ?? 'US';
 
-            // Update Status on Success
-            $msg->status = 'sent';
-            $msg->save();
-        } catch (\Exception $e) {
-            logger("Carrier Send Failed: " . $e->getMessage());
+            $normalizedSource = formatPhoneNumber($data['source'], $countryCode, PhoneNumberFormat::E164);
+            $normalizedDestination = formatPhoneNumber($data['destination'], $countryCode, PhoneNumberFormat::E164);
 
-            // Update Status on Failure
-            $msg->status = 'failed';
-            $msg->save();
+            $smsConfig = $this->getPhoneNumberSmsConfig(
+                $normalizedSource,
+                $extension->extension,
+                $domainUuid
+            );
 
-            return response()->json(['message' => 'Carrier failed: ' . $e->getMessage()], 500);
+            $message = $outbound->create(CreateOutboundMessageData::from([
+                'domainUuid' => $domainUuid,
+                'extensionUuid' => $extension->extension_uuid,
+                'source' => $normalizedSource,
+                'destination' => $normalizedDestination,
+                'message' => $data['message'] ?? '',
+                'origin' => 'portal',
+                'carrier' => $smsConfig->carrier,
+                'mediaFiles' => $request->file('media', []),
+                'meta' => [
+                    'requested_by_user_uuid' => session('user_uuid'),
+                ],
+            ]));
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+            ], 201);
+        } catch (\Throwable $e) {
+            logger('Error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => [$e->getMessage()]],
+            ], 500);
         }
-
-        return response()->json(['success' => true, 'message' => $msg]);
     }
 
 
-    public function retry()
+    public function retry(RetryMessageService $retryService)
     {
         try {
-            //Get items info as a collection
-            $items = $this->model::whereIn($this->model->getKeyName(), request('items'))
-                ->get();
+            $items = $this->model::whereIn($this->model->getKeyName(), request('items', []))->get();
 
-            foreach ($items as $item) {
-                // get originating extension
-                $extension = Extensions::find($item->extension_uuid);
+            messaging_webhook_debug('MessageController retry() called', [
+                'requested_ids' => request('items', []),
+                'found_count' => $items->count(),
+            ]);
 
-                // check if there is an email destination
-                $messageSettings = MessageSetting::where('domain_uuid', $item->domain_uuid)
-                    ->where('destination', $item->destination)
-                    ->first();
-
-                if (!$extension && (!$messageSettings || !$messageSettings->email)) {
-                    throw new Exception('No assigned destination found.');
-                }
-
-
-                if ($item->direction == "out") {
-
-                    //Get message config
-                    $phoneNumberSmsConfig = $this->getPhoneNumberSmsConfig(
-                        $item->source,
-                        $extension->extension,
-                        $item->domain_uuid
-                    );
-                    $carrier =  $phoneNumberSmsConfig->carrier;
-
-                    //Determine message provider
-                    $messageProvider = MessageProviderFactory::make($carrier);
-
-                    //Store message in the log database
-                    $item->status = "Queued";
-                    $item->save();
-
-                    // Send message
-                    $messageProvider->send($item->message_uuid);
-                }
-
-                if ($item->direction == "in") {
-                    $org_id = DomainSettings::where('domain_uuid', $item->domain_uuid)
-                        ->where('domain_setting_category', 'app shell')
-                        ->where('domain_setting_subcategory', 'org_id')
-                        ->value('domain_setting_value');
-
-                    if (is_null($org_id)) {
-                        throw new \Exception("From: " . $item->source . " To: " . $item->destination . " \n Org ID not found");
-                    }
-
-                    if ($extension) {
-                        // Logic to deliver the SMS message using a third-party Ringotel API,
-                        try {
-                            $response = Http::ringotel_api()
-                                ->withBody(json_encode([
-                                    'method' => 'message',
-                                    'params' => [
-                                        'orgid' => $org_id,
-                                        'from' => $item->source,
-                                        'to' => $extension->extension,
-                                        'content' => $item->message
-                                    ]
-                                ]), 'application/json')
-                                ->post('/')
-                                ->throw()
-                                ->json();
-
-                            $this->updateMessageStatus($item, $response);
-                        } catch (\Throwable $e) {
-                            logger("Error delivering SMS to Ringotel: {$e->getMessage()}");
-                            SendSmsNotificationToSlack::dispatch("*Inbound SMS Failed*. From: " . $item->source . " To: " . $item->extension . "\nError delivering SMS to Ringotel")->onQueue('messages');
-                            return false;
-                        }
-                    }
-
-                    if ($messageSettings && $messageSettings->email) {
-                        $attributes['orgid'] = $org_id;
-                        $attributes['from'] = $item->source;
-                        $attributes['email_to'] = $messageSettings->email;
-                        $attributes['message'] = $item->message;
-                        $attributes['email_subject'] = 'SMS Notification: New Message from ' . $item->source;
-                        // $attributes['smtp_from'] = config('mail.from.address');
-
-                        // Logic to deliver the SMS message using email
-                        // This method should return a boolean indicating whether the message was sent successfully.
-                        Mail::to($messageSettings->email)->send(new SmsToEmail($attributes));
-
-                        if ($item->status == "queued") {
-                            $item->status = 'emailed';
-                        }
-                        $item->save();
-                    }
-                }
+            if ($items->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['server' => ['No messages selected']]
+                ], 422);
             }
 
-            // Return a JSON response indicating success
+            $retryService->retryMany($items);
+
             return response()->json([
-                'messages' => ['success' => ['Selected message(s) scheduled for sending']]
+                'messages' => ['success' => ['Selected message(s) scheduled for retry']]
             ], 201);
-        } catch (\Exception $e) {
-            logger($e->getMessage() . PHP_EOL);
+        } catch (\Throwable $e) {
+            logger('Error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
             return response()->json([
                 'success' => false,
                 'errors' => ['server' => [$e->getMessage()]]
-            ], 500); // 500 Internal Server Error for any other errors
+            ], 500);
         }
     }
 
@@ -778,22 +645,27 @@ class MessageController extends Controller
     {
         $params = request()->all();
         $params['paginate'] = 50;
-        $domain_uuid = session('domain_uuid');
-        $params['domain_uuid'] = $domain_uuid;
+
+        $domainUuid = session('domain_uuid');
+        $params['domain_uuid'] = $domainUuid;
+
+        $startPeriod = null;
+        $endPeriod = null;
 
         if (!empty(request('filter.dateRange'))) {
-            $startPeriod = Carbon::parse(request('filter.dateRange')[0])->setTimeZone('UTC');
-            $endPeriod = Carbon::parse(request('filter.dateRange')[1])->setTimeZone('UTC');
+            $startPeriod = Carbon::parse(request('filter.dateRange')[0])->setTimezone('UTC');
+            $endPeriod = Carbon::parse(request('filter.dateRange')[1])->setTimezone('UTC');
         }
 
         $params['filter']['startPeriod'] = $startPeriod;
         $params['filter']['endPeriod'] = $endPeriod;
 
-        unset(
-            $params['filter']['dateRange'],
-        );
+        unset($params['filter']['dateRange']);
 
-        $data = QueryBuilder::for(Messages::class, request()->merge($params))
+        $query = QueryBuilder::for(
+            Messages::query()->where('domain_uuid', $domainUuid),
+            request()->merge($params)
+        )
             ->select([
                 'message_uuid',
                 'extension_uuid',
@@ -804,35 +676,117 @@ class MessageController extends Controller
                 'direction',
                 'type',
                 'status',
+                'reference_id',
+                'media',
+                'delivery_meta',
+                'read_at',
                 'created_at',
             ])
-
             ->allowedFilters([
                 AllowedFilter::callback('startPeriod', function ($query, $value) {
-                    $query->where('created_at', '>=', $value);
+                    if ($value) {
+                        $query->where('created_at', '>=', $value);
+                    }
                 }),
                 AllowedFilter::callback('endPeriod', function ($query, $value) {
-                    $query->where('created_at', '<=', $value);
+                    if ($value) {
+                        $query->where('created_at', '<=', $value);
+                    }
                 }),
                 AllowedFilter::callback('search', function ($query, $value) {
                     $query->where(function ($q) use ($value) {
                         $q->where('source', 'ilike', "%{$value}%")
                             ->orWhere('destination', 'ilike', "%{$value}%")
-                            ->orWhere('message', 'ilike', "%{$value}%");
+                            ->orWhere('message', 'ilike', "%{$value}%")
+                            ->orWhere('reference_id', 'ilike', "%{$value}%");
                     });
                 }),
             ])
-            // Sorting
-            ->allowedSorts(['created_at']) // add more if needed
+            ->allowedSorts(['created_at'])
             ->defaultSort('-created_at');
 
         if ($params['paginate']) {
-            $data = $data->paginate($params['paginate']);
-        } else {
-            $data = $data->cursor();
+            return $query
+                ->paginate($params['paginate'])
+                ->through(fn($row) => $this->transformLogRow($row));
         }
 
-        return $data;
+        return $query
+            ->cursor()
+            ->map(fn($row) => $this->transformLogRow($row));
+    }
+
+    protected function transformLogRow(Messages $row): array
+    {
+        $media = is_array($row->media) ? $row->media : [];
+        $deliveryMeta = is_array($row->delivery_meta) ? $row->delivery_meta : [];
+
+        $providerName = data_get($deliveryMeta, 'outbound.provider.name')
+            ?? data_get($deliveryMeta, 'provider.name');
+
+        $statusSummary = $this->buildStatusSummary($row, $deliveryMeta);
+
+        return [
+            ...$row->toArray(),
+            'provider_name' => $providerName,
+            'message_preview' => $this->buildMessagePreview($row->message, $media),
+            'status_summary' => $statusSummary,
+            'media_count' => count($media),
+            'has_media' => !empty($media),
+        ];
+    }
+
+    protected function buildMessagePreview(?string $message, array $media): string
+    {
+        $message = trim((string) $message);
+
+        if ($message !== '') {
+            return mb_strlen($message) > 70
+                ? mb_substr($message, 0, 70) . '...'
+                : $message;
+        }
+
+        $count = count($media);
+
+        if ($count > 0) {
+            $label = $count === 1 ? 'attachment' : 'attachments';
+            $firstName = $media[0]['original_name'] ?? null;
+
+            return $firstName
+                ? "📎 {$count} {$label} ({$firstName})"
+                : "📎 {$count} {$label}";
+        }
+
+        return '—';
+    }
+
+    protected function buildStatusSummary(Messages $row, array $deliveryMeta): string
+    {
+        $parts = [];
+
+        $providerName = data_get($deliveryMeta, 'outbound.provider.name')
+            ?? data_get($deliveryMeta, 'provider.name');
+
+        $providerStatus = data_get($deliveryMeta, 'outbound.provider.status')
+            ?? data_get($deliveryMeta, 'provider.status');
+
+        if ($providerStatus) {
+            $parts[] = ($providerName ? "{$providerName}: " : '') . $providerStatus;
+        }
+
+        if ($ringotel = data_get($deliveryMeta, 'ringotel.status')) {
+            $parts[] = "ringotel: {$ringotel}";
+        }
+
+        if ($email = data_get($deliveryMeta, 'email.status')) {
+            $parts[] = "email: {$email}";
+        }
+
+        if (empty($parts) && $row->status) {
+            $parts[] = $row->status;
+        }
+
+        return implode(' • ', $parts);
     }
 
     public function getUserPermissions()

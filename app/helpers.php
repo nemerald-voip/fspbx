@@ -1985,7 +1985,7 @@ if (!function_exists('buildDestinationAction')) {
     if (!function_exists('messaging_webhook_debug')) {
         function messaging_webhook_debug(string $message, array $context = []): void
         {
-            if (!config('logging.messaging_webhook_debug')) {
+            if (!config('messaging.webhook_debug')) {
                 return;
             }
 

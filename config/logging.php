@@ -114,7 +114,4 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
     ],
-
-    'messaging_webhook_debug' => env('MESSAGING_WEBHOOK_DEBUG', false),
-
 ];

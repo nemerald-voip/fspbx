@@ -16,6 +16,8 @@ use Spatie\WebhookClient\Models\WebhookCall;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 use App\Services\MessageMediaObjectStorageService;
 use Illuminate\Support\Facades\Http;
+use App\Services\Messaging\Outbound\CreateOutboundMessageService;
+use App\Services\Messaging\Outbound\Data\CreateOutboundMessageData;
 use Spatie\WebhookClient\Jobs\ProcessWebhookJob as SpatieProcessWebhookJob;
 
 class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
@@ -53,9 +55,11 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
         $this->webhookCall = $webhookCall;
     }
 
-    public function handle(MessageMediaObjectStorageService $mediaStorage)
-    {
-        Redis::throttle('messages')->allow(2)->every(1)->then(function () use ($mediaStorage) {
+    public function handle(
+        MessageMediaObjectStorageService $mediaStorage,
+        CreateOutboundMessageService $outbound
+    ) {
+        Redis::throttle('messages')->allow(2)->every(1)->then(function () use ($mediaStorage, $outbound) {
             $this->message = $this->webhookCall->payload;
 
             try {
@@ -64,7 +68,7 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
                 if (($this->message['method'] ?? null) === 'delivered') {
                     $response = $this->handleDeliveryStatusUpdate();
                 } else {
-                    $response = $this->processOutgoingMessage($mediaStorage);
+                    $response = $this->processOutgoingMessage($mediaStorage, $outbound);
                 }
 
                 return $response;
@@ -76,44 +80,60 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
         });
     }
 
-    private function processOutgoingMessage(MessageMediaObjectStorageService $mediaStorage)
-    {
+    private function processOutgoingMessage(
+        MessageMediaObjectStorageService $mediaStorage,
+        CreateOutboundMessageService $outbound
+    ) {
         $this->validateMessage();
 
         $this->mobileAppDomainConfig = $this->getMobileAppDomainConfig($this->message['params']['orgid']);
         $this->domain_uuid = $this->mobileAppDomainConfig->domain_uuid;
         $this->extension_uuid = $this->getExtensionUuid();
 
-        $phoneNumberSmsConfig = $this->getPhoneNumberSmsConfig($this->message['params']['from'], $this->domain_uuid);
+        $phoneNumberSmsConfig = $this->getPhoneNumberSmsConfig(
+            $this->message['params']['from'],
+            $this->domain_uuid
+        );
+
         $this->carrier = $phoneNumberSmsConfig->carrier;
 
-        $this->messageProvider = MessageProviderFactory::make($this->carrier);
-
         $countryCode = get_domain_setting('country', $this->domain_uuid) ?? 'US';
-        if (!blank($phoneNumberSmsConfig->destination)) {
-            $this->source = formatPhoneNumber(
-                $phoneNumberSmsConfig->destination,
-                $countryCode,
-                PhoneNumberFormat::E164
-            );
-        }
 
-        $this->media = [];
+        $source = formatPhoneNumber(
+            $phoneNumberSmsConfig->destination,
+            $countryCode,
+            PhoneNumberFormat::E164
+        );
 
-        if ($this->messageType === 'mms') {
-            $this->media = $this->extractAndStoreRingotelMmsFiles($mediaStorage);
-        }
+        $destination = formatPhoneNumber(
+            $this->message['params']['to'],
+            $countryCode,
+            PhoneNumberFormat::E164
+        );
 
-        $this->storedMessage = $this->storeMessage('queued');
+        $message = $outbound->create(CreateOutboundMessageData::from([
+            'domainUuid' => $this->domain_uuid,
+            'extensionUuid' => $this->extension_uuid,
+            'source' => $source,
+            'destination' => $destination,
+            'message' => $this->messageType === 'mms'
+                ? ''
+                : (string) ($this->message['params']['content'] ?? ''),
+            'origin' => 'ringotel',
+            'carrier' => $this->carrier,
+            'mediaRemoteUrls' => $this->messageType === 'mms'
+                ? [(string) ($this->message['params']['content'] ?? '')]
+                : [],
+            'meta' => [
+                'ringotel_orgid' => $this->message['params']['orgid'] ?? null,
+            ],
+        ]));
 
-        if (!empty($this->media)) {
-            $this->attachMediaAccessPaths($this->storedMessage);
-        }
-
-        $this->messageProvider->send($this->storedMessage->message_uuid);
+        $this->storedMessage = $message;
 
         return response()->json([
-            'status' => ucfirst($this->messageType) . ' sent'
+            'status' => ucfirst($message->type) . ' queued',
+            'message_uuid' => $message->message_uuid,
         ]);
     }
 

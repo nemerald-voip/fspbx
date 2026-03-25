@@ -77,20 +77,27 @@
                                     <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
                                         {{ row.destination_formatted }}
                                     </td>
-                                    <td class="px-6 py-2 text-sm text-gray-500" :title="row.message">
-                                        {{ row.message && row.message.length > 50 ? row.message.substring(0, 50) + '...'
-                                            : row.message }}
+                                    <td class="px-6 py-2 text-sm text-gray-500" :title="row.message_preview">
+                                        <div class="max-w-sm">
+                                            <div class="truncate">
+                                                {{ row.message_preview }}
+                                            </div>
+                                            <div class="mt-1 text-xs text-gray-400">
+                                                <span v-if="row.provider_name">{{ row.provider_name }}</span>
+                                                <span v-if="row.provider_name && row.has_media"> • </span>
+                                                <span v-if="row.has_media">📎 {{ row.media_count }}</span>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
                                         {{ row.type }}
                                     </td>
-                                    <td class="px-6 py-2 text-sm text-gray-500" :title="row.status">
-                                        <!-- Pass the original status to the functions to keep correct colors, but truncate the visual text -->
-                                        <Badge
-                                            :text="row.status && row.status.length > 50 ? row.status.substring(0, 50) + '...' : row.status"
-                                            :backgroundColor="determineColor(row.status).backgroundColor"
-                                            :textColor="determineColor(row.status).textColor"
-                                            :ringColor="determineColor(row.status).ringColor" />
+                                    <td class="px-6 py-2 text-sm text-gray-500"
+                                        :title="row.status_summary || row.status">
+                                        <Badge :text="truncateText(row.status_summary || row.status, 60)"
+                                            :backgroundColor="determineColor(row.status_summary || row.status).backgroundColor"
+                                            :textColor="determineColor(row.status_summary || row.status).textColor"
+                                            :ringColor="determineColor(row.status_summary || row.status).ringColor" />
                                     </td>
 
                                     <!-- ACTION COLUMN WITH RETRY ICON -->
@@ -120,22 +127,69 @@
                                 <!-- EXPANDED DETAILS -->
                                 <tr v-if="expandedRow === row.message_uuid">
                                     <td :colspan="8" class="bg-gray-50 px-6 py-4 shadow-inner">
-                                        <div class="mb-4">
-                                            <div class="text-gray-900 font-semibold text-sm mb-1">Message ID:</div>
-                                            <pre
-                                                class="text-gray-700 text-sm whitespace-pre-wrap break-words">{{ row.message_uuid }}</pre>
-                                        </div>
-                                        <!-- Showing full Status -->
-                                        <div class="mb-4">
-                                            <div class="text-gray-900 font-semibold text-sm mb-1">Full Status</div>
-                                            <pre
-                                                class="text-gray-700 text-sm whitespace-pre-wrap break-words">{{ row.status }}</pre>
-                                        </div>
-                                        <!-- Showing full Message -->
-                                        <div>
-                                            <div class="text-gray-900 font-semibold text-sm mb-1">Full Message</div>
-                                            <pre
-                                                class="text-gray-700 text-sm whitespace-pre-wrap break-words">{{ row.message }}</pre>
+                                        <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                                            <div class="rounded-md border border-gray-200 bg-white p-4">
+                                                <div class="text-gray-900 font-semibold text-sm mb-2">Overview</div>
+
+                                                <div class="space-y-2 text-sm">
+                                                    <div><span class="font-medium text-gray-700">Message ID:</span> {{
+                                                        row.message_uuid }}</div>
+                                                    <div><span class="font-medium text-gray-700">Provider:</span> {{
+                                                        row.provider_name || '—' }}</div>
+                                                    <div><span class="font-medium text-gray-700">Reference ID:</span> {{
+                                                        row.reference_id || '—' }}</div>
+                                                    <div><span class="font-medium text-gray-700">Direction:</span> {{
+                                                        row.direction }}</div>
+                                                    <div><span class="font-medium text-gray-700">Type:</span> {{
+                                                        row.type }}</div>
+                                                    <div><span class="font-medium text-gray-700">Status Summary:</span>
+                                                        {{ row.status_summary || row.status }}</div>
+                                                    <div><span class="font-medium text-gray-700">Read At:</span> {{
+                                                        row.read_at || '—' }}</div>
+                                                </div>
+                                            </div>
+
+                                            <div class="rounded-md border border-gray-200 bg-white p-4">
+                                                <div class="text-gray-900 font-semibold text-sm mb-2">Message</div>
+                                                <pre
+                                                    class="text-gray-700 text-sm whitespace-pre-wrap break-words">{{ row.message || '—' }}</pre>
+                                            </div>
+
+                                            <div class="rounded-md border border-gray-200 bg-white p-4 lg:col-span-2"
+                                                v-if="hasMedia(row)">
+                                                <div class="text-gray-900 font-semibold text-sm mb-2">Attachments</div>
+
+                                                <div class="space-y-2">
+                                                    <div v-for="(item, index) in row.media"
+                                                        :key="`${row.message_uuid}-${index}`"
+                                                        class="flex items-center justify-between rounded border border-gray-200 px-3 py-2 text-sm">
+                                                        <div class="min-w-0">
+                                                            <div class="truncate font-medium text-gray-800">
+                                                                {{ item.original_name || item.stored_name || `Attachment
+                                                                ${index + 1}` }}
+                                                            </div>
+                                                            <div class="text-xs text-gray-500">
+                                                                {{ item.mime_type || 'unknown' }}
+                                                                <span v-if="item.size"> • {{ item.size }} bytes</span>
+                                                            </div>
+                                                        </div>
+
+                                                        <a v-if="item.access_path" :href="item.access_path"
+                                                            target="_blank"
+                                                            class="ml-4 text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                                                            @click.stop>
+                                                            Open
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="rounded-md border border-gray-200 bg-white p-4 lg:col-span-2">
+                                                <div class="text-gray-900 font-semibold text-sm mb-2">Delivery Meta
+                                                </div>
+                                                <pre
+                                                    class="text-gray-700 text-sm whitespace-pre-wrap break-words">{{ prettyJson(row.delivery_meta) }}</pre>
+                                            </div>
                                         </div>
                                     </td>
                                 </tr>
@@ -276,6 +330,22 @@ const toggleExpand = (id) => {
     expandedRow.value = expandedRow.value === id ? null : id
 }
 
+const truncateText = (value, length = 50) => {
+    if (!value) return '—'
+    return value.length > length ? value.substring(0, length) + '...' : value
+}
+
+const prettyJson = (value) => {
+    if (!value) return '—'
+    try {
+        return JSON.stringify(value, null, 2)
+    } catch {
+        return String(value)
+    }
+}
+
+const hasMedia = (row) => Array.isArray(row.media) && row.media.length > 0
+
 const handleFiltersReset = () => {
     filterData.value.dateRange = [
         startLocal.clone().startOf('day').toISOString(), // UTC instant for local start-of-day
@@ -288,29 +358,38 @@ const handleFiltersReset = () => {
 }
 
 const determineColor = (status) => {
-    switch (status) {
-        case 'success':
-        case 'emailed':
-        case 'delivered':
-            return {
-                backgroundColor: 'bg-green-50',
-                textColor: 'text-green-700',
-                ringColor: 'ring-green-600/20'
-            };
-        case 'queued':
-            return {
-                backgroundColor: 'bg-blue-50',
-                textColor: 'text-blue-700',
-                ringColor: 'ring-blue-600/20'
-            };
-        default:
-            return {
-                backgroundColor: 'bg-yellow-50',
-                textColor: 'text-yellow-700',
-                ringColor: 'ring-yellow-600/20'
-            };
+    const value = (status || '').toLowerCase()
+
+    if (value.includes('failed') || value.includes('error') || value.includes('undelivered')) {
+        return {
+            backgroundColor: 'bg-red-50',
+            textColor: 'text-red-700',
+            ringColor: 'ring-red-600/20'
+        }
     }
-};
+
+    if (value.includes('queued') || value.includes('received')) {
+        return {
+            backgroundColor: 'bg-blue-50',
+            textColor: 'text-blue-700',
+            ringColor: 'ring-blue-600/20'
+        }
+    }
+
+    if (value.includes('success') || value.includes('delivered') || value.includes('emailed')) {
+        return {
+            backgroundColor: 'bg-green-50',
+            textColor: 'text-green-700',
+            ringColor: 'ring-green-600/20'
+        }
+    }
+
+    return {
+        backgroundColor: 'bg-yellow-50',
+        textColor: 'text-yellow-700',
+        ringColor: 'ring-yellow-600/20'
+    }
+}
 
 const renderRequestedPage = (url) => {
     isDataLoading.value = true;

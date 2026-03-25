@@ -3,6 +3,7 @@
 namespace App\Services\Messaging;
 
 use App\Models\Messages;
+use App\Services\Messaging\Outbound\Data\OutboundSendResultData;
 use libphonenumber\PhoneNumberFormat;
 
 class MessageRepository
@@ -121,6 +122,123 @@ class MessageRepository
             'message_uuid' => $message->message_uuid,
         ]);
     }
+
+    public function storeOutbound(
+        string $domainUuid,
+        ?string $extensionUuid,
+        string $source,
+        string $destination,
+        string $text,
+        string $type,
+        string $carrier,
+        string $origin,
+        ?string $providerReferenceId = null,
+        array $media = [],
+        array $meta = [],
+    ): Messages {
+        messaging_webhook_debug('storeOutbound called', [
+            'domain_uuid' => $domainUuid,
+            'extension_uuid' => $extensionUuid,
+            'source' => $source,
+            'destination' => $destination,
+            'type' => $type,
+            'carrier' => $carrier,
+            'origin' => $origin,
+            'media_count' => count($media),
+        ]);
+
+        $countryCode = get_domain_setting('country', $domainUuid) ?? 'US';
+
+        $normalizedSource = $this->normalizePhoneNumberForStorage($source, $countryCode);
+        $normalizedDestination = $this->normalizePhoneNumberForStorage($destination, $countryCode);
+
+        $message = Messages::create([
+            'domain_uuid'    => $domainUuid,
+            'extension_uuid' => $extensionUuid,
+            'source'         => $normalizedSource,
+            'destination'    => $normalizedDestination,
+            'message'        => $text,
+            'direction'      => 'out',
+            'type'           => $type,
+            'reference_id'   => $providerReferenceId,
+            'status'         => 'queued',
+            'media'          => $media,
+            'delivery_meta'  => [
+                'outbound' => [
+                    'origin' => $origin,
+                    'provider' => [
+                        'name' => $carrier,
+                        'status' => 'queued',
+                        'queued_at' => now()->toIso8601String(),
+                        'reference_id' => $providerReferenceId,
+                        'error' => null,
+                    ],
+                    'meta' => $meta,
+                ],
+            ],
+        ]);
+
+        messaging_webhook_debug('storeOutbound created message', [
+            'message_uuid' => $message->message_uuid,
+        ]);
+
+        if (!empty($media)) {
+            $message->media = $this->attachMediaAccessPaths(
+                messageUuid: $message->message_uuid,
+                media: $message->media ?? []
+            );
+
+            $message->save();
+        }
+
+        messaging_webhook_debug('storeOutbound created message', [
+            'message_uuid' => $message->message_uuid,
+        ]);
+
+        return $message;
+    }
+
+    public function applyOutboundSendResult(
+        Messages $message,
+        string $carrier,
+        OutboundSendResultData $result
+    ): void {
+        messaging_webhook_debug('applyOutboundSendResult called', [
+            'message_uuid' => $message->message_uuid,
+            'carrier' => $carrier,
+            'success' => $result->success,
+            'status' => $result->status,
+            'provider_reference_id' => $result->providerReferenceId,
+            'error' => $result->error,
+        ]);
+
+        $meta = $message->delivery_meta ?? [];
+
+        data_set($meta, 'outbound.provider.name', $carrier);
+        data_set($meta, 'outbound.provider.status', $result->status);
+        data_set($meta, 'outbound.provider.reference_id', $result->providerReferenceId);
+        data_set($meta, 'outbound.provider.error', $result->error);
+        data_set($meta, 'outbound.provider.response', $result->providerResponse);
+        data_set($meta, 'outbound.provider.updated_at', now()->toIso8601String());
+
+        $message->delivery_meta = $meta;
+        $message->status = $result->status;
+
+        if ($result->providerReferenceId) {
+            $message->reference_id = $result->providerReferenceId;
+        }
+
+        $message->save();
+        messaging_webhook_debug('applyOutboundSendResult called', [
+            'message_uuid' => $message->message_uuid,
+            'carrier' => $carrier,
+            'success' => $result->success,
+            'status' => $result->status,
+            'provider_reference_id' => $result->providerReferenceId,
+            'error' => $result->error,
+        ]);
+    }
+
 
     public function markRingotelStatus(string $messageUuid, string $status, ?string $error = null): void
     {
