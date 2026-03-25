@@ -5,4 +5,5 @@ return [
     'username' => env('CLICKSEND_USERNAME'),
     'subaccount_id' => env('CLICKSEND_SUBACCOUNT_ID'),
     'api_key'  => env('CLICKSEND_API_KEY'),
+    'mms_subject' => env('CLICKSEND_MMS_SUBJECT', env('APP_NAME', 'Message')),
 ];
