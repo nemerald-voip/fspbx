@@ -12,6 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
+use RuntimeException;
 
 class SendOutboundSMSMessage implements ShouldQueue
 {
@@ -30,6 +31,7 @@ class SendOutboundSMSMessage implements ShouldQueue
     {
         return [new RateLimitedWithRedis('messages')];
     }
+
 
     public function handle(
         OutboundProviderFactory $factory,
@@ -59,27 +61,53 @@ class SendOutboundSMSMessage implements ShouldQueue
             ]);
 
             if (!$carrier) {
-                throw new \RuntimeException("Outbound provider not stored on message {$this->messageUuid}");
+                $messages->markOutboundFailure(
+                    $message,
+                    'unknown',
+                    'No outbound provider stored on the message'
+                );
+
+                return;
             }
 
-            $provider = $factory->make($carrier);
+            try {
+                $provider = $factory->make($carrier);
 
-            messaging_webhook_debug('SendOutboundMessage resolved provider instance', [
-                'message_uuid' => $this->messageUuid,
-                'provider_class' => get_class($provider),
-            ]);
+                messaging_webhook_debug('SendOutboundMessage resolved provider instance', [
+                    'message_uuid' => $this->messageUuid,
+                    'provider_class' => get_class($provider),
+                ]);
 
-            $result = $provider->send($message);
+                $result = $provider->send($message);
 
-            messaging_webhook_debug('SendOutboundMessage provider result', [
-                'message_uuid' => $this->messageUuid,
-                'success' => $result->success,
-                'status' => $result->status,
-                'provider_reference_id' => $result->providerReferenceId,
-                'error' => $result->error,
-            ]);
+                messaging_webhook_debug('SendOutboundMessage provider result', [
+                    'message_uuid' => $this->messageUuid,
+                    'success' => $result->success,
+                    'status' => $result->status,
+                    'provider_reference_id' => $result->providerReferenceId,
+                    'error' => $result->error,
+                ]);
 
-            $messages->applyOutboundSendResult($message, $carrier, $result);
+                $messages->applyOutboundSendResult($message, $carrier, $result);
+            } catch (RuntimeException $e) {
+                logger('Outbound provider resolution failed: ' . $e->getMessage());
+
+                $messages->markOutboundFailure(
+                    $message,
+                    $carrier,
+                    $e->getMessage()
+                );
+            } catch (\Throwable $e) {
+                logger('Error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+                $messages->markOutboundFailure(
+                    $message,
+                    $carrier,
+                    $e->getMessage()
+                );
+
+                throw $e;
+            }
         }, function () {
             messaging_webhook_debug('SendOutboundMessage throttled', [
                 'message_uuid' => $this->messageUuid,

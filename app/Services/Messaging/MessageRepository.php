@@ -342,4 +342,24 @@ class MessageRepository
 
         return $formatted ?: $number;
     }
+
+    public function markOutboundFailure(Messages $message, string $carrier, string $error): void
+    {
+        $meta = $message->delivery_meta ?? [];
+
+        data_set($meta, 'outbound.provider.name', $carrier);
+        data_set($meta, 'outbound.provider.status', 'failed');
+        data_set($meta, 'outbound.provider.error', $error);
+        data_set($meta, 'outbound.provider.updated_at', now()->toIso8601String());
+
+        $message->delivery_meta = $meta;
+        $message->status = 'failed';
+        $message->save();
+
+        messaging_webhook_debug('markOutboundFailure updated message', [
+            'message_uuid' => $message->message_uuid,
+            'carrier' => $carrier,
+            'error' => $error,
+        ]);
+    }
 }
