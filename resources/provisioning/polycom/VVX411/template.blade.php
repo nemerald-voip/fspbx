@@ -438,11 +438,7 @@
     		tcpIpApp.sntp.address="{{ $settings['ntp_server_primary'] ?? 'null' }}"
     		tcpIpApp.sntp.gmtOffset.overrideDHCP="1"
     		tcpIpApp.sntp.gmtOffset="{{ $settings['polycom_gmt_offset'] ?? '0' }}"
-    		@if ($settings['daylight_savings_enabled'] == "false")
-    		    tcpIpApp.sntp.daylightSavings.enable="0"
-    		@else
-    		    tcpIpApp.sntp.daylightSavings.enable="1"
-    		@endif
+            tcpIpApp.sntp.daylightSavings.enable="{{ $settings['daylight_savings_enabled'] ? '1' : '0' }}"
     		tcpIpApp.sntp.daylightSavings.fixedDayEnable="0"
     		tcpIpApp.sntp.daylightSavings.start.month="{{ $settings['daylight_savings_start_month'] }}"
     		tcpIpApp.sntp.daylightSavings.start.date="{{ $settings['daylight_savings_start_day'] }}"

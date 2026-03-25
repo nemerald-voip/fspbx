@@ -1,8 +1,8 @@
-{{-- version: 1.0.5 --}}
+{{-- version: 1.0.0 --}}
 
 @switch($flavor)
 
-{{-- ================= Yealink T74W mac.cfg ================= --}}
+{{-- ================= Yealink T85W mac.cfg ================= --}}
 @case('mac.cfg')
 
 #!version:1.0.0.1
@@ -279,8 +279,8 @@ distinctive_ring_tones.alert_info.{{ $i }}.ringer = {{ $settings["yealink_ring_f
 ##for SIP-T54W/T46G/T46S/T29G: <=1.8 megapixels;SIP-T54S/T52S:<=4.2 megapixels;
 ##Single File Size: <=5MB
 ##2MB of space should bereserved for the phone
-wallpaper_upload.url = {{ $settings['yealink_t74w_wallpaper'] ?? '' }}
-phone_setting.backgrounds = Config:{{ $settings['yealink_t74w_wallpaper_filename'] ?? '' }}
+wallpaper_upload.url = {{ $settings['yealink_t85w_wallpaper'] ?? '' }}
+phone_setting.backgrounds = Config:{{ $settings['yealink_t85_wallpaper_filename'] ?? '' }}
 
 
 ################################################################
