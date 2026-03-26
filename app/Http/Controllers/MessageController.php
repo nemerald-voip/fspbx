@@ -721,8 +721,8 @@ class MessageController extends Controller
         $media = is_array($row->media) ? $row->media : [];
         $deliveryMeta = is_array($row->delivery_meta) ? $row->delivery_meta : [];
 
-        $providerName = data_get($deliveryMeta, 'outbound.provider.name')
-            ?? data_get($deliveryMeta, 'provider.name');
+        $providerName = data_get($deliveryMeta, 'provider.name')
+            ?? data_get($deliveryMeta, 'outbound.provider.name');
 
         $statusSummary = $this->buildStatusSummary($row, $deliveryMeta);
 
@@ -764,11 +764,12 @@ class MessageController extends Controller
     {
         $parts = [];
 
-        $providerName = data_get($deliveryMeta, 'outbound.provider.name')
-            ?? data_get($deliveryMeta, 'provider.name');
+        $providerName = data_get($deliveryMeta, 'provider.name')
+            ?? data_get($deliveryMeta, 'outbound.provider.name');
 
-        $providerStatus = data_get($deliveryMeta, 'outbound.provider.status')
-            ?? data_get($deliveryMeta, 'provider.status');
+        $providerStatus = data_get($deliveryMeta, 'provider.status')
+            ?? data_get($deliveryMeta, 'outbound.provider.status')
+            ?? $row->status;
 
         if ($providerStatus) {
             $parts[] = ($providerName ? "{$providerName}: " : '') . $providerStatus;
@@ -780,10 +781,6 @@ class MessageController extends Controller
 
         if ($email = data_get($deliveryMeta, 'email.status')) {
             $parts[] = "email: {$email}";
-        }
-
-        if (empty($parts) && $row->status) {
-            $parts[] = $row->status;
         }
 
         return implode(' • ', $parts);
