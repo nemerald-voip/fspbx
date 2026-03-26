@@ -3,7 +3,7 @@ id: commio
 title: Commio (ThinQ) SMS Provider Configuration
 slug: /configuration/messaging/commio
 description: Configure Commio for SMS and MMS in FS PBX.
-sidebar_position: 3
+sidebar_position: 20
 ---
 
 Commio (ThinQ) SMS Provider Configuration
@@ -108,7 +108,19 @@ After saving, SMS messages sent to that number will:
 
 -   Allow the user to reply directly through the app
 
-* * * * *
+## 5. MMS Support
+
+If your Apidaze number supports MMS, FS PBX can also process media attachments sent through the same messaging flow.
+
+To use MMS media storage, S3-compatible storage must already be configured in your system. See the [S3 Configuration for Messages](/docs/configuration/messaging/s3-config-for-messages/) guide.
+
+This allows users to:
+
+* receive inbound picture messages in the mobile app
+* reply to supported MMS conversations
+* keep SMS and MMS history together in the same conversation thread
+
+---
 
 Summary
 -------

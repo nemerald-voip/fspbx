@@ -95,7 +95,21 @@ When ClickSend posts an inbound message:
 
 -   If it matches, the message is accepted and routed to the correct extension
 
-* * * * *
+---
+
+## 5. MMS Support
+
+If your Apidaze number supports MMS, FS PBX can also process media attachments sent through the same messaging flow.
+
+To use MMS media storage, S3-compatible storage must already be configured in your system. See the [S3 Configuration for Messages](/docs/configuration/messaging/s3-config-for-messages/) guide.
+
+This allows users to:
+
+* receive inbound picture messages in the mobile app
+* reply to supported MMS conversations
+* keep SMS and MMS history together in the same conversation thread
+
+---
 
 6\. Enable ClickSend on a Phone Number in FS PBX
 ------------------------------------------------

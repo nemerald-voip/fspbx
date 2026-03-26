@@ -87,7 +87,7 @@ When configured:
 
 If your Apidaze number supports MMS, FS PBX can also process media attachments sent through the same messaging flow.
 
-To use MMS media storage, S3-compatible storage must already be configured in your system. A setup guide will be linked here.
+To use MMS media storage, S3-compatible storage must already be configured in your system. See the [S3 Configuration for Messages](/docs/configuration/messaging/s3-config-for-messages/) guide.
 
 This allows users to:
 
