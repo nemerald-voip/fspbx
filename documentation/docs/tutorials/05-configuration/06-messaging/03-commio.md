@@ -2,13 +2,14 @@
 id: commio
 title: Commio (ThinQ) SMS Provider Configuration
 slug: /configuration/messaging/commio
+description: Configure Commio for SMS and MMS in FS PBX.
 sidebar_position: 3
 ---
 
 Commio (ThinQ) SMS Provider Configuration
 =========================================
 
-FS PBX supports two-way SMS messaging through **Commio** (formerly ThinQ). This guide explains how to configure your Commio credentials, set up webhook security, and enable SMS on individual phone numbers.
+FS PBX provides two-way SMS and MMS support through **Commio** (formerly ThinQ). This guide explains how to configure your Commio credentials, set up webhook security, and enable SMS on individual phone numbers.
 
 * * * * *
 

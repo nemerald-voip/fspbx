@@ -8,7 +8,7 @@ sidebar_position: 7
 
 # Apidaze SMS Provider Configuration
 
-FS PBX provides two-way SMS and MMS support via Apidaze, including inbound message handling, outbound delivery, and provider authentication. This guide explains how to configure your Apidaze credentials and enable messaging routing to extensions.
+FS PBX provides two-way SMS and MMS support via **Apidaze**, including inbound message handling, outbound delivery, and provider authentication. This guide explains how to configure your Apidaze credentials and enable messaging routing to extensions.
 
 ---
 

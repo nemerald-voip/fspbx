@@ -2,13 +2,14 @@
 id: sinch
 title: Sinch SMS Provider Configuration
 slug: /configuration/messaging/sinch
+description: Configure Sinch for SMS and MMS in FS PBX.
 sidebar_position: 4
 ---
 
 Sinch SMS Provider Configuration
 ================================
 
-FS PBX supports two-way SMS through **Sinch**, using the Sinch (Inteliquent) message broker API for outbound messages and a secure inbound webhook for receiving messages. This guide explains how to configure your Sinch credentials, set up inbound security, and enable SMS for phone numbers.
+FS PBX provides two-way SMS and MMS support through **Sinch**, using the Sinch (Inteliquent) message broker API for outbound messages and a secure inbound webhook for receiving messages. This guide explains how to configure your Sinch credentials, set up inbound security, and enable SMS for phone numbers.
 
 * * * * *
 

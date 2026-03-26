@@ -2,13 +2,14 @@
 id: telnyx
 title: Telnyx SMS Provider Configuration
 slug: /configuration/messaging/telnyx
+description: Configure Telnyx for SMS and MMS in FS PBX.
 sidebar_position: 5
 ---
 
 Telnyx SMS Provider Configuration
 =================================
 
-FS PBX provides full two-way SMS support via **Telnyx**, including inbound message handling, outbound delivery, and webhook signature verification for security. This guide explains how to configure your Telnyx credentials and enable SMS routing to extensions.
+FS PBX provides two-way SMS and MMS support via **Telnyx**, including inbound message handling, outbound delivery, and webhook signature verification for security. This guide explains how to configure your Telnyx credentials and enable SMS routing to extensions.
 
 * * * * *
 

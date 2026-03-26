@@ -2,13 +2,14 @@
 id: bandwidth
 title: Bandwidth SMS Provider Configuration
 slug: /configuration/messaging/bandwidth
+description: Configure Bandwidth for SMS and MMS in FS PBX.
 sidebar_position: 2
 ---
 
 Bandwidth SMS Provider Configuration
 ====================================
 
-FS PBX supports full two-way SMS messaging through **Bandwidth**, including inbound message delivery and outbound replies from the mobile app. This guide explains how to configure Bandwidth credentials, enable SMS, and set up the required webhook endpoint.
+FS PBX provides two-way SMS and MMS support through **Bandwidth**, including inbound message delivery and outbound replies from the mobile app. This guide explains how to configure Bandwidth credentials, enable SMS, and set up the required webhook endpoint.
 
 
 * * * * *
