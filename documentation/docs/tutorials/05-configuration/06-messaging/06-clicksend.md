@@ -39,10 +39,6 @@ CLICKSEND_BASE_URL=https://rest.clicksend.com
 | **CLICKSEND_API_KEY** | API key paired with `CLICKSEND_USERNAME` for outbound authentication. |
 | **CLICKSEND_BASE_URL** | Base URL for ClickSend's REST API. Default: `https://rest.clicksend.com`. |
 
-> **Important:**\
-> Outbound SMS authentication uses **`CLICKSEND_USERNAME` + `CLICKSEND_API_KEY`**.\
-> The **`CLICKSEND_SUBACCOUNT_ID`** is only used when FS PBX verifies inbound webhook payloads from ClickSend.
-
 * * * * *
 
 2\. Getting Your ClickSend API Username & API Key
