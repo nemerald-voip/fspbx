@@ -80,6 +80,7 @@ Route::webhooks('webhook/telnyx/sms', 'telnyx_messaging');
 Route::webhooks('webhook/clicksend/sms', 'clicksend_messaging');
 Route::webhooks('webhook/apidaze/sms', 'apidaze_messaging');
 Route::webhooks('webhook/bulkvs/sms', 'bulkvs_messaging');
+Route::webhooks('webhook/voipms/sms', 'voipms_messaging');
 Route::webhooks('/sms/ringotelwebhook', 'ringotel_messaging');
 Route::webhooks('/webhook/freeswitch', 'freeswitch');
 Route::webhooks('/webhook/stripe', 'stripe');

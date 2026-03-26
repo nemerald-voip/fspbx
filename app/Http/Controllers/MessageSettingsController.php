@@ -94,6 +94,7 @@ class MessageSettingsController extends Controller
                 ['value' => 'sinch', 'label' => 'Sinch'],
                 ['value' => 'telnyx', 'label' => 'Telnyx'],
                 ['value' => 'thinq', 'label' => 'Commio (ThinQ)'],
+                ['value' => 'voipms', 'label' => 'VoIP.MS'],
             ];
 
             // Define the options for the 'chatplan_detail_data' field

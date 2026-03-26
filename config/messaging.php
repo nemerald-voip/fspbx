@@ -11,5 +11,6 @@ return [
         'apidaze' => \App\Services\Messaging\Outbound\Providers\ApidazeOutboundProvider::class,
         'bulkvs' => \App\Services\Messaging\Outbound\Providers\BulkVSOutboundProvider::class,
         'thinq' => \App\Services\Messaging\Outbound\Providers\CommioOutboundProvider::class,
+        'voipms' => \App\Services\Messaging\Outbound\Providers\VoipMsOutboundProvider::class,
     ],
 ];
