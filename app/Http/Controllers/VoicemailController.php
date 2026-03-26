@@ -114,7 +114,13 @@ class VoicemailController extends Controller
                 }),
                 AllowedFilter::exact('voicemail_enabled'), // Example: filter[enabled]=true
             ])
-            ->allowedSorts(['voicemail_id'])
+            ->allowedSorts([
+                'voicemail_id',
+                'voicemail_description',
+                'voicemail_mail_to',
+                'voicemail_enabled',
+                'messages_count',
+            ])
             ->defaultSort('voicemail_id')
             ->paginate($perPage);
 

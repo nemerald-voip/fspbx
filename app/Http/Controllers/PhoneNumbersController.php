@@ -19,6 +19,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\RedirectResponse;
 use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\AllowedSort;
 use Illuminate\Support\Facades\Session;
 use Maatwebsite\Excel\HeadingRowImport;
 use App\Services\CallRoutingOptionsService;
@@ -291,7 +292,15 @@ class PhoneNumbersController extends Controller
                 $query->select('domain_uuid', 'domain_name', 'domain_description');
             }])
 
-            ->allowedSorts(['destination_number'])
+            ->allowedSorts([
+                'destination_number',
+                'destination_description',
+                'destination_enabled',
+                AllowedSort::callback('destination_actions', function ($query, bool $descending, string $property) {
+                    $direction = $descending ? 'desc' : 'asc';
+                    $query->orderByRaw("CAST({$property} AS TEXT) {$direction}");
+                }),
+            ])
             ->defaultSort('destination_number')
             ->paginate($perPage);
 

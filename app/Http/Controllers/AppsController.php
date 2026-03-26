@@ -36,6 +36,11 @@ class AppsController extends Controller
     public $sortOrder;
     protected $viewName = 'RingotelAppSettings';
     protected $searchable = ['domain_name', 'domain_description'];
+    protected $allowedSortFields = [
+        'domain_name',
+        'domain_description',
+        'ringotel_status',
+    ];
 
     public function __construct()
     {
@@ -84,8 +89,15 @@ class AppsController extends Controller
         }
 
         // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'domain_name'); // Default to 'voicemail_id'
-        $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to descending
+        $requestedSortField = request()->get('sortField', 'domain_name');
+        $requestedSortOrder = request()->get('sortOrder', 'asc');
+
+        $this->sortField = in_array($requestedSortField, $this->allowedSortFields, true)
+            ? $requestedSortField
+            : 'domain_name';
+        $this->sortOrder = in_array($requestedSortOrder, ['asc', 'desc'], true)
+            ? $requestedSortOrder
+            : 'asc';
 
         $data = $this->builder($this->filters);
 
@@ -96,13 +108,9 @@ class AppsController extends Controller
             $data = $data->get(); // This will return a collection
         }
 
-        // Add `ringotel_status` dynamically
+        // Normalize the query-level sort flag into the existing UI payload shape.
         $data->each(function ($domain) {
-            $domain->ringotel_status = $domain->settings()
-                ->where('domain_setting_category', 'app shell')
-                ->where('domain_setting_subcategory', 'org_id')
-                ->where('domain_setting_enabled', true)
-                ->exists() ? 'true' : 'false';
+            $domain->ringotel_status = !empty($domain->ringotel_status_sort) ? 'true' : 'false';
         });
 
         return $data;
@@ -130,6 +138,17 @@ class AppsController extends Controller
             'domain_description',
         );
 
+        $data->selectRaw("
+            EXISTS (
+                SELECT 1
+                FROM v_domain_settings ds
+                WHERE ds.domain_uuid = v_domains.domain_uuid
+                  AND ds.domain_setting_category = ?
+                  AND ds.domain_setting_subcategory = ?
+                  AND ds.domain_setting_enabled = ?
+            ) AS ringotel_status_sort
+        ", ['app shell', 'org_id', true]);
+
         if (is_array($filters)) {
             foreach ($filters as $field => $value) {
                 if (method_exists($this, $method = "filter" . ucfirst($field))) {
@@ -139,7 +158,11 @@ class AppsController extends Controller
         }
 
         // Apply sorting
-        $data->orderBy($this->sortField, $this->sortOrder);
+        $sortColumn = $this->sortField === 'ringotel_status'
+            ? 'ringotel_status_sort'
+            : $this->sortField;
+
+        $data->orderBy($sortColumn, $this->sortOrder);
 
         return $data;
     }

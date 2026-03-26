@@ -17,6 +17,18 @@ class RegistrationsController extends Controller
     public $sortOrder;
     protected $viewName = 'Registrations';
     protected $searchable = ['lan_ip','wan_ip', 'port', 'agent', 'transport', 'sip_profile_name', 'sip_auth_user', 'sip_auth_realm'];
+    protected $allowedSortFields = [
+        'sip_auth_user',
+        'sip_auth_realm',
+        'agent',
+        'lan_ip',
+        'wan_ip',
+        'port',
+        'status',
+        'expsecs',
+        'ping_time',
+        'sip_profile_name',
+    ];
 
     /**
      * Display a listing of the resource.
@@ -65,8 +77,15 @@ class RegistrationsController extends Controller
             $this->filters['showGlobal'] = null;
         }
         // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'sip_auth_user'); // Default to 'sip_auth_user'
-        $this->sortOrder = request()->get('sortOrder', 'asc'); // Default to ascending
+        $requestedSortField = request()->get('sortField', 'sip_auth_user');
+        $requestedSortOrder = request()->get('sortOrder', 'asc');
+
+        $this->sortField = in_array($requestedSortField, $this->allowedSortFields, true)
+            ? $requestedSortField
+            : 'sip_auth_user';
+        $this->sortOrder = in_array($requestedSortOrder, ['asc', 'desc'], true)
+            ? $requestedSortOrder
+            : 'asc';
 
         $data = $this->builder($this->filters, $eslService);
 

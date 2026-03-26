@@ -86,7 +86,7 @@ class UsersController extends Controller
                 AllowedFilter::exact('user_enabled'),
             ])
             // allow ?sort=-username or ?sort=add_date
-            ->allowedSorts(['username', 'add_date'])
+            ->allowedSorts(['username', 'user_email', 'user_enabled', 'add_date'])
             // let your front-end optionally eager-load relations
             ->allowedIncludes(['user_groups'])
             // eager-load only the columns you need on user_groups
