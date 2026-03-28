@@ -2,17 +2,18 @@
 
 namespace App\Jobs;
 
-use App\Models\Messages;
 use App\Models\Voicemails;
+use App\Models\SmsDestinations;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Carbon;
-use App\Models\SmsDestinations;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Queue\InteractsWithQueue;
-use App\Factories\MessageProviderFactory;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use App\Services\Messaging\Outbound\CreateOutboundMessageService;
+use App\Services\Messaging\Outbound\Data\CreateOutboundMessageData;
+use libphonenumber\PhoneNumberFormat;
 
 class SendNewVoicemailNotificationBySms implements ShouldQueue
 {
@@ -20,121 +21,95 @@ class SendNewVoicemailNotificationBySms implements ShouldQueue
 
     public array $data;
 
-    /**
-     * The number of times the job may be attempted.
-     *
-     * @var int
-     */
     public $tries = 10;
-
-    /**
-     * The maximum number of unhandled exceptions to allow before failing.
-     *
-     * @var int
-     */
     public $maxExceptions = 3;
-
-    /**
-     * The number of seconds the job can run before timing out.
-     *
-     * @var int
-     */
     public $timeout = 120;
-
-    /**
-     * Indicate if the job should be marked as failed on timeout.
-     *
-     * @var bool
-     */
     public $failOnTimeout = true;
-
-    /**
-     * The number of seconds to wait before retrying the job.
-     *
-     * @var int
-     */
     public $backoff = [30, 60, 120, 300];
-
-    /**
-     * Delete the job if its models no longer exist.
-     *
-     * @var bool
-     */
     public $deleteWhenMissingModels = true;
 
-    // private string $logId;
-
-    /**
-     * Create a new job instance.
-     *
-     * @return void
-     */
     public function __construct(array $data)
     {
-        // Raw payload from the webhook (data block)
         $this->data = $data;
-
-        // Optional: force this job to the "messages" queue if you want
         $this->onQueue('messages');
     }
 
-    /**
-     * Execute the job.
-     *
-     * @return void
-     */
-    public function handle()
+    public function handle(CreateOutboundMessageService $outbound): void
     {
-        // Allow only 2 tasks every 1 second
-        Redis::throttle('messages')->allow(2)->every(1)->then(function () {
+        messaging_webhook_debug('SendNewVoicemailNotificationBySms started', [
+            'data' => $this->data,
+        ]);
 
+        Redis::throttle('messages')->allow(2)->every(1)->then(function () use ($outbound) {
             $data = $this->data;
 
-            // 1. Find the voicemail
-            $voicemail = Voicemails::where('domain_uuid', $data['domain_uuid'] ?? null)
+            $domainUuid = $data['domain_uuid'] ?? null;
+
+            if (!$domainUuid) {
+                throw new \RuntimeException('Missing domain_uuid in voicemail SMS notification payload');
+            }
+
+            $voicemail = Voicemails::where('domain_uuid', $domainUuid)
                 ->where('voicemail_id', $data['voicemail_id'] ?? null)
                 ->select(['voicemail_uuid', 'voicemail_sms_to'])
                 ->firstOrFail();
 
+            messaging_webhook_debug('Voicemail lookup complete', [
+                'domain_uuid' => $domainUuid,
+                'voicemail_id' => $data['voicemail_id'] ?? null,
+                'voicemail_uuid' => $voicemail->voicemail_uuid,
+                'voicemail_sms_to' => $voicemail->voicemail_sms_to,
+            ]);
 
             if (empty($voicemail->voicemail_sms_to)) {
-                // No SMS destination configured, nothing to do
+                messaging_webhook_debug('Voicemail SMS notification skipped: no destination configured', [
+                    'voicemail_uuid' => $voicemail->voicemail_uuid,
+                ]);
+
                 return;
             }
 
-            // 2. Prepare base payload
-            $payload = [
-                'source'      => get_domain_setting('sms_notification_from_number'),
-                'destination' => $voicemail->voicemail_sms_to,
-                'domain_uuid' => $data['domain_uuid'] ?? null,
-                'status'      => 'queued',
-            ];
+            $countryCode = get_domain_setting('country', $domainUuid) ?? 'US';
 
-            // 3. Normalize/format message_date for template
+            $source = get_domain_setting('sms_notification_from_number', $domainUuid);
+
+            if (empty($source)) {
+                throw new \RuntimeException('sms_notification_from_number is not configured');
+            }
+
+            $normalizedSource = formatPhoneNumber($source, $countryCode, PhoneNumberFormat::E164) ?: $source;
+            $normalizedDestination = formatPhoneNumber(
+                $voicemail->voicemail_sms_to,
+                $countryCode,
+                PhoneNumberFormat::E164
+            ) ?: $voicemail->voicemail_sms_to;
+
+            $phoneNumberSmsConfig = $this->getPhoneNumberSmsConfig($normalizedSource, $domainUuid);
+
+            messaging_webhook_debug('SMS config resolved for voicemail notification', [
+                'source' => $normalizedSource,
+                'destination' => $normalizedDestination,
+                'carrier' => $phoneNumberSmsConfig->carrier,
+                'sms_config_domain_uuid' => $phoneNumberSmsConfig->domain_uuid,
+            ]);
+
             if (!empty($data['message_date'])) {
                 $data['message_date'] = Carbon::createFromTimestamp($data['message_date'])
-                    ->setTimezone(get_local_time_zone($data['domain_uuid'] ?? null))
+                    ->setTimezone(get_local_time_zone($domainUuid))
                     ->format('Y-m-d H:i');
             }
 
-            // 4. Load SMS config for the "from" number
-            $phoneNumberSmsConfig = $this->getPhoneNumberSmsConfig($payload['source']);
+            $textTemplate = get_domain_setting('sms_notification_text', $domainUuid) ?? '';
 
-            $payload['domain_uuid'] = $phoneNumberSmsConfig->domain_uuid;
-            $payload['carrier'] = $phoneNumberSmsConfig->carrier;
+            if ($textTemplate === '') {
+                throw new \RuntimeException('sms_notification_text is not configured');
+            }
 
-            // 5. Determine message provider
-            $messageProvider = MessageProviderFactory::make($payload['carrier']);
-
-            // 6. Build message body from template
-            $textTemplate = get_domain_setting('sms_notification_text');
-
-            // Optionally append transcription block
             if (!empty($data['transcription'])) {
                 $textTemplate .= "\n\nTranscript: " . $data['transcription'];
             }
 
-            $payload['message'] = preg_replace_callback(
+            $messageBody = preg_replace_callback(
                 '/\$\{([a-zA-Z0-9_]+)\}/',
                 function ($matches) use ($data) {
                     return $data[$matches[1]] ?? '';
@@ -142,52 +117,51 @@ class SendNewVoicemailNotificationBySms implements ShouldQueue
                 $textTemplate
             );
 
-            // 7. Store message in DB
-            $message = $this->storeMessage($payload);
+            messaging_webhook_debug('Voicemail notification message rendered', [
+                'message_preview' => mb_substr((string) $messageBody, 0, 120),
+            ]);
 
-            // 8. Send message via provider
-            $messageProvider->send($message->message_uuid);
+            $message = $outbound->create(CreateOutboundMessageData::from([
+                'domainUuid' => $phoneNumberSmsConfig->domain_uuid,
+                'extensionUuid' => null,
+                'source' => $normalizedSource,
+                'destination' => $normalizedDestination,
+                'message' => (string) $messageBody,
+                'origin' => 'voicemail_notification',
+                'carrier' => $phoneNumberSmsConfig->carrier,
+                'media' => [],
+                'meta' => [
+                    'voicemail_uuid' => $voicemail->voicemail_uuid,
+                    'voicemail_id' => $data['voicemail_id'] ?? null,
+                    'notification_type' => 'new_voicemail_sms',
+                ],
+            ]));
+
+            messaging_webhook_debug('Voicemail notification outbound message created', [
+                'message_uuid' => $message->message_uuid,
+                'status' => $message->status,
+                'carrier' => $phoneNumberSmsConfig->carrier,
+            ]);
         }, function () {
-            // Could not obtain lock; this job will be re-queued
+            messaging_webhook_debug('SendNewVoicemailNotificationBySms throttled, releasing', [
+                'data' => $this->data,
+            ]);
+
             return $this->release(15);
         });
     }
 
-    // public function failed(\Throwable $e): void
-    // {
-    //     // Best effort: if the row exists, mark permanent failure and store the last error.
-    //     EmailLog::where('uuid', $this->logId)->update([
-    //         'status'      => 'permanent_failed',   // distinct from interim 'failed' if you want
-    //         'sent_debug_info'  => $e->getMessage(),
-
-    //     ]);
-    // }
-
-    private function getPhoneNumberSmsConfig(string $from): SmsDestinations
+    private function getPhoneNumberSmsConfig(string $from, string $domainUuid): SmsDestinations
     {
-        $phoneNumberSmsConfig = SmsDestinations::where('destination', $from)->first();
+        $phoneNumberSmsConfig = SmsDestinations::where('domain_uuid', $domainUuid)
+            ->where('destination', $from)
+            ->where('enabled', 'true')
+            ->first();
 
         if (!$phoneNumberSmsConfig) {
-            throw new \Exception("SMS configuration not found for phone number " . $from);
+            throw new \RuntimeException("SMS configuration not found for phone number {$from}");
         }
 
         return $phoneNumberSmsConfig;
-    }
-
-    private function storeMessage(array $payload): Messages
-    {
-        $messageModel = new Messages();
-        $messageModel->extension_uuid = null;
-        $messageModel->domain_uuid    = $payload['domain_uuid'] ?? null;
-        $messageModel->source         = $payload['source'] ?? null;
-        $messageModel->destination    = $payload['destination'] ?? null;
-        $messageModel->message        = $payload['message'] ?? null;
-        $messageModel->direction      = "out";
-        $messageModel->type           = 'sms';
-        $messageModel->status         = $payload['status'] ?? null;
-
-        $messageModel->save();
-
-        return $messageModel;
     }
 }
