@@ -43,7 +43,6 @@ class UsersController extends Controller
      */
     public function index(Request $request)
     {
-        logger(session('user.group_level'));
         // Check permissions
         if (!userCheckPermission("user_view")) {
             return redirect('/');
@@ -115,7 +114,8 @@ class UsersController extends Controller
                     'item_options' => route('users.item.options'),
                     'bulk_delete' => route('users.bulk.delete'),
                     'select_all' => route('users.select.all'),
-                ]
+                ],
+                'permissions' => $this->getUserPermissions(),
             ]
         );
     }
@@ -199,7 +199,7 @@ class UsersController extends Controller
             $userDto = UserData::from($user);
             $updateRoute = route('users.update', ['user' => $itemUuid]);
         } else {
-            if (! userCheckPermission('user_create')) {
+            if (! userCheckPermission('user_add')) {
                 return response()->json([
                     'messages' => ['error' => ['Access denied.']]
                 ], 403);
@@ -314,7 +314,7 @@ class UsersController extends Controller
      */
     public function store(StoreUserRequest $request)
     {
-        if (! userCheckPermission('user_create')) {
+        if (! userCheckPermission('user_add')) {
             return response()->json([
                 'messages' => ['error' => ['Access denied.']]
             ], 403);
@@ -646,6 +646,7 @@ class UsersController extends Controller
     public function getUserPermissions()
     {
         $permissions = [];
+        $permissions['user_create'] = userCheckPermission('user_add');
         $permissions['user_group_view'] = userCheckPermission('user_group_view');
         $permissions['user_group_edit'] = userCheckPermission('user_group_edit');
         $permissions['user_status'] = userCheckPermission('user_status');
