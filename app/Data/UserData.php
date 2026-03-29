@@ -11,16 +11,19 @@ use Spatie\LaravelData\Attributes\DataCollectionOf;
 class UserData extends Data
 {
     public function __construct(
-        public string  $user_uuid,
-        public ?string  $user_email,
-        public ?string  $first_name,
-        public ?string  $last_name,
-        public ?string  $name_formatted,
-        public string  $user_enabled,
+        public string $user_uuid,
+        public ?string $user_email,
+        public ?string $first_name,
+        public ?string $last_name,
+        public ?string $name_formatted,
+        public string $user_enabled,
         public ?string $domain_uuid,
         public ?string $language,
         public ?string $time_zone,
         public ?string $extension_uuid,
+
+        public ?bool $can_manage_target = false,
+        public ?bool $can_delete_target = false,
 
         public ?ExtensionListData $extension = null,
 

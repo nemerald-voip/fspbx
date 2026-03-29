@@ -94,10 +94,6 @@ class HandleInertiaRequests extends Middleware
 
         $permissions['active_calls_view_global'] = userCheckPermission('call_active_all');
 
-        $permissions['virtual_receptionist_create'] = userCheckPermission('ivr_menu_add');
-        $permissions['virtual_receptionist_update'] = userCheckPermission('ivr_menu_edit');
-        $permissions['virtual_receptionist_destroy'] = userCheckPermission('ivr_menu_delete');
-
         $permissions['wakeup_calls_list_view'] = userCheckPermission('wakeup_calls_list_view');
         $permissions['wakeup_calls_create'] = userCheckPermission('wakeup_calls_create');
         $permissions['wakeup_calls_edit'] = userCheckPermission('wakeup_calls_edit');
@@ -121,10 +117,6 @@ class HandleInertiaRequests extends Middleware
         $permissions['group_update'] = userCheckPermission('group_edit');
         $permissions['group_destroy'] = userCheckPermission('group_delete');
         $permissions['domain_groups_view'] = userCheckPermission('domain_groups_list_view');
-
-        $permissions['user_create'] = userCheckPermission('user_add');
-        $permissions['user_update'] = userCheckPermission('user_edit');
-        $permissions['user_destroy'] = userCheckPermission('user_delete');
 
         $permissions['extension_create'] = userCheckPermission('extension_add');
         $permissions['extension_update'] = userCheckPermission('extension_edit');

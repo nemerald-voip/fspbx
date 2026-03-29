@@ -42,10 +42,10 @@
                 <!-- Checkbox + Name column -->
                 <TableColumnHeader
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
-                    <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
-                        class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
-                        :has-selected-items="selectedItems.length > 0" />
+                    <!-- <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
+                        class="h-4 w-4 rounded border-gray-300 text-indigo-600"> -->
+                    <!-- <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
+                        :has-selected-items="selectedItems.length > 0" /> -->
                     <span class="pl-4">Name</span>
                 </TableColumnHeader>
 
@@ -89,11 +89,19 @@
                     <!-- Checkbox + Name -->
                     <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.ring_group_extension">
                         <div class="flex items-center">
-                            <input v-if="row.user_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
-                                :value="row.user_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="ml-9"
-                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.user_update, }"
-                                @click="page.props.auth.can.user_update && handleEditButtonClick(row.user_uuid)">
+                            <!-- <input
+                                v-if="row.user_uuid && row.can_delete_target"
+                                v-model="selectedItems"
+                                type="checkbox"
+                                name="action_box[]"
+                                :value="row.user_uuid"
+                                class="h-4 w-4 rounded border-gray-300 text-indigo-600"
+                            /> -->
+                            <div
+                                class="ml-4"
+                                :class="{ 'cursor-pointer hover:text-gray-900': row.can_manage_target }"
+                                @click="row.can_manage_target && handleEditButtonClick(row.user_uuid)"
+                            >
                                 <span class="flex items-center">
                                     {{ row.name_formatted }}
                                 </span>
@@ -127,20 +135,31 @@
 
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="page.props.auth.can.user_update" :content="'Edit'" position='TopCenter'
-                                    target="#destination_tooltip_target">
+                                <ejs-tooltip
+                                    v-if="row.can_manage_target"
+                                    :content="'Edit'"
+                                    position="TopCenter"
+                                    target="#destination_tooltip_target"
+                                >
                                     <div id="destination_tooltip_target">
-                                        <PencilSquareIcon @click="handleEditButtonClick(row.user_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-
+                                        <PencilSquareIcon
+                                            @click="handleEditButtonClick(row.user_uuid)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                        />
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="page.props.auth.can.user_destroy" :content="'Delete'"
-                                    position='TopCenter' target="#delete_tooltip_target">
+                               <ejs-tooltip
+                                    v-if="row.can_delete_target"
+                                    :content="'Delete'"
+                                    position="TopCenter"
+                                    target="#delete_tooltip_target"
+                                >
                                     <div id="delete_tooltip_target">
-                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.user_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                        <TrashIcon
+                                            @click="handleSingleItemDeleteRequest(row.user_uuid)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                        />
                                     </div>
                                 </ejs-tooltip>
                             </div>
