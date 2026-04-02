@@ -258,8 +258,8 @@ class UploadCallRecordingsToS3Storage extends Command
 
         $process = new Process([
             'ffmpeg',
-            '-nostdin',        // never prompt / read from stdin
-            '-y',              // overwrite output if it exists
+            '-nostdin',
+            '-y',
             '-i',
             $recordingFile,
             '-b:a',
@@ -271,9 +271,13 @@ class UploadCallRecordingsToS3Storage extends Command
             $mp3File,
         ]);
 
+        $process->setTimeout(7200); // 2 hours
+
         try {
             $process->mustRun();
             return $mp3File;
+        } catch (ProcessTimedOutException $e) {
+            logger('FFmpeg timed out for file: ' . $recordingFile . '. Error: ' . $e->getMessage());            return null;
         } catch (ProcessFailedException $e) {
             logger($e->getMessage());
             return null;
