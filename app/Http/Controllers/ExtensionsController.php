@@ -44,6 +44,7 @@ use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\HeadingRowImport;
 use App\Services\CallRoutingOptionsService;
 use Maatwebsite\Excel\Excel as ExcelWriter;
+use App\Http\Requests\BulkUpdateExtensionRequest;
 use App\Http\Requests\StoreExtensionRequest;
 use App\Http\Requests\UpdateExtensionRequest;
 use Spatie\Activitylog\Facades\CauserResolver;
@@ -105,6 +106,7 @@ class ExtensionsController extends Controller
                     'current_page' => route('extensions.index'),
                     'data_route' => route('extensions.data'),
                     'item_options' => route('extensions.item.options'),
+                    'bulk_update' => route('extensions.bulk.update'),
                     'bulk_delete' => route('extensions.bulk.delete'),
                     'select_all' => route('extensions.select.all'),
                     'registrations' => route('extensions.registrations'),
@@ -575,31 +577,6 @@ class ExtensionsController extends Controller
                 ]);
             }
 
-            $phone_numbers = QueryBuilder::for(Destinations::class)
-                ->allowedFilters(['destination_number', 'destination_description'])
-                ->allowedSorts('destination_number')
-                ->where('destination_enabled', 'true')
-                ->where('domain_uuid', $currentDomain)
-                ->get([
-                    'destination_uuid',
-                    'destination_number',
-                    'destination_description',
-                ])
-                ->each->append('label', 'destination_number_e164')
-                ->map(function ($destination) {
-                    return [
-                        'value' => $destination->destination_number_e164,
-                        'label' => $destination->label,
-                    ];
-                })
-                ->prepend([
-                    'value' => '',
-                    'label' => 'Main Company Number',
-                ])
-                ->values()
-                ->toArray();
-
-
             $allVoicemails =  Voicemails::where('domain_uuid', $currentDomain)
                 ->with(['extension' => function ($query) use ($currentDomain) {
                     $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
@@ -702,9 +679,6 @@ class ExtensionsController extends Controller
                 ]
             ];
 
-            $routingOptionsService = new CallRoutingOptionsService;
-            $forwardingTypes = $routingOptionsService->forwardingTypes;
-
             $music_on_hold_options = getMusicOnHoldCollection(session('domain_uuid'));
 
 
@@ -752,6 +726,33 @@ class ExtensionsController extends Controller
             $updateRoute = null;
         }
 
+        $routingOptionsService = new CallRoutingOptionsService;
+        $forwardingTypes = $routingOptionsService->forwardingTypes;
+
+        $phone_numbers = QueryBuilder::for(Destinations::class)
+            ->allowedFilters(['destination_number', 'destination_description'])
+            ->allowedSorts('destination_number')
+            ->where('destination_enabled', 'true')
+            ->where('domain_uuid', $currentDomain)
+            ->get([
+                'destination_uuid',
+                'destination_number',
+                'destination_description',
+            ])
+            ->each->append('label', 'destination_number_e164')
+            ->map(function ($destination) {
+                return [
+                    'value' => $destination->destination_number_e164,
+                    'label' => $destination->label,
+                ];
+            })
+            ->prepend([
+                'value' => '',
+                'label' => 'Main Company Number',
+            ])
+            ->values()
+            ->toArray();
+
         // 2) Permissions array
         $permissions = $this->getUserPermissions();
 
@@ -759,6 +760,7 @@ class ExtensionsController extends Controller
         $routes = array_merge($routes, [
             'store_route'  => route('extensions.store'),
             'update_route' => $updateRoute ?? null,
+            'bulk_update_route' => route('extensions.bulk.update'),
             'devices' => $deviceRoute ?? null,
             'get_routing_options' => route('routing.options'),
             'device_bulk_unassign' => route('devices.bulk.unassign'),
@@ -1374,6 +1376,254 @@ public function store(StoreExtensionRequest $request)
         }
 
         return $followMe->follow_me_uuid;
+    }
+
+    public function bulkUpdate(BulkUpdateExtensionRequest $request)
+    {
+        $data = $request->validated();
+        $ids = array_values(array_unique($data['items'] ?? []));
+
+        unset($data['items']);
+        $data = $this->filterBulkExtensionPayload($data);
+
+        if (empty($ids) || empty($data)) {
+            return response()->json([
+                'success' => false,
+                'errors' => ['input' => ['No extensions or fields provided for update.']]
+            ], 422);
+        }
+
+        $currentDomain = session('domain_uuid');
+        $canManageVoicemail = userCheckPermission('extension_voicemail_settings');
+
+        try {
+            DB::beginTransaction();
+
+            $extensions = Extensions::with(['advSettings'])
+                ->with(['voicemail' => function ($query) use ($currentDomain) {
+                    $query->where('domain_uuid', $currentDomain);
+                }])
+                ->where('domain_uuid', $currentDomain)
+                ->whereIn('extension_uuid', $ids)
+                ->get();
+
+            foreach ($extensions as $extension) {
+                $extensionData = $this->prepareBulkExtensionUpdateData($extension, $data);
+
+                if (!empty($extensionData)) {
+                    $extension->fill($extensionData);
+
+                    if ($extension->isDirty()) {
+                        $extension->save();
+                    }
+                }
+
+                if (array_key_exists('suspended', $data)) {
+                    $extension->advSettings()->updateOrCreate(
+                        ['extension_uuid' => $extension->extension_uuid],
+                        ['suspended' => filter_var($data['suspended'], FILTER_VALIDATE_BOOLEAN)]
+                    );
+                }
+
+                if ($canManageVoicemail) {
+                    $this->syncBulkVoicemailUpdate($extension, $data, $currentDomain);
+                }
+
+                FusionCache::clear("directory:" . $extension->extension . "@" . $extension->user_context);
+            }
+
+            if (isset($_SESSION['destinations']['array'])) {
+                unset($_SESSION['destinations']['array']);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'messages' => ['success' => ['Selected extensions updated successfully.']],
+            ], 200);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            logger('ExtensionsController@bulkUpdate error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to update selected extensions.']]
+            ], 500);
+        }
+    }
+
+    protected function filterBulkExtensionPayload(array $data): array
+    {
+        $allowed = [];
+        $permissions = $this->getUserPermissions();
+
+        foreach (['directory_first_name', 'directory_last_name', 'description', 'call_timeout'] as $field) {
+            if (array_key_exists($field, $data)) {
+                $allowed[$field] = $data[$field];
+            }
+        }
+
+        if ($permissions['extension_suspended'] && array_key_exists('suspended', $data)) {
+            $allowed['suspended'] = $data['suspended'];
+        }
+
+        if ($permissions['extension_do_not_disturb'] && array_key_exists('do_not_disturb', $data)) {
+            $allowed['do_not_disturb'] = $data['do_not_disturb'];
+        }
+
+        if ($permissions['extension_user_record'] && array_key_exists('user_record', $data)) {
+            $allowed['user_record'] = $data['user_record'];
+        }
+
+        if ($permissions['manage_external_caller_id_number'] && array_key_exists('outbound_caller_id_number', $data)) {
+            $allowed['outbound_caller_id_number'] = $data['outbound_caller_id_number'];
+        }
+
+        if ($permissions['manage_emergency_caller_id_number'] && array_key_exists('emergency_caller_id_number', $data)) {
+            $allowed['emergency_caller_id_number'] = $data['emergency_caller_id_number'];
+        }
+
+        $forwardPermissionMap = [
+            'forward_all' => 'extension_forward_all',
+            'forward_busy' => 'extension_forward_busy',
+            'forward_no_answer' => 'extension_forward_no_answer',
+            'forward_user_not_registered' => 'extension_forward_not_registered',
+        ];
+
+        foreach ($forwardPermissionMap as $prefix => $permissionKey) {
+            if (!$permissions[$permissionKey]) {
+                continue;
+            }
+
+            foreach ([
+                "{$prefix}_enabled",
+                "{$prefix}_action",
+                "{$prefix}_target",
+                "{$prefix}_external_target",
+            ] as $field) {
+                if (array_key_exists($field, $data)) {
+                    $allowed[$field] = $data[$field];
+                }
+            }
+        }
+
+        if ($permissions['manage_voicemail']) {
+            foreach ([
+                'voicemail_mail_to',
+                'voicemail_enabled',
+                'voicemail_password',
+                'voicemail_description',
+                'voicemail_file',
+            ] as $field) {
+                if (array_key_exists($field, $data)) {
+                    $allowed[$field] = $data[$field];
+                }
+            }
+        }
+
+        if ($permissions['manage_voicemail_transcription'] && array_key_exists('voicemail_transcription_enabled', $data)) {
+            $allowed['voicemail_transcription_enabled'] = $data['voicemail_transcription_enabled'];
+        }
+
+        if ($permissions['manage_voicemail_auto_delete'] && array_key_exists('voicemail_local_after_email', $data)) {
+            $allowed['voicemail_local_after_email'] = $data['voicemail_local_after_email'];
+        }
+
+        return $allowed;
+    }
+
+    protected function prepareBulkExtensionUpdateData(Extensions $extension, array $data): array
+    {
+        $extensionData = [];
+
+        foreach ([
+            'description',
+            'do_not_disturb',
+            'user_record',
+            'call_timeout',
+            'outbound_caller_id_number',
+            'emergency_caller_id_number',
+        ] as $field) {
+            if (array_key_exists($field, $data)) {
+                $extensionData[$field] = $data[$field];
+            }
+        }
+
+        $nameChanged = false;
+
+        if (array_key_exists('directory_first_name', $data)) {
+            $extensionData['directory_first_name'] = $data['directory_first_name'];
+            $nameChanged = true;
+        }
+
+        if (array_key_exists('directory_last_name', $data)) {
+            $extensionData['directory_last_name'] = $data['directory_last_name'];
+            $nameChanged = true;
+        }
+
+        if ($nameChanged) {
+            $firstName = $extensionData['directory_first_name'] ?? $extension->directory_first_name;
+            $lastName = $extensionData['directory_last_name'] ?? $extension->directory_last_name;
+
+            $extensionData['effective_caller_id_name'] = trim(collect([$firstName, $lastName])->filter()->implode(' '));
+            $extensionData['effective_caller_id_number'] = $extension->extension;
+        }
+
+        foreach (['forward_all', 'forward_busy', 'forward_no_answer', 'forward_user_not_registered'] as $prefix) {
+            $enabledKey = "{$prefix}_enabled";
+            $destinationKey = "{$prefix}_destination";
+
+            if (!array_key_exists($enabledKey, $data)) {
+                continue;
+            }
+
+            $enabled = filter_var($data[$enabledKey] ?? false, FILTER_VALIDATE_BOOLEAN);
+            $extensionData[$enabledKey] = $enabled ? 'true' : 'false';
+            $extensionData[$destinationKey] = $enabled
+                ? $this->buildForwardDestinationTarget($data, $prefix)
+                : '';
+        }
+
+        return $extensionData;
+    }
+
+    protected function syncBulkVoicemailUpdate(Extensions $extension, array $data, string $currentDomain): void
+    {
+        $voicemailFields = [
+            'voicemail_mail_to',
+            'voicemail_enabled',
+            'voicemail_password',
+            'voicemail_description',
+            'voicemail_transcription_enabled',
+            'voicemail_file',
+            'voicemail_local_after_email',
+        ];
+
+        $submittedVoicemailFields = array_intersect_key($data, array_flip($voicemailFields));
+
+        if (empty($submittedVoicemailFields)) {
+            return;
+        }
+
+        $voicemail = $extension->voicemail;
+        $shouldCreateVoicemail = !$voicemail && (($submittedVoicemailFields['voicemail_enabled'] ?? 'false') === 'true');
+
+        if (!$voicemail && !$shouldCreateVoicemail) {
+            return;
+        }
+
+        $payload = array_merge($submittedVoicemailFields, [
+            'domain_uuid' => $currentDomain,
+            'extension_uuid' => $extension->extension_uuid,
+            'voicemail_id' => $extension->extension,
+        ]);
+
+        if ($voicemail) {
+            $voicemail->update($payload);
+            return;
+        }
+
+        Voicemails::create($payload);
     }
 
 
