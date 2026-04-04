@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdateHotelRoomRequest;
+use App\Jobs\RetryLoggedEmail;
 use App\Models\EmailLog;
-use App\Models\HotelRoom;
 use App\Models\Extensions;
+use App\Models\HotelRoom;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
-use App\Http\Requests\UpdateHotelRoomRequest;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class EmailLogsController extends Controller
 {
@@ -220,5 +221,57 @@ class EmailLogsController extends Controller
                 'messages' => ['error' => ['An error occurred while deleting the selected hotel room(s).']]
             ], 500);
         }
+    }
+
+    public function retry(Request $request)
+    {
+        if (! userCheckPermission('logs_list_view')) {
+            return response()->json([
+                'errors' => ['server' => ['Permission denied.']]
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'items' => ['required', 'array', 'min:1'],
+            'items.*' => ['required', 'uuid'],
+        ]);
+
+        // $domainUuid = session('domain_uuid');
+
+        $logs = EmailLog::query()
+            // ->where('domain_uuid', $domainUuid)
+            ->whereIn('uuid', $validated['items'])
+            ->get()
+            ->keyBy('uuid');
+
+        $messages = [];
+        $errors = [];
+
+        foreach ($validated['items'] as $uuid) {
+            $log = $logs->get($uuid);
+
+            $log->update([
+                'status' => 'queued',
+            ]);
+
+            if (! $log) {
+                $errors[] = "Email log {$uuid} was not found.";
+                continue;
+            }
+
+            RetryLoggedEmail::dispatch($log->uuid);
+
+            $messages[] = "Email to {$log->to} has been queued for retry.";
+        }
+
+        if (empty($messages)) {
+            return response()->json([
+                'errors' => ['server' => $errors ?: ['No eligible emails were selected for retry.']]
+            ], 422);
+        }
+
+        return response()->json([
+            'messages' => ['server' => $messages],
+        ], 200);
     }
 }

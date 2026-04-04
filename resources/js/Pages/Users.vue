@@ -409,22 +409,41 @@ const getItemOptions = (itemUuid = null) => {
 
 const handleErrorResponse = (error) => {
     if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-         console.log(error.response.data);
-        showNotification('error', error.response.data.errors || { request: [error.message] });
+        console.log(error.response.data);
+
+        const data = error.response.data;
+
+        // Prefer the same structure the success flow already uses
+        if (data.messages) {
+            const messages = { ...data.messages };
+
+            // In local/dev, optionally append debug details
+            if (data.debug?.message) {
+                messages.error = [
+                    ...(messages.error || []),
+                    data.debug.message,
+                ];
+            }
+
+            showNotification('error', messages);
+            return;
+        }
+
+        // Validation-style fallback
+        if (data.errors) {
+            showNotification('error', { error: Object.values(data.errors).flat() });
+            return;
+        }
+
+        showNotification('error', { error: [error.message] });
     } else if (error.request) {
-        // The request was made but no response was received
-        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-        // http.ClientRequest in node.js
-        showNotification('error', { request: [error.request] });
+        showNotification('error', { error: ['No response received from the server.'] });
         console.log(error.request);
     } else {
-        // Something happened in setting up the request that triggered an Error
-        showNotification('error', { request: [error.message] });
+        showNotification('error', { error: [error.message] });
         console.log(error.message);
     }
-}
+};
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {

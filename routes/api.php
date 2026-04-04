@@ -72,7 +72,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
 
     // Email logs
     Route::resource('/email-logs', EmailLogsController::class);
-    // Route::post('/email-logs/item-options', [HotelRoomController::class, 'getItemOptions'])->name('hotel-rooms.item.options');
+    Route::post('/email-logs/retry', [EmailLogsController::class, 'retry'])->name('email-logs.retry');
 
     // Inbound Webhooks
     Route::resource('/inbound-webhooks', InboundWebhooksController::class);
