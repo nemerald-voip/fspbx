@@ -12,7 +12,7 @@ print_warn()    { echo -e "\e[33m$1 \e[0m"; }
 set -euo pipefail
 
 # === CONFIGURATION ===
-PG_VERSION="17"
+PG_VERSION="18"
 PG_CONF="/etc/postgresql/${PG_VERSION}/main/postgresql.conf"
 PG_HBA="/etc/postgresql/${PG_VERSION}/main/pg_hba.conf"
 PG_SERVICE="postgresql"
