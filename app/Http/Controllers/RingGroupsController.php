@@ -330,6 +330,8 @@ class RingGroupsController extends Controller
             $ring_back_tones = getRingBackTonesCollectionGrouped(session('domain_uuid'));
 
             $openAiService = app(\App\Services\OpenAIService::class);
+            $ttsRegistry = app(\App\Services\Tts\TtsProviderRegistry::class);
+            $ttsProvider = $ttsRegistry->make();
 
             // Construct the itemOptions object
             $itemOptions = [
@@ -340,9 +342,10 @@ class RingGroupsController extends Controller
                 'routes' => $routes,
                 'routing_types' => $routingTypes,
                 'forwarding_types' => $forwardingTypes,
-                'voices' => $openAiService->getVoices(),
-                'default_voice' => isset($openAiService) && $openAiService ? $openAiService->getDefaultVoice() : null,
-                'speeds' => $openAiService->getSpeeds(),
+                'voices' => $ttsProvider->getVoices(),
+                'default_voice' => $ttsProvider->getDefaultVoice(),
+                'speeds' => $ttsProvider->getSpeeds(),
+                'tts_voices_route' => route('tts.voices'),
                 'phone_call_instructions' => $phoneCallInstructions,
                 'sample_message' => $sampleMessage,
                 'greetings' => $greetingsArray,

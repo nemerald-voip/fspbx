@@ -693,6 +693,7 @@ class VoicemailController extends Controller
                 'voices' => $openAiService->getVoices(),
                 'default_voice' => isset($openAiService) && $openAiService ? $openAiService->getDefaultVoice() : null,
                 'speeds' => $openAiService->getSpeeds(),
+                'tts_voices_route' => route('tts.voices'),
                 'routes' => $routes,
                 'phone_call_instructions' => $phoneCallInstructions,
                 'phone_call_instructions_for_name' => $phoneCallInstructionsForName,
