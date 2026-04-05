@@ -6,6 +6,7 @@ use App\Http\Requests\TextToSpeechRequest;
 use App\Models\Recordings;
 use App\Models\SwitchVariable;
 use App\Services\OpenAIService;
+use App\Services\Tts\TtsProviderRegistry;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Facades\Storage;
@@ -116,16 +117,20 @@ class GreetingsController extends Controller
     }
 
 
-    public function textToSpeech(OpenAIService $openAIService, TextToSpeechRequest $request)
+    public function textToSpeech(TtsProviderRegistry $registry, TextToSpeechRequest $request)
     {
         $input = $request->input('input');
-        $model = $request->input('model');
-        $voice = $request->input('voice');
+        $providerKey = $request->input('provider');
         $responseFormat = $request->input('response_format');
-        $speed = $request->input('speed');
 
         try {
-            $response = $openAIService->textToSpeech($model, $input, $voice, $responseFormat, $speed);
+            $provider = $registry->make($providerKey);
+            $response = $provider->textToSpeech($input, [
+                'model'           => $request->input('model'),
+                'voice'           => $request->input('voice'),
+                'response_format' => $responseFormat,
+                'speed'           => $request->input('speed'),
+            ]);
 
             $domainName = session('domain_name');
 
@@ -162,6 +167,33 @@ class GreetingsController extends Controller
                 'success' => false,
                 'errors' => ['server' => [$e->getMessage()]]
             ], 500);  // 500 Internal Server Error for any other errors
+        }
+    }
+
+    /**
+     * Return available voices, speeds, and formats for a given TTS provider.
+     */
+    public function getTtsVoices(TtsProviderRegistry $registry, Request $request)
+    {
+        $providerKey = $request->input('provider', 'openai');
+
+        try {
+            $provider = $registry->make($providerKey);
+
+            return response()->json([
+                'voices'         => $provider->getVoices(),
+                'speeds'         => $provider->getSpeeds(),
+                'formats'        => $provider->getOutputFormats(),
+                'default_voice'  => $provider->getDefaultVoice(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'voices' => [],
+                'speeds' => [],
+                'formats' => [],
+                'default_voice' => null,
+                'error' => $e->getMessage(),
+            ], 422);
         }
     }
 
