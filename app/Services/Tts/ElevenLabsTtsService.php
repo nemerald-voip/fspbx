@@ -117,7 +117,6 @@ class ElevenLabsTtsService implements TtsProviderInterface
     public function getOutputFormats(): array
     {
         return [
-            ['value' => 'wav', 'label' => 'WAV (16-bit PCM)'],
             ['value' => 'mp3', 'label' => 'MP3 (128kbps)'],
             ['value' => 'ulaw', 'label' => 'u-law 8kHz (telephony)'],
             ['value' => 'pcm', 'label' => 'PCM 16kHz'],
@@ -130,11 +129,11 @@ class ElevenLabsTtsService implements TtsProviderInterface
     private function mapOutputFormat(string $format): string
     {
         return match ($format) {
-            'wav'  => 'pcm_44100',
             'mp3'  => 'mp3_44100_128',
+            'wav'  => 'mp3_44100_128',
             'ulaw' => 'ulaw_8000',
             'pcm'  => 'pcm_16000',
-            default => 'pcm_44100',
+            default => 'mp3_44100_128',
         };
     }
 
