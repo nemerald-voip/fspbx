@@ -37,7 +37,7 @@ class ElevenLabsTtsService implements TtsProviderInterface
 
         $body = [
             'text'     => $input,
-            'model_id' => $options['model'] ?? 'eleven_multilingual_v2',
+            'model_id' => 'eleven_multilingual_v2',
         ];
 
         // Optional voice settings
