@@ -57,8 +57,12 @@
                                     device_profile_uuid: options.item?.device_profile_uuid,
                                     domain_uuid: options.item?.domain_uuid,
                                     device_lines: options.lines,
-                                    device_keys: normalizeDeviceKeysForForm(options.item?.keys ?? []),
-                                    device_settings: options.item?.settings,
+                                    device_keys: normalizeDeviceKeysForForm(
+                                        filterKeysByArea(options.item?.keys ?? [], 'main')
+                                    ),
+                                    multi_purpose_keys: normalizeDeviceKeysForForm(
+                                        filterKeysByArea(options.item?.keys ?? [], 'multi_purpose')
+                                    ), device_settings: options.item?.settings,
                                     device_description: options.item?.device_description ?? null,
                                 }">
 
@@ -111,6 +115,17 @@
                                                         // 'submit_keys',
 
                                                     ]" :conditions="[() => options?.item?.device_vendor == 'polycom']" /> -->
+
+                                                <FormTab name="multi_purpose_keys" label="Multi Purpose Keys" :elements="[
+                                                    'multi_purpose_keys_container',
+                                                    'multi_purpose_keys_title',
+                                                    // 'add_key',
+                                                    'multi_purpose_keys',
+                                                    'multi_purpose_keys_container2',
+                                                    'multi_purpose_keys_submit_keys',
+
+                                                ]"
+                                                    :conditions="[() => options?.item?.device_vendor == 'grandstream']" />
                                                 <FormTab name="cloud_provisioning" label="Cloud Provisioning" :elements="[
                                                     'cloud_provisioning_title',
                                                     'cloud_provisioning_status',
@@ -282,17 +297,15 @@
 
                                                                 }" />
 
-                                                            <SelectElement v-if="!isExternalLine(index)" name="auth_id" label="Ext/Number"
-                                                                :items="options.extensions" label-prop="name"
-                                                                :search="true" :native="false" input-type="search"
-                                                                autocomplete="off" :columns="{
+                                                            <SelectElement v-if="!isExternalLine(index)" name="auth_id"
+                                                                label="Ext/Number" :items="options.extensions"
+                                                                label-prop="name" :search="true" :native="false"
+                                                                input-type="search" autocomplete="off" :columns="{
 
                                                                     sm: {
                                                                         container: 4,
                                                                     },
-                                                                }"
-                                                                placeholder="Choose Ext/Number"
-                                                                :floating="false"
+                                                                }" placeholder="Choose Ext/Number" :floating="false"
                                                                 @change="(newValue, oldValue, el$) => {
 
                                                                     el$.form$.el$('device_lines').children$[index].children$['display_name'].update(newValue);
@@ -302,8 +315,7 @@
                                                                 }" />
 
                                                             <StaticElement v-else name="external_auth_hint"
-                                                                label="Ext/Number"
-                                                                :columns="{
+                                                                label="Ext/Number" :columns="{
 
                                                                     sm: {
                                                                         container: 4,
@@ -352,10 +364,8 @@
                                                                         :floating="false"
                                                                         :default="options.default_line_options?.server_address" />
 
-                                                                    <TextElement name="user_id"
-                                                                        label="User ID"
-                                                                        placeholder="Enter user Id"
-                                                                        :floating="false"
+                                                                    <TextElement name="user_id" label="User ID"
+                                                                        placeholder="Enter user Id" :floating="false"
                                                                         :default="options.default_line_options?.user_id"
                                                                         :conditions="[
                                                                             () => options?.permissions?.manage_device_line_user_id,
@@ -363,8 +373,7 @@
                                                                         ]" />
 
                                                                     <TextElement name="auth_id" id="auth_id2"
-                                                                        label="Auth ID"
-                                                                        placeholder="Enter auth Id"
+                                                                        label="Auth ID" placeholder="Enter auth Id"
                                                                         :floating="false"
                                                                         :default="options.default_line_options?.auth_id"
                                                                         :conditions="[
@@ -372,8 +381,7 @@
                                                                             () => form$.el$(`device_lines.${index}.line_type_id`)?.value === 'externalline'
                                                                         ]" />
 
-                                                                    <TextElement name="password"
-                                                                        label="SIP Password"
+                                                                    <TextElement name="password" label="SIP Password"
                                                                         placeholder="Enter sip password"
                                                                         :floating="false"
                                                                         :default="options.default_line_options?.password"
@@ -381,7 +389,7 @@
                                                                             () => options?.permissions?.manage_device_line_password,
                                                                             () => form$.el$(`device_lines.${index}.line_type_id`)?.value === 'externalline'
                                                                         ]" />
-                                                                        
+
                                                                     <TextElement name="server_address_secondary"
                                                                         label="Secondary Server Address"
                                                                         placeholder="Enter secondary server address"
@@ -451,6 +459,8 @@
                                                         <ObjectElement :name="index"
                                                             :key="form$?.data?.device_keys?.[index]?.key_uuid">
 
+                                                            <HiddenElement name="key_area" :meta="true" default="main" />
+
                                                             <HiddenElement name="key_uuid" :meta="true"
                                                                 :default="Math.random().toString(36).slice(2)" />
                                                             <HiddenElement name="_generated_label" :meta="true"
@@ -464,7 +474,7 @@
                                                                 sm: {
                                                                     container: 1,
                                                                 },
-                                                            }" :default="nextKeyNumber" />
+                                                            }" :default="getNextKeyNumber('device_keys')" />
 
                                                             <SelectElement name="key_type" label="Type"
                                                                 :items="keyTypes" :search="true" label-prop="name"
@@ -561,7 +571,8 @@
                                                     align="right" />
 
                                                 <!-- Secondar Screen Keys -->
-                                                <StaticElement name="secondary_screen_keys_title" tag="h4" content="Device Secondary Screen Keys"
+                                                <StaticElement name="secondary_screen_keys_title" tag="h4"
+                                                    content="Device Secondary Screen Keys"
                                                     description="Assign function keys to this device's secondary screen." />
 
                                                 <GroupElement name="secondary_screen_keys_container" />
@@ -585,7 +596,7 @@
                                                                 sm: {
                                                                     container: 1,
                                                                 },
-                                                            }" :default="nextKeyNumber" />
+                                                            }" :default="getNextKeyNumber('secondary')" />
 
                                                             <SelectElement name="key_type" label="Type"
                                                                 :items="keyTypes" :search="true" label-prop="name"
@@ -679,8 +690,135 @@
 
                                                 <GroupElement name="secondary_screen_keys_container2" />
 
-                                                <ButtonElement name="secondary_screen_submit_keys" button-label="Save" :submits="true"
-                                                    align="right" />
+                                                <ButtonElement name="secondary_screen_submit_keys" button-label="Save"
+                                                    :submits="true" align="right" />
+
+                                                <!-- Multi Purpose Keys -->
+                                                <StaticElement name="multi_purpose_keys_title" tag="h4"
+                                                    content="Multi Purpose Keys"
+                                                    description="Assign multi purpose keys to this device. Make sure your device supports this feature." />
+
+                                                <GroupElement name="multi_purpose_keys_container" />
+                                                <ListElement name="multi_purpose_keys" :sort="true" size="sm"
+                                                    :controls="{ add: options.permissions.device_key_create, remove: options.permissions.device_key_destroy, sort: options.permissions.device_key_up }"
+                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                                    <template #default="{ index }">
+                                                        <ObjectElement :name="index"
+                                                            :key="form$?.data?.multi_purpose_keys?.[index]?.key_uuid">
+
+                                                            <HiddenElement name="key_area" :meta="true"
+                                                                default="multi_purpose" />
+
+                                                            <HiddenElement name="key_uuid" :meta="true"
+                                                                :default="Math.random().toString(36).slice(2)" />
+                                                            <HiddenElement name="_generated_label" :meta="true"
+                                                                :default="null" />
+
+                                                            <TextElement name="key_index" label="Key" :rules="[
+                                                                'nullable',
+                                                                'numeric',
+                                                            ]" autocomplete="off" :columns="{
+
+                                                                sm: {
+                                                                    container: 1,
+                                                                },
+                                                            }" :default="getNextKeyNumber('multi_purpose_keys')" />
+
+                                                            <SelectElement name="key_type" label="Type"
+                                                                :items="keyTypes" :search="true" label-prop="name"
+                                                                :native="false" input-type="search" autocomplete="off"
+                                                                :columns="{
+
+                                                                    sm: {
+                                                                        container: 3,
+                                                                    },
+                                                                }" placeholder="Choose Function" :floating="false"
+                                                                @change="(newValue, oldValue, el$) => {
+
+                                                                    let key_value_select = el$.form$.el$('multi_purpose_keys.' + index + '.key_value_select')
+
+                                                                    // only clear when this isn’t the very first time (i.e. oldValue was set)
+                                                                    if (oldValue !== null && oldValue !== undefined) {
+                                                                        key_value_select.clear();
+                                                                    }
+
+                                                                    key_value_select.updateItems()
+
+                                                                }" />
+
+                                                            <SelectElement name="key_value_select" label="Value"
+                                                                label-prop="name" value-prop="extension" :search="true"
+                                                                :native="false" :submit="false"
+                                                                :create="['blf', 'speed_dial', 'park']
+                                                                    .includes(form$?.data?.multi_purpose_keys?.[index]?.key_type)"
+                                                                :append-new-option="false" input-type="search"
+                                                                autocomplete="off" :columns="{
+
+                                                                    sm: {
+                                                                        container: 4,
+                                                                    },
+                                                                }" placeholder="Choose Ext/Number" :floating="false"
+                                                                :items="(query, input) => getKeyValueSelectItems(query, input, index, 'multi_purpose_keys')"
+                                                                @change="(newValue, oldValue, el$) => updateLabel(newValue, oldValue, el$, index, 'multi_purpose_keys')"
+                                                                :conditions="[
+                                                                    ['multi_purpose_keys.*.key_type', ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']]
+                                                                ]" />
+
+                                                            <TextElement name="key_value_text" label="Value" :columns="{
+                                                                sm: {
+                                                                    container: 4,
+                                                                },
+                                                            }" placeholder="Enter Value" :floating="false" :disabled="[
+                                                                ['multi_purpose_keys.*.key_type', '']
+                                                            ]" :conditions="[
+                                                                ['multi_purpose_keys.*.key_type', '!=', ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']]
+                                                            ]" />
+
+                                                            <HiddenElement name="key_value" :meta="true"
+                                                                :default="null" />
+
+                                                            <TextElement name="key_label" label="Label" :columns="{
+
+                                                                default: {
+                                                                    container: 10,
+                                                                },
+                                                                sm: {
+                                                                    container: 3,
+                                                                },
+                                                            }" :placeholder="form$?.data?.multi_purpose_keys?.[index]?._generated_label ?? 'Enter Value'"
+                                                                :floating="false" :disabled="[
+                                                                    ['multi_purpose_keys.*.key_type', ['', 'line']]
+                                                                ]" />
+
+                                                            <StaticElement label="&nbsp;" name="key_advanced" :columns="{
+
+                                                                default: {
+                                                                    container: 1,
+                                                                },
+                                                                sm: {
+                                                                    container: 1,
+                                                                },
+                                                            }"
+                                                                :conditions="[() => options?.permissions?.device_key_advanced]">
+
+
+                                                                <!-- <Cog8ToothIcon @click="showLineAdvSettings(index)"
+                                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" /> -->
+
+                                                            </StaticElement>
+
+
+
+
+                                                        </ObjectElement>
+                                                    </template>
+                                                </ListElement>
+
+
+                                                <GroupElement name="multi_purpose_keys_container2" />
+
+                                                <ButtonElement name="multi_purpose_keys_submit_keys" button-label="Save"
+                                                    :submits="true" align="right" />
 
                                                 <!-- Cloud Provisioning tab-->
                                                 <StaticElement name="cloud_provisioning_title" tag="h4"
@@ -747,7 +885,7 @@
                                                                     2 errors with your submission</h3> -->
                                                                 <div class="text-sm text-red-700">
                                                                     <span>Last Action: {{ provisioning.last_action
-                                                                    }}</span>
+                                                                        }}</span>
                                                                 </div>
                                                                 <div class="text-sm text-red-700">
                                                                     <span>Error: {{ provisioning.error }}</span>
@@ -972,15 +1110,27 @@ const nextLineNumber = computed(() => {
     return maxLine + 1
 })
 
-const nextKeyNumber = computed(() => {
-    const deviceKeys = form$?.value?.el$('device_keys')
-    const children = deviceKeys?.children$Array ?? []
-    const maxLine = children.reduce((max, child) => {
+const getNextKeyNumber = (listName = 'device_keys') => {
+    const list = form$?.value?.el$(listName)
+    const children = list?.children$Array ?? []
+    const maxKey = children.reduce((max, child) => {
         const n = parseInt(child?.value?.key_index, 10)
         return Number.isFinite(n) && n > max ? n : max
     }, 0)
-    return maxLine + 1
-})
+
+    return maxKey + 1
+}
+
+const getKeyCacheKey = (listName, index) => `${listName}.${index}`
+
+const filterKeysByArea = (keys = [], area = 'main') => {
+    if (!Array.isArray(keys)) return []
+
+    return keys.filter((k) => {
+        const keyArea = k?.key_area ?? 'main'
+        return keyArea === area
+    })
+}
 
 const keyTypes = [
     { value: '', name: 'N/A' },
@@ -997,18 +1147,19 @@ const handleTabSelected = (activeTab, previousTab) => {
     }
 }
 
-const getKeyValueSelectItems = async (query, input, index) => {
+const getKeyValueSelectItems = async (query, input, index, listName = 'device_keys') => {
     const form$ = input.$parent.el$.form$
-    const keyTypeEl = form$.el$('device_keys.' + index + '.key_type')
+    const keyTypeEl = form$.el$(`${listName}.${index}.key_type`)
     const keyType = keyTypeEl?.value
+    const cacheKey = getKeyCacheKey(listName, index)
 
-    // line => Line 1..N based on device_lines count
     if (keyType === 'line') {
         const deviceLinesEl = form$.el$('device_lines')
         const count = deviceLinesEl?.children$Array?.length ?? deviceLinesEl?.value?.length ?? 0
 
         return Array.from({ length: count }, (_, i) => {
             const displayName = form$.el$(`device_lines.${i}.display_name`)?.value ?? ''
+
             return {
                 extension: `${i + 1}`,
                 name: `Line ${i + 1}${displayName ? ' - ' + displayName : ''}`,
@@ -1016,7 +1167,6 @@ const getKeyValueSelectItems = async (query, input, index) => {
         })
     }
 
-    // check_voicemail => fetch voicemails
     if (keyType === 'check_voicemail') {
         try {
             const axios = keyTypeEl.$vueform.services.axios
@@ -1024,7 +1174,8 @@ const getKeyValueSelectItems = async (query, input, index) => {
                 props.options.routes.get_routing_options,
                 { category: 'voicemails' }
             )
-            keyValueOptionsByIndex[index] = response.data.options ?? []
+
+            keyValueOptionsByIndex[cacheKey] = response.data.options ?? []
             return response.data.options ?? []
         } catch (error) {
             emit('error', error)
@@ -1039,7 +1190,8 @@ const getKeyValueSelectItems = async (query, input, index) => {
                 props.options.routes.get_routing_options,
                 { category: 'extensions' }
             )
-            keyValueOptionsByIndex[index] = response.data.options ?? []
+
+            keyValueOptionsByIndex[cacheKey] = response.data.options ?? []
             return response.data.options ?? []
         } catch (error) {
             emit('error', error)
@@ -1086,16 +1238,17 @@ const nameOnlyFromOption = (opt) => {
     return (parts.length > 1 ? parts.slice(1).join(' - ') : s).trim()
 }
 
-const updateLabel = (newValue, oldValue, el$, index) => {
-    // Update key_value field
-    el$?.form$?.el$('device_keys').children$[index].children$['key_value'].update(newValue)
+const updateLabel = (newValue, oldValue, el$, index, listName = 'device_keys') => {
+    const row = el$?.form$?.el$(listName)?.children$?.[index]?.children$
+    if (!row) return
 
-    const keyLabelEl = el$?.form$?.el$('device_keys').children$[index].children$['key_label']
+    row['key_value'].update(newValue)
 
-    // Get the Hidden Element instance
-    const generatedLabelEl = el$?.form$?.el$('device_keys').children$[index].children$['_generated_label']
+    const keyLabelEl = row['key_label']
+    const generatedLabelEl = row['_generated_label']
+    const keyType = el$?.form$.el$(`${listName}.${index}.key_type`)?.value
+    const cacheKey = getKeyCacheKey(listName, index)
 
-    const keyType = el$?.form$.el$('device_keys.' + index + '.key_type')?.value
     let label = null
 
     if (keyType === 'park') {
@@ -1103,31 +1256,28 @@ const updateLabel = (newValue, oldValue, el$, index) => {
     }
 
     if (keyType === 'check_voicemail') {
-        const selected = (keyValueOptionsByIndex[index] ?? []).find(o => String(o.extension) === String(newValue))
+        const selected = (keyValueOptionsByIndex[cacheKey] ?? [])
+            .find(o => String(o.extension) === String(newValue))
+
         label = selected?.extension ? `VM ${selected.extension}` : null
     }
 
     if (keyType === 'blf' || keyType === 'speed_dial') {
-        const selected = (keyValueOptionsByIndex[index] ?? [])
+        const selected = (keyValueOptionsByIndex[cacheKey] ?? [])
             .find(o => String(o.extension) === String(newValue))
 
         label = nameOnlyFromOption(selected)
 
-        // Clear the actual input value
         keyLabelEl.update(null)
-
-        // SAVE the placeholder text to the hidden element
         generatedLabelEl.update(label)
 
         return
     }
 
-    // Default case: clear the custom placeholder so it reverts to 'Enter Value'
     generatedLabelEl.update(null)
-
-    // For other types (park/vm), you were setting the actual value
     keyLabelEl.update(label)
 }
+
 
 const getCloudProvisioningStatus = async () => {
     isCloudProvisioningLoading.loading = true
@@ -1245,7 +1395,7 @@ const handleCloudProvisioningRefreshButtonClick = async () => {
 const normalizeDeviceKeysForForm = (keys = []) => {
     if (!Array.isArray(keys)) return []
 
-    const key_types = ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']
+    const keyTypesWithSelect = ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']
 
     return keys.map(k => {
         const key_type = (k?.key_type ?? '')?.trim?.() ?? k?.key_type ?? ''
@@ -1254,31 +1404,27 @@ const normalizeDeviceKeysForForm = (keys = []) => {
         let label = null
 
         if (key_type === 'blf' || key_type === 'speed_dial') {
-            // Try to find the matching object in the extensions list provided in props
-            const match = props.options.extensions?.find(ext => ext.value == key_value);
+            const match = props.options.extensions?.find(ext =>
+                String(ext.value ?? ext.extension) === String(key_value)
+            )
 
-            if (match) {
-                // If found, pass the object to your helper to extract the name
-                label = nameOnlyFromOption(match);
-            } else {
-                //Fallback: use the extension number itself if the name isn't found
-                label = key_value;
-            }
+            label = match ? nameOnlyFromOption(match) : key_value
         }
 
         const row = {
             ...k,
             key_uuid: k?.device_key_uuid,
+            key_area: k?.key_area ?? 'main',
             _generated_label: label ?? null,
-            key_type: key_type,
-            key_value: key_value,
+            key_type,
+            key_value,
             key_value_select: null,
             key_value_text: null,
         }
 
         if (!key_type || key_value == null || key_value === '') return row
 
-        if (key_types.includes(key_type)) {
+        if (keyTypesWithSelect.includes(key_type)) {
             row.key_value_select = String(key_value)
         } else {
             row.key_value_text = String(key_value)
@@ -1292,12 +1438,26 @@ const normalizeDeviceKeysForForm = (keys = []) => {
 const submitForm = async (FormData, form$) => {
     // Using form$.requestData will EXCLUDE conditional elements and it 
     // will submit the form as Content-Type: application/json . 
-    const requestData = form$.requestData
+    // const requestData = form$.requestData
+
     // console.log(requestData);
 
     // Using form$.data will INCLUDE conditional elements and it
     // will submit the form as "Content-Type: application/json".
     const data = form$.data
+
+    data.device_keys = [
+        ...(data.device_keys ?? []).map(k => ({
+            ...k,
+            key_area: k.key_area ?? 'main',
+        })),
+        ...(data.multi_purpose_keys ?? []).map(k => ({
+            ...k,
+            key_area: k.key_area ?? 'multi_purpose',
+        })),
+    ]
+
+    delete data.multi_purpose_keys
 
     return await form$.$vueform.services.axios.put(props.options.routes.update_route, data)
 };

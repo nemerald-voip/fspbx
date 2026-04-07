@@ -847,7 +847,7 @@ if (!function_exists('getVendorTemplateCollection')) {
         $vendors = DeviceVendor::where('enabled', 'true')->orderBy('name')->get();
         $templates = [];
 
-        // 1) Legacy filesystem (unchanged)
+        // 1) Legacy filesystem 
         $legacyBase = public_path('resources/templates/provision');
         foreach ($vendors as $vendor) {
             $vname = $vendor->name;
@@ -860,21 +860,19 @@ if (!function_exists('getVendorTemplateCollection')) {
 
                 $templates[] = [
                     'name'  => $vname . '/' . $dir,
-                    'value' => $vname . '/' . $dir,   // legacy value is the path-like string
+                    'value' => $vname . '/' . $dir,
                 ];
             }
         }
 
-        $domainUuid = $domainUuid ?? session('domain_uuid');
+        $domainUuid = session('domain_uuid');
 
-        // limit DB query to enabled vendors (by name, lowercase match)
         $vendorNames = $vendors->pluck('name')->map(fn($n) => strtolower($n))->all();
 
         $rows = ProvisioningTemplate::query()
             ->select('template_uuid', 'vendor', 'name', 'type', 'version', 'revision', 'domain_uuid', 'created_at')
             ->whereIn('vendor', $vendorNames)
             ->where(function ($q) use ($domainUuid) {
-                // defaults are global (domain_uuid NULL); customs can be global or domain-scoped
                 $q->whereNull('domain_uuid');
                 if ($domainUuid) {
                     $q->orWhere('domain_uuid', $domainUuid);
@@ -885,6 +883,27 @@ if (!function_exists('getVendorTemplateCollection')) {
             ->orderByDesc('created_at')
             ->get();
 
+        $buildLabel = function ($r): string {
+            $base = $r->vendor
+                ? "{$r->vendor}/{$r->name}"
+                : $r->name;
+
+            $suffixParts = [];
+
+            if (!empty($r->version)) {
+                $suffixParts[] = "v{$r->version}";
+            }
+
+            $rev = is_numeric($r->revision) ? (int) $r->revision : null;
+            if ($rev !== null && $rev > 0) {
+                $suffixParts[] = "r{$rev}";
+            }
+
+            return $suffixParts
+                ? "{$base} (" . implode(', ', $suffixParts) . ")"
+                : $base;
+        };
+
         // latest DEFAULT per (vendor,name)
         $latestDefaults = $rows->where('type', 'default')
             ->groupBy(fn($r) => $r->vendor . '|' . $r->name)
@@ -892,7 +911,7 @@ if (!function_exists('getVendorTemplateCollection')) {
 
         foreach ($latestDefaults as $r) {
             $templates[] = [
-                'name'  => "{$r->vendor}/{$r->name} v{$r->version}",
+                'name'  => $buildLabel($r),
                 'value' => (string) $r->template_uuid,
             ];
         }
@@ -900,12 +919,11 @@ if (!function_exists('getVendorTemplateCollection')) {
         // include each CUSTOM row (unique by template_uuid)
         foreach ($rows->where('type', 'custom') as $r) {
             $templates[] = [
-                'name'  => "{$r->vendor}/{$r->name}",
+                'name'  => $buildLabel($r),
                 'value' => (string) $r->template_uuid,
             ];
         }
 
-        // Sort alphabetically (case-insensitive, natural)
         return collect($templates)
             ->sortBy('name', SORT_NATURAL | SORT_FLAG_CASE)
             ->values()

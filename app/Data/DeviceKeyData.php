@@ -8,6 +8,7 @@ class DeviceKeyData extends Data
 {
     public function __construct(
         public ?string $device_key_uuid,
+        public ?string $key_area = null,
         public ?int $key_index,
         public ?string $key_type,
         public ?string $key_value,

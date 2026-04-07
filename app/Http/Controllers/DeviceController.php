@@ -82,7 +82,7 @@ class DeviceController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-   public function duplicate(Request $request)
+    public function duplicate(Request $request)
     {
         // 1. Validate Input
         $request->validate([
@@ -119,14 +119,14 @@ class DeviceController extends Controller
 
             // 4. Fetch Original
             $original = $this->model::where('device_uuid', $request->uuid)
-                ->with(['lines', 'settings', 'keys']) 
+                ->with(['lines', 'settings', 'keys'])
                 ->firstOrFail();
 
             // 5. Replicate Parent
             $newDevice = $original->replicate();
             $newDevice->device_uuid = Str::uuid();
             $newDevice->device_label = $original->device_label . ' (Copy)';
-            $newDevice->device_address = $cleanMac; 
+            $newDevice->device_address = $cleanMac;
 
             $newDevice->save();
 
@@ -154,7 +154,7 @@ class DeviceController extends Controller
             if ($original->keys) {
                 foreach ($original->keys as $key) {
                     $newKey = $key->replicate();
-                    $newKey->device_key_uuid = Str::uuid(); 
+                    $newKey->device_key_uuid = Str::uuid();
                     $newKey->device_uuid = $newDevice->device_uuid;
                     $newKey->save();
                 }
@@ -273,7 +273,7 @@ class DeviceController extends Controller
                 $query->select('template_uuid', 'domain_uuid', 'vendor', 'name', 'version', 'revision');
             }])
 
-            ->allowedSorts(['device_address', 'device_description', 'device_provisioned_date'])            ->defaultSort('device_address')
+            ->allowedSorts(['device_address', 'device_description', 'device_provisioned_date'])->defaultSort('device_address')
             ->paginate($perPage);
 
         // wrap in DTO
@@ -436,7 +436,7 @@ class DeviceController extends Controller
                             'enabled' => 'true',
                         ];
 
-      //                  logger($deviceLineData);
+                        //                  logger($deviceLineData);
 
                         $deviceLines = new DeviceLines();
                         $deviceLines->fill($deviceLineData);
@@ -487,6 +487,7 @@ class DeviceController extends Controller
                     foreach ($inputs['device_keys'] as $k) {
                         $rows[] = [
                             'device_uuid' => $device->device_uuid,
+                            'key_area'    => $k['key_area'] ?? 'main',
                             'key_index'   => $k['key_index'],
                             'key_type'    => $k['key_type'] ?? null,
                             'key_value'   => $k['key_value'] ?? null,
@@ -722,7 +723,7 @@ class DeviceController extends Controller
                         // ]);
                     }])
                     ->with(['keys' => function ($query) {
-                        $query->select('device_key_uuid', 'device_uuid', 'key_index', 'key_type', 'key_value', 'key_label');
+                        $query->select('device_key_uuid', 'device_uuid', 'key_area', 'key_index', 'key_type', 'key_value', 'key_label');
                     }])
                     ->with(['profile' => function ($query) {
                         $query->select('device_profile_uuid', 'device_profile_name', 'device_profile_description');
@@ -826,7 +827,6 @@ class DeviceController extends Controller
                         }
                         return $line;
                     });
-
             }
 
             $lineKeyTypes = [

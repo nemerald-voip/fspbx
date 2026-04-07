@@ -1,8 +1,8 @@
-{{-- version: 1.0.0 --}}
+{{-- version: 1.0.1 --}}
 
 @switch($flavor)
 
-{{-- ================= Grandstream GPX21xx cfgmac.xml ================= --}}
+{{-- ================= Grandstream GXP16xx cfgmac.xml ================= --}}
 @case('cfgmac.xml')
 
 <gs_provision version="1">
@@ -104,7 +104,7 @@
 
 		<!-- Register Expiration (m) -->
 		<!-- Number: 0 - 64800 -->
-		<item name="account.{{ $n }}.sip.registerExpiration">{{ $line['register_expires'] ?? '3600' }}</item>
+		<item name="account.{{ $n }}.sip.registerExpiration">{{ $line['register_expires']/60 ?? '3600' }}</item>
 
 		<!-- Subscribe Expiration (m) -->
 		<!-- Number: 0 - 64800 -->
@@ -386,8 +386,8 @@
 		<item name="account.{{ $n }}.audio.multipleMLineInSDP">No</item>
 
 		<!-- SRTP Mode -->
-		<!-- Disabled, EnabledButNotForced, EnabledAndForced, Optional -->
-        <item name="account.{{ $n }}.audio.srtpMode">Disabled</item>
+        <!-- Disabled, EnabledButNotForced, EnabledAndForced, Optional -->
+        <item name="account.{{ $n }}.audio.srtpMode">{{ $lines[$n]['sip_transport'] === 'Tls Or Tcp' ? 'EnabledButNotForced' : 'Disabled' }}</item>
 
 		<!-- SRTP Key Length -->
 		<!-- AES128And256Bit, AES128Bit, AES256Bit -->
@@ -678,49 +678,88 @@
 @endforeach
 
 @php
-    $keyTypes = [
-        'none' => -1,
-        'line' => 0,
-        'shared' => 0,
-        'speed dial' => 14,
-        'blf' => 11,
-        'monitored call park' => 26,
+    $grandstreamKeyModes = [
+        'none' => 'None',
+        'speed dial' => 'SpeedDial',
+        'blf' => 'BLF',
+        'speed dial via active account' => 'SpeedDialViaActiveAccount',
+        'voicemail' => 'VoiceMail',
+        'transfer' => 'Transfer',
+        'call park' => 'CallPark',
+        'intercom' => 'Intercom',
+        'monitored call park' => 'MonitoredCallPark',
+        'line' => 'Line',
+        'sharedline' => 'SharedLine',
     ];
 
-    $lineKeys = array_values(array_filter($keys ?? [], fn ($k) => ($k['category'] ?? null) === 'line'));
-    $maxId = collect($lineKeys)
+    $maxVpkId = collect($main_keys)
         ->pluck('id')
-        ->filter(fn ($id) => is_numeric($id) && (int)$id > 0)
-        ->map(fn ($id) => (int)$id)
+        ->filter(fn ($id) => is_numeric($id) && (int) $id > 0)
+        ->map(fn ($id) => (int) $id)
+        ->max() ?? 0;
+
+    $maxMpkId = collect($multi_purpose_keys)
+        ->pluck('id')
+        ->filter(fn ($id) => is_numeric($id) && (int) $id > 0)
+        ->map(fn ($id) => (int) $id)
         ->max() ?? 0;
 @endphp
 
-@foreach ($lineKeys as $k)
+{{-- ====================================================================== --}}
+{{-- Virtual Multi-Purpose Keys / VPKs                                      --}}
+{{-- pks.vpk.{i}.account is NUMERIC: 0 = Account1, 1 = Account2, ...        --}}
+{{-- ====================================================================== --}}
+@foreach ($main_keys as $k)
+    @php
+        $type = strtolower(trim((string) ($k['type'] ?? 'none')));
+    @endphp
 
-    <!-- ###################################################################################### -->
-    <!-- # VPK {{ $k['id'] ?? 0 }} -->
-    <!-- ###################################################################################### -->
-
-    <!-- # Key Mode -->
-    <item name="pks.vpk.{{ $k['id'] ?? 0 }}.keyMode">{{ $keyTypes[$k['type']] ?? -1 }}</item>
-
-    <!-- # Account. 0 - Account1, 1 - Account2, ... -->
-    <item name="pks.vpk.{{ $k['id'] ?? 0 }}.account">{{ $k['line'] ?? 0 }}</item>
-
-    <!-- # Description. Max length allowed is 32 characters. -->
-    <item name="pks.vpk.{{ $k['id'] ?? 0 }}.description">{{ $k['label'] ?? '' }}</item>
-
-    <!-- # Value. Max length allowed is 64 characters. -->
-    <item name="pks.vpk.{{ $k['id'] ?? 0 }}.value">{{ $k['value'] ?? '' }}</item>
-
+    <!-- ################################################################## -->
+    <!-- # VPK {{ $k['id'] }} -->
+    <!-- ################################################################## -->
+    <item name="pks.vpk.{{ $k['id'] }}.keyMode">{{ $grandstreamKeyModes[$type] ?? 'None' }}</item>
+    <item name="pks.vpk.{{ $k['id'] }}.account">{{ (int) ($k['line'] ?? 0) }}</item>
+    <item name="pks.vpk.{{ $k['id'] }}.description">{{ $k['label'] ?? '' }}</item>
+    <item name="pks.vpk.{{ $k['id'] }}.value">{{ $k['value'] ?? '' }}</item>
 @endforeach
 
-{{-- clear everything AFTER the max used id --}}
-@for ($id = $maxId + 1; $id <= 30; $id++)
-    <item name="pks.vpk.{{ $id }}.keyMode">{{ $keyTypes['none'] ?? -1 }}</item>
+{{-- Clear unused VPKs --}}
+@for ($id = $maxVpkId + 1; $id <= 30; $id++)
+    <item name="pks.vpk.{{ $id }}.keyMode">None</item>
     <item name="pks.vpk.{{ $id }}.account">0</item>
     <item name="pks.vpk.{{ $id }}.description"></item>
     <item name="pks.vpk.{{ $id }}.value"></item>
+@endfor
+
+
+{{-- ====================================================================== --}}
+{{-- Physical Multi-Purpose Keys / MPKs                                     --}}
+{{-- pks.mpk.{i}.account uses STRING: Account1, Account2, ...               --}}
+{{-- MPKs do NOT support line/sharedline                                    --}}
+{{-- ====================================================================== --}}
+@foreach ($multi_purpose_keys as $k)
+    @php
+        $type = strtolower(trim((string) ($k['type'] ?? 'none')));
+        $mpkMode = in_array($type, ['line', 'sharedline'], true)
+            ? 'None'
+            : ($grandstreamKeyModes[$type] ?? 'None');
+    @endphp
+
+    <!-- ################################################################## -->
+    <!-- # MPK {{ $k['id'] }} -->
+    <!-- ################################################################## -->
+    <item name="pks.mpk.{{ $k['id'] }}.keyMode">{{ $mpkMode }}</item>
+    <item name="pks.mpk.{{ $k['id'] }}.account">Account{{ ((int) ($k['line'] ?? 0)) + 1 }}</item>
+    <item name="pks.mpk.{{ $k['id'] }}.description">{{ $k['label'] ?? '' }}</item>
+    <item name="pks.mpk.{{ $k['id'] }}.value">{{ $k['value'] ?? '' }}</item>
+@endforeach
+
+{{-- Clear unused MPKs --}}
+@for ($id = $maxMpkId + 1; $id <= 30; $id++)
+    <item name="pks.mpk.{{ $id }}.keyMode">None</item>
+    <item name="pks.mpk.{{ $id }}.account">Account1</item>
+    <item name="pks.mpk.{{ $id }}.description"></item>
+    <item name="pks.mpk.{{ $id }}.value"></item>
 @endfor
 
 		<!-- ################################################################### -->
@@ -1388,7 +1427,7 @@
 
 		<!-- Web Access Method -->
 		<!-- HTTP, HTTPS, Both, Disabled -->
-		<item name="security.webAccessMode">HTTPS</item>
+		<item name="security.webaccessmode">HTTPS</item>
 
 		<!-- # Enable User Web Access.  Yes or No -->
 		<item name="security.webAccess.user.enable">Yes</item>
@@ -2607,7 +2646,7 @@
 
 		<!-- # Idle. Default is 60. -->
 		<!-- # Number: 0 - 100 -->
-		<item name="lcd.backlight.brightness.idle">60</item>
+		<item name="lcd.backlight.brightness.idle">80</item>
 
 		<!-- # Active Backlight Timeout. Default is 1 -->
 		<!-- # Number: 1 - 90 -->
@@ -2638,7 +2677,7 @@
 
 		<!-- # Screensaver Settings -->
 		<!-- # Screensaver. No, Yes,  OnIfNoVPKIsActive. -->
-		<item name="lcd.screensaver.enable">OnIfNoVPKIsActive</item>
+		<item name="lcd.screensaver.enable">No</item>
 
 		<!-- # Screensaver Source.  Default, USB, Download.  -->
 		<item name="lcd.screensaver.source"/>
@@ -2930,67 +2969,6 @@
 		<item name="pks.vpk.settings.call.showLabel">Show</item>
 
 		<!-- ############################################################################## -->
-		<!-- ##  Settings/Programmable Keys/Virtual Multi-Purpose Keys -->
-		<!-- ############################################################################## -->
-		<!-- ############################################################################## -->
-		<!-- # Virtual Multi-Purpose Keys (VPKs) -->
-		<!-- # Note: 1. Fixed VPKs can only be edited. Adding or deleting Fixed VPK is not allowed. -->
-		<!-- #       2. Even if a Dynamic VPK has mode set to None, it should be added in sequence. Skipping one will remove everything after that VPK.  -->
-		<!-- #       3. For GXP2130, VPK1 to VPK3 are fixed VPK, VPK4 to VPK12 are dynamic VPK. -->
-		<!-- #       4. For GXP2140, VPK1 to VPK4 are fixed VPK, VPK4 to VPK16 are dynamic VPK. -->
-		<!-- #       5. For GXP2160, VPK1 to VPK6 are fixed VPK, VPK7 to VPK24 are dynamic VPK. -->
-		<!-- #		 6. For GXP2135, VPK1 to VPK8 are fixed VPK, VPK9 to VPK32 are dynamic VPK.-->
-		<!-- #       7. For GXP2170, VPK1 to VPK12 are fixed VPK, VPK13 to VPK48 are dynamic VPK. -->
-		<!-- #       8. This config template includes settings for VPK1 only. To update item name to "pks.vpk.{i}...", where {i} is the VPK index. For example, to update VPK12 key mode, include the following in config template: <item name="pks.vpk.12.keyMode"></item> -->
-
-		<!-- # Key Mode for fixed VPK. -->
-		<!-- # None (-1), SpeedDial (0), BLF (1), PresenceWatcher (2), EventlistBLF (3), SpeedDialViaActiveAccount (4) -->
-		<!-- # DialDTMF (5), VoiceMail (6), CallReturn (7), Transfer (8), CallPark (9), Intercom (10), LDAPSearch (11) -->
-		<!-- # Conference (12), MulticastPaging (13), Record (14), CallLog (15), MonitoredCallPark (16), Menu (17) -->
-		<!-- # XMLApplication (18), Information (19), Message (20), Forward (21), DND (22), Redial (23), InstantMessages (24) -->
-		<!-- # MulticastListenAddress (25), KeypadLock (26), GDSOpenDoor (27), EventListPresence (28), Provision (29) -->
-		<!-- # Phonebook(30), Line (31), SharedLine (32), Paging(33) -->
-
-		<!-- # Key Mode for dynamic VPK. -->
-		<!-- # None (-1), SpeedDial (0), BLF (1), PresenceWatcher (2), EventlistBLF (3), SpeedDialViaActiveAccount (4) -->
-		<!-- # DialDTMF (5), VoiceMail (6), CallReturn (7), Transfer (8), CallPark (9), Intercom (10), LDAPSearch (11) -->
-		<!-- # Conference (12), MulticastPaging (13), Record (14), CallLog (15), MonitoredCallPark (16), Menu (17) -->
-		<!-- # XMLApplication (18), Information (19), Message (20), Forward (21), DND (22), Redial (23), InstantMessages (24) -->
-		<!-- # MulticastListenAddress (25), KeypadLock (26), GDSOpenDoor (27), EventListPresence (28), Provision (29) -->
-		<!-- # Phonebook(30), Paging(33) -->
-		
-
-<!--{assign var=key_types value=["none"=>-1,"line"=>0,"shared"=>1,"speed dial"=>10, "blf"=>11, "presence watcher"=>12,-->
-<!--"eventlist blf"=>13,"speed dial active"=>14,"dial dtmf"=>15,"voicemail"=>16,"call return"=>17,-->
-<!--"transfer"=>18,"call park"=>19,"intercom"=>20,"ldap search"=>21,"conference"=>22,"multicast paging"=>23,-->
-<!--"record"=>24,"call log"=>25,"monitored call park"=>26,"menu"=>27]}-->
-
-<!--{foreach $keys['line'] as $row}-->
-<!--{$line=$row.device_key_id}-->
-		<!-- ###################################################################################### -->
-		<!-- # VPK {$row.device_key_id}  -->
-		<!-- ###################################################################################### -->
-		<!-- # Key Mode  -->
-<!--		<item name="pks.vpk.{$row.device_key_id}.keyMode">{$key_types[$keys.line.$line.device_key_type]}</item>-->
-		<!--<item name="pks.vpk.{$row.device_key_id}.keyMode">-1</item>-->
-
-		<!-- # Account. 0 - Account1, 1 - Account2, 2 - Account3, 3 - Account 4, 4 - Account 5, 5 - Account 6 -->
-<!--		<item name="pks.vpk.{$row.device_key_id}.account">{$row.device_key_line}</item>-->
-
-		<!-- # Description. Max length allowed is 32 characters. -->
-		<!-- # String -->
-<!--		<item name="pks.vpk.{$row.device_key_id}.description">{$row.device_key_label}</item>-->
-
-		<!-- # Value. Max length allowed is 64 characters. -->
-		<!-- # String -->
-<!--		<item name="pks.vpk.{$row.device_key_id}.value">{$row.device_key_value}</item>-->
-
-		<!-- # Locked: uncheck, check.  -->
-		<!--<item name="pks.vpk.{$row.device_key_id}.lockMode"></item>-->
-
-<!--{/foreach}-->
-
-		<!-- ############################################################################## -->
 		<!-- ##  Settings/Programmable Keys / Softkeys Settings -->
 		<!-- ############################################################################## -->
 		<!-- # More Softkey Display Mode -->
@@ -3165,42 +3143,6 @@
 		<!-- # Value. -->
 		<!-- # String. -->
 		<item name="pks.scSoftkey.3.value"/>
-
-		<!-- ###################################################################################### -->
-		<!-- ## Programmable Keys/Physical Multi-Purpose Keys -->
-		<!-- ###################################################################################### -->
-		<!-- # Note:  -->
-		<!-- #       1. For GXP2130, it has 8 physical MPK.-->
-		<!-- #       2. For GXP2160, it has 24 physical MPK. -->
-		<!-- #       3. This config template includes settings for MPK1 only. To update item name to "pks.mpk.{i}...", where {i} is the MPK index. For example, to update VPK12 key mode, include the following in config template: <item name="pks.mpk.12.keyMode"></item> -->
-
-		<!-- # Key Mode for physical MPK. -->
-		<!-- # None (-1), SpeedDial (0), BLF (1), PresenceWatcher (2), EventlistBLF (3), SpeedDialViaActiveAccount (4) -->
-		<!-- # DialDTMF (5), VoiceMail (6), CallReturn (7), Transfer (8), CallPark (9), Intercom (10), LDAPSearch (11) -->
-		<!-- # Conference (12), MulticastPaging (13), Record (14), CallLog (15), MonitoredCallPark (16), Menu (17) -->
-		<!-- # XMLApplication (18), Information (19), Message (20), Forward (21), DND (22), Redial (23), InstantMessages (24) -->
-		<!-- # MulticastListenAddress (25), KeypadLock (26), GDSOpenDoor (27), EventListPresence (28), Provision (29) -->
-		<!-- # Phonebook(30), Paging(33) -->
-
-<!--{foreach $keys['memory'] as $row}-->
-<!--{$line=$row.device_key_id}-->
-
-		<!-- ###################################################################################### -->
-		<!-- # MPK {$row.device_key_id} -->
-		<!-- ###################################################################################### -->
-		<!-- # Key Mode -->
-<!--		<item name="pks.mpk.{$row.device_key_id}.keyMode">{$key_types[$keys.memory.$line.device_key_type]}</item>-->
-
-		<!-- # Account. Account1, Account2, Account3, Account4, Account 5, Account 6  -->
-<!--		<item name="pks.mpk.{$row.device_key_id}.account">{$row.device_key_line}</item>-->
-
-		<!-- MPK Description -->
-<!--		<item name="pks.mpk.{$row.device_key_id}.description">{$row.device_key_label}</item>-->
-
-		<!-- MPK Value -->
-<!--		<item name="pks.mpk.{$row.device_key_id}.value">{$row.device_key_value}</item>-->
-
-<!--{/foreach}-->
 
 		<!-- ###################################################################################### -->
 		<!-- ## Programmable Keys/EXT Setting -->
