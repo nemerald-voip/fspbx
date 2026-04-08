@@ -1,4 +1,4 @@
-{{-- version: 1.0.1 --}}
+{{-- version: 1.0.2 --}}
 
 @switch($flavor)
 
@@ -1366,7 +1366,7 @@
 		<!-- ############################################################################## -->
 		<!-- Enable TR-069 -->
 		<!-- Yes, No -->
-		<item name="tr069.enable">No</item>
+		<item name="tr069.enable">Yes</item>
 
 		<!-- ACS URL -->
 		<item name="tr069.url">https://acs.gdms.cloud</item>
@@ -1385,10 +1385,10 @@
 		<item name="tr069.periodicInformInterval">86400</item>
 
 		<!-- Connection Request Username -->
-		<item name="tr069.connectionRequestUsername"/>
+		<item name="tr069.connectionRequestUsername">{{ strtoupper(preg_replace('/-/', '', $mac)) }}</item>
 
 		<!-- Connection Request Password -->
-		<item name="tr069.connectionRequestPassword"/>
+		<item name="tr069.connectionRequestPassword">{{ strtoupper(preg_replace('/-/', '', $mac)) }}</item>
 
 		<!-- Connection Request Port -->
 		<item name="tr069.connectionRequestPort">7547</item>
