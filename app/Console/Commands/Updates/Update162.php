@@ -10,15 +10,15 @@ use Illuminate\Support\Facades\Http;
 class Update162
 {
 
-    protected $file1 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/voicemail/index.lua';
-    protected $filePath1;
-    protected $filePath2;
+    // protected $file1 = 'https://raw.githubusercontent.com/nemerald-voip/fusionpbx/master/app/switch/resources/scripts/app/voicemail/index.lua';
+    // protected $filePath1;
+    // protected $filePath2;
 
 
     public function __construct()
     {
-        $this->filePath1 = base_path('public/app/switch/resources/scripts/app/voicemail/index.lua');
-        $this->filePath2 = '/usr/share/freeswitch/scripts/app/voicemail/index.lua';
+        // $this->filePath1 = base_path('public/app/switch/resources/scripts/app/voicemail/index.lua');
+        // $this->filePath2 = '/usr/share/freeswitch/scripts/app/voicemail/index.lua';
     }
 
     /**
@@ -28,12 +28,12 @@ class Update162
      */
     public function apply()
     {
-        if (!$this->downloadAndReplaceFile($this->file1, $this->filePath1, 'index.lua')) {
-            return false;
-        }
-        if (!$this->downloadAndReplaceFile($this->file1, $this->filePath2, 'index.lua')) {
-            return false;
-        }
+        // if (!$this->downloadAndReplaceFile($this->file1, $this->filePath1, 'index.lua')) {
+        //     return false;
+        // }
+        // if (!$this->downloadAndReplaceFile($this->file1, $this->filePath2, 'index.lua')) {
+        //     return false;
+        // }
 
         if (!$this->renameGrandstreamTemplates()) {
             return false;

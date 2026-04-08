@@ -1,7 +1,7 @@
 -- flow_blf.lua
 -- Simple Call-Flow BLF presence daemon for FreeSWITCH
 -- Listens for PRESENCE_PROBE and answers with current Call-Flow state from DB.
--- BLF AoR format: flow*<feature_code>@domain  (e.g. flow*26@fspbx.domain.com)
+-- BLF AoR format: flow<feature_code>@domain  (e.g. flow26@fspbx.domain.com)
 
 local CF_PREFIX = "flow"  -- user part starts with "flow"
 
@@ -16,7 +16,7 @@ end
 -- --------------------------
 -- Return true  -> LED ON  (night mode)  when call_flow_status == 'false'
 -- Return false -> LED OFF (day mode)    when call_flow_status == 'true'
-local function get_callflow_enabled(feature_code, domain_name)
+local function get_callflow_enabled(extension, domain_name)
     local dbh = Database.new('system')
     if not (dbh and dbh:connected()) then
         log("ERR", "DB connect failed (system)")
@@ -28,12 +28,12 @@ local function get_callflow_enabled(feature_code, domain_name)
         from v_call_flows cf
         join v_domains     d on cf.domain_uuid = d.domain_uuid
         where d.domain_name = :domain_name
-          and cf.call_flow_feature_code = :feature_code
+          and cf.call_flow_extension = :extension
     ]]
 
     local status, err = dbh:first_value(sql, {
         domain_name  = domain_name,
-        feature_code = feature_code,
+        extension = extension,
     })
 
     dbh:release()
@@ -86,18 +86,18 @@ end
 -- Normalize To: header → user@domain
 -- Handles: <sip:flow*26@domain;param=...>, sip:..., angle brackets, params
 -- --------------------------
-local function normalize_to_uri(to)
-    if not to or to == "" then return "", "" end
-    -- trim angle brackets
-    to = to:gsub("^%s*<", ""):gsub(">%s*$", "")
-    -- strip leading sip:
-    to = to:gsub("^sip:", "")
-    -- drop any ;params
-    to = (to:match("([^;]+)")) or to
-    -- now split user@domain
-    local user, domain = to:match("^(.-)@(.-)$")
-    return user or "", domain or ""
-end
+-- local function normalize_to_uri(to)
+--     if not to or to == "" then return "", "" end
+--     -- trim angle brackets
+--     to = to:gsub("^%s*<", ""):gsub(">%s*$", "")
+--     -- strip leading sip:
+--     to = to:gsub("^sip:", "")
+--     -- drop any ;params
+--     to = (to:match("([^;]+)")) or to
+--     -- now split user@domain
+--     local user, domain = to:match("^(.-)@(.-)$")
+--     return user or "", domain or ""
+-- end
 
 -- --------------------------
 -- Handle PRESENCE_PROBE
@@ -120,20 +120,20 @@ local function handle_probe(event)
         return
     end
 
-    -- only handle "flow..." AoRs; explicitly ignore "flow+..."
+    -- only handle flow<ext>@domain
     if user:sub(1, #CF_PREFIX) ~= CF_PREFIX then
         return
     end
 
     -- extract EXACT feature part after "flow"
-    local feature_code = user:sub(#CF_PREFIX + 1)
+    local extension = user:sub(#CF_PREFIX + 1)
 
-    log("NOTICE", string.format("PRESENCE_PROBE Call-Flow: to=%s user=%s feature=%s domain=%s",
-        to_hdr, user, feature_code, domain))
+    log("NOTICE", string.format("PRESENCE_PROBE Call-Flow: to=%s user=%s extension=%s domain=%s",
+        to_hdr, user, extension, domain))
 
-    local enabled = get_callflow_enabled(feature_code, domain)
+    local enabled = get_callflow_enabled(extension, domain)
     if enabled == nil then
-        log("WARNING", "No Call-Flow record for feature=" .. feature_code .. " domain=" .. domain)
+        log("WARNING", "No Call-Flow record for extension=" .. extension .. " domain=" .. domain)
         enabled = false
     end
 

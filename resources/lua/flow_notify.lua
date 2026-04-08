@@ -1,14 +1,14 @@
 -- flow_notify.lua
--- Immediate NOTIFY for Call Flow BLF (flow*XX)
+-- Immediate NOTIFY for Call Flow BLF (flow<ext>)
 
-local feature = argv[1]      -- "*26"
-local domain  = argv[2]
-local toggle  = argv[3] or "false"
+local extension = tostring(argv[1] or "")   -- "333"
+local domain    = tostring(argv[2] or "")
+local toggle    = tostring(argv[3] or "false")
 
--- DB logic: false = night = LED ON
+-- DB logic: false = alternate/night = LED ON
 local enabled = (toggle == "false")
 
-local user = "flow" .. feature   -- flow*26
+local user = "flow" .. extension            -- flow333
 local userid = user .. "@" .. domain
 
 local api = freeswitch.API()
@@ -29,16 +29,15 @@ local function send_presence(event_type)
     ev:addHeader("rpid", "unknown")
 
     if enabled then
-        ev:addHeader("answer-state", "confirmed")    -- LED ON
+        ev:addHeader("answer-state", "confirmed")
     else
-        ev:addHeader("answer-state", "terminated")   -- LED OFF
+        ev:addHeader("answer-state", "terminated")
     end
 
-    freeswitch.consoleLog("NOTICE", "[flow_notify] Sending "..event_type.." for "..userid.." enabled="..tostring(enabled).."\n")
+    freeswitch.consoleLog("NOTICE", "[flow_notify] Sending " .. event_type .. " for " .. userid .. " enabled=" .. tostring(enabled) .. "\n")
 
     ev:fire()
 end
 
--- MUST send both — Polycom requires it
 send_presence("PRESENCE_OUT")
 send_presence("PRESENCE_IN")

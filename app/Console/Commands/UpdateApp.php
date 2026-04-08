@@ -19,6 +19,7 @@ use App\Console\Commands\Updates\Update150;
 use App\Console\Commands\Updates\Update160;
 use App\Console\Commands\Updates\Update161;
 use App\Console\Commands\Updates\Update162;
+use App\Console\Commands\Updates\Update163;
 use App\Console\Commands\Updates\Update0917;
 use App\Console\Commands\Updates\Update0918;
 use App\Console\Commands\Updates\Update0924;
@@ -114,6 +115,7 @@ class UpdateApp extends Command
             '1.6.0' => Update160::class,
             '1.6.1' => Update161::class,
             '1.6.2' => Update162::class,
+            '1.6.3' => Update163::class,
             // Add more versions as needed
         ];
 

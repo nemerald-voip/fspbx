@@ -98,7 +98,7 @@ local function handle_probe(event)
         return
     end
 
-    -- we only handle fm+<ext>@domain
+    -- we only handle fm<ext>@domain
     if user:sub(1, #FM_PREFIX) ~= FM_PREFIX then
         return
     end
