@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreAssemblyAiConfigRequest extends FormRequest
 {
@@ -193,6 +194,8 @@ class StoreAssemblyAiConfigRequest extends FormRequest
 
             'content_safety_confidence.min' => 'Content safety confidence must be between 25 and 100.',
             'content_safety_confidence.max' => 'Content safety confidence must be between 25 and 100.',
+            'redact_pii_policies.required' => 'Select at least one PII redaction policy when redacting transcribed text.',
+            'redact_pii_policies.min' => 'Select at least one PII redaction policy when redacting transcribed text.',
             // Audio timing
             'audio_start_from.integer' => 'Start time must be a whole number (milliseconds).',
             'audio_start_from.min'     => 'Start time can’t be negative.',
@@ -210,6 +213,13 @@ class StoreAssemblyAiConfigRequest extends FormRequest
             'speaker_options.max_speakers_expected.integer' => 'Maximum speakers must be a whole number.',
             'speakers_expected.integer'                     => 'Number of expected speakers must be a whole number.',
         ];
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->sometimes('redact_pii_policies', ['required', 'array', 'min:1'], function () {
+            return $this->boolean('redact_pii');
+        });
     }
 
     public function attributes(): array
