@@ -83,7 +83,9 @@ local function main()
         return
     end
 
-    local extension = destination_number:match("^flow(%d+)$")
+    local extension =
+        destination_number:match("^flow(%d+)$")
+        or destination_number:match("^%*(%d+)$")
 
     if not extension then
         debug_log("ERR", "Could not extract extension from destination_number: " .. destination_number)
