@@ -1,4 +1,4 @@
-{{-- version: 1.0.2 --}}
+{{-- version: 1.0.3 --}}
 
 @switch($flavor)
 
@@ -626,7 +626,7 @@
 		<!-- #Enable Local Call Features. Default is Yes -->
 		<!-- #Mandatory -->
 		<!-- No, Yes -->
-		<item name="account.{{ $n }}.featureCodes.callFeatures">Yes</item>
+		<item name="account.{{ $n }}.featureCodes.callFeatures">No</item>
 
 		<!-- DND Call Feature On -->
 		<item name="account.{{ $n }}.featureCodes.dndOn"/>
