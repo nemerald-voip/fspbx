@@ -131,9 +131,9 @@
               <template #default>
                 <span
                   class="inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold"
-                  :class="row.fax_success ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20' : 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20'"
+                  :class="row.fax_success == '1' ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20' : 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20'"
                 >
-                  {{ row.fax_success ? 'Success' : 'Failed' }}
+                  {{ row.fax_success == "1" ? 'Success' : 'Failed' }}
                 </span>
               </template>
             </TableField>

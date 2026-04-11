@@ -53,6 +53,8 @@ class FaxSentController extends Controller
                     'bulk_delete' => route('fax-sent.bulk.delete'),
                     'data_route' => route('fax-sent.data'),
                     'download' => route('fax-sent.fax.download', ['file' => ':file']),
+                    'stats_route' => route('fax-sent.stats'),
+                    'preview' => route('fax-sent.preview', ':file'),
                 ],
                 'permissions' => [
                     'delete' => userCheckPermission('fax_sent_delete'),
@@ -93,9 +95,12 @@ class FaxSentController extends Controller
 
             ])
             ->where('fax_mode', 'tx')
-            ->with(['fax' => function ($query) {
-                $query->select('fax_uuid', 'fax_caller_id_number');
-            }])
+            ->with([
+                'fax' => function ($query) {
+                    $query->select('fax_uuid', 'fax_caller_id_number');
+                },
+                'faxLog:fax_log_uuid,fax_document_transferred_pages,fax_document_total_pages',
+            ])
             ->allowedFilters([
                 AllowedFilter::callback('fax_uuid', function ($query, $value) {
                     $query->where('fax_uuid', $value);
@@ -257,6 +262,58 @@ class FaxSentController extends Controller
         }
     }
 
+    public function preview($file)
+    {
+        try {
+            $file = FaxFiles::where('fax_file_uuid', $file)
+                ->with([
+                    'fax:fax_uuid,fax_extension,fax_caller_id_number',
+                    'domain:domain_uuid,domain_name',
+                ])
+                ->firstOrFail();
+
+            if (session('domain_uuid') && $file->domain_uuid !== session('domain_uuid')) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['auth' => ['You are not authorized to access this file.']],
+                ], 403);
+            }
+
+            $original = basename($file->fax_file_path);
+            $baseName = pathinfo($original, PATHINFO_FILENAME);
+
+            $relative = "{$file->domain->domain_name}/{$file->fax->fax_extension}/sent/{$baseName}.pdf";
+
+            if (!Storage::disk('fax')->exists($relative)) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['file' => ['File not found.']],
+                ], 404);
+            }
+
+            return response()->file(
+                Storage::disk('fax')->path($relative),
+                [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'inline; filename="' . $baseName . '.pdf"',
+                    'Cache-Control' => 'private, max-age=0, no-cache, no-store, must-revalidate',
+                ]
+            );
+        } catch (ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'errors' => ['file' => ['File not found.']],
+            ], 404);
+        } catch (\Throwable $e) {
+            logger('Error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
+
+            return response()->json([
+                'success' => false,
+                'errors' => ['server' => ['Failed to preview the file.']],
+            ], 500);
+        }
+    }
+
 
     /**
      * Remove the specified fax files from storage.
@@ -365,5 +422,49 @@ class FaxSentController extends Controller
                 'messages' => ['error' => ['An error occurred while deleting the selected fax file(s).']]
             ], 500);
         }
+    }
+
+    public function getStats()
+    {
+        $domain_uuid = session('domain_uuid');
+
+        $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->startOfDay()->setTimeZone('UTC');
+        $endPeriod = Carbon::now(get_local_time_zone($domain_uuid))->endOfDay()->setTimeZone('UTC');
+
+        if (!empty(request('filter.dateRange'))) {
+            $startPeriod = Carbon::parse(request('filter.dateRange')[0])->setTimeZone('UTC');
+            $endPeriod = Carbon::parse(request('filter.dateRange')[1])->setTimeZone('UTC');
+        }
+
+        $query = FaxFiles::query()
+            ->where('domain_uuid', $domain_uuid)
+            ->where('fax_mode', 'tx')
+            ->whereBetween('fax_epoch', [
+                $startPeriod->getTimestamp(),
+                $endPeriod->getTimestamp(),
+            ]);
+
+        if (!empty(request('filter.fax_uuid'))) {
+            $query->where('fax_uuid', request('filter.fax_uuid'));
+        }
+
+        if (!empty(request('filter.search'))) {
+            $value = request('filter.search');
+
+            $query->where(function ($q) use ($value) {
+                $q->where('fax_caller_id_number', 'ilike', "%{$value}%")
+                    ->orWhere('fax_caller_id_name', 'ilike', "%{$value}%")
+                    ->orWhere('fax_destination', 'ilike', "%{$value}%");
+            });
+        }
+
+        $totalTransferredPages = $query
+            ->with('faxLog:fax_log_uuid,fax_document_transferred_pages')
+            ->get()
+            ->sum(fn($item) => (int) ($item->faxLog?->fax_document_transferred_pages ?? 0));
+
+        return response()->json([
+            'total_transferred_pages' => $totalTransferredPages,
+        ]);
     }
 }

@@ -6,7 +6,7 @@
     <condition field="destination_number" expression="^{{ $fax->fax_destination_number }}$">
         <action application="answer" data=""/>
         <action application="set" data="fax_uuid={{ $fax->fax_uuid }}"/>
-        <action application="set" data="api_hangup_hook=lua app/fax/resources/scripts/hangup_rx.lua" inline="true" />
+        <action application="set" data="api_hangup_hook=lua lua/fax_hangup.lua" inline="true" />
 
         @foreach ($settings as $data)
             @php

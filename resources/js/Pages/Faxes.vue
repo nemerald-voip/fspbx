@@ -1,29 +1,39 @@
 <template>
     <MainLayout />
 
+
+
     <div class="mt-6 px-10">
         <!-- <h3 class="text-base font-semibold text-gray-900">Last 30 days</h3> -->
-        <dl class="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-4">
-            <div v-for="item in stats" :key="item.name"
-                class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow-sm sm:p-6">
-                <dt class="truncate text-sm font-medium text-gray-500">{{ item.name }}</dt>
-                <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{{ item.stat }}</dd>
+        <div class="sm:flex sm:items-center sm:justify-between">
+            <div>
+                <h2 class="text-2xl font-bold leading-7 text-gray-900 sm:truncate sm:text-3xl sm:tracking-tight">
+                    Fax Dashboard
+                </h2>
             </div>
-            <div
-                class="flex overflow-hidden justify-center items-center rounded-lg bg-white px-4 py-5 shadow-sm sm:p-6">
-                <!-- <dt class="truncate text-sm font-medium text-gray-500">Buton</dt> -->
+            <div class="mt-4 sm:ml-4 sm:mt-0">
                 <button type="button" @click.prevent="handleNewFaxButtonClick()"
-                    class="sm:hidden lg:block rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    <DocumentPlusIcon class="-ml-0.5 mr-1.5 h-5 w-5" aria-hidden="true" />
                     Send New Fax
                 </button>
-
-                <button type="button" @click.prevent="handleNewFaxButtonClick()"
-                    class="hidden sm:block lg:hidden rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
-                    New
-                </button>
-
             </div>
-        </dl>
+        </div>
+
+<dl class="mt-5 flex flex-wrap gap-5">
+    <div v-for="item in stats" :key="item.name"
+        class="group relative flex-1 min-w-[240px] overflow-hidden rounded-xl bg-white px-4 py-5 shadow-sm ring-1 ring-gray-200 transition-all duration-200 hover:-translate-y-1 hover:shadow-md sm:p-6">
+        
+        <dt class="truncate text-sm font-medium text-gray-500 transition-colors duration-200 group-hover:text-indigo-600">
+            {{ item.name }}
+        </dt>
+        <dd class="mt-2 text-3xl font-bold tracking-tight text-gray-900">
+            {{ item.stat }}
+        </dd>
+        
+        <div class="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-gray-50 transition-colors duration-200 group-hover:bg-indigo-50"></div>
+    </div>
+</dl>
     </div>
 
     <div class="mt-6 grid grid-cols-1 lg:grid-cols-2">
@@ -398,7 +408,7 @@
 
     <NewFaxForm :show="showNewFaxModal" :options="newFaxOptions" :loading="isModalLoading"
         :header="'Create New Fax Server'" @close="showNewFaxModal = false" @error="handleErrorResponse"
-        @success="showNotification" @refresh-data="getRecentOutboundFaxes"/>
+        @success="showNotification" @refresh-data="getRecentOutboundFaxes" />
 
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"

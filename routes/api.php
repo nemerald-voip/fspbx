@@ -288,12 +288,16 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::delete('/faxes/deleteReceivedFax/{id}', [FaxesController::class, 'deleteReceivedFax'])->name('faxes.file.deleteReceivedFax');
     Route::delete('/faxes/deleteFaxLog/{id}', [FaxesController::class, 'deleteFaxLog'])->name('faxes.file.deleteFaxLog');
     Route::get('/fax/inbox/{file}/download', [FaxInboxController::class, 'download'])->name('fax-inbox.fax.download');
+    Route::get('/fax/inbox/{file}/preview', [FaxInboxController::class, 'preview'])->name('fax-inbox.preview');
     Route::post('/fax/inbox/bulk-delete', [FaxInboxController::class, 'bulkDelete'])->name('fax-inbox.bulk.delete');
     Route::post('/fax/inbox/select-all', [FaxInboxController::class, 'selectAll'])->name('fax-inbox.select.all');
+    Route::get('/fax/inbox/stats', [FaxInboxController::class, 'getStats'])->name('fax-inbox.stats');
     Route::post('/faxes/send', [FaxesController::class, 'sendFax'])->name('faxes.new.fax.send');
     Route::get('/fax/inbox/data', [FaxInboxController::class, 'getData'])->name('fax-inbox.data');
     Route::get('/fax/sent/data', [FaxSentController::class, 'getData'])->name('fax-sent.data');
+    Route::get('/fax/sent/stats', [FaxSentController::class, 'getStats'])->name('fax-sent.stats');
     Route::get('/fax/sent/{file}/download', [FaxSentController::class, 'download'])->name('fax-sent.fax.download');
+    Route::get('/fax/sent/{file}/preview', [FaxSentController::class, 'preview'])->name('fax-sent.preview');
     Route::post('/fax/sent/bulk-delete', [FaxSentController::class, 'bulkDelete'])->name('fax-sent.bulk.delete');
     Route::post('/fax/sent/select-all', [FaxSentController::class, 'selectAll'])->name('fax-sent.select.all');
     Route::get('/fax/log/data', [FaxLogController::class, 'getData'])->name('fax-logs.data');
