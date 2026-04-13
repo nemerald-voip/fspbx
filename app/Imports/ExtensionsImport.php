@@ -2,27 +2,29 @@
 
 namespace App\Imports;
 
-use App\Models\Devices;
-use App\Models\Extensions;
-use App\Models\Voicemails;
+use App\Models\DefaultSettings;
 use App\Models\DeviceLines;
+use App\Models\Devices;
+use App\Models\DomainSettings;
+use App\Models\Extensions;
 use App\Models\FusionCache;
+use App\Models\ProvisioningTemplate;
+use App\Models\Voicemails;
 use App\Rules\UniqueExtension;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Concerns\Importable;
-use Maatwebsite\Excel\Concerns\SkipsErrors;
-use Maatwebsite\Excel\Concerns\SkipsOnError;
-use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
+use Maatwebsite\Excel\Concerns\SkipsErrors;
+use Maatwebsite\Excel\Concerns\SkipsFailures;
+use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
+use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
-use App\Models\DomainSettings;
-use App\Models\DefaultSettings;
 
 class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, SkipsOnError, SkipsOnFailure, WithValidation
 {
@@ -86,7 +88,11 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
             '*.device_template' => [
                 'string',
                 'nullable'
-            ]
+            ],
+            '*.device_template_uuid' => [
+                'nullable',
+                'uuid'
+            ],
         ];
     }
 
@@ -135,6 +141,11 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
         if (isset($data['emergency_caller_id_number'])) {
             $data['emergency_caller_id_number'] = preg_replace('/[^0-9+]/', '', (string) $data['emergency_caller_id_number']);
         }
+
+        $data['device_template_uuid'] = trim((string)($data['device_template_uuid'] ?? ''));
+
+        $data['device_template'] = $data['device_template'] === '' ? null : $data['device_template'];
+        $data['device_template_uuid'] = $data['device_template_uuid'] === '' ? null : $data['device_template_uuid'];
 
         return $data;
     }
@@ -202,6 +213,7 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
 
                 if (!empty($row['device_address'])) {
                     $deviceAddressNoColons = str_replace(':', '', $row['device_address']);
+                    $templateColumns = $this->resolveDeviceTemplateColumns($row);
 
                     $device = new Devices();
                     $device->fill([
@@ -211,7 +223,8 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
                         'device_vendor' => $row['device_vendor'] ?? null,
                         'device_enabled' => 'true',
                         'device_enabled_date' => date('Y-m-d H:i:s'),
-                        'device_template' => $row['device_template'] ?? null,
+                        'device_template' => $templateColumns['device_template'],
+                        'device_template_uuid' => $templateColumns['device_template_uuid'],
                         'device_description' => $row['description'] ?? null,
                     ]);
                     $device->save();
@@ -256,6 +269,71 @@ class ExtensionsImport implements ToCollection, WithHeadingRow, SkipsEmptyRows, 
                 throw $e;
             }
         }
+    }
+
+    protected function resolveDeviceTemplateColumns($row): array
+    {
+        $rawTemplate = trim((string)($row['device_template'] ?? ''));
+        $rawUuid = trim((string)($row['device_template_uuid'] ?? ''));
+
+        // If UUID column is explicitly provided, treat as new template
+        if ($rawUuid !== '') {
+            return [
+                'device_template' => null,
+                'device_template_uuid' => $rawUuid,
+            ];
+        }
+
+        if ($rawTemplate === '') {
+            return [
+                'device_template' => null,
+                'device_template_uuid' => null,
+            ];
+        }
+
+        // If the device_template field itself contains a UUID
+        if (Str::isUuid($rawTemplate)) {
+            return [
+                'device_template' => null,
+                'device_template_uuid' => $rawTemplate,
+            ];
+        }
+
+        // New-style label:
+        // yealink/t74w (v1.0.5)
+        // dinstar/Dinstar test (r19)
+        if (preg_match('/^(?<vendor>[^\/]+)\/(?<name>.+?) \((?<kind>v|r)(?<value>[^)]+)\)$/i', $rawTemplate, $matches)) {
+            $vendor = trim($matches['vendor']);
+            $name = trim($matches['name']);
+            $kind = strtolower($matches['kind']);
+            $value = trim($matches['value']);
+
+            $query = ProvisioningTemplate::query()
+                ->whereRaw('LOWER(vendor) = ?', [strtolower($vendor)])
+                ->whereRaw('LOWER(name) = ?', [strtolower($name)]);
+
+            if ($kind === 'v') {
+                $query->where('type', 'default')
+                    ->where('version', $value);
+            } else {
+                $query->where('type', 'custom')
+                    ->where('revision', (int) $value)
+                    ->where('domain_uuid', $this->domain_uuid);
+            }
+
+            $template = $query->first();
+
+            return [
+                'device_template' => null,
+                'device_template_uuid' => $template?->template_uuid,
+            ];
+        }
+
+        // Otherwise treat as legacy template string only
+        return [
+            'device_template' => $rawTemplate,
+            'device_template_uuid' => null,
+        ];
     }
 
     protected function resolveDefaultVoicemailEnabled(string $domain_uuid): bool
