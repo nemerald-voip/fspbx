@@ -487,8 +487,8 @@ class ProvisioningController extends Controller
         $legacyKeys  = collect($device->legacy_keys ?? []);
         $newKeys     = collect($device->keys ?? []);
 
-        // for polycom
-        if ($device->device_vendor == 'polycom') {
+        // For Polycom, collapse duplicate line keys before mapping
+        if ($device->device_vendor === 'polycom') {
             $newKeys = collect($this->normalizeNewKeysForPolycom($device, $device->keys ?? []));
         }
 
@@ -496,6 +496,42 @@ class ProvisioningController extends Controller
             'main' => [],
             'multi_purpose' => [],
         ];
+
+        // Normalize old/profile/legacy keys into the same effective shape
+        $normalizeLegacyKey = function (array $item, string $source) use ($device) {
+            $type  = strtolower((string) ($item['type'] ?? ''));
+            $line  = $item['line'] !== null ? (int) $item['line'] : null;
+            $value = $item['value'] ?? null;
+            $label = $item['label'] ?? null;
+
+            if ($type === 'line') {
+                // Legacy/profile line indexes appear to be zero-based:
+                // 0 => first line, 1 => second line, etc.
+                $lookupLineNumber = $line !== null ? $line + 1 : 1;
+
+                $lineObj = collect($device->lines ?? [])->firstWhere('line_number', $lookupLineNumber);
+
+                if ($lineObj) {
+                    $value = $lineObj->auth_id ?? $value;
+
+                    if (empty($label)) {
+                        $label = $lineObj->display_name ?? $lineObj->auth_id ?? null;
+                    }
+                }
+            }
+
+            return [
+                'id'        => $item['id'],
+                'area'      => $item['area'],
+                'category'  => $item['category'],
+                'type'      => $item['type'], // keep logical type here
+                'line'      => $line,
+                'value'     => $value,
+                'extension' => $item['extension'] ?? null,
+                'label'     => $label,
+                'source'    => $source,
+            ];
+        };
 
         // Seed with profile keys
         foreach ($profileKeys as $pk) {
@@ -513,7 +549,7 @@ class ProvisioningController extends Controller
                 $maps[$area] = [];
             }
 
-            $maps[$area][$id] = [
+            $maps[$area][$id] = $normalizeLegacyKey([
                 'id'        => $id,
                 'area'      => $area,
                 'category'  => $category,
@@ -522,8 +558,7 @@ class ProvisioningController extends Controller
                 'value'     => $pk->profile_key_value ?? null,
                 'extension' => $pk->profile_key_extension ?? null,
                 'label'     => $pk->profile_key_label ?? null,
-                'source'    => 'profile',
-            ];
+            ], 'profile');
         }
 
         // Overlay with legacy device keys
@@ -542,7 +577,7 @@ class ProvisioningController extends Controller
                 $maps[$area] = [];
             }
 
-            $maps[$area][$id] = [
+            $maps[$area][$id] = $normalizeLegacyKey([
                 'id'        => $id,
                 'area'      => $area,
                 'category'  => $category,
@@ -551,10 +586,8 @@ class ProvisioningController extends Controller
                 'value'     => $dk->device_key_value ?? null,
                 'extension' => $dk->device_key_extension ?? null,
                 'label'     => $dk->device_key_label ?? null,
-                'source'    => 'device',
-            ];
+            ], 'device');
         }
-
 
         // Overlay with new keys -> keyed by area + index
         foreach ($newKeys as $nk) {
@@ -575,36 +608,39 @@ class ProvisioningController extends Controller
             $maps[$area][$id] = $mapped;
         }
 
-        logger([
-            'profile_keys' => $profileKeys->map(fn($k) => [
-                'id' => $k->profile_key_id,
-                'category' => $k->profile_key_category,
-                'type' => $k->profile_key_type,
-                'value' => $k->profile_key_value,
-            ])->values()->all(),
-
-            'legacy_keys' => $legacyKeys->map(fn($k) => [
-                'id' => $k->device_key_id,
-                'category' => $k->device_key_category,
-                'type' => $k->device_key_type,
-                'value' => $k->device_key_value,
-            ])->values()->all(),
-
-            'new_keys' => $newKeys->map(fn($k) => [
-                'id' => $k->key_index,
-                'area' => $k->key_area,
-                'type' => $k->key_type,
-                'value' => $k->key_value,
-            ])->values()->all(),
-        ]);
-
         foreach ($maps as $area => $map) {
             ksort($map, SORT_NUMERIC);
-            $maps[$area] = $this->postProcessEffectiveKeys($device, array_values($map));
+
+            $processed = $this->postProcessEffectiveKeys($device, array_values($map));
+
+            // Translate to vendor-specific output only after all logical processing is done
+            $maps[$area] = $this->translateEffectiveKeysForVendor($device, $processed);
         }
 
         return $maps;
     }
+
+    private function translateEffectiveKeysForVendor(Devices $device, array $keys): array
+    {
+        foreach ($keys as &$key) {
+            $translated = $this->translateKeyTypeForVendor(
+                $device->device_vendor,
+                (string) ($key['type'] ?? '')
+            );
+
+            if (!empty($translated['category'])) {
+                $key['category'] = $translated['category'];
+            }
+
+            if (array_key_exists('type', $translated)) {
+                $key['type'] = $translated['type'];
+            }
+        }
+        unset($key);
+
+        return $keys;
+    }
+
 
     private function resolveLegacyKeyPlacement(?string $vendor, ?string $category): array
     {
@@ -629,10 +665,20 @@ class ProvisioningController extends Controller
             ->map(fn($v) => (string) $v)
             ->unique();
 
-        // Drop any key whose value matches a self extension
+        // Drop any key whose value matches a self extension,
+        // but keep real line keys
         $keys = array_values(array_filter($keys, function ($k) use ($selfExts) {
+            $type = strtolower((string) ($k['type'] ?? ''));
             $val = (string) ($k['value'] ?? '');
-            if ($val === '') return true;
+
+            if ($val === '') {
+                return true;
+            }
+
+            if ($type === 'line') {
+                return true;
+            }
+
             return !$selfExts->contains($val);
         }));
 
@@ -641,10 +687,11 @@ class ProvisioningController extends Controller
         }
         unset($k);
 
-        // fill BLF labels from Extensions.effective_caller_id_name (domain-scoped)
+        // Fill labels from Extensions.effective_caller_id_name (domain-scoped)
         $blfTargets = collect($keys)
             ->filter(fn($k) => (empty($k['label']) || $k['label'] === null) && !empty($k['value']))
-            ->map(fn($k) => (string) $k['value'])
+            ->map(fn($k) => (string) ($k['value'] ?? ''))
+            ->filter()
             ->unique()
             ->values();
 
@@ -658,7 +705,7 @@ class ProvisioningController extends Controller
                 ->toArray();
 
             foreach ($keys as &$k) {
-                if ((empty($k['label']) || $k['label'] === null)) {
+                if (empty($k['label'])) {
                     $val = (string) ($k['value'] ?? '');
                     if ($val !== '' && !empty($extLabels[$val])) {
                         $k['label'] = $extLabels[$val];
@@ -677,9 +724,7 @@ class ProvisioningController extends Controller
      */
     private function mapNewDeviceKeyToLegacyShape(Devices $device, $nk): array
     {
-        $type = strtolower(trim((string) $nk->key_type));
-        $translated = $this->translateKeyTypeForVendor($device->device_vendor, $type);
-
+        $type  = strtolower(trim((string) ($nk->key_type ?? '')));
         $id    = (int) ($nk->key_index ?? 0);
         $area  = (string) ($nk->key_area ?? 'main');
         $line  = 1;
@@ -690,9 +735,12 @@ class ProvisioningController extends Controller
             return $this->mapNewDeviceKeyToPolycomShape($device, $id, $type, $nk);
         }
 
-        if ($device->device_vendor == 'grandstream') {
+        // Keep existing Grandstream line behavior
+        if ($device->device_vendor === 'grandstream') {
             $line = $line - 1;
-            if ($line < 0) $line = 0;
+            if ($line < 0) {
+                $line = 0;
+            }
         }
 
         switch ($type) {
@@ -700,15 +748,17 @@ class ProvisioningController extends Controller
                 $line = (int) ($nk->key_value ?? 1);
 
                 $lines = $device->lines ?? [];
-                $lineObj = collect($lines)->firstWhere('line_number', (string) $line);
-                $label = $lineObj['display_name'] ?? null;
+                $lineObj = collect($lines)->firstWhere('line_number', $line);
 
-                if ($device->device_vendor == 'grandstream') {
+                $label = $lineObj->display_name ?? null;
+                $value = $lineObj->auth_id ?? null;
+
+                if ($device->device_vendor === 'grandstream') {
                     $line = $line - 1;
-                    if ($line < 0) $line = 0;
+                    if ($line < 0) {
+                        $line = 0;
+                    }
                 }
-
-                $value = null;
                 break;
 
             case 'park':
@@ -725,8 +775,8 @@ class ProvisioningController extends Controller
         return [
             'id'        => $id,
             'area'      => $area,
-            'category'  => $translated['category'] ?? 'line',
-            'type'      => $translated['type'] ?? $nk->key_type,
+            'category'  => 'line',
+            'type'      => $type, // keep logical type here
             'line'      => $line,
             'value'     => $value,
             'extension' => null,
