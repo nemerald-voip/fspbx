@@ -46,7 +46,7 @@
 
 
                     <div class="relative z-10 min-w-64 -mt-0.5 mb-2 scale-y-95 shrink-0 sm:mr-4">
-                        <DatePicker :dateRange="filterData.dateRange" :timezone="timezone"
+                        <DatePicker :dateRange="filterData.dateRange" :timezone="timezone" :clearable="false"
                             @update:date-range="handleUpdateDateRange" />
                     </div>
 

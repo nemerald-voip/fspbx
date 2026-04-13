@@ -2,13 +2,14 @@
 id: telnyx
 title: Telnyx SMS Provider Configuration
 slug: /configuration/messaging/telnyx
+description: Configure Telnyx for SMS and MMS in FS PBX.
 sidebar_position: 5
 ---
 
 Telnyx SMS Provider Configuration
 =================================
 
-FS PBX provides full two-way SMS support via **Telnyx**, including inbound message handling, outbound delivery, and webhook signature verification for security. This guide explains how to configure your Telnyx credentials and enable SMS routing to extensions.
+FS PBX provides two-way SMS and MMS support via **Telnyx**, including inbound message handling, outbound delivery, and webhook signature verification for security. This guide explains how to configure your Telnyx credentials and enable SMS routing to extensions.
 
 * * * * *
 
@@ -105,6 +106,20 @@ When configured:
 -   Replies → FS PBX → Telnyx → Original Sender
 
 * * * * *
+
+## 5. MMS Support
+
+If your Apidaze number supports MMS, FS PBX can also process media attachments sent through the same messaging flow.
+
+To use MMS media storage, S3-compatible storage must already be configured in your system. See the [S3 Configuration for Messages](/docs/configuration/messaging/s3-config-for-messages/) guide.
+
+This allows users to:
+
+* receive inbound picture messages in the mobile app
+* reply to supported MMS conversations
+* keep SMS and MMS history together in the same conversation thread
+
+---
 
 Summary
 -------

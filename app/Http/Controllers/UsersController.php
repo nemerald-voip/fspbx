@@ -64,32 +64,23 @@ class UsersController extends Controller
         }
 
         $users = QueryBuilder::for(User::class)
-            // only users in the current domain
             ->where('domain_uuid', $currentDomain)
             ->select($select)
-            // allow ?filter[username]=foo or ?filter[user_email]=bar
             ->allowedFilters([
-                // Only email and name_formatted
                 AllowedFilter::callback('search', function ($query, $value) {
                     $query->where(function ($q) use ($value) {
                         $q->where('user_email', 'ilike', "%{$value}%")
-                            // if you want to search the fallback username too:
                             ->orWhere('username', 'ilike', "%{$value}%")
-                            // and/or match first_name/last_name
                             ->orWhereHas('user_adv_fields', function ($q2) use ($value) {
                                 $q2->where('first_name', 'ilike', "%{$value}%")
                                     ->orWhere('last_name',  'ilike', "%{$value}%");
                             });
                     });
                 }),
-                // keep any other filters you still need:
                 AllowedFilter::exact('user_enabled'),
             ])
-            // allow ?sort=-username or ?sort=add_date
-            ->allowedSorts(['username', 'user_email', 'user_enabled', 'add_date'])
-            // let your front-end optionally eager-load relations
+            ->allowedSorts(['username', 'add_date'])
             ->allowedIncludes(['user_groups'])
-            // eager-load only the columns you need on user_groups
             ->with([
                 'user_groups:user_uuid,user_group_uuid,group_uuid,group_name',
             ])
@@ -98,6 +89,15 @@ class UsersController extends Controller
             ])
             ->defaultSort('username')
             ->paginate($perPage);
+
+        $users->getCollection()->transform(function ($user) {
+            $canManage = userCheckPermission('user_edit') && $this->canManageTarget($user);
+            $canDelete = userCheckPermission('user_delete') && $this->canManageTarget($user);
+
+            $user->can_manage_target = $canManage;
+            $user->can_delete_target = $canDelete;
+            return $user;
+        });
 
         // wrap in your DTO
         $usersDto = UserData::collect($users);
@@ -114,7 +114,8 @@ class UsersController extends Controller
                     'item_options' => route('users.item.options'),
                     'bulk_delete' => route('users.bulk.delete'),
                     'select_all' => route('users.select.all'),
-                ]
+                ],
+                'permissions' => $this->getUserPermissions(),
             ]
         );
     }
@@ -142,6 +143,7 @@ class UsersController extends Controller
         if ($itemUuid) {
             $user = QueryBuilder::for(User::class)
                 ->select($select)
+                ->where('domain_uuid', $domain_uuid)
                 ->with([
                     'user_groups' => function ($q) {
                         $q->select([
@@ -161,7 +163,6 @@ class UsersController extends Controller
                             'user_uuid',
                         ]);
                     },
-
                 ])
                 ->with([
                     'domain_group_permissions' => function ($q) {
@@ -172,7 +173,6 @@ class UsersController extends Controller
                             'user_uuid',
                         ]);
                     },
-
                 ])
                 ->with([
                     'extension' => function ($q) {
@@ -182,13 +182,11 @@ class UsersController extends Controller
                             'effective_caller_id_name',
                         ]);
                     },
-
                 ])
                 ->with([
                     'locations' => function ($q) {
-                        // qualify with table name and only select columns from `locations`
                         $q->select([
-                            'locations.location_uuid',   // required PK for the related model
+                            'locations.location_uuid',
                             'locations.name',
                         ]);
                     },
@@ -196,23 +194,27 @@ class UsersController extends Controller
                 ->whereKey($itemUuid)
                 ->firstOrFail();
 
+            $this->ensureCanManageTarget($user);
+
             $userDto = UserData::from($user);
-            // logger($userDto);
             $updateRoute = route('users.update', ['user' => $itemUuid]);
         } else {
+            if (! userCheckPermission('user_add')) {
+                return response()->json([
+                    'messages' => ['error' => ['Access denied.']]
+                ], 403);
+            }
 
-          // Check for limits
-                if ($resp = $this->enforceLimit(
-                    'users',
-                    \App\Models\User::class,
-                    'domain_uuid',
-                    'user_limit_error'
-                )) {
-                    return $resp;
-                }
+            if ($resp = $this->enforceLimit(
+                'users',
+                \App\Models\User::class,
+                'domain_uuid',
+                'user_limit_error'
+            )) {
+                return $resp;
+            }
 
-            // “New user” defaults
-            $userDto     = new UserData(
+            $userDto = new UserData(
                 user_uuid: '',
                 user_email: '',
                 name_formatted: '',
@@ -312,34 +314,42 @@ class UsersController extends Controller
      */
     public function store(StoreUserRequest $request)
     {
-        $data        = $request->validated();
+        if (! userCheckPermission('user_add')) {
+            return response()->json([
+                'messages' => ['error' => ['Access denied.']]
+            ], 403);
+        }
+
+        $data = $request->validated();
         $domain_uuid = session('domain_uuid');
 
-        // build username: slug of first_name + (optional '_' + slug(last_name))
+        if (! isSuperAdmin()) {
+            $data['domain_uuid'] = $domain_uuid;
+        }
+
+        $allowedGroups = $this->allowedGroupsForActor($data['groups'] ?? [], $data['domain_uuid']);
+
         $username = Str::slug($data['first_name'], '_')
             . (!empty($data['last_name']) ? '_' . Str::slug($data['last_name'], '_') : '');
 
         try {
             DB::beginTransaction();
 
-            // 1) Core user
             $user = User::create([
                 'username'     => $username,
                 'user_email'   => $data['user_email'],
                 'user_enabled' => $data['user_enabled'] ?? 'true',
-                'domain_uuid'  => $data['domain_uuid'] ?? session('domain_uuid'),
+                'domain_uuid'  => $data['domain_uuid'],
             ]);
 
-            // 2) Advanced fields
             $user->user_adv_fields()->create([
                 'first_name' => $data['first_name'],
                 'last_name'  => $data['last_name'] ?? null,
             ]);
 
-            // 3) Domain settings
             foreach (['language', 'time_zone'] as $field) {
                 $user->settings()->create([
-                    'domain_uuid'               => $domain_uuid,
+                    'domain_uuid'               => $data['domain_uuid'],
                     'user_setting_category'     => 'domain',
                     'user_setting_subcategory'  => $field,
                     'user_setting_name'         => $field === 'language' ? 'code' : 'name',
@@ -348,32 +358,24 @@ class UsersController extends Controller
                 ]);
             }
 
-            // 4) Groups
-            $groupNames = Groups::whereIn('group_uuid', $data['groups'])
-                ->pluck('group_name', 'group_uuid');
-
-            foreach ($data['groups'] as $groupUuid) {
+            foreach (($data['groups'] ?? []) as $groupUuid) {
                 $user->user_groups()->create([
                     'group_uuid'  => $groupUuid,
-                    'domain_uuid' => $domain_uuid,
-                    'group_name'  => $groupNames[$groupUuid] ?? null,
+                    'domain_uuid' => $data['domain_uuid'],
+                    'group_name'  => $allowedGroups[$groupUuid]->group_name,
                 ]);
             }
 
-            // 5) Domain Permissions (Accounts)
             if (isset($data['accounts']) && is_array($data['accounts'])) {
-                // Add new permissions
-                foreach ($data['accounts'] as $domainUuid) {
+                foreach ($data['accounts'] as $managedDomainUuid) {
                     $user->domain_permissions()->create([
                         'user_uuid'   => $user->user_uuid,
-                        'domain_uuid' => $domainUuid,
+                        'domain_uuid' => $managedDomainUuid,
                     ]);
                 }
             }
 
-            // 6) Domain Group Permissions (Account Groups)
             if (isset($data['account_groups']) && is_array($data['account_groups'])) {
-                // Add new group permissions
                 foreach ($data['account_groups'] as $domainGroupUuid) {
                     $user->domain_group_permissions()->create([
                         'user_uuid'         => $user->user_uuid,
@@ -390,8 +392,7 @@ class UsersController extends Controller
             ], 201);
         } catch (\Throwable $e) {
             DB::rollBack();
-            logger('User create error: ' . $e->getMessage()
-                . " at " . $e->getFile() . ":" . $e->getLine());
+            logger('User create error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
                 'messages' => ['error' => ['Something went wrong while creating the user.']]
@@ -409,76 +410,78 @@ class UsersController extends Controller
      */
     public function update(UpdateUserRequest $request, User $user)
     {
+        if (! userCheckPermission('user_edit')) {
+            return response()->json([
+                'messages' => ['error' => ['Access denied.']]
+            ], 403);
+        }
+
+        $this->ensureCanManageTarget($user);
 
         $validated   = $request->validated();
         $domain_uuid = session('domain_uuid');
-        // logger($validated);
+
+        if (! isSuperAdmin()) {
+            unset($validated['domain_uuid'], $validated['user_type']);
+        }
+
+        $allowedGroups = collect();
+        if (!empty($validated['groups']) && is_array($validated['groups'])) {
+            $allowedGroups = $this->allowedGroupsForActor($validated['groups'], $user->domain_uuid);
+        }
 
         try {
             DB::beginTransaction();
 
-            // 1) Advanced fields (first_name, last_name)
             $user->user_adv_fields()->updateOrCreate(
                 ['user_uuid' => $user->user_uuid],
                 [
                     'first_name' => $validated['first_name'] ?? null,
-                    'last_name'  => $validated['last_name']  ?? null,
+                    'last_name'  => $validated['last_name'] ?? null,
                 ]
             );
 
-            // 2) Core user updates
             $user->update($validated);
 
-            // 3) Domain settings: language & time_zone
             foreach (['language', 'time_zone'] as $field) {
                 $user->settings()->updateOrCreate(
                     [
-                        'user_setting_category'    => 'domain',
-                        'user_setting_subcategory' => $field,
+                        'domain_uuid'                => $user->domain_uuid,
+                        'user_setting_category'      => 'domain',
+                        'user_setting_subcategory'   => $field,
                     ],
                     [
+                        'user_setting_name'    => $field === 'language' ? 'code' : 'name',
                         'user_setting_value'   => $validated[$field] ?? null,
                         'user_setting_enabled' => true,
                     ]
                 );
             }
 
-            // 4) User groups
-            if (!empty($validated['groups']) && is_array($validated['groups'])) {
-                $groupNames = Groups::whereIn('group_uuid', $validated['groups'])
-                    ->pluck('group_name', 'group_uuid');
-
-                // Delete existing group relations for the user
+            if (array_key_exists('groups', $validated) && is_array($validated['groups'])) {
                 $user->user_groups()->delete();
 
-                // Add new group relations
                 foreach ($validated['groups'] as $groupUuid) {
                     $user->user_groups()->create([
                         'group_uuid'  => $groupUuid,
-                        'domain_uuid' => $domain_uuid,
-                        'group_name'  => $groupNames[$groupUuid] ?? null,
+                        'domain_uuid' => $user->domain_uuid,
+                        'group_name'  => $allowedGroups[$groupUuid]->group_name,
                     ]);
                 }
             }
 
-            // 5) Domain Permissions (Accounts)
-            // Remove existing permissions for this user
             $user->domain_permissions()->delete();
             if (isset($validated['accounts']) && is_array($validated['accounts'])) {
-                // Add new permissions
-                foreach ($validated['accounts'] as $domainUuid) {
+                foreach ($validated['accounts'] as $managedDomainUuid) {
                     $user->domain_permissions()->create([
                         'user_uuid'   => $user->user_uuid,
-                        'domain_uuid' => $domainUuid,
+                        'domain_uuid' => $managedDomainUuid,
                     ]);
                 }
             }
 
-            // 6) Domain Group Permissions (Account Groups)
-            // Remove existing group permissions for this user
             $user->domain_group_permissions()->delete();
             if (isset($validated['account_groups']) && is_array($validated['account_groups'])) {
-                // Add new group permissions
                 foreach ($validated['account_groups'] as $domainGroupUuid) {
                     $user->domain_group_permissions()->create([
                         'user_uuid'         => $user->user_uuid,
@@ -487,8 +490,7 @@ class UsersController extends Controller
                 }
             }
 
-            // 7) Locations (polymorphic pivot)
-            $user->locations()->detach(); // Remove existing links
+            $user->locations()->detach();
             if (!empty($validated['locations']) && is_array($validated['locations'])) {
                 foreach ($validated['locations'] as $locationUuid) {
                     $user->locations()->attach($locationUuid);
@@ -537,28 +539,22 @@ class UsersController extends Controller
                 ->get();
 
             foreach ($users as $user) {
-                // Delete related advanced fields
+                $this->ensureCanManageTarget($user);
+            }
+
+            foreach ($users as $user) {
                 $user->user_adv_fields()->delete();
-
-                // Delete user settings
                 $user->settings()->delete();
-
-                // Delete group assignments
                 $user->user_groups()->delete();
-
-                $user->domain_permissions()->delete();       
-
-                $user->domain_group_permissions()->delete();  
-
-                // Finally delete the user record
+                $user->domain_permissions()->delete();
+                $user->domain_group_permissions()->delete();
                 $user->delete();
             }
 
-            // bulk-remove all location links for these users in one go
             DB::table('locationables')
-            ->where('locationable_type', \App\Models\User::class)
-            ->whereIn('locationable_id', $uuids)
-            ->delete();
+                ->where('locationable_type', \App\Models\User::class)
+                ->whereIn('locationable_id', $uuids)
+                ->delete();
 
             DB::commit();
 
@@ -567,9 +563,7 @@ class UsersController extends Controller
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
-            logger('User bulkDelete error: '
-                . $e->getMessage()
-                . " at " . $e->getFile() . ":" . $e->getLine());
+            logger('User bulkDelete error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
                 'messages' => ['error' => ['An error occurred while deleting the selected user(s).']]
@@ -577,9 +571,82 @@ class UsersController extends Controller
         }
     }
 
+    protected function actorLevel(): int
+    {
+        return (int) (session('user.group_level') ?? 0);
+    }
+
+    protected function targetLevel(User $user): int
+    {
+        return (int) $user->user_groups()
+            ->join('v_groups', 'v_groups.group_uuid', '=', 'v_user_groups.group_uuid')
+            ->max('v_groups.group_level');
+    }
+
+    protected function targetIsSuperadmin(User $user): bool
+    {
+        return $user->user_groups()
+            ->join('v_groups', 'v_groups.group_uuid', '=', 'v_user_groups.group_uuid')
+            ->whereRaw('lower(v_groups.group_name) = ?', ['superadmin'])
+            ->exists();
+    }
+
+    protected function canManageTarget(User $user): bool
+    {
+        if (isSuperAdmin()) {
+            return true;
+        }
+
+        if ($user->domain_uuid !== session('domain_uuid')) {
+            return false;
+        }
+
+        if ($this->targetIsSuperadmin($user)) {
+            return false;
+        }
+
+        return $this->targetLevel($user) <= $this->actorLevel();
+    }
+
+    protected function ensureCanManageTarget(User $user): void
+    {
+        if (! $this->canManageTarget($user)) {
+            abort(403, 'You are not allowed to manage this user.');
+        }
+    }
+
+    protected function allowedGroupsForActor(array $groupUuids, ?string $domainUuid = null)
+    {
+        $domainUuid ??= session('domain_uuid');
+
+        $groups = Groups::query()
+            ->whereIn('group_uuid', $groupUuids)
+            ->where(function ($q) use ($domainUuid) {
+                $q->whereNull('domain_uuid')
+                    ->orWhere('domain_uuid', $domainUuid);
+            })
+            ->where('group_level', '<=', $this->actorLevel())
+            ->get([
+                'group_uuid',
+                'group_name',
+                'group_level',
+            ]);
+
+        if ($groups->count() !== count(array_unique($groupUuids))) {
+            abort(403, 'One or more selected groups are not allowed.');
+        }
+
+        if (! isSuperAdmin() && $groups->contains(fn($group) => strtolower($group->group_name) === 'superadmin')) {
+            abort(403, 'You are not allowed to assign the superadmin group.');
+        }
+
+        return $groups->keyBy('group_uuid');
+    }
+
     public function getUserPermissions()
     {
         $permissions = [];
+        $permissions['user_create'] = userCheckPermission('user_add');
         $permissions['user_group_view'] = userCheckPermission('user_group_view');
         $permissions['user_group_edit'] = userCheckPermission('user_group_edit');
         $permissions['user_status'] = userCheckPermission('user_status');

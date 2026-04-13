@@ -46,7 +46,7 @@ class EmailSendingLogger
                     'subject'     => $email->getSubject(),
                     'html_body'   => $email->getHtmlBody(),
                     'text_body'   => $email->getTextBody(),
-                    'status'      => 'queued',
+                    'status'      => 'sending',
                     // 'attachments' => $attributes['attachments'] ?? null,
                 ]
             );
@@ -58,9 +58,9 @@ class EmailSendingLogger
     private function recipientsToString(array $recipients): string
     {
         return implode(
-            ',',
+            ', ',
             array_map(function ($email) {
-                return "{$email->getAddress()}" . ($email->getName() ? " <{$email->getName()}>" : '');
+                return $email->toString();
             }, $recipients)
         );
     }

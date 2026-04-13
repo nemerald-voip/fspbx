@@ -97,6 +97,11 @@ class UpdateDeviceRequest extends FormRequest
                 'integer',
             ],
 
+            'device_keys.*.key_area' => [
+                'nullable',
+                'string',
+            ],
+
             'device_keys.*.key_type' => [
                 'nullable',
                 'string',
@@ -170,12 +175,16 @@ class UpdateDeviceRequest extends FormRequest
             $indexes = [];
             foreach ($keys as $i => $k) {
                 $idx = $k['key_index'] ?? null;
+                $area = $k['key_area'] ?? 'main';
+
                 if ($idx === null) continue;
 
-                if (isset($indexes[$idx])) {
+                $composite = $area . ':' . $idx;
+
+                if (isset($indexes[$composite])) {
                     $validator->errors()->add("device_keys.$i.key_index", "Duplicate key.");
                 } else {
-                    $indexes[$idx] = true;
+                    $indexes[$composite] = true;
                 }
             }
         });

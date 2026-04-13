@@ -51,10 +51,9 @@
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">To</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Subject</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Action</th>
 
-                                <!-- <th class="relative px-6 py-3 text-left text-sm font-medium text-gray-500">
-                                    <span class="sr-only">Actions</span>
-                                </th> -->
+                                
                             </tr>
                         </thead>
                         <tbody v-if="!isDataLoading && data.data?.length" class="divide-y divide-gray-200 bg-white">
@@ -74,6 +73,9 @@
                                     </td>
 
                                     <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                        <Badge v-if="row.status == 'queued'" :text="row.status"
+                                            :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
+                                            ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
                                         <Badge v-if="row.status == 'sending'" :text="row.status"
                                             :backgroundColor="'bg-blue-100'" :textColor="'text-blue-800'"
                                             ringColor="ring-blue-400/20" class="px-2 py-1 text-xs" />
@@ -83,34 +85,37 @@
                                         <Badge v-if="row.status == 'permanent_failed'" :text="row.status"
                                             :backgroundColor="'bg-rose-100'" :textColor="'text-rose-800'"
                                             ringColor="ring-rose-400/20" class="px-2 py-1 text-xs" />
+                                        <Badge v-if="row.status == 'failed'" :text="row.status"
+                                            :backgroundColor="'bg-rose-100'" :textColor="'text-rose-800'"
+                                            ringColor="ring-rose-400/20" class="px-2 py-1 text-xs" />
                                     </td>
 
-                                    <!-- <td class="whitespace-nowrap px-6 py-2 text-right text-sm font-medium">
-                                        <div class="flex items-center whitespace-nowrap justify-end">
-                                            <ejs-tooltip :content="'Edit'" position='TopCenter'
-                                                target="#destination_tooltip_target">
-                                                <div id="destination_tooltip_target">
-                                                    <PencilSquareIcon @click.stop="handleEditButtonClick(row.uuid)"
-                                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                    <td>
+                                    <!-- RETRY ICON -->
+                                        <div class="relative group flex items-center justify-center cursor-pointer">
+                                            <RestartIcon @click.stop="handleRetry(row.uuid)"
+                                                class="h-7 w-7 transition duration-300 ease-in-out p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600 rounded-full" />
 
+                                            <!-- TOOLTIP -->
+                                            <div
+                                                class="absolute bottom-full mb-1 hidden group-hover:block whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 z-10 shadow-lg">
+                                                Resend
+                                                <!-- Little down arrow -->
+                                                <div
+                                                    class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45">
                                                 </div>
-                                            </ejs-tooltip>
-
-                                            <ejs-tooltip :content="'Delete'" position='TopCenter'
-                                                target="#delete_tooltip_target">
-                                                <div id="delete_tooltip_target">
-                                                    <TrashIcon @click.stop="handleSingleItemDeleteRequest(row.uuid)"
-                                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-                                                </div>
-                                            </ejs-tooltip>
+                                            </div>
                                         </div>
-
-                                    </td> -->
+                                    </td>
                                 </tr>
                                 <!-- EXPANDABLE ROW -->
                                 <tr v-if="expandedRow === row.uuid">
                                     <td :colspan="5" class="bg-gray-50 px-6 py-4">
 
+                                        <div class="flex gap-2">
+                                            <div class="text-gray-500 text-sm ">ID: </div>
+                                            <div class="text-gray-400 text-sm "> {{ row.uuid }}</div>
+                                        </div>
                                         <div class="flex gap-2">
                                             <div class="text-gray-500 text-sm ">From: </div>
                                             <div class="text-gray-400 text-sm "> {{ row.from }}</div>
@@ -183,6 +188,8 @@ import DatePicker from "@generalComponents/DatePicker.vue";
 import Paginator from "@generalComponents/Paginator.vue";
 import Badge from "@generalComponents/Badge.vue";
 import moment from 'moment-timezone';
+import RestartIcon from "./icons/RestartIcon.vue";
+
 
 const selectedItems = ref([]);
 
@@ -372,6 +379,19 @@ const getItemOptions = (itemUuid = null) => {
         });
 }
 
+const handleRetry = (uuid) => {
+    // Single message sent in array format to bulk endpoint
+    axios.post(props.routes.email_retry, { 'items': [uuid] })
+        .then((response) => {
+            showNotification('success', response.data.messages);
+            handleClearSelection();
+        }).catch((error) => {
+            handleClearSelection();
+            handleErrorResponse(error);
+        }).finally(() => {
+            fetchData(data.value.current_page || 1);
+        });
+}
 
 const hideNotification = () => {
     notificationShow.value = false;

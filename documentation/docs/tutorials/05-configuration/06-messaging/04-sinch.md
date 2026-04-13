@@ -2,13 +2,14 @@
 id: sinch
 title: Sinch SMS Provider Configuration
 slug: /configuration/messaging/sinch
+description: Configure Sinch for SMS and MMS in FS PBX.
 sidebar_position: 4
 ---
 
 Sinch SMS Provider Configuration
 ================================
 
-FS PBX supports two-way SMS through **Sinch**, using the Sinch (Inteliquent) message broker API for outbound messages and a secure inbound webhook for receiving messages. This guide explains how to configure your Sinch credentials, set up inbound security, and enable SMS for phone numbers.
+FS PBX provides two-way SMS and MMS support through **Sinch**, using the Sinch (Inteliquent) message broker API for outbound messages and a secure inbound webhook for receiving messages. This guide explains how to configure your Sinch credentials, set up inbound security, and enable SMS for phone numbers.
 
 * * * * *
 
@@ -119,7 +120,19 @@ From this point:
 
 -   Outbound replies → Mobile App → Sinch → Recipient
 
-* * * * *
+## 6. MMS Support
+
+If your Apidaze number supports MMS, FS PBX can also process media attachments sent through the same messaging flow.
+
+To use MMS media storage, S3-compatible storage must already be configured in your system. See the [S3 Configuration for Messages](/docs/configuration/messaging/s3-config-for-messages/) guide.
+
+This allows users to:
+
+* receive inbound picture messages in the mobile app
+* reply to supported MMS conversations
+* keep SMS and MMS history together in the same conversation thread
+
+---
 
 Summary
 -------

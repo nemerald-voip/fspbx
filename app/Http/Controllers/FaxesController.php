@@ -21,7 +21,6 @@ use App\Models\Destinations;
 use Illuminate\Http\Request;
 use App\Models\DefaultSettings;
 use Illuminate\Support\Facades\DB;
-use libphonenumber\PhoneNumberUtil;
 use libphonenumber\PhoneNumberFormat;
 use Spatie\QueryBuilder\QueryBuilder;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -29,8 +28,6 @@ use App\Http\Requests\CreateFaxRequest;
 use App\Http\Requests\UpdateFaxRequest;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Response;
-use libphonenumber\NumberParseException;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\CreateNewFaxRequest;
 use Exception;
@@ -115,6 +112,22 @@ class FaxesController extends Controller
             ->count();
         // ->toSql();
 
+        $totalReceivedPages = FaxFiles::query()
+            ->join('v_fax_logs', 'v_fax_logs.fax_log_uuid', '=', 'v_fax_files.fax_file_uuid')
+            ->where('v_fax_files.fax_mode', 'rx')
+            ->where('v_fax_files.domain_uuid', $currentDomain)
+            ->inUsersLocations()
+            ->whereBetween('v_fax_files.fax_date', $period)
+            ->sum(DB::raw('coalesce(v_fax_logs.fax_document_transferred_pages, 0)'));
+
+        $totalSentPages = FaxFiles::query()
+            ->join('v_fax_logs', 'v_fax_logs.fax_log_uuid', '=', 'v_fax_files.fax_file_uuid')
+            ->where('v_fax_files.fax_mode', 'tx')
+            ->where('v_fax_files.domain_uuid', $currentDomain)
+            ->inUsersLocations()
+            ->whereBetween('v_fax_files.fax_date', $period)
+            ->sum(DB::raw('coalesce(v_fax_logs.fax_document_transferred_pages, 0)'));
+
         $totalFaxes = $faxes->total();
 
         return Inertia::render(
@@ -125,6 +138,8 @@ class FaxesController extends Controller
                 'stats' => [
                     ['name' => 'Faxes Sent (Last 30 Days)', 'stat' => $totalSent],
                     ['name' => 'Faxes Received (Last 30 Days)', 'stat' => $totalReceived],
+                    ['name' => 'Pages Sent (Last 30 Days)', 'stat' => $totalSentPages],
+                    ['name' => 'Pages Received (Last 30 Days)', 'stat' => $totalReceivedPages],
                     ['name' => 'Active Fax Numbers', 'stat' => $totalFaxes],
                 ],
 
@@ -143,7 +158,7 @@ class FaxesController extends Controller
         );
     }
 
-        /**
+    /**
      * Store a newly created resource in storage.
      *
      * @param \Illuminate\Http\Request $request
@@ -778,7 +793,7 @@ class FaxesController extends Controller
         }
     }
 
-    private function buildWorkingDirectories($fax) 
+    private function buildWorkingDirectories($fax)
     {
         $temp_dir = Storage::disk('fax')->path("{$fax->accountcode}/{$fax->fax_extension}/temp");
         if (!is_dir($temp_dir)) {
@@ -850,7 +865,6 @@ class FaxesController extends Controller
             // Update IVR with the new dialplan_uuid
             $fax->dialplan_uuid = $newDialplanUuid;
             $fax->save();
-
         } else {
             // Update existing dialplan info
             $dialPlan->dialplan_name = $fax->fax_name;

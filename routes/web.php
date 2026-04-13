@@ -10,7 +10,6 @@ use App\Http\Controllers\BusinessHoursController;
 use App\Http\Controllers\CallRecordingController;
 use App\Http\Controllers\CallRoutingOptionsController;
 use App\Http\Controllers\CdrsController;
-use App\Http\Controllers\ContactsController;
 use App\Http\Controllers\CsrfTokenController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
@@ -26,10 +25,10 @@ use App\Http\Controllers\FaxLogController;
 use App\Http\Controllers\FaxQueueController;
 use App\Http\Controllers\FaxSentController;
 use App\Http\Controllers\FirewallController;
-use App\Http\Controllers\GreetingsController;
 use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\LogsController;
 use App\Http\Controllers\MessageController;
+use App\Http\Controllers\MessageMediaController;
 use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\PolycomLogController;
@@ -79,6 +78,9 @@ Route::webhooks('webhook/sinch/sms', 'sinch_messaging');
 Route::webhooks('webhook/bandwidth/sms', 'bandwidth_messaging');
 Route::webhooks('webhook/telnyx/sms', 'telnyx_messaging');
 Route::webhooks('webhook/clicksend/sms', 'clicksend_messaging');
+Route::webhooks('webhook/apidaze/sms', 'apidaze_messaging');
+Route::webhooks('webhook/bulkvs/sms', 'bulkvs_messaging');
+Route::webhooks('webhook/voipms/sms', 'voipms_messaging');
 Route::webhooks('/sms/ringotelwebhook', 'ringotel_messaging');
 Route::webhooks('/webhook/freeswitch', 'freeswitch');
 Route::webhooks('/webhook/stripe', 'stripe');
@@ -90,6 +92,12 @@ Route::put('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeControll
     ->middleware('throttle:2,1')
     ->name('email-challenge.new-code');
 Route::post('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeController::class, 'store']);
+
+// Message media URL for MMS
+Route::get(
+    '/messages/media/{message_uuid}/{index}/{file_name?}',
+    [MessageMediaController::class, 'show']
+)->name('messages.media.show');
 
 // Csrf token
 Route::get('/csrf-token/refresh', [CsrfTokenController::class, 'store']);

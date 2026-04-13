@@ -22,7 +22,7 @@
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.user_create" type="button"
+                <button v-if="permissions.user_create" type="button"
                     @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
@@ -42,10 +42,10 @@
                 <!-- Checkbox + Name column -->
                 <TableColumnHeader
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
-                    <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems" @click.stop
+<!--                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems" @click.stop
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
-                        :has-selected-items="selectedItems.length > 0" />
+                        :has-selected-items="selectedItems.length > 0" /> -->
                     <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('username')">
                         <span class="mr-2">Name</span>
                         <ChevronUpIcon v-if="sortData.name === 'username' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
@@ -104,11 +104,19 @@
                     <!-- Checkbox + Name -->
                     <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.ring_group_extension">
                         <div class="flex items-center">
-                            <input v-if="row.user_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
-                                :value="row.user_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="ml-9"
-                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.user_update, }"
-                                @click="page.props.auth.can.user_update && handleEditButtonClick(row.user_uuid)">
+                            <!-- <input
+                                v-if="row.user_uuid && row.can_delete_target"
+                                v-model="selectedItems"
+                                type="checkbox"
+                                name="action_box[]"
+                                :value="row.user_uuid"
+                                class="h-4 w-4 rounded border-gray-300 text-indigo-600"
+                            /> -->
+                            <div
+                                class="ml-4"
+                                :class="{ 'cursor-pointer hover:text-gray-900': row.can_manage_target }"
+                                @click="row.can_manage_target && handleEditButtonClick(row.user_uuid)"
+                            >
                                 <span class="flex items-center">
                                     {{ row.name_formatted }}
                                 </span>
@@ -142,20 +150,31 @@
 
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="page.props.auth.can.user_update" :content="'Edit'" position='TopCenter'
-                                    target="#destination_tooltip_target">
+                                <ejs-tooltip
+                                    v-if="row.can_manage_target"
+                                    :content="'Edit'"
+                                    position="TopCenter"
+                                    target="#destination_tooltip_target"
+                                >
                                     <div id="destination_tooltip_target">
-                                        <PencilSquareIcon @click="handleEditButtonClick(row.user_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
-
+                                        <PencilSquareIcon
+                                            @click="handleEditButtonClick(row.user_uuid)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                        />
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="page.props.auth.can.user_destroy" :content="'Delete'"
-                                    position='TopCenter' target="#delete_tooltip_target">
+                               <ejs-tooltip
+                                    v-if="row.can_delete_target"
+                                    :content="'Delete'"
+                                    position="TopCenter"
+                                    target="#delete_tooltip_target"
+                                >
                                     <div id="delete_tooltip_target">
-                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.user_uuid)"
-                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                        <TrashIcon
+                                            @click="handleSingleItemDeleteRequest(row.user_uuid)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                        />
                                     </div>
                                 </ejs-tooltip>
                             </div>
@@ -249,6 +268,7 @@ const showDeleteConfirmationModal = ref(false);
 const props = defineProps({
     data: Object,
     routes: Object,
+    permissions: Object,
 });
 
 const filterData = ref({
@@ -432,22 +452,41 @@ const getItemOptions = (itemUuid = null) => {
 
 const handleErrorResponse = (error) => {
     if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-         console.log(error.response.data);
-        showNotification('error', error.response.data.errors || { request: [error.message] });
+        console.log(error.response.data);
+
+        const data = error.response.data;
+
+        // Prefer the same structure the success flow already uses
+        if (data.messages) {
+            const messages = { ...data.messages };
+
+            // In local/dev, optionally append debug details
+            if (data.debug?.message) {
+                messages.error = [
+                    ...(messages.error || []),
+                    data.debug.message,
+                ];
+            }
+
+            showNotification('error', messages);
+            return;
+        }
+
+        // Validation-style fallback
+        if (data.errors) {
+            showNotification('error', { error: Object.values(data.errors).flat() });
+            return;
+        }
+
+        showNotification('error', { error: [error.message] });
     } else if (error.request) {
-        // The request was made but no response was received
-        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
-        // http.ClientRequest in node.js
-        showNotification('error', { request: [error.request] });
+        showNotification('error', { error: ['No response received from the server.'] });
         console.log(error.request);
     } else {
-        // Something happened in setting up the request that triggered an Error
-        showNotification('error', { request: [error.message] });
+        showNotification('error', { error: [error.message] });
         console.log(error.message);
     }
-}
+};
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {

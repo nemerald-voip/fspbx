@@ -19,4 +19,8 @@ class FaxLogs extends Model
     protected $keyType = 'string';
 
 
+    public function faxFile()
+    {
+        return $this->hasOne(FaxFiles::class, 'fax_file_uuid', 'fax_log_uuid');
+    }
 }

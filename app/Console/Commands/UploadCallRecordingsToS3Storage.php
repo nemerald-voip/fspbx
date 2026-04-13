@@ -160,18 +160,18 @@ class UploadCallRecordingsToS3Storage extends Command
                 // 2. MASS UPDATE
                 // Update ALL CDRs that match this filename and path. 
                 // This covers the current $rec AND any other CDRs sharing this file.
-$recordingStart = Carbon::parse($rec->start_stamp);
+                $recordingStart = Carbon::parse($rec->start_stamp);
 
-CDR::where('record_name', $originalRecordName)
-    ->where('record_path', $originalRecordPath)
-    ->whereBetween('start_stamp', [
-        $recordingStart->copy()->subDay(),
-        $recordingStart->copy()->addDay(),
-    ])
-    ->update([
-        'record_path' => 'S3',
-        'record_name' => $objectKey
-    ]);
+                CDR::where('record_name', $originalRecordName)
+                    ->where('record_path', $originalRecordPath)
+                    ->whereBetween('start_stamp', [
+                        $recordingStart->copy()->subDay(),
+                        $recordingStart->copy()->addDay(),
+                    ])
+                    ->update([
+                        'record_path' => 'S3',
+                        'record_name' => $objectKey
+                    ]);
 
                 // Cleanup local files
                 if ($mp3File !== $recordingFile && file_exists($mp3File)) {
@@ -258,8 +258,8 @@ CDR::where('record_name', $originalRecordName)
 
         $process = new Process([
             'ffmpeg',
-            '-nostdin',        // never prompt / read from stdin
-            '-y',              // overwrite output if it exists
+            '-nostdin',
+            '-y',
             '-i',
             $recordingFile,
             '-b:a',
@@ -271,9 +271,13 @@ CDR::where('record_name', $originalRecordName)
             $mp3File,
         ]);
 
+        $process->setTimeout(7200); // 2 hours
+
         try {
             $process->mustRun();
             return $mp3File;
+        } catch (ProcessTimedOutException $e) {
+            logger('FFmpeg timed out for file: ' . $recordingFile . '. Error: ' . $e->getMessage());            return null;
         } catch (ProcessFailedException $e) {
             logger($e->getMessage());
             return null;

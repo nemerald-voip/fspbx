@@ -27,10 +27,24 @@ class MessageObserver
             // 2. Active Chat Window
             $roomId = "{$local}_{$remote}";
 
+            $mediaPayload = $message->media;
+            
+            if (is_array($mediaPayload)) {
+                foreach ($mediaPayload as $index => &$item) {
+                    // If the path is null (because it just inserted), build it manually
+                    if (empty($item['access_path'])) {
+                        $fileName = $item['stored_name'] ?? 'image.png';
+                        // Matches your MessageMediaController route structure
+                        $item['access_path'] = "/messages/media/{$message->message_uuid}/{$index}/{$fileName}";
+                    }
+                }
+            }
+
             $payload = [
                 'text' => $message->message,
                 'role' => $role,
                 'timestamp' => $message->created_at->toIsoString(),
+                'media'     => $mediaPayload,
             ];
 
             // logger("Broadcasting to channel: room." . str_replace('+', '', $roomId));
@@ -50,6 +64,7 @@ class MessageObserver
                 'name' => $remote,
                 'my_number' => $local,
                 'direction' => $isOutbound ? 'out' : 'in',
+                'media'     => $message->media,
             ];
 
             try {

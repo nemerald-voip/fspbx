@@ -6,10 +6,16 @@
                 <template #title>Sent Faxes</template>
 
                 <template #action>
-
                 </template>
 
                 <template #filters>
+                    <div class="w-full mb-3 mt-1">
+                        <p class="text-sm text-gray-500">
+                            The total page count for your filtered results is <span
+                                class="font-semibold text-gray-900">{{ stats.total_transferred_pages ?? 0 }}</span>.
+                        </p>
+                    </div>
+
                     <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
                         <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                             <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
@@ -63,7 +69,8 @@
                         class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
 
-                    <TableColumnHeader header="" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    <TableColumnHeader header="Pages"
+                        class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                     <!-- Empty for any action buttons -->
                     <TableColumnHeader header="" class="px-2 py-3.5 text-center text-sm font-semibold text-gray-900" />
@@ -118,7 +125,8 @@
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
                             :text="row.fax_date_formatted" />
 
-                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="''" />
+                        <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                            :text="row.fax_log?.fax_document_transferred_pages ?? ''" />
 
 
                         <!-- Action buttons -->
@@ -126,6 +134,14 @@
 
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap justify-end">
+                                    <ejs-tooltip :content="'Preview'" position="TopCenter"
+                                        target="#preview_tooltip_target">
+                                        <div id="preview_tooltip_target">
+                                            <EyeIcon @click="handlePreviewButtonClick(row.fax_file_uuid)"
+                                                class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                        </div>
+                                    </ejs-tooltip>
+
                                     <ejs-tooltip v-if="permissions.delete" :content="'Download'" position='TopCenter'
                                         target="#destination_tooltip_target">
                                         <div id="destination_tooltip_target">
@@ -176,6 +192,24 @@
         </div>
     </MainLayout>
 
+    <!-- Fax preview modal -->
+    <div v-if="showPreviewModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+        @click.self="closePreviewModal">
+        <div class="flex h-[90vh] w-full max-w-6xl flex-col overflow-hidden rounded-lg bg-white shadow-xl">
+            <div class="flex items-center justify-between border-b px-4 py-3">
+                <h2 class="text-lg font-semibold text-gray-900">Fax Preview</h2>
+
+                <button type="button" @click="closePreviewModal"
+                    class="rounded p-1 text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+                    <XMarkIcon class="h-5 w-5" />
+                </button>
+            </div>
+
+            <div class="flex-1 bg-gray-100">
+                <iframe v-if="previewUrl" :src="previewUrl" class="h-full w-full" />
+            </div>
+        </div>
+    </div>
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -197,7 +231,7 @@ import moment from 'moment-timezone';
 import { registerLicense } from '@syncfusion/ej2-base';
 import DatePicker from "./components/general/DatePicker.vue";
 import Notification from "./components/notifications/Notification.vue";
-import { MagnifyingGlassIcon, CloudArrowDownIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
+import { MagnifyingGlassIcon, CloudArrowDownIcon, TrashIcon, XMarkIcon, EyeIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 
@@ -212,6 +246,8 @@ const selectPageItems = ref(false);
 const selectAll = ref(false);
 const showDeleteConfirmationModal = ref(false);
 const confirmDeleteAction = ref(null);
+const showPreviewModal = ref(false);
+const previewUrl = ref(null);
 
 const data = ref({
     data: [],
@@ -254,6 +290,28 @@ const filterData = ref({
 
 });
 
+const stats = ref({
+    total_transferred_pages: 0,
+})
+
+const getStats = () => {
+    if (!props.routes?.stats_route) {
+        return
+    }
+
+    axios.get(props.routes.stats_route, {
+        params: {
+            filter: filterData.value,
+        }
+    })
+        .then((response) => {
+            stats.value = response.data
+        })
+        .catch((error) => {
+            handleErrorResponse(error)
+        })
+}
+
 const getData = (page = 1) => {
     loading.value = true;
 
@@ -279,6 +337,7 @@ const getData = (page = 1) => {
 
 const handleSearchButtonClick = () => {
     getData()
+    getStats()
 };
 
 const handleDeleteButtonClick = (uuid) => {
@@ -389,6 +448,15 @@ const handleDownloadButtonClick = async (uuid) => {
     }
 };
 
+const handlePreviewButtonClick = (uuid) => {
+    previewUrl.value = props.routes.preview.replace(':file', encodeURIComponent(uuid));
+    showPreviewModal.value = true;
+};
+
+const closePreviewModal = () => {
+    showPreviewModal.value = false;
+    previewUrl.value = null;
+};
 
 
 const handleSelectAll = () => {

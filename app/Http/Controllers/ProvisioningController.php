@@ -141,6 +141,7 @@ class ProvisioningController extends Controller
                     'device_line_uuid',   // PK on device_lines
                     'device_uuid',        // FK to devices (required for the relation)
                     'line_number',
+                    'user_id',
                     'auth_id',
                     'server_address',
                     'server_address_primary',
@@ -194,11 +195,12 @@ class ProvisioningController extends Controller
                 $k->select([
                     'device_key_uuid',
                     'device_uuid',
+                    'key_area',
                     'key_index',
                     'key_type',
                     'key_value',
                     'key_label',
-                ])->orderBy('key_index');
+                ])->orderBy('key_area')->orderBy('key_index');
             },
             'domain' => function ($q) {
                 $q->select([
@@ -211,6 +213,7 @@ class ProvisioningController extends Controller
         $lines = [];
         foreach ($device->lines as $line) {
             $lines[$line->line_number] = [
+                'user_id'           => $line->user_id ?? null,
                 'auth_id'           => $line->auth_id ?? null,
                 'password'          => $line->password ?? null,
                 'display_name'      => $line->display_name ?? null,
@@ -227,19 +230,29 @@ class ProvisioningController extends Controller
             ];
         }
 
+        $keyAreas = $this->getEffectiveDeviceKeysByArea($device);
+        // logger($keyAreas);
+
         return [
             'device_uuid'   => (string) $device->device_uuid,
             'domain_uuid'   => (string) $device->domain_uuid,
             'vendor'        => $device->device_vendor ?? null,
-            'domain_name' => $device->domain?->domain_name ?? null,
-            'template' => $device->device_template ?? null,
+            'domain_name'   => $device->domain?->domain_name ?? null,
+            'template'      => $device->device_template ?? null,
             'template_uuid' => $device->device_template_uuid ?? null,
             'serial'        => (string) $device->serial_number ?? null,
             'mac'           => $device->device_address ?? null,
-            'keys'        => $this->getEffectiveDeviceKeys($device),
+
+            // all keys flattened for legacy templates that expect a single list:
+            'keys' => $keyAreas['main'] ?? [],
+            // keys separated by area for newer templates that want to organize by area:
+            'keys_by_area' => $keyAreas,
+            'main_keys' => $keyAreas['main'] ?? [],
+            'multi_purpose_keys' => $keyAreas['multi_purpose'] ?? [],
+
             'lines'       => $lines,
-            'line_count' => count($lines),
-            'settings' => $this->getProvisionSettings(
+            'line_count'  => count($lines),
+            'settings'    => $this->getProvisionSettings(
                 (string) $device->domain_uuid,
                 (string) $device->device_uuid
             ),
@@ -468,83 +481,183 @@ class ProvisioningController extends Controller
     }
 
 
-    /**
-     * Build final key layout where device-level keys override profile keys
-     * by the same key order (device_key_id === profile_key_id).
-     *
-     * Output is a zero-indexed array sorted by 'id' (key order), each item:
-     * [
-     *   'id'        => int,   // key order
-     *   'category'  => ?string,
-     *   'type'      => ?string,
-     *   'line'      => ?int,
-     *   'value'     => ?string,
-     *   'extension' => ?string,
-     *   'label'     => ?string,
-     *   'source'    => 'profile'|'device',
-     * ]
-     */
-    private function getEffectiveDeviceKeys(Devices $device): array
+    private function getEffectiveDeviceKeysByArea(Devices $device): array
     {
         $profileKeys = collect($device->profile?->keys ?? []);
-        $legacyKeys  = collect($device->legacy_keys ?? []); // old device keys
-        $newKeys     = collect($device->keys ?? []);        // new simplified table
+        $legacyKeys  = collect($device->legacy_keys ?? []);
+        $newKeys     = collect($device->keys ?? []);
 
-        // for polycom
-        if ($device->device_vendor == 'polycom') {
-            $newKeys = $this->normalizeNewKeysForPolycom($device, $device->keys ?? []);
+        // For Polycom, collapse duplicate line keys before mapping
+        if ($device->device_vendor === 'polycom') {
+            $newKeys = collect($this->normalizeNewKeysForPolycom($device, $device->keys ?? []));
         }
 
-        $map = [];
+        $maps = [
+            'main' => [],
+            'multi_purpose' => [],
+        ];
 
-        // Seed with profile keys (base)
+        // Normalize old/profile/legacy keys into the same effective shape
+        $normalizeLegacyKey = function (array $item, string $source) use ($device) {
+            $type  = strtolower((string) ($item['type'] ?? ''));
+            $line  = $item['line'] !== null ? (int) $item['line'] : null;
+            $value = $item['value'] ?? null;
+            $label = $item['label'] ?? null;
+
+            if ($type === 'line') {
+                // Legacy/profile line indexes appear to be zero-based:
+                // 0 => first line, 1 => second line, etc.
+                $lookupLineNumber = $line !== null ? $line + 1 : 1;
+
+                $lineObj = collect($device->lines ?? [])->firstWhere('line_number', $lookupLineNumber);
+
+                if ($lineObj) {
+                    $value = $lineObj->auth_id ?? $value;
+
+                    if (empty($label)) {
+                        $label = $lineObj->display_name ?? $lineObj->auth_id ?? null;
+                    }
+                }
+            }
+
+            return [
+                'id'        => $item['id'],
+                'area'      => $item['area'],
+                'category'  => $item['category'],
+                'type'      => $item['type'], // keep logical type here
+                'line'      => $line,
+                'value'     => $value,
+                'extension' => $item['extension'] ?? null,
+                'label'     => $label,
+                'source'    => $source,
+            ];
+        };
+
+        // Seed with profile keys
         foreach ($profileKeys as $pk) {
             $id = (int) $pk->profile_key_id;
             if ($id <= 0) {
                 continue;
             }
-            $map[$id] = [
+
+            [$area, $category] = $this->resolveLegacyKeyPlacement(
+                $device->device_vendor,
+                $pk->profile_key_category
+            );
+
+            if (!array_key_exists($area, $maps)) {
+                $maps[$area] = [];
+            }
+
+            $maps[$area][$id] = $normalizeLegacyKey([
                 'id'        => $id,
-                'category'  => $pk->profile_key_category ?? null,
+                'area'      => $area,
+                'category'  => $category,
                 'type'      => $pk->profile_key_type ?? null,
                 'line'      => $pk->profile_key_line !== null ? (int) $pk->profile_key_line : null,
                 'value'     => $pk->profile_key_value ?? null,
                 'extension' => $pk->profile_key_extension ?? null,
                 'label'     => $pk->profile_key_label ?? null,
-                'source'    => 'profile',
-            ];
+            ], 'profile');
         }
 
-        // Overlay with legacy device keys (override by same key order)
+        // Overlay with legacy device keys
         foreach ($legacyKeys as $dk) {
             $id = (int) $dk->device_key_id;
             if ($id <= 0) {
                 continue;
             }
-            $map[$id] = [
+
+            [$area, $category] = $this->resolveLegacyKeyPlacement(
+                $device->device_vendor,
+                $dk->device_key_category
+            );
+
+            if (!array_key_exists($area, $maps)) {
+                $maps[$area] = [];
+            }
+
+            $maps[$area][$id] = $normalizeLegacyKey([
                 'id'        => $id,
-                'category'  => $dk->device_key_category ?? null,
+                'area'      => $area,
+                'category'  => $category,
                 'type'      => $dk->device_key_type ?? null,
                 'line'      => $dk->device_key_line !== null ? (int) $dk->device_key_line : null,
                 'value'     => $dk->device_key_value ?? null,
                 'extension' => $dk->device_key_extension ?? null,
                 'label'     => $dk->device_key_label ?? null,
-                'source'    => 'device',
-            ];
+            ], 'device');
         }
+
+        // Overlay with new keys -> keyed by area + index
         foreach ($newKeys as $nk) {
             $id = (int) ($nk->key_index ?? 0);
-            if ($id <= 0) continue;
+            if ($id <= 0) {
+                continue;
+            }
 
-            $map[$id] = $this->mapNewDeviceKeyToLegacyShape($device, $nk);
+            $area = (string) ($nk->key_area ?? 'main');
+
+            if (!array_key_exists($area, $maps)) {
+                $maps[$area] = [];
+            }
+
+            $mapped = $this->mapNewDeviceKeyToLegacyShape($device, $nk);
+            $mapped['area'] = $area;
+
+            $maps[$area][$id] = $mapped;
         }
 
-        ksort($map, SORT_NUMERIC);
+        foreach ($maps as $area => $map) {
+            ksort($map, SORT_NUMERIC);
 
-        // logger($map);
+            $processed = $this->postProcessEffectiveKeys($device, array_values($map));
 
-        $keys = array_values($map);
+            // Translate to vendor-specific output only after all logical processing is done
+            $maps[$area] = $this->translateEffectiveKeysForVendor($device, $processed);
+        }
 
+        return $maps;
+    }
+
+    private function translateEffectiveKeysForVendor(Devices $device, array $keys): array
+    {
+        foreach ($keys as &$key) {
+            $translated = $this->translateKeyTypeForVendor(
+                $device->device_vendor,
+                (string) ($key['type'] ?? '')
+            );
+
+            if (!empty($translated['category'])) {
+                $key['category'] = $translated['category'];
+            }
+
+            if (array_key_exists('type', $translated)) {
+                $key['type'] = $translated['type'];
+            }
+        }
+        unset($key);
+
+        return $keys;
+    }
+
+
+    private function resolveLegacyKeyPlacement(?string $vendor, ?string $category): array
+    {
+        $vendor = strtolower((string) $vendor);
+        $category = strtolower(trim((string) $category));
+
+        // Grandstream legacy "memory" keys belong to multi-purpose keys,
+        // not the main key area.
+        if ($vendor === 'grandstream' && $category === 'memory') {
+            return ['multi_purpose', 'line'];
+        }
+
+        return ['main', $category ?: null];
+    }
+
+    private function postProcessEffectiveKeys(Devices $device, array $keys): array
+    {
         // Build list of device’s own extensions
         $selfExts = collect($device->lines ?? [])
             ->pluck('auth_id')
@@ -552,11 +665,21 @@ class ProvisioningController extends Controller
             ->map(fn($v) => (string) $v)
             ->unique();
 
-        // Drop any key whose value matches a self extension
+        // Drop any key whose value matches a self extension,
+        // but keep real line keys
         $keys = array_values(array_filter($keys, function ($k) use ($selfExts) {
+            $type = strtolower((string) ($k['type'] ?? ''));
             $val = (string) ($k['value'] ?? '');
-            if ($val === '') return true;           // keep empty values
-            return !$selfExts->contains($val);      // skip if value is one of selfExts
+
+            if ($val === '') {
+                return true;
+            }
+
+            if ($type === 'line') {
+                return true;
+            }
+
+            return !$selfExts->contains($val);
         }));
 
         foreach ($keys as $i => &$k) {
@@ -564,11 +687,11 @@ class ProvisioningController extends Controller
         }
         unset($k);
 
-        // fill BLF labels from Extensions.effective_caller_id_name (domain-scoped)
+        // Fill labels from Extensions.effective_caller_id_name (domain-scoped)
         $blfTargets = collect($keys)
-            ->filter(fn($k) => (empty($k['label']) || $k['label'] === null)
-                && !empty($k['value']))
-            ->map(fn($k) => (string) $k['value'])
+            ->filter(fn($k) => (empty($k['label']) || $k['label'] === null) && !empty($k['value']))
+            ->map(fn($k) => (string) ($k['value'] ?? ''))
+            ->filter()
             ->unique()
             ->values();
 
@@ -582,13 +705,11 @@ class ProvisioningController extends Controller
                 ->toArray();
 
             foreach ($keys as &$k) {
-                if ((empty($k['label']) || $k['label'] === null)) {
-
+                if (empty($k['label'])) {
                     $val = (string) ($k['value'] ?? '');
                     if ($val !== '' && !empty($extLabels[$val])) {
                         $k['label'] = $extLabels[$val];
                     }
-                    // else: leave label null; 
                 }
             }
             unset($k);
@@ -603,12 +724,10 @@ class ProvisioningController extends Controller
      */
     private function mapNewDeviceKeyToLegacyShape(Devices $device, $nk): array
     {
-        $type = strtolower(trim((string) $nk->key_type));
-        $translated = $this->translateKeyTypeForVendor($device->device_vendor, $type);
-
-        // Defaults
-        $id   = (int) ($nk->key_index ?? 0);
-        $line = 1;
+        $type  = strtolower(trim((string) ($nk->key_type ?? '')));
+        $id    = (int) ($nk->key_index ?? 0);
+        $area  = (string) ($nk->key_area ?? 'main');
+        $line  = 1;
         $value = $nk->key_value ?? null;
         $label = $nk->key_label ?? null;
 
@@ -616,27 +735,30 @@ class ProvisioningController extends Controller
             return $this->mapNewDeviceKeyToPolycomShape($device, $id, $type, $nk);
         }
 
-        // Grandstream expects 0-based line index
-        if ($device->device_vendor == 'grandstream') {
-            $line = $line - 1; // 1->0, 2->1, ...
-            if ($line < 0) $line = 0;
+        // Keep existing Grandstream line behavior
+        if ($device->device_vendor === 'grandstream') {
+            $line = $line - 1;
+            if ($line < 0) {
+                $line = 0;
+            }
         }
 
         switch ($type) {
             case 'line':
-                $line  = (int) $nk->key_value ?? 1;
+                $line = (int) ($nk->key_value ?? 1);
 
                 $lines = $device->lines ?? [];
-                $lineObj = collect($lines)->firstWhere('line_number', (string) $line);
-                $label = $lineObj['display_name'];
+                $lineObj = collect($lines)->firstWhere('line_number', $line);
 
-                // Grandstream expects 0-based line index
-                if ($device->device_vendor == 'grandstream') {
-                    $line = $line - 1; // 1->0, 2->1, ...
-                    if ($line < 0) $line = 0;
+                $label = $lineObj->display_name ?? null;
+                $value = $lineObj->auth_id ?? null;
+
+                if ($device->device_vendor === 'grandstream') {
+                    $line = $line - 1;
+                    if ($line < 0) {
+                        $line = 0;
+                    }
                 }
-
-                $value = null;
                 break;
 
             case 'park':
@@ -652,13 +774,14 @@ class ProvisioningController extends Controller
 
         return [
             'id'        => $id,
-            'category'  => $translated['category'] ?? 'line',
-            'type'      => $translated['type'] ?? $nk->key_type,
+            'area'      => $area,
+            'category'  => 'line',
+            'type'      => $type, // keep logical type here
             'line'      => $line,
             'value'     => $value,
             'extension' => null,
             'label'     => $label,
-            'source'    => 'device', // new-table keys are the strongest override
+            'source'    => 'device',
         ];
     }
 
@@ -878,7 +1001,7 @@ class ProvisioningController extends Controller
         if ($vendor === 'grandstream') {
             return match ($t) {
                 'tcp' => 'TCP',
-                'tls' => 'Tls',
+                'tls' => 'Tls Or Tcp',
                 'dns srv', 'dnssrv', 'dnsnaptr' => 'dnssrv',
                 '', 'udp' => 'UDP',
                 default => 'UDP',

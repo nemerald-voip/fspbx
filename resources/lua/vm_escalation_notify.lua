@@ -1,7 +1,7 @@
 json = require "resources.functions.lunajson"
 
 -- Enable/Disable debug mode globally
-DEBUG_MODE = true -- Set to true to enable debug logs
+DEBUG_MODE = false -- Set to true to enable debug logs
 
 local SCRIPT_NAME = "[vm_escalation_notify.lua]"
 local SOUND_PREFIX = "/var/www/fspbx/resources/sounds/en/us/alloy/vm_escalation_notify"

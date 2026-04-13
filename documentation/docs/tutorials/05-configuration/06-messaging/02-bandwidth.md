@@ -2,13 +2,14 @@
 id: bandwidth
 title: Bandwidth SMS Provider Configuration
 slug: /configuration/messaging/bandwidth
+description: Configure Bandwidth for SMS and MMS in FS PBX.
 sidebar_position: 2
 ---
 
 Bandwidth SMS Provider Configuration
 ====================================
 
-FS PBX supports full two-way SMS messaging through **Bandwidth**, including inbound message delivery and outbound replies from the mobile app. This guide explains how to configure Bandwidth credentials, enable SMS, and set up the required webhook endpoint.
+FS PBX provides two-way SMS and MMS support through **Bandwidth**, including inbound message delivery and outbound replies from the mobile app. This guide explains how to configure Bandwidth credentials, enable SMS, and set up the required webhook endpoint.
 
 
 * * * * *
@@ -98,7 +99,19 @@ Inbound SMS will now be:
 
 -   Replyable through the app using Bandwidth as the outbound provider
 
-* * * * *
+## 5. MMS Support
+
+If your Apidaze number supports MMS, FS PBX can also process media attachments sent through the same messaging flow.
+
+To use MMS media storage, S3-compatible storage must already be configured in your system. See the [S3 Configuration for Messages](/docs/configuration/messaging/s3-config-for-messages/) guide.
+
+This allows users to:
+
+* receive inbound picture messages in the mobile app
+* reply to supported MMS conversations
+* keep SMS and MMS history together in the same conversation thread
+
+---
 
 Summary
 -------

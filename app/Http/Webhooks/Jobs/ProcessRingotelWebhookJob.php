@@ -14,52 +14,22 @@ use libphonenumber\NumberParseException;
 use App\Factories\MessageProviderFactory;
 use Spatie\WebhookClient\Models\WebhookCall;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
+use App\Services\MessageMediaObjectStorageService;
+use Illuminate\Support\Facades\Http;
+use App\Services\Messaging\Outbound\CreateOutboundMessageService;
+use App\Services\Messaging\Outbound\Data\CreateOutboundMessageData;
 use Spatie\WebhookClient\Jobs\ProcessWebhookJob as SpatieProcessWebhookJob;
 
 class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
 {
-
-    /**
-     * The number of times the job may be attempted.
-     *
-     * @var int
-     */
     public $tries = 10;
-
-    /**
-     * The maximum number of unhandled exceptions to allow before failing.
-     *
-     * @var int
-     */
     public $maxExceptions = 5;
-
-    /**
-     * The number of seconds the job can run before timing out.
-     *
-     * @var int
-     */
     public $timeout = 120;
-
-    /**
-     * Indicate if the job should be marked as failed on timeout.
-     *
-     * @var bool
-     */
     public $failOnTimeout = true;
-
-    /**
-     * The number of seconds to wait before retrying the job.
-     *
-     * @var int
-     */
     public $backoff = 15;
-
-    /**
-     * Delete the job if its models no longer exist.
-     *
-     * @var bool
-     */
     public $deleteWhenMissingModels = true;
+    protected $media = [];
+    protected ?Messages $storedMessage = null;
 
     protected $mobileAppDomainConfig;
     protected $smsDestinationModel;
@@ -72,13 +42,8 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
     protected $messageProvider;
     protected $currentDestination;
     protected $deliveryReceipt;
+    protected $messageType = 'sms'; // sms | mms
 
-
-    /**
-     * Get the middleware the job should pass through.
-     *
-     * @return array
-     */
     public function middleware()
     {
         return [(new RateLimitedWithRedis('sms'))];
@@ -90,20 +55,20 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
         $this->webhookCall = $webhookCall;
     }
 
-    public function handle()
-    {
-        // $this->webhookCall // contains an instance of `WebhookCall`
-
-        // Allow only 2 tasks every 1 second
-        Redis::throttle('messages')->allow(2)->every(1)->then(function () {
-
+    public function handle(
+        MessageMediaObjectStorageService $mediaStorage,
+        CreateOutboundMessageService $outbound
+    ) {
+        Redis::throttle('messages')->allow(2)->every(1)->then(function () use ($mediaStorage, $outbound) {
             $this->message = $this->webhookCall->payload;
-            try {
 
-                if ($this->message['method'] == 'delivered') {
+            try {
+                $this->messageType = $this->resolveMessageType();
+
+                if (($this->message['method'] ?? null) === 'delivered') {
                     $response = $this->handleDeliveryStatusUpdate();
                 } else {
-                    $response = $this->processOutgoingMessage();
+                    $response = $this->processOutgoingMessage($mediaStorage, $outbound);
                 }
 
                 return $response;
@@ -111,49 +76,120 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
                 return $this->handleError($e);
             }
         }, function () {
-            // Could not obtain lock; this job will be re-queued
             return $this->release(5);
         });
     }
 
-    private function processOutgoingMessage()
-    {
+    private function processOutgoingMessage(
+        MessageMediaObjectStorageService $mediaStorage,
+        CreateOutboundMessageService $outbound
+    ) {
         $this->validateMessage();
 
         $this->mobileAppDomainConfig = $this->getMobileAppDomainConfig($this->message['params']['orgid']);
         $this->domain_uuid = $this->mobileAppDomainConfig->domain_uuid;
         $this->extension_uuid = $this->getExtensionUuid();
 
-        //Get message config
-        $phoneNumberSmsConfig = $this->getPhoneNumberSmsConfig($this->message['params']['from'], $this->domain_uuid);
-        $this->carrier =  $phoneNumberSmsConfig->carrier;
+        $phoneNumberSmsConfig = $this->getPhoneNumberSmsConfig(
+            $this->message['params']['from'],
+            $this->domain_uuid
+        );
 
-        //Determine message provider
-        $this->messageProvider= MessageProviderFactory::make($this->carrier);
+        $this->carrier = $phoneNumberSmsConfig->carrier;
 
-        $phoneNumberUtil = PhoneNumberUtil::getInstance();
-        try {
-            $phoneNumberObject = $phoneNumberUtil->parse($phoneNumberSmsConfig->destination, 'US');
+        $countryCode = get_domain_setting('country', $this->domain_uuid) ?? 'US';
 
-            if ($phoneNumberUtil->isValidNumber($phoneNumberObject)) {
-                $this->source = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::E164);
-            } else {
-                $this->source = $phoneNumberSmsConfig->destination;
-                throw new \Exception("Phone number *" . $phoneNumberSmsConfig->destination . "* assigned to extension *" . $this->message['params']['from'] . "* is not a valid US number");
-            }
-        } catch (NumberParseException $e) {
-            $this->source = $phoneNumberSmsConfig->destination;
-            throw new \Exception("Phone number *" . $phoneNumberSmsConfig->destination . "* assigned to extension *" . $this->message['params']['from'] . "* is not a valid US number");
+        $source = formatPhoneNumber(
+            $phoneNumberSmsConfig->destination,
+            $countryCode,
+            PhoneNumberFormat::E164
+        );
+
+        $destination = formatPhoneNumber(
+            $this->message['params']['to'],
+            $countryCode,
+            PhoneNumberFormat::E164
+        );
+
+        $message = $outbound->create(CreateOutboundMessageData::from([
+            'domainUuid' => $this->domain_uuid,
+            'extensionUuid' => $this->extension_uuid,
+            'source' => $source,
+            'destination' => $destination,
+            'message' => $this->messageType === 'mms'
+                ? ''
+                : (string) ($this->message['params']['content'] ?? ''),
+            'origin' => 'ringotel',
+            'carrier' => $this->carrier,
+            'mediaRemoteUrls' => $this->messageType === 'mms'
+                ? [(string) ($this->message['params']['content'] ?? '')]
+                : [],
+            'meta' => [
+                'ringotel_orgid' => $this->message['params']['orgid'] ?? null,
+            ],
+        ]));
+
+        $this->storedMessage = $message;
+
+        return response()->json([
+            'status' => ucfirst($message->type) . ' queued',
+            'message_uuid' => $message->message_uuid,
+        ]);
+    }
+
+    private function attachMediaAccessPaths(Messages $message): void
+    {
+        if (empty($this->media)) {
+            return;
         }
 
-        //Store message in the log database
-        $message = $this->storeMessage("queued");
+        foreach ($this->media as $index => &$item) {
+            $item['access_path'] = route('messages.media.show', [
+                'message_uuid' => $message->message_uuid,
+                'index' => $index,
+                'file_name' => $item['stored_name'] ?? ('file_' . $index),
+            ], false);
+        }
 
-        // Send message
-        $this->messageProvider->send($message->message_uuid);
+        unset($item);
 
-        return response()->json(['status' => 'Message sent']);
+        $message->media = array_values($this->media);
+        $message->save();
     }
+
+    private function extractAndStoreRingotelMmsFiles(MessageMediaObjectStorageService $mediaStorage): array
+    {
+        $sourceUrl = $this->message['params']['content'] ?? null;
+
+        if (empty($sourceUrl) || !filter_var($sourceUrl, FILTER_VALIDATE_URL)) {
+            throw new \Exception('Ringotel MMS content is missing or is not a valid URL');
+        }
+
+        $response = Http::timeout(30)->get($sourceUrl);
+
+        if (!$response->successful()) {
+            throw new \Exception('Failed to download MMS attachment from Ringotel');
+        }
+
+        $binary = $response->body();
+
+        if ($binary === '' || $binary === null) {
+            throw new \Exception('Downloaded Ringotel MMS attachment is empty');
+        }
+
+        $path = parse_url($sourceUrl, PHP_URL_PATH);
+        $originalName = $path ? basename($path) : 'attachment';
+
+        return [
+            $mediaStorage->storeBinaryForDomain(
+                domainUuid: $this->domain_uuid,
+                binary: $binary,
+                originalName: $originalName,
+                provider: 'ringotel'
+            )
+        ];
+    }
+
 
     public function handleDeliveryStatusUpdate()
     {
@@ -170,12 +206,16 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
 
     private function validateMessage()
     {
-
         if (!isset($this->message['params']['to'])) {
             throw new \Exception("Missing destination number");
         }
 
+        if (!isset($this->message['params']['content'])) {
+            throw new \Exception("Missing message content");
+        }
+
         $phoneNumberUtil = PhoneNumberUtil::getInstance();
+
         try {
             $phoneNumberObject = $phoneNumberUtil->parse($this->message['params']['to'], 'US');
 
@@ -183,11 +223,15 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
                 $this->currentDestination = $phoneNumberUtil->format($phoneNumberObject, PhoneNumberFormat::E164);
             } else {
                 $this->currentDestination = $this->message['params']['to'];
-                throw new \Exception("Destination phone number *" . $this->message['params']['to'] . "* is not a valid US number");
+                throw new \Exception("Destination phone number *{$this->message['params']['to']}* is not a valid US number");
             }
         } catch (NumberParseException $e) {
             $this->currentDestination = $this->message['params']['to'];
-            throw new \Exception("Destination phone number *" . $this->message['params']['to'] . "* is not a valid US number");
+            throw new \Exception("Destination phone number *{$this->message['params']['to']}* is not a valid US number");
+        }
+
+        if ($this->messageType === 'mms' && !$this->isValidMmsContent($this->message['params']['content'])) {
+            throw new \Exception("MMS content must be a valid media URL");
         }
     }
 
@@ -212,7 +256,7 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
             ->first();
 
         if (!$phoneNumberSmsConfig) {
-            throw new \Exception("SMS configuration not found for extension " . $from);
+            throw new \Exception("SMS/MMS configuration not found for extension " . $from);
         }
 
         return $phoneNumberSmsConfig;
@@ -220,27 +264,34 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
 
     private function getExtensionUuid()
     {
-        $extension_uuid = Extensions::where('domain_uuid', $this->domain_uuid)
+        $extension = Extensions::where('domain_uuid', $this->domain_uuid)
             ->where('extension', $this->message['params']['from'])
             ->select('extension_uuid')
-            ->first()
-            ->extension_uuid;
-        if (!$extension_uuid) {
+            ->first();
+
+        if (!$extension) {
             throw new \Exception("Extension " . $this->message['params']['from'] . " not found");
         }
 
-        return $extension_uuid;
+        return $extension->extension_uuid;
     }
 
     private function handleError(\Exception $e)
     {
-
         logger($e->getMessage());
-        $this->storeMessage($e->getMessage());
-        // Log the error or send it to Slack
-        $error = isset($this->mobileAppDomainConfig) && isset($this->mobileAppDomainConfig->domain) ?
-            "*Outbound SMS Failed*: From: " . $this->message['params']['from'] . " in " . $this->mobileAppDomainConfig->domain->domain_description . " To: " . $this->message['params']['to'] . "\n" . $e->getMessage() :
-            "*Outbound SMS Failed*: From: " . $this->message['params']['from'] . " To: " . $this->message['params']['to'] . "\n" . $e->getMessage();
+
+        if ($this->storedMessage) {
+            $this->storedMessage->status = $e->getMessage();
+            $this->storedMessage->save();
+        } else {
+            $this->storedMessage = $this->storeMessage($e->getMessage());
+        }
+
+        $label = strtoupper($this->messageType ?? 'sms');
+
+        $error = isset($this->mobileAppDomainConfig) && isset($this->mobileAppDomainConfig->domain)
+            ? "*Outbound {$label} Failed*: From: " . $this->message['params']['from'] . " in " . $this->mobileAppDomainConfig->domain->domain_description . " To: " . $this->message['params']['to'] . "\n" . $e->getMessage()
+            : "*Outbound {$label} Failed*: From: " . $this->message['params']['from'] . " To: " . $this->message['params']['to'] . "\n" . $e->getMessage();
 
         SendSmsNotificationToSlack::dispatch($error)->onQueue('messages');
 
@@ -249,17 +300,34 @@ class ProcessRingotelWebhookJob extends SpatieProcessWebhookJob
 
     private function storeMessage($status)
     {
+        $content = $this->message['params']['content'] ?? '';
+
         $messageModel = new Messages;
-        $messageModel->extension_uuid = (isset($this->extension_uuid)) ? $this->extension_uuid : null;
-        $messageModel->domain_uuid = (isset($this->domain_uuid)) ? $this->domain_uuid : null;
-        $messageModel->source =  (isset($this->source)) ? $this->source : "";
-        $messageModel->destination =  (isset($this->currentDestination)) ? $this->currentDestination : "";
-        $messageModel->message = $this->message['params']['content'];
-        $messageModel->direction = "out";
-        $messageModel->type = 'sms';
+        $messageModel->extension_uuid = isset($this->extension_uuid) ? $this->extension_uuid : null;
+        $messageModel->domain_uuid = isset($this->domain_uuid) ? $this->domain_uuid : null;
+        $messageModel->source = isset($this->source) ? $this->source : "";
+        $messageModel->destination = isset($this->currentDestination) ? $this->currentDestination : "";
+        $messageModel->message = $this->messageType === 'mms' ? '' : $content;
+        $messageModel->media = $this->media;
+        $messageModel->direction = 'out';
+        $messageModel->type = $this->messageType;
         $messageModel->status = $status;
+        $messageModel->reference_id = $this->message['params']['messageid'] ?? null;
         $messageModel->save();
 
         return $messageModel;
+    }
+
+    private function resolveMessageType(): string
+    {
+        return match ((int) ($this->message['params']['type'] ?? 1)) {
+            2 => 'mms',
+            default => 'sms',
+        };
+    }
+
+    private function isValidMmsContent(string $content): bool
+    {
+        return filter_var($content, FILTER_VALIDATE_URL) !== false;
     }
 }

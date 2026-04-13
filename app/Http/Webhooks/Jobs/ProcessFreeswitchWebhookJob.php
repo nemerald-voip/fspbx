@@ -4,6 +4,7 @@ namespace App\Http\Webhooks\Jobs;
 
 use App\Jobs\CreateVoicemailEscalationNotificationsJob;
 use App\Jobs\HandleVoicemailEscalationAttemptEventJob;
+use App\Jobs\ProcessFaxWebhookEventJob;
 use App\Jobs\SendNewVoicemailNotificationByEmail;
 use App\Jobs\SendNewVoicemailNotificationBySms;
 use App\Jobs\TranscribeCdrJob;
@@ -81,6 +82,8 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
             'send_vm_sms_notification'   => 'messages',
             'send_vm_email_notification' => 'emails',
             // 'transcribe_call'            => 'transcriptions',
+            'fax.received',
+            'fax.sent',                  => 'faxes',
             'voicemail_created'          => 'voicemails',
             'vm_notify_attempt_event'    => 'voicemails',
             default                      => 'default',
@@ -131,6 +134,16 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
                         $response = $this->transcribeCall($data);
                         break;
 
+                    case 'fax.received':
+                    case 'fax.sent':
+                        if (!$this->validateFaxPayload($data)) {
+                            Log::warning('[Webhook] Invalid fax payload', $payload);
+                            break;
+                        }
+
+                        ProcessFaxWebhookEventJob::dispatch($event, $timestamp, $data);
+                        break;
+
                     default:
                         Log::warning("[Webhook] Unknown event type: $event", $payload);
                         break;
@@ -152,6 +165,12 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
             && !empty($data['voicemail_uuid'])
             && !empty($data['voicemail_id'])
             && !empty($data['voicemail_message_uuid']);
+    }
+
+    private function validateFaxPayload(array $data): bool
+    {
+        return !empty($data['uuid'])
+            && !empty($data['domain_uuid']);
     }
 
     private function hasEnabledVmNotifyProfile(array $data): bool

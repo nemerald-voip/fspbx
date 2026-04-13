@@ -9,7 +9,18 @@ class TelnyxWebhookProfile implements WebhookProfile
 {
     public function shouldProcess(Request $request): bool
     {
-        return true;
+        $eventType = (string) data_get($request->all(), 'data.event_type', '');
 
+        $shouldProcess = in_array($eventType, [
+            'message.received',
+            'message.finalized',
+        ], true);
+
+        messaging_webhook_debug('TelnyxWebhookProfile shouldProcess()', [
+            'event_type' => $eventType,
+            'should_process' => $shouldProcess,
+        ]);
+
+        return $shouldProcess;
     }
 }

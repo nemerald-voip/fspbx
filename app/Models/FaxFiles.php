@@ -71,4 +71,9 @@ class FaxFiles extends Model
     {
         return $this->belongsTo(FaxQueues::class, 'fax_file_path', 'fax_file');
     }
+
+    public function faxLog()
+    {
+        return $this->belongsTo(FaxLogs::class, 'fax_file_uuid', 'fax_log_uuid');
+    }
 }

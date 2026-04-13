@@ -19,6 +19,11 @@ class VoicemailDestinations extends Model
     protected $keyType = 'string';
 
 
+    protected $fillable = [
+        'voicemail_uuid',
+        'voicemail_uuid_copy',
+    ];
+
     /**
      * The booted method of the model
      *
@@ -39,7 +44,6 @@ class VoicemailDestinations extends Model
             if (!$model->voicemail_destination_uuid) {
                 $model->voicemail_destination_uuid = Str::uuid();
             }
-
         });
     }
 
@@ -48,7 +52,6 @@ class VoicemailDestinations extends Model
      */
     public function voicemail()
     {
-        return $this->hasOne(Voicemails::class,'voicemail_uuid','voicemail_uuid_copy');
+        return $this->hasOne(Voicemails::class, 'voicemail_uuid', 'voicemail_uuid_copy');
     }
-
 }

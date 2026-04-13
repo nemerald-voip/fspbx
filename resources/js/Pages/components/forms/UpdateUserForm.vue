@@ -264,7 +264,7 @@
                                                 <StaticElement name="security_title" tag="h4" content="Security" />
 
                                                 <ButtonElement name="password_reset" :secondary="true" label="Password"
-                                                    @click="requestResetPassword" button-label="Reset Password"
+                                                    @click="requestResetPassword" button-label="Reset Password" :loading="isPasswordResetLoading"
                                                     align="left" />
 
                                                 <StaticElement name="advanced_title" tag="h4" content="Advanced" />
@@ -352,6 +352,7 @@ const showApiTokenModal = ref(false)
 const confirmDeleteAction = ref(null);
 const locations = ref([])
 const isLocationsLoading = ref(false)
+const isPasswordResetLoading = ref(false)
 
 const handleCopyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -390,6 +391,7 @@ const requestResetPassword = () => {
 
 const confirmResetPassword = async () => {
     showResetConfirmationModal.value = false;
+    isPasswordResetLoading.value = true;
 
     try {
         await form$.value.$vueform.services.axios.post(
@@ -402,6 +404,8 @@ const confirmResetPassword = async () => {
         emit("success", "success", { success: ["Password reset email sent successfully."] });
     } catch (error) {
         emit("error", error);
+    } finally {
+        isPasswordResetLoading.value = false;
     }
 };
 

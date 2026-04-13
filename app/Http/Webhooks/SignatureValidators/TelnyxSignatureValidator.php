@@ -3,56 +3,93 @@
 namespace App\Http\Webhooks\SignatureValidators;
 
 use Illuminate\Http\Request;
-use Spatie\WebhookClient\WebhookConfig;
 use Spatie\WebhookClient\SignatureValidator\SignatureValidator;
+use Spatie\WebhookClient\WebhookConfig;
+use Throwable;
 
 class TelnyxSignatureValidator implements SignatureValidator
 {
     public function isValid(Request $request, WebhookConfig $config): bool
     {
-        // 1. Get the signature and timestamp from headers
-        $signature = $request->header('telnyx-signature-ed25519');
-        $timestamp = $request->header('telnyx-timestamp');
+        $signature = (string) $request->header('telnyx-signature-ed25519', '');
+        $timestamp = (string) $request->header('telnyx-timestamp', '');
+        $publicKey = (string) ($config->signingSecret ?? '');
+        $tolerance = (int) env('TELNYX_WEBHOOK_TOLERANCE', 300);
 
-        // 2. Get your Public Key (mapped to 'signing_secret' in config)
-        $publicKey = $config->signingSecret;
+        if ($signature === '' || $timestamp === '' || $publicKey === '') {
+            messaging_webhook_debug('TelnyxSignatureValidator missing required signature data', [
+                'has_signature' => $signature !== '',
+                'has_timestamp' => $timestamp !== '',
+                'has_public_key' => $publicKey !== '',
+            ]);
 
-        if (! $signature || ! $timestamp || ! $publicKey) {
             return false;
         }
 
-        // 3. Construct the payload string exactly as Telnyx expects: timestamp|json_body
-        $signedPayload = $timestamp . '|' . $request->getContent();
+        if (! ctype_digit($timestamp)) {
+            messaging_webhook_debug('TelnyxSignatureValidator invalid timestamp format', [
+                'timestamp' => $timestamp,
+            ]);
 
-        // 4. Decode the Base64 encoded keys/signatures
-        // The header signature and your public key are both Base64 encoded
-        $decodedSignature = base64_decode($signature);
-        $decodedPublicKey = base64_decode($publicKey);
+            return false;
+        }
 
-        // 5. Verify using Sodium
+        if (abs(time() - (int) $timestamp) > $tolerance) {
+            messaging_webhook_debug('TelnyxSignatureValidator timestamp outside tolerance', [
+                'timestamp' => $timestamp,
+                'tolerance' => $tolerance,
+            ]);
+
+            return false;
+        }
+
         try {
-            // sodium_crypto_sign_verify_detached returns true if valid, false otherwise
+            $signatureBytes = base64_decode($signature, true);
+            $publicKeyBytes = $this->decodePublicKey($publicKey);
+
+            if ($signatureBytes === false || $publicKeyBytes === null) {
+                messaging_webhook_debug('TelnyxSignatureValidator failed to decode signature/public key');
+
+                return false;
+            }
+
+            $signedPayload = $timestamp . '|' . $request->getContent();
+
             $isValid = sodium_crypto_sign_verify_detached(
-                $decodedSignature,
+                $signatureBytes,
                 $signedPayload,
-                $decodedPublicKey
+                $publicKeyBytes
             );
 
-            if (!$isValid) {
-                return false;
-            }
+            messaging_webhook_debug('TelnyxSignatureValidator verification completed', [
+                'is_valid' => $isValid,
+            ]);
 
-            // 6. (Optional) Verify timestamp freshness to prevent replay attacks
-            // Reject requests older than 5 minutes (300 seconds)
-            $tolerance = 300;
-            if (abs(time() - $timestamp) > $tolerance) {
-                return false;
-            }
+            return $isValid;
+        } catch (Throwable $e) {
+            messaging_webhook_debug('TelnyxSignatureValidator exception', [
+                'error' => $e->getMessage(),
+            ]);
 
-            return true;
-        } catch (\Exception $e) {
-            // If keys are malformed, sodium might throw an exception
             return false;
         }
+    }
+
+    protected function decodePublicKey(string $publicKey): ?string
+    {
+        $trimmed = trim($publicKey);
+
+        $base64 = base64_decode($trimmed, true);
+        if ($base64 !== false && strlen($base64) === SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES) {
+            return $base64;
+        }
+
+        if (ctype_xdigit($trimmed) && strlen($trimmed) === SODIUM_CRYPTO_SIGN_PUBLICKEYBYTES * 2) {
+            $hex = hex2bin($trimmed);
+
+            return $hex === false ? null : $hex;
+        }
+
+        return null;
     }
 }
