@@ -38,15 +38,35 @@
             <template #table-header>
                 <TableColumnHeader
                     class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
-                    <input type="checkbox" v-model="selectPageItems"
+                    <input type="checkbox" v-model="selectPageItems" @click.stop
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <span class="pl-4">Virtual Receptionist</span>
+                    <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('ivr_menu_name')">
+                        <span class="mr-2">Virtual Receptionist</span>
+                        <ChevronUpIcon v-if="sortData.name === 'ivr_menu_name' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'ivr_menu_name' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
                 </TableColumnHeader>
-                <TableColumnHeader header="Extension"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Description"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('ivr_menu_extension')">
+                        <span class="mr-2">Extension</span>
+                        <ChevronUpIcon v-if="sortData.name === 'ivr_menu_extension' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'ivr_menu_extension' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('ivr_menu_description')">
+                        <span class="mr-2">Description</span>
+                        <ChevronUpIcon v-if="sortData.name === 'ivr_menu_description' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'ivr_menu_description' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('ivr_menu_enabled')">
+                        <span class="mr-2">Status</span>
+                        <ChevronUpIcon v-if="sortData.name === 'ivr_menu_enabled' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'ivr_menu_enabled' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
@@ -170,7 +190,7 @@ import Paginator from "./components/general/Paginator.vue";
 import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
+import { ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import MainLayout from "../Layouts/MainLayout.vue";
 import UpdateVirtualReceptionistForm from "./components/forms/UpdateVirtualReceptionistForm.vue";
@@ -214,6 +234,11 @@ const filterData = ref({
     search: null,
 });
 
+const sortData = ref({
+    name: 'ivr_menu_extension',
+    order: 'asc',
+});
+
 const itemOptions = ref({})
 
 onMounted(() => {
@@ -227,10 +252,16 @@ const handleSearchButtonClick = () => {
 const getData = (page = 1) => {
     loading.value = true;
 
+    let sort = sortData.value.name;
+    if (sortData.value.order === 'desc') {
+        sort = `-${sort}`;
+    }
+
     axios.get(props.routes.data_route, {
         params: {
             filter: filterData.value,
             page,
+            sort,
         }
     })
         .then((response) => {
@@ -240,6 +271,17 @@ const getData = (page = 1) => {
         }).finally(() => {
             loading.value = false
         })
+}
+
+const handleSortRequest = (column) => {
+    if (sortData.value.name === column) {
+        sortData.value.order = sortData.value.order === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortData.value.name = column;
+        sortData.value.order = 'asc';
+    }
+
+    getData(1);
 }
 
 // Computed property for bulk actions based on permissions

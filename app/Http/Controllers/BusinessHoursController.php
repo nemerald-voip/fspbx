@@ -26,6 +26,11 @@ class BusinessHoursController extends Controller
     public $sortOrder;
     protected $viewName = 'BusinessHours';
     protected $searchable = ['name', 'extension', 'description'];
+    protected $allowedSortFields = [
+        'name',
+        'extension',
+        'description',
+    ];
 
     public function __construct()
     {
@@ -77,8 +82,15 @@ class BusinessHoursController extends Controller
         }
 
         // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'extension');
-        $this->sortOrder = request()->get('sortOrder', 'asc');
+        $requestedSortField = request()->get('sortField', 'extension');
+        $requestedSortOrder = request()->get('sortOrder', 'asc');
+
+        $this->sortField = in_array($requestedSortField, $this->allowedSortFields, true)
+            ? $requestedSortField
+            : 'extension';
+        $this->sortOrder = in_array($requestedSortOrder, ['asc', 'desc'], true)
+            ? $requestedSortOrder
+            : 'asc';
 
         $data = $this->builder($this->filters);
 

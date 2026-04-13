@@ -18,6 +18,17 @@ class ActiveCallsController extends Controller
     public $sortOrder;
     protected $viewName = 'ActiveCalls';
     protected $searchable = ['cid_name', 'cid_num', 'dest', 'application_data', 'application', 'read_codec', 'write_codec', 'secure'];
+    protected $allowedSortFields = [
+        'context',
+        'created_epoch',
+        'duration',
+        'cid_name',
+        'cid_num',
+        'dest',
+        'application',
+        'read_codec',
+        'secure',
+    ];
 
     /**
      * Display a listing of the resource.
@@ -66,6 +77,16 @@ class ActiveCallsController extends Controller
         } else {
             $this->filters['showGlobal'] = null;
         }
+
+        $requestedSortField = request()->get('sortField', 'created_epoch');
+        $requestedSortOrder = request()->get('sortOrder', 'desc');
+
+        $this->sortField = in_array($requestedSortField, $this->allowedSortFields, true)
+            ? $requestedSortField
+            : 'created_epoch';
+        $this->sortOrder = in_array($requestedSortOrder, ['asc', 'desc'], true)
+            ? $requestedSortOrder
+            : 'desc';
 
         $data = $this->builder($this->filters, $eslService);
 
@@ -146,7 +167,11 @@ class ActiveCallsController extends Controller
         // logger($data);
 
         // Apply sorting using sortBy or sortByDesc depending on the sort order
-        if ($this->sortOrder === 'asc') {
+        if ($this->sortField === 'duration') {
+            $data = $this->sortOrder === 'asc'
+                ? $data->sortByDesc('created_epoch')
+                : $data->sortBy('created_epoch');
+        } elseif ($this->sortOrder === 'asc') {
             $data = $data->sortBy($this->sortField);
         } else {
             $data = $data->sortByDesc($this->sortField);

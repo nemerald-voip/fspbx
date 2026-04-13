@@ -42,15 +42,24 @@
                 <!-- Checkbox + Name column -->
                 <TableColumnHeader
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
-                    <!-- <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
-                        class="h-4 w-4 rounded border-gray-300 text-indigo-600"> -->
-                    <!-- <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
+<!--                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems" @click.stop
+                        class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
                         :has-selected-items="selectedItems.length > 0" /> -->
-                    <span class="pl-4">Name</span>
+                    <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('username')">
+                        <span class="mr-2">Name</span>
+                        <ChevronUpIcon v-if="sortData.name === 'username' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'username' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
                 </TableColumnHeader>
 
-                <!-- Email column -->
-                <TableColumnHeader header="Email" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('user_email')">
+                        <span class="mr-2">Email</span>
+                        <ChevronUpIcon v-if="sortData.name === 'user_email' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'user_email' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
 
                 <TableColumnHeader header="Assigned Extension" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
@@ -58,7 +67,13 @@
                 <TableColumnHeader header="Roles" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                 <!-- Enabled column -->
-                <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('user_enabled')">
+                        <span class="mr-2">Status</span>
+                        <ChevronUpIcon v-if="sortData.name === 'user_enabled' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'user_enabled' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
 
                 <!-- Actions column -->
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
@@ -224,7 +239,7 @@ import Paginator from "./components/general/Paginator.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
+import { ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -258,6 +273,11 @@ const props = defineProps({
 
 const filterData = ref({
     search: null,
+});
+
+const sortData = ref({
+    name: 'username',
+    order: 'asc',
 });
 
 const itemOptions = ref({})
@@ -346,12 +366,18 @@ const handleSelectAll = () => {
 
 
 const handleSearchButtonClick = () => {
+    let sort = sortData.value.name;
+    if (sortData.value.order === 'desc') {
+        sort = `-${sort}`;
+    }
+
     loading.value = true;
     router.visit(props.routes.current_page, {
         data: {
             filter: {
                 search: filterData.value.search,     
             },
+            sort,
         },
         preserveScroll: true,
         preserveState: true,
@@ -373,12 +399,18 @@ const handleFiltersReset = () => {
 
 
 const renderRequestedPage = (url) => {
+    let sort = sortData.value.name;
+    if (sortData.value.order === 'desc') {
+        sort = `-${sort}`;
+    }
+
     loading.value = true;
     router.visit(url, {
         data: {
             filter: {
                 search: filterData.value.search,    
             },
+            sort,
         },
         preserveScroll: true,
         preserveState: true,
@@ -387,6 +419,17 @@ const renderRequestedPage = (url) => {
             loading.value = false;
         }
     });
+};
+
+const handleSortRequest = (column) => {
+    if (sortData.value.name === column) {
+        sortData.value.order = sortData.value.order === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortData.value.name = column;
+        sortData.value.order = 'asc';
+    }
+
+    handleSearchButtonClick();
 };
 
 

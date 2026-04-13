@@ -57,18 +57,39 @@
             <template #table-header>
                 <TableColumnHeader header=""
                     class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
-                    <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
+                    <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems" @click.stop
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
 
-                    <span class="pl-4">Phone Number</span>
+                    <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('destination_number')">
+                        <span class="mr-2">Phone Number</span>
+                        <ChevronUpIcon v-if="sortData.name === 'destination_number' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'destination_number' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
                 </TableColumnHeader>
                 <TableColumnHeader v-if="filterData.showGlobal" header="Domain"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader v-if="!filterData.showGlobal" header="Call Routing"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Description"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('destination_actions')">
+                        <span class="mr-2">Call Routing</span>
+                        <ChevronUpIcon v-if="sortData.name === 'destination_actions' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'destination_actions' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('destination_description')">
+                        <span class="mr-2">Description</span>
+                        <ChevronUpIcon v-if="sortData.name === 'destination_description' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'destination_description' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('destination_enabled')">
+                        <span class="mr-2">Status</span>
+                        <ChevronUpIcon v-if="sortData.name === 'destination_enabled' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'destination_enabled' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
@@ -255,7 +276,7 @@ import UpdatePhoneNumberForm from "./components/forms/UpdatePhoneNumberForm.vue"
 import Loading from "./components/general/Loading.vue";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { MagnifyingGlassIcon, TrashIcon } from "@heroicons/vue/24/solid";
+import { ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon, TrashIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import MainLayout from "../Layouts/MainLayout.vue";
 import Notification from "./components/notifications/Notification.vue";
@@ -324,10 +345,16 @@ const getData = (page = 1) => {
     loading.value = true;
     currentPage.value = Number(page) || 1;
 
+    let sort = sortData.value.name;
+    if (sortData.value.order === 'desc') {
+        sort = `-${sort}`;
+    }
+
     axios.get(props.routes.data_route, {
         params: {
             filter: filterData.value,
             page: currentPage.value,
+            sort,
         }
     })
         .then((response) => {
@@ -346,6 +373,11 @@ const getData = (page = 1) => {
 const filterData = ref({
     search: null,
     showGlobal: false,
+});
+
+const sortData = ref({
+    name: 'destination_number',
+    order: 'asc',
 });
 
 const renderRequestedPage = (url) => {
@@ -368,9 +400,15 @@ const itemOptions = ref({
 });
 
 const exportPhoneNumbersCsv = () => {
+    let sort = sortData.value.name;
+    if (sortData.value.order === 'desc') {
+        sort = `-${sort}`;
+    }
+
     axios.get(props.routes.export, {
         params: {
             filter: filterData.value,
+            sort,
         },
         responseType: 'blob',
     })
@@ -386,6 +424,17 @@ const exportPhoneNumbersCsv = () => {
             window.URL.revokeObjectURL(url);
         })
         .catch(handleErrorResponse);
+};
+
+const handleSortRequest = (column) => {
+    if (sortData.value.name === column) {
+        sortData.value.order = sortData.value.order === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortData.value.name = column;
+        sortData.value.order = 'asc';
+    }
+
+    getData(1);
 };
 
 // Computed property for bulk actions based on permissions
