@@ -231,7 +231,7 @@ class ProvisioningController extends Controller
         }
 
         $keyAreas = $this->getEffectiveDeviceKeysByArea($device);
-        logger($keyAreas);
+        // logger($keyAreas);
 
         return [
             'device_uuid'   => (string) $device->device_uuid,
