@@ -1,4 +1,4 @@
-{{-- version: 1.0.2 --}}
+{{-- version: 1.0.3 --}}
 
 @switch($flavor)
 
@@ -690,6 +690,7 @@
         'monitored call park' => 'MonitoredCallPark',
         'line' => 'Line',
         'sharedline' => 'SharedLine',
+        'dial dtmf' => 'DialDTMF',
     ];
 
     $maxVpkId = collect($main_keys)

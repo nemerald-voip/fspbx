@@ -231,7 +231,7 @@ class ProvisioningController extends Controller
         }
 
         $keyAreas = $this->getEffectiveDeviceKeysByArea($device);
-        // logger($keyAreas);
+        logger($keyAreas);
 
         return [
             'device_uuid'   => (string) $device->device_uuid,
@@ -481,143 +481,6 @@ class ProvisioningController extends Controller
     }
 
 
-    /**
-     * Build final key layout where device-level keys override profile keys
-     * by the same key order (device_key_id === profile_key_id).
-     *
-     * Output is a zero-indexed array sorted by 'id' (key order), each item:
-     * [
-     *   'id'        => int,   // key order
-     *   'category'  => ?string,
-     *   'type'      => ?string,
-     *   'line'      => ?int,
-     *   'value'     => ?string,
-     *   'extension' => ?string,
-     *   'label'     => ?string,
-     *   'source'    => 'profile'|'device',
-     * ]
-     */
-    // private function getEffectiveDeviceKeys(Devices $device): array
-    // {
-    //     $profileKeys = collect($device->profile?->keys ?? []);
-    //     $legacyKeys  = collect($device->legacy_keys ?? []); // old device keys
-    //     $newKeys     = collect($device->keys ?? []);       
-
-    //     // for polycom
-    //     if ($device->device_vendor == 'polycom') {
-    //         $newKeys = $this->normalizeNewKeysForPolycom($device, $device->keys ?? []);
-    //     }
-
-    //     $map = [];
-
-    //     // Seed with profile keys (base)
-    //     foreach ($profileKeys as $pk) {
-    //         $id = (int) $pk->profile_key_id;
-    //         if ($id <= 0) {
-    //             continue;
-    //         }
-    //         $map[$id] = [
-    //             'id'        => $id,
-    //             'category'  => $pk->profile_key_category ?? null,
-    //             'type'      => $pk->profile_key_type ?? null,
-    //             'line'      => $pk->profile_key_line !== null ? (int) $pk->profile_key_line : null,
-    //             'value'     => $pk->profile_key_value ?? null,
-    //             'extension' => $pk->profile_key_extension ?? null,
-    //             'label'     => $pk->profile_key_label ?? null,
-    //             'source'    => 'profile',
-    //         ];
-    //     }
-
-    //     // Overlay with legacy device keys (override by same key order)
-    //     foreach ($legacyKeys as $dk) {
-    //         $id = (int) $dk->device_key_id;
-    //         if ($id <= 0) {
-    //             continue;
-    //         }
-    //         $map[$id] = [
-    //             'id'        => $id,
-    //             'category'  => $dk->device_key_category ?? null,
-    //             'type'      => $dk->device_key_type ?? null,
-    //             'line'      => $dk->device_key_line !== null ? (int) $dk->device_key_line : null,
-    //             'value'     => $dk->device_key_value ?? null,
-    //             'extension' => $dk->device_key_extension ?? null,
-    //             'label'     => $dk->device_key_label ?? null,
-    //             'source'    => 'device',
-    //         ];
-    //     }
-    //     foreach ($newKeys as $nk) {
-    //         $id = (int) ($nk->key_index ?? 0);
-    //         if ($id <= 0) continue;
-
-    //         $map[$id] = $this->mapNewDeviceKeyToLegacyShape($device, $nk);
-    //     }
-
-    //     ksort($map, SORT_NUMERIC);
-
-    //     logger($map);
-
-    //     $keys = array_values($map);
-
-    //     // Build list of device’s own extensions
-    //     $selfExts = collect($device->lines ?? [])
-    //         ->pluck('auth_id')
-    //         ->filter()
-    //         ->map(fn($v) => (string) $v)
-    //         ->unique();
-
-    //     // Drop any key whose value matches a self extension
-    //     $keys = array_values(array_filter($keys, function ($k) use ($selfExts) {
-    //         $val = (string) ($k['value'] ?? '');
-    //         if ($val === '') return true;           // keep empty values
-    //         return !$selfExts->contains($val);      // skip if value is one of selfExts
-    //     }));
-
-    //     foreach ($keys as $i => &$k) {
-    //         $k['id'] = $i + 1;
-    //     }
-    //     unset($k);
-
-    //     // fill BLF labels from Extensions.effective_caller_id_name (domain-scoped)
-    //     $blfTargets = collect($keys)
-    //         ->filter(fn($k) => (empty($k['label']) || $k['label'] === null)
-    //             && !empty($k['value']))
-    //         ->map(fn($k) => (string) $k['value'])
-    //         ->unique()
-    //         ->values();
-
-    //     if ($blfTargets->isNotEmpty()) {
-    //         $extLabels = Extensions::query()
-    //             ->where('domain_uuid', $device->domain_uuid)
-    //             ->whereIn('extension', $blfTargets->all())
-    //             ->get(['extension', 'effective_caller_id_name'])
-    //             ->keyBy('extension')
-    //             ->map(fn($r) => $r->effective_caller_id_name)
-    //             ->toArray();
-
-    //         foreach ($keys as &$k) {
-    //             if ((empty($k['label']) || $k['label'] === null)) {
-
-    //                 $val = (string) ($k['value'] ?? '');
-    //                 if ($val !== '' && !empty($extLabels[$val])) {
-    //                     $k['label'] = $extLabels[$val];
-    //                 }
-    //                 // else: leave label null; 
-    //             }
-    //         }
-    //         unset($k);
-    //     }
-
-    //     return $keys;
-    // }
-
-    private function getEffectiveDeviceKeys(Devices $device): array
-    {
-        $keysByArea = $this->getEffectiveDeviceKeysByArea($device);
-
-        // keep legacy behavior for old templates
-        return $keysByArea['main'] ?? [];
-    }
-
     private function getEffectiveDeviceKeysByArea(Devices $device): array
     {
         $profileKeys = collect($device->profile?->keys ?? []);
@@ -634,17 +497,26 @@ class ProvisioningController extends Controller
             'multi_purpose' => [],
         ];
 
-        // Seed with profile keys (base) -> main area only
+        // Seed with profile keys
         foreach ($profileKeys as $pk) {
             $id = (int) $pk->profile_key_id;
             if ($id <= 0) {
                 continue;
             }
 
-            $maps['main'][$id] = [
+            [$area, $category] = $this->resolveLegacyKeyPlacement(
+                $device->device_vendor,
+                $pk->profile_key_category
+            );
+
+            if (!array_key_exists($area, $maps)) {
+                $maps[$area] = [];
+            }
+
+            $maps[$area][$id] = [
                 'id'        => $id,
-                'area'      => 'main',
-                'category'  => $pk->profile_key_category ?? null,
+                'area'      => $area,
+                'category'  => $category,
                 'type'      => $pk->profile_key_type ?? null,
                 'line'      => $pk->profile_key_line !== null ? (int) $pk->profile_key_line : null,
                 'value'     => $pk->profile_key_value ?? null,
@@ -654,17 +526,26 @@ class ProvisioningController extends Controller
             ];
         }
 
-        // Overlay with legacy device keys -> main area only
+        // Overlay with legacy device keys
         foreach ($legacyKeys as $dk) {
             $id = (int) $dk->device_key_id;
             if ($id <= 0) {
                 continue;
             }
 
-            $maps['main'][$id] = [
+            [$area, $category] = $this->resolveLegacyKeyPlacement(
+                $device->device_vendor,
+                $dk->device_key_category
+            );
+
+            if (!array_key_exists($area, $maps)) {
+                $maps[$area] = [];
+            }
+
+            $maps[$area][$id] = [
                 'id'        => $id,
-                'area'      => 'main',
-                'category'  => $dk->device_key_category ?? null,
+                'area'      => $area,
+                'category'  => $category,
                 'type'      => $dk->device_key_type ?? null,
                 'line'      => $dk->device_key_line !== null ? (int) $dk->device_key_line : null,
                 'value'     => $dk->device_key_value ?? null,
@@ -673,6 +554,7 @@ class ProvisioningController extends Controller
                 'source'    => 'device',
             ];
         }
+
 
         // Overlay with new keys -> keyed by area + index
         foreach ($newKeys as $nk) {
@@ -693,12 +575,49 @@ class ProvisioningController extends Controller
             $maps[$area][$id] = $mapped;
         }
 
+        logger([
+            'profile_keys' => $profileKeys->map(fn($k) => [
+                'id' => $k->profile_key_id,
+                'category' => $k->profile_key_category,
+                'type' => $k->profile_key_type,
+                'value' => $k->profile_key_value,
+            ])->values()->all(),
+
+            'legacy_keys' => $legacyKeys->map(fn($k) => [
+                'id' => $k->device_key_id,
+                'category' => $k->device_key_category,
+                'type' => $k->device_key_type,
+                'value' => $k->device_key_value,
+            ])->values()->all(),
+
+            'new_keys' => $newKeys->map(fn($k) => [
+                'id' => $k->key_index,
+                'area' => $k->key_area,
+                'type' => $k->key_type,
+                'value' => $k->key_value,
+            ])->values()->all(),
+        ]);
+
         foreach ($maps as $area => $map) {
             ksort($map, SORT_NUMERIC);
             $maps[$area] = $this->postProcessEffectiveKeys($device, array_values($map));
         }
 
         return $maps;
+    }
+
+    private function resolveLegacyKeyPlacement(?string $vendor, ?string $category): array
+    {
+        $vendor = strtolower((string) $vendor);
+        $category = strtolower(trim((string) $category));
+
+        // Grandstream legacy "memory" keys belong to multi-purpose keys,
+        // not the main key area.
+        if ($vendor === 'grandstream' && $category === 'memory') {
+            return ['multi_purpose', 'line'];
+        }
+
+        return ['main', $category ?: null];
     }
 
     private function postProcessEffectiveKeys(Devices $device, array $keys): array
