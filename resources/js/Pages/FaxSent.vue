@@ -117,7 +117,7 @@
 
                         <!-- Email -->
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                            :text="row.fax?.fax_caller_id_number_formatted ?? ''" />
+                            :text="row.fax_destination_formatted ?? ''" />
 
 
 

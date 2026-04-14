@@ -90,6 +90,7 @@ class FaxSentController extends Controller
                 'fax_uuid',
                 'fax_caller_id_name',
                 'fax_caller_id_number',
+                'fax_destination',
                 'fax_epoch',
                 'fax_date',
 
@@ -129,6 +130,8 @@ class FaxSentController extends Controller
         } else {
             $data = $data->cursor();
         }
+
+        logger($data);
 
         return $data;
     }
