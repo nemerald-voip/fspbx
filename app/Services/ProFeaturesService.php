@@ -230,9 +230,25 @@ class ProFeaturesService
     protected function downloadAndDeployModule(string $licenseKey, string $moduleName, string $version, string $artifactName): bool|string
     {
         try {
-            //don't overwrite a git-managed module folder
+            // Don't overwrite a git-managed module folder
             if ($this->isGitManagedModule($moduleName)) {
-                return "skipped artifact deploy for " . $moduleName . " (git-managed dev module)";
+                return "skipped artifact deploy for {$moduleName} (git-managed dev module)";
+            }
+
+            // If module already exists locally, just enable it instead of redeploying
+            if ($this->isInstalledModule($moduleName)) {
+                Artisan::call('module:enable', ['module' => $moduleName]);
+
+                try {
+                    Artisan::call('module:seed', ['module' => $moduleName, '--force' => true]);
+                } catch (\Throwable $e) {
+                    // optional: ignore if seeding is not required
+                }
+
+                $this->callIfExists("module:install-{$moduleName}");
+                $this->callIfExists("module:update-{$moduleName}");
+
+                return true;
             }
 
             $content = $this->keygenApiService->downloadArtifact($licenseKey, $version, $artifactName);
@@ -244,9 +260,11 @@ class ProFeaturesService
 
             Artisan::call('module:enable', ['module' => $moduleName]);
 
-            // Artisan::call('module:migrate', ['module' => $moduleName, '--force' => true]);
-
-            Artisan::call('module:seed', ['module' => $moduleName, '--force' => true]);
+            try {
+                Artisan::call('module:seed', ['module' => $moduleName, '--force' => true]);
+            } catch (\Throwable $e) {
+                // optional
+            }
 
             $this->callIfExists("module:install-{$moduleName}");
             $this->callIfExists("module:update-{$moduleName}");
@@ -255,6 +273,13 @@ class ProFeaturesService
         } catch (\Throwable $e) {
             return "deploy failed: {$e->getMessage()}";
         }
+    }
+
+    protected function isInstalledModule(string $moduleName): bool
+    {
+        $path = base_path("Modules/{$moduleName}");
+
+        return is_dir($path) && file_exists("{$path}/module.json");
     }
 
     protected function isGitManagedModule(string $moduleName): bool
@@ -275,7 +300,7 @@ class ProFeaturesService
     {
         $licenseResponse = $this->keygenApiService->validateLicenseKey($licenseKey);
 
-        logger($licenseResponse);
+        // logger($licenseResponse);
 
         if (!$licenseResponse || !($licenseResponse['meta']['valid'] ?? false)) {
             return ['__error' => 'Pro Features License invalid or expired.'];

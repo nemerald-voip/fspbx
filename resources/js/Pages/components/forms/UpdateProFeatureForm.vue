@@ -151,10 +151,12 @@
                                     <table class="min-w-full divide-y divide-gray-200 mb-4">
                                         <thead class="bg-gray-200">
                                             <tr>
-                                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900 sm:px-6">
+                                                <th
+                                                    class="px-4 py-3 text-left text-sm font-semibold text-gray-900 sm:px-6">
                                                     Module Name
                                                 </th>
-                                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-900 sm:px-6">
+                                                <th
+                                                    class="px-4 py-3 text-left text-sm font-semibold text-gray-900 sm:px-6">
                                                     Status
                                                 </th>
                                             </tr>
@@ -174,7 +176,8 @@
                                         </tbody>
                                         <tbody v-else>
                                             <tr>
-                                                <td colspan="2" class="text-center py-8 text-gray-400">No modules found</td>
+                                                <td colspan="2" class="text-center py-8 text-gray-400">No modules found
+                                                </td>
                                             </tr>
                                         </tbody>
                                     </table>
@@ -188,8 +191,8 @@
                             class="col-span-full flex justify-center bg-gray-100 px-4 text-center text-sm font-medium text-indigo-500 hover:text-indigo-700 sm:rounded-b-lg">
 
                             <!-- Show Install if none are enabled -->
-                            <button v-if="!props.options.modules || !props.options.modules.length"
-                                @click.prevent="handleInstall"
+                            <!-- Show Install if none are enabled -->
+                            <button v-if="!props.options.modules?.some(m => m.enabled)" @click.prevent="handleInstall"
                                 class="justify-center flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
                                 :disabled="isInstalling || isUninstalling">
                                 <span>Install</span>
@@ -197,8 +200,7 @@
                             </button>
 
                             <!-- Show Uninstall if any are enabled -->
-                            <button v-if="props.options.modules && props.options.modules.some(m => m.enabled)"
-                                @click.prevent="handleUninstall"
+                            <button v-else @click.prevent="handleUninstall"
                                 class="justify-center flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
                                 :disabled="isUninstalling || isInstalling">
                                 <span>Uninstall</span>
@@ -236,7 +238,8 @@
                     <div>
                         <LabelInputOptional :target="'license'" :label="'License'" />
                         <div class="mt-2">
-                            <InputField v-model="form.license" type="text" name="license" placeholder="Enter license key" />
+                            <InputField v-model="form.license" type="text" name="license"
+                                placeholder="Enter license key" />
                         </div>
                     </div>
 
