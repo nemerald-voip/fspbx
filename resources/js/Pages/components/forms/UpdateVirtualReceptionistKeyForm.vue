@@ -1,5 +1,5 @@
 <template>
-    <div class="bg-white px-4 py-6 sm:px-6 lg:px-8">
+    <form class="bg-white px-4 py-6 sm:px-6 lg:px-8" @submit.prevent="submitForm">
 
 
         <div class="grid grid-cols-1 gap-6 ">
@@ -58,7 +58,7 @@
 
             <div class="border-t mt-4 sm:mt-4 ">
                 <div class="mt-4 sm:mt-4 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-                    <button @click.prevent="submitForm"
+                    <button type="submit"
                         class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
                         ref="saveButtonRef" :disabled="isSubmitting">
                         <Spinner :show="isSubmitting" />
@@ -73,7 +73,7 @@
 
         </div>
 
-    </div>
+    </form>
 </template>
 
 <script setup>

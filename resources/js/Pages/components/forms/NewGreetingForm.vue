@@ -77,8 +77,14 @@
 
                                 <StaticElement name="audio_player" v-if="audioUrl" :columns="{ container: 12, sm: 8 }"
                                     :conditions="[['greeting_method', '==', 'text-to-speech']]">
-                                    
-                                        <audio controls :src="audioUrl" class="w-full h-10"></audio>
+                                    <div class="flex items-center gap-2">
+                                        <audio controls controlsList="nodownload" :src="audioUrl" class="h-10 min-w-0 flex-1"></audio>
+                                        <button type="button" @click="downloadDraftGreeting" :disabled="isDownloading"
+                                            class="grid h-10 w-10 flex-none place-items-center rounded-md text-gray-400 transition hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            title="Download draft recording" aria-label="Download draft recording">
+                                            <DownloadIcon class="h-5 w-5" :class="{ 'animate-pulse': isDownloading }" aria-hidden="true" />
+                                        </button>
+                                    </div>
                                 </StaticElement>
 
                                 <ButtonElement name="save" v-if="audioUrl" @click="saveGreeting"
@@ -163,12 +169,13 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import axios from 'axios';
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue';
 import { XMarkIcon } from '@heroicons/vue/24/outline';
 import { XCircleIcon, CheckCircleIcon } from '@heroicons/vue/20/solid';
+import DownloadIcon from "@icons/DownloadIcon.vue";
 
 const props = defineProps({
     show: Boolean, // Required for modal toggle
@@ -193,6 +200,7 @@ const page = usePage();
 // UI State Variables
 const isFormSubmiting = ref(false);
 const isSaving = ref(false);
+const isDownloading = ref(false);
 const errors = ref(null);
 const successMessage = ref(null);
 const audioUrl = ref(null);
@@ -200,6 +208,15 @@ const applyUrl = ref(null);
 const newGreetingFileName = ref(null);
 const fileToUpload = ref(null);
 const voicemail_uuid = ref(null);
+
+const draftGreetingDownloadUrl = computed(() => {
+    if (!audioUrl.value) {
+        return null;
+    }
+
+    const separator = audioUrl.value.includes('?') ? '&' : '?';
+    return `${audioUrl.value}${separator}download=true`;
+});
 
 const closeModal = () => {
     emit('close');
@@ -306,6 +323,34 @@ const saveGreeting = () => {
             isSaving.value = false;
             handleFormErrorResponse(error);
         });
+};
+
+const downloadDraftGreeting = async () => {
+    if (!draftGreetingDownloadUrl.value) {
+        return;
+    }
+
+    isDownloading.value = true;
+    errors.value = null;
+
+    try {
+        const response = await axios.get(draftGreetingDownloadUrl.value, {
+            responseType: 'blob',
+        });
+
+        const blobUrl = window.URL.createObjectURL(response.data);
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = newGreetingFileName.value || 'greeting.wav';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+        handleFormErrorResponse(error);
+    } finally {
+        isDownloading.value = false;
+    }
 };
 
 const handleFormErrorResponse = (error) => {
