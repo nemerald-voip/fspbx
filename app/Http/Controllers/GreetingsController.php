@@ -105,7 +105,10 @@ class GreetingsController extends Controller
 
         if ($download) {
             // Serve the file as a download
-            return response()->download(Storage::disk('recordings')->path($filePath));
+            return response()->download(
+                Storage::disk('recordings')->path($filePath),
+                basename($filePath)
+            );
         }
 
         // Serve the file inline
