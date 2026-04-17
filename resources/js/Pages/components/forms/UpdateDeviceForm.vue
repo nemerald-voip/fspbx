@@ -390,6 +390,13 @@
                                                                             () => form$.el$(`device_lines.${index}.line_type_id`)?.value === 'externalline'
                                                                         ]" />
 
+                                                                    <TextElement name="server_address_primary"
+                                                                        label="Primary Server Address"
+                                                                        placeholder="Enter primary server address"
+                                                                        :floating="false"
+                                                                        :default="options.default_line_options?.server_address_primary"
+                                                                        :conditions="[() => options?.permissions?.manage_device_line_primary_server]" />
+
                                                                     <TextElement name="server_address_secondary"
                                                                         label="Secondary Server Address"
                                                                         placeholder="Enter secondary server address"
