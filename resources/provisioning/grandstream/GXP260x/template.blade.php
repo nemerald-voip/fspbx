@@ -1,4 +1,4 @@
-{{-- version: 1.0.4 --}}
+{{-- version: 1.0.5 --}}
 
 @switch($flavor)
 
@@ -807,95 +807,6 @@
 		<!-- # String  -->
 		<item name="network.pppoe.serviceName"/>
 
-		<!-- ########################################## -->
-		<!-- # Statically Configured -->
-		<!-- ########################################## -->
-		<!-- # IP Address. Ignore if DHCP or PPPoE is used -->
-		<!-- # Number: 0 - 255 -->
-		<!-- IP Address -->
-		<item name="network.port.eth.1.address.1">192</item>
-		<!-- # Number: 0 - 255 -->
-		<item name="network.port.eth.1.address.2">168</item>
-		<!-- # Number: 0 - 255 -->
-		<item name="network.port.eth.1.address.3">0</item>
-		<!-- # Number: 0 - 255 -->
-		<item name="network.port.eth.1.address.4">160</item>
-
-		<!-- # Subnet mask. Ignore if DHCP or PPPoE is used -->
-		<!-- # Number: 0 - 255 -->
-		<!-- Subnet Mask -->
-		<item name="network.port.eth.1.mask.1">255</item>
-		<!-- # Number: 0 - 255 -->
-		<item name="network.port.eth.1.mask.2">255</item>
-		<!-- # Number: 0 - 255 -->
-		<item name="network.port.eth.1.mask.3">0</item>
-		<!-- # Number: 0 - 255 -->
-		<item name="network.port.eth.1.mask.4">0</item>
-
-		<!-- # Gateway. Ignore if DHCP or PPPoE is used -->
-		<!-- # Number: 0 - 255 -->
-		<item name="network.port.eth.1.gateway.1">0</item>
-		<!-- # Number: 0 - 255 -->
-		<item name="network.port.eth.1.gateway.2">0</item>
-		<!-- # Number: 0 - 255 -->
-		<item name="network.port.eth.1.gateway.3">0</item>
-		<!-- # Number: 0 - 255 -->
-		<item name="network.port.eth.1.gateway.4">0</item>
-
-		<!-- # DNS 1 Server. Ignore if DHCP or PPPoE is used -->
-		<!-- # Number: 0 - 255 -->
-		<item name="network.dns.1.ip.1">0</item>
-		<!-- # Number: 0 - 255 -->
-		<item name="network.dns.1.ip.2">0</item>
-		<!-- # Number: 0 - 255 -->
-		<item name="network.dns.1.ip.3">0</item>
-		<!-- # Number: 0 - 255 -->
-		<item name="network.dns.1.ip.4">0</item>
-
-		<!-- # DNS 2 Server. Ignore if DHCP or PPPoE is used -->
-		<!-- # Number: 0 - 255 -->
-		<item name="network.dns.2.ip.1">0</item>
-		<!-- # Number: 0 - 255 -->
-		<item name="network.dns.2.ip.2">0</item>
-		<!-- # Number: 0 - 255 -->
-		<item name="network.dns.2.ip.3">0</item>
-		<!-- # Number: 0 - 255 -->
-		<item name="network.dns.2.ip.4">0</item>
-
-		<!-- # Preferred DNS server.  (if specified). -->
-		<!-- # Number: 0 - 255 -->
-		<item name="network.dns.preferred.ip.1">0</item>
-		<!-- # Number: 0 - 255 -->
-		<item name="network.dns.preferred.ip.2">0</item>
-		<!-- # Number: 0 - 255 -->
-		<item name="network.dns.preferred.ip.3">0</item>
-		<!-- # Number: 0 - 255 -->
-		<item name="network.dns.preferred.ip.4">0</item>
-
-		<!-- # IPv6 Address type. 0 - Auto Configured, 1 - Statically Configured. Default is 0. -->
-		<!-- # Number: 0, 1 -->
-		<!-- # Mandatory -->
-		<!-- IPv6 Address  -->
-		<!-- AutoConfigured, StaticallyConfigured -->
-		<item name="network.port.eth.1.ipv6.type">AutoConfigured</item>
-		<!-- FullStatic(Default), PrefixStatic -->
-		<item name="network.port.eth.1.ipv6.static.mode"/>
-		<!-- Static IPv6 Address -->
-		<item name="network.port.eth.1.ipv6.static.address"/>
-		<!-- IPv6 Prefix Length -->
-		<item name="network.port.eth.1.ipv6.static.prefixLength"/>
-		<!-- # Prefix Static: IPv6 Prefix (64bits) -->
-		<item name="network.port.eth.1.ipv6.static.prefix"/>
-
-		<!-- DNS Server 1 -->
-		<!-- # String: a-z, A-Z, 0-9, ".", ":", "[", "]" -->
-		<item name="network.dns.1.ipv6"/>
-		<!-- DNS Server 2 -->
-		<!-- # String: a-z, A-Z, 0-9, ".", ":", "[", "]" -->
-		<item name="network.dns.2.ipv6"/>
-		<!-- # Preferred DNS Server for IPv6 Address -->
-		<!-- # String: a-z, A-Z, 0-9, ".", ":", "[", "]" -->
-		<item name="network.dns.preferred.ipv6"/>
 
 		<!-- Network/Advanced Settings  -->
 		<!-- # 802.1X Mode. 0 - Disable, 1 - EAP-MD5. 2 - EAP-TLS, 3 - EAP-PEAPv0/MSCHAPv2. Default is 0 -->
@@ -950,7 +861,7 @@
 
 		<!-- # Enable Manual VLAN Configuration. Yes or No. -->
 		<!-- # Mandatory -->
-		<item name="network.port.eth.1.vlan.enable">Yes</item>
+		<item name="network.port.eth.1.vlan.enable">No</item>
 
 		<!-- # Layer 2 QoS. 802.1Q/VLAN Tag (VLAN classification for RTP). Default is 0 -->
 		<!-- Layer 2 QoS 802.1Q/VLAN Tag (Ethernet) -->
@@ -973,11 +884,11 @@
 
 		<!-- Enable CDP -->
 		<!-- Yes, No -->
-		<item name="network.cdp">Yes</item>
+		<item name="network.cdp">No</item>
 
 		<!-- Enable LLDP -->
 		<!-- Yes, No -->
-		<item name="network.lldp.enable">Yes</item>
+		<item name="network.lldp.enable">No</item>
 
 		<!-- LLDP TX Interval (s)  -->
 		<item name="network.lldp.txInterval">60</item>
@@ -985,33 +896,8 @@
 		<!-- # Maximum Transmission Unit(MTU). Default is 1500 -->
 		<!-- # Number: 576 - 1500 -->
 		<item name="network.mtu">1500</item>
-
-		<!-- ############################################################################## -->
-		<!-- ##  Network/Remote Control -->
-		<!-- ############################################################################## -->
-		<!-- # Action URI Support. Yes or No -->
-		<item name="remoteControl.enable">Yes</item>
-
-		<!-- # Remote Control Pop up Window Support. Yes or No-->
-		<item name="remoteControl.confirmWindow.enable">Yes</item>
-
-		<!-- # Action URI Allowed IP List -->
-		<!-- # String -->
-		<item name="remoteControl.allowList"/>
-
-		<!-- # CSTA Control. Yes or No-->
-		<item name="remoteControl.csta.enable">No</item>
-
-		<!-- ################################################################################## -->
-		<!-- ##  Network/Affinity Settings    GRP2614/GRP2615/GRP2616/GRP2624/GRP2634/GRP2670/GRP2650   -->
-		<!-- ################################################################################## -->
-		<!-- # Affinity Support. Yes or No-->
-		<item name="affinity.enable">No</item>
-
-		<!-- # Preferred Account. 0 - Account 1, 1 - Account 2, 2 - Account 3, 3 - Account 4, 4 - Account 5, 5 - Account 6 -->
-		<item name="affinity.preferredAccount">0</item>
-
-		<!-- #################################################################################### -->
+		
+	    <!-- #################################################################################### -->
 		<!-- ##  Network /Bluetooth Settings    GRP2614/GRP2615/GRP2616/GRP2624/GRP2634/GRP2670/GRP2650   -->
 		<!-- #################################################################################### -->
 		<!-- # Bluetooth Power.  -->
@@ -1030,146 +916,6 @@
 		<!-- # String -->
 		<item name="bluetooth.name"/>
 
-		<!-- ############################################################################## -->
-		<!-- ## Network/OpenVPN Settings                     ## -->
-		<!-- ############################################################################## -->
-		<!-- OpenVPN Settings -->
-		<!-- Enable OpenVPN -->
-		<!-- Yes, No -->
-		<item name="network.openvpn.enable">No</item>
-
-		<!-- OpenVPN mode -->
-		<!-- 0 - simple mode, 1 - expert mode -->
-		<item name="network.openvpn.mode">0</item>
-
-		<!-- OpenVPN Server Address -->
-		<item name="network.openvpn.server"/>
-
-		<!-- OpenVPN Port -->
-		<item name="network.openvpn.port">1194</item>
-
-		<!-- OpenVPN Transport -->
-		<!-- UDP, TCP -->
-		<item name="network.openvpn.transport">UDP</item>
-
-		<!-- # OpenVPN CA -->
-		<!-- # String -->
-		<!-- <item name="network.openvpn.ca"></item> -->
-
-		<!-- # OpenVPN Certificate -->
-		<!-- # String -->
-		<!-- <item name="network.openvpn.cert"></item> -->
-
-		<!-- # OpenVPN Client Key -->
-		<!-- # String -->
-		<!-- <item name="network.openvpn.clientKey"></item> -->
-
-		<!-- # 	OpenVPN Client Key Password -->
-		<!-- # String -->
-		<!-- <item name="network.openvpn.clientKey.password"></item> -->
-
-		<!-- OpenVPN Cipher Method -->
-		<!-- Blowfish, AES128, AES256, TripleDES -->
-		<item name="network.openvpn.ciperMethod">Blowfish</item>
-
-		<!-- # OpenVPN Username -->
-		<!-- # String -->
-		<item name="network.openvpn.username"/>
-
-		<!-- OpenVPN Password -->
-		<item name="network.openvpn.password"/>
-
-		<!-- # OpenVPN Comp-lzo. Yes or No -->
-		<item name="network.openvpn.complzo.enable">Yes</item>
-
-		<!-- # Additional Options -->
-		<!-- # String -->
-		<item name="network.openvpn.otherOptions"/>
-
-		<!-- ############################################################################## -->
-		<!-- ## Network/SNMP Settings                     ## -->
-		<!-- ############################################################################## -->
-		<!-- # Enable SNMP. Yes or No -->
-		<item name="network.snmp.enable">No</item>
-
-		<!-- # Version. Version1, Version2, Version3. Default is Version3 -->
-		<item name="network.snmp.version">Version3</item>
-
-		<!-- # Port -->
-		<!-- # Number. Default is 161. -->
-		<item name="network.snmp.port">161</item>
-
-		<!-- # Community -->
-		<!-- # String -->
-		<item name="network.snmp.community"/>
-
-		<!-- # SNMP Trap Version -->
-		<!-- # Version1, Version2, Version3. -->
-		<item name="network.snmp.trap.version">Version2</item>
-
-		<!-- # SNMP Trap IP -->
-		<!-- # String -->
-		<item name="network.snmp.trap.ip"/>
-
-		<!-- # SNMP Trap Port -->
-		<!-- # Number: 1025 - 65535. Default is 162 -->
-		<item name="network.snmp.trap.port">162</item>
-
-		<!-- # SNMP Trap Interval -->
-		<!-- # Number: 1 - 1440. Default is 5 -->
-		<item name="network.snmp.trap.interval">5</item>
-
-		<!-- # Snmp Trap Community -->
-		<!-- # String -->
-		<item name="network.snmp.trap.community"/>
-
-		<!-- # SNMP Username -->
-		<!-- # Strings -->
-		<item name="network.snmp.username"/>
-
-		<!-- # Security Level -->
-		<!-- # noAuthUser - 0, authUser - 1, privUser - 2.-->
-		<item name="network.snmp.security.level">0</item>
-
-		<!-- # Authentication Protocol -->
-		<!-- # None, MD5, SHA. -->
-		<item name="network.snmp.auth.protocol">None</item>
-
-		<!-- # Privacy Protocol -->
-		<!-- # None, DES, AES. -->
-		<item name="network.snmp.privacy.protocol">None</item>
-
-		<!-- # Authentication Key -->
-		<!-- # String -->
-		<item name="network.snmp.auth.key"/>
-
-		<!-- # Privacy Key -->
-		<!-- # String  -->
-		<item name="network.snmp.privacy.key"/>
-
-		<!-- # SNMP Trap Username -->
-		<!-- # String -->
-		<item name="network.snmp.trap.username"/>
-
-		<!-- # Trap Security Level -->
-		<!-- # noAuthUser - 0, authUser - 1, privUser - 2.-->
-		<item name="network.snmp.trap.security.level">0</item>
-
-		<!-- # Trap Authentication Protocol -->
-		<!-- # None, MD5, SHA.  -->
-		<item name="network.snmp.trap.auth.protocol">None</item>
-
-		<!-- # Trap Privacy Protocol -->
-		<!-- # None, DES, AES. -->
-		<item name="network.snmp.trap.privacy.protocol">None</item>
-
-		<!-- # Trap Authentication Key -->
-		<!-- # String -->
-		<item name="network.snmp.trap.auth.key"/>
-
-		<!-- # Trap Privacy Key -->
-		<!-- # String -->
-		<item name="network.snmp.trap.privacy.key"/>
 
 		<!-- ############################################################################## -->
 		<!-- ##  Maintenance/ Web Access     ## -->
@@ -1201,36 +947,40 @@
 		<!-- # Validate Hostname in Certificate. No, Yes. -->
 		<item name="provisioning.validateHostnameInCertificate">No</item>
 
-		<!-- # Allow DHCP Option 43 and Option 66 to override server. No, Yes, Prefer, fallback when failed. Default is No -->
-		<!-- # When set to Yes, it will override the configured provision path and method -->
-		<!-- Allow DHCP Option 43 and Option 66 to Override Server -->
-		<!-- No, Yes, Fallback-->
-        @if (array_key_exists('grandstream_dhcp_option_override', $settings))
-            <item name="provisioning.override.dhcp.allowCommonOptions">{{ $settings['grandstream_dhcp_option_override'] }}</item>
-        @else
-            <item name="provisioning.override.dhcp.allowCommonOptions">Yes</item>
+
+		<!-- # Firmware Upgrade Confirmation. No or Yes -->
+		<item name="provisioning.firmware.confirm.enable">Yes</item>
+
+		<!-- Config Upgrade Via -->
+		<!-- TFTP, HTTP, HTTPS -->
+		<item name="provisioning.config.protocol">HTTPS</item>
+
+		<!-- Config Server Path -->
+        <item name="provisioning.config.serverPath">{{ trim(str_replace(['http://', 'https://'], '', $settings['provision_base_url'] ?? ''), " /") }}</item>
+        <!--<item name="provisioning.config.serverPath">portal.us.nemerald.net/prov</item>-->
+
+		<!-- Config Server User Name -->
+		<item name="provisioning.config.username">{{ $settings['http_auth_username'] ?? '' }}</item>
+		<!-- Config Server Password -->
+		<item name="provisioning.config.password">{{ $settings['http_auth_password'] ?? '' }}</item>
+		
+		<!-- Firmware Upgrade via -->
+		<!-- TFTP, HTTP, HTTPS, FTP,FTPS -->
+		<item name="provisioning.firmware.protocol">HTTPS</item>
+		<!-- Firmware Server Path -->
+        @if (array_key_exists('grandstream_firmware_path', $settings))
+            <item name="provisioning.firmware.serverPath">{{ trim(str_replace(['http://', 'https://'], '', $settings['grandstream_firmware_path'] ?? ''), " /") }}</item>
         @endif
 
-		<!-- # Additional Override DHCP Option.  None, Option 150, Option 160.  -->
-        @if (array_key_exists('grandstream_dhcp_option_additional_override', $settings))
-            <item name="provisioning.override.dhcp.allowCustomOption">{{ $settings['grandstream_dhcp_option_additional_override'] }}</item>
-        @else
-            <item name="provisioning.override.dhcp.allowCustomOption">None</item>
-        @endif
-
-
-		<!-- # Allow DHCP Option 120 to Override SIP Server -->
-		<!-- # No or Yes. -->
-        @if (array_key_exists('grandstream_dhcp_option_override_sip_server', $settings))
-            <item name="sip.override.dhcp.allowOption120">{{ $settings['grandstream_dhcp_option_override_sip_server'] }}</item>
-        @else
-            <item name="sip.override.dhcp.allowOption120">No</item>
-        @endif
-
-
+		<!-- Firmware Server User Name -->
+		<item name="provisioning.firmware.username"/>
+		<!-- Firmware Server Password -->
+		<item name="provisioning.firmware.password"/>
+		<!-- Firmware File Prefix -->
+		
 		<!-- # 3CX Auto Provision. No or Yes. -->
 		<item name="provisioning.3cxAutoProvision">Yes</item>
-
+		
 		<!-- Automatic Upgrade -->
 		<!-- No - No (default), Check Every Day - YesUpgradeHourOfDay, Check Every Week - YesUpgradeDayOfWeek, Check at a Period Time - YesUpgradeMin -->
 		<item name="provisioning.auto.mode">No</item>
@@ -1253,56 +1003,7 @@
 
 		<!-- #	Disable SIP NOTIFY Authentication. Yes or No -->
 		<item name="sip.notify.challenge">No</item>
-
-		<!-- # Firmware Upgrade Confirmation. No or Yes -->
-		<item name="provisioning.firmware.confirm.enable">Yes</item>
-
-		<!-- Config Upgrade Via -->
-		<!-- TFTP, HTTP, HTTPS -->
-		<item name="provisioning.config.protocol">HTTPS</item>
-
-		<!-- Config Server Path -->
-		<item name="provisioning.config.serverPath">{{ $settings['provision_base_url'] ?? '' }} </item>
-
-		<!-- Config Server User Name -->
-		<item name="provisioning.config.username">{{ $settings['http_auth_username'] ?? '' }}</item>
-		<!-- Config Server Password -->
-		<item name="provisioning.config.password">{{ $settings['http_auth_password'] ?? '' }}</item>
-		<!-- Config File Prefix -->
-		<item name="provisioning.config.filePrefix"/>
-		<!-- Config File Postfix -->
-		<item name="provisioning.config.filePostfix"/>
-
-		<!-- XML Config File Password -->
-		<item name="provisioning.config.filePassword"/>
-
-		<!-- Authenticate Conf File -->
-		<!-- Yes, No -->
-		<item name="provisioning.config.authenticateFile">No</item>
-
-		<!-- # User Protection. No or Yes -->
-		<item name="provisioning.userProtect.enable">No</item>
-
-		<!-- # Download and Process ALL Available Config Files. No or Yes -->
-		<item name="provisioning.config.processAll.enable">No</item>
-
-		<!-- Firmware Upgrade via -->
-		<!-- TFTP, HTTP, HTTPS, FTP,FTPS -->
-		<item name="provisioning.firmware.protocol">HTTPS</item>
-		<!-- Firmware Server Path -->
-        @if (array_key_exists('grandstream_firmware_path', $settings))
-            <item name="provisioning.firmware.serverPath">{{ $settings['grandstream_firmware_path'] }}</item>
-        @endif
-
-		<!-- Firmware Server User Name -->
-		<item name="provisioning.firmware.username"/>
-		<!-- Firmware Server Password -->
-		<item name="provisioning.firmware.password"/>
-		<!-- Firmware File Prefix -->
-		<item name="provisioning.firmware.filePrefix"/>
-		<!-- Firmware File Postfix -->
-		<item name="provisioning.firmware.filePostfix"/>
-
+		
 		<!-- ############################################################################## -->
 		<!-- ##  Maintenance/Syslog -->
 		<!-- ############################################################################## -->
@@ -1330,7 +1031,6 @@
             <item name="maintain.syslog.sendSipLog">{{ $settings['grandstream_send_sip_log'] }}</item>
         @endif
 
-
 		<!-- # Show Network Warning Message. Yes or No-->
 		<item name="network.showInternetDownWarning">No</item>
 
@@ -1339,70 +1039,7 @@
 
 		<!-- # USB Console Log. Yes or No -->
 		<item name="maintain.usbConsoleLog">No</item>
-
-		<!-- ############################################################################## -->
-		<!-- ##  Maintenance/Language -->
-		<!-- ############################################################################## -->
-		<!-- # Display Language. Default is Auto -->
-		<!-- # ar - Arabic, cz - Czech, de - Deutsh -->
-		<!-- # en - English, es - Spanish, fr - Francais -->
-		<!-- # he - Hebrew, hr - Hrvatski, hu - Magyar  -->
-		<!-- # it - Italiano, ja - japanese, ko - korean, lv - latvian -->
-		<!-- # nl - Dutch, pl - Polski, pt - Portugue -->
-		<!-- # ru - Russian, sl - Slovenian, se - Svenska, tr - Turkish -->
-		<!-- # zh-tw - traditional chinese, zh - simplified chinese, auto - Automatic -->
-		<!-- # Downloaded Language -->
-		<!-- # String -->
-		<item name="language.gui">Automatic</item>
-
-		<!-- # Default Input Selection. Default is Multi-Tap. -->
-		<!-- # MultiTap,  Shiftable -->
-		<item name="language.defaultInputSelection"/>
-
-		<!-- # Auto language download. Yes or No -->
-		<item name="language.autoDownload"/>
-
-		<!-- ############################################################################## -->
-		<!-- ##  Maintenance/TR-069 -->
-		<!-- ############################################################################## -->
-		<!-- Enable TR-069 -->
-		<!-- Yes, No -->
-		<item name="tr069.enable">No</item>
-
-		<!-- ACS URL -->
-		<item name="tr069.url">https://acs.gdms.cloud</item>
-
-		<!-- TR-069 Username -->
-		<item name="tr069.username"/>
-
-		<!-- TR-069 Password -->
-		<item name="tr069.password"/>
-
-		<!-- Periodic Inform Enable -->
-		<!-- Yes, No -->
-		<item name="tr069.periodicInform">Yes</item>
-
-		<!-- Periodic Inform Interval (s) -->
-		<item name="tr069.periodicInformInterval">86400</item>
-
-		<!-- Connection Request Username -->
-		<item name="tr069.connectionRequestUsername">{{ strtoupper(preg_replace('/-/', '', $mac)) }}</item>
-
-		<!-- Connection Request Password -->
-		<item name="tr069.connectionRequestPassword">{{ strtoupper(preg_replace('/-/', '', $mac)) }}</item>
-
-		<!-- Connection Request Port -->
-		<item name="tr069.connectionRequestPort">7547</item>
-
-		<!-- CPE SSL Certificate -->
-		<item name="tr069.ssl.certificate"/>
-
-		<!-- CPE SSL Private Key -->
-		<item name="tr069.ssl.privateKey"/>
-
-		<!-- # 	Start TR-069 at Random Time. Yes or No -->
-		<item name="tr069.randomStart.enable">No</item>
-
+		
 		<!-- ############################################################################## -->
 		<!-- ##  Maintenance/Security Settings/Security   ## -->
 		<!-- ############################################################################## -->
@@ -1415,7 +1052,7 @@
 		<item name="security.factoryResetSecurityLevel">Default</item>
 
 		<!-- # Validate Server Certificates. Yes or No -->
-		<item name="security.validate.serverCertificate">No</item>
+		<!--<item name="security.validate.serverCertificate">No</item>-->
 
 		<!-- SIP TLS Certificate -->
 		<item name="security.certificate"/>
@@ -1470,53 +1107,7 @@
 		<!-- Enable/Disable Weak Ciphers -->
 		<!-- 0 - Enable Weak TLS Ciphers Suites, 1 - Disable Symmetric Encryption RC4/DES/3DES, 2 - Disable Symmetric Encryption SEED, 3 - Disable All Weak Symmetric Encryption, 4 - Disable Symmetric Authentication MD5, 5 - Disable All Weak TLS Cipher Suites -->
 		<item name="security.maximum.TLS.version">0</item>
-
-
-		<!-- ############################################################################## -->
-		<!-- ##  Maintenance/Security Settings/Trusted CA Certificates   ## -->
-		<!-- ############################################################################## -->
-		<!-- # Load CA Certificates. Default Certificates, Custom Certificates, All Certificates-->
-		<item name="trustedCACertificates.load">Default Certificates</item>
-
-		<!-- ############################################################################## -->
-		<!-- ##  Maintenance/Security Settings/Keypad Lock  ## -->
-		<!-- ############################################################################## -->
-		<!-- # Enable Keypad Locking. Yes or No -->
-		<item name="keys.lock.enable">No</item>
-
-		<!-- # Keypad Lock Type -->
-		<!-- # All Keys - 0, Functional Keys - 1 -->
-		<item name="keys.lock.type">0</item>
-
-		<!-- # Password to Lock/Unlock -->
-		<!-- # String -->
-		<item name="keys.lock.password"/>
-
-		<!-- # Keypad Lock Timer. -->
-		<!-- # Number -->
-		<item name="keys.lock.timer">0</item>
-
-		<!-- # Emergency -->
-		<!-- # String -->
-		<item name="keys.lock.emergency">112,911,110</item>
-
-		<!-- ############################################################################## -->
-		<!-- ##  Maintenance/Packet Capture       ## -->
-		<!-- ############################################################################## -->
-
-		<!-- # Capture Location. InternalStorage, USB -->
-		<item name="packetCapture.captureLocation">InternalStorage</item>
-
-		<!-- # With RTP Packets. Yes or No -->
-		<item name="maintain.packetCapture.includeRtp">No</item>
-
-		<!-- # With Secret Key Information. Yes or No -->
-		<item name="maintain.packetCapture.withSecretKeyInformation">No</item>
-
-		<!-- # USB Filename -->
-		<!-- # String -->
-		<item name="packetCapture.usbFilename">0</item>
-
+		
 		<!-- ############################################################################## -->
 		<!-- ##  Phonebook/Phonebook Management -->
 		<!-- ############################################################################## -->
@@ -1563,83 +1154,49 @@
 		<!-- QuickMatch, ExactMatch -->
 		<item name="phonebook.defaultSearchMode">QuickMatch</item>
 
+
 		<!-- ############################################################################## -->
-		<!-- ##  Directory/LDAP -->
+		<!-- ##  Maintenance/TR-069 -->
 		<!-- ############################################################################## -->
-		<!-- # LDAP protocol.  LDAP, LDAPS -->
-		<!-- Connection Mode -->
-		<!-- LDAP, LDAPS -->
-		<item name="ldap.protocol">LDAP</item>
-
-		<!-- Server Address -->
-		<item name="ldap.server"/>
-
-		<!-- # LDAP Server Port. Default is 389. -->
-		<!-- # Number: 1 - 65535 -->
-		<item name="ldap.port">389</item>
-
-		<!-- Base DN -->
-		<!-- # Example 1: dc=grandstream,dc=com -->
-		<!-- # Example 2: ou=Boston, dc=grandstream,dc=com -->
-		<item name="ldap.base"/>
-
-		<!-- User Name -->
-		<item name="ldap.username"/>
-
-		<!-- Password -->
-		<item name="ldap.password"/>
-
-		<!-- LDAP Number Filter -->
-		<item name="ldap.ldapNumberFilter"/>
-
-		<!-- LDAP Name Filter -->
-		<item name="ldap.ldapNameFilter"/>
-
-		<!-- # LDAP Version. Protocol version for the phone when send the bind requests -->
-		<!-- # version2, version3. Default is version3 -->
-		<item name="ldap.version">version3</item>
-
-		<!-- # LDAP Name Attributes. This setting specifies the "name" attributes of each record which are returned in the LDAP search result -->
-		<!-- # The setting allows the users to configure multiple space separated name attributes -->
-		<!-- # String -->
-		<item name="ldap.ldapNameAttributes"/>
-
-		<!-- # LDAP Number Attributes. This setting specifies the "number" attributes of each record which are returned in the LDAP search result -->
-		<!-- # The setting allows the users to configure multiple space separated number attributes -->
-		<!-- # String -->
-		<item name="ldap.ldapNumberAttributes"/>
-
-		<!-- # LDAP Display Name. The entry information to be shown on phone LCD. Grandstream phones will display up to 3 fields -->
-		<!-- # String -->
-		<item name="ldap.ldapDisplayName"/>
-
-		<!-- Max Hits -->
-		<item name="ldap.maxHits">50</item>
-
-		<!-- # Search Timeout (in seconds). Default is 30 -->
-		<!-- # The setting specifies how long the server should process the request and client waits for server to return -->
-		<!-- # Number: 0 - 180 -->
-		<item name="ldap.searchTimeout">30</item>
-
-		<!-- # Sort Results. This setting is used for sorting searching result. -->
-		<!-- # Yes or No -->
-		<item name="ldap.sortResults">No</item>
-
-		<!-- LDAP Lookup For Incoming Calls -->
+		<!-- Enable TR-069 -->
 		<!-- Yes, No -->
-		<item name="ldap.ldapLookup">No</item>
+		<item name="tr069.enable">Yes</item>
 
-		<!-- LDAP Lookup For Outgoing Calls -->
+		<!-- ACS URL -->
+		<item name="tr069.url">https://acs.gdms.cloud</item>
+
+		<!-- TR-069 Username -->
+		<item name="tr069.username"/>
+
+		<!-- TR-069 Password -->
+		<item name="tr069.password"/>
+
+		<!-- Periodic Inform Enable -->
 		<!-- Yes, No -->
-		<item name="ldap.outgoingCalls">No</item>
+		<item name="tr069.periodicInform">Yes</item>
 
-		<!-- # Lookup Display Name -->
-		<!-- # String -->
-		<item name="ldap.lookupDisplayName"/>
+		<!-- Periodic Inform Interval (s) -->
+		<item name="tr069.periodicInformInterval">86400</item>
 
-		<!-- # Exact Match Search -->
-		<!-- # Yes or No -->
-		<item name="ldap.exactSearch.enable">No</item>
+		<!-- Connection Request Username -->
+		<item name="tr069.connectionRequestUsername">{{ strtoupper(preg_replace('/-/', '', $mac)) }}</item>
+
+		<!-- Connection Request Password -->
+		<item name="tr069.connectionRequestPassword">{{ strtoupper(preg_replace('/-/', '', $mac)) }}</item>
+
+		<!-- Connection Request Port -->
+		<item name="tr069.connectionRequestPort">7547</item>
+
+		<!-- CPE SSL Certificate -->
+		<item name="tr069.ssl.certificate"/>
+
+		<!-- CPE SSL Private Key -->
+		<item name="tr069.ssl.privateKey"/>
+
+		<!-- # 	Start TR-069 at Random Time. Yes or No -->
+		<item name="tr069.randomStart.enable">No</item>
+
+
 
 		<!-- ############################################################################## -->
 		<!-- ##  Settings/General Settings -->
@@ -1676,386 +1233,7 @@
 		<!-- # Yes or No.  -->
 		<item name="users.testPasswordStrength.enable">No</item>
 
-		<!-- # Enable Public Mode. No or Yes. -->
-		<item name="hotdesking.enable">No</item>
 
-		<!-- # Enable Fix For RTP Timestamp Jump. Yes or No -->
-		<item name="hotdesking.rtp.fixTimestampJump.enable">No</item>
-
-		<!-- # Public Mode Username Prefix -->
-		<!-- # String -->
-		<item name="hotdesking.username.prefix"/>
-
-		<!-- # Public Mode Username Suffix -->
-		<!-- # String -->
-		<item name="hotdesking.username.suffix"/>
-
-		<!-- ############################################################################## -->
-		<!-- ##  Settings/Broadsoft -->
-		<!-- ############################################################################## -->
-		<!-- ################################################################### -->
-		<!-- # Broadsoft XSI -->
-		<!-- ################################################################### -->
-		<!-- # XSI -->
-		<!-- # Server address -->
-		<!-- # String -->
-		<item name="broadsoftXsi.server"/>
-
-		<!-- # Port -->
-		<!-- # Number -->
-		<item name="broadsoftXsi.port"/>
-
-		<!-- # XSI Actions Path -->
-		<!-- # String -->
-		<item name="broadsoftXsi.actionsPath"/>
-
-		<!-- # BroadSoft Directory Update Interval (m). Default is 4320  -->
-		<!-- # Number: 5 - 4320 -->
-		<item name="broadsoftXsi.contactDownloadInterval">4320</item>
-
-		<!-- # Broadsoft Contacts Download Limit. Default is 100. -->
-		<!-- # Number: 0-2000 -->
-		<item name="broadsoftXsi.contactDownloadLimitation">100</item>
-
-		<!-- # Broadsoft Contacts Search Limit. Default is 100. -->
-		<!-- # Number: 0-2000 -->
-		<item name="broadsoftXsi.contactSearchLimitation">100</item>
-
-		<!-- # XSI Authentication Type. LoginCredentials, SIPCredentials, Account1, Account2, Account3,  Account4, Account5, Account6.  -->
-		<item name="broadsoftXsi.authenticationType"/>
-
-		<!-- # Login Credentials -->
-		<!-- # Login Username -->
-		<item name="broadsoftXsi.credential.username"/>
-
-		<!-- # Login Password -->
-		<!-- # String -->
-		<item name="broadsoftXsi.credential.password"/>
-
-		<!-- # SIP Credentials -->
-		<!-- # SIP UserName  -->
-		<item name="broadsoftXsi.sip.username"/>
-
-		<!-- # SIP User ID -->
-		<!-- # String -->
-		<item name="broadsoftXsi.sip.userId"/>
-
-		<!-- # SIP Password  -->
-		<!-- # String -->
-		<item name="broadsoftXsi.sip.password"/>
-
-		<!-- # Sort Phonebook by. LastName, FirstName. -->
-		<item name="broadsoftXsi.sortPhonebookBy"/>
-
-		<!-- ###################################################################################### -->
-		<!-- # Broadsoft XSI    Network Directories -->
-		<!-- ###################################################################################### -->
-		<!-- ### Group Directory ### -->
-		<!-- # Disabled/Enabled. Yes or No -->
-		<item name="broadsoftXsi.directory.groupDirectory"/>
-
-		<!-- # Name.  -->
-		<!-- # String -->
-		<item name="broadsoftXsi.directory.groupDirectoryName"/>
-
-		<!-- ### Enterprise Directory ### Yes or No-->
-		<item name="broadsoftXsi.directory.enterpriseDirectory"/>
-
-		<!-- # Name.  -->
-		<!-- # String -->
-		<item name="broadsoftXsi.directory.enterpriseDirectoryName"/>
-
-		<!-- ### Group Common ### Yes or No -->
-		<item name="broadsoftXsi.directory.groupCommon"/>
-
-		<!-- # Name.  -->
-		<!-- # String -->
-		<item name="broadsoftXsi.directory.groupCommonName"/>
-
-		<!-- ### Enterprise Common ### Yes or No -->
-		<item name="broadsoftXsi.directory.enterpriseCommon"/>
-
-		<!-- # Name.  -->
-		<!-- # String -->
-		<item name="broadsoftXsi.directory.enterpriseCommonName"/>
-
-		<!-- ### Personal Directory ### Yes or No -->
-		<item name="broadsoftXsi.directory.personalDirectory"/>
-
-		<!-- # Name.  -->
-		<!-- # String -->
-		<item name="broadsoftXsi.directory.personalDirectoryName"/>
-
-		<!-- ### Missed Call Log ### Yes or No -->
-		<item name="broadsoftXsi.directory.missedCallLog"/>
-
-		<!-- # Name.  -->
-		<!-- # String -->
-		<item name="broadsoftXsi.directory.missedCallLogName"/>
-
-		<!-- ### Placed Call Log ###  Yes or No -->
-		<item name="broadsoftXsi.directory.placedCallLog"/>
-
-		<!-- # Name.  -->
-		<!-- # String -->
-		<item name="broadsoftXsi.directory.placedCallLogName"/>
-
-		<!-- ### Received Call Log ###  Yes or No -->
-		<item name="broadsoftXsi.directory.receivedCallLog"/>
-
-		<!-- # Name.  -->
-		<!-- # String -->
-		<item name="broadsoftXsi.directory.receivedCallLogName"/>
-
-		<!-- ############################################################################################### -->
-		<!-- ## Broadsoft Instant Message and Presence -->
-		<!-- ############################################################################################### -->
-		<!-- # Login Credentials  -->
-		<!-- # Server. -->
-		<!-- # String -->
-		<item name="broadsoftIMP.server"/>
-
-		<!-- # Port.  -->
-		<!-- # Number. Default is 5222 -->
-		<item name="broadsoftIMP.port">5222</item>
-
-		<!-- # Username.  -->
-		<!-- # String -->
-		<item name="broadsoftIMP.username"/>
-
-		<!-- # Password.  -->
-		<!-- # String -->
-		<item name="broadsoftIMP.password"/>
-
-		<!-- # IM&P Settings  -->
-		<!-- # Broadsoft IM&P. Yes or No -->
-		<item name="broadsoftIMP.enable"/>
-
-		<!-- # Associated Broadsoft Account. -->
-		<!-- # Account1 - Account6 -->
-		<item name="broadsoftIMP.associatedAccount"/>
-
-		<!-- # Auto Login -->
-		<!-- # Yes or No -->
-		<item name="broadsoftIMP.autoLogin"/>
-
-		<!-- # Display Non XMPP Contacts. -->
-		<!-- # Yes or No -->
-		<item name="broadsoftIMP.displayNonXMPPContacts"/>
-
-		<!-- ############################################################################## -->
-		<!-- ##  Settings/External Service -->
-		<!-- ############################################################################## -->
-		<!-- ##  Grandstream Door System -->
-		<!-- ############################################################### -->
-		<!-- # Order 1 -->
-		<!-- ############################################################### -->
-		<!-- Value-added Service - Value-added Service -->
-		<!-- Service Type -->
-		<!-- None, GDS. -->
-		<item name="externalService.1.type">None</item>
-
-		<!-- # Account -->
-		<!-- # Account1 - Account6  -->
-		<item name="externalService.1.account"/>
-
-		<!-- Display Name -->
-		<item name="externalService.1.systemId"/>
-
-		<!-- System Number -->
-		<item name="externalService.1.systemNumber"/>
-
-		<!-- Access Password / DTMF Content -->
-		<item name="externalService.1.password"/>
-
-		<!-- ############################################################### -->
-		<!-- # Order 2 -->
-		<!-- ############################################################### -->
-		<!-- Value-added Service - Value-added Service -->
-		<!-- Service Type -->
-		<!-- None, GDS. -->
-		<item name="externalService.2.type">None</item>
-
-		<!-- # Account -->
-		<!-- # Account1 - Account6  -->
-		<item name="externalService.2.account"/>
-
-		<!-- Display Name -->
-		<item name="externalService.2.systemId"/>
-
-		<!-- System Number -->
-		<item name="externalService.2.systemNumber"/>
-
-		<!-- Access Password / DTMF Content -->
-		<item name="externalService.2.password"/>
-
-		<!-- ############################################################### -->
-		<!-- # Order 3 -->
-		<!-- ############################################################### -->
-		<!-- Value-added Service - Value-added Service -->
-		<!-- Service Type -->
-		<!-- None, GDS. -->
-		<item name="externalService.3.type">None</item>
-
-		<!-- # Account -->
-		<!-- # Account1 - Account6  -->
-		<item name="externalService.3.account"/>
-
-		<!-- Display Name -->
-		<item name="externalService.3.systemId"/>
-
-		<!-- System Number -->
-		<item name="externalService.3.systemNumber"/>
-
-		<!-- Access Password / DTMF Content -->
-		<item name="externalService.3.password"/>
-
-		<!-- ############################################################### -->
-		<!-- # Order 4 -->
-		<!-- ############################################################### -->
-		<!-- Value-added Service - Value-added Service -->
-		<!-- Service Type -->
-		<!-- None, GDS. -->
-		<item name="externalService.4.type">None</item>
-
-		<!-- # Account -->
-		<!-- # Account1 - Account6  -->
-		<item name="externalService.4.account"/>
-
-		<!-- Display Name -->
-		<item name="externalService.4.systemId"/>
-
-		<!-- System Number -->
-		<item name="externalService.4.systemNumber"/>
-
-		<!-- Access Password / DTMF Content -->
-		<item name="externalService.4.password"/>
-
-		<!-- ############################################################### -->
-		<!-- # Order 5 -->
-		<!-- ############################################################### -->
-		<!-- Value-added Service - Value-added Service -->
-		<!-- Service Type -->
-		<!-- None, GDS. -->
-		<item name="externalService.5.type">None</item>
-
-		<!-- # Account -->
-		<!-- # Account1 - Account6  -->
-		<item name="externalService.5.account"/>
-
-		<!-- Display Name -->
-		<item name="externalService.5.systemId"/>
-
-		<!-- System Number -->
-		<item name="externalService.5.systemNumber"/>
-
-		<!-- Access Password / DTMF Content -->
-		<item name="externalService.5.password"/>
-
-		<!-- ############################################################### -->
-		<!-- # Order 6 -->
-		<!-- ############################################################### -->
-		<!-- Value-added Service - Value-added Service -->
-		<!-- Service Type -->
-		<!-- None, GDS. -->
-		<item name="externalService.6.type">None</item>
-
-		<!-- # Account -->
-		<!-- # Account1 - Account6  -->
-		<item name="externalService.6.account"/>
-
-		<!-- Display Name -->
-		<item name="externalService.6.systemId"/>
-
-		<!-- System Number -->
-		<item name="externalService.6.systemNumber"/>
-
-		<!-- Access Password / DTMF Content -->
-		<item name="externalService.6.password"/>
-
-		<!-- ############################################################### -->
-		<!-- # Order 7 -->
-		<!-- ############################################################### -->
-		<!-- Value-added Service - Value-added Service -->
-		<!-- Service Type -->
-		<!-- None, GDS. -->
-		<item name="externalService.7.type">None</item>
-
-		<!-- # Account -->
-		<!-- # Account1 - Account6  -->
-		<item name="externalService.7.account"/>
-
-		<!-- Display Name -->
-		<item name="externalService.7.systemId"/>
-
-		<!-- System Number -->
-		<item name="externalService.7.systemNumber"/>
-
-		<!-- Access Password / DTMF Content -->
-		<item name="externalService.7.password"/>
-
-		<!-- ############################################################### -->
-		<!-- # Order 8 -->
-		<!-- ############################################################### -->
-		<!-- Value-added Service - Value-added Service -->
-		<!-- Service Type -->
-		<!-- None, GDS. -->
-		<item name="externalService.8.type">None</item>
-
-		<!-- # Account -->
-		<!-- # Account1 - Account6  -->
-		<item name="externalService.8.account"/>
-
-		<!-- Display Name -->
-		<item name="externalService.8.systemId"/>
-
-		<!-- System Number -->
-		<item name="externalService.8.systemNumber"/>
-
-		<!-- Access Password / DTMF Content -->
-		<item name="externalService.8.password"/>
-
-		<!-- ############################################################### -->
-		<!-- # Order 9 -->
-		<!-- ############################################################### -->
-		<!-- Value-added Service - Value-added Service -->
-		<!-- Service Type -->
-		<!-- None, GDS. -->
-		<item name="externalService.9.type">None</item>
-
-		<!-- # Account -->
-		<!-- # Account1 - Account6  -->
-		<item name="externalService.9.account"/>
-
-		<!-- Display Name -->
-		<item name="externalService.9.systemId"/>
-
-		<!-- System Number -->
-		<item name="externalService.9.systemNumber"/>
-
-		<!-- Access Password / DTMF Content -->
-		<item name="externalService.9.password"/>
-
-		<!-- ############################################################### -->
-		<!-- # Order 10 -->
-		<!-- ############################################################### -->
-		<!-- Value-added Service - Value-added Service -->
-		<!-- Service Type -->
-		<!-- None, GDS. -->
-		<item name="externalService.10.type">None</item>
-
-		<!-- # Account -->
-		<!-- # Account1 - Account6  -->
-		<item name="externalService.10.account"/>
-
-		<!-- Display Name -->
-		<item name="externalService.10.systemId"/>
-
-		<!-- System Number -->
-		<item name="externalService.10.systemNumber"/>
-
-		<!-- Access Password / DTMF Content -->
-		<item name="externalService.10.password"/>
 
 		<!-- ############################################################################## -->
 		<!-- ##  Settings/Call Features -->
@@ -2110,8 +1288,7 @@
             <item name="call.callWaiting.enable">{{ $settings['grandstream_call_waiting'] }}</item>
         @endif
 
-
-		<!-- # Disable Call Waiting Tone -->
+        <!-- # Disable Call Waiting Tone -->
 		<!-- Invert_Yes_No, Yes - No, No - Yes -->
 		<item name="call.callWaiting.enableTone">Yes</item>
 
@@ -2172,8 +1349,7 @@
 
 		<!-- # Attended Transfer Mode. Static or Dynamic. -->
 		<item name="call.transfer.attended.mode">Dynamic</item>
-
-
+		
 		<!-- # Transfer Mode via VPK/MPK. -->
 		<!-- BlindTransfer, AttendedTransfer,  NewCall -->
 		<item name="call.transfer.modeViaVpk">BlindTransfer</item>
@@ -2272,198 +1448,9 @@
 		<!-- ##  Settings/Call History -->
 		<!-- ############################################################################## -->
 
-		<!-- ############################################################################## -->
-		<!-- ##  Settings/Multicast Paging   -->
-		<!-- ############################################################################## -->
-		<!-- # Allowed in DND Mode. Yes or No -->
-		<item name="multicast.allowedInDnd"/>
+	
 
-		<!-- Paging Barge -->
-		<!-- Disable - 0, priority1 - 1, priority2 - 2, priority3 - 3, priority4 - 4, priority5 - 5, priority6 - 6, priority7 - 7, priority8 - 8, priority9 - 9, priority10 - 10 -->
-		<item name="multicast.paginBarge"/>
-
-		<!-- Paging Priority Active -->
-		<!-- Yes, No -->
-		<item name="multicast.pagingPriorityActive">Yes</item>
-
-		<!-- Multicast Paging Codec -->
-		<!-- PCMU, PCMA, G.726-32, G.722, G.729AOrB, G.723.1, iLBC -->
-		<item name="multicast.multicastPagingCodec">G.722</item>
-
-		<!-- # Multicase Channel Number -->
-		<!-- # Number: 0 - 50 (0 for normal RTP packets, 1-50 for Polycom multicast format packets). Default is 0 -->
-		<item name="multicast.channel">0</item>
-
-		<!-- # Multicast Sender ID -->
-		<!-- # Strings -->
-		<item name="multicast.senderId"/>
-
-		<!-- ### Multicast Listening ###  -->
-		<!-- # Priority 1 -->
-		<!-- # Listening Address -->
-		<!-- # String -->
-		<item name="multicast.listening.1.address"/>
-		<!-- # Label -->
-		<!-- # String -->
-		<item name="multicast.listening.1.label"/>
-
-		<!-- # Priority 2 -->
-		<!-- # Listening Address -->
-		<!-- # String -->
-		<item name="multicast.listening.2.address"/>
-		<!-- # Label -->
-		<!-- # String -->
-		<item name="multicast.listening.2.label"/>
-
-		<!-- # Priority 3 -->
-		<!-- # Listening Address -->
-		<!-- # String -->
-		<item name="multicast.listening.3.address"/>
-		<!-- # Label -->
-		<!-- # String -->
-		<item name="multicast.listening.3.label"/>
-
-		<!-- # Priority 4 -->
-		<!-- # Listening Address -->
-		<!-- # String -->
-		<item name="multicast.listening.4.address"/>
-		<!-- # Label -->
-		<!-- # String -->
-		<item name="multicast.listening.4.label"/>
-
-		<!-- # Priority 5 -->
-		<!-- # Listening Address -->
-		<!-- # String -->
-		<item name="multicast.listening.5.address"/>
-		<!-- # Label -->
-		<!-- # String -->
-		<item name="multicast.listening.5.label"/>
-
-		<!-- # Priority 6 -->
-		<!-- # Listening Address -->
-		<!-- # String -->
-		<item name="multicast.listening.6.address"/>
-		<!-- # Label -->
-		<!-- # String -->
-		<item name="multicast.listening.6.label"/>
-
-		<!-- # Priority 7 -->
-		<!-- # Listening Address -->
-		<!-- # String -->
-		<item name="multicast.listening.7.address"/>
-		<!-- # Label -->
-		<!-- # String -->
-		<item name="multicast.listening.7.label"/>
-
-		<!-- # Priority 8 -->
-		<!-- # Listening Address -->
-		<!-- # String -->
-		<item name="multicast.listening.8.address"/>
-		<!-- # Label -->
-		<!-- # String -->
-		<item name="multicast.listening.8.label"/>
-
-		<!-- # Priority 9 -->
-		<!-- # Listening Address -->
-		<!-- # String -->
-		<item name="multicast.listening.9.address"/>
-		<!-- # Label -->
-		<!-- # String -->
-		<item name="multicast.listening.9.label"/>
-
-		<!-- # Priority 10 -->
-		<!-- # Listening Address -->
-		<!-- # String -->
-		<item name="multicast.listening.10.address"/>
-		<!-- # Label -->
-		<!-- # String -->
-		<item name="multicast.listening.10.label"/>
-
-		<!-- ############################################################################## -->
-		<!-- ##  Settings/Outbound Notification -->
-		<!-- ############################################################################## -->
-		<!-- ###################################################################################### -->
-		<!-- # Action URL -->
-		<!-- ###################################################################################### -->
-		<!-- # Setup Completed.  -->
-		<!-- # String -->
-		<item name="ons.actionUrl.setupCompleted"/>
-
-		<!-- # Registered. -->
-		<!-- # String -->
-		<item name="ons.actionUrl.registered"/>
-
-		<!-- # Unregistered. -->
-		<!-- # String -->
-		<item name="ons.actionUrl.unregistered"/>
-
-		<!-- # Off Hook. -->
-		<!-- # String -->
-		<item name="ons.actionUrl.offHook"/>
-
-		<!-- # On Hook. -->
-		<!-- # String -->
-		<item name="ons.actionUrl.onHook"/>
-
-		<!-- # Incoming Call. -->
-		<!-- # String -->
-		<item name="ons.actionUrl.incomingCall"/>
-
-		<!-- # Outgoing Call -->
-		<!-- # String -->
-		<item name="ons.actionUrl.outgoingCall"/>
-
-		<!-- # Missed Call -->
-		<!-- # String -->
-		<item name="ons.actionUrl.missedCall"/>
-
-		<!-- # Answered Call -->
-		<!-- # String  -->
-		<item name="ons.actionUrl.establishedCall"/>
-
-		<!-- # Terminated Call -->
-		<!-- # String -->
-		<item name="ons.actionUrl.terminatedCall"/>
-
-		<!-- # Open DND -->
-		<!-- # String -->
-		<item name="ons.actionUrl.openDnd"/>
-
-		<!-- # Close DND -->
-		<!-- # String -->
-		<item name="ons.actionUrl.closedDnd"/>
-
-		<!-- # Enable Call Forward -->
-		<!-- # String -->
-		<item name="ons.actionUrl.openForward"/>
-
-		<!-- # Disable Call Forward -->
-		<!-- # String -->
-		<item name="ons.actionUrl.closedForward"/>
-
-		<!-- # Enable Call Forward Busy-->
-		<!-- # String -->
-		<item name="ons.actionUrl.enableBusyForward"/>
-
-		<!-- # Disable Call Forward Busy-->
-		<!-- # String -->
-		<item name="ons.actionUrl.disableBusyForward"/>
-
-		<!-- # Blind Transfer -->
-		<!-- # String -->
-		<item name="ons.actionUrl.blindTransfer"/>
-
-		<!-- # Attended Transfer -->
-		<!-- # String -->
-		<item name="ons.actionUrl.attendedTransfer"/>
-
-		<!-- # Hold Call -->
-		<!-- # String -->
-		<item name="ons.actionUrl.holdCall"/>
-
-		<!-- # UnHold Call -->
-		<!-- # String -->
-		<item name="ons.actionUrl.unholdCall"/>
+	
 
 		<!-- ###################################################################################### -->
 		<!-- # Destination -->
@@ -2525,69 +1512,6 @@
 		<item name="dateTime.override.dhcp.allowOption42">No</item>
 
 		<!-- # Time Zone -->
-
-		<!-- # Web GUI Option										Option: TimeZone -->
-		<!-- # Automatic											auto -->
-		<!-- # GMT-12:00 (International Date Line West)				TAZ+12 -->
-		<!-- # GMT-11:00 (Midway Island, Samoa) 					TAB+11 -->
-		<!-- # GMT-10:00 (US Hawaiian Time) 						HAW10 -->
-		<!-- # GMT-9:00 (US Alaska Time) 							AKST9AKDT -->
-		<!-- # GMT-8:00 (US Pacific Time, Los Angeles)				PST8PDT -->
-		<!-- # GMT-08:00 (Baja California)							PST8PDT,M3.2.0,M11.1.0 -->
-		<!-- # GMT-07:00 (US Mountain Time, Denver) 				MST7MDT -->
-		<!-- # GMT-07:00 (Mountain Time (Arizona, no DST)) 			MST7 -->
-		<!-- # GMT-07:00 (Chihuahua, La Paz, Mazatlan)				MST7MDT,M4.1.0,M10.5.0   -->
-		<!-- # GMT-06:00 (Central Time) 							CST6CDT -->
-		<!-- # GMT-06:00 (Central America) 							CST+6 -->
-		<!-- # GMT-06:00 (Guadalajara, Mexico City, Monterrey)		CST6CDT,M4.1.0,M10.5.0 -->
-		<!-- # GMT-05:00 (Eastern Time)								EST5EDT -->
-		<!-- # GMT-05:00 (Eastern Time without daylight saving) 	EST5 -->
-		<!-- # GMT-04:30 (Caracas) 									TZf+4:30 -->
-		<!-- # GMT-04:00 (Atlantic Time) 							AST4ADT -->
-		<!-- # GMT-04:00 (Atlantic Time (New Brunswick)) 			AST4ADT,M3.2.0,M11.1.0 -->
-		<!-- # GMT-04:00 (Santiago, Chile)							CLT4CLST,M9.1.6/24:00,M4.1.6/24:00 -->
-		<!-- # GMT-03:30 (Newfoundland Time)						NST+3:30NDT+2:30,M3.2.0/02:00:00,M11.1.0/02:00:00 -->
-		<!-- # GMT-03:00 (Greenland) 								TZK+3 -->
-		<!-- # GMT-03:00 (Brazil, Sao Paulo) 						BRST+3BRDT+2,M11.1.0,M2.3.0 -->
-		<!-- # GMT-02:00 (Argentina) 								UTC+3  -->
-		<!-- # GMT-02:00 (Mid-Atlantic) 							TZL+2 -->
-		<!-- # GMT-01:00 (Azores, Cape Verdi Is.) 					TZM+1 -->
-		<!-- # GMT (Azores, Portugal) 								TZM+1TZN+0,M3.4.6/24:00:00,M10.4.0/1:00:00 -->
-		<!-- # GMT (Edinburgh, Casablanca, Monrovia) 				TZN+0 -->
-		<!-- # GMT (London, Great Britain) 							GMT+0BST-1,M3.5.0/01:00:00,M10.5.0/02:00:00 -->
-		<!-- # GMT (Lisbon, Portugal) 								WET-0WEST-1,M3.5.0/01:00:00,M10.5.0/02:00:00 -->
-		<!-- # GMT (Dublin, Ireland) 								GMT+0IST-1,M3.5.0/01:00:00,M10.5.0/02:00:00 -->
-		<!-- # GMT+01:00 (Paris, Vienna, Warsaw, Roma, Madrid, Prague, Berlin, Budapest, Amsterdam, Belgium)   CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/03:00:00 -->
-		<!-- # GMT+02:00 (Cairo, Egypt) 							TZP-2 -->
-		<!-- # GMT+02:00 (Israel) 									EET-2EEST-3,M3.4.5/02:00:00,M10.4.0/02:00:00 -->
-		<!-- # GMT+02:00 (Helsinki, Athens, Tallinn, Bucharest) 	EET-2EEST-3,M3.5.0/03:00:00,M10.4.0/04:00:00 -->
-		<!-- # GMT+02:00 (Kyiv, Ukraine) 							EET-2EEST,M3.5.0/3,M10.5.0/4  -->
-		<!-- # GMT+03:00 (Kuwait, Baghdad, Istanbul, Nairobi) 		TZQ-3 -->
-		<!-- # GMT+03:00 (Moscow, Russia) 							MSK-3 -->
-		<!-- # GMT+03:00 (Tehran)		 							IRST-3:30IRDT-4:30,M3.3.5/24:00:00,M9.3.0/24:00:00 -->
-		<!-- # GMT+04:00 (Abu Dhabi, Baku) 							TZR-4 -->
-		<!-- # GMT+05:00 (Islamabad, Ekaterinburg, Karachi, Tashkent)TZS-5 -->
-		<!-- # GMT+05:30 (Chennai, New Delhi, Mumbai) 				TZT-5:30 -->
-		<!-- # GMT+05:45 (Kathmandu) 								TZU-5:45 -->
-		<!-- # GMT+06:00 (Almaty, Astana, Dhaka, Novosibirsk) 		TZV-6 -->
-		<!-- # GMT+06:30 (Rangoon) 									TZW-6:30 -->
-		<!-- # GMT+07:00 (Bankok, Hanoi, Krasnoyarsk) 				TZX-7 -->
-		<!-- # GMT+07:00 (Jakarta) 									WIB-7 -->
-		<!-- # GMT+08:00 (Beijing, Taipei, Kuala Lumpur, Irkutsk) 	TZY-8 -->
-		<!-- # GMT+08:00 (Singapore) 								SGT-8 -->
-		<!-- # GMT+08:00 (Ulaanbaatar, Mongolia) 					ULAT-8 -->
-		<!-- # GMT+08:00 (Perth) 									WST-8 -->
-		<!-- # GMT+09:00 (Japan, Korea, Yakutsk) 					TZZ-9 -->
-		<!-- # GMT+09:30 (Adelaide) 								CST-9:30CDT-10:30,M10.5.0/02:00:00,M3.5.0/03:00:00 -->
-		<!-- # GMT+09:30 (Darwin) 									CST-9:30  -->
-		<!-- # GMT+10:00 (Guam) 									TZb-10 -->
-		<!-- # GMT+10:00 (Hobart) 									EST-10EDT-11,M10.1.0/02:00:00,M4.1.0/03:00:00 -->
-		<!-- # GMT+10:00 (Sydney, Melbourne, Canberra) 				EST-10EDT-11,M10.1.0/02:00:00,M4.1.0/03:00:00 -->
-		<!-- # GMT+10:00 (Brisbane) 								EST-10 -->
-		<!-- # GMT+11:00 (Magadan, Solomon Is., New Caledonia) 		TZc-11 -->
-		<!-- # GMT+12:00 (Auckland, Wellington) 					NZST-12NZDT-13,M9.4.0/02:00:00,M4.1.0/03:00:00 -->
-		<!-- # GMT+12:00 (Fiji) 									FJT-12FJST-13,M11.2.0/02:00:00,M1.2.0/03:00:00 -->
-		<!-- # Self-Defined Time Zone								customize -->
 
 		<!-- # String -->
 		<!-- # Mandatory -->
@@ -2670,35 +1594,8 @@
         @if (array_key_exists('grandstream_wallpaper_url', $settings))
             <item name="lcd.wallpaper.serverPath">{{ $settings['grandstream_wallpaper_url'] }}</item>
         @endif
-
-
-		<!-- # Color Background. Default is #000000. -->
-		<!-- # String -->
-		<item name="lcd.wallpaper.color">#000000</item>
-
-		<!-- # Screensaver Settings -->
-		<!-- # Screensaver. No, Yes,  OnIfNoVPKIsActive. -->
-		<item name="lcd.screensaver.enable">No</item>
-
-		<!-- # Screensaver Source.  Default, USB, Download.  -->
-		<item name="lcd.screensaver.source"/>
-
-		<!-- # Show Date and Time. Yes or No -->
-		<item name="lcd.screensaver.showDateTime">Yes</item>
-
-		<!-- # Screensaver Timeout. Minutes. -->
-		<!-- # Number: 3 - 60 -->
-		<item name="lcd.screensaver.timeout">3</item>
-
-		<!-- # Screensaver Server Path. -->
-		<!-- # String -->
-		<item name="lcd.screensaver.serverPath"/>
-
-		<!-- Screensaver XML Download Interval -->
-		<!-- # Number: 5 - 720. Default is 0 (disable auto downloading) -->
-		<item name="lcd.screensaver.downloadXmlInterval">0</item>
-
-		<!-- ############################################################################## -->
+        
+        <!-- ############################################################################## -->
 		<!-- ##  Settings/Preferences / LED Control -->
 		<!-- ############################################################################## -->
 		<!-- # BLF LED Pattern. Default-0,  Analog-1, Directional-2, Reserved(Red)-3, Reserved(Green)-4, Inverse-5.-->
@@ -2782,6 +1679,7 @@
 		<!-- # Mandatory -->
 		<item name="audio.ring.numberOfRingtone">3</item>
 
+	
 		<!-- ############################################################################## -->
 		<!-- ##  Settings/Web Service -->
 		<!-- ############################################################################## -->
@@ -2789,163 +1687,9 @@
 		<!-- # Use Auto Location Service. Yes or No -->
 		<item name="services.weather.enable">Yes</item>
 
-		<!-- ############################################################################## -->
-		<!-- ##  Settings/XML Applications -->
-		<!-- ############################################################################## -->
-		<!-- # Server Path -->
-		<!-- # String -->
-		<item name="xmlApplication.serverPath"/>
+	
 
-		<!-- # Softkey Label -->
-		<!-- # String -->
-		<item name="xmlApplication.softkeyLabel">XMLApp</item>
-
-		<!-- # Default Background Color -->
-		<!-- # String -->
-		<item name="xmlApplications.defaultBackgroundColor"/>
-
-		<!-- # Block Call Screen. Yes or No -->
-		<item name="xmlApplications.blockCallScreen"/>
-
-		<!-- # Enable XML Application Auto Launch. No, OnIncomingCall, OnBootup, OnBootupNoAccount -->
-		<item name="xmlApplications.autoLaunch">No</item>
-
-		<!-- ############################################################################## -->
-		<!-- ##  Settings/E911 Service -->
-		<!-- ############################################################################## -->
-		<!-- # Enable 911. Yes or No -->
-		<item name="e911.enable">No</item>
-
-		<!-- # HELD Protocol. HTTP or HTTPS -->
-		<item name="e911.held.protocol">HTTP</item>
-
-		<!-- # HELD Protocol. 0, 30-1440 -->
-		<item name="e911.held.syncInterval">0</item>
-
-		<!-- # Location Server -->
-		<!-- # String -->
-		<item name="e911.held.server.1.address"/>
-
-		<!-- # Location Server Username -->
-		<!-- # String -->
-		<item name="e911.held.server.1.userId"/>
-
-		<!-- # Location Server Password -->
-		<!-- # String -->
-		<item name="e911.held.server.1.password"/>
-
-		<!-- # Secondary Location Server -->
-		<!-- # String -->
-		<item name="e911.held.server.2.address"/>
-
-		<!-- # Secondary Location Server Username -->
-		<!-- # String -->
-		<item name="e911.held.server.2.userId"/>
-
-		<!-- # Secondary Location Server Password -->
-		<!-- # String -->
-		<item name="e911.held.server.2.password"/>
-
-		<!-- # 	HELD Location Types -->
-		<!-- # String: geodetic,civic,locationURI -->
-		<item name="e911.held.locationType">geodetic,civic,locationURI</item>
-
-		<!-- # HELD Use LLDP Information. Yes or No -->
-		<item name="e911.held.lldpInfo">No</item>
-
-		<!-- # HELD NAI. Yes or No -->
-		<item name="e911.held.nai">No</item>
-
-		<!-- # HELD Identity 1 -->
-		<!-- # String -->
-		<item name="e911.held.identity.1.name"/>
-
-		<!-- # HELD Identity 1 Value -->
-		<!-- # String -->
-		<item name="e911.held.identity.1.value"/>
-
-		<!-- # HELD Identity 2 -->
-		<!-- # String -->
-		<item name="e911.held.identity.2.name"/>
-
-		<!-- # HELD Identity 2 Value -->
-		<!-- # String -->
-		<item name="e911.held.identity.2.value"/>
-
-		<!-- # HELD Identity 3 -->
-		<!-- # String -->
-		<item name="e911.held.identity.3.name"/>
-
-		<!-- # HELD Identity 3 Value -->
-		<!-- # String -->
-		<item name="e911.held.identity.3.value"/>
-
-		<!-- # HELD Identity 4 -->
-		<!-- # String -->
-		<item name="e911.held.identity.4.name"/>
-
-		<!-- # HELD Identity 4 Value -->
-		<!-- # String -->
-		<item name="e911.held.identity.4.value"/>
-
-		<!-- # HELD Identity 5 -->
-		<!-- # String -->
-		<item name="e911.held.identity.5.name"/>
-
-		<!-- # HELD Identity 5 Value -->
-		<!-- # String -->
-		<item name="e911.held.identity.5.value"/>
-
-		<!-- # HELD Identity 6 -->
-		<!-- # String -->
-		<item name="e911.held.identity.6.name"/>
-
-		<!-- # HELD Identity 6 Value -->
-		<!-- # String -->
-		<item name="e911.held.identity.6.value"/>
-
-		<!-- # HELD Identity 7 -->
-		<!-- # String -->
-		<item name="e911.held.identity.7.name"/>
-
-		<!-- # HELD Identity 7 Value -->
-		<!-- # String -->
-		<item name="e911.held.identity.7.value"/>
-
-		<!-- # HELD Identity 8 -->
-		<!-- # String -->
-		<item name="e911.held.identity.8.name"/>
-
-		<!-- # HELD Identity 8 Value -->
-		<!-- # String -->
-		<item name="e911.held.identity.8.value"/>
-
-		<!-- # HELD Identity 9 -->
-		<!-- # String -->
-		<item name="e911.held.identity.9.name"/>
-
-		<!-- # HELD Identity 9 Value -->
-		<!-- # String -->
-		<item name="e911.held.identity.9.value"/>
-
-		<!-- # HELD Identity 10 -->
-		<!-- # String -->
-		<item name="e911.held.identity.10.name"/>
-
-		<!-- # HELD Identity 10 Value -->
-		<!-- # String -->
-		<item name="e911.held.identity.10.value"/>
-
-		<!-- # E911 Emergency Numbers -->
-		<!-- # String -->
-		<item name="e911.emergency">911</item>
-
-		<!-- # Geolocation-Routing Header. Yes or No -->
-		<item name="e911.header.geolocationRouting">No</item>
-
-		<!-- # Priority Header. Yes or No -->
-		<item name="e911.header.priority">No</item>
-
+	
 		<!-- ############################################################################## -->
 		<!-- ##  Settings/Programmable Keys -->
 		<!-- ############################################################################## -->
@@ -2969,7 +1713,7 @@
 		<!-- # Show Keys Label. Toggle, Show, Hide -->
 		<item name="pks.vpk.settings.call.showLabel">Show</item>
 
-		<!-- ############################################################################## -->
+	    <!-- ############################################################################## -->
 		<!-- ##  Settings/Programmable Keys / Softkeys Settings -->
 		<!-- ############################################################################## -->
 		<!-- # More Softkey Display Mode -->
@@ -3156,44 +1900,6 @@
 		<!-- # Mandatory -->
 		<item name="pks.ext.syncBacklightWithLCD">No</item>
 
-		<!-- ###################################################################################### -->
-		<!-- ## Programmable Keys/EXT 1 -->
-		<!-- ###################################################################################### -->
-		<!-- # Note:  -->
-		<!-- #       1. This config template includes settings for EXT MPK1 only. To update item name to "pks.ext.{i}...", where {i} is the MPK index. For example, to update VPK12 key mode, include the following in config template: <item name="pks.mpk.12.keyMode"></item> -->
-
-		<!-- # Key Mode for EXT MPK. -->
-		<!-- # None (-1), SpeedDial (0), BLF (1), PresenceWatcher (2), EventlistBLF (3), SpeedDialViaActiveAccount (4) -->
-		<!-- # DialDTMF (5), VoiceMail (6), CallReturn (7), Transfer (8), CallPark (9), Intercom (10), LDAPSearch (11) -->
-		<!-- # Conference (12), MulticastPaging (13), Record (14), CallLog (15), MonitoredCallPark (16), Menu (17) -->
-		<!-- # XMLApplication (18), Information (19), Message (20), Forward (21), DND (22), Redial (23), InstantMessages (24) -->
-		<!-- # MulticastListenAddress (25), KeypadLock (26), GDSOpenDoor (27), EventListPresence (28), Provision (29) -->
-		<!-- # Phonebook(30), Paging(33) -->
-
-<!--{assign var=key_types value=["none"=>-1,"speed dial"=>0, "blf"=>1, "presence watcher"=>2,-->
-<!--"eventlist blf"=>3,"speed dial active"=>4,"dial dtmf"=>5,"voicemail"=>6,"call return"=>7,-->
-<!--"transfer"=>8,"call park"=>9,"intercom"=>10,"ldap search"=>11,"conference"=>12,"multicast paging"=>13,-->
-<!--"record"=>14,"call log"=>15,"monitored call park"=>16,"menu"=>17]}-->
-
-<!--{foreach $keys['expansion'] as $row}-->
-<!--{$line=$row.device_key_id}-->
-
-		<!-- ###################################################################################### -->
-		<!-- # EXT MPK {$row.device_key_id} -->
-		<!-- ###################################################################################### -->
-		<!-- # Key Mode -->
-<!--		<item name="pks.ext.{$row.device_key_id}.keyMode">{$key_types[$keys.expansion.$line.device_key_type]}</item>-->
-
-		<!-- # Account. Account1, Account2, Account3, Account4, Account5, Account6 -->
-<!--		<item name="pks.ext.{$row.device_key_id}.account">{$row.device_key_line}</item>-->
-
-		<!-- # Description -->
-<!--		<item name="pks.ext.{$row.device_key_id}.description">{$row.device_key_label}</item>-->
-
-		<!-- # Value -->
-<!--		<item name="pks.ext.{$row.device_key_id}.value">{$row.device_key_value}</item>-->
-
-<!--{/foreach}-->
 
 	</config>
 </gs_provision>
