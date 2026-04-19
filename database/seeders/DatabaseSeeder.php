@@ -688,6 +688,14 @@ class DatabaseSeeder extends Seeder
                 'default_setting_description'   => "",
             ],
             [
+                'default_setting_category'      => 'provision',
+                'default_setting_subcategory'   => 'drop_self_extension_keys',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "true",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Prevents the phone from provisioning duplicate self-monitoring keys by removing non-line keys that point to its own extensions. Turn this off when you intentionally want those keys to be kept.",
+            ],
+            [
                 'default_setting_category'      => 'company',
                 'default_setting_subcategory'   => 'billing_suspension',
                 'default_setting_name'          => 'text',
