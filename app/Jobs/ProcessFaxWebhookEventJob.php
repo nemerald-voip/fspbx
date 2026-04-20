@@ -194,8 +194,13 @@ class ProcessFaxWebhookEventJob implements ShouldQueue
         ?string $tiffPath
     ): void {
         $recipient = $this->stringOrNull($fax->fax_email ?? null);
+        $recipients = $this->parseRecipients($recipient);
 
-        if (!$recipient) {
+        if (empty($recipients)) {
+            Log::warning('[Webhook] No valid fax email recipients found', [
+                'uuid' => $faxLogUuid,
+                'raw_recipient' => $recipient,
+            ]);
             return;
         }
 
@@ -236,7 +241,7 @@ class ProcessFaxWebhookEventJob implements ShouldQueue
         ];
 
         try {
-            Mail::to($recipient)->send(new \App\Mail\FaxReceived($attributes));
+            Mail::to($recipients)->send(new \App\Mail\FaxReceived($attributes));
         } catch (Throwable $e) {
             Cache::forget($lockKey);
 
@@ -248,6 +253,21 @@ class ProcessFaxWebhookEventJob implements ShouldQueue
 
             throw $e;
         }
+    }
+
+    private function parseRecipients(?string $value): array
+    {
+        if (!$value) {
+            return [];
+        }
+
+        return collect(preg_split('/[;,]+/', $value))
+            ->map(fn ($email) => trim($email))
+            ->filter()
+            ->filter(fn ($email) => filter_var($email, FILTER_VALIDATE_EMAIL))
+            ->unique()
+            ->values()
+            ->all();
     }
 
     private function stringOrNull($value): ?string
