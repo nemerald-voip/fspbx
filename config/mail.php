@@ -77,8 +77,9 @@ return [
             'mailers' => [
                 'postmark',
                 'ses',
-                'log',
+                'postmark',
             ],
+            'retry_after' => 60,
         ],
     ],
 
