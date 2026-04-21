@@ -12,6 +12,637 @@ servers:
         default: YOUR-FSPBX-HOST
         description: 'Hostname where FS PBX is running (example: fspbx.your-domain.net)'
 paths:
+  '/api/v1/domains/{domain_uuid}/cdrs':
+    get:
+      summary: 'List CDRs'
+      operationId: listCDRs
+      description: "Returns CDRs for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `xml_cdr_view` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 500.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `xml_cdr_uuid` from the previous response.\n\nOptional filters:\n- `search` matches caller/destination fields and status.\n- `direction` filters by call direction.\n- `status` filters by call status.\n  Accepted values: `answered`, `no answer`, `cancelled`, `voicemail`,\n  `missed call`, `abandoned`.\n- `extension_uuid` filters by extension UUID.\n- `call_center_queue_uuid` filters by queue UUID.\n- `date_from` and `date_to` filter by `start_epoch` in epoch seconds.\n\nExamples:\n- First page: `GET /api/v1/domains/{domain_uuid}/cdrs`\n- Next page:  `GET /api/v1/domains/{domain_uuid}/cdrs?starting_after={last_xml_cdr_uuid}`\n- Custom size: `GET /api/v1/domains/{domain_uuid}/cdrs?limit=25`\n- Search: `GET /api/v1/domains/{domain_uuid}/cdrs?search=2135551212`\n- Date range (epoch): `GET /api/v1/domains/{domain_uuid}/cdrs?date_from=1775001600&date_to=1775087999`"
+      parameters:
+        -
+          in: query
+          name: limit
+          description: 'Optional. Number of results to return (min 1, max 500). Defaults to 500.'
+          example: 500
+          required: false
+          schema:
+            type: integer
+            description: 'Optional. Number of results to return (min 1, max 500). Defaults to 500.'
+            example: 500
+        -
+          in: query
+          name: starting_after
+          description: 'Optional. Return results after this CDR UUID (cursor).'
+          example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+          required: false
+          schema:
+            type: string
+            description: 'Optional. Return results after this CDR UUID (cursor).'
+            example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+        -
+          in: query
+          name: search
+          description: 'Optional. Search caller name, numbers, SIP Call-ID, and status.'
+          example: '2135551212'
+          required: false
+          schema:
+            type: string
+            description: 'Optional. Search caller name, numbers, SIP Call-ID, and status.'
+            example: '2135551212'
+        -
+          in: query
+          name: direction
+          description: 'Optional. Filter by direction.'
+          example: inbound
+          required: false
+          schema:
+            type: string
+            description: 'Optional. Filter by direction.'
+            example: inbound
+        -
+          in: query
+          name: status
+          description: 'Optional. Filter by status. Accepted values: answered, no answer, cancelled, voicemail, missed call, abandoned.'
+          example: answered
+          required: false
+          schema:
+            type: string
+            description: 'Optional. Filter by status. Accepted values: answered, no answer, cancelled, voicemail, missed call, abandoned.'
+            example: answered
+        -
+          in: query
+          name: extension_uuid
+          description: 'Optional. Filter by extension UUID.'
+          example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+          required: false
+          schema:
+            type: string
+            description: 'Optional. Filter by extension UUID.'
+            example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+        -
+          in: query
+          name: call_center_queue_uuid
+          description: 'Optional. Filter by queue UUID.'
+          example: 89ea1ec3-44f8-4705-8f2c-f9769486f9f1
+          required: false
+          schema:
+            type: string
+            description: 'Optional. Filter by queue UUID.'
+            example: 89ea1ec3-44f8-4705-8f2c-f9769486f9f1
+        -
+          in: query
+          name: date_from
+          description: 'Optional. Start of date range in epoch seconds (UTC).'
+          example: 1775001600
+          required: false
+          schema:
+            type: integer
+            description: 'Optional. Start of date range in epoch seconds (UTC).'
+            example: 1775001600
+        -
+          in: query
+          name: date_to
+          description: 'Optional. End of date range in epoch seconds (UTC).'
+          example: 1775087999
+          required: false
+          schema:
+            type: integer
+            description: 'Optional. End of date range in epoch seconds (UTC).'
+            example: 1775087999
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  object: list
+                  url: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/cdrs
+                  has_more: true
+                  data:
+                    -
+                      xml_cdr_uuid: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                      object: cdr
+                      domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                      sip_call_id: 0f4b17db-3ef1-476d-b6e7-bcfe07dfd001
+                      extension_uuid: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                      direction: inbound
+                      caller_id_name: 'John Smith'
+                      caller_id_number: '2135551212'
+                      caller_destination: '1001'
+                      destination_number: '1001'
+                      start_epoch: 1775787900
+                      answer_epoch: 1775787905
+                      end_epoch: 1775787960
+                      duration: 60
+                      hangup_cause: NORMAL_CLEARING
+                      hangup_cause_q850: '16'
+                      status: answered
+                properties:
+                  object:
+                    type: string
+                    example: list
+                  url:
+                    type: string
+                    example: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/cdrs
+                  has_more:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    example:
+                      -
+                        xml_cdr_uuid: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                        object: cdr
+                        domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                        sip_call_id: 0f4b17db-3ef1-476d-b6e7-bcfe07dfd001
+                        extension_uuid: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                        direction: inbound
+                        caller_id_name: 'John Smith'
+                        caller_id_number: '2135551212'
+                        caller_destination: '1001'
+                        destination_number: '1001'
+                        start_epoch: 1775787900
+                        answer_epoch: 1775787905
+                        end_epoch: 1775787960
+                        duration: 60
+                        hangup_cause: NORMAL_CLEARING
+                        hangup_cause_q850: '16'
+                        status: answered
+                    items:
+                      type: object
+                      properties:
+                        xml_cdr_uuid:
+                          type: string
+                          example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                        object:
+                          type: string
+                          example: cdr
+                        domain_uuid:
+                          type: string
+                          example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                        sip_call_id:
+                          type: string
+                          example: 0f4b17db-3ef1-476d-b6e7-bcfe07dfd001
+                        extension_uuid:
+                          type: string
+                          example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                        direction:
+                          type: string
+                          example: inbound
+                        caller_id_name:
+                          type: string
+                          example: 'John Smith'
+                        caller_id_number:
+                          type: string
+                          example: '2135551212'
+                        caller_destination:
+                          type: string
+                          example: '1001'
+                        destination_number:
+                          type: string
+                          example: '1001'
+                        start_epoch:
+                          type: integer
+                          example: 1775787900
+                        answer_epoch:
+                          type: integer
+                          example: 1775787905
+                        end_epoch:
+                          type: integer
+                          example: 1775787960
+                        duration:
+                          type: integer
+                          example: 60
+                        hangup_cause:
+                          type: string
+                          example: NORMAL_CLEARING
+                        hangup_cause_q850:
+                          type: string
+                          example: '16'
+                        status:
+                          type: string
+                          example: answered
+        400:
+          description: 'Invalid date_to'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid date_to value.'
+                    code: invalid_request
+                    param: date_to
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid date_to value.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: date_to
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: permission_error
+                    message: 'You do not have permission to access CDRs.'
+                    code: forbidden
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: permission_error
+                      message:
+                        type: string
+                        example: 'You do not have permission to access CDRs.'
+                      code:
+                        type: string
+                        example: forbidden
+        404:
+          description: 'Domain not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Domain not found.'
+                    code: resource_missing
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Domain not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: domain_uuid
+      tags:
+        - CDRs
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/cdrs/{xml_cdr_uuid}':
+    get:
+      summary: 'Retrieve a CDR'
+      operationId: retrieveACDR
+      description: "Returns a single CDR for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `xml_cdr_view` permission.\n\nNotes:\n- The response includes a normalized `call_flow` summary.\n- Related queue and ring group call legs are merged into the returned\n  `call_flow` timeline when present."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  xml_cdr_uuid: 40aec3e8-a572-40da-954b-ddf6a8a65324
+                  object: cdr
+                  domain_uuid: 7d58342b-2b29-4dcf-92d6-e9a9e002a4e5
+                  sip_call_id: 0f4b17db-3ef1-476d-b6e7-bcfe07dfd001
+                  extension_uuid: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                  call_center_queue_uuid: null
+                  direction: inbound
+                  caller_id_name: 'John Smith'
+                  caller_id_number: '2135551212'
+                  caller_destination: '1001'
+                  destination_number: '1001'
+                  start_epoch: 1775787900
+                  answer_epoch: 1775787905
+                  end_epoch: 1775787960
+                  duration: 60
+                  hangup_cause: NORMAL_CLEARING
+                  hangup_cause_q850: '16'
+                  voicemail_message: false
+                  cc_cancel_reason: null
+                  cc_cause: null
+                  sip_hangup_disposition: recv_bye
+                  status: answered
+                  call_disposition: 'The caller hung up.'
+                  call_flow:
+                    -
+                      destination_number: '1001'
+                      context: example.com
+                      bridged_time: '2026-04-01 12:00:05'
+                      created_time: '2026-04-01 12:00:00'
+                      answered_time: '2026-04-01 12:00:05'
+                      progress_time: '2026-04-01 12:00:01'
+                      transfer_time: 0
+                      profile_created_time: '2026-04-01 12:00:00'
+                      profile_end_time: '2026-04-01 12:01:00'
+                      progress_media_time: '2026-04-01 12:00:01'
+                      hangup_time: '2026-04-01 12:01:00'
+                      duration_seconds: 60
+                      duration_formatted: '1 min 00 s'
+                      call_disposition: answered
+                      time_line: '00:00'
+                      dialplan_app: Extension
+                      dialplan_name: 'John Smith'
+                      dialplan_description: null
+                properties:
+                  xml_cdr_uuid:
+                    type: string
+                    example: 40aec3e8-a572-40da-954b-ddf6a8a65324
+                  object:
+                    type: string
+                    example: cdr
+                  domain_uuid:
+                    type: string
+                    example: 7d58342b-2b29-4dcf-92d6-e9a9e002a4e5
+                  sip_call_id:
+                    type: string
+                    example: 0f4b17db-3ef1-476d-b6e7-bcfe07dfd001
+                  extension_uuid:
+                    type: string
+                    example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                  call_center_queue_uuid:
+                    type: string
+                    example: null
+                  direction:
+                    type: string
+                    example: inbound
+                  caller_id_name:
+                    type: string
+                    example: 'John Smith'
+                  caller_id_number:
+                    type: string
+                    example: '2135551212'
+                  caller_destination:
+                    type: string
+                    example: '1001'
+                  destination_number:
+                    type: string
+                    example: '1001'
+                  start_epoch:
+                    type: integer
+                    example: 1775787900
+                  answer_epoch:
+                    type: integer
+                    example: 1775787905
+                  end_epoch:
+                    type: integer
+                    example: 1775787960
+                  duration:
+                    type: integer
+                    example: 60
+                  hangup_cause:
+                    type: string
+                    example: NORMAL_CLEARING
+                  hangup_cause_q850:
+                    type: string
+                    example: '16'
+                  voicemail_message:
+                    type: boolean
+                    example: false
+                  cc_cancel_reason:
+                    type: string
+                    example: null
+                  cc_cause:
+                    type: string
+                    example: null
+                  sip_hangup_disposition:
+                    type: string
+                    example: recv_bye
+                  status:
+                    type: string
+                    example: answered
+                  call_disposition:
+                    type: string
+                    example: 'The caller hung up.'
+                  call_flow:
+                    type: array
+                    example:
+                      -
+                        destination_number: '1001'
+                        context: example.com
+                        bridged_time: '2026-04-01 12:00:05'
+                        created_time: '2026-04-01 12:00:00'
+                        answered_time: '2026-04-01 12:00:05'
+                        progress_time: '2026-04-01 12:00:01'
+                        transfer_time: 0
+                        profile_created_time: '2026-04-01 12:00:00'
+                        profile_end_time: '2026-04-01 12:01:00'
+                        progress_media_time: '2026-04-01 12:00:01'
+                        hangup_time: '2026-04-01 12:01:00'
+                        duration_seconds: 60
+                        duration_formatted: '1 min 00 s'
+                        call_disposition: answered
+                        time_line: '00:00'
+                        dialplan_app: Extension
+                        dialplan_name: 'John Smith'
+                        dialplan_description: null
+                    items:
+                      type: object
+                      properties:
+                        destination_number:
+                          type: string
+                          example: '1001'
+                        context:
+                          type: string
+                          example: example.com
+                        bridged_time:
+                          type: string
+                          example: '2026-04-01 12:00:05'
+                        created_time:
+                          type: string
+                          example: '2026-04-01 12:00:00'
+                        answered_time:
+                          type: string
+                          example: '2026-04-01 12:00:05'
+                        progress_time:
+                          type: string
+                          example: '2026-04-01 12:00:01'
+                        transfer_time:
+                          type: integer
+                          example: 0
+                        profile_created_time:
+                          type: string
+                          example: '2026-04-01 12:00:00'
+                        profile_end_time:
+                          type: string
+                          example: '2026-04-01 12:01:00'
+                        progress_media_time:
+                          type: string
+                          example: '2026-04-01 12:00:01'
+                        hangup_time:
+                          type: string
+                          example: '2026-04-01 12:01:00'
+                        duration_seconds:
+                          type: integer
+                          example: 60
+                        duration_formatted:
+                          type: string
+                          example: '1 min 00 s'
+                        call_disposition:
+                          type: string
+                          example: answered
+                        time_line:
+                          type: string
+                          example: '00:00'
+                        dialplan_app:
+                          type: string
+                          example: Extension
+                        dialplan_name:
+                          type: string
+                          example: 'John Smith'
+                        dialplan_description:
+                          type: string
+                          example: null
+        400:
+          description: 'Invalid CDR UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid CDR UUID.'
+                    code: invalid_request
+                    param: xml_cdr_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid CDR UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: xml_cdr_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        404:
+          description: 'CDR not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'CDR not found.'
+                    code: resource_missing
+                    param: xml_cdr_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'CDR not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: xml_cdr_uuid
+      tags:
+        - CDRs
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 7d58342b-2b29-4dcf-92d6-e9a9e002a4e5
+        required: true
+        schema:
+          type: string
+      -
+        in: path
+        name: xml_cdr_uuid
+        description: 'The CDR UUID.'
+        example: 40aec3e8-a572-40da-954b-ddf6a8a65324
+        required: true
+        schema:
+          type: string
   /api/v1/domains:
     get:
       summary: 'List domains'
@@ -5131,6 +5762,9 @@ paths:
         schema:
           type: string
 tags:
+  -
+    name: CDRs
+    description: ''
   -
     name: Domains
     description: ''

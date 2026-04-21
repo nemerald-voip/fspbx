@@ -10,11 +10,242 @@
     ],
     "info": {
         "name": "FS PBX",
-        "_postman_id": "735e0107-5510-4dd1-8dde-8193538f45a3",
+        "_postman_id": "30de811d-2605-4256-ae20-8f13c1b83a3b",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
     "item": [
+        {
+            "name": "CDRs",
+            "description": "",
+            "item": [
+                {
+                    "name": "List CDRs",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/cdrs",
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "500",
+                                    "description": "Optional. Number of results to return (min 1, max 500). Defaults to 500.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "starting_after",
+                                    "value": "c0ec8113-aa15-40ac-8437-47185dd9dcf4",
+                                    "description": "Optional. Return results after this CDR UUID (cursor).",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "2135551212",
+                                    "description": "Optional. Search caller name, numbers, SIP Call-ID, and status.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "direction",
+                                    "value": "inbound",
+                                    "description": "Optional. Filter by direction.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "answered",
+                                    "description": "Optional. Filter by status. Accepted values: answered, no answer, cancelled, voicemail, missed call, abandoned.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "extension_uuid",
+                                    "value": "c9a76140-0ca4-4ea3-95af-7e12c2ff0df5",
+                                    "description": "Optional. Filter by extension UUID.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "call_center_queue_uuid",
+                                    "value": "89ea1ec3-44f8-4705-8f2c-f9769486f9f1",
+                                    "description": "Optional. Filter by queue UUID.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "date_from",
+                                    "value": "1775001600",
+                                    "description": "Optional. Start of date range in epoch seconds (UTC).",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "date_to",
+                                    "value": "1775087999",
+                                    "description": "Optional. End of date range in epoch seconds (UTC).",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/cdrs?limit=500&starting_after=c0ec8113-aa15-40ac-8437-47185dd9dcf4&search=2135551212&direction=inbound&status=answered&extension_uuid=c9a76140-0ca4-4ea3-95af-7e12c2ff0df5&call_center_queue_uuid=89ea1ec3-44f8-4705-8f2c-f9769486f9f1&date_from=1775001600&date_to=1775087999",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns CDRs for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `xml_cdr_view` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 500.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `xml_cdr_uuid` from the previous response.\n\nOptional filters:\n- `search` matches caller\/destination fields and status.\n- `direction` filters by call direction.\n- `status` filters by call status.\n  Accepted values: `answered`, `no answer`, `cancelled`, `voicemail`,\n  `missed call`, `abandoned`.\n- `extension_uuid` filters by extension UUID.\n- `call_center_queue_uuid` filters by queue UUID.\n- `date_from` and `date_to` filter by `start_epoch` in epoch seconds.\n\nExamples:\n- First page: `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs`\n- Next page:  `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs?starting_after={last_xml_cdr_uuid}`\n- Custom size: `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs?limit=25`\n- Search: `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs?search=2135551212`\n- Date range (epoch): `GET \/api\/v1\/domains\/{domain_uuid}\/cdrs?date_from=1775001600&date_to=1775087999`"
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"object\": \"list\",\n  \"url\": \"\/api\/v1\/domains\/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\/cdrs\",\n  \"has_more\": true,\n  \"data\": [\n    {\n      \"xml_cdr_uuid\": \"c0ec8113-aa15-40ac-8437-47185dd9dcf4\",\n      \"object\": \"cdr\",\n      \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n      \"sip_call_id\": \"0f4b17db-3ef1-476d-b6e7-bcfe07dfd001\",\n      \"extension_uuid\": \"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5\",\n      \"direction\": \"inbound\",\n      \"caller_id_name\": \"John Smith\",\n      \"caller_id_number\": \"2135551212\",\n      \"caller_destination\": \"1001\",\n      \"destination_number\": \"1001\",\n      \"start_epoch\": 1775787900,\n      \"answer_epoch\": 1775787905,\n      \"end_epoch\": 1775787960,\n      \"duration\": 60,\n      \"hangup_cause\": \"NORMAL_CLEARING\",\n      \"hangup_cause_q850\": \"16\",\n      \"status\": \"answered\"\n    }\n  ]\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid starting_after UUID.\",\"code\":\"invalid_request\",\"param\":\"starting_after\"}}",
+                            "name": "Invalid starting_after UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid extension UUID.\",\"code\":\"invalid_request\",\"param\":\"extension_uuid\"}}",
+                            "name": "Invalid extension UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid call_center_queue_uuid UUID.\",\"code\":\"invalid_request\",\"param\":\"call_center_queue_uuid\"}}",
+                            "name": "Invalid queue UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid date_from value.\",\"code\":\"invalid_request\",\"param\":\"date_from\"}}",
+                            "name": "Invalid date_from"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid date_to value.\",\"code\":\"invalid_request\",\"param\":\"date_to\"}}",
+                            "name": "Invalid date_to"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"error\":{\"type\":\"permission_error\",\"message\":\"You do not have permission to access CDRs.\",\"code\":\"forbidden\"}}",
+                            "name": "Forbidden"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Retrieve a CDR",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/cdrs\/:xml_cdr_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/cdrs\/:xml_cdr_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "7d58342b-2b29-4dcf-92d6-e9a9e002a4e5",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "xml_cdr_uuid",
+                                    "key": "xml_cdr_uuid",
+                                    "value": "40aec3e8-a572-40da-954b-ddf6a8a65324",
+                                    "description": "The CDR UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns a single CDR for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `xml_cdr_view` permission.\n\nNotes:\n- The response includes a normalized `call_flow` summary.\n- Related queue and ring group call legs are merged into the returned\n  `call_flow` timeline when present."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"xml_cdr_uuid\": \"40aec3e8-a572-40da-954b-ddf6a8a65324\",\n  \"object\": \"cdr\",\n  \"domain_uuid\": \"7d58342b-2b29-4dcf-92d6-e9a9e002a4e5\",\n  \"sip_call_id\": \"0f4b17db-3ef1-476d-b6e7-bcfe07dfd001\",\n  \"extension_uuid\": \"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5\",\n  \"call_center_queue_uuid\": null,\n  \"direction\": \"inbound\",\n  \"caller_id_name\": \"John Smith\",\n  \"caller_id_number\": \"2135551212\",\n  \"caller_destination\": \"1001\",\n  \"destination_number\": \"1001\",\n  \"start_epoch\": 1775787900,\n  \"answer_epoch\": 1775787905,\n  \"end_epoch\": 1775787960,\n  \"duration\": 60,\n  \"hangup_cause\": \"NORMAL_CLEARING\",\n  \"hangup_cause_q850\": \"16\",\n  \"voicemail_message\": false,\n  \"cc_cancel_reason\": null,\n  \"cc_cause\": null,\n  \"sip_hangup_disposition\": \"recv_bye\",\n  \"status\": \"answered\",\n  \"call_disposition\": \"The caller hung up.\",\n  \"call_flow\": [\n    {\n      \"destination_number\": \"1001\",\n      \"context\": \"example.com\",\n      \"bridged_time\": \"2026-04-01 12:00:05\",\n      \"created_time\": \"2026-04-01 12:00:00\",\n      \"answered_time\": \"2026-04-01 12:00:05\",\n      \"progress_time\": \"2026-04-01 12:00:01\",\n      \"transfer_time\": 0,\n      \"profile_created_time\": \"2026-04-01 12:00:00\",\n      \"profile_end_time\": \"2026-04-01 12:01:00\",\n      \"progress_media_time\": \"2026-04-01 12:00:01\",\n      \"hangup_time\": \"2026-04-01 12:01:00\",\n      \"duration_seconds\": 60,\n      \"duration_formatted\": \"1 min 00 s\",\n      \"call_disposition\": \"answered\",\n      \"time_line\": \"00:00\",\n      \"dialplan_app\": \"Extension\",\n      \"dialplan_name\": \"John Smith\",\n      \"dialplan_description\": null\n    }\n  ]\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid CDR UUID.\",\"code\":\"invalid_request\",\"param\":\"xml_cdr_uuid\"}}",
+                            "name": "Invalid CDR UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"CDR not found.\",\"code\":\"resource_missing\",\"param\":\"xml_cdr_uuid\"}}",
+                            "name": "CDR not found"
+                        }
+                    ]
+                }
+            ]
+        },
         {
             "name": "Domains",
             "description": "",

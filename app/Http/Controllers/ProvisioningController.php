@@ -501,23 +501,28 @@ class ProvisioningController extends Controller
 
         // Normalize old/profile/legacy keys into the same effective shape
         $normalizeLegacyKey = function (array $item, string $source) use ($device) {
+            $vendor = strtolower((string) $device->device_vendor);
             $type  = strtolower((string) ($item['type'] ?? ''));
             $line  = $item['line'] !== null ? (int) $item['line'] : null;
             $value = $item['value'] ?? null;
             $label = $item['label'] ?? null;
 
             if ($type === 'line') {
-                // Legacy/profile line indexes appear to be zero-based:
-                // 0 => first line, 1 => second line, etc.
-                $lookupLineNumber = $line !== null ? $line + 1 : 1;
+                // Polycom legacy/profile line keys already store the correct value.
+                // Do not rewrite them from the device line's auth_id/display_name.
+                if ($vendor !== 'polycom') {
+                    // Legacy/profile line indexes appear to be zero-based:
+                    // 0 => first line, 1 => second line, etc.
+                    $lookupLineNumber = $line !== null ? $line + 1 : 1;
 
-                $lineObj = collect($device->lines ?? [])->firstWhere('line_number', $lookupLineNumber);
+                    $lineObj = collect($device->lines ?? [])->firstWhere('line_number', $lookupLineNumber);
 
-                if ($lineObj) {
-                    $value = $lineObj->auth_id ?? $value;
+                    if ($lineObj) {
+                        $value = $lineObj->auth_id ?? $value;
 
-                    if (empty($label)) {
-                        $label = $lineObj->display_name ?? $lineObj->auth_id ?? null;
+                        if (empty($label)) {
+                            $label = $lineObj->display_name ?? $lineObj->auth_id ?? null;
+                        }
                     }
                 }
             }

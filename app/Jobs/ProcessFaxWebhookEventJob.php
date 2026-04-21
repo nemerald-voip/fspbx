@@ -128,14 +128,16 @@ class ProcessFaxWebhookEventJob implements ShouldQueue
             }
         }
 
-        Log::info('[Webhook] Fax event processed', [
-            'event' => $this->event,
-            'uuid' => $faxLogUuid,
-            'fax_uuid' => $faxUuid,
-            'pdf_path' => $pdfPath,
-            'pages_transferred' => $this->data['fax_document_transferred_pages'] ?? null,
-            'pages_total' => $this->data['fax_document_total_pages'] ?? null,
-        ]);
+        // Log::info('[Webhook] Fax event processed', [
+        //     'event' => $this->event,
+        //     'uuid' => $faxLogUuid,
+        //     'fax_uuid' => $faxUuid,
+        //     'pdf_path' => $pdfPath,
+        //     'pages_transferred' => $this->data['fax_document_transferred_pages'] ?? null,
+        //     'pages_total' => $this->data['fax_document_total_pages'] ?? null,
+        // ]);
+
+        return;
     }
 
     private function convertTiffToPdf(?string $tiffPath): ?string

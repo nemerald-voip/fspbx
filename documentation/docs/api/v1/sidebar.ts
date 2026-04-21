@@ -8,6 +8,24 @@ const sidebar: SidebarsConfig = {
     },
     {
       type: "category",
+      label: "CDRs",
+      items: [
+        {
+          type: "doc",
+          id: "api/v1/list-cd-rs",
+          label: "List CDRs",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/retrieve-acdr",
+          label: "Retrieve a CDR",
+          className: "api-method get",
+        },
+      ],
+    },
+    {
+      type: "category",
       label: "Domains",
       items: [
         {
