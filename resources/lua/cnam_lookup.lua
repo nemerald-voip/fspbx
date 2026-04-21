@@ -22,7 +22,7 @@ local function telnyx_lookup(digits)
     local url = "https://api.telnyx.com/v2/number_lookup/" .. e164 .. "?type=caller-name"
 
     local cmd = string.format(
-        [[curl -sS --max-time 3 --globoff -H "Accept: application/json" -H "Authorization: Bearer %s" "%s"]],
+        [[curl -sS --max-time 1 --globoff -H "Accept: application/json" -H "Authorization: Bearer %s" "%s"]],
         telnyx_api_key,
         url
     )
