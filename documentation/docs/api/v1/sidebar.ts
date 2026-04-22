@@ -12,14 +12,14 @@ const sidebar: SidebarsConfig = {
       items: [
         {
           type: "doc",
-          id: "api/v1/list-cd-rs",
-          label: "List CDRs",
+          id: "api/v1/list-call-detail-records",
+          label: "List Call Detail Records",
           className: "api-method get",
         },
         {
           type: "doc",
-          id: "api/v1/retrieve-acdr",
-          label: "Retrieve a CDR",
+          id: "api/v1/retrieve-a-call-detail-record",
+          label: "Retrieve a Call Detail Record",
           className: "api-method get",
         },
       ],

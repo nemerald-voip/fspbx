@@ -66,10 +66,10 @@
                 </li>
                                     <ul id="tocify-subheader-cdrs" class="tocify-subheader">
                                                     <li class="tocify-item level-2" data-unique="cdrs-GETapi-v1-domains--domain_uuid--cdrs">
-                                <a href="#cdrs-GETapi-v1-domains--domain_uuid--cdrs">List CDRs</a>
+                                <a href="#cdrs-GETapi-v1-domains--domain_uuid--cdrs">List Call Detail Records</a>
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="cdrs-GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid-">
-                                <a href="#cdrs-GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid-">Retrieve a CDR</a>
+                                <a href="#cdrs-GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid-">Retrieve a Call Detail Record</a>
                             </li>
                                                                         </ul>
                             </ul>
@@ -216,7 +216,7 @@ You can switch the language used with the tabs at the top right (or from the nav
 
     
 
-                                <h2 id="cdrs-GETapi-v1-domains--domain_uuid--cdrs">List CDRs</h2>
+                                <h2 id="cdrs-GETapi-v1-domains--domain_uuid--cdrs">List Call Detail Records</h2>
 
 <p>
 <small class="badge badge-darkred">requires authentication</small>
@@ -635,7 +635,7 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                 </form>
 
-                    <h2 id="cdrs-GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid-">Retrieve a CDR</h2>
+                    <h2 id="cdrs-GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid-">Retrieve a Call Detail Record</h2>
 
 <p>
 <small class="badge badge-darkred">requires authentication</small>
@@ -7035,10 +7035,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="members.0.destination_number"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="+62862"
+               value="+0"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>+62862</code></p>
+<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>+0</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_delay</code></b>&nbsp;&nbsp;
@@ -7046,10 +7046,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_delay"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="28"
+               value="15"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>28</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>15</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_timeout</code></b>&nbsp;&nbsp;
@@ -7057,10 +7057,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_timeout"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="47"
+               value="78"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>47</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>78</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_prompt</code></b>&nbsp;&nbsp;
@@ -7081,7 +7081,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_enabled</code></b>&nbsp;&nbsp;
@@ -7696,10 +7696,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="members.0.destination_number"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="316"
+               value="+737"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>316</code></p>
+<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>+737</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_delay</code></b>&nbsp;&nbsp;
@@ -7707,10 +7707,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_delay"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="77"
+               value="37"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>77</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>37</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_timeout</code></b>&nbsp;&nbsp;
@@ -7718,10 +7718,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_timeout"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="40"
+               value="32"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>40</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>32</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_prompt</code></b>&nbsp;&nbsp;

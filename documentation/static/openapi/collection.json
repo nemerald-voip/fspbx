@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "FS PBX",
-        "_postman_id": "30de811d-2605-4256-ae20-8f13c1b83a3b",
+        "_postman_id": "77512b5a-875e-4b2b-bea8-f5897414c9d4",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -20,7 +20,7 @@
             "description": "",
             "item": [
                 {
-                    "name": "List CDRs",
+                    "name": "List Call Detail Records",
                     "request": {
                         "url": {
                             "host": "{{baseUrl}}",
@@ -169,7 +169,7 @@
                     ]
                 },
                 {
-                    "name": "Retrieve a CDR",
+                    "name": "Retrieve a Call Detail Record",
                     "request": {
                         "url": {
                             "host": "{{baseUrl}}",

@@ -24,7 +24,7 @@ class CdrController extends Controller
     }
 
     /**
-     * List CDRs
+     * List Call Detail Records
      *
      * Returns CDRs for the specified domain the caller is allowed to access.
      *
@@ -124,8 +124,8 @@ class CdrController extends Controller
             throw new ApiException(404, 'invalid_request_error', 'Domain not found.', 'resource_missing', 'domain_uuid');
         }
 
-        $limit = (int) $request->input('limit', 50);
-        $limit = max(1, min(100, $limit));
+        $limit = (int) $request->input('limit', 500);
+        $limit = max(1, min(500, $limit));
 
         $startingAfter = (string) $request->input('starting_after', '');
         if ($startingAfter !== '' && ! preg_match('/^[0-9a-fA-F-]{36}$/', $startingAfter)) {
@@ -196,7 +196,7 @@ class CdrController extends Controller
     }
 
     /**
-     * Retrieve a CDR
+     * Retrieve a Call Detail Record
      *
      * Returns a single CDR for the specified domain the caller is allowed to access.
      *
@@ -293,154 +293,6 @@ class CdrController extends Controller
         $payload = $this->cdrDataService->buildApiShowPayload($domain_uuid, $xml_cdr_uuid);
 
         return response()->json($payload->toArray(), 200);
-    }
-
-    /**
-     * Builds response payload as a reusable helper.
-     */
-    private function buildCdrShowPayload(string $domain_uuid, string $xml_cdr_uuid): array
-    {
-        $cdr = CDR::query()
-            ->where('domain_uuid', $domain_uuid)
-            ->where('xml_cdr_uuid', $xml_cdr_uuid)
-            ->select([
-                'xml_cdr_uuid',
-                'domain_uuid',
-                'sip_call_id',
-                'extension_uuid',
-                'direction',
-                'caller_id_name',
-                'caller_id_number',
-                'caller_destination',
-                'destination_number',
-                'start_epoch',
-                'answer_epoch',
-                'end_epoch',
-                'duration',
-                'billsec',
-                'waitsec',
-                'call_flow',
-                'voicemail_message',
-                'missed_call',
-                'hangup_cause',
-                'hangup_cause_q850',
-                'call_center_queue_uuid',
-                'cc_cancel_reason',
-                'cc_cause',
-                'sip_hangup_disposition',
-                'status',
-            ])
-            ->first();
-
-        if (! $cdr) {
-            throw new ApiException(404, 'invalid_request_error', 'CDR not found.', 'resource_missing', 'xml_cdr_uuid');
-        }
-
-        $this->item_domain_uuid = $cdr->domain_uuid;
-
-        $mainCallFlowData = collect(json_decode($cdr->call_flow, true) ?: []);
-        $combinedCallFlowData = $mainCallFlowData;
-
-        if (! empty($cdr->call_center_queue_uuid)) {
-            $relatedQueueCalls = $cdr->relatedQueueCalls()
-                ->where('domain_uuid', $cdr->domain_uuid)
-                ->select([
-                    'xml_cdr_uuid',
-                    'domain_uuid',
-                    'call_flow',
-                    'call_disposition',
-                ])
-                ->get();
-
-            foreach ($relatedQueueCalls as $relatedCall) {
-                $relatedCallFlow = collect(json_decode($relatedCall->call_flow, true) ?: [])
-                    ->map(function ($flow) use ($relatedCall) {
-                        if (isset($flow['times'])) {
-                            $flow['times']['call_disposition'] = $relatedCall->call_disposition;
-                        }
-                        return $flow;
-                    });
-
-                $combinedCallFlowData = $combinedCallFlowData->merge($relatedCallFlow);
-            }
-        }
-
-        $relatedRingGroupCalls = $cdr->relatedRingGroupCalls()
-            ->where('domain_uuid', $cdr->domain_uuid)
-            ->select([
-                'xml_cdr_uuid',
-                'domain_uuid',
-                'call_flow',
-                'call_disposition',
-            ])
-            ->get();
-
-        foreach ($relatedRingGroupCalls as $relatedCall) {
-            $relatedCallFlow = collect(json_decode($relatedCall->call_flow, true) ?: [])
-                ->map(function ($flow) use ($relatedCall) {
-                    if (isset($flow['times'])) {
-                        $flow['times']['call_disposition'] = $relatedCall->call_disposition;
-                    }
-                    return $flow;
-                });
-
-            $combinedCallFlowData = $combinedCallFlowData->merge($relatedCallFlow);
-        }
-
-        $combinedCallFlowData = $this->handleCallFlowSteps($combinedCallFlowData);
-
-        $callFlowSummary = $combinedCallFlowData
-            ->map(function ($row) {
-                return $this->buildSummaryItem($row);
-            })
-            ->sortBy('profile_created_time')
-            ->values()
-            ->map(function ($row) use ($cdr) {
-                $timeDifference = $row['profile_created_time'] - $cdr->start_epoch;
-                $row['time_line'] = sprintf('%02d:%02d', floor($timeDifference / 60), $timeDifference % 60);
-
-                if ($cdr->direction === 'outbound') {
-                    $row['dialplan_app'] = 'Outbound Call';
-                }
-
-                return $row;
-            });
-
-        $callFlowSummary = $this->formatTimes($callFlowSummary)
-            ->map(function ($row) {
-                return $this->getAppDetails($row);
-            })
-            ->values()
-            ->all();
-
-        return [
-            'xml_cdr_uuid' => (string) $cdr->xml_cdr_uuid,
-            'object' => 'cdr',
-            'domain_uuid' => (string) $cdr->domain_uuid,
-            'sip_call_id' => $cdr->sip_call_id,
-            'extension_uuid' => $cdr->extension_uuid,
-            'direction' => $cdr->direction,
-            'caller_id_name' => $cdr->caller_id_name,
-            'caller_id_number' => $cdr->caller_id_number,
-            'caller_destination' => $cdr->caller_destination,
-            'destination_number' => $cdr->destination_number,
-            'start_epoch' => $cdr->start_epoch !== null ? (int) $cdr->start_epoch : null,
-            'answer_epoch' => $cdr->answer_epoch !== null ? (int) $cdr->answer_epoch : null,
-            'end_epoch' => $cdr->end_epoch !== null ? (int) $cdr->end_epoch : null,
-            'duration' => $cdr->duration !== null ? (int) $cdr->duration : null,
-            'billsec' => $cdr->billsec !== null ? (int) $cdr->billsec : null,
-            'waitsec' => $cdr->waitsec !== null ? (int) $cdr->waitsec : null,
-            'voicemail_message' => $this->toBool($cdr->voicemail_message),
-            'missed_call' => $this->toBool($cdr->missed_call),
-            'hangup_cause' => $cdr->hangup_cause,
-            'hangup_cause_q850' => $cdr->hangup_cause_q850,
-            'call_center_queue_uuid' => $cdr->call_center_queue_uuid,
-            'cc_cancel_reason' => $cdr->cc_cancel_reason,
-            'cc_cause' => $cdr->cc_cause,
-            'sip_hangup_disposition' => $cdr->sip_hangup_disposition,
-            'status' => $cdr->status,
-            'call_flow' => $callFlowSummary,
-        ];
     }
 
     /**

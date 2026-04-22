@@ -14,8 +14,8 @@ servers:
 paths:
   '/api/v1/domains/{domain_uuid}/cdrs':
     get:
-      summary: 'List CDRs'
-      operationId: listCDRs
+      summary: 'List Call Detail Records'
+      operationId: listCallDetailRecords
       description: "Returns CDRs for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `xml_cdr_view` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 500.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `xml_cdr_uuid` from the previous response.\n\nOptional filters:\n- `search` matches caller/destination fields and status.\n- `direction` filters by call direction.\n- `status` filters by call status.\n  Accepted values: `answered`, `no answer`, `cancelled`, `voicemail`,\n  `missed call`, `abandoned`.\n- `extension_uuid` filters by extension UUID.\n- `call_center_queue_uuid` filters by queue UUID.\n- `date_from` and `date_to` filter by `start_epoch` in epoch seconds.\n\nExamples:\n- First page: `GET /api/v1/domains/{domain_uuid}/cdrs`\n- Next page:  `GET /api/v1/domains/{domain_uuid}/cdrs?starting_after={last_xml_cdr_uuid}`\n- Custom size: `GET /api/v1/domains/{domain_uuid}/cdrs?limit=25`\n- Search: `GET /api/v1/domains/{domain_uuid}/cdrs?search=2135551212`\n- Date range (epoch): `GET /api/v1/domains/{domain_uuid}/cdrs?date_from=1775001600&date_to=1775087999`"
       parameters:
         -
@@ -340,8 +340,8 @@ paths:
           type: string
   '/api/v1/domains/{domain_uuid}/cdrs/{xml_cdr_uuid}':
     get:
-      summary: 'Retrieve a CDR'
-      operationId: retrieveACDR
+      summary: 'Retrieve a Call Detail Record'
+      operationId: retrieveACallDetailRecord
       description: "Returns a single CDR for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `xml_cdr_view` permission.\n\nNotes:\n- The response includes a normalized `call_flow` summary.\n- Related queue and ring group call legs are merged into the returned\n  `call_flow` timeline when present."
       parameters: []
       responses:
