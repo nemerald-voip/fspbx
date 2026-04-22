@@ -2,27 +2,26 @@
 
 namespace App\Providers;
 
-use App\Models\User;
-use Inertia\Inertia;
-use Illuminate\Support\Str;
-use Illuminate\Http\Request;
-use Laravel\Fortify\Fortify;
-use Illuminate\Support\Facades\Hash;
 use App\Actions\Fortify\CreateNewUser;
 use App\Actions\Fortify\RedirectToEmailChallengeIf2FAIsNotEnabled;
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Cache\RateLimiting\Limit;
 use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
-use Illuminate\Support\Facades\RateLimiter;
 use App\Actions\Fortify\UpdateUserProfileInformation;
-use Laravel\Fortify\Features;
-use Illuminate\Routing\Pipeline;
+use App\Models\DefaultSettings;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Str;
+use Inertia\Inertia;
 use Laravel\Fortify\Actions\AttemptToAuthenticate;
 use Laravel\Fortify\Actions\CanonicalizeUsername;
 use Laravel\Fortify\Actions\EnsureLoginIsNotThrottled;
 use Laravel\Fortify\Actions\PrepareAuthenticatedSession;
 use Laravel\Fortify\Actions\RedirectIfTwoFactorAuthenticatable;
+use Laravel\Fortify\Features;
+use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
 {
@@ -45,11 +44,12 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
 
         Fortify::authenticateThrough(function () {
+            logger('Checking email challenge enabled status...'  . $this->emailChallengeEnabled());
             return [
                 config('fortify.limiters.login') ? null : EnsureLoginIsNotThrottled::class,
                 config('fortify.lowercase_usernames') ? CanonicalizeUsername::class : null,
                 Features::enabled(Features::twoFactorAuthentication()) ? RedirectIfTwoFactorAuthenticatable::class : null,
-                Features::enabled('email-challenge') ? RedirectToEmailChallengeIf2FAIsNotEnabled::class : null,
+                $this->emailChallengeEnabled() ? RedirectToEmailChallengeIf2FAIsNotEnabled::class : null,
                 AttemptToAuthenticate::class,
                 PrepareAuthenticatedSession::class,
             ];
@@ -106,5 +106,27 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::confirmPasswordView(function () {
             return Inertia::render('Auth/ConfirmPassword');
         });
+    }
+
+    protected function emailChallengeEnabled(): bool
+    {
+        if (! Features::enabled('email-challenge')) {
+            return false;
+        }
+
+        try {
+            return Cache::remember('settings.email_challenge_enabled', 3600, function () {
+                $value = DefaultSettings::where('default_setting_category', 'authentication')
+                    ->where('default_setting_subcategory', 'email_challenge')
+                    ->where('default_setting_name', 'boolean')
+                    ->value('default_setting_value');
+
+                // logger('default_setting_value raw: ' . var_export($value, true));
+
+                return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+            });
+        } catch (\Throwable $e) {
+            return false;
+        }
     }
 }
