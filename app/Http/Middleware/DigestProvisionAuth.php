@@ -54,9 +54,19 @@ class DigestProvisionAuth
         $hash  = substr(hash_hmac('sha256', (string) $domainUuid, config('app.key')), 0, 16);
         $realm = "Prov-$hash";
 
-        $authTypeRaw = get_domain_setting('http_auth_type', $domainUuid);
-        $authType = in_array(strtolower((string)$authTypeRaw), ['basic', 'digest', 'both'], true)
-            ? strtolower((string)$authTypeRaw) : 'basic';
+        if ($this->userAgentForcesBasic($request)) {
+            $authTypeValue = 'basic';
+            $authType = 'basic';
+        } else {
+
+            $authTypeValue = get_domain_setting('http_auth_type',$domainUuid);
+            $authType = strtolower($authTypeValue);
+
+            if (!in_array($authType, ['basic', 'digest', 'both'], true)) {
+                $authType = 'digest';
+            }
+        }
+
 
         $auth   = $request->header('Authorization', '');
         $scheme = strtolower(strtok($auth, ' ')) ?: '';
@@ -164,6 +174,28 @@ class DigestProvisionAuth
         return [$tail, 'cfg'];
     }
 
+
+    //Override known user-agents that do not support digest authentication
+    private function userAgentForcesBasic(Request $request): bool
+    {
+        $ua = strtolower((string) $request->userAgent());
+        
+//switch this method to cache method when default settings page is eventually migrated 
+        $forceBasicMatchers = [
+            'algo',
+            'panasonic',
+            'aastra',
+            'snom',
+        ];
+
+        foreach ($forceBasicMatchers as $needle) {
+            if (str_contains($ua, strtolower($needle))) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
     // Challenge according to policy
     private function challengeAccordingToPolicy(string $authType, string $realm, bool $debug)
