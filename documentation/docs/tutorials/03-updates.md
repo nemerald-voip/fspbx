@@ -7,73 +7,195 @@ sidebar_position: 3
 
 # How to update
 
-:::info
+This guide explains how to update FS PBX in both single-server and multinode deployments.
 
-Below steps apply to **single server deployments**.
+## Single-server deployments
 
-:::
+The steps below apply to **single-server deployments**.
 
-### Pull new updates and install them by running these commands:
+### 1. Pull the latest application updates
 
-   ```bash
-   cd /var/www/fspbx
-   git pull
-   php artisan app:update
-   ```
-Check if there are any pending database updates.
+Run:
 
-   ```bash
-   php artisan migrate:status
-   ```
-If you find any updates pending, run this command to install them. 
-   ```bash
-   php artisan migrate
-   ```
+```bash
+cd /var/www/fspbx
+git pull
+php artisan app:update
+````
 
+### 2. Check for pending database migrations
 
-:::info
+Run:
 
-Below steps apply to **multinode server deployments** where **Server A** and **Server B** are configured with **bidirectional logical replication**.
+```bash
+php artisan migrate:status
+```
 
-:::
+If any migrations are pending, apply them with:
 
-### **1\. Update Application Code on Both Servers**
+```bash
+php artisan migrate
+```
 
-On **Server A** and **Server B**, pull the latest updates and apply them:
+---
 
-``` bash
+## Multinode deployments
+
+The steps below apply to **multinode deployments** where two servers are configured with **bidirectional logical replication**.
+
+### Overview
+
+In a multinode deployment, you will:
+
+1. Update the application code on both servers
+2. Pick one server to update first
+3. Run `php artisan migrate` on the **first server**
+4. Run `php artisan migrate:delete-last-batch` and then `php artisan migrate` on the **second server**
+5. Refresh subscriptions on both servers
+
+### 1. Update application code on both servers
+
+Run the following on **both servers**:
+
+```bash
 cd /var/www/fspbx
 git pull
 php artisan app:update
 ```
 
-* * * * *
+### 2. Choose the first server
 
-### **2\. Check for Pending Database Migrations (Server A Only)**
+Decide which server you want to update first.
 
-On **Server A**, verify if any new migrations need to be applied:
+On the **first server**, check migration status:
 
-`php artisan migrate:status`
+```bash
+php artisan migrate:status
+```
 
-If you see any pending migrations, run:
+If any migrations are pending, run:
 
-`php artisan migrate`
+```bash
+php artisan migrate
+```
 
-* * * * *
+### 3. Update the second server
 
-### **3\. Sync Migrations on Server B**
-
-Because **Server B** replicates from **Server A**, it may incorrectly mark migrations as already applied. To ensure proper synchronization, reset and reapply the latest batch:
+On the **second server**, run:
 
 ```bash
 php artisan migrate:delete-last-batch
 php artisan migrate
 ```
 
-* * * * *
+### 4. Refresh logical replication subscriptions
 
-### **4\. Refresh Logical Replication Subscriptions**
+After the migrations are complete, run the following on **both servers**:
 
-Finally, on **both servers**, refresh the subscriptions to ensure replication consistency:
+```bash
+php artisan db:refresh-subscriptions
+```
 
-`php artisan db:refresh-subscriptions`
+---
+
+## Examples
+
+### Example 1: You start on Server A
+
+If you begin the update on **Server A**, then:
+
+**On Server A:**
+
+```bash
+php artisan migrate
+```
+
+**On Server B:**
+
+```bash
+php artisan migrate:delete-last-batch
+php artisan migrate
+```
+
+### Example 2: You start on Server B
+
+If you begin the update on **Server B**, then:
+
+**On Server B:**
+
+```bash
+php artisan migrate
+```
+
+**On Server A:**
+
+```bash
+php artisan migrate:delete-last-batch
+php artisan migrate
+```
+
+---
+
+## Important rule
+
+The names **Server A** and **Server B** are only labels used for reference.
+
+What matters is the **order**:
+
+* The server updated first runs:
+
+```bash
+php artisan migrate
+```
+
+* The server updated second runs:
+
+```bash
+php artisan migrate:delete-last-batch
+php artisan migrate
+```
+
+---
+
+## Quick reference
+
+### On both servers
+
+```bash
+cd /var/www/fspbx
+git pull
+php artisan app:update
+```
+
+### On the first server
+
+```bash
+php artisan migrate:status
+php artisan migrate
+```
+
+### On the second server
+
+```bash
+php artisan migrate:delete-last-batch
+php artisan migrate
+```
+
+### Back on both servers
+
+```bash
+php artisan db:refresh-subscriptions
+```
+
+---
+
+## Need help?
+
+If you are unsure which server should be treated as the first or second server during an update, remember:
+
+* **First server** = the server where you run `php artisan migrate` first
+* **Second server** = the other server
+
+If you get stuck during the update process, please reach out to support.
+
+

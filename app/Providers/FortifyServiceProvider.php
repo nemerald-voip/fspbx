@@ -119,6 +119,7 @@ class FortifyServiceProvider extends ServiceProvider
                 $value = DefaultSettings::where('default_setting_category', 'authentication')
                     ->where('default_setting_subcategory', 'email_challenge')
                     ->where('default_setting_name', 'boolean')
+                    ->where('default_setting_enabled', true)
                     ->value('default_setting_value');
 
                 // logger('default_setting_value raw: ' . var_export($value, true));
