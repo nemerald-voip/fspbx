@@ -215,7 +215,8 @@ class UpdateExtensionRequest extends FormRequest
             'voicemail_password' => ['nullable', 'numeric'],
             'voicemail_tutorial' => ['sometimes', 'required', 'in:true,false,1,0'],
             'voicemail_recording_instructions' => ['sometimes', 'required', 'in:true,false,1,0'],
-
+            'voicemail_copies' => ['nullable', 'array'],
+            'voicemail_copies.*' => ['uuid'],
 
         ];
     }
@@ -249,6 +250,7 @@ class UpdateExtensionRequest extends FormRequest
 
 public function prepareForValidation()
 {
+    // logger($this->all());
     $first = $this->input('directory_first_name', '');
     $last  = $this->input('directory_last_name', '');
     $fullName = trim($first . ' ' . $last);
