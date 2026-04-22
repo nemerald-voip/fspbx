@@ -285,6 +285,7 @@ class FaxesController extends Controller
                 'domain_uuid',
                 'fax_caller_id_number',
                 'fax_date',
+                'fax_epoch',
             ])
             ->where('domain_uuid', $currentDomain)
             ->inUsersLocations()

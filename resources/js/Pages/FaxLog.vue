@@ -73,16 +73,19 @@
             <span class="pl-4">Date</span>
           </TableColumnHeader>
 
+          <TableColumnHeader header="From" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+          <TableColumnHeader header="To" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
           <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
           <TableColumnHeader header="Code" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
           <TableColumnHeader header="Result" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-          <TableColumnHeader header="File" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+          <!-- <TableColumnHeader header="File" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
           <TableColumnHeader header="ECM" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-          <TableColumnHeader header="Local Station ID" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+          <!-- <TableColumnHeader header="Local Station ID" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
           <TableColumnHeader header="Bad Rows" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
           <TableColumnHeader header="Transfer Rate" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-          <TableColumnHeader header="Retry" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-          <TableColumnHeader header="Destination" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+          <TableColumnHeader header="Transferred Pages" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+          <TableColumnHeader header="Total Pages" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+          <!-- <TableColumnHeader header="Destination" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
           <TableColumnHeader v-if="permissions.delete" header="" class="px-2 py-3.5 text-center text-sm font-semibold text-gray-900" />
         </template>
 
@@ -121,11 +124,23 @@
                   class="h-4 w-4 rounded border-gray-300 text-indigo-600"
                 />
                 <div class="ml-4">
-                  <div class="text-gray-900">{{ formatDate(row.fax_date) }}</div>
-                  <div class="text-gray-500 text-xs">{{ formatTime(row.fax_date) }}</div>
+                  <div class="text-gray-500 ">{{ row.fax_date_formatted }}</div>
                 </div>
               </div>
             </TableField>
+
+            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_file?.fax_caller_id_number_formatted ?? ''" />
+
+            <TableField
+                class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                :text="
+                    row.fax_file?.fax_mode === 'rx'
+                        ? (row.fax?.fax_caller_id_number_formatted ?? row.fax_file?.fax_caller_id_number_formatted ?? '')
+                        : row.fax_file?.fax_mode === 'tx'
+                            ? (row.fax_file?.fax_destination_formatted ?? '')
+                            : ''
+                "
+            />
 
             <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
               <template #default>
@@ -140,13 +155,14 @@
 
             <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="String(row.fax_result_code ?? '')" />
             <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_result_text ?? ''" />
-            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="fileBase(row.fax_file)" />
+            <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="fileBase(row.fax_file)" /> -->
             <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_ecm_used ?? ''" />
-            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_local_station_id ?? ''" />
+            <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_local_station_id ?? ''" /> -->
             <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="String(row.fax_bad_rows ?? '')" />
             <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="String(row.fax_transfer_rate ?? '')" />
-            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="retryText(row)" />
-            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_uri ?? ''" />
+            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_document_transferred_pages" />
+            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_document_total_pages" />
+            <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_uri ?? ''" /> -->
 
             <TableField v-if="permissions.delete" class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
               <template #action-buttons>
@@ -290,6 +306,7 @@ const getData = (page = 1) => {
     })
     .then((response) => {
       data.value = response.data;
+    //   console.log(data.value);
     })
     .catch((error) => {
       handleErrorResponse(error);
@@ -405,9 +422,6 @@ const handleErrorResponse = (error) => {
   }
 };
 
-// Helpers (match your old blade display intent)
-const formatDate = (utc) => (utc ? moment.utc(utc).tz(props.timezone).format("ddd, MMM DD, YYYY") : "");
-const formatTime = (utc) => (utc ? moment.utc(utc).tz(props.timezone).format("hh:mm:ss A") : "");
 
 const fileBase = (path) => {
   if (!path) return "";

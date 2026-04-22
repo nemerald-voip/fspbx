@@ -75,18 +75,31 @@ class FaxLogController extends Controller
                 'fax_result_text',
                 'fax_file',
                 'fax_ecm_used',
-                'fax_local_station_id',
                 'fax_bad_rows',
                 'fax_transfer_rate',
-                'fax_retry_attempts',
-                'fax_retry_limit',
-                'fax_retry_sleep',
-                'fax_uri',
                 'fax_duration',
                 'fax_date',
                 'fax_epoch',
                 'fax_document_transferred_pages',
                 'fax_document_total_pages',
+            ])
+            ->with([
+                'fax' => function ($q) {
+                    $q->select([
+                        'fax_uuid',
+                        'fax_caller_id_number',
+                    ]);
+                },
+                'faxFile' => function ($q) {
+                    $q->select([
+                        'fax_file_uuid',
+                        'fax_uuid', 
+                        'fax_caller_id_number',
+                        'fax_destination',
+                        'domain_uuid',
+                        'fax_mode',
+                    ]);
+                },
             ])
             ->where('domain_uuid', $domain_uuid)
             ->allowedFilters([

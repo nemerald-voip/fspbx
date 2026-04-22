@@ -28,6 +28,10 @@ class FaxFiles extends Model
         'fax_destination_formatted',
     ];
 
+    protected $casts = [
+        'fax_epoch' => 'integer',
+    ];
+
     public function locations()
     {
         return $this->belongsToMany(
@@ -43,11 +47,15 @@ class FaxFiles extends Model
 
     public function getFaxDateFormattedAttribute()
     {
-        if (!$this->fax_date || !$this->domain_uuid) {
+        if (!$this->fax_epoch || !$this->domain_uuid) {
             return null;
         }
+
         $timeZone = get_local_time_zone($this->domain_uuid);
-        return Carbon::parse($this->fax_date)->setTimezone($timeZone)->format('g:i:s A M d, Y');
+
+        return Carbon::createFromTimestamp($this->fax_epoch, 'UTC')
+            ->setTimezone($timeZone)
+            ->format('g:i:s A M d, Y');
     }
 
     public function getFaxCallerIdNumberFormattedAttribute()
