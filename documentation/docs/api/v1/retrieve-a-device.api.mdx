@@ -1,0 +1,76 @@
+---
+id: retrieve-a-device
+title: "Retrieve a device"
+description: "Returns a single device for the specified domain."
+sidebar_label: "Retrieve a device"
+hide_title: true
+hide_table_of_contents: true
+api: eJzdWN+P2jgQ/lcsP7VSAgmEHxtVldrrtd2nrnYXqdUu2nXsCXE32Knt0EUo//vJSYBAUkqr68MdL0A8M/5m5ht7JhssM1DEcCkuGQ6xAqM4rODNO1hxCtjBDDRVPLMSOMTXYHIlNCJIc7FIAbFSDsVSIZMA0hlQHnNgiMkl4aJ3L+7FX3KZEcMjnnKzRkIaCO+Fix4r3QcDyywlBh4R14hBpoASAwwRwZACQ7gAVm4QEfr0nSiGaNNgz9qaaWjZe8hzzh4R0YgbjXROKWgtVQ87OCOKLMGA0ji822BuXcuISbCDBVkCDnEFvzTRCsJtArV7aDa7fGcNwjNZZqlVDDx/Gk/I0J2CR9xgEkXuRRzErhdE/tAfggd+hB2s4FvOFTAcGpWDgzVNYElwuMFmnVk72iguFrgonG58la8/xlflpY2PekCnvj90CfFHbuAR6k6D4cQNJv50xNgFo3HwS/jmVlhnUmjQdn3gefbrENJNFX3sYCqFAWGsCMmylNOSfP2v2spt2vvI6CtQ03Rhc+D82R7Vhrahs1Fr5PjsxNV7Z0rGPN1hGPmT0QWLpi6dRrEbRIPYjYIpccejyYRNCBsTn+yVCWPKRiPEnucF8WBIRhGd7NdTEkGKQ/xeSWHQO9BP6CqRAvYSW47jEH8BknLxhG6D8awtsAVIxjQeXUTEYovcIGLMjaYTzx2OKB2NIkr8YLzXPi56CuVvxCyUffx2oVhxzaUA9sAqTANvMHa9wB0MkR+E/igcDLrleVZKD3tez/eHvcGoW4wsSsrsfL25vHKtv8j3pr3puOf1Bh4uHJwpe5wZXjHxgCbHxP3lmij2FDplq45OcUSvUypnMa/4AfVOGT6LlUWblqdsHjC2OKbsKc0Wm4sOOp8ycMD0tvIZATmrCoruMjhlt7tCihMlcspaV/V027Llc9pSo7K6TdSldU7cu6uu/Dg46Dr2L8WKpJw1b6N/6QoApaRqyPBqpwd7b4E2D9W6g5egNVlAN5ZeCYZ16G97hKObtmidMcc4dlgPxarVU0HudqBoeHBKu9O5YuvdL+xbnqKV5z8/5bZB2XPAb3NgJkhuEhCGl23dH8p/Yw8uRUf6j2A0Up8fAfyDSe5EeW6OWx6cld+2d/tsBe1sVX2/bdJRLHPxp9L183I9BtJImAItc0XhYcm1rvz9TxVr27WzMtly+/dLtXCwIQs7/NRgNJ5b8CaRtllcQHUAmgSHuE8y3l/5/aqd0f1No68p+pV1+3S/TYEdrEGttuNVrmwzmxiT6bDf3yRSm6I1tLy/QVdvP6M3V5eo0sUOXhHFSZRWWbFqFV9jkqdlN/hpdu2+v7l6+9n9+OnmtmXyo9TGjkvoewIKUL0D10jlQnCxQC/qKIUo1ln03FvLXLn14CrAvLTxmltfaK64WZfO7La/mzfXbmwVbNvOWmKXFes6rmco+z8CokoHD/F+kTmiRKDtEI4sHmTkEwgUrZG9so2FXT5mRCeRtNOwnZNpyumTXXsVvf4Awo70UMay1H7Vj173ynrgIpYlMG6qnmwX9RYaG39Quvqz8ku2SW2WpKz6egy93kIlzbHgoGvaHR//l5cHdVINPJt+lhIubGhKjm/qmrnDJOM2fv5uyrSjb3j8UqGqPLvQqNG5U1P9Dm82EdEwU2lR2MffclCWhPN9ZVSU5Nr+ZjiMSarhRAZeXNdj/UvU8RKj07Ht/SrWZUGmOVTceIL10WsS+6bi96EcdmW/A6V5zs0LBydAGKgyQpXEG2q79IZu6zormqfgh79vcVH8A1Aae6s=
+sidebar_class_name: "get api-method"
+info_path: docs/api/v1/fs-pbx-api
+custom_edit_url: null
+hide_send_button: true
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Retrieve a device"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/api/v1/domains/{domain_uuid}/devices/{device_uuid}"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Returns a single device for the specified domain.
+
+Compatibility note:
+- `device_template` is deprecated and retained for backward compatibility.
+- Use `device_template_uuid` as its successor.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"in":"path","name":"domain_uuid","description":"The domain UUID.","example":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","required":true,"schema":{"type":"string"}},{"in":"path","name":"device_uuid","description":"The device UUID.","example":"c0ec8113-aa15-40ac-8437-47185dd9dcf4","required":true,"schema":{"type":"string"}}]}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"Success","content":{"application/json":{"schema":{"type":"object","example":{"device_uuid":"c0ec8113-aa15-40ac-8437-47185dd9dcf4","object":"device","domain_uuid":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","device_profile_uuid":"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a","device_address":"0004f23a5bc7","device_label":"Front Desk Phone","device_template":"Yealink T46U","device_template_uuid":"a6cf59ba-4b2b-4bdd-b870-35cc55bca146","device_description":"Reception desk device","device_provisioned_date":"2026-04-23 14:15:22","device_provisioned_ip":"203.0.113.25","device_provisioned_agent":"Yealink SIP-T46U 108.86.0.20"},"properties":{"device_uuid":{"type":"string","example":"c0ec8113-aa15-40ac-8437-47185dd9dcf4"},"object":{"type":"string","example":"device"},"domain_uuid":{"type":"string","example":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"},"device_profile_uuid":{"type":"string","example":"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a"},"device_address":{"type":"string","example":"0004f23a5bc7"},"device_label":{"type":"string","example":"Front Desk Phone"},"device_template":{"type":"string","example":"Yealink T46U"},"device_template_uuid":{"type":"string","example":"a6cf59ba-4b2b-4bdd-b870-35cc55bca146"},"device_description":{"type":"string","example":"Reception desk device"},"device_provisioned_date":{"type":"string","example":"2026-04-23 14:15:22"},"device_provisioned_ip":{"type":"string","example":"203.0.113.25"},"device_provisioned_agent":{"type":"string","example":"Yealink SIP-T46U 108.86.0.20"}}}}}},"400":{"description":"Invalid device UUID","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Invalid device UUID.","code":"invalid_request","param":"device_uuid"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Invalid device UUID."},"code":{"type":"string","example":"invalid_request"},"param":{"type":"string","example":"device_uuid"}}}}}}}},"401":{"description":"Unauthenticated","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"authentication_error"},"message":{"type":"string","example":"Unauthenticated."},"code":{"type":"string","example":"unauthenticated"}}}}}}}},"404":{"description":"Device not found","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Device not found.","code":"resource_missing","param":"device_uuid"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Device not found."},"code":{"type":"string","example":"resource_missing"},"param":{"type":"string","example":"device_uuid"}}}}}}}}}}
+>
+  
+</StatusCodes>
+
+
+      

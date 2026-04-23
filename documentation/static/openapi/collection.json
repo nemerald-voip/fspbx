@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "FS PBX",
-        "_postman_id": "77512b5a-875e-4b2b-bea8-f5897414c9d4",
+        "_postman_id": "5aafbbd6-9886-4e6e-a387-dc9faef0690f",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -241,6 +241,171 @@
                             "code": 404,
                             "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"CDR not found.\",\"code\":\"resource_missing\",\"param\":\"xml_cdr_uuid\"}}",
                             "name": "CDR not found"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Devices",
+            "description": "",
+            "item": [
+                {
+                    "name": "List devices",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/devices",
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "50",
+                                    "description": "Optional. Number of results to return (min 1, max 100). Defaults to 50.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "starting_after",
+                                    "value": "c0ec8113-aa15-40ac-8437-47185dd9dcf4",
+                                    "description": "Optional. Return results after this device UUID (cursor).",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/devices?limit=50&starting_after=c0ec8113-aa15-40ac-8437-47185dd9dcf4",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns devices for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `device_view` permission.\n\nCompatibility note:\n- `device_template` is deprecated and retained for backward compatibility.\n- Use `device_template_uuid` as its successor.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 50.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `device_uuid` from the previous response.\n\nExamples:\n- First page: `GET \/api\/v1\/domains\/{domain_uuid}\/devices`\n- Next page:  `GET \/api\/v1\/domains\/{domain_uuid}\/devices?starting_after={last_device_uuid}`\n- Custom size: `GET \/api\/v1\/domains\/{domain_uuid}\/devices?limit=50`"
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"object\": \"list\",\n  \"url\": \"\/api\/v1\/domains\/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\/devices\",\n  \"has_more\": true,\n  \"data\": [\n    {\n      \"device_uuid\": \"c0ec8113-aa15-40ac-8437-47185dd9dcf4\",\n      \"object\": \"device\",\n      \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n      \"device_profile_uuid\": \"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a\",\n      \"device_address\": \"0004f23a5bc7\",\n      \"device_label\": \"Front Desk Phone\",\n      \"device_template\": \"Yealink T46U\",\n      \"device_template_uuid\": \"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",\n      \"device_description\": \"Reception desk device\"\n    }\n  ]\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid starting_after UUID.\",\"code\":\"invalid_request\",\"param\":\"starting_after\"}}",
+                            "name": "Invalid starting_after UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 403,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"You do not have access to this domain.\",\"code\":\"forbidden_domain\",\"param\":\"domain_uuid\"}}",
+                            "name": "Forbidden (domain access)"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Retrieve a device",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/devices\/:device_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/devices\/:device_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "device_uuid",
+                                    "key": "device_uuid",
+                                    "value": "c0ec8113-aa15-40ac-8437-47185dd9dcf4",
+                                    "description": "The device UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns a single device for the specified domain.\n\nCompatibility note:\n- `device_template` is deprecated and retained for backward compatibility.\n- Use `device_template_uuid` as its successor."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"device_uuid\": \"c0ec8113-aa15-40ac-8437-47185dd9dcf4\",\n  \"object\": \"device\",\n  \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"device_profile_uuid\": \"51759db8-c8bf-4b2f-b48a-6577d7ad6a1a\",\n  \"device_address\": \"0004f23a5bc7\",\n  \"device_label\": \"Front Desk Phone\",\n  \"device_template\": \"Yealink T46U\",\n  \"device_template_uuid\": \"a6cf59ba-4b2b-4bdd-b870-35cc55bca146\",\n  \"device_description\": \"Reception desk device\",\n  \"device_provisioned_date\": \"2026-04-23 14:15:22\",\n  \"device_provisioned_ip\": \"203.0.113.25\",\n  \"device_provisioned_agent\": \"Yealink SIP-T46U 108.86.0.20\"\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid device UUID.\",\"code\":\"invalid_request\",\"param\":\"device_uuid\"}}",
+                            "name": "Invalid device UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Device not found.\",\"code\":\"resource_missing\",\"param\":\"device_uuid\"}}",
+                            "name": "Device not found"
                         }
                     ]
                 }

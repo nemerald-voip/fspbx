@@ -643,6 +643,388 @@ paths:
         required: true
         schema:
           type: string
+  '/api/v1/domains/{domain_uuid}/devices':
+    get:
+      summary: 'List devices'
+      operationId: listDevices
+      description: "Returns devices for the specified domain the caller is allowed to access.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `device_view` permission.\n\nCompatibility note:\n- `device_template` is deprecated and retained for backward compatibility.\n- Use `device_template_uuid` as its successor.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 50.\n- If `starting_after` is not provided, results start from the beginning.\n- If `has_more` is true, request the next page by passing `starting_after`\n  equal to the last item's `device_uuid` from the previous response.\n\nExamples:\n- First page: `GET /api/v1/domains/{domain_uuid}/devices`\n- Next page:  `GET /api/v1/domains/{domain_uuid}/devices?starting_after={last_device_uuid}`\n- Custom size: `GET /api/v1/domains/{domain_uuid}/devices?limit=50`"
+      parameters:
+        -
+          in: query
+          name: limit
+          description: 'Optional. Number of results to return (min 1, max 100). Defaults to 50.'
+          example: 50
+          required: false
+          schema:
+            type: integer
+            description: 'Optional. Number of results to return (min 1, max 100). Defaults to 50.'
+            example: 50
+        -
+          in: query
+          name: starting_after
+          description: 'Optional. Return results after this device UUID (cursor).'
+          example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+          required: false
+          schema:
+            type: string
+            description: 'Optional. Return results after this device UUID (cursor).'
+            example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  object: list
+                  url: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/devices
+                  has_more: true
+                  data:
+                    -
+                      device_uuid: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                      object: device
+                      domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                      device_profile_uuid: 51759db8-c8bf-4b2f-b48a-6577d7ad6a1a
+                      device_address: 0004f23a5bc7
+                      device_label: 'Front Desk Phone'
+                      device_template: 'Yealink T46U'
+                      device_template_uuid: a6cf59ba-4b2b-4bdd-b870-35cc55bca146
+                      device_description: 'Reception desk device'
+                properties:
+                  object:
+                    type: string
+                    example: list
+                  url:
+                    type: string
+                    example: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/devices
+                  has_more:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    example:
+                      -
+                        device_uuid: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                        object: device
+                        domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                        device_profile_uuid: 51759db8-c8bf-4b2f-b48a-6577d7ad6a1a
+                        device_address: 0004f23a5bc7
+                        device_label: 'Front Desk Phone'
+                        device_template: 'Yealink T46U'
+                        device_template_uuid: a6cf59ba-4b2b-4bdd-b870-35cc55bca146
+                        device_description: 'Reception desk device'
+                    items:
+                      type: object
+                      properties:
+                        device_uuid:
+                          type: string
+                          example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                        object:
+                          type: string
+                          example: device
+                        domain_uuid:
+                          type: string
+                          example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                        device_profile_uuid:
+                          type: string
+                          example: 51759db8-c8bf-4b2f-b48a-6577d7ad6a1a
+                        device_address:
+                          type: string
+                          example: 0004f23a5bc7
+                        device_label:
+                          type: string
+                          example: 'Front Desk Phone'
+                        device_template:
+                          type: string
+                          example: 'Yealink T46U'
+                        device_template_uuid:
+                          type: string
+                          example: a6cf59ba-4b2b-4bdd-b870-35cc55bca146
+                        device_description:
+                          type: string
+                          example: 'Reception desk device'
+        400:
+          description: 'Invalid starting_after UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid starting_after UUID.'
+                    code: invalid_request
+                    param: starting_after
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid starting_after UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: starting_after
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        403:
+          description: 'Forbidden (domain access)'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'You do not have access to this domain.'
+                    code: forbidden_domain
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'You do not have access to this domain.'
+                      code:
+                        type: string
+                        example: forbidden_domain
+                      param:
+                        type: string
+                        example: domain_uuid
+        404:
+          description: 'Domain not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Domain not found.'
+                    code: resource_missing
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Domain not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: domain_uuid
+      tags:
+        - Devices
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/devices/{device_uuid}':
+    get:
+      summary: 'Retrieve a device'
+      operationId: retrieveADevice
+      description: "Returns a single device for the specified domain.\n\nCompatibility note:\n- `device_template` is deprecated and retained for backward compatibility.\n- Use `device_template_uuid` as its successor."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  device_uuid: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                  object: device
+                  domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  device_profile_uuid: 51759db8-c8bf-4b2f-b48a-6577d7ad6a1a
+                  device_address: 0004f23a5bc7
+                  device_label: 'Front Desk Phone'
+                  device_template: 'Yealink T46U'
+                  device_template_uuid: a6cf59ba-4b2b-4bdd-b870-35cc55bca146
+                  device_description: 'Reception desk device'
+                  device_provisioned_date: '2026-04-23 14:15:22'
+                  device_provisioned_ip: 203.0.113.25
+                  device_provisioned_agent: 'Yealink SIP-T46U 108.86.0.20'
+                properties:
+                  device_uuid:
+                    type: string
+                    example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                  object:
+                    type: string
+                    example: device
+                  domain_uuid:
+                    type: string
+                    example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  device_profile_uuid:
+                    type: string
+                    example: 51759db8-c8bf-4b2f-b48a-6577d7ad6a1a
+                  device_address:
+                    type: string
+                    example: 0004f23a5bc7
+                  device_label:
+                    type: string
+                    example: 'Front Desk Phone'
+                  device_template:
+                    type: string
+                    example: 'Yealink T46U'
+                  device_template_uuid:
+                    type: string
+                    example: a6cf59ba-4b2b-4bdd-b870-35cc55bca146
+                  device_description:
+                    type: string
+                    example: 'Reception desk device'
+                  device_provisioned_date:
+                    type: string
+                    example: '2026-04-23 14:15:22'
+                  device_provisioned_ip:
+                    type: string
+                    example: 203.0.113.25
+                  device_provisioned_agent:
+                    type: string
+                    example: 'Yealink SIP-T46U 108.86.0.20'
+        400:
+          description: 'Invalid device UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid device UUID.'
+                    code: invalid_request
+                    param: device_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid device UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: device_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        404:
+          description: 'Device not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Device not found.'
+                    code: resource_missing
+                    param: device_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Device not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: device_uuid
+      tags:
+        - Devices
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+      -
+        in: path
+        name: device_uuid
+        description: 'The device UUID.'
+        example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+        required: true
+        schema:
+          type: string
   /api/v1/domains:
     get:
       summary: 'List domains'
@@ -5764,6 +6146,9 @@ paths:
 tags:
   -
     name: CDRs
+    description: ''
+  -
+    name: Devices
     description: ''
   -
     name: Domains

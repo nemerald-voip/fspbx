@@ -26,6 +26,24 @@ const sidebar: SidebarsConfig = {
     },
     {
       type: "category",
+      label: "Devices",
+      items: [
+        {
+          type: "doc",
+          id: "api/v1/list-devices",
+          label: "List devices",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/retrieve-a-device",
+          label: "Retrieve a device",
+          className: "api-method get",
+        },
+      ],
+    },
+    {
+      type: "category",
       label: "Domains",
       items: [
         {
