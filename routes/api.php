@@ -33,6 +33,7 @@ use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Controllers\PhoneNumbersController;
+use App\Http\Controllers\RecordingsManagerController;
 use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\SpeedDialController;
 use App\Http\Controllers\SystemSettingsController;
@@ -113,6 +114,11 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('ring-groups/{ring_group}/get-greeting', [RingGroupsController::class, 'getGreeting'])->name('ring-groups.getGreeting');
     Route::post('ring-groups/{ring_group}/upload-greeting', [RingGroupsController::class, 'uploadGreeting'])->name('ring-groups.uploadGreeting');
     Route::post('ring-groups/{ring_group}/delete-greeting', [RingGroupsController::class, 'deleteGreeting'])->name('ring-groups.deleteGreeting');
+
+    // Recordings Manager
+    Route::get('recordings-manager/data', [RecordingsManagerController::class, 'getData'])->name('recordings-manager.data');
+    Route::post('recordings-manager/bulk-delete', [RecordingsManagerController::class, 'bulkDelete'])->name('recordings-manager.bulk.delete');
+    Route::post('recordings-manager/select-all', [RecordingsManagerController::class, 'selectAll'])->name('recordings-manager.select.all');
 
     // Ring Group AI Text-to-Speech & File Serving
     Route::post('ring-groups/{ring_group}/text-to-speech', [RingGroupsController::class, 'textToSpeech'])->name('ring-groups.textToSpeech');

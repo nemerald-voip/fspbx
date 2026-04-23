@@ -131,7 +131,7 @@ class FaxSentController extends Controller
             $data = $data->cursor();
         }
 
-        logger($data);
+        // logger($data);
 
         return $data;
     }
