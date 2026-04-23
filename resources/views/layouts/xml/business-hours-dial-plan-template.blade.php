@@ -254,17 +254,23 @@ $makeTimeRangeRegex = function ($start, $end) {
                             <action application="set" data="slot_matched=1" inline="true"/>
                             <action application="{{ $dest['destination_app'] }}"
                                 data="{{ $dest['destination_data'] }}" />
+                            @if ($h->action === 'recordings')
+                                <action application="hangup" data="NORMAL_CLEARING" />
+                            @endif
                         </condition>
                     </condition>
                 @endforeach
             @elseif (count($useAttrs ?? []))
-                {{-- attribute-based condition --}}
                 <condition
                     @foreach ($useAttrs as $attr => $val)
-                {{ $attr }}="{{ $val }}" @endforeach
+                        {{ $attr }}="{{ $val }}"
+                    @endforeach
                     {!! $timeAttr !!} break="on-true">
                     <action application="set" data="slot_matched=1" inline="true"/>
                     <action application="{{ $dest['destination_app'] }}" data="{{ $dest['destination_data'] }}" />
+                    @if ($h->action === 'recordings')
+                        <action application="hangup" data="NORMAL_CLEARING" />
+                    @endif
                 </condition>
             @endif
         @endforeach
@@ -304,6 +310,9 @@ $makeTimeRangeRegex = function ($start, $end) {
                 {{-- mark that a slot matched --}}
                 <action application="set" data="slot_matched=1" inline="true"/>
                 <action application="{{ $destApp }}" data="{{ $destData }}" />
+                @if ($first->action === 'recordings')
+                    <action application="hangup" data="NORMAL_CLEARING" />
+                @endif
             </condition>
         @endforeach
 
