@@ -62,6 +62,25 @@ local function check_pin(pin)
     return false
 end
 
+local function play_call_flow_sound(row, new_status, domain_name)
+    local sound_file = ""
+
+    if tostring(new_status) == "true" then
+        sound_file = tostring(row.call_flow_sound or "")
+    else
+        sound_file = tostring(row.call_flow_alternate_sound or "")
+    end
+
+    if sound_file == "" then
+        debug_log("NOTICE", "No call flow sound defined for status=" .. tostring(new_status))
+        return
+    end
+
+    local sound_path = "/var/lib/freeswitch/recordings/" .. tostring(domain_name) .. "/" .. sound_file
+
+    debug_log("NOTICE", "Playing call flow sound for status=" .. tostring(new_status) .. ": " .. sound_path)
+    session:streamFile(sound_path)
+end
 
 local function main()
     if not session:ready() then return end
@@ -71,11 +90,16 @@ local function main()
     if not session:ready() then return end
 
     -- Pull all the important vars from the channel
-    local domain_uuid    = session:getVariable("domain_uuid")
-    local domain_name    = session:getVariable("domain_name")
+    local domain_uuid = session:getVariable("domain_uuid")
+    local domain_name = session:getVariable("domain_name")
     local destination_number = session:getVariable("destination_number") or ""
 
-    debug_log("NOTICE", string.format(" Flow Toggle: to=%s domain_uuid=%s domain_name=%s", destination_number, domain_uuid, domain_name))
+    debug_log("NOTICE", string.format(
+        "Flow Toggle: to=%s domain_uuid=%s domain_name=%s",
+        tostring(destination_number),
+        tostring(domain_uuid),
+        tostring(domain_name)
+    ))
 
     if not (domain_uuid and domain_name and destination_number) then
         debug_log("ERR", "Missing required session variables (domain_uuid/domain_name/destination_number)")
@@ -83,16 +107,27 @@ local function main()
         return
     end
 
-    local extension =
-        destination_number:match("^flow(\d+)$")
+    local extension = destination_number:match("^flow(%d+)$")
+    local fc = destination_number:match("^(%*%d+)$")
 
-    if not extension then
-        debug_log("ERR", "Could not extract extension from destination_number: " .. destination_number)
+    local lookup_column
+    local lookup_value
+
+    if extension then
+        lookup_column = "call_flow_extension"
+        lookup_value = extension
+    elseif fc then
+        lookup_column = "call_flow_feature_code"
+        lookup_value = fc
+    else
+        debug_log("ERR", "Could not extract extension or feature code from destination_number: " .. tostring(destination_number))
         session:hangup()
         return
     end
 
-    debug_log("NOTICE", "Extracted extension: " .. extension)
+    debug_log("NOTICE", "Extracted extension: " .. tostring(extension))
+    debug_log("NOTICE", "Extracted feature code: " .. tostring(fc))
+    debug_log("NOTICE", "Call flow lookup: " .. lookup_column .. "=" .. tostring(lookup_value))
 
     local dbh = Database.new("system")
     if not (dbh and dbh:connected()) then
@@ -101,25 +136,26 @@ local function main()
         return
     end
 
-
-    local sql = [[
+    local sql = string.format([[
         SELECT *
         FROM v_call_flows
-        WHERE call_flow_extension = :extension
+        WHERE %s = :lookup_value
           AND domain_uuid = :domain_uuid
         LIMIT 1
-    ]]
+    ]], lookup_column)
 
     local params = {
-        domain_uuid = domain_uuid,
-        extension   = extension,
+        domain_uuid  = domain_uuid,
+        lookup_value = lookup_value,
     }
 
     local row = dbh:first_row(sql, params)
     if not row then
         debug_log("ERR", string.format(
-            "Call flow not found for extension=%s domain_uuid=%s",
-            extension, domain_uuid
+            "Call flow not found for %s=%s domain_uuid=%s",
+            lookup_column,
+            tostring(lookup_value),
+            tostring(domain_uuid)
         ))
         dbh:release()
         session:hangup()
@@ -148,8 +184,8 @@ local function main()
     debug_log("NOTICE", string.format(
         "Toggling call flow %s from %s to %s",
         tostring(row.call_flow_uuid),
-        current_status,
-        toggle
+        tostring(current_status),
+        tostring(toggle)
     ))
 
     local update_sql = [[
@@ -172,26 +208,30 @@ local function main()
         return
     end
 
-    debug_log("NOTICE", "Call flow status updated successfully to " .. toggle)
+    debug_log("NOTICE", "Call flow status updated successfully to " .. tostring(toggle))
 
-    local notify_target = tostring(row.call_flow_extension or extension)
+local notify_target = tostring(row.call_flow_extension or extension or lookup_value)
 
-    local cmd = string.format(
-        "luarun lua/flow_notify.lua %s %s %s",
-        notify_target,
-        domain_name,
-        toggle
-    )
+local cmd = string.format(
+    "luarun lua/flow_notify.lua %s %s %s",
+    notify_target,
+    domain_name,
+    toggle
+)
 
-    debug_log("NOTICE", "Sending BLF notify command: " .. cmd)
-    api:execute("bgapi", cmd)
+debug_log("NOTICE", "Sending BLF notify command: " .. cmd)
+api:execute("bgapi", cmd)
+
+-- Play sound for the NEW status after toggle.
+-- New status true  = call_flow_sound
+-- New status false = call_flow_alternate_sound
+if session:ready() then
+    play_call_flow_sound(row, toggle, domain_name)
+end
 
     dbh:release()
     session:hangup()
     return
-
 end
-
-
 
 main()
