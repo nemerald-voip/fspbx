@@ -1,0 +1,72 @@
+---
+id: delete-a-device
+title: "Delete a device"
+description: "Deletes a device within the specified domain."
+sidebar_label: "Delete a device"
+hide_title: true
+hide_table_of_contents: true
+api: eJzVV2Fr2zoU/SviftrAruOXlGZmDDravRUerCwNbJRQZPum1upIniRnDcb/fUhyEic2WbotH16/rLOudM+55+j2qgJRoKSaCX6TQgQp5qjx8gqXLEHwIEWVSFaYdYjgyq4qQklqA8gPpjPGic6QqAITNmeYklQsKONn4EFBJV2gRqkguq+AmTMKqjPwgNMFmnw29qEsWdrJdpdhcxaZTm+uzIH4TBdFbjaOBuF4fkGH/hgH1B9dxLH/Zj6a+4NRHA7DIQ4wjMEDid9LJjGFSMsSPVBJhgsKUQV6VZhzlJaMP0Jde/34LM8D+FwduviSASbjMBz6lIbn/mhAE388Gl74o4twfJ6mb9JkPnoRvpkJVoXgCpVZ/2cwMP/sQpqUSYJKgQeJ4Bq5NiG0KHKWWI2Db8rEVd08Iv6GiW5TqNbf1lUAD2wdjibnzNRwqz0opDGbZo7A+vR9qu0qNonrdeZDsUeBqluoNofFQuRIefs0i9j+eDDqq/QNX9KcpW0D/KWqo5RCtmKYy/RgrIJKP7h1DxaoFH3EfixnFkzas399LffMXXf02cexwbob5lYPCdNPoG4xOLS7l1y9ZveCvGZTw/zXllsXZeuBsOuBKaelzpBrozOmJ9K/lYMJ3iP/HoyW9OUewBOK3IvyWI07DI7St8tuq9aoq5b7m0a40GQuSn4quX59XfeBtASTqEQpE3xYMKUc3//VZe1SO0rJDu0/uarn/e1ao+Q0JwrlEiVZq3KSC1uw3ibdg2CnTbv1dcVPeFU3+I7vwb3Yj+zCe7w2Qmn6aObCxjQKZgaNzsR2DrX21xlEENCCBcswcPOgCqrW4FgHzgjm69YRNXjg4Lrhs5Q5RJBpXagoCKpMKF13RroPE3L7/gu5vL1pqIIHSyoZjXNXXbPNuWtOy9zMRl8/TT/7Hya377/4Hz9N7jpHfhRKm2GS/MhQImkyMEVkyTnjj+RVU6uIzFURP5+tRCn9ZobmqF+bks0Ml6SUTK8smU36+1l7bWLs6oBuIjbaGOrQTJh26kEqLcFdvF9FSRLKiUQtGS6RGDxEiyfkJF6RJVNMG9j2c0pVFgsqU0J5SpKcJU9m7W387l/k5l2BtpZ299sgfndmfc34XFhgTFuLbKveQWPqj1K5/yxD2xiE0gtqr2czpLtnyeZVsn9Itb3lL37BNLXT+KyDIqeM21nUWKlqrHlv7pOBGZq8zp7gQbT/snEeNwutrjXzGkfdQ1XFVOFU5nVtPn8vURqtZ1sDOuWZMr+nEM1prvAA1Vefm7fFa9Lzkuoltm5gfGV9n5foJHjC1d5bzTyXfh/K7pz6O1DanX9We5AhTVHaCrmIyyTBQrf2dtp73e43V9f/Xd9dQ13/BOG+KS0=
+sidebar_class_name: "delete api-method"
+info_path: docs/api/v1/fs-pbx-api
+custom_edit_url: null
+hide_send_button: true
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Delete a device"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"delete"}
+  path={"/api/v1/domains/{domain_uuid}/devices/{device_uuid}"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Deletes a device within the specified domain.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"in":"path","name":"domain_uuid","description":"The domain UUID.","example":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","required":true,"schema":{"type":"string"}},{"in":"path","name":"device_uuid","description":"The device UUID.","example":"c0ec8113-aa15-40ac-8437-47185dd9dcf4","required":true,"schema":{"type":"string"}}]}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"Success","content":{"application/json":{"schema":{"type":"object","example":{"object":"device","uuid":"c0ec8113-aa15-40ac-8437-47185dd9dcf4","deleted":true},"properties":{"object":{"type":"string","example":"device"},"uuid":{"type":"string","example":"c0ec8113-aa15-40ac-8437-47185dd9dcf4"},"deleted":{"type":"boolean","example":true}}}}}},"400":{"description":"Invalid device UUID","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Invalid device UUID.","code":"invalid_request","param":"device_uuid"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Invalid device UUID."},"code":{"type":"string","example":"invalid_request"},"param":{"type":"string","example":"device_uuid"}}}}}}}},"401":{"description":"Unauthenticated","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"authentication_error"},"message":{"type":"string","example":"Unauthenticated."},"code":{"type":"string","example":"unauthenticated"}}}}}}}},"404":{"description":"Device not found","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Device not found.","code":"resource_missing","param":"device_uuid"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Device not found."},"code":{"type":"string","example":"resource_missing"},"param":{"type":"string","example":"device_uuid"}}}}}}}},"500":{"description":"Internal server error","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"api_error","message":"Internal server error.","code":"internal_error"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"api_error"},"message":{"type":"string","example":"Internal server error."},"code":{"type":"string","example":"internal_error"}}}}}}}}}}
+>
+  
+</StatusCodes>
+
+
+      

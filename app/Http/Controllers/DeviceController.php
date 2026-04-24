@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\Devices;
 use App\Data\DeviceData;
-use App\Models\DeviceKey;
 use App\Models\Extensions;
 use App\Models\DeviceLines;
 use Illuminate\Support\Str;
@@ -13,6 +12,7 @@ use App\Traits\ChecksLimits;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use App\Services\DeviceService;
 use App\Services\DeviceActionService;
 use Spatie\QueryBuilder\QueryBuilder;
 use App\Services\FreeswitchEslService;
@@ -20,7 +20,6 @@ use Spatie\QueryBuilder\AllowedFilter;
 use App\Http\Requests\StoreDeviceRequest;
 use App\Http\Requests\UpdateDeviceRequest;
 use App\Http\Requests\BulkUpdateDeviceRequest;
-use App\Services\DeviceCloudProvisioningService;
 use Spatie\QueryBuilder\AllowedSort;
 
 /**
@@ -295,62 +294,12 @@ class DeviceController extends Controller
         $validated = $request->validated();
 
         try {
-            DB::beginTransaction();
-
-            $inputs = $validated;
-
-            $inputs['device_address'] = $inputs['device_address_modified'];
-
-            // Create device
-            $device = new Devices();
-            $device->fill($inputs);
-            $device->save();
-
-            // Create device lines
-            if (!empty($inputs['device_lines']) && is_array($inputs['device_lines'])) {
-                foreach ($inputs['device_lines'] as $index => $line) {
-                    $extension = Extensions::where('extension', $line['auth_id'])
-                        ->where('domain_uuid', $inputs['domain_uuid'])
-                        ->first();
-                    if ($extension) {
-                        $deviceLines = new DeviceLines();
-                        $deviceLines->fill([
-                            'device_uuid' => $device->device_uuid,
-                            'line_number' => $line['line_number'],
-                            'line_type_id' => $line['line_type_id'] ?? 'line',
-                            'server_address' => session('domain_name'),
-                            'outbound_proxy_primary' => get_domain_setting('outbound_proxy_primary'),
-                            'outbound_proxy_secondary' => get_domain_setting('outbound_proxy_secondary'),
-                            'server_address_primary' => $line['server_address_primary'] ?? get_domain_setting('server_address_primary'),
-                            'server_address_secondary' => $line['server_address_secondary'] ?? get_domain_setting('server_address_secondary'),
-                            'outbound_proxy_primary' => $line['outbound_proxy_primary'] ?? get_domain_setting('outbound_proxy_primary'),
-                            'outbound_proxy_secondary' => $line['outbound_proxy_secondary'] ?? get_domain_setting('outbound_proxy_secondary'),
-                            'display_name' => $line['display_name'],
-                            'user_id' => $extension ? $extension->extension : null,
-                            'auth_id' => $extension ? $extension->extension : $line['auth_id'],
-                            'label' => $line['display_name'],
-                            'password' => $extension ? $extension->password : null,
-                            'sip_port' => $line['sip_port'] ?? get_domain_setting('line_sip_port'),
-                            'sip_transport' => $line['sip_transport'] ?? get_domain_setting('line_sip_transport'),
-                            'register_expires' => $line['register_expires'] ?? get_domain_setting('register_expires'),
-                            'shared_line' => $line['shared_line'] ?? null,
-                            'device_line_uuid' => Str::uuid(),
-                            'domain_uuid' => $device->domain_uuid,
-                            'enabled' => 'true',
-                        ]);
-
-                        $deviceLines->save();
-                    }
-                }
-            }
-
-            DB::commit();
+            app(DeviceService::class)->create($validated);
 
             return response()->json([
                 'messages' => ['success' => ['Device created successfully.']]
             ], 201);
         } catch (\Exception $e) {
-            DB::rollBack();
             logger('DeviceController@store error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
@@ -381,134 +330,12 @@ class DeviceController extends Controller
         }
 
         try {
-            DB::beginTransaction();
-
-            // Device DB uses device_address, set it from device_address_modified
-            $inputs['device_address'] = $inputs['device_address_modified'];
-
-            $device->update($inputs);
-
-            // Create new device lines
-            if (array_key_exists('device_lines', $inputs)) {
-                if (empty($inputs['device_lines'])) {
-                    // Field is present but empty: remove all device lines
-                    $device->lines()->delete();
-                } else {
-                    // Field is present and has items: remove all then recreate
-                    $device->lines()->delete();
-
-                    foreach ($inputs['device_lines'] as $index => $line) {
-                        $isExternalLine = ($line['line_type_id'] ?? null) === 'externalline';
-
-                        $extension = null;
-                        if (!$isExternalLine && !empty($line['auth_id'])) {
-                            $extension = Extensions::where('extension', $line['auth_id'])
-                                ->where('domain_uuid', $inputs['domain_uuid'])
-                                ->first();
-                        }
-
-                        $deviceLineData = [
-                            'device_uuid' => $device->device_uuid,
-                            'line_number' => $line['line_number'],
-                            'server_address' => $line['server_address'],
-                            'server_address_primary' => $line['server_address_primary'],
-                            'server_address_secondary' => $line['server_address_secondary'],
-                            'outbound_proxy_primary' => $line['outbound_proxy_primary'],
-                            'outbound_proxy_secondary' => $line['outbound_proxy_secondary'],
-                            'display_name' => $line['display_name'],
-                            'user_id' => $isExternalLine
-                                ? ($line['user_id'] ?? null)
-                                : ($extension->extension ?? ($line['user_id'] ?? null)),
-                            'auth_id' => $isExternalLine
-                                ? ($line['auth_id'] ?? null)
-                                : ($extension->extension ?? ($line['auth_id'] ?? null)),
-                            'password' => $isExternalLine
-                                ? ($line['password'] ?? null)
-                                : ($extension->password ?? null),
-                            'label' => $line['display_name'],
-                            'sip_port' => $line['sip_port'],
-                            'sip_transport' => $line['sip_transport'],
-                            'register_expires' => $line['register_expires'],
-                            'shared_line' => $line['line_type_id'] == 'sharedline' ? '1' : '',
-                            'external_line' => $isExternalLine,
-                            'device_line_uuid' => $line['device_line_uuid'] ?? null,
-                            'domain_uuid' => $device->domain_uuid,
-                            'enabled' => 'true',
-                        ];
-
-                        //                  logger($deviceLineData);
-
-                        $deviceLines = new DeviceLines();
-                        $deviceLines->fill($deviceLineData);
-                        $deviceLines->save();
-                    }
-                }
-            }
-
-            // Create/update device settings
-            if (array_key_exists('device_settings', $inputs)) {
-                if (empty($inputs['device_settings'])) {
-                    // Field present but empty → remove all settings for this device
-                    $device->settings()->delete();
-                } else {
-                    // Field present with items → clear and recreate
-                    $device->settings()->delete();
-
-                    foreach ($inputs['device_settings'] as $item) {
-                        $payload = [
-                            'device_uuid'                => $device->device_uuid,
-                            'domain_uuid'                => $device->domain_uuid,
-
-                            // Defaults match common FusionPBX conventions; override if sent in payload
-                            'device_setting_category'    => $item['device_setting_category'] ?? null,
-                            'device_setting_subcategory' => $item['device_setting_subcategory'] ?? null,
-                            'device_setting_name'        => $item['device_setting_name']        ?? null,
-                            'device_setting_value'       => $item['device_setting_value']       ?? null,
-                            'device_setting_enabled'     => $item['device_setting_enabled'] ?? 'false',
-                            'device_setting_description' => $item['device_setting_description'] ?? null,
-                        ];
-
-                        $device->settings()->create($payload);
-                    }
-                }
-            }
-
-            // Create/update device keys
-            if (array_key_exists('device_keys', $inputs)) {
-                if (empty($inputs['device_keys'])) {
-                    // Field is present but empty: remove all device keys
-                    $device->keys()->delete();
-                } else {
-                    // Field is present and has items: remove all then recreate
-                    $device->keys()->delete();
-
-                    $rows = [];
-
-                    foreach ($inputs['device_keys'] as $k) {
-                        $rows[] = [
-                            'device_uuid' => $device->device_uuid,
-                            'key_area'    => $k['key_area'] ?? 'main',
-                            'key_index'   => $k['key_index'],
-                            'key_type'    => $k['key_type'] ?? null,
-                            'key_value'   => $k['key_value'] ?? null,
-                            'key_label'   => $k['key_label'] ?? null,
-                            'created_at'  => now(),
-                            'updated_at'  => now(),
-                        ];
-                    }
-
-                    // Bulk insert 
-                    DeviceKey::insert($rows);
-                }
-            }
-
-            DB::commit();
+            app(DeviceService::class)->update($device, $inputs);
 
             return response()->json([
                 'messages' => ['success' => ['Device updated succesfully.']]
             ], 200);
         } catch (\Exception $e) {
-            DB::rollBack();
             logger('DeviceController@update error: ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return response()->json([
                 'success' => false,
@@ -1064,31 +891,7 @@ class DeviceController extends Controller
                 ]);
 
             foreach ($devices as $device) {
-                // Delete all related lines for each device
-                if ($device->lines) {
-                    foreach ($device->lines as $line) {
-                        $line->delete();
-                    }
-                }
-
-                // Delete related cloud provisioning record
-                if ($device->cloudProvisioning) {
-
-                    $params = [
-                        'device_uuid' => $device->device_uuid,
-                        'domain_uuid' => $device->domain_uuid,
-                        'device_vendor' => $device->device_vendor,
-                        'device_address' => $device->device_address,
-                    ];
-
-                    $deregisterJob = (new DeviceCloudProvisioningService)->deregister($params);
-                    $resetJob = app(DeviceCloudProvisioningService::class)->reset($params);
-
-                    dispatch($deregisterJob->chain([$resetJob]));
-                }
-
-                // Delete the device itself
-                $device->delete();
+                app(DeviceService::class)->delete($device);
             }
 
             // Commit Transaction

@@ -110,6 +110,15 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
     Route::get('/domains/{domain_uuid}/devices/{device_uuid}', [DeviceController::class, 'show'])
         ->middleware('user.authorize:device_view');
 
+    Route::post('/domains/{domain_uuid}/devices', [DeviceController::class, 'store'])
+        ->middleware('user.authorize:device_add');
+
+    Route::patch('/domains/{domain_uuid}/devices/{device_uuid}', [DeviceController::class, 'update'])
+        ->middleware('user.authorize:device_edit');
+
+    Route::delete('/domains/{domain_uuid}/devices/{device_uuid}', [DeviceController::class, 'destroy'])
+        ->middleware('user.authorize:device_delete');
+
     /*
     |--------------------------------------------------------------------------
     | Phone Numbers (domain-scoped)

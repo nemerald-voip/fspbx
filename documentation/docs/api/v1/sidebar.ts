@@ -36,9 +36,27 @@ const sidebar: SidebarsConfig = {
         },
         {
           type: "doc",
+          id: "api/v1/create-a-device",
+          label: "Create a device",
+          className: "api-method post",
+        },
+        {
+          type: "doc",
           id: "api/v1/retrieve-a-device",
           label: "Retrieve a device",
           className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/update-a-device",
+          label: "Update a device",
+          className: "api-method patch",
+        },
+        {
+          type: "doc",
+          id: "api/v1/delete-a-device",
+          label: "Delete a device",
+          className: "api-method delete",
         },
       ],
     },

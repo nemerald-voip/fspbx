@@ -5,10 +5,14 @@ namespace App\Http\Controllers\Api\V1;
 use App\Models\Domain;
 use App\Models\Devices;
 use Illuminate\Http\Request;
+use App\Services\DeviceService;
 use App\Data\Api\V1\DeviceData;
+use App\Data\Api\V1\DeletedResponseData;
 use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
 use Spatie\QueryBuilder\QueryBuilder;
+use App\Http\Requests\Api\V1\StoreDeviceRequest;
+use App\Http\Requests\Api\V1\UpdateDeviceRequest;
 
 class DeviceController extends Controller
 {
@@ -204,6 +208,241 @@ class DeviceController extends Controller
         $payload = $this->buildDeviceShowPayload($domain_uuid, $device_uuid);
 
         return response()->json($payload->toArray(), 200);
+    }
+
+    /**
+     * Create a device
+     *
+     * Creates a new device in the specified domain.
+     *
+     * Notes:
+     * - `device_template` is deprecated and retained for backward compatibility.
+     * - Use `device_template_uuid` as its successor.
+     *
+     * @group Devices
+     * @authenticated
+     *
+     * @urlParam domain_uuid string required The domain UUID. Example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+     *
+     * @response 201 scenario="Created" {
+     *   "device_uuid": "c0ec8113-aa15-40ac-8437-47185dd9dcf4",
+     *   "object": "device",
+     *   "domain_uuid": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+     *   "device_profile_uuid": "51759db8-c8bf-4b2f-b48a-6577d7ad6a1a",
+     *   "device_address": "0004f23a5bc7",
+     *   "device_label": "Front Desk Phone",
+     *   "device_template": "Yealink T46U",
+     *   "device_template_uuid": "a6cf59ba-4b2b-4bdd-b870-35cc55bca146",
+     *   "device_description": "Reception desk device",
+     *   "device_provisioned_date": null,
+     *   "device_provisioned_ip": null,
+     *   "device_provisioned_agent": null
+     * }
+     *
+     * @response 400 scenario="Invalid domain UUID" {"error":{"type":"invalid_request_error","message":"Invalid domain UUID.","code":"invalid_request","param":"domain_uuid"}}
+     * @response 401 scenario="Unauthenticated" {"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}}
+     * @response 404 scenario="Domain not found" {"error":{"type":"invalid_request_error","message":"Domain not found.","code":"resource_missing","param":"domain_uuid"}}
+     * @response 422 scenario="Validation error" {"errors":{"device_address":["MAC address is required"]}}
+     */
+    public function store(StoreDeviceRequest $request, string $domain_uuid)
+    {
+        $user = $request->user();
+        if (! $user) {
+            throw new ApiException(401, 'authentication_error', 'Unauthenticated.', 'unauthenticated');
+        }
+
+        if (! preg_match('/^[0-9a-fA-F-]{36}$/', $domain_uuid)) {
+            throw new ApiException(400, 'invalid_request_error', 'Invalid domain UUID.', 'invalid_request', 'domain_uuid');
+        }
+
+        $domain = Domain::query()
+            ->where('domain_uuid', $domain_uuid)
+            ->first(['domain_uuid']);
+
+        if (! $domain) {
+            throw new ApiException(404, 'invalid_request_error', 'Domain not found.', 'resource_missing', 'domain_uuid');
+        }
+
+        $validated = array_merge($request->validated(), [
+            'domain_uuid' => $domain_uuid,
+            'device_address_modified' => (string) $request->input('device_address_modified'),
+            'device_vendor' => $request->input('device_vendor'),
+        ]);
+
+        try {
+            $device = app(DeviceService::class)->create($validated);
+
+            $payload = $this->buildDeviceShowPayload($domain_uuid, (string) $device->device_uuid);
+
+            return response()
+                ->json($payload->toArray(), 201)
+                ->header('Location', "/api/v1/domains/{$domain_uuid}/devices/{$device->device_uuid}");
+        } catch (\Throwable $e) {
+            logger('API Device store error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            throw new ApiException(500, 'api_error', 'Internal server error.', 'internal_error');
+        }
+    }
+
+    /**
+     * Update a device
+     *
+     * Updates an existing device in the specified domain.
+     *
+     * Notes:
+     * - Only provided fields are updated.
+     * - `device_template` is deprecated and retained for backward compatibility.
+     * - Use `device_template_uuid` as its successor.
+     *
+     * @group Devices
+     * @authenticated
+     *
+     * @urlParam domain_uuid string required The domain UUID. Example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+     * @urlParam device_uuid string required The device UUID. Example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+     *
+     * @response 200 scenario="Success" {
+     *   "device_uuid": "c0ec8113-aa15-40ac-8437-47185dd9dcf4",
+     *   "object": "device",
+     *   "domain_uuid": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+     *   "device_profile_uuid": "51759db8-c8bf-4b2f-b48a-6577d7ad6a1a",
+     *   "device_address": "0004f23a5bc7",
+     *   "device_label": "Front Desk Phone",
+     *   "device_template": "Yealink T46U",
+     *   "device_template_uuid": "a6cf59ba-4b2b-4bdd-b870-35cc55bca146",
+     *   "device_description": "Reception desk device",
+     *   "device_provisioned_date": "2026-04-23 14:15:22",
+     *   "device_provisioned_ip": "203.0.113.25",
+     *   "device_provisioned_agent": "Yealink SIP-T46U 108.86.0.20"
+     * }
+     *
+     * @response 400 scenario="Invalid domain UUID" {"error":{"type":"invalid_request_error","message":"Invalid domain UUID.","code":"invalid_request","param":"domain_uuid"}}
+     * @response 400 scenario="Invalid device UUID" {"error":{"type":"invalid_request_error","message":"Invalid device UUID.","code":"invalid_request","param":"device_uuid"}}
+     * @response 401 scenario="Unauthenticated" {"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}}
+     * @response 404 scenario="Domain not found" {"error":{"type":"invalid_request_error","message":"Domain not found.","code":"resource_missing","param":"domain_uuid"}}
+     * @response 404 scenario="Device not found" {"error":{"type":"invalid_request_error","message":"Device not found.","code":"resource_missing","param":"device_uuid"}}
+     * @response 422 scenario="Validation error" {"errors":{"device_address":["Duplicate MAC address has been found"]}}
+     */
+    public function update(UpdateDeviceRequest $request, string $domain_uuid, string $device_uuid)
+    {
+        $user = $request->user();
+        if (! $user) {
+            throw new ApiException(401, 'authentication_error', 'Unauthenticated.', 'unauthenticated');
+        }
+
+        if (! preg_match('/^[0-9a-fA-F-]{36}$/', $domain_uuid)) {
+            throw new ApiException(400, 'invalid_request_error', 'Invalid domain UUID.', 'invalid_request', 'domain_uuid');
+        }
+
+        if (! preg_match('/^[0-9a-fA-F-]{36}$/', $device_uuid)) {
+            throw new ApiException(400, 'invalid_request_error', 'Invalid device UUID.', 'invalid_request', 'device_uuid');
+        }
+
+        $domain = Domain::query()
+            ->where('domain_uuid', $domain_uuid)
+            ->first(['domain_uuid']);
+
+        if (! $domain) {
+            throw new ApiException(404, 'invalid_request_error', 'Domain not found.', 'resource_missing', 'domain_uuid');
+        }
+
+        $device = Devices::query()
+            ->where('domain_uuid', $domain_uuid)
+            ->where('device_uuid', $device_uuid)
+            ->first();
+
+        if (! $device) {
+            throw new ApiException(404, 'invalid_request_error', 'Device not found.', 'resource_missing', 'device_uuid');
+        }
+
+        $validated = array_merge($request->validated(), [
+            'domain_uuid' => $domain_uuid,
+        ]);
+
+        if ($request->has('device_address_modified')) {
+            $validated['device_address_modified'] = (string) $request->input('device_address_modified');
+        }
+
+        if ($request->has('device_vendor')) {
+            $validated['device_vendor'] = $request->input('device_vendor');
+        }
+
+        try {
+            app(DeviceService::class)->update($device, $validated);
+
+            $payload = $this->buildDeviceShowPayload($domain_uuid, $device_uuid);
+
+            return response()->json($payload->toArray(), 200);
+        } catch (\Throwable $e) {
+            logger('API Device update error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            throw new ApiException(500, 'api_error', 'Internal server error.', 'internal_error');
+        }
+    }
+
+    /**
+     * Delete a device
+     *
+     * Deletes a device within the specified domain.
+     *
+     * @group Devices
+     * @authenticated
+     *
+     * @urlParam domain_uuid string required The domain UUID. Example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+     * @urlParam device_uuid string required The device UUID. Example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+     *
+     * @response 200 scenario="Success" {"object":"device","uuid":"c0ec8113-aa15-40ac-8437-47185dd9dcf4","deleted":true}
+     *
+     * @response 400 scenario="Invalid domain UUID" {"error":{"type":"invalid_request_error","message":"Invalid domain UUID.","code":"invalid_request","param":"domain_uuid"}}
+     * @response 400 scenario="Invalid device UUID" {"error":{"type":"invalid_request_error","message":"Invalid device UUID.","code":"invalid_request","param":"device_uuid"}}
+     * @response 401 scenario="Unauthenticated" {"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}}
+     * @response 404 scenario="Domain not found" {"error":{"type":"invalid_request_error","message":"Domain not found.","code":"resource_missing","param":"domain_uuid"}}
+     * @response 404 scenario="Device not found" {"error":{"type":"invalid_request_error","message":"Device not found.","code":"resource_missing","param":"device_uuid"}}
+     * @response 500 scenario="Internal server error" {"error":{"type":"api_error","message":"Internal server error.","code":"internal_error"}}
+     */
+    public function destroy(Request $request, string $domain_uuid, string $device_uuid)
+    {
+        $user = $request->user();
+        if (! $user) {
+            throw new ApiException(401, 'authentication_error', 'Unauthenticated.', 'unauthenticated');
+        }
+
+        if (! preg_match('/^[0-9a-fA-F-]{36}$/', $domain_uuid)) {
+            throw new ApiException(400, 'invalid_request_error', 'Invalid domain UUID.', 'invalid_request', 'domain_uuid');
+        }
+
+        if (! preg_match('/^[0-9a-fA-F-]{36}$/', $device_uuid)) {
+            throw new ApiException(400, 'invalid_request_error', 'Invalid device UUID.', 'invalid_request', 'device_uuid');
+        }
+
+        $domain = Domain::query()
+            ->where('domain_uuid', $domain_uuid)
+            ->first(['domain_uuid']);
+
+        if (! $domain) {
+            throw new ApiException(404, 'invalid_request_error', 'Domain not found.', 'resource_missing', 'domain_uuid');
+        }
+
+        $device = Devices::query()
+            ->where('domain_uuid', $domain_uuid)
+            ->where('device_uuid', $device_uuid)
+            ->first(['device_uuid']);
+
+        if (! $device) {
+            throw new ApiException(404, 'invalid_request_error', 'Device not found.', 'resource_missing', 'device_uuid');
+        }
+
+        try {
+            app(DeviceService::class)->delete($device);
+
+            $payload = DeletedResponseData::from([
+                'uuid' => (string) $device_uuid,
+                'object' => 'device',
+                'deleted' => true,
+            ]);
+
+            return response()->json($payload->toArray(), 200);
+        } catch (\Throwable $e) {
+            logger('API Device delete error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            throw new ApiException(500, 'api_error', 'Internal server error.', 'internal_error');
+        }
     }
 
     /**
