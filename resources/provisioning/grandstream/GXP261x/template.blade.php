@@ -1,4 +1,4 @@
-{{-- version: 1.0.5 --}}
+{{-- version: 1.0.6 --}}
 
 @switch($flavor)
 
@@ -246,7 +246,7 @@
 
 		<!-- BLF Call-pickup  -->
 		<!-- Auto, Force, Disabled -->
-		<item name="account.{{ $n }}.sip.blf.callPickup.forcePrefix">Auto</item>
+		<item name="account.{{ $n }}.sip.blf.callPickup.forcePrefix">Force</item>
 
 		<!-- BLF Call-pickup Prefix -->
 		<item name="account.{{ $n }}.sip.blf.callPickup.prefix">**</item>
@@ -1424,8 +1424,8 @@
 		<item name="sip.showError">Yes</item>
 
 		<!-- # Enable Missed Call Notification. Yes or No -->
-		<item name="features.history.missedCallNotification">Yes</item>
-
+        <item name="features.history.missedCallNotification">{{ (string) ($settings['grandstream_missed_call_notification'] ?? '') === '1' ? 'Yes' : 'No' }}</item>
+        
 		<!-- # Enable Call Completion Service. Yes or No -->
 		<item name="call.dial.callComplete.enable"/>
 
@@ -1571,7 +1571,7 @@
 
 		<!-- # Idle. Default is 60. -->
 		<!-- # Number: 0 - 100 -->
-		<item name="lcd.backlight.brightness.idle">80</item>
+		<item name="lcd.backlight.brightness.idle">100</item>
 
 		<!-- # Active Backlight Timeout. Default is 1 -->
 		<!-- # Number: 1 - 90 -->
@@ -1580,6 +1580,10 @@
 		<!-- # Disable Missed Call Backlight. No, Yes, Yes, but flash MWI LED.  -->
 		<!-- No - 0, Yes - 1, Yes,but flash MWI LED - 2 -->
 		<item name="lcd.backlight.missedCall">1</item>
+
+        <!-- # Screensaver Settings -->
+		<!-- # Screensaver. No, Yes,  OnIfNoVPKIsActive. -->
+		<item name="lcd.screensaver.enable">No</item>
 
 		<!-- # Wallpaper Settings -->
 		<!-- # Wallpaper Source. Default, Download, USB, Uploaded, ColorBackground -->
