@@ -101,7 +101,7 @@ class User extends Authenticatable
             return trim(($adv->first_name ?? '') . ' ' . ($adv->last_name ?? ''));
         }
 
-        return $this->username;
+        return $this->username ?? '';
     }
 
     /**
