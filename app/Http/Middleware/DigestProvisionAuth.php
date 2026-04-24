@@ -180,12 +180,13 @@ class DigestProvisionAuth
     {
         $ua = strtolower((string) $request->userAgent());
         
-//switch this method to cache method when default settings page is eventually migrated 
+        //switch this method to cache method when default settings page is eventually migrated 
         $forceBasicMatchers = [
             'algo',
             'panasonic',
             'aastra',
             'snom',
+            'DAG', //Dinstar
         ];
 
         foreach ($forceBasicMatchers as $needle) {
