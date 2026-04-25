@@ -58,6 +58,9 @@ class ExtensionData extends Data
         /** Do not disturb enabled */
         public ?bool $do_not_disturb,
 
+        /** Which device(s) ring on inbound calls: "app", "fmc", or "both" */
+        public ?string $ring_target,
+
         /** User record enabled */
         public ?bool $user_record,
 
