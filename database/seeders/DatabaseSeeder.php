@@ -155,6 +155,8 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'XML CDR', 'permission_name' => 'xml_cdr_view_self_records'],
             ['application_name' => 'Messages', 'permission_name' => 'messages_view'],
             ['application_name' => 'Messages', 'permission_name' => 'messages_view_as'],
+            ['application_name' => 'Call Flow API', 'permission_name' => 'call_flow_simulate'],
+            ['application_name' => 'Call Flow API', 'permission_name' => 'call_flow_simulate_all_domains'],
         ];
         $timestamp = date("Y-m-d H:i:s");
 
