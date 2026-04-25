@@ -180,6 +180,8 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_update'],
             ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_delete'],
             ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_start'],
+            ['application_name' => 'Call Flow API', 'permission_name' => 'call_flow_simulate'],
+            ['application_name' => 'Call Flow API', 'permission_name' => 'call_flow_simulate_all_domains'],
         ];
         $timestamp = date("Y-m-d H:i:s");
 
