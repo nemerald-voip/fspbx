@@ -1,40 +1,30 @@
 <template>
-    <div class="overflow-hidden rounded-lg bg-white shadow">
-        <div class="p-5">
-            <a :href="card.href" class="group">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <span
-                            :class="[iconStyles.bgColor, iconStyles.textColor, iconStyles.hoverTextColor, 'inline-flex rounded-lg p-3 ring-4 ring-white']">
-                            <component :is="iconComponent" class="h-6 w-6" aria-hidden="true" />
-                        </span>
-                    </div>
-                    <div class="ml-5 w-0 flex-1">
-                        <dl>
-                            <dt class="truncate text-lg font-medium text-gray-500 group-hover:text-gray-700">{{ card.name }}</dt>
-                            <dd>
-                                <div v-if="count === null" class="w-full">
-                                    <div class="animate-pulse flex space-x-4 pt-2 w-4/12">
-                                        <div class="flex-1 space-y-6 py-1">
-                                            <div class="grid grid-cols-3 gap-4">
-                                                <div class="h-2 bg-slate-300 rounded col-span-2"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="text-md font-medium text-gray-900">{{ count }}</div>
-                            </dd>
-                        </dl>
-                    </div>
-                </div>
+    <div
+        class="group relative flex h-full overflow-hidden rounded-lg bg-white ring-1 ring-gray-200 transition duration-150 hover:-translate-y-0.5 hover:shadow-md hover:ring-cyan-200">
+        <div class="grid min-h-24 flex-1 grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-3 p-4">
+            <a :href="card.href"
+                class="row-span-2 min-w-0 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
+                <dl class="min-w-0">
+                    <dt class="truncate text-base font-medium leading-5 text-gray-500 group-hover:text-gray-700">{{
+                        card.name }}</dt>
+                    <dd class="mt-3 min-h-8">
+                        <div v-if="count === null" class="animate-pulse">
+                            <div class="h-7 w-14 rounded bg-slate-200"></div>
+                        </div>
+                        <div v-else class="text-3xl font-semibold leading-none tracking-tight text-gray-600">{{ count }}</div>
+                    </dd>
+                </dl>
             </a>
-        </div>
-        <div class="bg-gray-50 px-5 py-3">
-            <div class="flex text-sm justify-between">
-                <a :href="card.href" class="font-medium text-cyan-700 hover:text-cyan-900">View all</a>
-                <a v-if="card.alt_href" :href="card.alt_href" class="font-medium text-cyan-700 hover:text-cyan-900">{{
-                    card.alt_link_label }}</a>
-            </div>
+
+            <span
+                :class="[iconStyles.bgColor, iconStyles.textColor, 'inline-flex h-10 w-10 items-center justify-center justify-self-end rounded-lg ring-1 ring-inset ring-current/10 transition group-hover:scale-105']">
+                <component :is="iconComponent" class="dashboard-tile-icon" aria-hidden="true" />
+            </span>
+
+            <a v-if="card.alt_href" :href="card.alt_href"
+                class="self-end whitespace-nowrap rounded-md px-2 py-1 text-sm font-medium text-cyan-700 transition hover:bg-cyan-50 hover:text-cyan-900 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
+                {{ card.alt_link_label }}
+            </a>
         </div>
     </div>
 </template>
@@ -105,7 +95,18 @@ const styleMap = {
 // Computed property to get the correct icon component
 const iconComponent = computed(() => iconMap[props.card.icon]);
 
-const iconStyles = computed(() => styleMap[props.card.icon] || { bgColor: 'default-bg', textColor: 'default-text' });
+const iconStyles = computed(() => styleMap[props.card.icon] || { bgColor: 'bg-gray-50', textColor: 'text-gray-700' });
 
 
 </script>
+
+<style scoped>
+.dashboard-tile-icon,
+:deep(.dashboard-tile-icon svg),
+:deep(svg.dashboard-tile-icon) {
+    width: 1.25rem;
+    height: 1.25rem;
+    display: block;
+    flex-shrink: 0;
+}
+</style>
