@@ -412,3 +412,12 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     // CHAR PMS
     Route::post('/pms/char', CharPmsWebhookController::class)->name('pms.char');
 });
+
+// APNs push-token registration. Authenticated as the extension's user via
+// the cookie-auth middleware that the rest of the app uses for in-app calls;
+// machine-to-machine consumers can use the bearer-auth lookup endpoint to
+// resolve UUIDs and POST the token here.
+Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () {
+    Route::post('/extensions/{extension}/push-token', [ExtensionsController::class, 'updatePushToken'])
+        ->name('extensions.push.token');
+});
