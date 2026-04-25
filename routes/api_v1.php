@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\RingGroupController;
 use App\Http\Controllers\Api\V1\VoicemailController;
 use App\Http\Controllers\Api\V1\PhoneNumberController;
 use App\Http\Controllers\Api\V1\CdrController;
+use App\Http\Controllers\Api\V1\UserController;
 
 /*
 |--------------------------------------------------------------------------
@@ -149,4 +150,27 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
 
     Route::get('/domains/{domain_uuid}/cdrs/{xml_cdr_uuid}', [CdrController::class, 'show'])
         ->middleware('user.authorize:xml_cdr_view');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Users (domain-scoped)
+    |--------------------------------------------------------------------------
+    | Documented CRUD over v_users so external integrations can manage users
+    | without using the internal session-cookie endpoints. is_domain_admin
+    | toggles membership in the global admin group, scoped to the URL domain.
+    */
+    Route::get('/domains/{domain_uuid}/users', [UserController::class, 'index'])
+        ->middleware('user.authorize:user_view');
+
+    Route::get('/domains/{domain_uuid}/users/{user_uuid}', [UserController::class, 'show'])
+        ->middleware('user.authorize:user_view');
+
+    Route::post('/domains/{domain_uuid}/users', [UserController::class, 'store'])
+        ->middleware('user.authorize:user_add');
+
+    Route::patch('/domains/{domain_uuid}/users/{user_uuid}', [UserController::class, 'update'])
+        ->middleware('user.authorize:user_edit');
+
+    Route::delete('/domains/{domain_uuid}/users/{user_uuid}', [UserController::class, 'destroy'])
+        ->middleware('user.authorize:user_delete');
 });
