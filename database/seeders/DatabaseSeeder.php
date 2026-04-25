@@ -1247,7 +1247,7 @@ class DatabaseSeeder extends Seeder
         // Define the providers you want available by default
         $providers = [
             ['key' => 'assemblyai', 'name' => 'AssemblyAI', 'is_active' => true],
-            // add more here later, e.g. ['key' => 'whisper', 'name' => 'OpenAI Whisper', 'is_active' => true],
+            ['key' => 'elevenlabs', 'name' => 'ElevenLabs', 'is_active' => true],
         ];
 
         // Find existing keys so we only insert missing ones

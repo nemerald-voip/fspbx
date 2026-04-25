@@ -373,6 +373,9 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::get('/call-transcription/assemblyai', [CallTranscriptionController::class, 'getAssemblyAiConfig'])->name('call-transcription.assemblyai');
     Route::post('/call-transcription/assemblyai', [CallTranscriptionController::class, 'storeAssemblyAiConfig'])->name('call-transcription.assemblyai.store');
     Route::delete('/call-transcription/assemblyai', [CallTranscriptionController::class, 'destroyAssemblyAiConfig'])->name('call-transcription.assemblyai.destroy');
+    Route::get('/call-transcription/elevenlabs', [CallTranscriptionController::class, 'getElevenLabsConfig'])->name('call-transcription.elevenlabs');
+    Route::post('/call-transcription/elevenlabs', [CallTranscriptionController::class, 'storeElevenLabsConfig'])->name('call-transcription.elevenlabs.store');
+    Route::delete('/call-transcription/elevenlabs', [CallTranscriptionController::class, 'destroyElevenLabsConfig'])->name('call-transcription.elevenlabs.destroy');
 
     // Payment Gateways
     Route::put('/gateways', [PaymentGatewayController::class, 'update'])->name('gateway.update');
