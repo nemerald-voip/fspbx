@@ -69,6 +69,7 @@ class Extensions extends Model
         'dial_user',
         'dial_domain',
         'do_not_disturb',
+        'ring_target',
         'forward_all_destination',
         'forward_all_enabled',
         'forward_busy_destination',
@@ -105,6 +106,7 @@ class Extensions extends Model
     protected $attributes = [
         'enabled' => 'true',
         'do_not_disturb' => 'false',
+        'ring_target' => 'both',
         'call_timeout' => '25',
         'call_screen_enabled' => 'false',
         'limit_max' => '5',

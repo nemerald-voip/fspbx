@@ -412,3 +412,11 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     // CHAR PMS
     Route::post('/pms/char', CharPmsWebhookController::class)->name('pms.char');
 });
+
+// Integration endpoints for external services that authenticate with a
+// Sanctum personal access token. The api.token.auth middleware rejects
+// cookie/session requests so these routes are strictly machine-to-machine.
+Route::group(['middleware' => ['auth:sanctum', 'api.token.auth']], function () {
+    Route::get('/integrations/extensions/lookup', [ExtensionsController::class, 'lookupByNumber'])
+        ->name('integrations.extensions.lookup');
+});

@@ -189,6 +189,7 @@ class ExtensionController extends Controller
                 'directory_visible',
                 'directory_exten_visible',
                 'do_not_disturb',
+                'ring_target',
                 'user_record',
                 'description',
                 'forward_all_enabled',
@@ -238,6 +239,7 @@ class ExtensionController extends Controller
                 email: $e->email,
 
                 do_not_disturb: $toBool($e->do_not_disturb),
+                ring_target: $e->ring_target ?? 'both',
                 user_record: $toBool($e->user_record),
 
                 suspended: $e->suspended !== null ? (bool) $e->suspended : null,
@@ -439,6 +441,7 @@ class ExtensionController extends Controller
                 'directory_visible',
                 'directory_exten_visible',
                 'do_not_disturb',
+                'ring_target',
                 'user_record',
                 'description',
                 'forward_all_enabled',
@@ -490,6 +493,7 @@ class ExtensionController extends Controller
             email: $e->email,
 
             do_not_disturb: $toBool($e->do_not_disturb),
+            ring_target: $e->ring_target ?? 'both',
             user_record: $toBool($e->user_record),
 
             suspended: $e->suspended !== null ? (bool) $e->suspended : null,
@@ -666,6 +670,7 @@ class ExtensionController extends Controller
             // default booleans (DB stores as text)
             'enabled'                 => $boolText($validated['enabled'] ?? null, true),
             'do_not_disturb'          => $boolText($validated['do_not_disturb'] ?? null, false),
+            'ring_target'             => in_array($validated['ring_target'] ?? null, ['app', 'fmc', 'both'], true) ? $validated['ring_target'] : 'both',
             'directory_visible'       => $boolText($validated['directory_visible'] ?? null, true),
             'directory_exten_visible' => $boolText($validated['directory_exten_visible'] ?? null, true),
             'user_record'             => $boolText($validated['user_record'] ?? null, false),
@@ -785,6 +790,7 @@ class ExtensionController extends Controller
                 email: $extension->email ?? null,
 
                 do_not_disturb: filter_var($extension->do_not_disturb, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
+                ring_target: $extension->ring_target ?? 'both',
                 user_record: filter_var($extension->user_record, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
 
                 suspended: $extension->suspended !== null ? (bool) $extension->suspended : null,
@@ -1021,6 +1027,11 @@ class ExtensionController extends Controller
         }
         if (array_key_exists('sip_force_expires', $inputs)) {
             $update['sip_force_expires'] = $toNumericString($inputs['sip_force_expires']);
+        }
+
+        // ring_target is an enum string column (app/fmc/both)
+        if (array_key_exists('ring_target', $inputs)) {
+            $update['ring_target'] = in_array($inputs['ring_target'], ['app', 'fmc', 'both'], true) ? $inputs['ring_target'] : 'both';
         }
 
         // TEXT boolean columns in v_extensions
@@ -1298,6 +1309,7 @@ class ExtensionController extends Controller
                 email: $fresh->email ?? null,
 
                 do_not_disturb: filter_var($fresh->do_not_disturb, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
+                ring_target: $fresh->ring_target ?? 'both',
                 user_record: filter_var($fresh->user_record, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE),
 
                 suspended: (bool) ($fresh->advSettings->suspended ?? false),
