@@ -380,6 +380,10 @@ class FreeswitchEslService
                 return $this->convertEslResponseToArray($response);
             }
 
+            if (!str_starts_with($response, '<')) {
+                return $response;
+            }
+
             // Assume XML otherwise
             return $this->convertEslResponseToXml($response);
         }

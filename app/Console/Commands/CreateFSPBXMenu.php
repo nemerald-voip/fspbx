@@ -147,7 +147,7 @@ class CreateFSPBXMenu extends Command
                     ['title' => 'Logs', 'link' => '/logs', 'groups' => ['superadmin']],
                     ['title' => 'Log Viewer', 'link' => '/app/log_viewer/log_viewer.php', 'groups' => ['superadmin']],
                     ['title' => 'Registrations', 'link' => '/registrations', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'SIP Status', 'link' => '/app/sip_status/sip_status.php', 'groups' => ['superadmin']],
+                    ['title' => 'SIP Status', 'link' => '/sip-status', 'groups' => ['superadmin']],
                     ['title' => 'System Status', 'link' => '/app/system/system.php', 'groups' => ['superadmin']],
                     ['title' => 'User Logs', 'link' => '/user-logs', 'groups' => ['superadmin']],
                 ],

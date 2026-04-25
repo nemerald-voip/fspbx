@@ -23,6 +23,7 @@ class FusionCache extends Model
 
         static::$cacheType = DefaultSettings::where('default_setting_category', 'cache')
             ->where('default_setting_subcategory', 'method')
+            ->where('default_setting_enabled', true)
             ->value('default_setting_value');
 
         return static::$cacheType;
@@ -39,6 +40,7 @@ class FusionCache extends Model
 
         static::$cacheLocation = DefaultSettings::where('default_setting_category', 'cache')
             ->where('default_setting_subcategory', 'location')
+            ->where('default_setting_enabled', true)
             ->value('default_setting_value');
 
         return static::$cacheLocation;
