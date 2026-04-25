@@ -66,10 +66,18 @@ return [
 
     'assemblyai' => [
         'api_key' => env('ASSEMBLYAI_API_KEY', ''),
-        'region' => env('ASSEMBLYAI_REGION', 'US'), 
+        'region' => env('ASSEMBLYAI_REGION', 'US'),
         'base_url' => env('ASSEMBLYAI_BASE_URL', 'api.assemblyai.com'),
         'webhook_header_name'  => env('ASSEMBLYAI_WEBHOOK_HEADER', 'X-FSPBX-Webhook'),
         'webhook_header_value' => env('ASSEMBLYAI_WEBHOOK_SECRET', ''),
+    ],
+
+    'elevenlabs' => [
+        'api_key'  => env('ELEVENLABS_API_KEY', ''),
+        'base_url' => env('ELEVENLABS_BASE_URL', 'https://api.elevenlabs.io'),
+        'timeout'  => (int) env('ELEVENLABS_TIMEOUT', 60),
+        // Optional list of IPs to allow on ElevenLabs SIP trunk inbound.
+        'sip_allowed_addresses' => array_filter(array_map('trim', explode(',', (string) env('ELEVENLABS_SIP_ALLOWED_ADDRESSES', '')))),
     ],
 
     'keygen' => [

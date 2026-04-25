@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\ActiveCallsController;
+use App\Http\Controllers\AiAgentController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AppsController;
 use App\Http\Controllers\AppsCredentialsController;
@@ -181,6 +182,9 @@ Route::group(['middleware' => 'auth'], function () {
     // Recordings Manager
     Route::get('recordings-manager', [RecordingsManagerController::class, 'index'])->name('recordings-manager.index');
     Route::get('recordings-manager/{recording}/download', [RecordingsManagerController::class, 'download'])->name('recordings-manager.download');
+
+    // AI Agents
+    Route::get('ai-agents', [AiAgentController::class, 'index'])->name('ai-agents.index');
 
     // SIP Status
     Route::get('sip-status', [SipStatusController::class, 'index'])->name('sip-status.index');

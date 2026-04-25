@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountSettingsController;
+use App\Http\Controllers\AiAgentController;
 use App\Http\Controllers\Api\EmergencyCallController;
 use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\LocationsController;
@@ -115,6 +116,16 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('ring-groups/{ring_group}/get-greeting', [RingGroupsController::class, 'getGreeting'])->name('ring-groups.getGreeting');
     Route::post('ring-groups/{ring_group}/upload-greeting', [RingGroupsController::class, 'uploadGreeting'])->name('ring-groups.uploadGreeting');
     Route::post('ring-groups/{ring_group}/delete-greeting', [RingGroupsController::class, 'deleteGreeting'])->name('ring-groups.deleteGreeting');
+
+    // AI Agents
+    Route::post('ai-agents', [AiAgentController::class, 'store'])->name('ai-agents.store');
+    Route::put('ai-agents/{ai_agent}', [AiAgentController::class, 'update'])->name('ai-agents.update');
+    Route::get('ai-agents/data', [AiAgentController::class, 'getData'])->name('ai-agents.data');
+    Route::post('ai-agents/item-options', [AiAgentController::class, 'getItemOptions'])->name('ai-agents.item.options');
+    Route::post('ai-agents/bulk-delete', [AiAgentController::class, 'bulkDelete'])->name('ai-agents.bulk.delete');
+    Route::post('ai-agents/select-all', [AiAgentController::class, 'selectAll'])->name('ai-agents.select.all');
+    Route::post('ai-agents/{ai_agent}/kb-documents', [AiAgentController::class, 'storeKbDocument'])->name('ai-agents.kb.store');
+    Route::delete('ai-agents/{ai_agent}/kb-documents/{kb_document}', [AiAgentController::class, 'deleteKbDocument'])->name('ai-agents.kb.delete');
 
     // Recordings Manager
     Route::get('recordings-manager/data', [RecordingsManagerController::class, 'getData'])->name('recordings-manager.data');
