@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\RingGroupController;
 use App\Http\Controllers\Api\V1\VoicemailController;
 use App\Http\Controllers\Api\V1\PhoneNumberController;
 use App\Http\Controllers\Api\V1\CdrController;
+use App\Http\Controllers\Api\V1\CallFlowSimulationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -149,4 +150,27 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
 
     Route::get('/domains/{domain_uuid}/cdrs/{xml_cdr_uuid}', [CdrController::class, 'show'])
         ->middleware('user.authorize:xml_cdr_view');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Call Flow Simulation — domain-scoped, read-only
+    |--------------------------------------------------------------------------
+    | Walks the dialplan tree starting from a given DID at a given timestamp
+    | and returns the active branch + every alternative. Dedicated throttle
+    | because each simulation walks several tables per call.
+    */
+    Route::middleware(['user.authorize:call_flow_simulate', 'throttle:call-flow-simulate'])->group(function () {
+        Route::get('/domains/{domain_uuid}/call-flow/simulate', [CallFlowSimulationController::class, 'simulate'])
+            ->name('api.v1.call-flow.simulate');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Call Flow Simulation — global (cross-domain, admin)
+    |--------------------------------------------------------------------------
+    */
+    Route::middleware(['user.authorize:call_flow_simulate_all_domains', 'throttle:call-flow-simulate'])->group(function () {
+        Route::get('/call-flow/simulate', [CallFlowSimulationController::class, 'globalSimulate'])
+            ->name('api.v1.call-flow.global.simulate');
+    });
 });
