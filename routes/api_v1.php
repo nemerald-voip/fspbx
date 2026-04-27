@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\V1\RingGroupController;
 use App\Http\Controllers\Api\V1\VoicemailController;
 use App\Http\Controllers\Api\V1\PhoneNumberController;
 use App\Http\Controllers\Api\V1\CdrController;
+use App\Http\Controllers\Api\V1\AiAgentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -149,4 +150,19 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
 
     Route::get('/domains/{domain_uuid}/cdrs/{xml_cdr_uuid}', [CdrController::class, 'show'])
         ->middleware('user.authorize:xml_cdr_view');
+
+    /*
+    |--------------------------------------------------------------------------
+    | AI Agents (domain-scoped, read-only)
+    |--------------------------------------------------------------------------
+    | Read endpoints are independent of any external provider; they just
+    | surface rows in v_ai_agents (and the linked v_ai_agent_kb_documents).
+    | Create/update/delete are deferred to a follow-up that wires in the
+    | provider-specific side effects.
+    */
+    Route::get('/domains/{domain_uuid}/ai-agents', [AiAgentController::class, 'index'])
+        ->middleware('user.authorize:ai_agent_view');
+
+    Route::get('/domains/{domain_uuid}/ai-agents/{ai_agent_uuid}', [AiAgentController::class, 'show'])
+        ->middleware('user.authorize:ai_agent_view');
 });
