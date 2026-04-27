@@ -4,16 +4,15 @@
 require "resources.functions.config"
 require "resources.functions.channel_utils"
 
-local cache  = require "resources.functions.cache"
-local Database = require "resources.functions.database"
+local cache     = require "resources.functions.cache"
+local Database  = require "resources.functions.database"
+local play_file = require "resources.functions.play_file"
 
 local api = freeswitch.API()
 
 DEBUG_MODE = false -- Set to true to enable debug logs
 
 local SCRIPT_NAME = "[flow_toggle.lua]"
-
-api = freeswitch.API()
 
 -- Debug logging function
 local function debug_log(level, message)
@@ -62,24 +61,34 @@ local function check_pin(pin)
     return false
 end
 
-local function play_call_flow_sound(row, new_status, domain_name)
-    local sound_file = ""
+local function play_call_flow_sound(dbh, row, new_status, domain_name, domain_uuid)
+    local audio_file = ""
 
     if tostring(new_status) == "true" then
-        sound_file = tostring(row.call_flow_sound or "")
+        audio_file = tostring(row.call_flow_sound or "")
     else
-        sound_file = tostring(row.call_flow_alternate_sound or "")
+        audio_file = tostring(row.call_flow_alternate_sound or "")
     end
 
-    if sound_file == "" then
+    if audio_file == "" then
         debug_log("NOTICE", "No call flow sound defined for status=" .. tostring(new_status))
+
+        if session:ready() then
+            session:sleep(2000)
+        end
+
         return
     end
 
-    local sound_path = "/var/lib/freeswitch/recordings/" .. tostring(domain_name) .. "/" .. sound_file
+    debug_log("NOTICE", "Playing call flow audio for status=" .. tostring(new_status) .. ": " .. tostring(audio_file))
 
-    debug_log("NOTICE", "Playing call flow sound for status=" .. tostring(new_status) .. ": " .. sound_path)
-    session:streamFile(sound_path)
+    if session:ready() then
+        session:sleep(1000)
+
+        play_file(dbh, domain_name, domain_uuid, audio_file)
+
+        session:sleep(1000)
+    end
 end
 
 local function main()
@@ -210,24 +219,23 @@ local function main()
 
     debug_log("NOTICE", "Call flow status updated successfully to " .. tostring(toggle))
 
-local notify_target = tostring(row.call_flow_extension or extension or lookup_value)
+    -- Send BLF notify BEFORE playing the sound.
+    local notify_target = tostring(row.call_flow_extension or extension or lookup_value)
 
-local cmd = string.format(
-    "luarun lua/flow_notify.lua %s %s %s",
-    notify_target,
-    domain_name,
-    toggle
-)
+    local cmd = string.format(
+        "luarun lua/flow_notify.lua %s %s %s",
+        notify_target,
+        domain_name,
+        toggle
+    )
 
-debug_log("NOTICE", "Sending BLF notify command: " .. cmd)
-api:execute("bgapi", cmd)
+    debug_log("NOTICE", "Sending BLF notify command: " .. cmd)
+    api:execute("bgapi", cmd)
 
--- Play sound for the NEW status after toggle.
--- New status true  = call_flow_sound
--- New status false = call_flow_alternate_sound
-if session:ready() then
-    play_call_flow_sound(row, toggle, domain_name)
-end
+
+    if session:ready() then
+        play_call_flow_sound(dbh, row, toggle, domain_name, domain_uuid)
+    end
 
     dbh:release()
     session:hangup()
