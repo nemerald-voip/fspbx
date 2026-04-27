@@ -30,6 +30,7 @@ class StoreExtensionRequest extends FormRequest
             'suspended'   => ['nullable', 'boolean'],
 
             'do_not_disturb' => ['sometimes',  'boolean'],
+            'ring_target'    => ['sometimes', 'string', 'in:app,fmc,both'],
             'enabled'        => ['sometimes', 'boolean'],
             'call_timeout'   => ['sometimes', 'string'],
 
@@ -117,6 +118,10 @@ class StoreExtensionRequest extends FormRequest
             'do_not_disturb' => [
                 'description' => 'Enable Do Not Disturb for this extension. Defaults to false if omitted.',
                 'example' => 'false',
+            ],
+            'ring_target' => [
+                'description' => 'Which device(s) ring on inbound calls: "app", "fmc", or "both". Defaults to "both" if omitted.',
+                'example' => 'both',
             ],
             'enabled' => [
                 'description' => 'Whether the extension is enabled. Defaults to true if omitted.',

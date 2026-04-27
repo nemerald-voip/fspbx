@@ -2232,4 +2232,35 @@ public function store(StoreExtensionRequest $request)
 
         return $permissions;
     }
+
+    /**
+     * Resolve an extension number + domain name to their fspbx UUIDs.
+     * Used by external machine-to-machine integrations that need to
+     * round-trip extension/domain UUIDs without manual entry.
+     */
+    public function lookupByNumber(Request $request)
+    {
+        $request->validate([
+            'extension' => 'required|string',
+            'domain' => 'required|string',
+        ]);
+
+        $domain = \App\Models\Domain::where('domain_name', $request->input('domain'))->first();
+        if (!$domain) {
+            return response()->json(['success' => false, 'message' => 'Domain not found'], 404);
+        }
+
+        $extension = Extensions::where('domain_uuid', $domain->domain_uuid)
+            ->where('extension', $request->input('extension'))
+            ->first();
+        if (!$extension) {
+            return response()->json(['success' => false, 'message' => 'Extension not found'], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'extension_uuid' => $extension->extension_uuid,
+            'domain_uuid' => $domain->domain_uuid,
+        ]);
+    }
 }

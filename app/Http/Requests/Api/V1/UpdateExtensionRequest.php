@@ -32,6 +32,7 @@ class UpdateExtensionRequest extends FormRequest
             'suspended'   => ['sometimes', 'nullable', 'boolean'],
 
             'do_not_disturb' => ['sometimes', 'boolean'],
+            'ring_target'    => ['sometimes', 'string', 'in:app,fmc,both'],
             'enabled'        => ['sometimes', 'boolean'],
             'call_timeout'   => ['sometimes', 'string'],
 
@@ -118,6 +119,10 @@ class UpdateExtensionRequest extends FormRequest
             'do_not_disturb' => [
                 'description' => 'Enable Do Not Disturb for this extension. If omitted, value is unchanged.',
                 'example' => 'false',
+            ],
+            'ring_target' => [
+                'description' => 'Which device(s) ring on inbound calls: "app", "fmc", or "both". Default: "both". If omitted, value is unchanged.',
+                'example' => 'both',
             ],
             'call_timeout' => [
                 'description' => 'Ring timeout in seconds. If omitted, value is unchanged.',
