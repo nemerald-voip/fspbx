@@ -2232,4 +2232,27 @@ public function store(StoreExtensionRequest $request)
 
         return $permissions;
     }
+
+    /**
+     * Update the APNs VoIP push token for an extension. Used by mobile apps
+     * to register or rotate their token after install/login.
+     */
+    public function updatePushToken(Request $request, $extension_uuid)
+    {
+        try {
+            $request->validate(['token' => 'required|string']);
+
+            $extension = Extensions::whereKey($extension_uuid)->firstOrFail();
+            $extension->apns_voip_token = $request->input('token');
+            $extension->save();
+
+            return response()->json(['success' => true]);
+        } catch (\Throwable $e) {
+            logger('ExtensionsController@updatePushToken error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'errors' => ['error' => [$e->getMessage()]],
+            ], 500);
+        }
+    }
 }

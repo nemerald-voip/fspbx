@@ -5,6 +5,7 @@ namespace App\Http\Webhooks\Jobs;
 use App\Jobs\CreateVoicemailEscalationNotificationsJob;
 use App\Jobs\HandleVoicemailEscalationAttemptEventJob;
 use App\Jobs\ProcessFaxWebhookEventJob;
+use App\Jobs\SendIncomingCallPushJob;
 use App\Jobs\SendNewVoicemailNotificationByEmail;
 use App\Jobs\SendNewVoicemailNotificationBySms;
 use App\Jobs\TranscribeCdrJob;
@@ -132,6 +133,10 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
 
                     case 'transcribe_call':
                         $response = $this->transcribeCall($data);
+                        break;
+
+                    case 'incoming_call':
+                        SendIncomingCallPushJob::dispatch($data);
                         break;
 
                     case 'fax.received':
