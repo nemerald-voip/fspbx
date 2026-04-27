@@ -4,7 +4,7 @@
 require "resources.functions.config"
 require "resources.functions.channel_utils"
 
-local cache  = require "resources.functions.cache"
+local cache    = require "resources.functions.cache"
 local Database = require "resources.functions.database"
 
 local api = freeswitch.API()
@@ -13,13 +13,21 @@ DEBUG_MODE = false -- Set to true to enable debug logs
 
 local SCRIPT_NAME = "[flow_toggle.lua]"
 
-api = freeswitch.API()
-
 -- Debug logging function
 local function debug_log(level, message)
     if DEBUG_MODE then
         freeswitch.consoleLog(level, SCRIPT_NAME .. " " .. tostring(message) .. "\n")
     end
+end
+
+local function file_exists(path)
+    local f = io.open(path, "rb")
+    if f then
+        f:close()
+        return true
+    end
+
+    return false
 end
 
 local function check_pin(pin)
@@ -38,14 +46,14 @@ local function check_pin(pin)
         debug_log("NOTICE", string.format("PIN attempt %s of %s", attempt, max_tries))
 
         local digits = session:playAndGetDigits(
-            min_digits,          -- min digits
-            max_digits,          -- max digits
-            1,                   -- tries per prompt
-            timeout,             -- timeout ms
-            "#",                 -- terminator
+            min_digits,
+            max_digits,
+            1,
+            timeout,
+            "#",
             "phrase:voicemail_enter_pass:#",
-            "",                  -- invalid file
-            "\\d+"               -- digits only
+            "",
+            "\\d+"
         )
 
         debug_log("NOTICE", "Entered PIN: " .. tostring(digits))
@@ -62,7 +70,7 @@ local function check_pin(pin)
     return false
 end
 
-local function play_call_flow_sound(row, new_status, domain_name)
+local function play_call_flow_sound(row, new_status, domain_name, sounds_dir, default_language, default_dialect, default_voice)
     local sound_file = ""
 
     if tostring(new_status) == "true" then
@@ -76,10 +84,69 @@ local function play_call_flow_sound(row, new_status, domain_name)
         return
     end
 
-    local sound_path = "/var/lib/freeswitch/recordings/" .. tostring(domain_name) .. "/" .. sound_file
+    local domain_sound_path =
+        "/var/lib/freeswitch/recordings/" ..
+        tostring(domain_name) ..
+        "/" ..
+        sound_file
 
-    debug_log("NOTICE", "Playing call flow sound for status=" .. tostring(new_status) .. ": " .. sound_path)
-    session:streamFile(sound_path)
+    if file_exists(domain_sound_path) then
+        debug_log("NOTICE", "Playing domain call flow sound: " .. domain_sound_path)
+        session:streamFile(domain_sound_path)
+        return
+    end
+
+    local system_base_path =
+        tostring(sounds_dir) ..
+        "/" ..
+        tostring(default_language) ..
+        "/" ..
+        tostring(default_dialect) ..
+        "/" ..
+        tostring(default_voice)
+
+    -- First try the simple/direct system path.
+    local system_sound_path = system_base_path .. "/" .. sound_file
+
+    if file_exists(system_sound_path) then
+        debug_log("NOTICE", "Playing system call flow sound: " .. system_sound_path)
+        session:streamFile(system_sound_path)
+        return
+    end
+
+    -- Then try FusionPBX/FreeSWITCH sample-rate subdirectory layout.
+    -- Example:
+    -- sound_file = ivr/ivr-night_mode.wav
+    -- path       = /usr/share/freeswitch/sounds/en/us/callie/ivr/8000/ivr-night_mode.wav
+    local sound_dir, sound_name = sound_file:match("^(.-)/([^/]+)$")
+
+    if sound_dir and sound_name then
+        local rates = { "8000", "16000", "32000", "48000" }
+
+        for _, rate in ipairs(rates) do
+            local rated_system_sound_path =
+                system_base_path ..
+                "/" ..
+                sound_dir ..
+                "/" ..
+                rate ..
+                "/" ..
+                sound_name
+
+            if file_exists(rated_system_sound_path) then
+                debug_log("NOTICE", "Playing rated system call flow sound: " .. rated_system_sound_path)
+                session:streamFile(rated_system_sound_path)
+                return
+            end
+        end
+    end
+
+    debug_log("ERR", "Sound file not found. Checked domain path: " .. domain_sound_path)
+    debug_log("ERR", "Sound file not found. Checked system path: " .. system_sound_path)
+
+    if sound_dir and sound_name then
+        debug_log("ERR", "Also checked rated system paths under: " .. system_base_path .. "/" .. sound_dir .. "/{8000,16000,32000,48000}/" .. sound_name)
+    end
 end
 
 local function main()
@@ -94,11 +161,20 @@ local function main()
     local domain_name = session:getVariable("domain_name")
     local destination_number = session:getVariable("destination_number") or ""
 
+    local sounds_dir = session:getVariable("sounds_dir") or "/usr/share/freeswitch/sounds"
+    local default_language = session:getVariable("default_language") or "en"
+    local default_dialect = session:getVariable("default_dialect") or "us"
+    local default_voice = session:getVariable("default_voice") or "callie"
+
     debug_log("NOTICE", string.format(
-        "Flow Toggle: to=%s domain_uuid=%s domain_name=%s",
+        "Flow Toggle: to=%s domain_uuid=%s domain_name=%s sounds=%s/%s/%s/%s",
         tostring(destination_number),
         tostring(domain_uuid),
-        tostring(domain_name)
+        tostring(domain_name),
+        tostring(sounds_dir),
+        tostring(default_language),
+        tostring(default_dialect),
+        tostring(default_voice)
     ))
 
     if not (domain_uuid and domain_name and destination_number) then
@@ -145,7 +221,7 @@ local function main()
     ]], lookup_column)
 
     local params = {
-        domain_uuid  = domain_uuid,
+        domain_uuid = domain_uuid,
         lookup_value = lookup_value,
     }
 
@@ -161,11 +237,6 @@ local function main()
         session:hangup()
         return
     end
-
-    -- Log all retrieved row values for debugging
-    -- for key, value in pairs(row) do
-    --     debug_log("NOTICE", string.format("row[%s] = %s", tostring(key), tostring(value)))
-    -- end
 
     local pin_number = tostring(row.call_flow_pin_number or "")
 
@@ -210,24 +281,30 @@ local function main()
 
     debug_log("NOTICE", "Call flow status updated successfully to " .. tostring(toggle))
 
-local notify_target = tostring(row.call_flow_extension or extension or lookup_value)
+    -- Send BLF notify BEFORE playing the sound.
+    local notify_target = tostring(row.call_flow_extension or extension or lookup_value)
 
-local cmd = string.format(
-    "luarun lua/flow_notify.lua %s %s %s",
-    notify_target,
-    domain_name,
-    toggle
-)
+    local cmd = string.format(
+        "luarun lua/flow_notify.lua %s %s %s",
+        notify_target,
+        domain_name,
+        toggle
+    )
 
-debug_log("NOTICE", "Sending BLF notify command: " .. cmd)
-api:execute("bgapi", cmd)
+    debug_log("NOTICE", "Sending BLF notify command: " .. cmd)
+    api:execute("bgapi", cmd)
 
--- Play sound for the NEW status after toggle.
--- New status true  = call_flow_sound
--- New status false = call_flow_alternate_sound
-if session:ready() then
-    play_call_flow_sound(row, toggle, domain_name)
-end
+    if session:ready() then
+        play_call_flow_sound(
+            row,
+            toggle,
+            domain_name,
+            sounds_dir,
+            default_language,
+            default_dialect,
+            default_voice
+        )
+    end
 
     dbh:release()
     session:hangup()
