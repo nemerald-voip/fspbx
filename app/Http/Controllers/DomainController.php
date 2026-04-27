@@ -78,7 +78,8 @@ class DomainController extends Controller
 
                     // Apply your search conditions
                     $query->where(function ($q) use ($needle) {
-                        $q->where('domain_name', 'ILIKE', "%{$needle}%")
+                        $q->where('domain_uuid', 'ILIKE', "%{$needle}%")
+                            ->orWhere('domain_name', 'ILIKE', "%{$needle}%")
                             ->orWhere('domain_description', 'ILIKE', "%{$needle}%");
                     });
                 }),
