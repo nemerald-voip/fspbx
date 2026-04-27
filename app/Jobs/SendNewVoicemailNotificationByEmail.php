@@ -39,7 +39,7 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
      *
      * @var int
      */
-    public $maxExceptions = 3;
+    public $maxExceptions = 10;
 
     /**
      * The number of seconds the job can run before timing out.
@@ -278,13 +278,22 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
 
             if (!Cache::has($sentKey)) {
                 try {
+                    // Rebuild failover transport for this attempt.
+                    // This helps avoid stale RoundRobinTransport state in long-running Horizon workers.
+                    Mail::purge(config('mail.default'));
+
                     // send; if it throws, the job RETRIES
                     Mail::to($to)->send(new VoicemailNotification($attributes));
 
                     // mark as sent so future retries won't resend
                     Cache::put($sentKey, 1, now()->addDays(1));
                 } catch (\Throwable $e) {
-                    logger()->error('Voicemail email send failed', ['uuid' => $uuid, 'error' => $e->getMessage()]);
+                    logger()->error('Voicemail email send failed', [
+                        'uuid' => $uuid,
+                        'attempt' => $this->attempts(),
+                        'max_tries' => $this->tries,
+                        'error' => $e->getMessage(),
+                    ]);                    
                     throw $e; // ensure retry on failure
                 }
             }
@@ -334,11 +343,26 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
 
     public function failed(\Throwable $e): void
     {
-        // Best effort: if the row exists, mark permanent failure and store the last error.
-        EmailLog::where('uuid', $this->logId)->update([
-            'status'      => 'permanent_failed',   // distinct from interim 'failed' if you want
-            'sent_debug_info'  => $e->getMessage(),
+        $log = EmailLog::query()->find($this->logId);
 
+        if (! $log) {
+            return;
+        }
+
+        $existing = trim((string) $log->sent_debug_info);
+
+        $line = 'Voicemail email job exhausted retries at '
+            . now()->toDateTimeString()
+            . ' after '
+            . $this->attempts()
+            . ' attempts: '
+            . $e->getMessage();
+
+        $log->update([
+            'status' => 'permanent_failed',
+            'sent_debug_info' => $existing
+                ? $existing . PHP_EOL . $line
+                : $line,
         ]);
     }
 

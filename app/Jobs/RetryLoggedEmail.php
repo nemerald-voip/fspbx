@@ -47,6 +47,10 @@ class RetryLoggedEmail implements ShouldQueue
                 'status' => 'sending',
             ]);
 
+            // Rebuild the failover transport for this retry attempt.
+            // This helps avoid stale RoundRobinTransport state in long-running Horizon workers.
+            Mail::purge(config('mail.default'));
+
             Mail::send([], [
                 'attributes' => [
                     'logId'       => (string) $log->uuid,
@@ -130,7 +134,7 @@ class RetryLoggedEmail implements ShouldQueue
 
     protected function classifyMailException(\Throwable $e): array
     {
-        $raw = trim($e->getMessage());
+        $raw = $this->exceptionMessageWithPrevious($e);
         $normalized = strtolower($raw);
 
         // SMTP auth lockout / rate limiting
@@ -188,6 +192,18 @@ class RetryLoggedEmail implements ShouldQueue
             'summary' => 'Email send attempt failed due to a mail transport error.',
             'details' => $this->shortenTransportMessage($raw),
         ];
+    }
+
+    protected function exceptionMessageWithPrevious(\Throwable $e): string
+    {
+        $messages = [];
+
+        do {
+            $messages[] = get_class($e) . ': ' . $e->getMessage();
+            $e = $e->getPrevious();
+        } while ($e);
+
+        return implode(' | Previous: ', $messages);
     }
 
     protected function shortenTransportMessage(string $message, int $max = 500): string
