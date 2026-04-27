@@ -149,4 +149,7 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
 
     Route::get('/domains/{domain_uuid}/cdrs/{xml_cdr_uuid}', [CdrController::class, 'show'])
         ->middleware('user.authorize:xml_cdr_view');
+
+    Route::get('/domains/{domain_uuid}/cdrs/{xml_cdr_uuid}/recording-url', [CdrController::class, 'recordingUrl'])
+        ->middleware('user.authorize:xml_cdr_view');
 });

@@ -11,16 +11,21 @@ use Illuminate\Support\Carbon;
 use App\Exceptions\ApiException;
 use App\Http\Controllers\Controller;
 use App\Services\CdrDataService;
+use App\Services\CallRecordingUrlService;
 
 class CdrController extends Controller
 {
     public $item_domain_uuid;
 
     protected CdrDataService $cdrDataService;
+    protected CallRecordingUrlService $callRecordingUrlService;
 
-    public function __construct(CdrDataService $cdrDataService)
-    {
+    public function __construct(
+        CdrDataService $cdrDataService,
+        CallRecordingUrlService $callRecordingUrlService
+    ) {
         $this->cdrDataService = $cdrDataService;
+        $this->callRecordingUrlService = $callRecordingUrlService;
     }
 
     /**
@@ -293,6 +298,98 @@ class CdrController extends Controller
         $payload = $this->cdrDataService->buildApiShowPayload($domain_uuid, $xml_cdr_uuid);
 
         return response()->json($payload->toArray(), 200);
+    }
+
+    /**
+     * Retrieve a temporary recording URL for a Call Detail Record
+     *
+     * Returns time-limited URLs (default 10 minutes) for streaming and
+     * downloading the recording associated with the given CDR. Works
+     * uniformly across both recording-storage backends:
+     *
+     * - **Local storage** (`cdrs.record_path` is a filesystem path):
+     *   Returns Laravel signed routes to the existing `cdrs.recording.stream`
+     *   and `cdrs.recording.download` web endpoints. The signature embeds
+     *   the TTL; no session cookie required by the consumer.
+     * - **S3 / S3-compatible** (`cdrs.record_path === 'S3'`, populated by
+     *   the `fs:upload-call-recordings-to-s3-storage` archival command):
+     *   Returns presigned object URLs minted via the configured per-domain
+     *   S3 disk.
+     *
+     * Either way the consumer can `GET` the URL with no extra auth and
+     * receive the audio bytes (`Content-Disposition: inline` for
+     * `audio_url`, `attachment` for `download_url`).
+     *
+     * Access rules:
+     * - Caller must have access to the target domain (domain scope).
+     * - Caller must have the `xml_cdr_view` permission.
+     *
+     * @group CDRs
+     * @authenticated
+     *
+     * @urlParam domain_uuid string required The domain UUID. Example: 7d58342b-2b29-4dcf-92d6-e9a9e002a4e5
+     * @urlParam xml_cdr_uuid string required The CDR UUID. Example: 40aec3e8-a572-40da-954b-ddf6a8a65324
+     *
+     * @response 200 scenario="Success" {
+     *   "object": "cdr_recording_url",
+     *   "xml_cdr_uuid": "40aec3e8-a572-40da-954b-ddf6a8a65324",
+     *   "audio_url": "https://pbx.example.com/call-detail-records/recordings/40aec3e8-a572-40da-954b-ddf6a8a65324/stream?expires=1775788500&signature=...",
+     *   "download_url": "https://pbx.example.com/call-detail-records/recordings/40aec3e8-a572-40da-954b-ddf6a8a65324/download?expires=1775788500&signature=...",
+     *   "filename": "20260401-120000_2135551212_1001.wav",
+     *   "expires_at": 1775788500
+     * }
+     *
+     * @response 400 scenario="Invalid domain UUID" {"error":{"type":"invalid_request_error","message":"Invalid domain UUID.","code":"invalid_request","param":"domain_uuid"}}
+     * @response 400 scenario="Invalid CDR UUID" {"error":{"type":"invalid_request_error","message":"Invalid CDR UUID.","code":"invalid_request","param":"xml_cdr_uuid"}}
+     * @response 401 scenario="Unauthenticated" {"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}}
+     * @response 404 scenario="Domain not found" {"error":{"type":"invalid_request_error","message":"Domain not found.","code":"resource_missing","param":"domain_uuid"}}
+     * @response 404 scenario="CDR not found" {"error":{"type":"invalid_request_error","message":"CDR not found.","code":"resource_missing","param":"xml_cdr_uuid"}}
+     * @response 404 scenario="No recording for this CDR" {"error":{"type":"invalid_request_error","message":"No recording available for this CDR.","code":"resource_missing","param":"xml_cdr_uuid"}}
+     */
+    public function recordingUrl(Request $request, string $domain_uuid, string $xml_cdr_uuid)
+    {
+        $user = $request->user();
+
+        if (! $user) {
+            throw new ApiException(401, 'authentication_error', 'Unauthenticated.', 'unauthenticated');
+        }
+
+        if (! preg_match('/^[0-9a-fA-F-]{36}$/', $domain_uuid)) {
+            throw new ApiException(400, 'invalid_request_error', 'Invalid domain UUID.', 'invalid_request', 'domain_uuid');
+        }
+
+        if (! preg_match('/^[0-9a-fA-F-]{36}$/', $xml_cdr_uuid)) {
+            throw new ApiException(400, 'invalid_request_error', 'Invalid CDR UUID.', 'invalid_request', 'xml_cdr_uuid');
+        }
+
+        $domainExists = Domain::query()->where('domain_uuid', $domain_uuid)->exists();
+        if (! $domainExists) {
+            throw new ApiException(404, 'invalid_request_error', 'Domain not found.', 'resource_missing', 'domain_uuid');
+        }
+
+        $cdrExists = CDR::query()
+            ->where('domain_uuid', $domain_uuid)
+            ->where('xml_cdr_uuid', $xml_cdr_uuid)
+            ->exists();
+        if (! $cdrExists) {
+            throw new ApiException(404, 'invalid_request_error', 'CDR not found.', 'resource_missing', 'xml_cdr_uuid');
+        }
+
+        $ttlSeconds = 600;
+        $urls = $this->callRecordingUrlService->urlsForCdr($xml_cdr_uuid, $ttlSeconds);
+
+        if (empty($urls['audio_url'])) {
+            throw new ApiException(404, 'invalid_request_error', 'No recording available for this CDR.', 'resource_missing', 'xml_cdr_uuid');
+        }
+
+        return response()->json([
+            'object' => 'cdr_recording_url',
+            'xml_cdr_uuid' => $xml_cdr_uuid,
+            'audio_url' => $urls['audio_url'],
+            'download_url' => $urls['download_url'],
+            'filename' => $urls['filename'],
+            'expires_at' => Carbon::now()->addSeconds($ttlSeconds)->timestamp,
+        ], 200);
     }
 
     /**
