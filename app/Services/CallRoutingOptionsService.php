@@ -2,20 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\{
-    BusinessHour,
-    CallCenterQueues,
-    CallFlows,
-    Conferences,
-    Dialplans,
-    Domain,
-    Extensions,
-    Faxes,
-    IvrMenus,
-    Recordings,
-    RingGroups,
-    Voicemails
-};
+use App\Models\{BusinessHour, CallCenterQueues, CallFlows, Conferences, Dialplans, Domain, Extensions, Faxes, IvrMenus, Recordings, RingGroups, Voicemails};
+use App\Models\ConferenceCenter;
 
 class CallRoutingOptionsService
 {
@@ -34,6 +22,7 @@ class CallRoutingOptionsService
         ['value' => 'call_flows', 'name' => 'Call Flow'],
         ['value' => 'recordings', 'name' => 'Play Greeting'],
         ['value' => 'conferences', 'name' => 'Conferences'],
+        ['value' => 'conference_centers', 'name' => 'Conference Centers'],
         ['value' => 'check_voicemail', 'name' => 'Check Voicemail'],
         ['value' => 'company_directory', 'name' => 'Company Directory'],
         ['value' => 'hangup', 'name' => 'Hang up'],
@@ -66,6 +55,7 @@ class CallRoutingOptionsService
         'time_conditions'  => \App\Models\Dialplans::class,
         'contact_centers'  => \App\Models\CallCenterQueues::class,
         'conferences'      => \App\Models\Conferences::class,
+        'conference_centers' => \App\Models\ConferenceCenter::class,
         'faxes'            => \App\Models\Faxes::class,
         'call_flows'       => \App\Models\CallFlows::class,
         'recordings'       => \App\Models\Recordings::class,
@@ -105,6 +95,8 @@ class CallRoutingOptionsService
                 return $this->buildOptions(Dialplans::class, 'dialplan_number', 'dialplan_name');
             case 'conferences':
                 return $this->buildOptions(Conferences::class, 'conference_extension', 'conference_name');
+            case 'conference_centers':
+                return $this->buildOptions(ConferenceCenter::class, 'conference_center_extension', 'conference_center_name');
             case 'voicemails':
                 return $this->buildOptions(Voicemails::class, 'voicemail_id', 'voicemail_description');
             case 'other':
@@ -155,7 +147,7 @@ class CallRoutingOptionsService
                     $name = $row->extension->name_formatted;
                 } else {
                     // Fallback to voicemail_id - "Team voicemail" if extension does not exist
-                    $name =  $row->voicemail_id . " - Team voicemail" . ($row->voicemail_description ? ' ('. $row->voicemail_description . ')': '');
+                    $name =  $row->voicemail_id . " - Team voicemail" . ($row->voicemail_description ? ' (' . $row->voicemail_description . ')' : '');
                 }
             }
 
@@ -249,47 +241,7 @@ class CallRoutingOptionsService
      */
     public function reverseEngineerIVROption($ivrAction)
     {
-        try {
-            $ivrAction = trim($ivrAction);
-            // Split the string by spaces to extract details
-            $parts = explode(' ', $ivrAction);
-
-            if (count($parts) < 3 && $ivrAction != "hangup") {
-                throw new \Exception("Invalid IVR action format");
-            }
-
-            // Extract relevant data
-            $actionType = $parts[0]; // e.g., "transfer"
-            if ($actionType != 'hangup') {
-                $destination = $parts[1]; // e.g., "201"
-                $context = $parts[2]; // e.g., "XML"
-                $domain = $parts[3] ?? null; // e.g., "api.us.domain.net"
-            }
-
-            // Reverse engineer based on the action type
-            switch ($actionType) {
-                case 'transfer':
-                    return $this->reverseEngineerTransferAction("$destination $context $domain");
-                    break;
-                case 'lua':
-                    return $this->extractRecordingUuidFromData("$destination $context $domain");
-                    break;
-
-                case 'hangup':
-                    return array(
-                        'type' => 'hangup',
-                    );
-                    break;
-
-                // Add more cases for other IVR actions as needed
-
-                default:
-                    throw new \Exception("Unsupported IVR action type: $actionType");
-            }
-        } catch (\Exception $e) {
-            logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
-            return null;
-        }
+        return $this->reverseEngineerApplicationAction($ivrAction, 'IVR');
     }
 
     /**
@@ -300,6 +252,22 @@ class CallRoutingOptionsService
      */
     public function reverseEngineerRingGroupExitAction($action)
     {
+        return $this->reverseEngineerApplicationAction($action, 'Ring Group');
+    }
+
+    /**
+     * Reverse engineer Call Flow route options based on the provided parameter.
+     *
+     * @param string $action A string containing the action details (e.g., "transfer 201 XML api.us.nemerald.net").
+     * @return array|null Reverse-engineered routing option details.
+     */
+    public function reverseEngineerCallFlowAction($action)
+    {
+        return $this->reverseEngineerApplicationAction($action, 'Call Flow');
+    }
+
+    protected function reverseEngineerApplicationAction($action, string $label)
+    {
         try {
             if (!$action) {
                 return null;
@@ -309,7 +277,7 @@ class CallRoutingOptionsService
             $parts = explode(' ', $action);
 
             if (count($parts) < 3 && $action != "hangup") {
-                throw new \Exception("Invalid Ring Group action format");
+                throw new \Exception("Invalid {$label} action format");
             }
 
             // Extract relevant data
@@ -338,7 +306,7 @@ class CallRoutingOptionsService
                 // Add more cases for other actions as needed
 
                 default:
-                    throw new \Exception("Unsupported Ring Group action type: $actionType");
+                    throw new \Exception("Unsupported {$label} action type: $actionType");
             }
         } catch (\Exception $e) {
             logger($e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
@@ -464,7 +432,7 @@ class CallRoutingOptionsService
         if ((substr($extension, 0, 3) == '*99') !== false) {
             $voicemail = Voicemails::where('domain_uuid', $domainUuid)
                 ->where('voicemail_id', substr($extension, 3))
-                ->with(['extension' => function ($query) use ($domainUuid){
+                ->with(['extension' => function ($query) use ($domainUuid) {
                     $query->select('extension_uuid', 'extension', 'effective_caller_id_name')
                         ->where('domain_uuid', $domainUuid);
                 }])
@@ -515,6 +483,7 @@ class CallRoutingOptionsService
             'time_conditions' => '/\b(year|yday|mon|mday|week|mweek|wday|hour|minute|minute-of-day|time-of-day|date-time)=("[^"]+"|\'[^\']+\'|\S+)/',
             'faxes' => '/fax_uuid=([0-9a-fA-F-]+)/',
             'conferences' => '/conference_uuid=([0-9a-fA-F-]+)/',
+            'conference_centers' => '/app.lua conference_center/',
             'check_voicemail' => '/app.lua voicemail/',
             'company_directory' => '/directory.lua/',
             'external' => '/disa.lua/',
@@ -558,6 +527,21 @@ class CallRoutingOptionsService
                         'extension' => $extension,
                         'option' => null,
                         // 'name' => $dialplan->dialplan_name,
+                    ];
+                }
+
+                if ($type === 'conference_centers') {
+                    $conferenceCenter = ConferenceCenter::where('domain_uuid', $this->domainUuid)
+                        ->where('conference_center_extension', $extension)
+                        ->first();
+
+                    return [
+                        'type' => $type,
+                        'extension' => $extension,
+                        'option' => $conferenceCenter?->conference_center_uuid,
+                        'name' => $conferenceCenter
+                            ? $conferenceCenter->conference_center_extension . ' - ' . $conferenceCenter->conference_center_name
+                            : $dialplan->dialplan_name,
                     ];
                 }
 
@@ -638,6 +622,7 @@ class CallRoutingOptionsService
             'time_conditions' => 'Schedules',
             'call_flows' => 'Call Flow',
             'conferences' => 'Conference',
+            'conference_centers' => 'Conference Center',
             'recordings' => 'Play recording',
             'company_directory' => 'Company Directory',
             'check_voicemail' => 'Check Voicemail',

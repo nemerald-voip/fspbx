@@ -116,7 +116,7 @@ class CreateFSPBXMenu extends Command
                     ['title' => 'Bridges', 'link' => '/app/bridges/bridges.php', 'groups' => ['superadmin']],
                     ['title' => 'Call Block', 'link' => '/app/call_block/call_block.php', 'groups' => ['superadmin', 'admin', 'user']],
                     ['title' => 'Call History', 'link' => '/call-detail-records', 'groups' => ['superadmin', 'admin', 'user']],
-                    ['title' => 'Call Flows', 'link' => '/app/call_flows/call_flows.php', 'groups' => ['superadmin', 'admin']],
+                    ['title' => 'Call Flows', 'link' => '/call-flows', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Conference Centers', 'link' => '/app/conference_centers/conference_centers.php', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Conference Controls', 'link' => '/app/conference_controls/conference_controls.php', 'groups' => ['superadmin']],
                     ['title' => 'Conference Profiles', 'link' => '/app/conference_profiles/conference_profiles.php', 'groups' => ['superadmin']],

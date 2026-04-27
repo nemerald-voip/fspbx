@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "FS PBX",
-        "_postman_id": "52f96c23-3ab6-4082-b3e8-b5f45e605cdf",
+        "_postman_id": "3958f0d8-7515-41c3-b8c6-c13d368567c8",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -241,6 +241,88 @@
                             "code": 404,
                             "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"CDR not found.\",\"code\":\"resource_missing\",\"param\":\"xml_cdr_uuid\"}}",
                             "name": "CDR not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Retrieve a recording URL for a Call Detail Record",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/cdrs\/:xml_cdr_uuid\/recording-url",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/cdrs\/:xml_cdr_uuid\/recording-url",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "7d58342b-2b29-4dcf-92d6-e9a9e002a4e5",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "xml_cdr_uuid",
+                                    "key": "xml_cdr_uuid",
+                                    "value": "40aec3e8-a572-40da-954b-ddf6a8a65324",
+                                    "description": "The CDR UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns time-limited URLs (default 10 minutes) for streaming and\ndownloading the recording associated with the given CDR. Works\nuniformly across both recording-storage backends:\n\n- **Local storage** (`cdrs.record_path` is a filesystem path):\n  Returns Laravel signed routes to the existing `cdrs.recording.stream`\n  and `cdrs.recording.download` web endpoints. The signature embeds\n  the TTL; no session cookie required by the consumer.\n- **S3 \/ S3-compatible** (`cdrs.record_path === 'S3'`, populated by\n  the `fs:upload-call-recordings-to-s3-storage` archival command):\n  Returns presigned object URLs minted via the configured per-domain\n  S3 disk.\n\nEither way the consumer can `GET` the URL with no extra auth and\nreceive the audio bytes (`Content-Disposition: inline` for\n`audio_url`, `attachment` for `download_url`).\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `xml_cdr_view` permission."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"object\": \"cdr_recording_url\",\n  \"xml_cdr_uuid\": \"40aec3e8-a572-40da-954b-ddf6a8a65324\",\n  \"audio_url\": \"https:\/\/pbx.example.com\/call-detail-records\/recordings\/40aec3e8-a572-40da-954b-ddf6a8a65324\/stream?expires=1775788500&signature=...\",\n  \"download_url\": \"https:\/\/pbx.example.com\/call-detail-records\/recordings\/40aec3e8-a572-40da-954b-ddf6a8a65324\/download?expires=1775788500&signature=...\",\n  \"filename\": \"20260401-120000_2135551212_1001.wav\",\n  \"expires_at\": 1775788500\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid CDR UUID.\",\"code\":\"invalid_request\",\"param\":\"xml_cdr_uuid\"}}",
+                            "name": "Invalid CDR UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"CDR not found.\",\"code\":\"resource_missing\",\"param\":\"xml_cdr_uuid\"}}",
+                            "name": "CDR not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"No recording available for this CDR.\",\"code\":\"resource_missing\",\"param\":\"xml_cdr_uuid\"}}",
+                            "name": "No recording for this CDR"
                         }
                     ]
                 }

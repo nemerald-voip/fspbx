@@ -643,6 +643,144 @@ paths:
         required: true
         schema:
           type: string
+  '/api/v1/domains/{domain_uuid}/cdrs/{xml_cdr_uuid}/recording-url':
+    get:
+      summary: 'Retrieve a recording URL for a Call Detail Record'
+      operationId: retrieveARecordingURLForACallDetailRecord
+      description: "Returns time-limited URLs (default 10 minutes) for streaming and\ndownloading the recording associated with the given CDR. Works\nuniformly across both recording-storage backends:\n\n- **Local storage** (`cdrs.record_path` is a filesystem path):\n  Returns Laravel signed routes to the existing `cdrs.recording.stream`\n  and `cdrs.recording.download` web endpoints. The signature embeds\n  the TTL; no session cookie required by the consumer.\n- **S3 / S3-compatible** (`cdrs.record_path === 'S3'`, populated by\n  the `fs:upload-call-recordings-to-s3-storage` archival command):\n  Returns presigned object URLs minted via the configured per-domain\n  S3 disk.\n\nEither way the consumer can `GET` the URL with no extra auth and\nreceive the audio bytes (`Content-Disposition: inline` for\n`audio_url`, `attachment` for `download_url`).\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `xml_cdr_view` permission."
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  object: cdr_recording_url
+                  xml_cdr_uuid: 40aec3e8-a572-40da-954b-ddf6a8a65324
+                  audio_url: 'https://pbx.example.com/call-detail-records/recordings/40aec3e8-a572-40da-954b-ddf6a8a65324/stream?expires=1775788500&signature=...'
+                  download_url: 'https://pbx.example.com/call-detail-records/recordings/40aec3e8-a572-40da-954b-ddf6a8a65324/download?expires=1775788500&signature=...'
+                  filename: 20260401-120000_2135551212_1001.wav
+                  expires_at: 1775788500
+                properties:
+                  object:
+                    type: string
+                    example: cdr_recording_url
+                  xml_cdr_uuid:
+                    type: string
+                    example: 40aec3e8-a572-40da-954b-ddf6a8a65324
+                  audio_url:
+                    type: string
+                    example: 'https://pbx.example.com/call-detail-records/recordings/40aec3e8-a572-40da-954b-ddf6a8a65324/stream?expires=1775788500&signature=...'
+                  download_url:
+                    type: string
+                    example: 'https://pbx.example.com/call-detail-records/recordings/40aec3e8-a572-40da-954b-ddf6a8a65324/download?expires=1775788500&signature=...'
+                  filename:
+                    type: string
+                    example: 20260401-120000_2135551212_1001.wav
+                  expires_at:
+                    type: integer
+                    example: 1775788500
+        400:
+          description: 'Invalid CDR UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid CDR UUID.'
+                    code: invalid_request
+                    param: xml_cdr_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid CDR UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: xml_cdr_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        404:
+          description: 'No recording for this CDR'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'No recording available for this CDR.'
+                    code: resource_missing
+                    param: xml_cdr_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'No recording available for this CDR.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: xml_cdr_uuid
+      tags:
+        - CDRs
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 7d58342b-2b29-4dcf-92d6-e9a9e002a4e5
+        required: true
+        schema:
+          type: string
+      -
+        in: path
+        name: xml_cdr_uuid
+        description: 'The CDR UUID.'
+        example: 40aec3e8-a572-40da-954b-ddf6a8a65324
+        required: true
+        schema:
+          type: string
   '/api/v1/domains/{domain_uuid}/devices':
     get:
       summary: 'List devices'

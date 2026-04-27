@@ -281,6 +281,65 @@ local function main()
 
     debug_log("NOTICE", "Call flow status updated successfully to " .. tostring(toggle))
 
+    if toggle == "false" then
+        local group = tostring(row.call_flow_group or "")
+
+        if group ~= "" then
+            local siblings = {}
+
+            dbh:query([[
+                SELECT call_flow_uuid, call_flow_extension
+                FROM v_call_flows
+                WHERE domain_uuid = :domain_uuid
+                  AND call_flow_group = :call_flow_group
+                  AND call_flow_uuid <> :call_flow_uuid
+                  AND call_flow_status = 'false'
+            ]], {
+                domain_uuid = domain_uuid,
+                call_flow_group = group,
+                call_flow_uuid = row.call_flow_uuid,
+            }, function(sibling)
+                table.insert(siblings, sibling)
+            end)
+
+            if #siblings > 0 then
+                local sibling_update_ok = dbh:query([[
+                    UPDATE v_call_flows
+                    SET call_flow_status = 'true'
+                    WHERE domain_uuid = :domain_uuid
+                      AND call_flow_group = :call_flow_group
+                      AND call_flow_uuid <> :call_flow_uuid
+                      AND call_flow_status = 'false'
+                ]], {
+                    domain_uuid = domain_uuid,
+                    call_flow_group = group,
+                    call_flow_uuid = row.call_flow_uuid,
+                })
+
+                if sibling_update_ok == false then
+                    debug_log("ERR", "Failed to reset sibling call flows for group=" .. tostring(group))
+                else
+                    debug_log("NOTICE", "Reset " .. tostring(#siblings) .. " sibling call flow(s) to default for group=" .. tostring(group))
+
+                    for _, sibling in ipairs(siblings) do
+                        local sibling_extension = tostring(sibling.call_flow_extension or "")
+
+                        if sibling_extension ~= "" then
+                            local sibling_cmd = string.format(
+                                "luarun lua/flow_notify.lua %s %s true",
+                                sibling_extension,
+                                domain_name
+                            )
+
+                            debug_log("NOTICE", "Sending sibling BLF notify command: " .. sibling_cmd)
+                            api:execute("bgapi", sibling_cmd)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
     -- Send BLF notify BEFORE playing the sound.
     local notify_target = tostring(row.call_flow_extension or extension or lookup_value)
 

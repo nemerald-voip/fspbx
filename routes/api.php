@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\LocationsController;
 use App\Http\Controllers\Api\ProvisioningTemplateController;
 use App\Http\Controllers\BusinessHoursController;
+use App\Http\Controllers\CallFlowController;
 use App\Http\Controllers\CallTranscriptionController;
 use App\Http\Controllers\CdrsController;
 use App\Http\Controllers\CharPmsWebhookController;
@@ -262,6 +263,17 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('devices/item-options', [DeviceController::class, 'getItemOptions'])->name('devices.item.options');
     Route::post('devices/assign', [DeviceController::class, 'assign'])->name('devices.assign');
     Route::post('devices/bulk-unassign', [DeviceController::class, 'bulkUnassign'])->name('devices.bulk.unassign');
+
+    // Call Flows
+    Route::post('call-flows', [CallFlowController::class, 'store'])->name('call-flows.store');
+    Route::put('call-flows/{call_flow}', [CallFlowController::class, 'update'])->name('call-flows.update');
+    Route::get('/call-flows/data', [CallFlowController::class, 'getData'])->name('call-flows.data');
+    Route::post('/call-flows/item-options', [CallFlowController::class, 'getItemOptions'])->name('call-flows.item.options');
+    Route::post('/call-flows/groups', [CallFlowController::class, 'storeGroup'])->name('call-flows.groups.store');
+    Route::post('/call-flows/select-all', [CallFlowController::class, 'selectAll'])->name('call-flows.select.all');
+    Route::post('/call-flows/bulk-delete', [CallFlowController::class, 'bulkDelete'])->name('call-flows.bulk.delete');
+    Route::post('/call-flows/bulk-copy', [CallFlowController::class, 'bulkCopy'])->name('call-flows.bulk.copy');
+    Route::post('/call-flows/bulk-toggle', [CallFlowController::class, 'bulkToggle'])->name('call-flows.bulk.toggle');
 
     // Phone Numbers
     Route::post('phone-numbers', [PhoneNumbersController::class, 'store'])->name('phone-numbers.store');

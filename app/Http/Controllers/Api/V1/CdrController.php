@@ -301,7 +301,7 @@ class CdrController extends Controller
     }
 
     /**
-     * Retrieve a temporary recording URL for a Call Detail Record
+     * Retrieve a recording URL for a Call Detail Record
      *
      * Returns time-limited URLs (default 10 minutes) for streaming and
      * downloading the recording associated with the given CDR. Works

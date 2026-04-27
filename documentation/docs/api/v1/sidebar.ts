@@ -22,6 +22,12 @@ const sidebar: SidebarsConfig = {
           label: "Retrieve a Call Detail Record",
           className: "api-method get",
         },
+        {
+          type: "doc",
+          id: "api/v1/retrieve-a-recording-url-for-a-call-detail-record",
+          label: "Retrieve a recording URL for a Call Detail Record",
+          className: "api-method get",
+        },
       ],
     },
     {

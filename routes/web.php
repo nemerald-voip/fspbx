@@ -8,6 +8,7 @@ use App\Http\Controllers\AppsCredentialsController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\BusinessHoursController;
 use App\Http\Controllers\CallRecordingController;
+use App\Http\Controllers\CallFlowController;
 use App\Http\Controllers\CallRoutingOptionsController;
 use App\Http\Controllers\CdrsController;
 use App\Http\Controllers\CsrfTokenController;
@@ -190,6 +191,9 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Business hours
     Route::get('business-hours', [BusinessHoursController::class, 'index'])->name('business-hours.index');
+
+    // Call Flows
+    Route::get('call-flows', [CallFlowController::class, 'index'])->name('call-flows.index');
 
     //Voicemails
     Route::get('voicemails', [VoicemailController::class, 'index'])->name('voicemails.index');

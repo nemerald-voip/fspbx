@@ -395,7 +395,7 @@ class DashboardController extends Controller
             $apps[] = ['name' => 'Call History (CDRs)', 'href' => route('cdrs.index'), 'icon' => 'CallHistoryIcon', 'slug' => 'cdrs'];
         }
         if (userCheckPermission("call_flow_view")) {
-            $apps[] = ['name' => 'Call Flows', 'href' => '/app/call_flows/call_flows.php', 'icon' => 'AlternativeRouteIcon', 'slug' => 'call_flows'];
+            $apps[] = ['name' => 'Call Flows', 'href' => route('call-flows.index'), 'icon' => 'AlternativeRouteIcon', 'slug' => 'call_flows'];
         }
         if (userCheckPermission("fax_view")) {
             $apps[] = ['name' => 'Faxes', 'href' => '/faxes', 'icon' => 'FaxIcon', 'slug' => 'faxes'];

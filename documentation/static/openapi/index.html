@@ -71,6 +71,9 @@
                                                                                 <li class="tocify-item level-2" data-unique="cdrs-GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid-">
                                 <a href="#cdrs-GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid-">Retrieve a Call Detail Record</a>
                             </li>
+                                                                                <li class="tocify-item level-2" data-unique="cdrs-GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid--recording-url">
+                                <a href="#cdrs-GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid--recording-url">Retrieve a recording URL for a Call Detail Record</a>
+                            </li>
                                                                         </ul>
                             </ul>
                     <ul id="tocify-header-devices" class="tocify-header">
@@ -214,7 +217,7 @@
     </ul>
 
     <ul class="toc-footer" id="last-updated">
-        <li>Last updated: April 24, 2026</li>
+        <li>Last updated: April 27, 2026</li>
     </ul>
 </div>
 
@@ -911,6 +914,251 @@ You can check the Dev Tools console for debugging information.</code></pre>
  &nbsp;
                 <input type="text" style="display: none"
                               name="xml_cdr_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid-"
+               value="40aec3e8-a572-40da-954b-ddf6a8a65324"
+               data-component="url">
+    <br>
+<p>The CDR UUID. Example: <code>40aec3e8-a572-40da-954b-ddf6a8a65324</code></p>
+            </div>
+                    </form>
+
+                    <h2 id="cdrs-GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid--recording-url">Retrieve a recording URL for a Call Detail Record</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Returns time-limited URLs (default 10 minutes) for streaming and
+downloading the recording associated with the given CDR. Works
+uniformly across both recording-storage backends:</p>
+<ul>
+<li><strong>Local storage</strong> (<code>cdrs.record_path</code> is a filesystem path):
+Returns Laravel signed routes to the existing <code>cdrs.recording.stream</code>
+and <code>cdrs.recording.download</code> web endpoints. The signature embeds
+the TTL; no session cookie required by the consumer.</li>
+<li><strong>S3 / S3-compatible</strong> (<code>cdrs.record_path === 'S3'</code>, populated by
+the <code>fs:upload-call-recordings-to-s3-storage</code> archival command):
+Returns presigned object URLs minted via the configured per-domain
+S3 disk.</li>
+</ul>
+<p>Either way the consumer can <code>GET</code> the URL with no extra auth and
+receive the audio bytes (<code>Content-Disposition: inline</code> for
+<code>audio_url</code>, <code>attachment</code> for <code>download_url</code>).</p>
+<p>Access rules:</p>
+<ul>
+<li>Caller must have access to the target domain (domain scope).</li>
+<li>Caller must have the <code>xml_cdr_view</code> permission.</li>
+</ul>
+
+<span id="example-requests-GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid--recording-url">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "/api/v1/domains/7d58342b-2b29-4dcf-92d6-e9a9e002a4e5/cdrs/40aec3e8-a572-40da-954b-ddf6a8a65324/recording-url" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/7d58342b-2b29-4dcf-92d6-e9a9e002a4e5/cdrs/40aec3e8-a572-40da-954b-ddf6a8a65324/recording-url"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid--recording-url">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;object&quot;: &quot;cdr_recording_url&quot;,
+    &quot;xml_cdr_uuid&quot;: &quot;40aec3e8-a572-40da-954b-ddf6a8a65324&quot;,
+    &quot;audio_url&quot;: &quot;https://pbx.example.com/call-detail-records/recordings/40aec3e8-a572-40da-954b-ddf6a8a65324/stream?expires=1775788500&amp;signature=...&quot;,
+    &quot;download_url&quot;: &quot;https://pbx.example.com/call-detail-records/recordings/40aec3e8-a572-40da-954b-ddf6a8a65324/download?expires=1775788500&amp;signature=...&quot;,
+    &quot;filename&quot;: &quot;20260401-120000_2135551212_1001.wav&quot;,
+    &quot;expires_at&quot;: 1775788500
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid domain UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid CDR UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid CDR UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;xml_cdr_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Domain not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, CDR not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;CDR not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;xml_cdr_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, No recording for this CDR):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;No recording available for this CDR.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;xml_cdr_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid--recording-url" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid--recording-url"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid--recording-url"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid--recording-url" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid--recording-url">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid--recording-url" data-method="GET"
+      data-path="api/v1/domains/{domain_uuid}/cdrs/{xml_cdr_uuid}/recording-url"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid--recording-url', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/domains/{domain_uuid}/cdrs/{xml_cdr_uuid}/recording-url</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid--recording-url"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid--recording-url"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid--recording-url"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid--recording-url"
+               value="7d58342b-2b29-4dcf-92d6-e9a9e002a4e5"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>7d58342b-2b29-4dcf-92d6-e9a9e002a4e5</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>xml_cdr_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="xml_cdr_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--cdrs--xml_cdr_uuid--recording-url"
                value="40aec3e8-a572-40da-954b-ddf6a8a65324"
                data-component="url">
     <br>
@@ -8372,10 +8620,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="members.0.destination_number"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="77"
+               value="73"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>77</code></p>
+<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>73</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_delay</code></b>&nbsp;&nbsp;
@@ -8383,10 +8631,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_delay"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="68"
+               value="69"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>68</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>69</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_timeout</code></b>&nbsp;&nbsp;
@@ -8394,10 +8642,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_timeout"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="40"
+               value="26"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>40</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>26</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_prompt</code></b>&nbsp;&nbsp;
@@ -8418,7 +8666,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_enabled</code></b>&nbsp;&nbsp;
@@ -9033,10 +9281,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="members.0.destination_number"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="+509"
+               value="440"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>+509</code></p>
+<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>440</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_delay</code></b>&nbsp;&nbsp;
@@ -9044,10 +9292,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_delay"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="55"
+               value="64"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>55</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>64</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_timeout</code></b>&nbsp;&nbsp;
@@ -9055,10 +9303,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_timeout"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="90"
+               value="81"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>90</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>81</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_prompt</code></b>&nbsp;&nbsp;
@@ -9079,7 +9327,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_enabled</code></b>&nbsp;&nbsp;
@@ -9100,7 +9348,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
                     </div>
                                     </details>
         </div>
