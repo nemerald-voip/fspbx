@@ -26,8 +26,6 @@ class CdrDataService
             $params['filter']['entity']['type'] = 'extension';
         }
 
-        logger(userCheckPermission("xml_cdr_view_self_records"));
-
         if (empty($params['filter']['showGlobal'])) {
             $params['filter']['showGlobal'] = 'false';
         }
