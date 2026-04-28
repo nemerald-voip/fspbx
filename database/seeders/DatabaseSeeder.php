@@ -289,6 +289,8 @@ class DatabaseSeeder extends Seeder
                 'voicemail_message_update',
                 'xml_cdr_search_sentiment',
                 'xml_cdr_view_all_records',
+                'messages_view',
+                'messages_view_as',
             ],
             'Message Admin' => [
                 'message_settings_list_view',

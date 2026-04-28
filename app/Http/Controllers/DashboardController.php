@@ -183,7 +183,7 @@ class DashboardController extends Controller
         }
 
         //Messages Count
-        if (userCheckPermission("message_settings_list_view")) {
+        if (userCheckPermission("messages_view")) {
             $counts['messages'] = Messages::where('domain_uuid', $domain_uuid)
                 ->whereRaw("created_at >= '" . date('Y-m-d') . " 00:00:00.00 " . get_domain_setting('time_zone') . "'")
                 ->count();
@@ -400,7 +400,7 @@ class DashboardController extends Controller
         if (userCheckPermission("fax_view")) {
             $apps[] = ['name' => 'Faxes', 'href' => '/faxes', 'icon' => 'FaxIcon', 'slug' => 'faxes'];
         }
-        if (userCheckPermission("message_settings_list_view")) {
+        if (userCheckPermission("messages_view")) {
             $apps[] = ['name' => 'Messages', 'href' => '/messages', 'icon' => 'UsersIcon', 'slug' => 'messages'];
         }
         if (userCheckPermission("whitelisted_numbers_list_view")) {
