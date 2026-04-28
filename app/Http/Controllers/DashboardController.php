@@ -106,7 +106,7 @@ class DashboardController extends Controller
         $params['filter']['startPeriod'] = $startPeriod;
         $params['filter']['endPeriod'] = $endPeriod;
         // Check if user is allowed to see all CDRs for tenant
-        if (!userCheckPermission("xml_cdr_domain")) {
+        if (userCheckPermission("xml_cdr_view") && userCheckPermission("xml_cdr_view_self_records") && !userCheckPermission("xml_cdr_view_all_records")) {
             $user = auth()->user();
             $params['filter']['entity']['value'] = $user->extension_uuid;
             $params['filter']['entity']['type'] = 'extension';

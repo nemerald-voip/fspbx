@@ -153,6 +153,7 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Call Transcriptions', 'permission_name' => 'transcription_summary'],
             ['application_name' => 'XML CDR', 'permission_name' => 'xml_cdr_search_sentiment'],
             ['application_name' => 'XML CDR', 'permission_name' => 'xml_cdr_view_self_records'],
+            ['application_name' => 'XML CDR', 'permission_name' => 'xml_cdr_view_all_records'],
             ['application_name' => 'Messages', 'permission_name' => 'messages_view'],
             ['application_name' => 'Messages', 'permission_name' => 'messages_view_as'],
         ];
@@ -255,6 +256,7 @@ class DatabaseSeeder extends Seeder
                 'xml_cdr_search_sentiment',
                 'messages_view',
                 'messages_view_as',
+                'xml_cdr_view_all_records',
             ],
             'admin' => [
                 'wakeup_calls_list_view',
@@ -286,6 +288,7 @@ class DatabaseSeeder extends Seeder
                 'extension_voicemail_settings',
                 'voicemail_message_update',
                 'xml_cdr_search_sentiment',
+                'xml_cdr_view_all_records',
             ],
             'Message Admin' => [
                 'message_settings_list_view',
