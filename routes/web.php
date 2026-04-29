@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AccountSettingsController;
+use App\Http\Controllers\AccessControlController;
 use App\Http\Controllers\ActiveCallsController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AppsController;
@@ -26,6 +27,7 @@ use App\Http\Controllers\FaxLogController;
 use App\Http\Controllers\FaxQueueController;
 use App\Http\Controllers\FaxSentController;
 use App\Http\Controllers\FirewallController;
+use App\Http\Controllers\GatewayController;
 use App\Http\Controllers\GroupsController;
 use App\Http\Controllers\LogsController;
 use App\Http\Controllers\MessageController;
@@ -178,6 +180,12 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Ring Groups
     Route::get('ring-groups', [RingGroupsController::class, 'index'])->name('ring-groups.index');
+
+    // Gateways
+    Route::get('gateways', [GatewayController::class, 'index'])->name('gateways.index');
+
+    // Access Controls
+    Route::get('access-controls', [AccessControlController::class, 'index'])->name('access-controls.index');
 
     // Recordings Manager
     Route::get('recordings-manager', [RecordingsManagerController::class, 'index'])->name('recordings-manager.index');

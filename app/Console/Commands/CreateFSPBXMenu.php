@@ -93,7 +93,7 @@ class CreateFSPBXMenu extends Command
                 'subcategories' => [
                     ['title' => 'Devices', 'link' => '/devices','groups' => ['superadmin', 'admin']],
                     ['title' => 'Extensions', 'link' => '/extensions', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Gateways', 'link' => '/app/gateways/gateways.php', 'groups' => ['superadmin']],
+                    ['title' => 'Gateways', 'link' => '/gateways', 'groups' => ['superadmin']],
                     ['title' => 'Users', 'link' => '/users', 'groups' => ['superadmin', 'admin']],
                 ],
             ],
@@ -157,7 +157,7 @@ class CreateFSPBXMenu extends Command
                 'link' => null,
                 'groups' => ['superadmin'],
                 'subcategories' => [
-                    ['title' => 'Access Control', 'link' => '/app/access_controls/access_controls.php', 'groups' => ['superadmin']],
+                    ['title' => 'Access Control', 'link' => '/access-controls', 'groups' => ['superadmin']],
                     ['title' => 'Default Settings', 'link' => '/core/default_settings/default_settings.php', 'groups' => ['superadmin']],
                     ['title' => 'Domains', 'link' => '/domains', 'groups' => ['superadmin']],
                     ['title' => 'Email templates', 'link' => '/app/email_templates/email_templates.php', 'groups' => ['superadmin']],

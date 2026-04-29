@@ -46,6 +46,8 @@ const RestartIcon = defineAsyncComponent(() => import('../icons/RestartIcon.vue'
 const LinkOffIcon = defineAsyncComponent(() => import('../icons/LinkOffIcon.vue'));
 const SyncIcon = defineAsyncComponent(() => import('../icons/SyncIcon.vue'));
 const PencilSquareIcon = defineAsyncComponent(() => import('@heroicons/vue/20/solid/PencilSquareIcon'));
+const PlayIcon = defineAsyncComponent(() => import('@heroicons/vue/20/solid/PlayIcon'));
+const StopIcon = defineAsyncComponent(() => import('@heroicons/vue/20/solid/StopIcon'));
 const TrashIcon = defineAsyncComponent(() => import('@heroicons/vue/24/solid/TrashIcon'));
 const EnvelopeIcon = defineAsyncComponent(() => import('@heroicons/vue/24/solid/EnvelopeIcon'));
 const EnvelopeOpenIcon = defineAsyncComponent(() => import('@heroicons/vue/24/solid/EnvelopeOpenIcon'));
@@ -60,6 +62,8 @@ const props = defineProps({
 const iconMap = {
     RestartIcon,
     PencilSquareIcon,
+    PlayIcon,
+    StopIcon,
     TrashIcon,
     LinkOffIcon,
     SyncIcon,

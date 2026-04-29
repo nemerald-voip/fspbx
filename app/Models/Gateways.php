@@ -18,6 +18,8 @@ class Gateways extends Model
     protected $primaryKey = 'gateway_uuid';
     public $incrementing = false;
     protected $keyType = 'string';
+    public const CREATED_AT = 'insert_date';
+    public const UPDATED_AT = 'update_date';
 
     /**
      * The attributes that are mass assignable.
@@ -58,10 +60,16 @@ class Gateways extends Model
         'description',
         'contact_in_ping',
         'contact_params',
+        'retry_seconds',
         'insert_date',
         'insert_user',
         'update_date',
         'update_user',
+    ];
+
+    protected $appends = [
+        'enabled_label',
+        'register_label',
     ];
 
     /**
@@ -95,6 +103,16 @@ class Gateways extends Model
     public function domain()
     {
         return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
+    }
+
+    public function getEnabledLabelAttribute(): string
+    {
+        return $this->enabled === 'true' ? 'Enabled' : 'Disabled';
+    }
+
+    public function getRegisterLabelAttribute(): string
+    {
+        return $this->register === 'true' ? 'Register' : 'No Register';
     }
 
 }

@@ -976,7 +976,7 @@
                                                     align="right" />
 
                                                 <StaticElement name="device_settings_title" tag="h4"
-                                                    content="Device Settings"
+                                                    content="Device Advanced Settings"
                                                     description="Assign custom device settings."
                                                     :conditions="[() => options?.permissions?.device_setting_view]" />
 

@@ -1,3 +1,21 @@
+-- Enable/Disable debug mode globally
+DEBUG_MODE = false; -- Set to true to enable debug logs
+
+-- Debug logging function
+function debug_log(level, message)
+	if (DEBUG_MODE) then
+		freeswitch.consoleLog(level, message .. "\n");
+	end
+end
+
+-- Manual recordings sound prompt path
+local recordings_sound_prefix = "/var/www/fspbx/resources/sounds/en/us/alloy/recordings";
+
+function get_recording_approval_digit(session)
+	local digits = session:playAndGetDigits(1, 1, max_tries, 5000, "#", "recording_review_options.wav", "", "[12]");
+	return digits;
+end
+
 --set the variables
 	pin_number = "";
 	max_tries = 3;
@@ -9,7 +27,6 @@
 	recording_id = "";
 	recording_prefix = "";
 	recording_description = "";
-	recording_base64 = "";
 
 --include config.lua
 	require "resources.functions.config";
@@ -22,12 +39,6 @@
 --setup the database connection
 	local Database = require "resources.functions.database";
 	local db = dbh or Database.new('system');
-
---include json library
-	local json
-	if (debug["sql"]) then
-		json = require "resources.functions.lunajson"
-	end
 
 --get the domain_uuid
 	if (session:ready()) then
@@ -75,6 +86,7 @@
 
 --start the recording
 	function begin_record(session, sounds_dir, recordings_dir)
+		debug_log("INFO", "[manual_recordings.lua] recordings_dir: " .. tostring(recordings_dir));
 
 		--set the sounds path for the language, dialect and voice
 			default_language = session:getVariable("default_language");
@@ -101,7 +113,8 @@
 				max_digits = 20;
 				session:sleep(1000);
 --				recording_id = session:playAndGetDigits(min_digits, max_digits, max_tries, digit_timeout, "#", sounds_dir.."/"..default_language.."/"..default_dialect.."/"..default_voice.."/ivr/ivr-id_number.wav", "", "\\d+");
-				recording_id = session:playAndGetDigits(min_digits, max_digits, max_tries, digit_timeout, "#", "/var/www/fspbx/resources/sounds/en/us/main/recording_id_prompt.wav", "", "\\d+");
+				debug_log("INFO", "[manual_recordings.lua] Prompting for recording ID.");
+				recording_id = session:playAndGetDigits(min_digits, max_digits, max_tries, digit_timeout, "#", "recording_id_prompt.wav", "", "\\d+");
 				session:setVariable("recording_id", recording_id);
 				recording_filename = recording_prefix..recording_id.."."..record_ext;
 			elseif (tonumber(recording_id) ~= nil) then
@@ -109,6 +122,7 @@
 			else
 				recording_filename = recording_prefix.."."..record_ext;
 			end
+			debug_log("INFO", "[manual_recordings.lua] Recording filename: " .. tostring(recording_filename));
 
 		--set the default recording name if one was not provided
 			if (recording_name) then
@@ -120,35 +134,23 @@
 
 		--prompt for the recording
 --			session:streamFile(sounds_dir.."/"..default_language.."/"..default_dialect.."/"..default_voice.."/ivr/ivr-recording_started.wav");
-			session:streamFile("/var/www/fspbx/resources/sounds/en/us/main/recording_begin.wav");
+			debug_log("INFO", "[manual_recordings.lua] Playing recording begin prompt.");
+			session:streamFile("recording_begin.wav");
 			session:execute("playback","silence_stream://200");
 			session:streamFile("tone_stream://L=1;%(1000, 0, 640)");
 			session:execute("set", "playback_terminators=#");
+			debug_log("INFO", "[manual_recordings.lua] Recording prompt completed; playback terminator set.");
 
 		--make the directory
 			mkdir(recordings_dir);
 
 		--begin recording
-			if (storage_type == "base64") then
-				--include the file io
-					local file = require "resources.functions.file"
-
-				--record the file to the file system
-					-- syntax is session:recordFile(file_name, max_len_secs, silence_threshold, silence_secs);
-					session:execute("record", recordings_dir .."/".. recording_filename);
-
-				--show the storage type
-					freeswitch.consoleLog("notice", "[recordings] ".. storage_type .. "\n");
-
-				--read file content as base64 string
-					recording_base64 = assert(file.read_base64(recordings_dir .. "/" .. recording_filename));
-
-			elseif (storage_type == "http_cache") then
-				freeswitch.consoleLog("notice", "[recordings] ".. storage_type .. " ".. storage_path .."\n");
+			if (storage_type == "http_cache") then
+				debug_log("INFO", "[manual_recordings.lua] Recording file: " .. tostring(storage_path.."/"..recording_filename));
 				session:execute("record", storage_path .."/"..recording_filename);
 			else
-				freeswitch.consoleLog("notice", "[recordings] ".. storage_type .. " ".. recordings_dir .."\n");
 				-- record,Record File,<path> [<time_limit_secs>] [<silence_thresh>] [<silence_hits>]
+				debug_log("INFO", "[manual_recordings.lua] Recording file: " .. tostring(recordings_dir.."/"..recording_filename));
 				session:execute("record", "'"..recordings_dir.."/"..recording_filename.."' "..time_limit_secs.." "..silence_thresh.." "..silence_hits);
 			end
 
@@ -169,6 +171,7 @@
 	};
 
 	local row = db:first_row(sql, lookup_params);
+	debug_log("INFO", "[manual_recordings.lua] Existing recording lookup complete. Found existing row: " .. tostring(row ~= nil));
 
 	if (row) then
 		--preserve existing description/name unless already provided
@@ -183,41 +186,39 @@
 		end
 
 		--update the existing recording instead of deleting it
-		local array = {}
-		table.insert(array, "UPDATE v_recordings SET ");
-		table.insert(array, "recording_description = :recording_description, ");
-		table.insert(array, "recording_base64 = :recording_base64, ");
-		table.insert(array, "recording_name = :recording_name, ");
-		table.insert(array, "insert_date = CURRENT_TIMESTAMP ");
-		table.insert(array, "WHERE domain_uuid = :domain_uuid ");
-		table.insert(array, "AND recording_filename = :recording_filename ");
-		sql = table.concat(array, "\n");
+		debug_log("INFO", "[manual_recordings.lua] Updating existing recording UUID: " .. tostring(recording_uuid));
+		sql = [[
+			UPDATE v_recordings
+			SET
+				recording_description = :recording_description,
+				recording_name = :recording_name,
+				insert_date = CURRENT_TIMESTAMP
+			WHERE domain_uuid = :domain_uuid
+				AND recording_filename = :recording_filename
+		]];
 	else
 		--new recording
 		recording_uuid = api:execute("create_uuid");
+		debug_log("INFO", "[manual_recordings.lua] Creating new recording UUID: " .. tostring(recording_uuid));
 
-		local array = {}
-		table.insert(array, "INSERT INTO v_recordings ");
-		table.insert(array, "(");
-		table.insert(array, "recording_uuid, ");
-		table.insert(array, "domain_uuid, ");
-		table.insert(array, "recording_filename, ");
-		table.insert(array, "recording_description, ");
-		table.insert(array, "recording_base64, ");
-		table.insert(array, "recording_name, ");
-		table.insert(array, "insert_date ");
-		table.insert(array, ") ");
-		table.insert(array, "VALUES ");
-		table.insert(array, "( ");
-		table.insert(array, ":recording_uuid, ");
-		table.insert(array, ":domain_uuid, ");
-		table.insert(array, ":recording_filename, ");
-		table.insert(array, ":recording_description, ");
-		table.insert(array, ":recording_base64, ");
-		table.insert(array, ":recording_name, ");
-		table.insert(array, "CURRENT_TIMESTAMP ");
-		table.insert(array, ") ");
-		sql = table.concat(array, "\n");
+		sql = [[
+			INSERT INTO v_recordings (
+				recording_uuid,
+				domain_uuid,
+				recording_filename,
+				recording_description,
+				recording_name,
+				insert_date
+			)
+			VALUES (
+				:recording_uuid,
+				:domain_uuid,
+				:recording_filename,
+				:recording_description,
+				:recording_name,
+				CURRENT_TIMESTAMP
+			)
+		]];
 	end
 
 	local params = {
@@ -226,73 +227,39 @@
 		recording_filename = recording_filename;
 		recording_name = recording_name;
 		recording_description = recording_description;
-		recording_base64 = recording_base64;
 	};
 
-	if (debug["sql"]) then
-		freeswitch.consoleLog("notice", "[recording] SQL: " .. sql .. "; params: " .. json.encode(params) .. "\n");
-	end
+	local Database = require "resources.functions.database";
+	local db = dbh or Database.new('system');
+	db:query(sql, params);
 
-	if (storage_type == "base64") then
-		local Database = require "resources.functions.database"
-		local dbh = Database.new('system', 'base64');
-		dbh:query(sql, params);
-		dbh:release();
-	else
-		local Database = require "resources.functions.database";
-		local db = dbh or Database.new('system');
-		db:query(sql, params);
-	end
+	--preview the recording
+		debug_log("INFO", "[manual_recordings.lua] Previewing recording: " .. tostring(recordings_dir.."/"..recording_filename));
+		session:streamFile(recordings_dir.."/"..recording_filename);
 
-		--preview the recording
-			session:streamFile(recordings_dir.."/"..recording_filename);
+	--approve the recording, to save the recording press 1 to re-record press 2
+		digits = get_recording_approval_digit(session);
 
-		--approve the recording, to save the recording press 1 to re-record press 2
-			min_digits="0" max_digits="1" max_tries = "1"; digit_timeout = "100";
-			digits = session:playAndGetDigits(min_digits, max_digits, max_tries, digit_timeout, "#", "voicemail/vm-save_recording.wav", "", "\\d+");
-
-			if (string.len(digits) == 0) then
-				min_digits="0" max_digits="1" max_tries = "1"; digit_timeout = "100";
-				digits = session:playAndGetDigits(min_digits, max_digits, max_tries, digit_timeout, "#", "voicemail/vm-press.wav", "", "\\d+");
-			end
-
-			if (string.len(digits) == 0) then
-				min_digits="0" max_digits="1" max_tries = "1"; digit_timeout = "100";
-				digits = session:playAndGetDigits(min_digits, max_digits, max_tries, digit_timeout, "#", "digits/1.wav", "", "\\d+");
-			end
-
-			if (string.len(digits) == 0) then
-				min_digits="0" max_digits="1" max_tries = "1"; digit_timeout = "100";
-				digits = session:playAndGetDigits(min_digits, max_digits, max_tries, digit_timeout, "#", "voicemail/vm-rerecord.wav", "", "\\d+");
-			end
-
-			if (string.len(digits) == 0) then
-				min_digits="0" max_digits="1" max_tries = "1"; digit_timeout = "100";
-				digits = session:playAndGetDigits(min_digits, max_digits, max_tries, digit_timeout, "#", "voicemail/vm-press.wav", "", "\\d+");
-			end
-
-			if (string.len(digits) == 0) then
-				min_digits="1" max_digits="1" max_tries = "1"; digit_timeout = "5000";
-				digits = session:playAndGetDigits(min_digits, max_digits, max_tries, digit_timeout, "#", "digits/2.wav", "", "\\d+");
-			end
-
-			if (digits == "1") then
-				--recording saved, hangup
-				session:streamFile("/var/www/fspbx/resources/sounds/en/us/main/recording_saved_bye.wav");
-				return;
-			elseif (digits == "2") then
-				--reset the digit timeout
-					digit_timeout = "3000";
-				--delete the old recording
-					os.remove (recordings_dir.."/"..recording_filename);
-					--session:execute("system", "rm "..);
-				--make a new recording
-					begin_record(session, sounds_dir, recordings_dir);
-			else
-				--recording saved, hangup
-					session:streamFile("/var/www/fspbx/resources/sounds/en/us/main/recording_saved_bye.wav");
-				return;
-			end
+		if (digits == "1") then
+			--recording saved, hangup
+			debug_log("INFO", "[manual_recordings.lua] Recording approved and saved.");
+			session:streamFile("recording_saved_bye.wav");
+			return;
+		elseif (digits == "2") then
+			--reset the digit timeout
+				digit_timeout = "3000";
+			--delete the old recording
+				os.remove (recordings_dir.."/"..recording_filename);
+				debug_log("INFO", "[manual_recordings.lua] Recording rejected; deleted file and restarting: " .. tostring(recordings_dir.."/"..recording_filename));
+				--session:execute("system", "rm "..);
+			--make a new recording
+				begin_record(session, sounds_dir, recordings_dir);
+		else
+			--recording saved, hangup
+				debug_log("INFO", "[manual_recordings.lua] No approval digit selected; keeping recording.");
+				session:streamFile("recording_saved_bye.wav");
+			return;
+		end
 	end
 
 if (session:ready()) then
@@ -308,34 +275,40 @@ if (session:ready()) then
 		recordings_dir = recordings_dir .. "/"..domain_name;
 
 	--if a recording directory is specified, use that instead
-		if (storage_path ~= nil and string.len(storage_path) > 0) then recordings_dir = storage_path; end
-
-	--set the sounds path for the language, dialect and voice
-		default_language = session:getVariable("default_language");
-		default_dialect = session:getVariable("default_dialect");
-		default_voice = session:getVariable("default_voice");
-		if (not default_language) then default_language = 'en'; end
-		if (not default_dialect) then default_dialect = 'us'; end
-		if (not default_voice) then default_voice = 'callie'; end
-
-	--if the pin number is provided then require it
-		if (pin_number) then
-			freeswitch.consoleLog("notice", "[recordings] pin_number: ".. pin_number .. "\n");
-			min_digits = string.len(pin_number);
-			max_digits = string.len(pin_number)+1;
-			digits = session:playAndGetDigits(min_digits, max_digits, max_tries, digit_timeout, "#", "phrase:voicemail_enter_pass:#", "", "\\d+");
-			if (digits == pin_number) then
-				--pin is correct
-				freeswitch.consoleLog("notice", "[recordings] pin_number: correct \n");
-			else
-				freeswitch.consoleLog("notice", "[recordings] pin_number: incorrect \n");
-				session:streamFile("phrase:voicemail_fail_auth:#");
-				session:hangup("NORMAL_CLEARING");
-				return;
-			end
+		if (storage_path ~= nil and string.len(storage_path) > 0) then
+			recordings_dir = storage_path;
 		end
 
-	--start recording
+		--set the sounds path for the language, dialect and voice
+			default_language = session:getVariable("default_language");
+			default_dialect = session:getVariable("default_dialect");
+			default_voice = session:getVariable("default_voice");
+			if (not default_language) then default_language = 'en'; end
+			if (not default_dialect) then default_dialect = 'us'; end
+			if (not default_voice) then default_voice = 'callie'; end
+
+		--use the manual recordings prompt set for the rest of the workflow
+			session:setVariable("sound_prefix", recordings_sound_prefix);
+
+		--if the pin number is provided then require it
+			if (pin_number) then
+				debug_log("INFO", "[manual_recordings.lua] PIN required.");
+				min_digits = string.len(pin_number);
+				max_digits = string.len(pin_number)+1;
+				digits = session:playAndGetDigits(min_digits, max_digits, max_tries, digit_timeout, "#", "recording_pin_prompt.wav", "", "\\d+");
+				if (digits == pin_number) then
+					--pin is correct
+					debug_log("INFO", "[manual_recordings.lua] PIN accepted.");
+				else
+					debug_log("INFO", "[manual_recordings.lua] PIN rejected.");
+					session:streamFile("recording_pin_invalid.wav");
+					session:hangup("NORMAL_CLEARING");
+					return;
+				end
+			end
+
+		--start recording
+		debug_log("INFO", "[manual_recordings.lua] Starting recording workflow.");
 		begin_record(session, sounds_dir, recordings_dir);
 
 	--hangup the call

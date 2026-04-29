@@ -257,6 +257,7 @@ class DatabaseSeeder extends Seeder
                 'messages_view',
                 'messages_view_as',
                 'xml_cdr_view_all_records',
+                'ring_group_cid_name_prefix',
             ],
             'admin' => [
                 'wakeup_calls_list_view',
@@ -291,6 +292,7 @@ class DatabaseSeeder extends Seeder
                 'xml_cdr_view_all_records',
                 'messages_view',
                 'messages_view_as',
+                'ring_group_cid_name_prefix',
             ],
             'Message Admin' => [
                 'message_settings_list_view',
