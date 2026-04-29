@@ -15,35 +15,9 @@ async function getConfig() {
     console.log('Vite configured CORS origin:', VITE_ORIGIN);
 
     const paths = [
-
-        "resources/js/app.js",
         "resources/js/vue.js",
 
-        // css
         'resources/scss/tailwind.css',
-        "resources/scss/app-modern.scss",
-        "resources/scss/icons.scss",
-        "node_modules/daterangepicker/daterangepicker.css",
-        "node_modules/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css",
-        "node_modules/select2/dist/css/select2.min.css",
-        "node_modules/jquery-toast-plugin/dist/jquery.toast.min.css",
-        "node_modules/britecharts/dist/css/britecharts.min.css",
-        "node_modules/bootstrap-timepicker/css/bootstrap-timepicker.min.css",
-
-        // js
-        "resources/js/hyper-head.js",
-        "resources/js/hyper-config.js",
-        "resources/js/hyper-main.js",
-        // "resources/js/hyper-layout.js",
-        "resources/js/hyper-syntax.js",
-        // "resources/js/ui/component.todo.js",
-        // "resources/js/ui/component.fileupload.js",
-        // "resources/js/ui/component.dragula.js",
-        // "resources/js/ui/component.chat.js",
-        "resources/js/ui/component.toastr.js",
-        "node_modules/daterangepicker/daterangepicker.js",
-        // "resources/js/ui/component.range-slider.js",
-        // "resources/js/ui/component.rating.js",
     ];
 
     const allPaths = await collectModuleAssetsPaths(paths, 'Modules');
@@ -113,6 +87,14 @@ async function getConfig() {
             reportCompressedSize: false,
             minify: 'esbuild',
             cssMinify: 'esbuild',
+            chunkSizeWarningLimit: 1500,
+        },
+        css: {
+            preprocessorOptions: {
+                scss: {
+                    silenceDeprecations: ['legacy-js-api'],
+                },
+            },
         },
         resolve: {
             alias: {
@@ -127,4 +109,3 @@ async function getConfig() {
 }
 
 export default getConfig();
-

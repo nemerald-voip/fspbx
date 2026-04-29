@@ -81,7 +81,7 @@ class CreateFSPBXMenu extends Command
                 'link' => null,
                 'groups' => ['superadmin', 'admin', 'user', 'fax', 'agent'],
                 'subcategories' => [
-                    ['title' => 'Account Settings', 'link' => '/core/users/user_edit.php?id=user', 'groups' => ['superadmin', 'admin', 'user', 'agent']],
+                    // ['title' => 'Account Settings', 'link' => '/core/users/user_edit.php?id=user', 'groups' => ['superadmin', 'admin', 'user', 'agent']],
                     ['title' => 'Dashboard', 'link' => '/dashboard', 'groups' => ['superadmin', 'admin', 'user', 'agent']],
                     ['title' => 'Logout', 'link' => '/logout', 'groups' => ['superadmin', 'admin', 'user', 'fax', 'agent']],
                 ],
@@ -148,7 +148,7 @@ class CreateFSPBXMenu extends Command
                     ['title' => 'Log Viewer', 'link' => '/app/log_viewer/log_viewer.php', 'groups' => ['superadmin']],
                     ['title' => 'Registrations', 'link' => '/registrations', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'SIP Status', 'link' => '/sip-status', 'groups' => ['superadmin']],
-                    ['title' => 'System Status', 'link' => '/app/system/system.php', 'groups' => ['superadmin']],
+                    ['title' => 'System Status', 'link' => '/system', 'groups' => ['superadmin']],
                     ['title' => 'User Logs', 'link' => '/user-logs', 'groups' => ['superadmin']],
                 ],
             ],

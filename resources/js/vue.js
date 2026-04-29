@@ -18,7 +18,7 @@ function resolvePage(name) {
 
     const pages = module
         ? import.meta.glob('../../Modules/**/Resources/assets/js/Pages/**/*.vue')
-        : import.meta.glob('./Pages/**/*.vue');
+        : import.meta.glob(['./Pages/**/*.vue', '!./Pages/components/**/*.vue']);
 
     if (!pages[pagePath]) {
         const errorMessage = `Page not found: ${pagePath}`;

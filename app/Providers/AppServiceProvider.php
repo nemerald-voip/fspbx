@@ -71,7 +71,8 @@ class AppServiceProvider extends ServiceProvider
         Vite::useHotFile(storage_path('vite.hot')) // Customize the "hot" file...
             ->useBuildDirectory('storage/vite') // Customize the build directory...
             ->withEntryPoints([
-                'resources/js/app.js'
+                'resources/js/vue.js',
+                'resources/scss/tailwind.css',
             ]);
 
 

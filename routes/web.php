@@ -46,6 +46,7 @@ use App\Http\Controllers\SansayActiveCallsController;
 use App\Http\Controllers\SansayRegistrationsController;
 use App\Http\Controllers\SipStatusController;
 use App\Http\Controllers\SpeedDialController;
+use App\Http\Controllers\SystemController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\UserLogsController;
 use App\Http\Controllers\UsersController;
@@ -220,6 +221,9 @@ Route::group(['middleware' => 'auth'], function () {
 
     // System Settings
     Route::get('system-settings', [SystemSettingsController::class, 'index'])->name('system-settings.index');
+
+    // System
+    Route::get('system', [SystemController::class, 'index'])->name('system.index');
 
     // Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

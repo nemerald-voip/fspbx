@@ -40,6 +40,7 @@ use App\Http\Controllers\RecordingsManagerController;
 use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\SipStatusController;
 use App\Http\Controllers\SpeedDialController;
+use App\Http\Controllers\SystemController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\TokenController;
 use App\Http\Controllers\UserLogsController;
@@ -400,6 +401,9 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // System Settings
     Route::put('system-settings/update', [SystemSettingsController::class, 'update'])->name('system-settings.update');
     Route::get('system-settings/payment_gateways', [SystemSettingsController::class, 'getPaymentGatewayData'])->name('system-settings.payment_gateways');
+
+    // System
+    Route::get('system/data', [SystemController::class, 'data'])->name('system.data');
 
     // Call Transcription
     Route::get('/call-transcription/providers', [CallTranscriptionController::class, 'getProviders'])->name('call-transcription.providers');
