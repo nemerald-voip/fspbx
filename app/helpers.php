@@ -185,7 +185,7 @@ if (!function_exists('event_socket_request_cmd')) {
     }
 }
 if (!function_exists('outbound_route_to_bridge')) {
-    function outbound_route_to_bridge($domain_uuid, $destination_number, array $channel_variables = null)
+    function outbound_route_to_bridge($domain_uuid, $destination_number, ?array $channel_variables = null)
     {
 
         $destination_number = trim($destination_number);
@@ -932,7 +932,7 @@ if (!function_exists('getVendorTemplateCollection')) {
 }
 
 if (!function_exists('getProfileCollection')) {
-    function getProfileCollection(string $domain = null): array
+    function getProfileCollection(?string $domain = null): array
     {
         $profilesCollection = DeviceProfile::where('device_profile_enabled', 'true');
         if ($domain) {
@@ -953,7 +953,7 @@ if (!function_exists('getProfileCollection')) {
 }
 
 if (!function_exists('getRingBackTonesCollection')) {
-    function getRingBackTonesCollection(string $domain = null): array
+    function getRingBackTonesCollection(?string $domain = null): array
     {
         $musicOnHold = [];
         $musicOnHoldCollection = MusicOnHold::query();
@@ -1033,7 +1033,7 @@ if (!function_exists('getRingBackTonesCollection')) {
 }
 
 if (!function_exists('getMusicOnHoldCollection')) {
-    function getMusicOnHoldCollection(string $domain = null): array
+    function getMusicOnHoldCollection(?string $domain = null): array
     {
         $musicOnHold = [];
         $musicOnHoldCollection = MusicOnHold::query();
@@ -1131,7 +1131,7 @@ if (!function_exists('getMusicOnHoldCollection')) {
 }
 
 if (! function_exists('getRingBackTonesCollectionGrouped')) {
-    function getRingBackTonesCollectionGrouped(string $domain = null): array
+    function getRingBackTonesCollectionGrouped(?string $domain = null): array
     {
         // — Music on Hold —
         $musicOnHold = MusicOnHold::when($domain, function ($q) use ($domain) {
@@ -1229,7 +1229,7 @@ if (! function_exists('getRingBackTonesCollectionGrouped')) {
 
 
 if (!function_exists('getSoundsCollectionGrouped')) {
-    function getSoundsCollectionGrouped(string $domain = null): array
+    function getSoundsCollectionGrouped(?string $domain = null): array
     {
         // — None —
         $none = [
@@ -1309,7 +1309,7 @@ if (!function_exists('getSoundsCollectionGrouped')) {
 }
 
 if (!function_exists('getExtensionCollection')) {
-    function getExtensionCollection(string $domain = null): array
+    function getExtensionCollection(?string $domain = null): array
     {
         $extensionsCollection = Extensions::query();
         if ($domain) {
@@ -1781,7 +1781,7 @@ if (!function_exists('buildDestinationAction')) {
             string $device_uuid,
             string $vendor,
             array $device_lines = [],
-            string $domain_uuid
+            string $domain_uuid = ''
         ): void {
             if ($device_keys === null) {
                 $device_keys = [];
