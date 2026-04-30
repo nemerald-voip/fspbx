@@ -53,7 +53,7 @@ class DialplanDetails extends Model
      */
     public function getDialplanDetailEnabledAttribute(?string $value): bool
     {
-        return $value === 'true';
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }
 
     /**
@@ -64,6 +64,6 @@ class DialplanDetails extends Model
      */
     public function setDialplanDetailEnabledAttribute($value): void
     {
-        $this->attributes['dialplan_detail_enabled'] = $value ? 'true' : 'false';
+        $this->attributes['dialplan_detail_enabled'] = filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false';
     }
 }
