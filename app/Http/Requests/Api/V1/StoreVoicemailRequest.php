@@ -5,6 +5,7 @@ namespace App\Http\Requests\Api\V1;
 use App\Rules\UniqueExtension;
 use App\Rules\ValidVoicemailPassword;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreVoicemailRequest extends FormRequest
 {
@@ -34,7 +35,7 @@ class StoreVoicemailRequest extends FormRequest
             'voicemail_enabled' => ['sometimes', 'boolean'],
 
             // Behavior / delivery
-            'voicemail_file' => ['nullable', 'string'],
+            'voicemail_file' => ['nullable', 'string', Rule::in(['attach', 'link', ''])],
             'voicemail_local_after_email'      => ['sometimes', 'boolean'],
             'voicemail_transcription_enabled'  => ['sometimes', 'boolean'],
             'voicemail_tutorial'               => ['sometimes', 'boolean'],
@@ -79,8 +80,8 @@ class StoreVoicemailRequest extends FormRequest
 
             // --- Delivery / behavior ---
             'voicemail_file' => [
-                'description' => 'Voicemail delivery mode (e.g., attach). Defaults to "attach" if omitted.',
-                'example' => 'attach',
+                'description' => 'Voicemail delivery mode. Use "attach" to attach the recording, "link" to email a signed download link, or blank for notification only. Defaults to "attach" if omitted.',
+                'example' => 'link',
             ],
             'voicemail_local_after_email' => [
                 'description' => 'Whether to keep voicemail local after emailing it. Defaults to true if omitted.',

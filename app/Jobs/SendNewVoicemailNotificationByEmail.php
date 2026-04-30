@@ -13,6 +13,7 @@ use App\Models\DefaultSettings;
 use App\Models\VoicemailMessages;
 use App\Models\Extensions;
 use App\Mail\VoicemailNotification;
+use App\Services\VoicemailMessageUrlService;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Redis;
@@ -154,6 +155,8 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
                 : 'default';
 
             $attachment_path = null; // Initialize attachment path as null
+            $voicemailFileMode = (string) ($message->voicemail?->voicemail_file ?? '');
+            $downloadUrl = null;
 
             // Get voicemail file path
             $base_path =
@@ -203,6 +206,10 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
                 }
             }
 
+            if ($voicemailFileMode === 'link' && $attachment_path) {
+                $downloadUrl = app(VoicemailMessageUrlService::class)->downloadUrlForMessage($message);
+            }
+
             $template = EmailTemplate::where(function ($q) use ($domain_uuid) {
                 $q->where('domain_uuid', $domain_uuid)
                     ->orWhereNull('domain_uuid');
@@ -233,6 +240,7 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
                 'message_date'       => Carbon::createFromTimestamp($message->created_epoch)->tz($timezone)->toDayDateTimeString(),
                 'message_duration'   => gmdate('i\m s\s', (int) $message->message_length),
                 'message_text'    => (string) $message->message_transcription,
+                'voicemail_download_url' => (string) $downloadUrl,
                 // add more as needed…
             ];
 
@@ -258,12 +266,13 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
             }
             $subject = strtr($subjectTpl, $replacements);
             $bodyHtml = strtr($bodyTpl, $replacements);
+            $bodyHtml = $this->applyVoicemailDeliveryInstructions($bodyHtml, $voicemailFileMode, $downloadUrl, $bodyTpl);
 
             $attributes['email_subject'] = $subject;
             $attributes['bodyHtml'] = $bodyHtml;
             $attributes['domain_uuid'] = $domain_uuid;
             $attributes['logId'] = $this->logId;
-            $attributes['attachment_path'] = ($message->voicemail?->voicemail_file ?? null) ? $attachment_path : null;
+            $attributes['attachment_path'] = $voicemailFileMode === 'attach' ? $attachment_path : null;
 
             $uuid    = (string) $message->voicemail_message_uuid;
             $sentKey = "vm:sent:$uuid";
@@ -290,7 +299,7 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
             }
 
             // Delete local voicemail if required by voicemail settings
-            if (($message->voicemail?->voicemail_local_after_email ?? 'true') !== 'true') {
+            if ($voicemailFileMode !== 'link' && ($message->voicemail?->voicemail_local_after_email ?? 'true') !== 'true') {
                 $this->deleteVoicemailSilently($message);
             }
 
@@ -365,6 +374,53 @@ class SendNewVoicemailNotificationByEmail implements ShouldQueue
 
         // text, password, select, label, etc.
         return $value;
+    }
+
+    private function applyVoicemailDeliveryInstructions(
+        string $bodyHtml,
+        string $voicemailFileMode,
+        ?string $downloadUrl,
+        string $bodyTpl
+    ): string {
+        $legacyInstructions = '<p>Listen to this voicemail over your phone or by opening the attached sound file. You can also sign in to your account with your credentials to manage and listen to voicemails.</p>';
+
+        if ($voicemailFileMode === 'attach') {
+            return $bodyHtml;
+        }
+
+        $replacement = '<p>Listen to this voicemail over your phone. You can also sign in to your account with your credentials to manage and listen to voicemails.</p>';
+
+        if ($voicemailFileMode === 'link' && $downloadUrl) {
+            $replacement = '<p>Listen to this voicemail over your phone or by using the secure download link below. You can also sign in to your account with your credentials to manage and listen to voicemails.</p>';
+
+            if (strpos($bodyTpl, '${voicemail_download_url}') === false) {
+                $replacement .= $this->voicemailDownloadLinkHtml($downloadUrl);
+            }
+        }
+
+        if (strpos($bodyHtml, $legacyInstructions) !== false) {
+            return str_replace($legacyInstructions, $replacement, $bodyHtml);
+        }
+
+        if ($voicemailFileMode === 'link' && $downloadUrl && strpos($bodyTpl, '${voicemail_download_url}') === false) {
+            return $this->insertBeforeBodyClose($bodyHtml, $this->voicemailDownloadLinkHtml($downloadUrl));
+        }
+
+        return $bodyHtml;
+    }
+
+    private function voicemailDownloadLinkHtml(string $downloadUrl): string
+    {
+        return '<p><a href="' . e($downloadUrl) . '">Download voicemail recording</a></p>';
+    }
+
+    private function insertBeforeBodyClose(string $bodyHtml, string $html): string
+    {
+        if (stripos($bodyHtml, '</body>') !== false) {
+            return preg_replace('/<\/body>/i', $html . '</body>', $bodyHtml, 1);
+        }
+
+        return $bodyHtml . $html;
     }
 
     private function deleteVoicemailSilently(\App\Models\VoicemailMessages $message): void

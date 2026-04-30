@@ -57,8 +57,8 @@
                                     voicemail_enabled: options.item?.voicemail_enabled ?? 'false',
                                     voicemail_description: options.item?.voicemail_description ?? '',
                                     voicemail_transcription_enabled: options.item?.voicemail_transcription_enabled ?? 'true',
-                                    voicemail_file: options.item?.voicemail_file === 'attach' ? 'attach' : '',
-                                    voicemail_local_after_email: options.item?.voicemail_local_after_email ?? 'true',
+                                    voicemail_file: ['attach', 'link'].includes(options.item?.voicemail_file) ? options.item.voicemail_file : '',
+                                    voicemail_local_after_email: options.item?.voicemail_file === 'link' ? 'true' : (options.item?.voicemail_local_after_email ?? 'true'),
                                     voicemail_copies: options.voicemail_copies ?? [],
                                     greeting_id: options.item?.greeting_id ?? null,
                                     voicemail_tutorial: options.item?.voicemail_tutorial ?? 'false',
@@ -214,10 +214,11 @@
                                                 <StaticElement name="divider1" tag="hr"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
-                                                <ToggleElement name="voicemail_file"
-                                                    text="Attach File to Email Notifications" true-value="attach"
-                                                    false-value=""
-                                                    description="Attach voicemail recording file to the email notification."
+                                                <SelectElement name="voicemail_file" :items="voicemailFileOptions"
+                                                    :native="false" label="Voicemail Email Recording"
+                                                    value-prop="value" label-prop="label"
+                                                    description="Choose how voicemail recordings are included in email notifications."
+                                                    @change="handleVoicemailFileChange"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <StaticElement name="divider2" tag="hr"
@@ -227,6 +228,7 @@
                                                     text="Automatically Delete Voicemail After Email" true-value="false"
                                                     false-value="true"
                                                     description="Remove voicemail from the cloud once the email is sent."
+                                                    :disabled="isAutoDeleteDisabled"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <TagsElement name="voicemail_copies" :search="true"
@@ -795,6 +797,23 @@ const props = defineProps({
 });
 
 const form$ = ref(null)
+
+const voicemailFileOptions = [
+    { value: 'attach', label: 'Attach recording' },
+    { value: 'link', label: 'Send download link' },
+    { value: '', label: 'Do not include recording' },
+]
+
+const handleVoicemailFileChange = (newValue, oldValue, el$) => {
+    if (newValue === 'link') {
+        el$.form$.el$('voicemail_local_after_email')?.update('true')
+    }
+}
+
+const isAutoDeleteDisabled = [
+    (el$, form$) => form$.el$('voicemail_file')?.value === 'link',
+]
+
 const isDownloading = ref(false);
 const isNameAudioPlaying = ref(false);
 const isNameDownloading = ref(false);

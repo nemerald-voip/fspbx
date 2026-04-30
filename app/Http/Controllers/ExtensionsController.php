@@ -947,6 +947,15 @@ public function store(StoreExtensionRequest $request)
                 // Prepare necessary linking data
                 $data['extension_uuid'] = $extension->extension_uuid;
                 $data['domain_uuid'] = $extension->domain_uuid;
+                $voicemailData = $data;
+
+                if (array_key_exists('voicemail_file', $voicemailData)) {
+                    $voicemailData['voicemail_attach_file'] = $voicemailData['voicemail_file'] === 'attach' ? 'true' : 'false';
+
+                    if ($voicemailData['voicemail_file'] === 'link') {
+                        $voicemailData['voicemail_local_after_email'] = 'true';
+                    }
+                }
 
                 // Look for an orphaned/existing voicemail box
                 $existingVoicemail = Voicemails::where('domain_uuid', $extension->domain_uuid)
@@ -955,10 +964,10 @@ public function store(StoreExtensionRequest $request)
 
                 if ($existingVoicemail) {
                     // Box exists! Just re-attach it to this extension and update its settings
-                    $existingVoicemail->update($data);
+                    $existingVoicemail->update($voicemailData);
                 } else {
                     // Box doesn't exist, create a brand new one
-                    Voicemails::create($data);
+                    Voicemails::create($voicemailData);
                 }
             }
 
@@ -1228,13 +1237,23 @@ public function store(StoreExtensionRequest $request)
                     ->where('voicemail_id', $extension->extension)
                     ->first();
 
+                $voicemailData = $data;
+
+                if (array_key_exists('voicemail_file', $voicemailData)) {
+                    $voicemailData['voicemail_attach_file'] = $voicemailData['voicemail_file'] === 'attach' ? 'true' : 'false';
+
+                    if ($voicemailData['voicemail_file'] === 'link') {
+                        $voicemailData['voicemail_local_after_email'] = 'true';
+                    }
+                }
+
                 if ($voicemail) {
                     // Re-link and update
-                    $voicemail->update($data);
+                    $voicemail->update($voicemailData);
                 } else {
                     // Create new only if enabled
                     if (($data['voicemail_enabled'] ?? 'false') == 'true') {
-                        Voicemails::create($data);
+                        Voicemails::create($voicemailData);
                     }
                 }
             }
@@ -1617,6 +1636,14 @@ public function store(StoreExtensionRequest $request)
             'extension_uuid' => $extension->extension_uuid,
             'voicemail_id' => $extension->extension,
         ]);
+
+        if (array_key_exists('voicemail_file', $payload)) {
+            $payload['voicemail_attach_file'] = $payload['voicemail_file'] === 'attach' ? 'true' : 'false';
+
+            if ($payload['voicemail_file'] === 'link') {
+                $payload['voicemail_local_after_email'] = 'true';
+            }
+        }
 
         if ($voicemail) {
             $voicemail->update($payload);

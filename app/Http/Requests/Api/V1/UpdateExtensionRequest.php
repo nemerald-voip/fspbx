@@ -4,6 +4,7 @@ namespace App\Http\Requests\Api\V1;
 
 use Illuminate\Foundation\Http\FormRequest;
 use App\Rules\UniqueExtension;
+use Illuminate\Validation\Rule;
 
 class UpdateExtensionRequest extends FormRequest
 {
@@ -74,7 +75,7 @@ class UpdateExtensionRequest extends FormRequest
             'voicemail_enabled' => ['sometimes', 'boolean'],
 
             'voicemail_id' => ['sometimes'],
-            'voicemail_file' => ['sometimes', 'nullable'],
+            'voicemail_file' => ['sometimes', 'nullable', Rule::in(['attach', 'link', ''])],
 
             'voicemail_local_after_email'      => ['sometimes', 'boolean'],
             'voicemail_transcription_enabled'  => ['sometimes', 'boolean'],
@@ -83,6 +84,17 @@ class UpdateExtensionRequest extends FormRequest
             'voicemail_tutorial'               => ['sometimes', 'boolean'],
             'voicemail_recording_instructions' => ['sometimes', 'boolean'],
         ];
+    }
+
+    public function prepareForValidation()
+    {
+        if ($this->has('voicemail_file')) {
+            $this->merge([
+                'voicemail_file' => in_array($this->input('voicemail_file'), ['attach', 'link'], true)
+                    ? $this->input('voicemail_file')
+                    : '',
+            ]);
+        }
     }
 
     public function bodyParameters(): array
@@ -251,8 +263,8 @@ class UpdateExtensionRequest extends FormRequest
                 'example' => '+12135551212',
             ],
             'voicemail_file' => [
-                'description' => 'Voicemail delivery mode (e.g., attach). If omitted, value is unchanged.',
-                'example' => 'attach',
+                'description' => 'Voicemail delivery mode. Use "attach" to attach the recording, "link" to email a signed download link, or blank for notification only. If omitted, value is unchanged.',
+                'example' => 'link',
             ],
             'voicemail_local_after_email' => [
                 'description' => 'Whether to keep voicemail local after emailing it. If omitted, value is unchanged.',

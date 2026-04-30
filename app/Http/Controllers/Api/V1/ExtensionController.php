@@ -738,6 +738,7 @@ class ExtensionController extends Controller
                         'voicemail_transcription_enabled'  => $boolText($extensionInputs['voicemail_transcription_enabled'] ?? 'true', true),
                         'voicemail_recording_instructions' => $boolText($extensionInputs['voicemail_recording_instructions'] ?? 'true', true),
                         'voicemail_file'                   => $extensionInputs['voicemail_file'] ?? 'attach',
+                        'voicemail_attach_file'            => ($extensionInputs['voicemail_file'] ?? 'attach') === 'attach' ? 'true' : 'false',
                         'voicemail_local_after_email'      => $boolText($extensionInputs['voicemail_local_after_email'] ?? 'true', true),
                         'voicemail_tutorial'               => $boolText($extensionInputs['voicemail_tutorial'] ?? 'true', true),
 
@@ -745,6 +746,10 @@ class ExtensionController extends Controller
                         // greeting_id is numeric in DB. Only include if provided.
                         'greeting_id'                      => $extensionInputs['greeting_id'] ?? null,
                     ];
+
+                    if ($vmInputs['voicemail_file'] === 'link') {
+                        $vmInputs['voicemail_local_after_email'] = 'true';
+                    }
 
                     Voicemails::create($vmInputs);
                 }
@@ -1149,9 +1154,14 @@ class ExtensionController extends Controller
                             }
                             if (array_key_exists('voicemail_file', $inputs)) {
                                 $vmData['voicemail_file'] = $inputs['voicemail_file'];
+                                $vmData['voicemail_attach_file'] = $inputs['voicemail_file'] === 'attach' ? 'true' : 'false';
+
                             }
                             if (array_key_exists('voicemail_local_after_email', $inputs)) {
                                 $vmData['voicemail_local_after_email'] = $boolText($inputs['voicemail_local_after_email']);
+                            }
+                            if (($vmData['voicemail_file'] ?? null) === 'link') {
+                                $vmData['voicemail_local_after_email'] = 'true';
                             }
                             if (array_key_exists('voicemail_transcription_enabled', $inputs)) {
                                 $vmData['voicemail_transcription_enabled'] = $boolText($inputs['voicemail_transcription_enabled']);
@@ -1179,6 +1189,7 @@ class ExtensionController extends Controller
                                 $vmData['voicemail_enabled'] = 'true';
                                 $vmData['voicemail_id'] = $vmData['voicemail_id'] ?? $newExtNumber;
                                 $vmData['voicemail_file'] = $vmData['voicemail_file'] ?? 'attach';
+                                $vmData['voicemail_attach_file'] = $vmData['voicemail_file'] === 'attach' ? 'true' : 'false';
                                 $vmData['voicemail_local_after_email'] = $vmData['voicemail_local_after_email'] ?? 'true';
                                 $vmData['voicemail_transcription_enabled'] = $vmData['voicemail_transcription_enabled'] ?? 'true';
                                 $vmData['voicemail_tutorial'] = $vmData['voicemail_tutorial'] ?? 'true';

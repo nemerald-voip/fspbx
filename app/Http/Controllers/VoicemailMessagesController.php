@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\VoicemailMessages;
 use App\Models\Voicemails;
 use App\Services\FreeswitchEslService;
+use App\Services\VoicemailMessageUrlService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -212,6 +213,43 @@ class VoicemailMessagesController extends Controller
         $response = Response::download($file, basename($file), $headers);
 
         return $response;
+    }
+
+    public function downloadSignedVoicemailMessage(
+        Request $request,
+        string $message_uuid,
+        VoicemailMessageUrlService $voicemailMessageUrlService
+    ) {
+        if (!$request->hasValidSignature()) {
+            abort(403, 'Invalid or expired link.');
+        }
+
+        $message = VoicemailMessages::findOrFail($message_uuid);
+        $file = $voicemailMessageUrlService->resolveMessageFile($message);
+
+        if (!$file) {
+            abort(404, 'Voicemail recording not found.');
+        }
+
+        $disk = Storage::disk('voicemail');
+
+        if (config('filesystems.disks.voicemail.driver') === 'local') {
+            return response()->download($disk->path($file['path']), $file['filename'], [
+                'Cache-Control' => 'private, max-age=0, no-cache',
+            ]);
+        }
+
+        return response()->streamDownload(function () use ($disk, $file) {
+            $stream = $disk->readStream($file['path']);
+            fpassthru($stream);
+
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        }, $file['filename'], [
+            'Content-Type' => $file['mime'],
+            'Cache-Control' => 'private, max-age=0, no-cache',
+        ]);
     }
 
 
