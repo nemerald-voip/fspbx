@@ -269,6 +269,12 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                             info="Enable answer confirmation to prevent voicemails and automated systems from answering a call."
                                             :disabled="() => { return !localOptions.permissions.destination_update }" />
 
+                                        <ToggleElement name="destination_ignore_voicemail"
+                                            :columns="{ default: { container: 6, }, sm: { container: 4, }, }"
+                                            align="left" label="Skip Voicemail" size="sm"
+                                            info="When this member doesn't answer, skip their personal voicemail and continue ringing the next member or fall through to the no-answer action."
+                                            :disabled="() => { return !localOptions.permissions.destination_update }" />
+
                                         <ToggleElement name="destination_enabled"
                                             :columns="{ default: { container: 5 }, sm: { container: 4 } }" size="sm"
                                             label="Active"

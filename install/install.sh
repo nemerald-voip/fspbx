@@ -435,6 +435,11 @@ else
 fi
 
 
+print_success "Patching ring_groups lua for Skip Voicemail toggle..."
+bash /var/www/fspbx/install/patch_ring_groups_skip_voicemail.sh || \
+    echo "WARN: ring_groups lua patch failed (non-fatal — re-run manually after FreeSWITCH install)"
+
+
 print_success "Installing FreeSWITCH Sounds..."
 bash /var/www/fspbx/install/install_freeswitch_sounds.sh
 if [ $? -eq 0 ]; then
