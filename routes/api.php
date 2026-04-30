@@ -14,6 +14,7 @@ use App\Http\Controllers\CharPmsWebhookController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\DeviceController;
+use App\Http\Controllers\DialplanController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\DomainGroupsController;
 use App\Http\Controllers\EmailLogsController;
@@ -288,6 +289,18 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/access-controls/bulk-delete', [AccessControlController::class, 'bulkDelete'])->name('access-controls.bulk.delete');
     Route::post('/access-controls/bulk-copy', [AccessControlController::class, 'bulkCopy'])->name('access-controls.bulk.copy');
     Route::post('/access-controls/reload', [AccessControlController::class, 'reload'])->name('access-controls.reload');
+
+    // Dialplans
+    Route::post('dialplans', [DialplanController::class, 'store'])->name('dialplans.store');
+    Route::put('dialplans/{dialplan}', [DialplanController::class, 'update'])->name('dialplans.update');
+    Route::get('/dialplans/data', [DialplanController::class, 'getData'])->name('dialplans.data');
+    Route::post('/dialplans/item-options', [DialplanController::class, 'getItemOptions'])->name('dialplans.item.options');
+    Route::post('/dialplans/outbound-routes/options', [DialplanController::class, 'getOutboundRouteOptions'])->name('dialplans.outbound-routes.options');
+    Route::post('/dialplans/outbound-routes', [DialplanController::class, 'storeOutboundRoute'])->name('dialplans.outbound-routes.store');
+    Route::post('/dialplans/select-all', [DialplanController::class, 'selectAll'])->name('dialplans.select.all');
+    Route::post('/dialplans/bulk-delete', [DialplanController::class, 'bulkDelete'])->name('dialplans.bulk.delete');
+    Route::post('/dialplans/bulk-copy', [DialplanController::class, 'bulkCopy'])->name('dialplans.bulk.copy');
+    Route::post('/dialplans/bulk-toggle', [DialplanController::class, 'bulkToggle'])->name('dialplans.bulk.toggle');
 
     // Call Flows
     Route::post('call-flows', [CallFlowController::class, 'store'])->name('call-flows.store');

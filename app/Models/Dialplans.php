@@ -22,6 +22,7 @@ class Dialplans extends Model
         'domain_uuid',
         'dialplan_uuid',
         'app_uuid',
+        'hostname',
         'dialplan_name',
         'dialplan_destination',
         'dialplan_number',
@@ -55,6 +56,11 @@ class Dialplans extends Model
         return $this->hasMany(DialplanDetails::class,'dialplan_uuid','dialplan_uuid');
     }
 
+    public function domain()
+    {
+        return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
+    }
+
     public function fax()
     {
         return $this->hasOne(Faxes::class,'dialplan_uuid','dialplan_uuid');
@@ -68,7 +74,7 @@ class Dialplans extends Model
      */
     public function getDialplanEnabledAttribute(?string $value): bool
     {
-        return $value === 'true';
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }
 
     /**
@@ -79,6 +85,6 @@ class Dialplans extends Model
      */
     public function setDialplanEnabledAttribute($value): void
     {
-        $this->attributes['dialplan_enabled'] = $value ? 'true' : 'false';
+        $this->attributes['dialplan_enabled'] = filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 'true' : 'false';
     }
 }

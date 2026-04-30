@@ -102,10 +102,10 @@ class CreateFSPBXMenu extends Command
                 'link' => null,
                 'groups' => ['superadmin', 'admin'],
                 'subcategories' => [
-                    ['title' => 'Dialplan Manager', 'link' => '/app/dialplans/dialplans.php', 'groups' => ['superadmin', 'admin']],
+                    ['title' => 'Dialplan Manager', 'link' => '/dialplans', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Phone Numbers', 'link' => '/phone-numbers','groups' => ['superadmin', 'admin']],
-                    ['title' => 'Inbound Routes', 'link' => '/app/dialplans/dialplans.php?app_uuid=c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4', 'groups' => ['superadmin']],
-                    ['title' => 'Outbound Routes', 'link' => '/app/dialplans/dialplans.php?app_uuid=8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3', 'groups' => ['superadmin']],
+                    ['title' => 'Inbound Routes', 'link' => '/dialplans?category=inbound', 'groups' => ['superadmin']],
+                    ['title' => 'Outbound Routes', 'link' => '/dialplans?category=outbound', 'groups' => ['superadmin']],
                 ],
             ],
             [
