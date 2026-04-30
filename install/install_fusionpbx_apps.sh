@@ -44,6 +44,14 @@ for APP_NAME in "${!APPS[@]}"; do
     # Clone the latest version from the correct GitHub repository
     git clone --depth 1 "$REPO_URL" "$APP_PATH"
 
+    if [[ "$APP_NAME" == "device_logs" ]]; then
+        DEVICE_LOG_FILE="$APP_PATH/resources/device_logs.php"
+        if [[ -f "$DEVICE_LOG_FILE" ]]; then
+            sed -Ei 's/permissions[[:space:]]*::[[:space:]]*new[[:space:]]*\([[:space:]]*\)/new permissions/g' "$DEVICE_LOG_FILE"
+            print_success "Patched device_logs permissions instantiation for FSPBX."
+        fi
+    fi
+
     # Set correct permissions
     chown -R www-data:www-data "$APP_PATH"
     print_success "$APP_NAME installed successfully."
