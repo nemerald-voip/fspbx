@@ -13,5 +13,6 @@ return [
         'thinq' => \App\Services\Messaging\Outbound\Providers\CommioOutboundProvider::class,
         'voipms' => \App\Services\Messaging\Outbound\Providers\VoipMsOutboundProvider::class,
         'fibernetics' => \App\Services\Messaging\Outbound\Providers\FiberneticsOutboundProvider::class,
+        'twilio' => \App\Services\Messaging\Outbound\Providers\TwilioOutboundProvider::class,
     ],
 ];
