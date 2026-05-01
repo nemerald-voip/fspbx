@@ -138,6 +138,7 @@ class VoicemailController extends Controller
     public function store(StoreVoicemailRequest $request)
     {
         $inputs = $request->validated();
+        $inputs = $this->syncVoicemailAttachFile($inputs);
 
         // If blank, generate
         if (empty($inputs['voicemail_password'])) {
@@ -199,6 +200,7 @@ class VoicemailController extends Controller
     public function update(UpdateVoicemailRequest $request, $uuid)
     {
         $inputs = $request->validated();
+        $inputs = $this->syncVoicemailAttachFile($inputs);
 
         try {
             DB::transaction(function () use ($inputs, $uuid) {
@@ -1386,5 +1388,18 @@ class VoicemailController extends Controller
                 'errors' => ['server' => ['Failed to select all items']]
             ], 500); // 500 Internal Server Error for any other errors
         }
+    }
+
+    private function syncVoicemailAttachFile(array $inputs): array
+    {
+        if (array_key_exists('voicemail_file', $inputs)) {
+            $inputs['voicemail_attach_file'] = $inputs['voicemail_file'] === 'attach' ? 'true' : 'false';
+
+            if ($inputs['voicemail_file'] === 'link') {
+                $inputs['voicemail_local_after_email'] = 'true';
+            }
+        }
+
+        return $inputs;
     }
 }

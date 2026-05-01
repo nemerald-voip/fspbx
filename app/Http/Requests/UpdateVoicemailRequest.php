@@ -6,6 +6,7 @@ use App\Rules\UniqueExtension;
 use App\Rules\ValidVoicemailPassword;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 use libphonenumber\PhoneNumberFormat;
 
@@ -35,7 +36,7 @@ class UpdateVoicemailRequest extends FormRequest
             'voicemail_local_after_email' => ['sometimes', 'in:true,false'],
             'voicemail_recording_instructions' => ['sometimes', 'in:true,false'],
 
-            'voicemail_file' => ['sometimes', 'nullable'],
+            'voicemail_file' => ['sometimes', 'nullable', Rule::in(['attach', 'link', ''])],
             'voicemail_alternate_greet_id' => ['nullable', 'numeric'],
             'voicemail_description' => ['nullable', 'string', 'max:100'],
             'voicemail_copies' => ['nullable', 'array'],
@@ -94,7 +95,9 @@ class UpdateVoicemailRequest extends FormRequest
         }
 
         if ($this->has('voicemail_file')) {
-            $merge['voicemail_file'] = $this->input('voicemail_file') === 'attach' ? 'attach' : '';
+            $merge['voicemail_file'] = in_array($this->input('voicemail_file'), ['attach', 'link'], true)
+                ? $this->input('voicemail_file')
+                : '';
         }
 
         if ($this->has('voicemail_sms_to') && !blank($this->input('voicemail_sms_to'))) {

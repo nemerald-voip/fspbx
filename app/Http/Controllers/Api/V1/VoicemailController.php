@@ -525,9 +525,14 @@ class VoicemailController extends Controller
                     'voicemail_recording_instructions' => $boolText($validated['voicemail_recording_instructions'] ?? null, true),
 
                     'voicemail_file'        => $validated['voicemail_file'] ?? 'attach',
+                    'voicemail_attach_file' => ($validated['voicemail_file'] ?? 'attach') === 'attach' ? 'true' : 'false',
                     'voicemail_description' => $validated['voicemail_description'] ?? null,
                     'greeting_id'           => $validated['greeting_id'] ?? null,
                 ];
+
+                if ($inputs['voicemail_file'] === 'link') {
+                    $inputs['voicemail_local_after_email'] = 'true';
+                }
 
                 $vm = Voicemails::create($inputs)->fresh();
 
@@ -736,6 +741,14 @@ class VoicemailController extends Controller
                 ) {
                     if (array_key_exists($key, $inputs)) {
                         $update[$key] = $boolText($inputs[$key]);
+                    }
+                }
+
+                if (array_key_exists('voicemail_file', $update)) {
+                    $update['voicemail_attach_file'] = $update['voicemail_file'] === 'attach' ? 'true' : 'false';
+
+                    if ($update['voicemail_file'] === 'link') {
+                        $update['voicemail_local_after_email'] = 'true';
                     }
                 }
 

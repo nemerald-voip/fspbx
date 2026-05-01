@@ -5,6 +5,7 @@ namespace App\Http\Requests\Api\V1;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Str;
 use App\Rules\UniqueExtension;
+use Illuminate\Validation\Rule;
 
 class StoreExtensionRequest extends FormRequest
 {
@@ -69,7 +70,7 @@ class StoreExtensionRequest extends FormRequest
 
             'voicemail_id' => ['sometimes'],
 
-            'voicemail_file' => ['nullable'],
+            'voicemail_file' => ['nullable', Rule::in(['attach', 'link', ''])],
 
             'voicemail_local_after_email'        => ['sometimes', 'boolean'],
             'voicemail_transcription_enabled'    => ['sometimes', 'boolean'],
@@ -85,6 +86,14 @@ class StoreExtensionRequest extends FormRequest
     {
         if (!$this->has('suspended')) {
             $this->merge(['suspended' => false]);
+        }
+
+        if ($this->has('voicemail_file')) {
+            $this->merge([
+                'voicemail_file' => in_array($this->input('voicemail_file'), ['attach', 'link'], true)
+                    ? $this->input('voicemail_file')
+                    : '',
+            ]);
         }
     }
 
@@ -254,8 +263,8 @@ class StoreExtensionRequest extends FormRequest
                 'example' => '+12135551212',
             ],
             'voicemail_file' => [
-                'description' => 'Voicemail delivery mode (e.g., attach). Defaults to "attach" if omitted.',
-                'example' => 'attach',
+                'description' => 'Voicemail delivery mode. Use "attach" to attach the recording, "link" to email a signed download link, or blank for notification only. Defaults to "attach" if omitted.',
+                'example' => 'link',
             ],
             'voicemail_local_after_email' => [
                 'description' => 'Whether to keep voicemail local after emailing it. Defaults to true if omitted.',

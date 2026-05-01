@@ -5,6 +5,7 @@ namespace App\Http\Requests\Api\V1;
 use App\Rules\UniqueExtension;
 use App\Rules\ValidVoicemailPassword;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateVoicemailRequest extends FormRequest
 {
@@ -39,7 +40,7 @@ class UpdateVoicemailRequest extends FormRequest
             'voicemail_recording_instructions' => ['sometimes', 'boolean'],
 
             // Delivery / greeting / label
-            'voicemail_file'               => ['sometimes', 'nullable', 'string', 'max:50'],
+            'voicemail_file'               => ['sometimes', 'nullable', 'string', 'max:50', Rule::in(['attach', 'link', ''])],
             'voicemail_description'        => ['sometimes', 'nullable', 'string', 'max:255'],
             'greeting_id'                  => ['sometimes', 'nullable', 'integer'],
             'voicemail_alternate_greet_id' => ['sometimes', 'nullable', 'integer'],
@@ -98,8 +99,8 @@ class UpdateVoicemailRequest extends FormRequest
             ],
 
             'voicemail_file' => [
-                'description' => 'Voicemail delivery mode (e.g., attach). If omitted, unchanged.',
-                'example' => 'attach',
+                'description' => 'Voicemail delivery mode. Use "attach" to attach the recording, "link" to email a signed download link, or blank for notification only. If omitted, unchanged.',
+                'example' => 'link',
             ],
 
             'voicemail_description' => [

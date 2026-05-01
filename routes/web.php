@@ -121,6 +121,7 @@ Route::match(['GET', 'HEAD'], '/prov/{path}', [ProvisioningController::class, 's
 // Call Recordings
 Route::get('/call-detail-records/recordings/{uuid}/stream', [CallRecordingController::class, 'stream'])->name('cdrs.recording.stream');
 Route::get('/call-detail-records/recordings/{uuid}/download', [CallRecordingController::class, 'download'])->name('cdrs.recording.download');
+Route::get('/voicemails/messages/{message_uuid}/public-download', [VoicemailMessagesController::class, 'downloadSignedVoicemailMessage'])->name('voicemails.messages.public-download');
 
 Route::group(['middleware' => 'auth'], function () {
 

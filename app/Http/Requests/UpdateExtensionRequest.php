@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Rules\UniqueExtension;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UpdateExtensionRequest extends FormRequest
 {
@@ -207,7 +208,7 @@ class UpdateExtensionRequest extends FormRequest
             'voicemail_enabled' => ['sometimes', 'in:true,false,1,0'],
             'voicemail_id' => ['sometimes', 'required'],
             'greeting_id' => ['sometimes', 'required', 'string'],
-            'voicemail_file' => ['nullable'],
+            'voicemail_file' => ['nullable', Rule::in(['attach', 'link', ''])],
             'voicemail_local_after_email' => ['sometimes', 'required', 'in:true,false,1,0'],
             'voicemail_transcription_enabled' => ['sometimes', 'required', 'in:true,false,1,0'],
             'voicemail_description' => ['nullable', 'string'],
@@ -260,6 +261,14 @@ public function prepareForValidation()
         'effective_caller_id_number' => $this->extension,
         'voicemail_mail_to'          => $this->voicemail_mail_to ? strtolower($this->voicemail_mail_to) : null,
     ]);
+
+    if ($this->has('voicemail_file')) {
+        $this->merge([
+            'voicemail_file' => in_array($this->input('voicemail_file'), ['attach', 'link'], true)
+                ? $this->input('voicemail_file')
+                : '',
+        ]);
+    }
 
     // Helper: keep digits, allow a single leading +
     $normalizePhoneLoose = function (?string $v): ?string {
