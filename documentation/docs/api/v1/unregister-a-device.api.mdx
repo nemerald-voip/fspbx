@@ -1,0 +1,72 @@
+---
+id: unregister-a-device
+title: "Unregister a device"
+description: "Unregisters a device within the specified domain."
+sidebar_label: "Unregister a device"
+hide_title: true
+hide_table_of_contents: true
+api: eJzNV2Fr2zwQ/iviPm1g1/Hq0s6MQUe7rTBYaRvYKKHI9jnW6kieJGcNxv99yLITJ3b7ZnvfwJsvSayT7nnuuTufKhAFSqqZ4FcJhFByiXOmNMrzC1yyGMGBBFUsWWFsIITp2kIRSpLGiPxiOmOc6AyJKjBmKcOEJGJBGT8CBwoq6QLNFgjvK2DmnILqDBzgdIEQgrV9KEuWDDzeZdieRabTqwtzID7RRZGbjcHEP0tP6bF7hhPqBqdR5L5Ng9SdBJF/7B/jBP0IHJD4s2QSEwi1LNEBFWe4oBBWoFeFOUdpyfgc6toZxRfTPH94BpuNhw0iMYYuS7ZBngXHQRSg7wbpSeIG9OzEfRvTyH2THvv0LI5OJ/7kj0DOjLEqBFeozPqbycR8bWO7LeMYlQIHYsE1cm1MaFHkLG6wej+UsauGfkT0A2Pdp1B1z0Lo0wUHGsn2pphgjrpjWDtQSJN/mlkanY9dwv1YbrmvO/8v7dgLWt3Dtj4sEiJHyvunNbibjwPBWNSv+JLmLOln7H+kAEopZM+GWU8PJm1Q6Qe77sAClaJzHMdy1IBJRvZ3dbpTjfVApV0ca6zbZnb1JWHGCdQ9Bi/tHiVXd+z+wK/Z1DJ/add2UDY54A9zYMppqTPk2uiMyYH07/lggo/IvwOjJ325A/CAIo+i3FfjAYO99B2y26gVDNW66fdvLjRJRckPJdo/F+04nJ54EpUoZYwPC6aU5d4Vbvea+t8W7XPk9tJ1QHy/wt0EpUuDk/HGrVFymhOFcomSdMocpHQLNtquRxBsNWy73sX8gEW7xrd/Nx7Fvmc/3uG1FkrTuRkZt9JGwcxg0pkwc4d9aTcloDMIwaMF85a+Z7u18qpe2669/vCgvKrNjBocsLDtfFrKHELItC5U6HlVJpSuB5Pfx1ty/eEbOb++aimDA0sqGY1yG2WzzWZZSsvcTE7fv05v3I+31x++uZ+/3t4NjvwslDbzJvmVoUTSemCKyJJzxufkVRuzkKSqiJ6OVqKUbjtmc9SvTehmhktcSqZXDZm1+/tZf+3WpK0FurZYa2SoQzt/NnMQUtkQ3Mb7XZQkppxI1JLhEonBQ7R4RE6iFVkyxbSB3TxOqMoiQWVCKE9InLP40ay9i95/Qm6uINjEstn9zoveHzX5zXgqGmBMN6myifoAjYk/SmX/LP2mOQilF7Qp03aO39xe1peX3YOqTcX/1WWnjaHGJ+0VOWV2SjUpVbVJem/qy8D1jW+bqOBAuH0J2spVs9z1sZnT5tY9VFVEFU5lXtfm8c8SpVF9tklFmwNMmd8JhCnNFb5A+NVNewd5TUauXaPUupbGV00F5CVaMR5xtTs1Of8CynO3rL/AtH4hzGoHMqQJyiZMdvU8jrHQvX2Drl/3G9DF5ZfLu0uo69/S/UOV
+sidebar_class_name: "delete api-method"
+info_path: docs/api/v1/fs-pbx-api
+custom_edit_url: null
+hide_send_button: true
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Unregister a device"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"delete"}
+  path={"/api/v1/domains/{domain_uuid}/registrations/{call_id}"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Unregisters a device within the specified domain.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"in":"path","name":"domain_uuid","description":"The domain UUID.","example":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","required":true,"schema":{"type":"string"}},{"in":"path","name":"call_id","description":"The registration call-id.","example":"8434b4e1-4f5d-4a85-9cab-2f31a8cb7010","required":true,"schema":{"type":"string"}}]}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"Success","content":{"application/json":{"schema":{"type":"object","example":{"object":"registration","uuid":"8434b4e1-4f5d-4a85-9cab-2f31a8cb7010","deleted":true},"properties":{"object":{"type":"string","example":"registration"},"uuid":{"type":"string","example":"8434b4e1-4f5d-4a85-9cab-2f31a8cb7010"},"deleted":{"type":"boolean","example":true}}}}}},"400":{"description":"Invalid domain UUID","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Invalid domain UUID.","code":"invalid_request","param":"domain_uuid"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Invalid domain UUID."},"code":{"type":"string","example":"invalid_request"},"param":{"type":"string","example":"domain_uuid"}}}}}}}},"401":{"description":"Unauthenticated","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"authentication_error"},"message":{"type":"string","example":"Unauthenticated."},"code":{"type":"string","example":"unauthenticated"}}}}}}}},"404":{"description":"Registration not found","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Registration not found.","code":"resource_missing","param":"call_id"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Registration not found."},"code":{"type":"string","example":"resource_missing"},"param":{"type":"string","example":"call_id"}}}}}}}},"500":{"description":"Internal server error","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"api_error","message":"Internal server error.","code":"internal_error"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"api_error"},"message":{"type":"string","example":"Internal server error."},"code":{"type":"string","example":"internal_error"}}}}}}}}}}
+>
+  
+</StatusCodes>
+
+
+      

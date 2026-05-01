@@ -1,0 +1,72 @@
+---
+id: retrieve-a-registration
+title: "Retrieve a registration"
+description: "Returns a single SIP registration for the specified domain."
+sidebar_label: "Retrieve a registration"
+hide_title: true
+hide_table_of_contents: true
+api: eJzNWG1v2zgM/iuCPm2AndhN1qa+3XAbdtv6aUXbABuKIJBtOtHqyJ4kZy0M/fcDbccvsedltxtw+ZLYIqmH5ENKTE6TFCTTPBFXIfWoBC057OH1DWy40uUKtWgIKpA8LZ48egM6k0IRRhQXmxjI7dU1kS0NEiWS6C0QlULAIw4hCZMd42JCLZoyyXagQSrq3eeUo8WU6S21qGA7oB4tZddZxsPe3ndbqGyR5fLqLRqER7ZLY1ScO+4iumAzewEOs+cXvm9fRvPIdua+O3Nn4IDrU4tK+JpxCSH1tMzAoirYwo5RL6f6KUU7SksuNtQYaxBfwOJ4/R1snTCgoM3DLsjFfDb35+Da8+hFaM/Z4oV9GTDfPotmLlsE/oXjOj8FcoXCKk2EAoXrZ46DX11st1kQgFLUokEiNAiNIixNYx4UWKdfFMrl/X0S/wsEuu1CXkfgZG8qI8iwLrFaqT45f5kCST3qOu5fqf84qXBNgmRHLao005kqWIo7AYbQojETa56i0uXZxJmcTQpUaSIR0wvn3KkCwwqQiqceWm+EPZT5Q0smFCr9mYUptSjbFIGkn4HFXDxgHdh38/MlcZ3FZHGOumi4VqMeXb69phb9doBz5swmzsR1Z5P5GYLn6TqVScRjWFdk40KDFCyuVlmmt+smAO23Eli8Q7L2YpJysVlrXthzF0UqUwUBRml27jjUWDSV2Ak0LylU5/eYbT9NZNPkfsxWhxbmiBdjiidRxhw4M2ZpiE6m4dOYaotqpuHa6GYNDc2Bh2PyBUVNi6NjwqfR19T8HbM1Sm3T4faYGaS9aXg/JtopCTNUE2PadbmYXr38IPkdjaqWxlQGuNKqs9HNFihc1+CYaFmexcei86HGfiX2LOZh+1D8j5o8SJm0w8bLndZ4MoHS63LdojtQim1gGMukABMO6B+uAkcHvuk1o2McNdauWLk6zo0hB0zLgzHtQefMwbuf2LdgSun5mFY3KA0H3D4HlgJJC0Jjnovz7nfkv7UHT8RA+o9gtFKfHQH8jUkeRHlqjnsenJTfvndNtub9bLXv1kQkmkRJJn5X0n5ctMNwWsmToJJMBrDecaVK3w+Fe7gn/G+L9nvOnZTXnuOnFW4TlJoHmm1w2unAUXSFTuhtglffDZQNUW+pR6cs5dO9Oy1bgJrmrV5gpu27kprm1XYGr4Ig94e5KpMx9ehW61R502m+TZQ2vYnl3S25fvOJvL6+IqUuteieSc78uMwPqpUMjlgWF3fdj8sb+93t9ZtP9oePt3c9kx8SpfGYJt+2IIFUO3BFZCYEFxvyrIqURyKFZ+hTkkm7Gg8F6OcYtxX6EmSS66fCmXr7+1V77RYrogRaS9SZQddpNTfhsw9MFg528X5OMhIwQQ6jL0E8RCcPIIj/RPZccY2wi9chU1s/YTIkTIQkiHnwgGsv/VfvQeAgDUUsC+2XU//VpKgMLqKkAMZ1QZAm6j00GH+QqnzYu+XlUOkdKzpANRLcHKAycjxOtY3lTUP5xZG9iqiGRz1NY8aLK3pBsLyi7D1lKUfwbj3U4azpdUf5DnNx+VAqK6ti2j3Nc58pWMrYGHz9NQOJHFg1xCwZwRX+DqkXsVjBiOvPbqpJ+jkZ+PNg0LXDgSeeinqIMyhT8wBPxwez9QtQvvdfwb/AVPeclbHoFliIF977vFp9HQSQ6pZe73gx7V70/u87asw/5h0W4w==
+sidebar_class_name: "get api-method"
+info_path: docs/api/v1/fs-pbx-api
+custom_edit_url: null
+hide_send_button: true
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Retrieve a registration"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/api/v1/domains/{domain_uuid}/registrations/{call_id}"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Returns a single SIP registration for the specified domain.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"in":"path","name":"domain_uuid","description":"The domain UUID.","example":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","required":true,"schema":{"type":"string"}},{"in":"path","name":"call_id","description":"The registration call-id.","example":"8434b4e1-4f5d-4a85-9cab-2f31a8cb7010","required":true,"schema":{"type":"string"}}]}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"Success","content":{"application/json":{"schema":{"type":"object","example":{"call_id":"8434b4e1-4f5d-4a85-9cab-2f31a8cb7010","object":"registration","domain_uuid":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","user":"101@pbx.example.com","status":"Registered","lan_ip":"192.0.2.10","port":"5060","contact":"sip:101@192.0.2.10:5060;transport=udp","agent":"Yealink SIP-T46U 108.86.0.20","transport":"UDP","wan_ip":"203.0.113.42","sip_profile_name":"internal","sip_auth_user":"101","sip_auth_realm":"pbx.example.com","ping_time":"18","expsecs":"3600"},"properties":{"call_id":{"type":"string","example":"8434b4e1-4f5d-4a85-9cab-2f31a8cb7010"},"object":{"type":"string","example":"registration"},"domain_uuid":{"type":"string","example":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"},"user":{"type":"string","example":"101@pbx.example.com"},"status":{"type":"string","example":"Registered"},"lan_ip":{"type":"string","example":"192.0.2.10"},"port":{"type":"string","example":"5060"},"contact":{"type":"string","example":"sip:101@192.0.2.10:5060;transport=udp"},"agent":{"type":"string","example":"Yealink SIP-T46U 108.86.0.20"},"transport":{"type":"string","example":"UDP"},"wan_ip":{"type":"string","example":"203.0.113.42"},"sip_profile_name":{"type":"string","example":"internal"},"sip_auth_user":{"type":"string","example":"101"},"sip_auth_realm":{"type":"string","example":"pbx.example.com"},"ping_time":{"type":"string","example":"18"},"expsecs":{"type":"string","example":"3600"}}}}}},"400":{"description":"Invalid domain UUID","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Invalid domain UUID.","code":"invalid_request","param":"domain_uuid"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Invalid domain UUID."},"code":{"type":"string","example":"invalid_request"},"param":{"type":"string","example":"domain_uuid"}}}}}}}},"401":{"description":"Unauthenticated","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"authentication_error"},"message":{"type":"string","example":"Unauthenticated."},"code":{"type":"string","example":"unauthenticated"}}}}}}}},"404":{"description":"Registration not found","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Registration not found.","code":"resource_missing","param":"call_id"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Registration not found."},"code":{"type":"string","example":"resource_missing"},"param":{"type":"string","example":"call_id"}}}}}}}}}}
+>
+  
+</StatusCodes>
+
+
+      

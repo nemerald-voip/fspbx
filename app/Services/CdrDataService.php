@@ -207,13 +207,70 @@ class CdrDataService
 
     public function getExtensionStatistics($params = [])
     {
-        $domain_uuid = $params['domain_uuid'] ?? session('domain_uuid');
+        $all = $this->buildExtensionStatisticsCollection($params);
 
-        $search = trim($params['filter']['search'] ?? '');
+        $perPage     = (int) ($params['per_page'] ?? 50);
+        $currentPage = (int) ($params['page'] ?? 1);
+        $total       = $all->count();
+        $pageItems   = $all->forPage($currentPage, $perPage)->values();
+
+        return new \Illuminate\Pagination\LengthAwarePaginator(
+            $pageItems,
+            $total,
+            $perPage,
+            $currentPage,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
+    }
+
+    public function getApiExtensionStatistics($params = []): array
+    {
+        $all = $this->buildExtensionStatisticsCollection($params);
+
+        $limit = (int) ($params['limit'] ?? 50);
+        $limit = max(1, min(100, $limit));
+
+        $startingAfter = (string) ($params['starting_after'] ?? '');
+        if ($startingAfter !== '') {
+            $position = $all->search(fn($row) => ($row['extension_uuid'] ?? null) === $startingAfter);
+            $all = $position === false ? collect() : $all->slice($position + 1)->values();
+        }
+
+        $hasMore = $all->count() > $limit;
+
+        return [
+            'data' => $all->take($limit)->values(),
+            'has_more' => $hasMore,
+        ];
+    }
+
+    protected function buildExtensionStatisticsCollection($params = [])
+    {
+        $domain_uuid = $params['domain_uuid'] ?? session('domain_uuid');
+        $extensionUuid = $params['filter']['extension_uuid'] ?? null;
+
+        $search = trim((string) ($params['filter']['search'] ?? ''));
+
+        $user = auth()->user();
+        $selfExtensionUuid = null;
+        if (
+            $user
+            && userCheckPermission("xml_cdr_view")
+            && userCheckPermission("xml_cdr_view_self_records")
+            && !userCheckPermission("xml_cdr_view_all_records")
+        ) {
+            $selfExtensionUuid = $user->extension_uuid;
+        }
 
         // 1) Load all extensions in this domain (only what we need)
-        $extensions = \App\Models\Extensions::query()
+        $extensions = Extensions::query()
             ->where('domain_uuid', $domain_uuid)
+            ->when($selfExtensionUuid, function ($q) use ($selfExtensionUuid) {
+                $q->where('extension_uuid', $selfExtensionUuid);
+            })
+            ->when(!$selfExtensionUuid && $extensionUuid, function ($q) use ($extensionUuid) {
+                $q->where('extension_uuid', $extensionUuid);
+            })
             ->when($search !== '', function ($q) use ($search) {
                 $q->where(function ($qq) use ($search) {
                     $qq->where('extension', 'ILIKE', "%{$search}%")
@@ -313,24 +370,9 @@ class CdrDataService
         }
         unset($s);
 
-        // 4) Paginate extensions (not CDRs)
-        $perPage     = (int) ($params['per_page'] ?? 50);
-        $currentPage = (int) ($params['page']     ?? 1);
-        // Sort by extension before pagination
-        $all = collect($stats)
+        return collect($stats)
             ->sortBy('extension', SORT_NATURAL) // SORT_NATURAL keeps 1, 2, 10 in the right order
-            ->values()
-            ->all();
-        $total       = count($all);
-        $pageItems   = collect($all)->forPage($currentPage, $perPage)->values();
-
-        return new \Illuminate\Pagination\LengthAwarePaginator(
-            $pageItems,
-            $total,
-            $perPage,
-            $currentPage,
-            ['path' => request()->url(), 'query' => request()->query()]
-        );
+            ->values();
     }
 
 

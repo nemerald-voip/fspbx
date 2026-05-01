@@ -10,7 +10,7 @@
     ],
     "info": {
         "name": "FS PBX",
-        "_postman_id": "bda467f5-3d96-48b4-8c66-d7393f5be008",
+        "_postman_id": "571beffc-07c8-41e3-b6e4-a3e1570ad77e",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
@@ -1268,6 +1268,125 @@
             ]
         },
         {
+            "name": "Extension Statistics",
+            "description": "",
+            "item": [
+                {
+                    "name": "List extension statistics",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/extension-statistics",
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "50",
+                                    "description": "Optional. Number of results to return (min 1, max 100). Defaults to 50.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "starting_after",
+                                    "value": "c9a76140-0ca4-4ea3-95af-7e12c2ff0df5",
+                                    "description": "Optional. Return results after this extension UUID.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "1001",
+                                    "description": "Optional. Search extension number, label, and related call fields.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "date_from",
+                                    "value": "1777507200",
+                                    "description": "Optional. Start of date range in epoch seconds (UTC).",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "date_to",
+                                    "value": "1777593599",
+                                    "description": "Optional. End of date range in epoch seconds (UTC).",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/extension-statistics?limit=50&starting_after=c9a76140-0ca4-4ea3-95af-7e12c2ff0df5&search=1001&date_from=1777507200&date_to=1777593599",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "7d58342b-2b29-4dcf-92d6-e9a9e002a4e5",
+                                    "description": "The domain UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns extension-level call statistics for the specified domain.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `xml_cdr_view` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 50.\n- If `starting_after` is not provided, results start from the beginning.\n\nOptional filters:\n- `search` filters by extension number, extension label, and related call fields.\n- `date_from` and `date_to` filter the reporting window using epoch seconds in UTC.\n- If no date range is provided, the current day in the domain's local timezone is used."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"object\": \"list\",\n  \"url\": \"\/api\/v1\/domains\/7d58342b-2b29-4dcf-92d6-e9a9e002a4e5\/extension-statistics\",\n  \"has_more\": false,\n  \"data\": [\n    {\n      \"extension_uuid\": \"c9a76140-0ca4-4ea3-95af-7e12c2ff0df5\",\n      \"object\": \"extension_statistic\",\n      \"domain_uuid\": \"7d58342b-2b29-4dcf-92d6-e9a9e002a4e5\",\n      \"extension\": \"1001\",\n      \"extension_label\": \"Front Desk\",\n      \"call_count\": 18,\n      \"inbound\": 10,\n      \"outbound\": 7,\n      \"missed\": 1,\n      \"total_duration_seconds\": 945,\n      \"total_duration_formatted\": \"00:15:45\",\n      \"total_talk_time_seconds\": 945,\n      \"total_talk_time_formatted\": \"00:15:45\",\n      \"average_duration_seconds\": 53,\n      \"average_duration_formatted\": \"00:00:53\"\n    }\n  ]\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid starting_after UUID.\",\"code\":\"invalid_request\",\"param\":\"starting_after\"}}",
+                            "name": "Invalid starting_after UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid date_from value.\",\"code\":\"invalid_request\",\"param\":\"date_from\"}}",
+                            "name": "Invalid date_from"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid date_to value.\",\"code\":\"invalid_request\",\"param\":\"date_to\"}}",
+                            "name": "Invalid date_to"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"date_from must be less than or equal to date_to.\",\"code\":\"invalid_request\",\"param\":\"date_from\"}}",
+                            "name": "Invalid date range"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "name": "Extensions",
             "description": "",
             "item": [
@@ -2030,6 +2149,399 @@
                             "code": 404,
                             "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Phone number not found.\",\"code\":\"resource_missing\",\"param\":\"destination_uuid\"}}",
                             "name": "Phone number not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 500,
+                            "body": "{\"error\":{\"type\":\"api_error\",\"message\":\"Internal server error.\",\"code\":\"internal_error\"}}",
+                            "name": "Internal server error"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Registrations",
+            "description": "",
+            "item": [
+                {
+                    "name": "List registrations",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/registrations",
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "50",
+                                    "description": "Optional. Number of results to return (min 1, max 100). Defaults to 50.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "starting_after",
+                                    "value": "8434b4e1-4f5d-4a85-9cab-2f31a8cb7010",
+                                    "description": "Optional. Return results after this registration call-id in the current snapshot.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "101",
+                                    "description": "Optional. Search IP, agent, transport, profile, auth user, or auth realm.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "sort",
+                                    "value": "sip_auth_user",
+                                    "description": "Optional. Sort field. One of: sip_auth_user, sip_auth_realm, agent, lan_ip, wan_ip, port, status, expsecs, ping_time, sip_profile_name. Defaults to sip_auth_user.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "order",
+                                    "value": "asc",
+                                    "description": "Optional. Sort direction: asc or desc. Defaults to asc.",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/registrations?limit=50&starting_after=8434b4e1-4f5d-4a85-9cab-2f31a8cb7010&search=101&sort=sip_auth_user&order=asc",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns SIP registrations for the specified domain.\n\nPagination (snapshot cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 50.\n- If `starting_after` is not provided, results start from the beginning."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"object\": \"list\",\n  \"url\": \"\/api\/v1\/domains\/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\/registrations\",\n  \"has_more\": false,\n  \"data\": [\n    {\n      \"call_id\": \"8434b4e1-4f5d-4a85-9cab-2f31a8cb7010\",\n      \"object\": \"registration\",\n      \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n      \"user\": \"101@pbx.example.com\",\n      \"agent\": \"Yealink SIP-T46U 108.86.0.20\",\n      \"lan_ip\": \"192.0.2.10\",\n      \"wan_ip\": \"203.0.113.42\",\n      \"port\": \"5060\",\n      \"status\": \"Registered\",\n      \"expsecs\": \"3600\",\n      \"ping_time\": \"18\",\n      \"sip_profile_name\": \"internal\"\n    }\n  ]\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Retrieve a registration",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/registrations\/:call_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/registrations\/:call_id",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "call_id",
+                                    "key": "call_id",
+                                    "value": "8434b4e1-4f5d-4a85-9cab-2f31a8cb7010",
+                                    "description": "The registration call-id."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns a single SIP registration for the specified domain."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"call_id\": \"8434b4e1-4f5d-4a85-9cab-2f31a8cb7010\",\n  \"object\": \"registration\",\n  \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"user\": \"101@pbx.example.com\",\n  \"status\": \"Registered\",\n  \"lan_ip\": \"192.0.2.10\",\n  \"port\": \"5060\",\n  \"contact\": \"sip:101@192.0.2.10:5060;transport=udp\",\n  \"agent\": \"Yealink SIP-T46U 108.86.0.20\",\n  \"transport\": \"UDP\",\n  \"wan_ip\": \"203.0.113.42\",\n  \"sip_profile_name\": \"internal\",\n  \"sip_auth_user\": \"101\",\n  \"sip_auth_realm\": \"pbx.example.com\",\n  \"ping_time\": \"18\",\n  \"expsecs\": \"3600\"\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Registration not found.\",\"code\":\"resource_missing\",\"param\":\"call_id\"}}",
+                            "name": "Registration not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Unregister a device",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/registrations\/:call_id",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/registrations\/:call_id",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "call_id",
+                                    "key": "call_id",
+                                    "value": "8434b4e1-4f5d-4a85-9cab-2f31a8cb7010",
+                                    "description": "The registration call-id."
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Unregisters a device within the specified domain."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"object\":\"registration\",\"uuid\":\"8434b4e1-4f5d-4a85-9cab-2f31a8cb7010\",\"deleted\":true}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Registration not found.\",\"code\":\"resource_missing\",\"param\":\"call_id\"}}",
+                            "name": "Registration not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 500,
+                            "body": "{\"error\":{\"type\":\"api_error\",\"message\":\"Internal server error.\",\"code\":\"internal_error\"}}",
+                            "name": "Internal server error"
+                        }
+                    ]
+                },
+                {
+                    "name": "Restart a registered device",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/registrations\/:call_id\/restart",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/registrations\/:call_id\/restart",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "call_id",
+                                    "key": "call_id",
+                                    "value": "8434b4e1-4f5d-4a85-9cab-2f31a8cb7010",
+                                    "description": "The registration call-id."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Sends a restart event to the device associated with this SIP registration."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"object\":\"registration\",\"uuid\":\"8434b4e1-4f5d-4a85-9cab-2f31a8cb7010\",\"action\":\"restart\",\"accepted\":true}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Registration not found.\",\"code\":\"resource_missing\",\"param\":\"call_id\"}}",
+                            "name": "Registration not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 500,
+                            "body": "{\"error\":{\"type\":\"api_error\",\"message\":\"Internal server error.\",\"code\":\"internal_error\"}}",
+                            "name": "Internal server error"
+                        }
+                    ]
+                },
+                {
+                    "name": "Sync a registered device",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/registrations\/:call_id\/sync",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/registrations\/:call_id\/sync",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "call_id",
+                                    "key": "call_id",
+                                    "value": "8434b4e1-4f5d-4a85-9cab-2f31a8cb7010",
+                                    "description": "The registration call-id."
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Sends a sync\/provision event to the device associated with this SIP registration."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"object\":\"registration\",\"uuid\":\"8434b4e1-4f5d-4a85-9cab-2f31a8cb7010\",\"action\":\"sync\",\"accepted\":true}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Registration not found.\",\"code\":\"resource_missing\",\"param\":\"call_id\"}}",
+                            "name": "Registration not found"
                         },
                         {
                             "header": [],

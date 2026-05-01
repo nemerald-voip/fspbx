@@ -136,6 +136,16 @@
                             </li>
                                                                         </ul>
                             </ul>
+                    <ul id="tocify-header-extension-statistics" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="extension-statistics">
+                    <a href="#extension-statistics">Extension Statistics</a>
+                </li>
+                                    <ul id="tocify-subheader-extension-statistics" class="tocify-subheader">
+                                                    <li class="tocify-item level-2" data-unique="extension-statistics-GETapi-v1-domains--domain_uuid--extension-statistics">
+                                <a href="#extension-statistics-GETapi-v1-domains--domain_uuid--extension-statistics">List extension statistics</a>
+                            </li>
+                                                                        </ul>
+                            </ul>
                     <ul id="tocify-header-extensions" class="tocify-header">
                 <li class="tocify-item level-1" data-unique="extensions">
                     <a href="#extensions">Extensions</a>
@@ -177,6 +187,28 @@
                             </li>
                                                                                 <li class="tocify-item level-2" data-unique="phone-numbers-DELETEapi-v1-domains--domain_uuid--phone-numbers--destination_uuid-">
                                 <a href="#phone-numbers-DELETEapi-v1-domains--domain_uuid--phone-numbers--destination_uuid-">Delete a phone number</a>
+                            </li>
+                                                                        </ul>
+                            </ul>
+                    <ul id="tocify-header-registrations" class="tocify-header">
+                <li class="tocify-item level-1" data-unique="registrations">
+                    <a href="#registrations">Registrations</a>
+                </li>
+                                    <ul id="tocify-subheader-registrations" class="tocify-subheader">
+                                                    <li class="tocify-item level-2" data-unique="registrations-GETapi-v1-domains--domain_uuid--registrations">
+                                <a href="#registrations-GETapi-v1-domains--domain_uuid--registrations">List registrations</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="registrations-GETapi-v1-domains--domain_uuid--registrations--call_id-">
+                                <a href="#registrations-GETapi-v1-domains--domain_uuid--registrations--call_id-">Retrieve a registration</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="registrations-DELETEapi-v1-domains--domain_uuid--registrations--call_id-">
+                                <a href="#registrations-DELETEapi-v1-domains--domain_uuid--registrations--call_id-">Unregister a device</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="registrations-POSTapi-v1-domains--domain_uuid--registrations--call_id--restart">
+                                <a href="#registrations-POSTapi-v1-domains--domain_uuid--registrations--call_id--restart">Restart a registered device</a>
+                            </li>
+                                                                                <li class="tocify-item level-2" data-unique="registrations-POSTapi-v1-domains--domain_uuid--registrations--call_id--sync">
+                                <a href="#registrations-POSTapi-v1-domains--domain_uuid--registrations--call_id--sync">Sync a registered device</a>
                             </li>
                                                                         </ul>
                             </ul>
@@ -4198,6 +4230,337 @@ You can check the Dev Tools console for debugging information.</code></pre>
 <p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
             </div>
                     </form>
+
+                <h1 id="extension-statistics">Extension Statistics</h1>
+
+    
+
+                                <h2 id="extension-statistics-GETapi-v1-domains--domain_uuid--extension-statistics">List extension statistics</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Returns extension-level call statistics for the specified domain.</p>
+<p>Access rules:</p>
+<ul>
+<li>Caller must have access to the target domain (domain scope).</li>
+<li>Caller must have the <code>xml_cdr_view</code> permission.</li>
+</ul>
+<p>Pagination (cursor-based):</p>
+<ul>
+<li>Both <code>limit</code> and <code>starting_after</code> are optional.</li>
+<li>If <code>limit</code> is not provided, it defaults to 50.</li>
+<li>If <code>starting_after</code> is not provided, results start from the beginning.</li>
+</ul>
+<p>Optional filters:</p>
+<ul>
+<li><code>search</code> filters by extension number, extension label, and related call fields.</li>
+<li><code>date_from</code> and <code>date_to</code> filter the reporting window using epoch seconds in UTC.</li>
+<li>If no date range is provided, the current day in the domain's local timezone is used.</li>
+</ul>
+
+<span id="example-requests-GETapi-v1-domains--domain_uuid--extension-statistics">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "/api/v1/domains/7d58342b-2b29-4dcf-92d6-e9a9e002a4e5/extension-statistics?limit=50&amp;starting_after=c9a76140-0ca4-4ea3-95af-7e12c2ff0df5&amp;search=1001&amp;date_from=1777507200&amp;date_to=1777593599" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/7d58342b-2b29-4dcf-92d6-e9a9e002a4e5/extension-statistics"
+);
+
+const params = {
+    "limit": "50",
+    "starting_after": "c9a76140-0ca4-4ea3-95af-7e12c2ff0df5",
+    "search": "1001",
+    "date_from": "1777507200",
+    "date_to": "1777593599",
+};
+Object.keys(params)
+    .forEach(key =&gt; url.searchParams.append(key, params[key]));
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-domains--domain_uuid--extension-statistics">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;object&quot;: &quot;list&quot;,
+    &quot;url&quot;: &quot;/api/v1/domains/7d58342b-2b29-4dcf-92d6-e9a9e002a4e5/extension-statistics&quot;,
+    &quot;has_more&quot;: false,
+    &quot;data&quot;: [
+        {
+            &quot;extension_uuid&quot;: &quot;c9a76140-0ca4-4ea3-95af-7e12c2ff0df5&quot;,
+            &quot;object&quot;: &quot;extension_statistic&quot;,
+            &quot;domain_uuid&quot;: &quot;7d58342b-2b29-4dcf-92d6-e9a9e002a4e5&quot;,
+            &quot;extension&quot;: &quot;1001&quot;,
+            &quot;extension_label&quot;: &quot;Front Desk&quot;,
+            &quot;call_count&quot;: 18,
+            &quot;inbound&quot;: 10,
+            &quot;outbound&quot;: 7,
+            &quot;missed&quot;: 1,
+            &quot;total_duration_seconds&quot;: 945,
+            &quot;total_duration_formatted&quot;: &quot;00:15:45&quot;,
+            &quot;total_talk_time_seconds&quot;: 945,
+            &quot;total_talk_time_formatted&quot;: &quot;00:15:45&quot;,
+            &quot;average_duration_seconds&quot;: 53,
+            &quot;average_duration_formatted&quot;: &quot;00:00:53&quot;
+        }
+    ]
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid domain UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid starting_after UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid starting_after UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;starting_after&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid date_from):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid date_from value.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;date_from&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid date_to):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid date_to value.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;date_to&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid date range):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;date_from must be less than or equal to date_to.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;date_from&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Domain not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-domains--domain_uuid--extension-statistics" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-domains--domain_uuid--extension-statistics"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-domains--domain_uuid--extension-statistics"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-domains--domain_uuid--extension-statistics" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-domains--domain_uuid--extension-statistics">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-domains--domain_uuid--extension-statistics" data-method="GET"
+      data-path="api/v1/domains/{domain_uuid}/extension-statistics"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-domains--domain_uuid--extension-statistics', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/domains/{domain_uuid}/extension-statistics</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-domains--domain_uuid--extension-statistics"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-domains--domain_uuid--extension-statistics"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-domains--domain_uuid--extension-statistics"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--extension-statistics"
+               value="7d58342b-2b29-4dcf-92d6-e9a9e002a4e5"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>7d58342b-2b29-4dcf-92d6-e9a9e002a4e5</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>limit</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="limit"                data-endpoint="GETapi-v1-domains--domain_uuid--extension-statistics"
+               value="50"
+               data-component="query">
+    <br>
+<p>Optional. Number of results to return (min 1, max 100). Defaults to 50. Example: <code>50</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>starting_after</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="starting_after"                data-endpoint="GETapi-v1-domains--domain_uuid--extension-statistics"
+               value="c9a76140-0ca4-4ea3-95af-7e12c2ff0df5"
+               data-component="query">
+    <br>
+<p>Optional. Return results after this extension UUID. Example: <code>c9a76140-0ca4-4ea3-95af-7e12c2ff0df5</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>search</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="search"                data-endpoint="GETapi-v1-domains--domain_uuid--extension-statistics"
+               value="1001"
+               data-component="query">
+    <br>
+<p>Optional. Search extension number, label, and related call fields. Example: <code>1001</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>date_from</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="date_from"                data-endpoint="GETapi-v1-domains--domain_uuid--extension-statistics"
+               value="1777507200"
+               data-component="query">
+    <br>
+<p>Optional. Start of date range in epoch seconds (UTC). Example: <code>1777507200</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>date_to</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="date_to"                data-endpoint="GETapi-v1-domains--domain_uuid--extension-statistics"
+               value="1777593599"
+               data-component="query">
+    <br>
+<p>Optional. End of date range in epoch seconds (UTC). Example: <code>1777593599</code></p>
+            </div>
+                </form>
 
                 <h1 id="extensions">Extensions</h1>
 
@@ -8340,6 +8703,1097 @@ You can check the Dev Tools console for debugging information.</code></pre>
             </div>
                     </form>
 
+                <h1 id="registrations">Registrations</h1>
+
+    
+
+                                <h2 id="registrations-GETapi-v1-domains--domain_uuid--registrations">List registrations</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Returns SIP registrations for the specified domain.</p>
+<p>Pagination (snapshot cursor-based):</p>
+<ul>
+<li>Both <code>limit</code> and <code>starting_after</code> are optional.</li>
+<li>If <code>limit</code> is not provided, it defaults to 50.</li>
+<li>If <code>starting_after</code> is not provided, results start from the beginning.</li>
+</ul>
+
+<span id="example-requests-GETapi-v1-domains--domain_uuid--registrations">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/registrations?limit=50&amp;starting_after=8434b4e1-4f5d-4a85-9cab-2f31a8cb7010&amp;search=101&amp;sort=sip_auth_user&amp;order=asc" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/registrations"
+);
+
+const params = {
+    "limit": "50",
+    "starting_after": "8434b4e1-4f5d-4a85-9cab-2f31a8cb7010",
+    "search": "101",
+    "sort": "sip_auth_user",
+    "order": "asc",
+};
+Object.keys(params)
+    .forEach(key =&gt; url.searchParams.append(key, params[key]));
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-domains--domain_uuid--registrations">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;object&quot;: &quot;list&quot;,
+    &quot;url&quot;: &quot;/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/registrations&quot;,
+    &quot;has_more&quot;: false,
+    &quot;data&quot;: [
+        {
+            &quot;call_id&quot;: &quot;8434b4e1-4f5d-4a85-9cab-2f31a8cb7010&quot;,
+            &quot;object&quot;: &quot;registration&quot;,
+            &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+            &quot;user&quot;: &quot;101@pbx.example.com&quot;,
+            &quot;agent&quot;: &quot;Yealink SIP-T46U 108.86.0.20&quot;,
+            &quot;lan_ip&quot;: &quot;192.0.2.10&quot;,
+            &quot;wan_ip&quot;: &quot;203.0.113.42&quot;,
+            &quot;port&quot;: &quot;5060&quot;,
+            &quot;status&quot;: &quot;Registered&quot;,
+            &quot;expsecs&quot;: &quot;3600&quot;,
+            &quot;ping_time&quot;: &quot;18&quot;,
+            &quot;sip_profile_name&quot;: &quot;internal&quot;
+        }
+    ]
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid domain UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Domain not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-domains--domain_uuid--registrations" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-domains--domain_uuid--registrations"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-domains--domain_uuid--registrations"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-domains--domain_uuid--registrations" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-domains--domain_uuid--registrations">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-domains--domain_uuid--registrations" data-method="GET"
+      data-path="api/v1/domains/{domain_uuid}/registrations"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-domains--domain_uuid--registrations', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/domains/{domain_uuid}/registrations</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-domains--domain_uuid--registrations"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-domains--domain_uuid--registrations"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-domains--domain_uuid--registrations"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--registrations"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>Query Parameters</b></h4>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>limit</code></b>&nbsp;&nbsp;
+<small>integer</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="number" style="display: none"
+               step="any"               name="limit"                data-endpoint="GETapi-v1-domains--domain_uuid--registrations"
+               value="50"
+               data-component="query">
+    <br>
+<p>Optional. Number of results to return (min 1, max 100). Defaults to 50. Example: <code>50</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>starting_after</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="starting_after"                data-endpoint="GETapi-v1-domains--domain_uuid--registrations"
+               value="8434b4e1-4f5d-4a85-9cab-2f31a8cb7010"
+               data-component="query">
+    <br>
+<p>Optional. Return results after this registration call-id in the current snapshot. Example: <code>8434b4e1-4f5d-4a85-9cab-2f31a8cb7010</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>search</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="search"                data-endpoint="GETapi-v1-domains--domain_uuid--registrations"
+               value="101"
+               data-component="query">
+    <br>
+<p>Optional. Search IP, agent, transport, profile, auth user, or auth realm. Example: <code>101</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>sort</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="sort"                data-endpoint="GETapi-v1-domains--domain_uuid--registrations"
+               value="sip_auth_user"
+               data-component="query">
+    <br>
+<p>Optional. Sort field. One of: sip_auth_user, sip_auth_realm, agent, lan_ip, wan_ip, port, status, expsecs, ping_time, sip_profile_name. Defaults to sip_auth_user. Example: <code>sip_auth_user</code></p>
+            </div>
+                                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>order</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+<i>optional</i> &nbsp;
+                <input type="text" style="display: none"
+                              name="order"                data-endpoint="GETapi-v1-domains--domain_uuid--registrations"
+               value="asc"
+               data-component="query">
+    <br>
+<p>Optional. Sort direction: asc or desc. Defaults to asc. Example: <code>asc</code></p>
+            </div>
+                </form>
+
+                    <h2 id="registrations-GETapi-v1-domains--domain_uuid--registrations--call_id-">Retrieve a registration</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Returns a single SIP registration for the specified domain.</p>
+
+<span id="example-requests-GETapi-v1-domains--domain_uuid--registrations--call_id-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request GET \
+    --get "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/registrations/8434b4e1-4f5d-4a85-9cab-2f31a8cb7010" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/registrations/8434b4e1-4f5d-4a85-9cab-2f31a8cb7010"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "GET",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-GETapi-v1-domains--domain_uuid--registrations--call_id-">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;call_id&quot;: &quot;8434b4e1-4f5d-4a85-9cab-2f31a8cb7010&quot;,
+    &quot;object&quot;: &quot;registration&quot;,
+    &quot;domain_uuid&quot;: &quot;4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b&quot;,
+    &quot;user&quot;: &quot;101@pbx.example.com&quot;,
+    &quot;status&quot;: &quot;Registered&quot;,
+    &quot;lan_ip&quot;: &quot;192.0.2.10&quot;,
+    &quot;port&quot;: &quot;5060&quot;,
+    &quot;contact&quot;: &quot;sip:101@192.0.2.10:5060;transport=udp&quot;,
+    &quot;agent&quot;: &quot;Yealink SIP-T46U 108.86.0.20&quot;,
+    &quot;transport&quot;: &quot;UDP&quot;,
+    &quot;wan_ip&quot;: &quot;203.0.113.42&quot;,
+    &quot;sip_profile_name&quot;: &quot;internal&quot;,
+    &quot;sip_auth_user&quot;: &quot;101&quot;,
+    &quot;sip_auth_realm&quot;: &quot;pbx.example.com&quot;,
+    &quot;ping_time&quot;: &quot;18&quot;,
+    &quot;expsecs&quot;: &quot;3600&quot;
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid domain UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Domain not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Registration not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Registration not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;call_id&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-GETapi-v1-domains--domain_uuid--registrations--call_id-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-GETapi-v1-domains--domain_uuid--registrations--call_id-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-GETapi-v1-domains--domain_uuid--registrations--call_id-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-GETapi-v1-domains--domain_uuid--registrations--call_id-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-GETapi-v1-domains--domain_uuid--registrations--call_id-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-GETapi-v1-domains--domain_uuid--registrations--call_id-" data-method="GET"
+      data-path="api/v1/domains/{domain_uuid}/registrations/{call_id}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('GETapi-v1-domains--domain_uuid--registrations--call_id-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-green">GET</small>
+            <b><code>api/v1/domains/{domain_uuid}/registrations/{call_id}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="GETapi-v1-domains--domain_uuid--registrations--call_id-"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="GETapi-v1-domains--domain_uuid--registrations--call_id-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="GETapi-v1-domains--domain_uuid--registrations--call_id-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="GETapi-v1-domains--domain_uuid--registrations--call_id-"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>call_id</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="call_id"                data-endpoint="GETapi-v1-domains--domain_uuid--registrations--call_id-"
+               value="8434b4e1-4f5d-4a85-9cab-2f31a8cb7010"
+               data-component="url">
+    <br>
+<p>The registration call-id. Example: <code>8434b4e1-4f5d-4a85-9cab-2f31a8cb7010</code></p>
+            </div>
+                    </form>
+
+                    <h2 id="registrations-DELETEapi-v1-domains--domain_uuid--registrations--call_id-">Unregister a device</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Unregisters a device within the specified domain.</p>
+
+<span id="example-requests-DELETEapi-v1-domains--domain_uuid--registrations--call_id-">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request DELETE \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/registrations/8434b4e1-4f5d-4a85-9cab-2f31a8cb7010" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/registrations/8434b4e1-4f5d-4a85-9cab-2f31a8cb7010"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "DELETE",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-DELETEapi-v1-domains--domain_uuid--registrations--call_id-">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;object&quot;: &quot;registration&quot;,
+    &quot;uuid&quot;: &quot;8434b4e1-4f5d-4a85-9cab-2f31a8cb7010&quot;,
+    &quot;deleted&quot;: true
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid domain UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Domain not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Registration not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Registration not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;call_id&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (500, Internal server error):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;api_error&quot;,
+        &quot;message&quot;: &quot;Internal server error.&quot;,
+        &quot;code&quot;: &quot;internal_error&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-DELETEapi-v1-domains--domain_uuid--registrations--call_id-" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-DELETEapi-v1-domains--domain_uuid--registrations--call_id-"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-DELETEapi-v1-domains--domain_uuid--registrations--call_id-"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-DELETEapi-v1-domains--domain_uuid--registrations--call_id-" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-DELETEapi-v1-domains--domain_uuid--registrations--call_id-">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-DELETEapi-v1-domains--domain_uuid--registrations--call_id-" data-method="DELETE"
+      data-path="api/v1/domains/{domain_uuid}/registrations/{call_id}"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('DELETEapi-v1-domains--domain_uuid--registrations--call_id-', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-red">DELETE</small>
+            <b><code>api/v1/domains/{domain_uuid}/registrations/{call_id}</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="DELETEapi-v1-domains--domain_uuid--registrations--call_id-"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="DELETEapi-v1-domains--domain_uuid--registrations--call_id-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="DELETEapi-v1-domains--domain_uuid--registrations--call_id-"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="DELETEapi-v1-domains--domain_uuid--registrations--call_id-"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>call_id</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="call_id"                data-endpoint="DELETEapi-v1-domains--domain_uuid--registrations--call_id-"
+               value="8434b4e1-4f5d-4a85-9cab-2f31a8cb7010"
+               data-component="url">
+    <br>
+<p>The registration call-id. Example: <code>8434b4e1-4f5d-4a85-9cab-2f31a8cb7010</code></p>
+            </div>
+                    </form>
+
+                    <h2 id="registrations-POSTapi-v1-domains--domain_uuid--registrations--call_id--restart">Restart a registered device</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Sends a restart event to the device associated with this SIP registration.</p>
+
+<span id="example-requests-POSTapi-v1-domains--domain_uuid--registrations--call_id--restart">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/registrations/8434b4e1-4f5d-4a85-9cab-2f31a8cb7010/restart" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/registrations/8434b4e1-4f5d-4a85-9cab-2f31a8cb7010/restart"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-v1-domains--domain_uuid--registrations--call_id--restart">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;object&quot;: &quot;registration&quot;,
+    &quot;uuid&quot;: &quot;8434b4e1-4f5d-4a85-9cab-2f31a8cb7010&quot;,
+    &quot;action&quot;: &quot;restart&quot;,
+    &quot;accepted&quot;: true
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid domain UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Domain not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Registration not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Registration not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;call_id&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (500, Internal server error):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;api_error&quot;,
+        &quot;message&quot;: &quot;Internal server error.&quot;,
+        &quot;code&quot;: &quot;internal_error&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-POSTapi-v1-domains--domain_uuid--registrations--call_id--restart" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-v1-domains--domain_uuid--registrations--call_id--restart"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-v1-domains--domain_uuid--registrations--call_id--restart"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-v1-domains--domain_uuid--registrations--call_id--restart" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-v1-domains--domain_uuid--registrations--call_id--restart">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-v1-domains--domain_uuid--registrations--call_id--restart" data-method="POST"
+      data-path="api/v1/domains/{domain_uuid}/registrations/{call_id}/restart"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-v1-domains--domain_uuid--registrations--call_id--restart', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/v1/domains/{domain_uuid}/registrations/{call_id}/restart</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-domains--domain_uuid--registrations--call_id--restart"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-v1-domains--domain_uuid--registrations--call_id--restart"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-v1-domains--domain_uuid--registrations--call_id--restart"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="POSTapi-v1-domains--domain_uuid--registrations--call_id--restart"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>call_id</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="call_id"                data-endpoint="POSTapi-v1-domains--domain_uuid--registrations--call_id--restart"
+               value="8434b4e1-4f5d-4a85-9cab-2f31a8cb7010"
+               data-component="url">
+    <br>
+<p>The registration call-id. Example: <code>8434b4e1-4f5d-4a85-9cab-2f31a8cb7010</code></p>
+            </div>
+                    </form>
+
+                    <h2 id="registrations-POSTapi-v1-domains--domain_uuid--registrations--call_id--sync">Sync a registered device</h2>
+
+<p>
+<small class="badge badge-darkred">requires authentication</small>
+</p>
+
+<p>Sends a sync/provision event to the device associated with this SIP registration.</p>
+
+<span id="example-requests-POSTapi-v1-domains--domain_uuid--registrations--call_id--sync">
+<blockquote>Example request:</blockquote>
+
+
+<div class="bash-example">
+    <pre><code class="language-bash">curl --request POST \
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/registrations/8434b4e1-4f5d-4a85-9cab-2f31a8cb7010/sync" \
+    --header "Authorization: Bearer {YOUR_AUTH_KEY}" \
+    --header "Content-Type: application/json" \
+    --header "Accept: application/json"</code></pre></div>
+
+
+<div class="javascript-example">
+    <pre><code class="language-javascript">const url = new URL(
+    "/api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/registrations/8434b4e1-4f5d-4a85-9cab-2f31a8cb7010/sync"
+);
+
+const headers = {
+    "Authorization": "Bearer {YOUR_AUTH_KEY}",
+    "Content-Type": "application/json",
+    "Accept": "application/json",
+};
+
+fetch(url, {
+    method: "POST",
+    headers,
+}).then(response =&gt; response.json());</code></pre></div>
+
+</span>
+
+<span id="example-responses-POSTapi-v1-domains--domain_uuid--registrations--call_id--sync">
+            <blockquote>
+            <p>Example response (200, Success):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;object&quot;: &quot;registration&quot;,
+    &quot;uuid&quot;: &quot;8434b4e1-4f5d-4a85-9cab-2f31a8cb7010&quot;,
+    &quot;action&quot;: &quot;sync&quot;,
+    &quot;accepted&quot;: true
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (400, Invalid domain UUID):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Invalid domain UUID.&quot;,
+        &quot;code&quot;: &quot;invalid_request&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (401, Unauthenticated):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;authentication_error&quot;,
+        &quot;message&quot;: &quot;Unauthenticated.&quot;,
+        &quot;code&quot;: &quot;unauthenticated&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Domain not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Domain not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;domain_uuid&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (404, Registration not found):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;invalid_request_error&quot;,
+        &quot;message&quot;: &quot;Registration not found.&quot;,
+        &quot;code&quot;: &quot;resource_missing&quot;,
+        &quot;param&quot;: &quot;call_id&quot;
+    }
+}</code>
+ </pre>
+            <blockquote>
+            <p>Example response (500, Internal server error):</p>
+        </blockquote>
+                <pre>
+
+<code class="language-json" style="max-height: 300px;">{
+    &quot;error&quot;: {
+        &quot;type&quot;: &quot;api_error&quot;,
+        &quot;message&quot;: &quot;Internal server error.&quot;,
+        &quot;code&quot;: &quot;internal_error&quot;
+    }
+}</code>
+ </pre>
+    </span>
+<span id="execution-results-POSTapi-v1-domains--domain_uuid--registrations--call_id--sync" hidden>
+    <blockquote>Received response<span
+                id="execution-response-status-POSTapi-v1-domains--domain_uuid--registrations--call_id--sync"></span>:
+    </blockquote>
+    <pre class="json"><code id="execution-response-content-POSTapi-v1-domains--domain_uuid--registrations--call_id--sync"
+      data-empty-response-text="<Empty response>" style="max-height: 400px;"></code></pre>
+</span>
+<span id="execution-error-POSTapi-v1-domains--domain_uuid--registrations--call_id--sync" hidden>
+    <blockquote>Request failed with error:</blockquote>
+    <pre><code id="execution-error-message-POSTapi-v1-domains--domain_uuid--registrations--call_id--sync">
+
+Tip: Check that you&#039;re properly connected to the network.
+If you&#039;re a maintainer of ths API, verify that your API is running and you&#039;ve enabled CORS.
+You can check the Dev Tools console for debugging information.</code></pre>
+</span>
+<form id="form-POSTapi-v1-domains--domain_uuid--registrations--call_id--sync" data-method="POST"
+      data-path="api/v1/domains/{domain_uuid}/registrations/{call_id}/sync"
+      data-authed="1"
+      data-hasfiles="0"
+      data-isarraybody="0"
+      autocomplete="off"
+      onsubmit="event.preventDefault(); executeTryOut('POSTapi-v1-domains--domain_uuid--registrations--call_id--sync', this);">
+    <h3>
+        Request&nbsp;&nbsp;&nbsp;
+            </h3>
+            <p>
+            <small class="badge badge-black">POST</small>
+            <b><code>api/v1/domains/{domain_uuid}/registrations/{call_id}/sync</code></b>
+        </p>
+                <h4 class="fancy-heading-panel"><b>Headers</b></h4>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Authorization</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Authorization" class="auth-value"               data-endpoint="POSTapi-v1-domains--domain_uuid--registrations--call_id--sync"
+               value="Bearer {YOUR_AUTH_KEY}"
+               data-component="header">
+    <br>
+<p>Example: <code>Bearer {YOUR_AUTH_KEY}</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Content-Type</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Content-Type"                data-endpoint="POSTapi-v1-domains--domain_uuid--registrations--call_id--sync"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                                <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>Accept</code></b>&nbsp;&nbsp;
+&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="Accept"                data-endpoint="POSTapi-v1-domains--domain_uuid--registrations--call_id--sync"
+               value="application/json"
+               data-component="header">
+    <br>
+<p>Example: <code>application/json</code></p>
+            </div>
+                        <h4 class="fancy-heading-panel"><b>URL Parameters</b></h4>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>domain_uuid</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="domain_uuid"                data-endpoint="POSTapi-v1-domains--domain_uuid--registrations--call_id--sync"
+               value="4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"
+               data-component="url">
+    <br>
+<p>The domain UUID. Example: <code>4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b</code></p>
+            </div>
+                    <div style="padding-left: 28px; clear: unset;">
+                <b style="line-height: 2;"><code>call_id</code></b>&nbsp;&nbsp;
+<small>string</small>&nbsp;
+ &nbsp;
+                <input type="text" style="display: none"
+                              name="call_id"                data-endpoint="POSTapi-v1-domains--domain_uuid--registrations--call_id--sync"
+               value="8434b4e1-4f5d-4a85-9cab-2f31a8cb7010"
+               data-component="url">
+    <br>
+<p>The registration call-id. Example: <code>8434b4e1-4f5d-4a85-9cab-2f31a8cb7010</code></p>
+            </div>
+                    </form>
+
                 <h1 id="ring-groups">Ring Groups</h1>
 
     
@@ -9353,10 +10807,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="members.0.destination_number"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="+98"
+               value="250"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>+98</code></p>
+<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>250</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_delay</code></b>&nbsp;&nbsp;
@@ -9364,10 +10818,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_delay"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="67"
+               value="25"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>67</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>25</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_timeout</code></b>&nbsp;&nbsp;
@@ -9375,10 +10829,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_timeout"                data-endpoint="POSTapi-v1-domains--domain_uuid--ring-groups"
-               value="6"
+               value="30"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>6</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>30</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_prompt</code></b>&nbsp;&nbsp;
@@ -10014,10 +11468,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="text" style="display: none"
                               name="members.0.destination_number"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="+51"
+               value="1936"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>+51</code></p>
+<p>This field is required when <code>members</code> is present.  Must match the regex /^+?\d+$/. Example: <code>1936</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_delay</code></b>&nbsp;&nbsp;
@@ -10025,10 +11479,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_delay"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="27"
+               value="73"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>27</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>73</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_timeout</code></b>&nbsp;&nbsp;
@@ -10036,10 +11490,10 @@ Must be one of:
 <i>optional</i> &nbsp;
                 <input type="number" style="display: none"
                step="any"               name="members.0.destination_timeout"                data-endpoint="PATCHapi-v1-domains--domain_uuid--ring-groups--ring_group_uuid-"
-               value="21"
+               value="24"
                data-component="body">
     <br>
-<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>21</code></p>
+<p>This field is required when <code>members</code> is present. Must be at least 0. Example: <code>24</code></p>
                     </div>
                                                                 <div style="margin-left: 14px; clear: unset;">
                         <b style="line-height: 2;"><code>destination_prompt</code></b>&nbsp;&nbsp;
@@ -10081,7 +11535,7 @@ Must be one of:
             <code>false</code>
         </label>
     <br>
-<p>This field is required when <code>members</code> is present. Example: <code>true</code></p>
+<p>This field is required when <code>members</code> is present. Example: <code>false</code></p>
                     </div>
                                     </details>
         </div>

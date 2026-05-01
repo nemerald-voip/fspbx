@@ -128,6 +128,18 @@ const sidebar: SidebarsConfig = {
     },
     {
       type: "category",
+      label: "Extension Statistics",
+      items: [
+        {
+          type: "doc",
+          id: "api/v1/list-extension-statistics",
+          label: "List extension statistics",
+          className: "api-method get",
+        },
+      ],
+    },
+    {
+      type: "category",
       label: "Extensions",
       items: [
         {
@@ -195,6 +207,42 @@ const sidebar: SidebarsConfig = {
           id: "api/v1/delete-a-phone-number",
           label: "Delete a phone number",
           className: "api-method delete",
+        },
+      ],
+    },
+    {
+      type: "category",
+      label: "Registrations",
+      items: [
+        {
+          type: "doc",
+          id: "api/v1/list-registrations",
+          label: "List registrations",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/retrieve-a-registration",
+          label: "Retrieve a registration",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/unregister-a-device",
+          label: "Unregister a device",
+          className: "api-method delete",
+        },
+        {
+          type: "doc",
+          id: "api/v1/restart-a-registered-device",
+          label: "Restart a registered device",
+          className: "api-method post",
+        },
+        {
+          type: "doc",
+          id: "api/v1/sync-a-registered-device",
+          label: "Sync a registered device",
+          className: "api-method post",
         },
       ],
     },

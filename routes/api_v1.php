@@ -5,6 +5,8 @@ use App\Http\Controllers\Api\V1\DomainController;
 use App\Http\Controllers\Api\V1\ActiveCallController;
 use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\ExtensionController;
+use App\Http\Controllers\Api\V1\ExtensionStatisticController;
+use App\Http\Controllers\Api\V1\RegistrationController;
 use App\Http\Controllers\Api\V1\RingGroupController;
 use App\Http\Controllers\Api\V1\VoicemailController;
 use App\Http\Controllers\Api\V1\PhoneNumberController;
@@ -50,6 +52,9 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
 
     Route::get('/domains/{domain_uuid}/extensions/{extension_uuid}', [ExtensionController::class, 'show'])
         ->middleware('user.authorize:extension_view');
+
+    Route::get('/domains/{domain_uuid}/extension-statistics', [ExtensionStatisticController::class, 'index'])
+        ->middleware('user.authorize:xml_cdr_view');
 
     Route::post('/domains/{domain_uuid}/extensions', [ExtensionController::class, 'store'])
         ->middleware('user.authorize:extension_add');
@@ -132,6 +137,26 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
         ->middleware('user.authorize:domain_view');
 
     Route::delete('/domains/{domain_uuid}/active-calls/{call_uuid}', [ActiveCallController::class, 'destroy'])
+        ->middleware('user.authorize:domain_view');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Registrations (domain-scoped)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/domains/{domain_uuid}/registrations', [RegistrationController::class, 'index'])
+        ->middleware('user.authorize:domain_view');
+
+    Route::get('/domains/{domain_uuid}/registrations/{call_id}', [RegistrationController::class, 'show'])
+        ->middleware('user.authorize:domain_view');
+
+    Route::delete('/domains/{domain_uuid}/registrations/{call_id}', [RegistrationController::class, 'destroy'])
+        ->middleware('user.authorize:domain_view');
+
+    Route::post('/domains/{domain_uuid}/registrations/{call_id}/restart', [RegistrationController::class, 'restart'])
+        ->middleware('user.authorize:domain_view');
+
+    Route::post('/domains/{domain_uuid}/registrations/{call_id}/sync', [RegistrationController::class, 'sync'])
         ->middleware('user.authorize:domain_view');
 
     /*

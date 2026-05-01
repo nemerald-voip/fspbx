@@ -2824,6 +2824,258 @@ paths:
         required: true
         schema:
           type: string
+  '/api/v1/domains/{domain_uuid}/extension-statistics':
+    get:
+      summary: 'List extension statistics'
+      operationId: listExtensionStatistics
+      description: "Returns extension-level call statistics for the specified domain.\n\nAccess rules:\n- Caller must have access to the target domain (domain scope).\n- Caller must have the `xml_cdr_view` permission.\n\nPagination (cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 50.\n- If `starting_after` is not provided, results start from the beginning.\n\nOptional filters:\n- `search` filters by extension number, extension label, and related call fields.\n- `date_from` and `date_to` filter the reporting window using epoch seconds in UTC.\n- If no date range is provided, the current day in the domain's local timezone is used."
+      parameters:
+        -
+          in: query
+          name: limit
+          description: 'Optional. Number of results to return (min 1, max 100). Defaults to 50.'
+          example: 50
+          required: false
+          schema:
+            type: integer
+            description: 'Optional. Number of results to return (min 1, max 100). Defaults to 50.'
+            example: 50
+        -
+          in: query
+          name: starting_after
+          description: 'Optional. Return results after this extension UUID.'
+          example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+          required: false
+          schema:
+            type: string
+            description: 'Optional. Return results after this extension UUID.'
+            example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+        -
+          in: query
+          name: search
+          description: 'Optional. Search extension number, label, and related call fields.'
+          example: '1001'
+          required: false
+          schema:
+            type: string
+            description: 'Optional. Search extension number, label, and related call fields.'
+            example: '1001'
+        -
+          in: query
+          name: date_from
+          description: 'Optional. Start of date range in epoch seconds (UTC).'
+          example: 1777507200
+          required: false
+          schema:
+            type: integer
+            description: 'Optional. Start of date range in epoch seconds (UTC).'
+            example: 1777507200
+        -
+          in: query
+          name: date_to
+          description: 'Optional. End of date range in epoch seconds (UTC).'
+          example: 1777593599
+          required: false
+          schema:
+            type: integer
+            description: 'Optional. End of date range in epoch seconds (UTC).'
+            example: 1777593599
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  object: list
+                  url: /api/v1/domains/7d58342b-2b29-4dcf-92d6-e9a9e002a4e5/extension-statistics
+                  has_more: false
+                  data:
+                    -
+                      extension_uuid: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                      object: extension_statistic
+                      domain_uuid: 7d58342b-2b29-4dcf-92d6-e9a9e002a4e5
+                      extension: '1001'
+                      extension_label: 'Front Desk'
+                      call_count: 18
+                      inbound: 10
+                      outbound: 7
+                      missed: 1
+                      total_duration_seconds: 945
+                      total_duration_formatted: '00:15:45'
+                      total_talk_time_seconds: 945
+                      total_talk_time_formatted: '00:15:45'
+                      average_duration_seconds: 53
+                      average_duration_formatted: '00:00:53'
+                properties:
+                  object:
+                    type: string
+                    example: list
+                  url:
+                    type: string
+                    example: /api/v1/domains/7d58342b-2b29-4dcf-92d6-e9a9e002a4e5/extension-statistics
+                  has_more:
+                    type: boolean
+                    example: false
+                  data:
+                    type: array
+                    example:
+                      -
+                        extension_uuid: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                        object: extension_statistic
+                        domain_uuid: 7d58342b-2b29-4dcf-92d6-e9a9e002a4e5
+                        extension: '1001'
+                        extension_label: 'Front Desk'
+                        call_count: 18
+                        inbound: 10
+                        outbound: 7
+                        missed: 1
+                        total_duration_seconds: 945
+                        total_duration_formatted: '00:15:45'
+                        total_talk_time_seconds: 945
+                        total_talk_time_formatted: '00:15:45'
+                        average_duration_seconds: 53
+                        average_duration_formatted: '00:00:53'
+                    items:
+                      type: object
+                      properties:
+                        extension_uuid:
+                          type: string
+                          example: c9a76140-0ca4-4ea3-95af-7e12c2ff0df5
+                        object:
+                          type: string
+                          example: extension_statistic
+                        domain_uuid:
+                          type: string
+                          example: 7d58342b-2b29-4dcf-92d6-e9a9e002a4e5
+                        extension:
+                          type: string
+                          example: '1001'
+                        extension_label:
+                          type: string
+                          example: 'Front Desk'
+                        call_count:
+                          type: integer
+                          example: 18
+                        inbound:
+                          type: integer
+                          example: 10
+                        outbound:
+                          type: integer
+                          example: 7
+                        missed:
+                          type: integer
+                          example: 1
+                        total_duration_seconds:
+                          type: integer
+                          example: 945
+                        total_duration_formatted:
+                          type: string
+                          example: '00:15:45'
+                        total_talk_time_seconds:
+                          type: integer
+                          example: 945
+                        total_talk_time_formatted:
+                          type: string
+                          example: '00:15:45'
+                        average_duration_seconds:
+                          type: integer
+                          example: 53
+                        average_duration_formatted:
+                          type: string
+                          example: '00:00:53'
+        400:
+          description: 'Invalid date range'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'date_from must be less than or equal to date_to.'
+                    code: invalid_request
+                    param: date_from
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'date_from must be less than or equal to date_to.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: date_from
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        404:
+          description: 'Domain not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Domain not found.'
+                    code: resource_missing
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Domain not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: domain_uuid
+      tags:
+        - 'Extension Statistics'
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 7d58342b-2b29-4dcf-92d6-e9a9e002a4e5
+        required: true
+        schema:
+          type: string
   '/api/v1/domains/{domain_uuid}/extensions':
     get:
       summary: 'List extensions'
@@ -5336,6 +5588,861 @@ paths:
         required: true
         schema:
           type: string
+  '/api/v1/domains/{domain_uuid}/registrations':
+    get:
+      summary: 'List registrations'
+      operationId: listRegistrations
+      description: "Returns SIP registrations for the specified domain.\n\nPagination (snapshot cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 50.\n- If `starting_after` is not provided, results start from the beginning."
+      parameters:
+        -
+          in: query
+          name: limit
+          description: 'Optional. Number of results to return (min 1, max 100). Defaults to 50.'
+          example: 50
+          required: false
+          schema:
+            type: integer
+            description: 'Optional. Number of results to return (min 1, max 100). Defaults to 50.'
+            example: 50
+        -
+          in: query
+          name: starting_after
+          description: 'Optional. Return results after this registration call-id in the current snapshot.'
+          example: 8434b4e1-4f5d-4a85-9cab-2f31a8cb7010
+          required: false
+          schema:
+            type: string
+            description: 'Optional. Return results after this registration call-id in the current snapshot.'
+            example: 8434b4e1-4f5d-4a85-9cab-2f31a8cb7010
+        -
+          in: query
+          name: search
+          description: 'Optional. Search IP, agent, transport, profile, auth user, or auth realm.'
+          example: '101'
+          required: false
+          schema:
+            type: string
+            description: 'Optional. Search IP, agent, transport, profile, auth user, or auth realm.'
+            example: '101'
+        -
+          in: query
+          name: sort
+          description: 'Optional. Sort field. One of: sip_auth_user, sip_auth_realm, agent, lan_ip, wan_ip, port, status, expsecs, ping_time, sip_profile_name. Defaults to sip_auth_user.'
+          example: sip_auth_user
+          required: false
+          schema:
+            type: string
+            description: 'Optional. Sort field. One of: sip_auth_user, sip_auth_realm, agent, lan_ip, wan_ip, port, status, expsecs, ping_time, sip_profile_name. Defaults to sip_auth_user.'
+            example: sip_auth_user
+        -
+          in: query
+          name: order
+          description: 'Optional. Sort direction: asc or desc. Defaults to asc.'
+          example: asc
+          required: false
+          schema:
+            type: string
+            description: 'Optional. Sort direction: asc or desc. Defaults to asc.'
+            example: asc
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  object: list
+                  url: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/registrations
+                  has_more: false
+                  data:
+                    -
+                      call_id: 8434b4e1-4f5d-4a85-9cab-2f31a8cb7010
+                      object: registration
+                      domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                      user: 101@pbx.example.com
+                      agent: 'Yealink SIP-T46U 108.86.0.20'
+                      lan_ip: 192.0.2.10
+                      wan_ip: 203.0.113.42
+                      port: '5060'
+                      status: Registered
+                      expsecs: '3600'
+                      ping_time: '18'
+                      sip_profile_name: internal
+                properties:
+                  object:
+                    type: string
+                    example: list
+                  url:
+                    type: string
+                    example: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/registrations
+                  has_more:
+                    type: boolean
+                    example: false
+                  data:
+                    type: array
+                    example:
+                      -
+                        call_id: 8434b4e1-4f5d-4a85-9cab-2f31a8cb7010
+                        object: registration
+                        domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                        user: 101@pbx.example.com
+                        agent: 'Yealink SIP-T46U 108.86.0.20'
+                        lan_ip: 192.0.2.10
+                        wan_ip: 203.0.113.42
+                        port: '5060'
+                        status: Registered
+                        expsecs: '3600'
+                        ping_time: '18'
+                        sip_profile_name: internal
+                    items:
+                      type: object
+                      properties:
+                        call_id:
+                          type: string
+                          example: 8434b4e1-4f5d-4a85-9cab-2f31a8cb7010
+                        object:
+                          type: string
+                          example: registration
+                        domain_uuid:
+                          type: string
+                          example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                        user:
+                          type: string
+                          example: 101@pbx.example.com
+                        agent:
+                          type: string
+                          example: 'Yealink SIP-T46U 108.86.0.20'
+                        lan_ip:
+                          type: string
+                          example: 192.0.2.10
+                        wan_ip:
+                          type: string
+                          example: 203.0.113.42
+                        port:
+                          type: string
+                          example: '5060'
+                        status:
+                          type: string
+                          example: Registered
+                        expsecs:
+                          type: string
+                          example: '3600'
+                        ping_time:
+                          type: string
+                          example: '18'
+                        sip_profile_name:
+                          type: string
+                          example: internal
+        400:
+          description: 'Invalid domain UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid domain UUID.'
+                    code: invalid_request
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid domain UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: domain_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        404:
+          description: 'Domain not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Domain not found.'
+                    code: resource_missing
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Domain not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: domain_uuid
+      tags:
+        - Registrations
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/registrations/{call_id}':
+    get:
+      summary: 'Retrieve a registration'
+      operationId: retrieveARegistration
+      description: 'Returns a single SIP registration for the specified domain.'
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  call_id: 8434b4e1-4f5d-4a85-9cab-2f31a8cb7010
+                  object: registration
+                  domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  user: 101@pbx.example.com
+                  status: Registered
+                  lan_ip: 192.0.2.10
+                  port: '5060'
+                  contact: 'sip:101@192.0.2.10:5060;transport=udp'
+                  agent: 'Yealink SIP-T46U 108.86.0.20'
+                  transport: UDP
+                  wan_ip: 203.0.113.42
+                  sip_profile_name: internal
+                  sip_auth_user: '101'
+                  sip_auth_realm: pbx.example.com
+                  ping_time: '18'
+                  expsecs: '3600'
+                properties:
+                  call_id:
+                    type: string
+                    example: 8434b4e1-4f5d-4a85-9cab-2f31a8cb7010
+                  object:
+                    type: string
+                    example: registration
+                  domain_uuid:
+                    type: string
+                    example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  user:
+                    type: string
+                    example: 101@pbx.example.com
+                  status:
+                    type: string
+                    example: Registered
+                  lan_ip:
+                    type: string
+                    example: 192.0.2.10
+                  port:
+                    type: string
+                    example: '5060'
+                  contact:
+                    type: string
+                    example: 'sip:101@192.0.2.10:5060;transport=udp'
+                  agent:
+                    type: string
+                    example: 'Yealink SIP-T46U 108.86.0.20'
+                  transport:
+                    type: string
+                    example: UDP
+                  wan_ip:
+                    type: string
+                    example: 203.0.113.42
+                  sip_profile_name:
+                    type: string
+                    example: internal
+                  sip_auth_user:
+                    type: string
+                    example: '101'
+                  sip_auth_realm:
+                    type: string
+                    example: pbx.example.com
+                  ping_time:
+                    type: string
+                    example: '18'
+                  expsecs:
+                    type: string
+                    example: '3600'
+        400:
+          description: 'Invalid domain UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid domain UUID.'
+                    code: invalid_request
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid domain UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: domain_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        404:
+          description: 'Registration not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Registration not found.'
+                    code: resource_missing
+                    param: call_id
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Registration not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: call_id
+      tags:
+        - Registrations
+    delete:
+      summary: 'Unregister a device'
+      operationId: unregisterADevice
+      description: 'Unregisters a device within the specified domain.'
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  object: registration
+                  uuid: 8434b4e1-4f5d-4a85-9cab-2f31a8cb7010
+                  deleted: true
+                properties:
+                  object:
+                    type: string
+                    example: registration
+                  uuid:
+                    type: string
+                    example: 8434b4e1-4f5d-4a85-9cab-2f31a8cb7010
+                  deleted:
+                    type: boolean
+                    example: true
+        400:
+          description: 'Invalid domain UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid domain UUID.'
+                    code: invalid_request
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid domain UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: domain_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        404:
+          description: 'Registration not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Registration not found.'
+                    code: resource_missing
+                    param: call_id
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Registration not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: call_id
+        500:
+          description: 'Internal server error'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: api_error
+                    message: 'Internal server error.'
+                    code: internal_error
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: api_error
+                      message:
+                        type: string
+                        example: 'Internal server error.'
+                      code:
+                        type: string
+                        example: internal_error
+      tags:
+        - Registrations
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+      -
+        in: path
+        name: call_id
+        description: 'The registration call-id.'
+        example: 8434b4e1-4f5d-4a85-9cab-2f31a8cb7010
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/registrations/{call_id}/restart':
+    post:
+      summary: 'Restart a registered device'
+      operationId: restartARegisteredDevice
+      description: 'Sends a restart event to the device associated with this SIP registration.'
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  object: registration
+                  uuid: 8434b4e1-4f5d-4a85-9cab-2f31a8cb7010
+                  action: restart
+                  accepted: true
+                properties:
+                  object:
+                    type: string
+                    example: registration
+                  uuid:
+                    type: string
+                    example: 8434b4e1-4f5d-4a85-9cab-2f31a8cb7010
+                  action:
+                    type: string
+                    example: restart
+                  accepted:
+                    type: boolean
+                    example: true
+        400:
+          description: 'Invalid domain UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid domain UUID.'
+                    code: invalid_request
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid domain UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: domain_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        404:
+          description: 'Registration not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Registration not found.'
+                    code: resource_missing
+                    param: call_id
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Registration not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: call_id
+        500:
+          description: 'Internal server error'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: api_error
+                    message: 'Internal server error.'
+                    code: internal_error
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: api_error
+                      message:
+                        type: string
+                        example: 'Internal server error.'
+                      code:
+                        type: string
+                        example: internal_error
+      tags:
+        - Registrations
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+      -
+        in: path
+        name: call_id
+        description: 'The registration call-id.'
+        example: 8434b4e1-4f5d-4a85-9cab-2f31a8cb7010
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/registrations/{call_id}/sync':
+    post:
+      summary: 'Sync a registered device'
+      operationId: syncARegisteredDevice
+      description: 'Sends a sync/provision event to the device associated with this SIP registration.'
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  object: registration
+                  uuid: 8434b4e1-4f5d-4a85-9cab-2f31a8cb7010
+                  action: sync
+                  accepted: true
+                properties:
+                  object:
+                    type: string
+                    example: registration
+                  uuid:
+                    type: string
+                    example: 8434b4e1-4f5d-4a85-9cab-2f31a8cb7010
+                  action:
+                    type: string
+                    example: sync
+                  accepted:
+                    type: boolean
+                    example: true
+        400:
+          description: 'Invalid domain UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid domain UUID.'
+                    code: invalid_request
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid domain UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: domain_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        404:
+          description: 'Registration not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Registration not found.'
+                    code: resource_missing
+                    param: call_id
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Registration not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: call_id
+        500:
+          description: 'Internal server error'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: api_error
+                    message: 'Internal server error.'
+                    code: internal_error
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: api_error
+                      message:
+                        type: string
+                        example: 'Internal server error.'
+                      code:
+                        type: string
+                        example: internal_error
+      tags:
+        - Registrations
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+      -
+        in: path
+        name: call_id
+        description: 'The registration call-id.'
+        example: 8434b4e1-4f5d-4a85-9cab-2f31a8cb7010
+        required: true
+        schema:
+          type: string
   '/api/v1/domains/{domain_uuid}/ring-groups':
     get:
       summary: 'List ring groups'
@@ -7368,10 +8475,16 @@ tags:
     name: Domains
     description: ''
   -
+    name: 'Extension Statistics'
+    description: ''
+  -
     name: Extensions
     description: ''
   -
     name: 'Phone Numbers'
+    description: ''
+  -
+    name: Registrations
     description: ''
   -
     name: 'Ring Groups'
