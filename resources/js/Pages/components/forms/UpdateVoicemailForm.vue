@@ -811,7 +811,7 @@ const handleVoicemailFileChange = (newValue, oldValue, el$) => {
 }
 
 const isAutoDeleteDisabled = [
-    (el$, form$) => form$.el$('voicemail_file')?.value === 'link',
+    (form$) => form$.el$('voicemail_file')?.value === 'link',
 ]
 
 const isDownloading = ref(false);
