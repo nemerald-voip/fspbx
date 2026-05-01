@@ -12,6 +12,555 @@ servers:
         default: YOUR-FSPBX-HOST
         description: 'Hostname where FS PBX is running (example: fspbx.your-domain.net)'
 paths:
+  '/api/v1/domains/{domain_uuid}/active-calls':
+    get:
+      summary: 'List active calls'
+      operationId: listActiveCalls
+      description: "Returns active calls for the specified domain.\n\nPagination (snapshot cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 50.\n- If `starting_after` is not provided, results start from the beginning."
+      parameters:
+        -
+          in: query
+          name: limit
+          description: 'Optional. Number of results to return (min 1, max 100). Defaults to 50.'
+          example: 50
+          required: false
+          schema:
+            type: integer
+            description: 'Optional. Number of results to return (min 1, max 100). Defaults to 50.'
+            example: 50
+        -
+          in: query
+          name: starting_after
+          description: 'Optional. Return results after this active call UUID in the current snapshot.'
+          example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+          required: false
+          schema:
+            type: string
+            description: 'Optional. Return results after this active call UUID in the current snapshot.'
+            example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+        -
+          in: query
+          name: search
+          description: 'Optional. Search caller, destination, app, codec, or secure fields.'
+          example: '1001'
+          required: false
+          schema:
+            type: string
+            description: 'Optional. Search caller, destination, app, codec, or secure fields.'
+            example: '1001'
+        -
+          in: query
+          name: sort
+          description: 'Optional. Sort field. One of: context, created_epoch, duration, cid_name, cid_num, dest, application, read_codec, secure. Defaults to created_epoch.'
+          example: created_epoch
+          required: false
+          schema:
+            type: string
+            description: 'Optional. Sort field. One of: context, created_epoch, duration, cid_name, cid_num, dest, application, read_codec, secure. Defaults to created_epoch.'
+            example: created_epoch
+        -
+          in: query
+          name: order
+          description: 'Optional. Sort direction: asc or desc. Defaults to desc.'
+          example: desc
+          required: false
+          schema:
+            type: string
+            description: 'Optional. Sort direction: asc or desc. Defaults to desc.'
+            example: desc
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  object: list
+                  url: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/active-calls
+                  has_more: false
+                  data:
+                    -
+                      uuid: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                      object: active_call
+                      domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                      direction: inbound
+                      created_epoch: '1774920000'
+                      created_display: '2026-04-30 14:00:00'
+                      duration_seconds: 42
+                      cid_name: 'Alice Johnson'
+                      cid_num: '1001'
+                      dest: '1002'
+                      application: bridge
+                      application_data: sofia/internal/1002@pbx.example.com
+                      secure: 'true'
+                      context: pbx.example.com
+                properties:
+                  object:
+                    type: string
+                    example: list
+                  url:
+                    type: string
+                    example: /api/v1/domains/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b/active-calls
+                  has_more:
+                    type: boolean
+                    example: false
+                  data:
+                    type: array
+                    example:
+                      -
+                        uuid: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                        object: active_call
+                        domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                        direction: inbound
+                        created_epoch: '1774920000'
+                        created_display: '2026-04-30 14:00:00'
+                        duration_seconds: 42
+                        cid_name: 'Alice Johnson'
+                        cid_num: '1001'
+                        dest: '1002'
+                        application: bridge
+                        application_data: sofia/internal/1002@pbx.example.com
+                        secure: 'true'
+                        context: pbx.example.com
+                    items:
+                      type: object
+                      properties:
+                        uuid:
+                          type: string
+                          example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                        object:
+                          type: string
+                          example: active_call
+                        domain_uuid:
+                          type: string
+                          example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                        direction:
+                          type: string
+                          example: inbound
+                        created_epoch:
+                          type: string
+                          example: '1774920000'
+                        created_display:
+                          type: string
+                          example: '2026-04-30 14:00:00'
+                        duration_seconds:
+                          type: integer
+                          example: 42
+                        cid_name:
+                          type: string
+                          example: 'Alice Johnson'
+                        cid_num:
+                          type: string
+                          example: '1001'
+                        dest:
+                          type: string
+                          example: '1002'
+                        application:
+                          type: string
+                          example: bridge
+                        application_data:
+                          type: string
+                          example: sofia/internal/1002@pbx.example.com
+                        secure:
+                          type: string
+                          example: 'true'
+                        context:
+                          type: string
+                          example: pbx.example.com
+        400:
+          description: 'Invalid starting_after UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid starting_after UUID.'
+                    code: invalid_request
+                    param: starting_after
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid starting_after UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: starting_after
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        404:
+          description: 'Domain not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Domain not found.'
+                    code: resource_missing
+                    param: domain_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Domain not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: domain_uuid
+      tags:
+        - 'Active Calls'
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+  '/api/v1/domains/{domain_uuid}/active-calls/{call_uuid}':
+    get:
+      summary: 'Retrieve an active call'
+      operationId: retrieveAnActiveCall
+      description: 'Returns a single active call for the specified domain.'
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  uuid: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                  object: active_call
+                  domain_uuid: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  direction: inbound
+                  created_epoch: '1774920000'
+                  created_display: '2026-04-30 14:00:00'
+                  duration_seconds: 42
+                  cid_name: 'Alice Johnson'
+                  cid_num: '1001'
+                  dest: '1002'
+                  application: bridge
+                  application_data: sofia/internal/1002@pbx.example.com
+                  secure: 'true'
+                  context: pbx.example.com
+                properties:
+                  uuid:
+                    type: string
+                    example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                  object:
+                    type: string
+                    example: active_call
+                  domain_uuid:
+                    type: string
+                    example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+                  direction:
+                    type: string
+                    example: inbound
+                  created_epoch:
+                    type: string
+                    example: '1774920000'
+                  created_display:
+                    type: string
+                    example: '2026-04-30 14:00:00'
+                  duration_seconds:
+                    type: integer
+                    example: 42
+                  cid_name:
+                    type: string
+                    example: 'Alice Johnson'
+                  cid_num:
+                    type: string
+                    example: '1001'
+                  dest:
+                    type: string
+                    example: '1002'
+                  application:
+                    type: string
+                    example: bridge
+                  application_data:
+                    type: string
+                    example: sofia/internal/1002@pbx.example.com
+                  secure:
+                    type: string
+                    example: 'true'
+                  context:
+                    type: string
+                    example: pbx.example.com
+        400:
+          description: 'Invalid call UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid call UUID.'
+                    code: invalid_request
+                    param: call_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid call UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: call_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        404:
+          description: 'Active call not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Active call not found.'
+                    code: resource_missing
+                    param: call_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Active call not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: call_uuid
+      tags:
+        - 'Active Calls'
+    delete:
+      summary: 'End an active call'
+      operationId: endAnActiveCall
+      description: 'Ends a single active call within the specified domain.'
+      parameters: []
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  object: active_call
+                  uuid: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                  deleted: true
+                properties:
+                  object:
+                    type: string
+                    example: active_call
+                  uuid:
+                    type: string
+                    example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+                  deleted:
+                    type: boolean
+                    example: true
+        400:
+          description: 'Invalid call UUID'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Invalid call UUID.'
+                    code: invalid_request
+                    param: call_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Invalid call UUID.'
+                      code:
+                        type: string
+                        example: invalid_request
+                      param:
+                        type: string
+                        example: call_uuid
+        401:
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: authentication_error
+                    message: Unauthenticated.
+                    code: unauthenticated
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: authentication_error
+                      message:
+                        type: string
+                        example: Unauthenticated.
+                      code:
+                        type: string
+                        example: unauthenticated
+        404:
+          description: 'Active call not found'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: invalid_request_error
+                    message: 'Active call not found.'
+                    code: resource_missing
+                    param: call_uuid
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: invalid_request_error
+                      message:
+                        type: string
+                        example: 'Active call not found.'
+                      code:
+                        type: string
+                        example: resource_missing
+                      param:
+                        type: string
+                        example: call_uuid
+        500:
+          description: 'Internal server error'
+          content:
+            application/json:
+              schema:
+                type: object
+                example:
+                  error:
+                    type: api_error
+                    message: 'Internal server error.'
+                    code: internal_error
+                properties:
+                  error:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: api_error
+                      message:
+                        type: string
+                        example: 'Internal server error.'
+                      code:
+                        type: string
+                        example: internal_error
+      tags:
+        - 'Active Calls'
+    parameters:
+      -
+        in: path
+        name: domain_uuid
+        description: 'The domain UUID.'
+        example: 4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b
+        required: true
+        schema:
+          type: string
+      -
+        in: path
+        name: call_uuid
+        description: 'The active call UUID.'
+        example: c0ec8113-aa15-40ac-8437-47185dd9dcf4
+        required: true
+        schema:
+          type: string
   '/api/v1/domains/{domain_uuid}/cdrs':
     get:
       summary: 'List Call Detail Records'
@@ -6806,6 +7355,9 @@ paths:
         schema:
           type: string
 tags:
+  -
+    name: 'Active Calls'
+    description: ''
   -
     name: CDRs
     description: ''

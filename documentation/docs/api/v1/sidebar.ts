@@ -8,6 +8,30 @@ const sidebar: SidebarsConfig = {
     },
     {
       type: "category",
+      label: "Active Calls",
+      items: [
+        {
+          type: "doc",
+          id: "api/v1/list-active-calls",
+          label: "List active calls",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/retrieve-an-active-call",
+          label: "Retrieve an active call",
+          className: "api-method get",
+        },
+        {
+          type: "doc",
+          id: "api/v1/end-an-active-call",
+          label: "End an active call",
+          className: "api-method delete",
+        },
+      ],
+    },
+    {
+      type: "category",
       label: "CDRs",
       items: [
         {

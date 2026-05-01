@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\DomainController;
+use App\Http\Controllers\Api\V1\ActiveCallController;
 use App\Http\Controllers\Api\V1\DeviceController;
 use App\Http\Controllers\Api\V1\ExtensionController;
 use App\Http\Controllers\Api\V1\RingGroupController;
@@ -118,6 +119,20 @@ Route::middleware(['auth:sanctum', 'api.token.auth', 'throttle:api'])->group(fun
 
     Route::delete('/domains/{domain_uuid}/devices/{device_uuid}', [DeviceController::class, 'destroy'])
         ->middleware('user.authorize:device_delete');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Active Calls (domain-scoped)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/domains/{domain_uuid}/active-calls', [ActiveCallController::class, 'index'])
+        ->middleware('user.authorize:domain_view');
+
+    Route::get('/domains/{domain_uuid}/active-calls/{call_uuid}', [ActiveCallController::class, 'show'])
+        ->middleware('user.authorize:domain_view');
+
+    Route::delete('/domains/{domain_uuid}/active-calls/{call_uuid}', [ActiveCallController::class, 'destroy'])
+        ->middleware('user.authorize:domain_view');
 
     /*
     |--------------------------------------------------------------------------

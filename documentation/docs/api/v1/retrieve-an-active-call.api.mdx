@@ -1,0 +1,72 @@
+---
+id: retrieve-an-active-call
+title: "Retrieve an active call"
+description: "Returns a single active call for the specified domain."
+sidebar_label: "Retrieve an active call"
+hide_title: true
+hide_table_of_contents: true
+api: eJzVV21v2zYQ/ivEfWoBKZYcdUmEoli6rW32pUVegBaBYVDU2WYrUypJeTUM/vfhJNmWLVVzgxXD8sWxyeM9d89z5N0G8gI1tzJXNynEoNFqiSu8VtfCyhX+xrMMPEjRCC0L2gYx3KIttTKMMyPVPEPGq71M8Cxjs1wzu0BmChRyJjFlab7kUp2BBwXXfIkWtYH4cQOSDiu4XYAHii8RYqj3TstSph239wtszmIPDze/04H4jS+LjAyjILycXfBz/xID7kcXSeJfzaKZH0RJeB6eY4BhAh5o/FpKjSnEVpfogRELXHKIN2DXBZ1jrJZqDs55vfgoxO+ja+ehC1EEKC7D8NznPHzhRwEX/mV0fuFHF+HlizS9SsUs+iGIE9psilwZNLQ+DgL6OMR1VwqBxoAHIlcWlaUtvCgyKSraR58N7dt0/eTJZxS2HcIGqtBPDqU5IYY6MVPRqKlF8snMpVKjaGKSKslLRRwIjdxiOsUiFwuIIby4iK7GQRAErcVUmiLja4hhHIx/8YPIPw9YGMVBEFf70rKugKlBkavUQByNPRAynTasX2dSIPszXyjKVbNULslfEIS1FGz9bQxeO7sQQ6JlOsfDn6cpt5yozGeSj6SyqBXPRmT/a5F8O2syfibyJXhgUJSacJAgtkR+I4fHe50HhaaKtrKWRJ3jY+n8sCrdnsuhs9o0uyOeh+xOkoA70MDQcVt5uI4+hqxa0nE92hky7ZOV69PV7hCifI66fUo0dm3RDfk71KNrCXIwQNKq24r1H3aOaeeBkIcMGo27PpEP2Z2if7cvgKGjqtpwreIY2tzxUf15EPXdoDdqxTOZ7q/1f+kuRa1zfaCJys+UHgA0dlqve7BEY/gc+5CcVVDSHuvta3vwZrnO/XCMYYfzcFu9OlxzfeBdC/2QdU9gbhvZD3it7r866sErr5WQPfNhl/kHxUu7QGWJX0x/Eu8tH1Q1XdqPYLRIL48A/kSCe1Geym8ngpPY7Ua3ZyvqsnXd6r5Ubtls2yP8J7Xai6ZFnUaTl1rgdCmNqSP/HxXsd6I7idZO5E+tWueB5XOaJbZ4aFwxMKEg7CKn7nKO9VVoqTsc8UKOVuGobkzMaNPqUNyo7l588mNGm507V3VgerWdWkqdQQwLawsTj0abRW6s60wDb+7Yh9cf2fWHG1bbggcrriVPspogMqslPONlRr3cp/cPt/6buw+vP/rv3t/dd458lxtLrQH7a4EaWeNBGqZLpaSas2dNrmI2M/TArfNS+83wpdA+p7xNmsdU2nUVzM7946S9dkc1UQPd7dhxQ6FDM5dUjz9yXQV4iPdTXjLBFduOlIzwMJt/QcWSNVtJIy3Brn5OuVkkOdcp4yplIpPiC629TF69RUUDKla5rKxfjpJXZ1VpSDXLK2DSVhLZZ72DhvKP2tRfVlUfVOTGLnl1BzR9/u0WKlftWe74sM3+Snn6LNwkk3qVUZFxWfVxlbY2jVwfgReScIe7mYnGuPhwRm6rllb3ZTLxGpU9wmaTcIMPOnOOfv5aoib+J3tR1mqQhv5PIZ7xzOBA2M9umyn1OesZy3tj2752al3VQlZiTcsXXB8N/jR7PxlK3wz+BDyt22biPFggT1FXSarXr4XAwrYsO0+La19Db/+4B+f+Btsu4jM=
+sidebar_class_name: "get api-method"
+info_path: docs/api/v1/fs-pbx-api
+custom_edit_url: null
+hide_send_button: true
+---
+
+import MethodEndpoint from "@theme/ApiExplorer/MethodEndpoint";
+import ParamsDetails from "@theme/ParamsDetails";
+import RequestSchema from "@theme/RequestSchema";
+import StatusCodes from "@theme/StatusCodes";
+import OperationTabs from "@theme/OperationTabs";
+import TabItem from "@theme/TabItem";
+import Heading from "@theme/Heading";
+
+<Heading
+  as={"h1"}
+  className={"openapi__heading"}
+  children={"Retrieve an active call"}
+>
+</Heading>
+
+<MethodEndpoint
+  method={"get"}
+  path={"/api/v1/domains/{domain_uuid}/active-calls/{call_uuid}"}
+  context={"endpoint"}
+>
+  
+</MethodEndpoint>
+
+
+
+Returns a single active call for the specified domain.
+
+<Heading
+  id={"request"}
+  as={"h2"}
+  className={"openapi-tabs__heading"}
+  children={"Request"}
+>
+</Heading>
+
+<ParamsDetails
+  parameters={[{"in":"path","name":"domain_uuid","description":"The domain UUID.","example":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","required":true,"schema":{"type":"string"}},{"in":"path","name":"call_uuid","description":"The active call UUID.","example":"c0ec8113-aa15-40ac-8437-47185dd9dcf4","required":true,"schema":{"type":"string"}}]}
+>
+  
+</ParamsDetails>
+
+<RequestSchema
+  title={"Body"}
+  body={undefined}
+>
+  
+</RequestSchema>
+
+<StatusCodes
+  id={undefined}
+  label={undefined}
+  responses={{"200":{"description":"Success","content":{"application/json":{"schema":{"type":"object","example":{"uuid":"c0ec8113-aa15-40ac-8437-47185dd9dcf4","object":"active_call","domain_uuid":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b","direction":"inbound","created_epoch":"1774920000","created_display":"2026-04-30 14:00:00","duration_seconds":42,"cid_name":"Alice Johnson","cid_num":"1001","dest":"1002","application":"bridge","application_data":"sofia/internal/1002@pbx.example.com","secure":"true","context":"pbx.example.com"},"properties":{"uuid":{"type":"string","example":"c0ec8113-aa15-40ac-8437-47185dd9dcf4"},"object":{"type":"string","example":"active_call"},"domain_uuid":{"type":"string","example":"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b"},"direction":{"type":"string","example":"inbound"},"created_epoch":{"type":"string","example":"1774920000"},"created_display":{"type":"string","example":"2026-04-30 14:00:00"},"duration_seconds":{"type":"integer","example":42},"cid_name":{"type":"string","example":"Alice Johnson"},"cid_num":{"type":"string","example":"1001"},"dest":{"type":"string","example":"1002"},"application":{"type":"string","example":"bridge"},"application_data":{"type":"string","example":"sofia/internal/1002@pbx.example.com"},"secure":{"type":"string","example":"true"},"context":{"type":"string","example":"pbx.example.com"}}}}}},"400":{"description":"Invalid call UUID","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Invalid call UUID.","code":"invalid_request","param":"call_uuid"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Invalid call UUID."},"code":{"type":"string","example":"invalid_request"},"param":{"type":"string","example":"call_uuid"}}}}}}}},"401":{"description":"Unauthenticated","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"authentication_error","message":"Unauthenticated.","code":"unauthenticated"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"authentication_error"},"message":{"type":"string","example":"Unauthenticated."},"code":{"type":"string","example":"unauthenticated"}}}}}}}},"404":{"description":"Active call not found","content":{"application/json":{"schema":{"type":"object","example":{"error":{"type":"invalid_request_error","message":"Active call not found.","code":"resource_missing","param":"call_uuid"}},"properties":{"error":{"type":"object","properties":{"type":{"type":"string","example":"invalid_request_error"},"message":{"type":"string","example":"Active call not found."},"code":{"type":"string","example":"resource_missing"},"param":{"type":"string","example":"call_uuid"}}}}}}}}}}
+>
+  
+</StatusCodes>
+
+
+      

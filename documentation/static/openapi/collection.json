@@ -10,11 +10,270 @@
     ],
     "info": {
         "name": "FS PBX",
-        "_postman_id": "3958f0d8-7515-41c3-b8c6-c13d368567c8",
+        "_postman_id": "031b3767-3cc6-41c2-8b19-42fe42b2642b",
         "description": "",
         "schema": "https:\/\/schema.getpostman.com\/json\/collection\/v2.1.0\/collection.json"
     },
     "item": [
+        {
+            "name": "Active Calls",
+            "description": "",
+            "item": [
+                {
+                    "name": "List active calls",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/active-calls",
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "50",
+                                    "description": "Optional. Number of results to return (min 1, max 100). Defaults to 50.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "starting_after",
+                                    "value": "c0ec8113-aa15-40ac-8437-47185dd9dcf4",
+                                    "description": "Optional. Return results after this active call UUID in the current snapshot.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "search",
+                                    "value": "1001",
+                                    "description": "Optional. Search caller, destination, app, codec, or secure fields.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "sort",
+                                    "value": "created_epoch",
+                                    "description": "Optional. Sort field. One of: context, created_epoch, duration, cid_name, cid_num, dest, application, read_codec, secure. Defaults to created_epoch.",
+                                    "disabled": false
+                                },
+                                {
+                                    "key": "order",
+                                    "value": "desc",
+                                    "description": "Optional. Sort direction: asc or desc. Defaults to desc.",
+                                    "disabled": false
+                                }
+                            ],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/active-calls?limit=50&starting_after=c0ec8113-aa15-40ac-8437-47185dd9dcf4&search=1001&sort=created_epoch&order=desc",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns active calls for the specified domain.\n\nPagination (snapshot cursor-based):\n- Both `limit` and `starting_after` are optional.\n- If `limit` is not provided, it defaults to 50.\n- If `starting_after` is not provided, results start from the beginning."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"object\": \"list\",\n  \"url\": \"\/api\/v1\/domains\/4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\/active-calls\",\n  \"has_more\": false,\n  \"data\": [\n    {\n      \"uuid\": \"c0ec8113-aa15-40ac-8437-47185dd9dcf4\",\n      \"object\": \"active_call\",\n      \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n      \"direction\": \"inbound\",\n      \"created_epoch\": \"1774920000\",\n      \"created_display\": \"2026-04-30 14:00:00\",\n      \"duration_seconds\": 42,\n      \"cid_name\": \"Alice Johnson\",\n      \"cid_num\": \"1001\",\n      \"dest\": \"1002\",\n      \"application\": \"bridge\",\n      \"application_data\": \"sofia\/internal\/1002@pbx.example.com\",\n      \"secure\": \"true\",\n      \"context\": \"pbx.example.com\"\n    }\n  ]\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid starting_after UUID.\",\"code\":\"invalid_request\",\"param\":\"starting_after\"}}",
+                            "name": "Invalid starting_after UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "Retrieve an active call",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/active-calls\/:call_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/active-calls\/:call_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "call_uuid",
+                                    "key": "call_uuid",
+                                    "value": "c0ec8113-aa15-40ac-8437-47185dd9dcf4",
+                                    "description": "The active call UUID."
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Returns a single active call for the specified domain."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\n  \"uuid\": \"c0ec8113-aa15-40ac-8437-47185dd9dcf4\",\n  \"object\": \"active_call\",\n  \"domain_uuid\": \"4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b\",\n  \"direction\": \"inbound\",\n  \"created_epoch\": \"1774920000\",\n  \"created_display\": \"2026-04-30 14:00:00\",\n  \"duration_seconds\": 42,\n  \"cid_name\": \"Alice Johnson\",\n  \"cid_num\": \"1001\",\n  \"dest\": \"1002\",\n  \"application\": \"bridge\",\n  \"application_data\": \"sofia\/internal\/1002@pbx.example.com\",\n  \"secure\": \"true\",\n  \"context\": \"pbx.example.com\"\n}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid call UUID.\",\"code\":\"invalid_request\",\"param\":\"call_uuid\"}}",
+                            "name": "Invalid call UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Active call not found.\",\"code\":\"resource_missing\",\"param\":\"call_uuid\"}}",
+                            "name": "Active call not found"
+                        }
+                    ]
+                },
+                {
+                    "name": "End an active call",
+                    "request": {
+                        "url": {
+                            "host": "{{baseUrl}}",
+                            "path": "api\/v1\/domains\/:domain_uuid\/active-calls\/:call_uuid",
+                            "query": [],
+                            "raw": "{{baseUrl}}\/api\/v1\/domains\/:domain_uuid\/active-calls\/:call_uuid",
+                            "variable": [
+                                {
+                                    "id": "domain_uuid",
+                                    "key": "domain_uuid",
+                                    "value": "4018f7a3-8e0a-47bb-9f4f-04b1313e0e1b",
+                                    "description": "The domain UUID."
+                                },
+                                {
+                                    "id": "call_uuid",
+                                    "key": "call_uuid",
+                                    "value": "c0ec8113-aa15-40ac-8437-47185dd9dcf4",
+                                    "description": "The active call UUID."
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application\/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application\/json"
+                            }
+                        ],
+                        "body": null,
+                        "description": "Ends a single active call within the specified domain."
+                    },
+                    "response": [
+                        {
+                            "header": [],
+                            "code": 200,
+                            "body": "{\"object\":\"active_call\",\"uuid\":\"c0ec8113-aa15-40ac-8437-47185dd9dcf4\",\"deleted\":true}",
+                            "name": "Success"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid domain UUID.\",\"code\":\"invalid_request\",\"param\":\"domain_uuid\"}}",
+                            "name": "Invalid domain UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 400,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Invalid call UUID.\",\"code\":\"invalid_request\",\"param\":\"call_uuid\"}}",
+                            "name": "Invalid call UUID"
+                        },
+                        {
+                            "header": [],
+                            "code": 401,
+                            "body": "{\"error\":{\"type\":\"authentication_error\",\"message\":\"Unauthenticated.\",\"code\":\"unauthenticated\"}}",
+                            "name": "Unauthenticated"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Domain not found.\",\"code\":\"resource_missing\",\"param\":\"domain_uuid\"}}",
+                            "name": "Domain not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 404,
+                            "body": "{\"error\":{\"type\":\"invalid_request_error\",\"message\":\"Active call not found.\",\"code\":\"resource_missing\",\"param\":\"call_uuid\"}}",
+                            "name": "Active call not found"
+                        },
+                        {
+                            "header": [],
+                            "code": 500,
+                            "body": "{\"error\":{\"type\":\"api_error\",\"message\":\"Internal server error.\",\"code\":\"internal_error\"}}",
+                            "name": "Internal server error"
+                        }
+                    ]
+                }
+            ]
+        },
         {
             "name": "CDRs",
             "description": "",
