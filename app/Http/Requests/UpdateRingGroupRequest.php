@@ -120,7 +120,7 @@ class UpdateRingGroupRequest extends FormRequest
                 'string',
             ],
 
-            'ring_group_distinctive_ring'           => ['nullable', 'string', 'max:30'],
+            'ring_group_distinctive_ring'           => ['nullable', 'string', 'max:100'],
             'ring_group_ringback'                   => [
                 'sometimes',
                 'required',
