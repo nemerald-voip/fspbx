@@ -215,9 +215,9 @@
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 
                                                 <SelectElement name="voicemail_file" :items="voicemailFileOptions"
-                                                    :native="false" label="Voicemail Email Recording"
+                                                    :native="false" label="Voicemail Recording Delivery"
                                                     value-prop="value" label-prop="label"
-                                                    description="Choose how voicemail recordings are included in email notifications."
+                                                    description="Choose whether voicemail emails include the recording as an attachment, a download link, or not at all."
                                                     @change="handleVoicemailFileChange"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
 

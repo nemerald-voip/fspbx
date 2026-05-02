@@ -271,7 +271,9 @@ class FaxSendService
         $vars = [
             "fax_queue_uuid={$e($fax_queue_uuid)}",
             "accountcode='{$e($accountcode)}'",
-            "sip_h_accountcode='{$e($accountcode)}'",
+            "sip_h_X-customacc='{$e($accountcode)}'",
+            "execute_on_answer='sched_hangup +14400'",
+            "call_direction='outbound'",
             "domain_uuid={$e($domain_uuid)}",
             "domain_name={$e($domain_name)}",
             "origination_caller_id_name='{$e($fax_caller_id_name)}'",
@@ -279,6 +281,11 @@ class FaxSendService
             "fax_ident='{$e($fax_ident)}'",
             "fax_header='{$e($fax_header)}'",
             "fax_file='{$e($fax_file)}'",
+            "hangup_after_bridge=true",
+            "continue_on_fail=true",
+            "media_mix_inbound_outbound_codecs='true'",
+            "sip_renegotiate-codec-on-reinvite='true'",
+            "caller_destination={$e($fax_destination)}",
         ];
 
         // Add dialplan variables

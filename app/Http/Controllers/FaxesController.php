@@ -140,7 +140,7 @@ class FaxesController extends Controller
                     ['name' => 'Faxes Received (Last 30 Days)', 'stat' => $totalReceived],
                     ['name' => 'Pages Sent (Last 30 Days)', 'stat' => $totalSentPages],
                     ['name' => 'Pages Received (Last 30 Days)', 'stat' => $totalReceivedPages],
-                    ['name' => 'Active Fax Numbers', 'stat' => $totalFaxes],
+                    ['name' => 'Active Fax Servers', 'stat' => $totalFaxes],
                 ],
 
 

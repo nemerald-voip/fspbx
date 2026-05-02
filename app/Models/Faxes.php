@@ -343,7 +343,9 @@ class Faxes extends Model
         $fax_file = $this->dir_fax_sent . "/" . $this->fax_instance_uuid . ".tif";
         $dial_string .= "fax_queue_uuid="                . $this->fax_queue_uuid          . ",";
         $dial_string .= "accountcode='"                  . $this->fax_accountcode         . "',";
-        $dial_string .= "sip_h_accountcode='"            . $this->fax_accountcode         . "',";
+        $dial_string .= "sip_h_X-customacc='"            . $this->fax_accountcode         . "',";
+        $dial_string .= "execute_on_answer='sched_hangup +14400',";
+        $dial_string .= "call_direction='outbound',";
         $dial_string .= "domain_uuid="                   . $this->domain->domain_uuid . ",";
         $dial_string .= "domain_name="                   . $this->domain->domain_name  . ",";
         $dial_string .= "origination_caller_id_name='"   . $this->fax_caller_id_name      . "',";
@@ -351,6 +353,11 @@ class Faxes extends Model
         $dial_string .= "fax_ident='"                    . $this->fax_caller_id_number    . "',";
         $dial_string .= "fax_header='"                   . $this->fax_caller_id_name      . "',";
         $dial_string .= "fax_file='"                     . $fax_file               . "',";
+        $dial_string .= "hangup_after_bridge=true,";
+        $dial_string .= "continue_on_fail=true,";
+        $dial_string .= "media_mix_inbound_outbound_codecs='true',";
+        $dial_string .= "sip_renegotiate-codec-on-reinvite='true',";
+        $dial_string .= "caller_destination="            . $this->fax_destination . ",";
 
         //prepare the fax command
         $channel_variables = array();

@@ -55,6 +55,9 @@ class LogsController extends Controller
                     'inbound_webhooks' => route('inbound-webhooks.index'),
                     'message_logs' => route('messages.logs'),
                     'message_retry' => route('messages.retry'),
+                    'fax_logs' => route('fax-logs.data'),
+                    'fax_logs_select_all' => route('fax-logs.select.all'),
+                    'fax_logs_bulk_delete' => route('fax-logs.bulk.delete'),
 
                 ],
                 'permissions' => function () {
@@ -175,6 +178,8 @@ class LogsController extends Controller
         $permissions['location_create'] = userCheckPermission('location_create');
         $permissions['location_update'] = userCheckPermission('location_update');
         $permissions['location_delete'] = userCheckPermission('location_delete');
+        $permissions['fax_log_view'] = userCheckPermission('fax_log_view');
+        $permissions['fax_log_delete'] = userCheckPermission('fax_log_delete');
 
         return $permissions;
     }

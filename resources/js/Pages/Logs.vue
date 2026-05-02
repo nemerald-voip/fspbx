@@ -34,6 +34,15 @@
                     :timezone="timezone" :routes="routes" :permissions="permissions" />
             </section>
 
+            <!-- FAXES -->
+            <section v-show="selectedMenuOption === 'fax_logs'">
+                <Vueform>
+                    <StaticElement name="locations_title" tag="h4" content="Faxes" />
+                </Vueform>
+
+                <FaxLogs :trigger="faxLogsTrigger" :startPeriod="startPeriod" :endPeriod="endPeriod"
+                    :timezone="timezone" :routes="routes" :permissions="permissions" />
+            </section>
 
         </template>
 
@@ -52,12 +61,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import PageWithSideMenu from '../Layouts/PageWithSideMenu.vue'
 import Notification from "./components/notifications/Notification.vue";
 import EmailLogs from "./components/EmailLogs.vue";
 import InboundWebhooks from "./components/InboundWebhooks.vue";
 import MessageLogs from "./components/MessageLogs.vue";
+import FaxLogs from "./components/FaxLogs.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 
 import {
@@ -65,6 +75,7 @@ import {
     InboxArrowDownIcon,
     DocumentTextIcon,
     ChatBubbleLeftRightIcon,
+    PrinterIcon,
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -82,6 +93,7 @@ const confirmDeleteLocationAction = ref(null);
 const emailsTrigger = ref(false)
 const inboundWebhooksTrigger = ref(false)
 const messageLogsTrigger = ref(false)
+const faxLogsTrigger = ref(false)
 const initialMenuOption = ref(null)
 
 
@@ -94,18 +106,27 @@ const handleUpdateSelectedMenuOption = (key) => {
     if (key === 'emails') emailsTrigger.value = !emailsTrigger.value
     if (key === 'inbound_webhooks') inboundWebhooksTrigger.value = !inboundWebhooksTrigger.value
     if (key === 'message_logs') messageLogsTrigger.value = !messageLogsTrigger.value
+    if (key === 'fax_logs') faxLogsTrigger.value = !faxLogsTrigger.value
 }
 
-const navigation = [
-    { key: 'emails', name: 'Emails', icon: EnvelopeIcon },
-    { key: 'inbound_webhooks', name: 'Inbound Webhooks', icon: InboxArrowDownIcon },
-    { key: 'message_logs', name: 'Messages', icon: ChatBubbleLeftRightIcon },
-]
+const navigation = computed(() => {
+    const items = [
+        { key: 'emails', name: 'Emails', icon: EnvelopeIcon },
+        { key: 'inbound_webhooks', name: 'Inbound Webhooks', icon: InboxArrowDownIcon },
+        { key: 'message_logs', name: 'Messages', icon: ChatBubbleLeftRightIcon },
+    ]
+
+    if (props.permissions?.fax_log_view) {
+        items.push({ key: 'fax_logs', name: 'Faxes', icon: PrinterIcon })
+    }
+
+    return items
+})
 
 
 onMounted(() => {
-    if (navigation.length) {
-        initialMenuOption.value = navigation[0].key
+    if (navigation.value.length) {
+        initialMenuOption.value = navigation.value[0].key
         // handleUpdateSelectedMenuOption(navigation.value[0].key)
     }
 })
