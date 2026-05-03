@@ -117,21 +117,60 @@
                         </div>
                         <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             <div v-for="card in cards" :key="card.slug" class="h-full">
-                                <DashboardTile :card="card" :count="counts[card.slug]" />
+                                <DashboardTile :card="card" :count="counts[card.slug]" @card-action="handleCardAction" />
+                            </div>
+                        </div>
+
+                        <div v-if="my_extension_status"
+                            class="mt-6 overflow-hidden rounded-lg bg-white ring-1 ring-gray-200">
+                            <div class="flex flex-col gap-4 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                                <div>
+                                    <p class="text-xs font-medium uppercase tracking-wide text-cyan-700">My Extension</p>
+                                    <h3 class="mt-1 text-sm font-semibold text-gray-950">{{ my_extension_status.name }}</h3>
+                                </div>
+
+                                <button type="button" @click="openExtensionModal(my_extension_status.extension_uuid)"
+                                    class="inline-flex w-fit items-center justify-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 transition hover:bg-gray-50 hover:ring-gray-400">
+                                    <CogIcon class="-ml-0.5 size-5 text-gray-400" aria-hidden="true" />
+                                    Manage
+                                </button>
+                            </div>
+
+                            <div class="px-5 py-4">
+                                <p class="text-sm font-medium text-gray-700">Active call handling</p>
+                                <div class="mt-3 flex flex-wrap gap-2">
+                                    <span v-if="my_extension_status.do_not_disturb"
+                                        class="inline-flex items-center rounded-full bg-rose-100 px-2.5 py-1 text-xs font-medium text-rose-800 ring-1 ring-inset ring-rose-400/20">
+                                        DND
+                                    </span>
+                                    <span v-for="forward in activeForwarding" :key="forward.key"
+                                        class="inline-flex max-w-full items-center rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-800 ring-1 ring-inset ring-blue-400/20">
+                                        <span>{{ forward.badge }}</span>
+                                        <span v-if="forward.target" class="ml-1 max-w-48 truncate text-blue-700">- {{ forward.target }}</span>
+                                    </span>
+                                    <span v-if="my_extension_status.call_sequence_enabled"
+                                        class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-800 ring-1 ring-inset ring-blue-400/20">
+                                        Sequence
+                                    </span>
+                                    <span v-if="!hasActiveCallHandling"
+                                        class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
+                                        Normal routing
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
                     </div>
 
                     <!-- Global Info -->
-                    <div class="lg:hidden" v-show="props.data.superadmin">
+                    <div class="lg:hidden" v-show="data.superadmin">
                         <div class="rounded-lg bg-gray-50 shadow-sm ring-1 ring-gray-900/5">
 
                             <dl class="flex flex-wrap">
                                 <div class="flex-auto pl-6 py-6 truncate border-b border-gray-900/5">
                                     <div class="mt-1 text-lg font-semibold leading-6 text-gray-900">Global Info</div>
                                     <dt class="text-sm  leading-6 text-gray-600">(Superadmin Only)</dt>
-                                    <dt class="text-sm  leading-6 text-gray-600">Version: {{ props.data.version }}</dt>
+                                    <dt class="text-sm  leading-6 text-gray-600">Version: {{ data.version }}</dt>
                                 </div>
 
                                 <div class="mt-6 mb-4 flex w-full  gap-x-4 px-6">
@@ -324,8 +363,8 @@
 
                         <h3 class="text-base font-semibold leading-6 text-gray-900">Global Info <span
                                 class="font-normal italic text-gray-600 text-sm">(Superadmin only)</span>
-                            <span v-if="props.data.version" class="text-sm font-normal  text-gray-600"> Version: {{
-                                props.data.version }}</span>
+                            <span v-if="data.version" class="text-sm font-normal  text-gray-600"> Version: {{
+                                data.version }}</span>
                         </h3>
                         <dl
                             class="mt-3 grid grid-cols-4 divide-x divide-gray-200 overflow-hidden rounded-lg bg-white shadow">
@@ -479,14 +518,24 @@
         </div>
 
     </TransitionRoot>
+
+    <UpdateExtensionForm :show="showExtensionModal" :options="extensionItemOptions" :loading="isExtensionModalLoading"
+        :header="'Update Extension - ' + (extensionItemOptions?.item?.name_formatted ?? 'loading')"
+        @close="showExtensionModal = false" @error="handleErrorResponse" @success="showNotification"
+        @refresh-data="getCounts" />
+
+    <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
+        @update:show="hideNotification" />
 </template>
 
 <script setup>
 import { computed, ref, onMounted } from 'vue'
-import { router } from "@inertiajs/vue3";
 import { usePage } from '@inertiajs/vue3'
+import axios from 'axios';
 import MainLayout from '../Layouts/MainLayout.vue'
 import DashboardTile from './components/general/DashboardTile.vue'
+import UpdateExtensionForm from './components/forms/UpdateExtensionForm.vue'
+import Notification from './components/notifications/Notification.vue'
 import ContactPhoneIcon from "./components/icons/ContactPhoneIcon.vue"
 import DialpadIcon from "./components/icons/DialpadIcon.vue"
 import FaxIcon from "./components/icons/FaxIcon.vue"
@@ -510,20 +559,33 @@ const props = defineProps({
         type: Object,
         default: () => ({}) // Providing an empty object as default
     },
+    my_extension_status: {
+        type: Object,
+        default: null,
+    },
     routes: Object,
 
 })
 
 const page = usePage()
 const open = ref(false);
+const data = ref(props.data ?? {});
+const counts = ref(props.counts ?? {});
+const my_extension_status = ref(props.my_extension_status ?? null);
+const showExtensionModal = ref(false);
+const isExtensionModalLoading = ref(false);
+const extensionItemOptions = ref({});
+const notificationType = ref(null);
+const notificationMessages = ref(null);
+const notificationShow = ref(false);
 
 const showTopBanner = ref(Boolean(props.company_data.billing_suspension));
 const topBannerText = ref('Your account has been suspended. Reactivation requires payment for past-due invoice(s).');
 
-const onlineExtensions = computed(() => Number(props.counts.local_reg_count || 0));
-const offlineExtensions = computed(() => Math.max((props.counts.extensions || 0) - onlineExtensions.value, 0));
+const onlineExtensions = computed(() => Number(counts.value.local_reg_count || 0));
+const offlineExtensions = computed(() => Math.max((counts.value.extensions || 0) - onlineExtensions.value, 0));
 const registrationPercent = computed(() => {
-    const totalExtensions = Number(props.counts.extensions || 0);
+    const totalExtensions = Number(counts.value.extensions || 0);
 
     if (!totalExtensions) {
         return 0;
@@ -532,47 +594,123 @@ const registrationPercent = computed(() => {
     return Math.min(Math.round((onlineExtensions.value / totalExtensions) * 100), 100);
 });
 
+const forwardBadgeLabels = {
+    forward_all: 'FWD All',
+    forward_busy: 'FWD Busy',
+    forward_no_answer: 'FWD no Ans',
+    forward_user_not_registered: 'FWD no Reg',
+};
+
+const activeForwarding = computed(() => {
+    return (my_extension_status.value?.forwarding || [])
+        .filter((forward) => forward.enabled)
+        .map((forward) => ({
+            ...forward,
+            badge: forwardBadgeLabels[forward.key] || forward.label,
+        }));
+});
+
+const hasActiveCallHandling = computed(() => {
+    return Boolean(
+        my_extension_status.value?.do_not_disturb
+        || my_extension_status.value?.call_sequence_enabled
+        || activeForwarding.value.length
+    );
+});
+
 onMounted(() => {
     //request list of entities
     getCounts();
 })
 
 const getCounts = () => {
-    router.visit("/dashboard", {
-        preserveScroll: true,
-        preserveState: true,
-        data: {
-        },
-        only: ["counts"],
-        onSuccess: (page) => {
+    axios.get(props.routes.counts_route)
+        .then((response) => {
+            counts.value = response.data || {};
+            return getMyExtensionStatus();
+        })
+        .then(() => {
             getData();
-        }
+        })
+        .catch((error) => {
+            handleErrorResponse(error);
+        });
+}
 
-    });
+const handleCardAction = (card) => {
+    if (card.action === 'open_extension_modal') {
+        openExtensionModal(card.extension_uuid);
+    }
+}
+
+const openExtensionModal = (extensionUuid) => {
+    if (!extensionUuid) {
+        return;
+    }
+
+    showExtensionModal.value = true;
+    extensionItemOptions.value = {};
+    isExtensionModalLoading.value = true;
+
+    axios.post(props.routes.extension_item_options, { item_uuid: extensionUuid })
+        .then((response) => {
+            extensionItemOptions.value = response.data;
+        })
+        .catch((error) => {
+            showExtensionModal.value = false;
+            handleErrorResponse(error);
+        })
+        .finally(() => {
+            isExtensionModalLoading.value = false;
+        });
+}
+
+const handleErrorResponse = (error) => {
+    if (error.response) {
+        showNotification('error', error.response.data.errors || { request: [error.message] });
+    } else if (error.request) {
+        showNotification('error', { request: [error.request] });
+    } else {
+        showNotification('error', { request: [error.message] });
+    }
+}
+
+const hideNotification = () => {
+    notificationShow.value = false;
+    notificationType.value = null;
+    notificationMessages.value = null;
+}
+
+const showNotification = (type, messages = null) => {
+    notificationType.value = type;
+    notificationMessages.value = messages;
+    notificationShow.value = true;
 }
 
 
 const getData = () => {
-    router.visit("/dashboard", {
-        preserveScroll: true,
-        preserveState: true,
-        data: {
-        },
-        only: ["data"],
-        onSuccess: (page) => {
-            if (props.data.superadmin) {
+    axios.get(props.routes.data_route)
+        .then((response) => {
+            data.value = response.data || {};
+
+            if (data.value.superadmin) {
                 open.value = true;
             }
-            // console.log(props.data);
-            // console.log(props.data.billing_suspension);
-            // if (props.data.billing_suspension) {
-            //     showTopBanner.value = true;
-            // }
+        })
+        .catch((error) => {
+            handleErrorResponse(error);
+        });
+}
 
-        }
+const getMyExtensionStatus = () => {
+    if (!props.routes.my_extension_status_route) {
+        return Promise.resolve();
+    }
 
-    });
-
+    return axios.get(props.routes.my_extension_status_route)
+        .then((response) => {
+            my_extension_status.value = response.data || null;
+        });
 }
 
 

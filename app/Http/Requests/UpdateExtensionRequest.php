@@ -10,7 +10,13 @@ class UpdateExtensionRequest extends FormRequest
 {
     public function authorize()
     {
-        return userCheckPermission('extension_edit');
+        if (userCheckPermission('extension_edit')) {
+            return true;
+        }
+
+        $extensionUuid = $this->route('extension') ?? $this->input('extension_uuid');
+
+        return $extensionUuid && auth()->user()?->extension_uuid === $extensionUuid;
     }
 
     public function rules()

@@ -2,16 +2,16 @@
     <div
         class="group relative flex h-full overflow-hidden rounded-lg bg-white ring-1 ring-gray-200 transition duration-150 hover:-translate-y-0.5 hover:shadow-md hover:ring-cyan-200">
         <div class="grid min-h-24 flex-1 grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-3 p-4">
-            <a :href="card.href"
+            <a :href="card.href || '#'" @click="handleCardClick"
                 class="row-span-2 min-w-0 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
                 <dl class="min-w-0">
                     <dt class="truncate text-base font-medium leading-5 text-gray-500 group-hover:text-gray-700">{{
                         card.name }}</dt>
                     <dd class="mt-3 min-h-8">
-                        <div v-if="count === null" class="animate-pulse">
+                        <div v-if="displayValue === null" class="animate-pulse">
                             <div class="h-7 w-14 rounded bg-slate-200"></div>
                         </div>
-                        <div v-else class="text-3xl font-semibold leading-none tracking-tight text-gray-600">{{ count }}</div>
+                        <div v-else class="text-3xl font-semibold leading-none tracking-tight text-gray-600">{{ displayValue }}</div>
                     </dd>
                 </dl>
             </a>
@@ -48,10 +48,12 @@ import AlternativeRouteIcon from "../icons/AlternativeRouteIcon.vue"
 import IvrIcon from "../icons/IvrIcon.vue"
 import SupportAgent from "../icons/SupportAgent.vue"
 
+const emit = defineEmits(['card-action']);
+
 const props = defineProps({
     card: Object,
     count: {
-        type: Number,
+        type: [Number, String],
         default: () => (null) // Providing an empty object as default
     }
 })
@@ -97,6 +99,16 @@ const iconComponent = computed(() => iconMap[props.card.icon]);
 
 const iconStyles = computed(() => styleMap[props.card.icon] || { bgColor: 'bg-gray-50', textColor: 'text-gray-700' });
 
+const displayValue = computed(() => props.card.count_label ?? props.count ?? null);
+
+const handleCardClick = (event) => {
+    if (!props.card.action) {
+        return;
+    }
+
+    event.preventDefault();
+    emit('card-action', props.card);
+};
 
 </script>
 

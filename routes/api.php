@@ -12,6 +12,7 @@ use App\Http\Controllers\CallTranscriptionController;
 use App\Http\Controllers\CdrsController;
 use App\Http\Controllers\CharPmsWebhookController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\DialplanController;
@@ -63,6 +64,11 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () {
+    // Dashboard
+    Route::get('/dashboard/data', [DashboardController::class, 'getData'])->name('dashboard.data');
+    Route::get('/dashboard/counts', [DashboardController::class, 'getCounts'])->name('dashboard.counts');
+    Route::get('/dashboard/my-extension-status', [DashboardController::class, 'getMyExtensionStatus'])->name('dashboard.my-extension-status');
+
     // Tokens
     Route::resource('/tokens', TokenController::class);
     Route::post('tokens/bulk-delete', [TokenController::class, 'bulkDelete'])->name('tokens.bulk.delete');

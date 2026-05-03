@@ -302,6 +302,13 @@ class DatabaseSeeder extends Seeder
             ],
             'user' => [
                 'xml_cdr_view_self_records',
+                'extension_do_not_disturb',
+                'extension_forward_all',
+                'extension_forward_busy',
+                'extension_forward_no_answer',
+                'extension_forward_not_registered',
+                'extension_voicemail_settings',
+                'extension_call_sequence',
             ],
         ];
 

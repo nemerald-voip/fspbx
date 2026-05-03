@@ -44,22 +44,17 @@ class DashboardController extends Controller
         return Inertia::render(
             $this->viewName,
             [
-                'company_data' => function () {
-                    return $this->getCompanyData();
-                },
-                'cards' => function () {
-                    return $this->getApps();
-                },
-                'data' => Inertia::lazy(
-                    fn() =>
-                    $this->getData()
-                ),
-                'counts' => Inertia::lazy(
-                    fn() =>
-                    $this->getCounts()
-                ),
+                'company_data' => $this->getCompanyData(),
+                'cards' => $this->getApps(),
+                'my_extension_status' => null,
+                'data' => [],
+                'counts' => [],
                 'routes' => [
                     'account_settings_page' => route('account-settings.index'),
+                    'data_route' => route('dashboard.data'),
+                    'counts_route' => route('dashboard.counts'),
+                    'my_extension_status_route' => route('dashboard.my-extension-status'),
+                    'extension_item_options' => route('extensions.item.options'),
                 ]
             ]
         );
@@ -166,6 +161,10 @@ class DashboardController extends Controller
                 $counts['my_voicemails'] = $voicemail?->messages_count ?? 0;
 
             }
+        }
+
+        if (!userCheckPermission("extension_view") && $extension) {
+            $counts['my_extension'] = 1;
         }
 
         if (userCheckPermission("call_flow_view")) {
@@ -348,6 +347,73 @@ class DashboardController extends Controller
         return $data;
     }
 
+    public function getMyExtensionStatus(): ?array
+    {
+        $extensionUuid = Auth::user()?->extension_uuid;
+
+        if (!$extensionUuid) {
+            return null;
+        }
+
+        $extension = Extensions::whereKey($extensionUuid)
+            ->where('domain_uuid', session('domain_uuid'))
+            ->select([
+                'extension_uuid',
+                'domain_uuid',
+                'extension',
+                'effective_caller_id_name',
+                'do_not_disturb',
+                'forward_all_destination',
+                'forward_all_enabled',
+                'forward_busy_destination',
+                'forward_busy_enabled',
+                'forward_no_answer_destination',
+                'forward_no_answer_enabled',
+                'forward_user_not_registered_destination',
+                'forward_user_not_registered_enabled',
+                'follow_me_enabled',
+            ])
+            ->first();
+
+        if (!$extension) {
+            return null;
+        }
+
+        return [
+            'extension_uuid' => $extension->extension_uuid,
+            'extension' => $extension->extension,
+            'name' => $extension->name_formatted,
+            'do_not_disturb' => $extension->do_not_disturb === 'true',
+            'call_sequence_enabled' => $extension->follow_me_enabled === 'true',
+            'forwarding' => [
+                $this->formatForwardingStatus($extension, 'forward_all', 'All Calls'),
+                $this->formatForwardingStatus($extension, 'forward_busy', 'Busy'),
+                $this->formatForwardingStatus($extension, 'forward_no_answer', 'No Answer'),
+                $this->formatForwardingStatus($extension, 'forward_user_not_registered', 'Offline'),
+            ],
+        ];
+    }
+
+    private function formatForwardingStatus(Extensions $extension, string $prefix, string $label): array
+    {
+        $enabledField = "{$prefix}_enabled";
+        $actionDisplay = "{$prefix}_action_display";
+        $targetName = "{$prefix}_target_name";
+        $targetExtension = "{$prefix}_target_extension";
+
+        $target = $extension->{$targetName} ?: $extension->{$targetExtension};
+        $targetLabel = $target && $extension->{$actionDisplay}
+            ? $extension->{$actionDisplay} . ': ' . $target
+            : $target;
+
+        return [
+            'key' => $prefix,
+            'label' => $label,
+            'enabled' => $extension->{$enabledField} === 'true',
+            'target' => $targetLabel,
+        ];
+    }
+
     public function getApps()
     {
         $apps = [];
@@ -362,6 +428,17 @@ class DashboardController extends Controller
 
         if (userCheckPermission("extension_view")) {
             $apps[] = ['name' => 'Extensions', 'href' => route('extensions.index'), 'icon' => 'ContactPhoneIcon', 'slug' => 'extensions'];
+        }
+        if (!userCheckPermission("extension_view") && $extension) {
+            $apps[] = [
+                'name' => 'My Extension',
+                'href' => '#',
+                'icon' => 'ContactPhoneIcon',
+                'slug' => 'my_extension',
+                'action' => 'open_extension_modal',
+                'extension_uuid' => $extension->extension_uuid,
+                'count_label' => 'Ext ' . $extension->extension,
+            ];
         }
         if (userCheckPermission("voicemail_view")) {
             $apps[] = ['name' => 'Voicemails', 'href' => route('voicemails.index'), 'icon' => 'VoicemailIcon', 'slug' => 'voicemails'];

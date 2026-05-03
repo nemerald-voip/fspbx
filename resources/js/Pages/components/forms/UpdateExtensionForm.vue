@@ -967,7 +967,9 @@
                                                 <ToggleElement name="voicemail_transcription_enabled"
                                                     text="Voicemail Transcription" true-value="true" false-value="false"
                                                     description="Convert voicemail messages to text using AI-powered transcription."
-                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
+                                                    :conditions="[
+                                                        (form$) => form$.el$('voicemail_enabled')?.value == 'true' && options.permissions.manage_voicemail_transcription
+                                                    ]" />
 
                                                 <StaticElement name="divider10" tag="hr"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
@@ -987,7 +989,9 @@
                                                     false-value="true"
                                                     description="Remove voicemail from the cloud once the email is sent."
                                                     :disabled="isAutoDeleteDisabled"
-                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
+                                                    :conditions="[
+                                                        (form$) => form$.el$('voicemail_enabled')?.value == 'true' && options.permissions.manage_voicemail_auto_delete
+                                                    ]" />
 
                                                 <TagsElement name="voicemail_copies" :search="true"
                                                     :items="options.all_voicemails"
@@ -995,7 +999,9 @@
                                                     autocomplete="off"
                                                     description="Automatically send a copy of the voicemail to selected additional extensions."
                                                     :floating="false" placeholder="Enter name or extension"
-                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
+                                                    :conditions="[
+                                                        (form$) => form$.el$('voicemail_enabled')?.value == 'true' && options.permissions.manage_voicemail_copies
+                                                    ]" />
 
                                                 <StaticElement name="divider12" tag="hr" top="1" bottom="1"
                                                     :conditions="[['voicemail_enabled', '==', 'true']]" />
@@ -1242,7 +1248,9 @@
                                                     text="Play Recording Instructions" true-value="true"
                                                     false-value="false"
                                                     description='Play a prompt instructing callers to "Record your message after the tone. Stop speaking to end the recording."'
-                                                    :conditions="[['voicemail_enabled', '==', 'true']]" />
+                                                    :conditions="[
+                                                        (form$) => form$.el$('voicemail_enabled')?.value == 'true' && options.permissions.manage_voicemail_recording_instructions
+                                                    ]" />
 
                                                 <StaticElement name="divider18" tag="hr" :conditions="[
                                                     function (form$) {
@@ -1268,7 +1276,9 @@
                                                         sm: {
                                                             wrapper: 6,
                                                         },
-                                                    }" :conditions="[['voicemail_enabled', '==', 'true']]" />
+                                                    }" :conditions="[
+                                                        (form$) => form$.el$('voicemail_enabled')?.value == 'true' && options.permissions.is_superadmin
+                                                    ]" />
 
                                                 <GroupElement name="container_voicemail" />
 

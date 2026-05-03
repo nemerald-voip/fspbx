@@ -736,6 +736,8 @@ class VoicemailController extends Controller
                 ]);
             }
 
+            $this->authorizeVoicemailManagement($voicemail);
+
             $greetingsArray = $voicemail->greetings
                 ->sortBy('greeting_id')
                 ->map(function ($greeting) {
@@ -787,6 +789,8 @@ class VoicemailController extends Controller
 
     public function textToSpeech(Voicemails $voicemail, OpenAIService $openAIService, TextToSpeechRequest $request)
     {
+        $this->authorizeVoicemailManagement($voicemail);
+
         $input = $request->input('input');
         $model = $request->input('model');
         $voice = $request->input('voice');
@@ -839,6 +843,8 @@ class VoicemailController extends Controller
 
     public function textToSpeechForName(Voicemails $voicemail, OpenAIService $openAIService, TextToSpeechRequest $request)
     {
+        $this->authorizeVoicemailManagement($voicemail);
+
         $input = $request->input('input');
         $model = $request->input('model');
         $voice = $request->input('voice');
@@ -922,6 +928,12 @@ class VoicemailController extends Controller
 
             $voicemail = Voicemails::find(request('voicemail_uuid'));
 
+            if (!$voicemail) {
+                abort(404);
+            }
+
+            $this->authorizeVoicemailManagement($voicemail);
+
             $filePath = $domain . "/" . $voicemail->voicemail_id . "/" . request('file_name');
 
             if (!Storage::disk('voicemail')->exists($filePath)) {
@@ -1002,6 +1014,8 @@ class VoicemailController extends Controller
 
     public function applyVoicemailFileForName($domain, Voicemails $voicemail, $file)
     {
+        $this->authorizeVoicemailManagement($voicemail);
+
         try {
             $filePath = "{$domain}/{$voicemail->voicemail_id}/{$file}";
 
@@ -1061,6 +1075,7 @@ class VoicemailController extends Controller
 
     public function getVoicemailGreeting(Voicemails $voicemail)
     {
+        $this->authorizeVoicemailManagement($voicemail);
 
         try {
             // Step 1: Get the greeting_id from the request
@@ -1102,6 +1117,8 @@ class VoicemailController extends Controller
 
     public function deleteGreeting(Voicemails $voicemail, Request $request)
     {
+        $this->authorizeVoicemailManagement($voicemail);
+
         try {
             $greetingId = $request->input('greeting_id');
 
@@ -1137,6 +1154,8 @@ class VoicemailController extends Controller
 
     public function uploadGreeting(Voicemails $voicemail, Request $request)
     {
+        $this->authorizeVoicemailManagement($voicemail);
+
         // Validate the file input
         $request->validate([
             'file' => 'required|mimes:wav,mp3,m4a|max:51200', // Limit to WAV or MP3, M4A files, max size 50MB
@@ -1246,6 +1265,8 @@ class VoicemailController extends Controller
 
     public function getRecordedName(Voicemails $voicemail)
     {
+        $this->authorizeVoicemailManagement($voicemail);
+
         try {
             $filePath = session('domain_name') . '/' . $voicemail->voicemail_id . '/recorded_name.wav';
 
@@ -1271,6 +1292,8 @@ class VoicemailController extends Controller
 
     public function deleteRecordedName(Voicemails $voicemail)
     {
+        $this->authorizeVoicemailManagement($voicemail);
+
         try {
             $filePath = session('domain_name') . '/' . $voicemail->voicemail_id . '/recorded_name.wav';
 
@@ -1292,6 +1315,8 @@ class VoicemailController extends Controller
 
     public function uploadRecordedName(Request $request, Voicemails $voicemail)
     {
+        $this->authorizeVoicemailManagement($voicemail);
+
         // Validate the file input
         $request->validate([
             'file' => 'required|mimes:wav,mp3|max:10240', // Limit to WAV or MP3 files, max size 10MB
@@ -1401,5 +1426,24 @@ class VoicemailController extends Controller
         }
 
         return $inputs;
+    }
+
+    private function authorizeVoicemailManagement(Voicemails $voicemail): void
+    {
+        if (userCheckPermission('voicemail_edit') || userCheckPermission('extension_voicemail_settings')) {
+            return;
+        }
+
+        $extension = auth()->user()?->extension;
+
+        if (
+            $extension
+            && $extension->domain_uuid === $voicemail->domain_uuid
+            && $extension->extension === $voicemail->voicemail_id
+        ) {
+            return;
+        }
+
+        abort(403);
     }
 }

@@ -22,20 +22,20 @@
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.extension_create" type="button"
+                <button v-if="permissions.extension_create" type="button"
                     @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
                 </button>
 
-                <button v-if="page.props.permissions.extension_import || page.props.auth.can.extension_import"
+                <button v-if="permissions.extension_import"
                     type="button" @click.prevent="handleImportButtonClick()"
                     class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     <DocumentArrowUpIcon class="h-5 w-5" aria-hidden="true" />
                     Import CSV
                 </button>
                 <button type="button"
-                    v-if="page.props.permissions.extension_export || page.props.auth.can.extension_export"
+                    v-if="permissions.extension_export"
                     @click.prevent="exportExtensionsCsv()"
                     class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     <DocumentArrowDownIcon class="h-5 w-5" aria-hidden="true" />
@@ -143,8 +143,8 @@
                                     title="Not registered" @click="toggleExpand(row.extension_uuid)">
                                 </span>
 
-                                <div :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.extension_update, }"
-                                    @click="page.props.auth.can.extension_update && handleEditButtonClick(row.extension_uuid)">
+                                <div :class="{ 'cursor-pointer hover:text-gray-900': permissions.extension_update, }"
+                                    @click="permissions.extension_update && handleEditButtonClick(row.extension_uuid)">
                                     <span class="flex flex-col lg:flex-row items-start gap-2">
                                         {{ row.name_formatted }}
                                         <span class="italic text-xs sm:hidden"> {{ row.email || '' }}</span>
@@ -211,7 +211,7 @@
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap justify-end">
 
-                                    <ejs-tooltip v-if="page.props.auth.can.extension_update" :content="'Edit'"
+                                    <ejs-tooltip v-if="permissions.extension_update" :content="'Edit'"
                                         position='TopCenter' target="#destination_tooltip_target">
                                         <div id="destination_tooltip_target">
                                             <PencilSquareIcon @click="handleEditButtonClick(row.extension_uuid)"
@@ -220,7 +220,7 @@
                                         </div>
                                     </ejs-tooltip>
 
-                                    <ejs-tooltip v-if="page.props.auth.can.extension_destroy" :content="'Delete'"
+                                    <ejs-tooltip v-if="permissions.extension_destroy" :content="'Delete'"
                                         position='TopCenter' target="#delete_tooltip_target">
                                         <div id="delete_tooltip_target">
                                             <TrashIcon @click="handleSingleItemDeleteRequest(row.extension_uuid)"
@@ -338,7 +338,6 @@
 
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
@@ -361,7 +360,6 @@ import UploadModal from "./components/modal/UploadModal.vue";
 import { DocumentArrowUpIcon, DocumentArrowDownIcon, DevicePhoneMobileIcon } from "@heroicons/vue/24/outline";
 
 
-const page = usePage()
 const loading = ref(false)
 const isModalLoading = ref(false)
 const currentPage = ref(1)
@@ -385,6 +383,8 @@ const props = defineProps({
     routes: Object,
     permissions: Object,
 });
+
+const permissions = computed(() => props.permissions ?? {});
 
 const data = ref({
     data: [],
@@ -424,7 +424,7 @@ const toggleExpand = (extension_uuid) => {
 const bulkActions = computed(() => {
     const actions = [];
 
-    if (page.props.auth.can.extension_update) {
+    if (permissions.value.extension_update) {
         actions.push({
             id: 'bulk_update',
             label: 'Edit',
@@ -433,7 +433,7 @@ const bulkActions = computed(() => {
     }
 
     // Conditionally add the delete action if permission is granted
-    if (page.props.auth.can.extension_destroy) {
+    if (permissions.value.extension_destroy) {
         actions.push({
             id: 'bulk_delete',
             label: 'Delete',
@@ -466,7 +466,7 @@ const advancedActions = computed(() => {
     ];
 
     // Only show if permission allows
-    if (props.permissions?.create_user) {
+    if (permissions.value.create_user) {
         actions[1].actions.push({
             id: 'make_user',
             label: 'Make User',
@@ -474,7 +474,7 @@ const advancedActions = computed(() => {
         });
     }
 
-    if (props.permissions?.create_admin) {
+    if (permissions.value.create_admin) {
         actions[1].actions.push({
             id: 'make_admin',
             label: 'Make Admin',
