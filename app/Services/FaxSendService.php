@@ -10,6 +10,8 @@ use App\Models\FaxQueues;
 use Illuminate\Support\Str;
 use App\Models\DefaultSettings;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Cache;
 use Symfony\Component\Process\Process;
 use App\Jobs\SendFaxFailedNotification;
 use Illuminate\Support\Facades\Storage;
@@ -767,5 +769,88 @@ class FaxSendService
 
         // Save cover PDF
         $pdf->Output($pdfPath, "F");
+    }
+
+    /**
+     * Allowed file extensions for fax attachments (cached for one day).
+     */
+    public static function getAllowedExtensions(): array
+    {
+        return Cache::remember('fax_allowed_extensions', now()->addDay(), function () {
+            $extensions = DefaultSettings::where('default_setting_category', 'fax')
+                ->where('default_setting_subcategory', 'allowed_extension')
+                ->where('default_setting_enabled', 'true')
+                ->pluck('default_setting_value')
+                ->toArray();
+
+            return !empty($extensions) ? $extensions : ['.pdf', '.tiff', '.tif'];
+        });
+    }
+
+    /**
+     * Store an UploadedFile (multipart upload) on the fax disk under /temp.
+     * Returns attachment metadata in the shape FaxSendService::send() expects,
+     * or null if the extension is not allowed or the save fails.
+     *
+     * Files land in the disk root /temp; getFaxServerInstance() can later pick
+     * a different fax extension based on a phone number in the subject, and
+     * convertAttachmentsToTif() renames the files into the resolved tenant's
+     * {domain}/{ext}/temp directory.
+     */
+    public static function storeUploadedAttachment(UploadedFile $file): ?array
+    {
+        $originalName = $file->getClientOriginalName();
+        $extension = '.' . strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+
+        if (!in_array($extension, self::getAllowedExtensions())) {
+            return null;
+        }
+
+        try {
+            $stored = Storage::disk('fax')->putFileAs(
+                '/temp',
+                $file,
+                Str::uuid()->toString() . $extension
+            );
+
+            return [
+                'original_name' => $originalName,
+                'stored_path'   => $stored,
+                'mime_type'     => $file->getMimeType(),
+                'extension'     => $extension,
+            ];
+        } catch (\Throwable $e) {
+            Log::alert('Failed to save fax attachment: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Store a base64-encoded attachment (e.g. Postmark JSON payload) on the
+     * fax disk under /temp. Same routing rationale as storeUploadedAttachment().
+     */
+    public static function storeBase64Attachment(string $name, string $base64Content, ?string $mimeType = null): ?array
+    {
+        $extension = '.' . strtolower(pathinfo($name, PATHINFO_EXTENSION));
+
+        if (!in_array($extension, self::getAllowedExtensions())) {
+            return null;
+        }
+
+        $storedPath = 'temp/' . Str::uuid()->toString() . $extension;
+
+        try {
+            Storage::disk('fax')->put($storedPath, base64_decode($base64Content));
+
+            return [
+                'original_name' => $name,
+                'stored_path'   => $storedPath,
+                'mime_type'     => $mimeType ?? 'application/octet-stream',
+                'extension'     => $extension,
+            ];
+        } catch (\Throwable $e) {
+            Log::alert('Failed to save fax attachment: ' . $e->getMessage());
+            return null;
+        }
     }
 }

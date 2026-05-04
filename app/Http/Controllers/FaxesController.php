@@ -30,6 +30,7 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use App\Http\Requests\CreateNewFaxRequest;
+use App\Services\FaxSendService;
 use Exception;
 
 class FaxesController extends Controller
@@ -1137,54 +1138,28 @@ class FaxesController extends Controller
                 $data['fax_uuid'] = $fax->fax_uuid;
             }
 
-            // Start creating the payload variable that will be passed to next step
-            $payload = array(
-                'From' => Session::get('user.user_email'),
-                'FromFull' => array(
-                    'Email' => ($data['send_confirmation']) ? Session::get('user.user_email') : '',
-                ),
-                'To' => $data['recipient'] . '@fax.domain.com',
-                'Subject' => isset($data['fax_message']) ? 'body' : null,
-                'TextBody' => isset($data['fax_message']) ? strip_tags($data['fax_message']) : null,
-                'HtmlBody' => isset($data['fax_message']) ? strip_tags($data['fax_message']) : null,
-                'fax_destination' => $data['recipient'],
-                'fax_uuid' => $data['fax_uuid'],
-            );
-
-            $payload['Attachments'] = array();
-
-            // Parse files
-            foreach ($files as $file) {
-                // $splited = explode(',', substr($file['data'], 5), 2);
-                // $mime = $splited[0];
-                // $data = $splited[1];
-                // $mime_split_without_base64 = explode(';', $mime, 2);
-                // $mime = $mime_split_without_base64[0];
-                // // $mime_split=explode('/', $mime_split_without_base64[0],2);
-
-                $mime = $file->getClientMimeType();
-
-                // Get original file name
-                $fileName = $file->getClientOriginalName();
-
-                // Read the file content
-                $content = file_get_contents($file->getRealPath());
-
-                // Encode the content to base64 if needed
-                $base64Content = base64_encode($content);
-
-                array_push(
-                    $payload['Attachments'],
-                    array(
-                        'Content' => $base64Content,
-                        'ContentType' => $mime,
-                        'Name' => $fileName,
-                    )
-                );
+            // Persist uploads to the fax disk and build attachment metadata
+            // in the shape FaxSendService::send() expects.
+            $attachments = [];
+            foreach (($files ?? []) as $file) {
+                $meta = FaxSendService::storeUploadedAttachment($file);
+                if ($meta !== null) {
+                    $attachments[] = $meta;
+                }
             }
 
-            $fax = new Faxes();
-            $result = $fax->EmailToFax($payload);
+            // Subject of "body" tells FaxSendService to render a cover page
+            // from the body text. Empty subject = no cover page.
+            // From is left blank when the user opted out of confirmation
+            // emails so FaxSendService doesn't notify them.
+            FaxSendService::send([
+                'from'            => $data['send_confirmation'] ? Session::get('user.user_email') : '',
+                'fax_destination' => $data['recipient'],
+                'fax_uuid'        => $data['fax_uuid'],
+                'subject'         => isset($data['fax_message']) ? 'body' : '',
+                'body'            => isset($data['fax_message']) ? strip_tags($data['fax_message']) : '',
+                'attachments'     => $attachments,
+            ]);
 
             return response()->json([
                 'messages' => ['success' => ['Fax is scheduled for delivery']],

@@ -76,6 +76,15 @@ class DeleteOldFaxes implements ShouldQueue
     /**
      * Execute the job.
      */
+    /**
+     * How long an orphaned file in any temp/ directory is allowed to live
+     * before this job removes it. A successful fax conversion finishes in
+     * seconds; anything still around days later is from a failed run. The
+     * window is intentionally generous so we keep enough history for
+     * troubleshooting before sweeping.
+     */
+    private const TEMP_ORPHAN_KEEP_DAYS = 7;
+
     public function handle()
     {
         Redis::throttle('fax')->allow(1)->every(60)->then(function () {
@@ -83,21 +92,38 @@ class DeleteOldFaxes implements ShouldQueue
             $days = $this->daysKeepFax;
             $cutoffTimestamp = Carbon::now()->subDays($days)->timestamp;
             $cutoffDate = Carbon::now()->subDays($days);
+            $tempCutoffTimestamp = Carbon::now()->subDays(self::TEMP_ORPHAN_KEEP_DAYS)->timestamp;
 
             // Use the 'fax' disk defined in config/filesystems.php
             $disk = Storage::disk('fax');
             $files = $disk->allFiles();
 
             foreach ($files as $file) {
-                // Only process TIFF and PDF files
+                // Files under /temp/ (disk root) or {domain}/{ext}/temp/ are
+                // intermediates from the conversion pipeline. On success they
+                // are unlinked explicitly; what's left is from a failed run.
+                // Sweep them on a shorter clock and across all extensions —
+                // .docx/.xls/.jpg orphans don't match the archive filter.
+                if (preg_match('~(^|/)temp/~', $file)) {
+                    $lastModified = $disk->lastModified($file);
+                    if ($lastModified < $tempCutoffTimestamp) {
+                        try {
+                            $disk->delete($file);
+                        } catch (\Exception $e) {
+                            logger("Error deleting fax temp file {$file}: " . $e->getMessage());
+                        }
+                    }
+                    continue;
+                }
+
+                // Archived sent/received faxes — keep only .tif/.pdf and
+                // honour the per-tenant retention window.
                 $extension = strtolower(pathinfo($file, PATHINFO_EXTENSION));
                 if (in_array($extension, ['tif', 'pdf'])) {
-                    // Check if the file's last modified time is older than the cutoff
                     $lastModified = $disk->lastModified($file);
                     if ($lastModified < $cutoffTimestamp) {
                         try {
                             $disk->delete($file);
-                            // logger("Deleted fax file: {$file}");
                         } catch (\Exception $e) {
                             logger("Error deleting fax file {$file}: " . $e->getMessage());
                         }

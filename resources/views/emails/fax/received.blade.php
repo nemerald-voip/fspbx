@@ -6,7 +6,7 @@
 <p>A new fax has been received and attached to this email.</p>
 
 <ul>
-    <li><strong>Domain:</strong> {{ $attributes['domain_name'] ?? '' }}</li>
+    {{-- <li><strong>Domain:</strong> {{ $attributes['domain_name'] ?? '' }}</li> --}}
     <li><strong>Fax destination:</strong> {{ $attributes['fax_destination'] ?? '' }}</li>
     <li><strong>Fax extension:</strong> {{ $attributes['fax_extension'] ?? '' }}</li>
     <li><strong>Caller ID name:</strong> {{ $attributes['caller_id_name'] ?? '' }}</li>

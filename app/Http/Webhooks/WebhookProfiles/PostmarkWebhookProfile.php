@@ -2,109 +2,63 @@
 
 namespace App\Http\Webhooks\WebhookProfiles;
 
-use Throwable;
-use App\Models\User;
-use App\Models\Voicemails;
 use Illuminate\Http\Request;
-use App\Models\FaxAllowedEmails;
-use Illuminate\Support\Facades\Log;
-use App\Models\FaxAllowedDomainNames;
-use App\Jobs\SendFaxInvalidEmailNotification;
-use App\Jobs\SendFaxInvalidDestinationNotification;
-use Spatie\WebhookClient\WebhookProfile\WebhookProfile;
+use App\Services\FaxSendService;
 
-class PostmarkWebhookProfile implements WebhookProfile
+class PostmarkWebhookProfile extends FaxWebhookProfile
 {
     public function shouldProcess(Request $request): bool
     {
-
-        $destination_number_valid = false;
-        // Get destination fax number and check if it's valid
-        $phone_number = strstr($request['ToFull'][0]['Email'], '@', true);
-        //Get libphonenumber object
-        $phoneNumberUtil = \libphonenumber\PhoneNumberUtil::getInstance();
-        try {
-            $phoneNumberObject = $phoneNumberUtil->parse($phone_number, 'US');
-            if ($phoneNumberUtil->isValidNumber($phoneNumberObject)){
-                $destination_number_valid = true;
-                $request['fax_destination'] = $phoneNumberUtil
-                            ->format($phoneNumberObject, \libphonenumber\PhoneNumberFormat::E164);
-            } else {
-                $request['fax_destination'] = $phone_number;
-            }
-        } catch (Throwable $e) {
-            $destination_number_valid = false;
-            $request['fax_destination'] = $phone_number;
+        // 1. Extract raw destination
+        $toEmail = $request['ToFull'][0]['Email'] ?? null;
+        if (!$toEmail || strpos($toEmail, '@') === false) {
+            logger('PostmarkWebhookProfile: no valid recipient in request');
+            return false;
         }
+        $phoneNumber = strstr($toEmail, '@', true);
 
-        // Get FROM email subject and check if it's authorized
-        $from_email = strtolower($request['FromFull']['Email']);
-
-        // Check if domain is whitelisted for sending faxes
-        try {
-            $email_address = explode("@",$from_email);
-            $domain_name = FaxAllowedDomainNames::where('domain', '=', $email_address[1])->firstOrFail();
-            $request['fax_uuid'] = $domain_name->fax_uuid;
-
-        } catch (Throwable $e) {
-            // If the domain not found check if this email is whitelisted for sending faxes
-            // Check users first
-            try {
-                $users = User::where('user_email', '=', $from_email)->get();
-                foreach ($users as $user) {
-                    if (!$user->domain->faxes->isEmpty()) {
-                        $request['fax_uuid'] = $user->domain->faxes->first()->fax_uuid;
-                        break;
-                    }
-                }
-
-                if (!isset($request['fax_uuid'])) {
-                    // if user with this email doesn't exist check if there is an extension with this email
-                    // Extension's emails are stored in Voicemail table
-                    $voicemails = Voicemails::where('voicemail_mail_to', $from_email)->get();
-                    foreach ($voicemails as $voicemail) {
-
-                        if (!$voicemail->domain->faxes->isEmpty()) {
-                            $request['fax_uuid'] = $voicemail->domain->faxes->first()->fax_uuid;
-                            break;
-                        }
-                    }
-                }
-
-                $email = FaxAllowedEmails::where('email', $from_email)->firstOrFail();
-                $request['fax_uuid'] = $email->fax_uuid;
-    
-            } catch (Throwable $e) {
-                    Log::alert($e->getMessage());
-                    $data = [
-                        'from' => $from_email,
-                        'fax_destination' =>$request['fax_destination'],
-                    ];
-                    SendFaxInvalidEmailNotification::dispatch($data)->onQueue('faxes');
-                    // Since the email was not found the request is not authorized to proceed 
-                    return false;
-            }
-    
-        }
-
-        // Check if the fax destination number is valid
-        if (!$destination_number_valid){
-
-            $request['invalid_number'] = $phone_number;
-
-            $data = [
-                'from' => $from_email,
-                'fax_destination' =>$request['fax_destination'],
-                'invalid_number' => $phone_number,
-            ];
-            SendFaxInvalidDestinationNotification::dispatch($data)->onQueue('faxes');
-
-            // Since the phone number is not valid the request is not authorized to proceed 
+        // 2. Extract sender
+        $fromEmail = strtolower($request['FromFull']['Email'] ?? '');
+        if (!$fromEmail) {
+            logger('PostmarkWebhookProfile: no valid sender in request');
             return false;
         }
 
-        // $this->request['fax_destination']
+        // 3. Authorize sender (sets fax_uuid; dispatches notification on failure)
+        if (!$this->resolveAuthorization($fromEmail, $phoneNumber, $request)) {
+            return false;
+        }
+
+        // 4. Normalize destination using the tenant's country setting
+        $this->resolveDestination($phoneNumber, $request['fax_uuid'], $request);
+
+        // 5. Normalize the rest of the fields the FaxSendService expects
+        $request->merge([
+            'from'             => $fromEmail,
+            'subject'          => $request['Subject'] ?? '',
+            'body'             => $request['TextBody'] ?? '',
+            'fax_attachments'  => $this->storeAttachments($request),
+        ]);
 
         return true;
+    }
+
+    /**
+     * Decode and persist Postmark's base64 attachments to the fax disk.
+     */
+    private function storeAttachments(Request $request): array
+    {
+        $stored = [];
+        foreach ($request['Attachments'] ?? [] as $attachment) {
+            $meta = FaxSendService::storeBase64Attachment(
+                $attachment['Name'] ?? '',
+                $attachment['Content'] ?? '',
+                $attachment['ContentType'] ?? null
+            );
+            if ($meta !== null) {
+                $stored[] = $meta;
+            }
+        }
+        return $stored;
     }
 }

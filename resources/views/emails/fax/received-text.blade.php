@@ -2,7 +2,7 @@ New fax received for {{ $attributes['fax_destination'] ?? ($attributes['fax_exte
 
 A new fax has been received and attached to this email.
 
-Domain: {{ $attributes['domain_name'] ?? '' }}
+{{-- Domain: {{ $attributes['domain_name'] ?? '' }} --}}
 Fax destination: {{ $attributes['fax_destination'] ?? '' }}
 Fax extension: {{ $attributes['fax_extension'] ?? '' }}
 Caller ID name: {{ $attributes['caller_id_name'] ?? '' }}
