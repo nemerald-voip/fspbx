@@ -66,7 +66,6 @@ if (!function_exists('isSuperAdmin')) {
      */
     function isSuperAdmin($user = null)
     {
-        // 1. Prefer authenticated user (covers Sanctum stateless + session web).
         $resolved = $user ?? Auth::user();
         if ($resolved && method_exists($resolved, 'groups')) {
             $groups = $resolved->groups();
@@ -75,7 +74,6 @@ if (!function_exists('isSuperAdmin')) {
             }
         }
 
-        // 2. Legacy fallback: web-session groups (cookie-auth flow).
         $sessionGroups = Session::get('user.groups');
         if (is_iterable($sessionGroups) && _isSuperAdminInGroups($sessionGroups)) {
             return true;
