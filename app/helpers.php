@@ -47,39 +47,44 @@ if (!function_exists('userCheckPermission')) {
     }
 }
 
-// Check if currently signed in user is a superadmin.
-//
-// Sanctum-aware: prefers the authenticated user's `groups()` (works for both
-// Sanctum bearer tokens and cookie-session web auth), and falls back to
-// Session::get('user.groups') for legacy code paths that pre-date Sanctum.
-//
-// Robust against malformed session values: historically this iterated
-// Session::get('user.groups') directly, raising a TypeError ("foreach()
-// argument must be of type array|object, null given") on stateless API calls
-// where the session is empty or contains a scalar default — see linked issue.
 if (!function_exists('isSuperAdmin')) {
     /**
-     * @param  mixed|null  $user  Optional explicit user. When provided, takes
-     *                            precedence over `Auth::user()`. Some callers
-     *                            (e.g. Eloquent observers receiving an explicit
-     *                            user) pass it positionally as `isSuperadmin($user)`.
+     * @param  \Illuminate\Contracts\Auth\Authenticatable|null  $user
+     *         Optional explicit user. When provided, takes precedence over
+     *         `Auth::user()`. Some callers (e.g. Eloquent observers receiving
+     *         an explicit user) pass it positionally as `isSuperadmin($user)`.
+     *
+     * SECURITY NOTE — When an authenticated identity (`$user` or
+     * `Auth::user()`) is present, this helper MUST evaluate ONLY that
+     * identity's groups. Falling through to `Session::get('user.groups')`
+     * would mix identity sources: a Sanctum bearer holder with limited
+     * scope could inherit superadmin from a concurrent or stale web
+     * session in dual-flow deployments (privilege escalation).
+     *
+     * The Session fallback is preserved ONLY for the legacy code path
+     * where neither `$user` nor `Auth::user()` is available — i.e.
+     * unauthenticated contexts where Session was historically the only
+     * source of truth for cookie-session web auth.
      */
-    function isSuperAdmin($user = null)
+    function isSuperAdmin(?\Illuminate\Contracts\Auth\Authenticatable $user = null)
     {
         $resolved = $user ?? Auth::user();
-        if ($resolved && method_exists($resolved, 'groups')) {
-            $groups = $resolved->groups();
-            if (is_iterable($groups) && _isSuperAdminInGroups($groups)) {
-                return true;
+
+        if ($resolved !== null) {
+            // Authenticated identity present — ONLY consult its groups.
+            // Do NOT fall through to Session (would allow identity confusion).
+            if (method_exists($resolved, 'groups')) {
+                $groups = $resolved->groups();
+                if (is_iterable($groups) && _isSuperAdminInGroups($groups)) {
+                    return true;
+                }
             }
+            return false;
         }
 
+        // No authenticated identity — legacy web-session fallback only.
         $sessionGroups = Session::get('user.groups');
-        if (is_iterable($sessionGroups) && _isSuperAdminInGroups($sessionGroups)) {
-            return true;
-        }
-
-        return false;
+        return is_iterable($sessionGroups) && _isSuperAdminInGroups($sessionGroups);
     }
 }
 

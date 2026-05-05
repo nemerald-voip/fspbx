@@ -191,4 +191,49 @@ class PermissionsHelperTest extends TestCase
         // to "no permissions" cleanly, not crash on foreach.
         $this->assertFalse(userCheckPermission('extension_add'));
     }
+
+    // ------------------------------------------------------------------
+    // SECURITY regression — privilege escalation via identity confusion
+    // (Gemini security review, 2026-05-05)
+    //
+    // When Auth::user() is a NON-superadmin lambda user, the helper MUST
+    // NOT fall through to Session::get('user.groups'). Doing so would
+    // allow a Sanctum bearer holder with limited scope to inherit
+    // superadmin from a concurrent web session in SPA dual-flow setups.
+    // ------------------------------------------------------------------
+
+    public function test_is_super_admin_does_not_fall_through_to_session_when_auth_user_is_lambda(): void
+    {
+        // Auth::user() returns a regular (non-superadmin) user
+        $regularUser = $this->makeAuthUserWithGroups([$this->makeGroup('user', 10)]);
+        Auth::shouldReceive('user')->andReturn($regularUser);
+
+        // Session contains a superadmin entry (simulates concurrent web session
+        // cookie present in the same request — SPA dual-flow attack vector).
+        Session::put('user.groups', [$this->makeGroup('superadmin', 80)]);
+
+        // SECURITY ASSERTION : authenticated identity wins. The session
+        // group MUST NOT escalate the bearer holder's privileges.
+        $this->assertFalse(
+            isSuperAdmin(),
+            'isSuperAdmin must not consult Session when an authenticated '
+            . 'non-superadmin user is present (privilege escalation guard).'
+        );
+    }
+
+    public function test_is_super_admin_does_not_fall_through_to_session_when_explicit_user_is_lambda(): void
+    {
+        // Explicit user argument is a regular user
+        $regularExplicit = $this->makeAuthUserWithGroups([$this->makeGroup('user', 10)]);
+        Auth::shouldReceive('user')->andReturn(null); // ensure explicit wins
+
+        // Session would otherwise grant superadmin
+        Session::put('user.groups', [$this->makeGroup('superadmin', 80)]);
+
+        $this->assertFalse(
+            isSuperAdmin($regularExplicit),
+            'isSuperAdmin must not consult Session when an explicit '
+            . 'non-superadmin $user argument is provided.'
+        );
+    }
 }
