@@ -20,6 +20,7 @@ use App\Models\DefaultSettings;
 use libphonenumber\PhoneNumberUtil;
 use App\Models\ProvisioningTemplate;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use libphonenumber\PhoneNumberFormat;
 use Illuminate\Support\Facades\Session;
@@ -30,12 +31,15 @@ if (!function_exists('userCheckPermission')) {
     function userCheckPermission($permission)
     {
         $list = Session::get('permissions', false);
-        if (!$list) {
+        if (!is_iterable($list)) {
             return false;
         }
 
         foreach ($list as $item) {
-            if ($item->permission_name == $permission) {
+            if (is_object($item)
+                && isset($item->permission_name)
+                && $item->permission_name === $permission
+            ) {
                 return true;
             }
         }
@@ -43,12 +47,60 @@ if (!function_exists('userCheckPermission')) {
     }
 }
 
-// Check if currenlty signed in user a superadmin
+// Check if currently signed in user is a superadmin.
+//
+// Sanctum-aware: prefers the authenticated user's `groups()` (works for both
+// Sanctum bearer tokens and cookie-session web auth), and falls back to
+// Session::get('user.groups') for legacy code paths that pre-date Sanctum.
+//
+// Robust against malformed session values: historically this iterated
+// Session::get('user.groups') directly, raising a TypeError ("foreach()
+// argument must be of type array|object, null given") on stateless API calls
+// where the session is empty or contains a scalar default — see linked issue.
 if (!function_exists('isSuperAdmin')) {
-    function isSuperAdmin()
+    /**
+     * @param  mixed|null  $user  Optional explicit user. When provided, takes
+     *                            precedence over `Auth::user()`. Some callers
+     *                            (e.g. Eloquent observers receiving an explicit
+     *                            user) pass it positionally as `isSuperadmin($user)`.
+     */
+    function isSuperAdmin($user = null)
     {
-        foreach (Session::get('user.groups') as $group) {
-            if ($group->group_name == "superadmin" && $group->group_level >= 80) {
+        // 1. Prefer authenticated user (covers Sanctum stateless + session web).
+        $resolved = $user ?? Auth::user();
+        if ($resolved && method_exists($resolved, 'groups')) {
+            $groups = $resolved->groups();
+            if (is_iterable($groups) && _isSuperAdminInGroups($groups)) {
+                return true;
+            }
+        }
+
+        // 2. Legacy fallback: web-session groups (cookie-auth flow).
+        $sessionGroups = Session::get('user.groups');
+        if (is_iterable($sessionGroups) && _isSuperAdminInGroups($sessionGroups)) {
+            return true;
+        }
+
+        return false;
+    }
+}
+
+if (!function_exists('_isSuperAdminInGroups')) {
+    /**
+     * Internal helper — returns true if the iterable contains a superadmin
+     * group entry with `group_level >= 80`. Defensive against malformed
+     * elements (non-objects, missing properties).
+     *
+     * @param  iterable  $groups
+     */
+    function _isSuperAdminInGroups(iterable $groups): bool
+    {
+        foreach ($groups as $group) {
+            if (is_object($group)
+                && isset($group->group_name, $group->group_level)
+                && $group->group_name === 'superadmin'
+                && (int) $group->group_level >= 80
+            ) {
                 return true;
             }
         }
