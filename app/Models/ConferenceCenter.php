@@ -14,7 +14,32 @@ class ConferenceCenter extends Model
     public $timestamps = false;
 
     protected $primaryKey = 'conference_center_uuid';
-
+    public $incrementing = false;
     protected $keyType = 'string';
-}
 
+    protected $fillable = [
+        'domain_uuid',
+        'conference_center_uuid',
+        'dialplan_uuid',
+        'conference_center_name',
+        'conference_center_extension',
+        'conference_center_greeting',
+        'conference_center_pin_length',
+        'conference_center_enabled',
+        'conference_center_description',
+        'insert_date',
+        'insert_user',
+        'update_date',
+        'update_user',
+    ];
+
+    public function domain()
+    {
+        return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
+    }
+
+    public function dialplan()
+    {
+        return $this->belongsTo(Dialplans::class, 'dialplan_uuid', 'dialplan_uuid');
+    }
+}

@@ -12,6 +12,7 @@ use App\Http\Controllers\CallRecordingController;
 use App\Http\Controllers\CallFlowController;
 use App\Http\Controllers\CallRoutingOptionsController;
 use App\Http\Controllers\CdrsController;
+use App\Http\Controllers\ConferenceCenterController;
 use App\Http\Controllers\CsrfTokenController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
@@ -211,6 +212,9 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Call Flows
     Route::get('call-flows', [CallFlowController::class, 'index'])->name('call-flows.index');
+
+    // Conference Centers
+    Route::get('conference-centers', [ConferenceCenterController::class, 'index'])->name('conference-centers.index');
 
     //Voicemails
     Route::get('voicemails', [VoicemailController::class, 'index'])->name('voicemails.index');

@@ -11,6 +11,7 @@ use App\Http\Controllers\CallFlowController;
 use App\Http\Controllers\CallTranscriptionController;
 use App\Http\Controllers\CdrsController;
 use App\Http\Controllers\CharPmsWebhookController;
+use App\Http\Controllers\ConferenceCenterController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
@@ -318,6 +319,15 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/call-flows/bulk-delete', [CallFlowController::class, 'bulkDelete'])->name('call-flows.bulk.delete');
     Route::post('/call-flows/bulk-copy', [CallFlowController::class, 'bulkCopy'])->name('call-flows.bulk.copy');
     Route::post('/call-flows/bulk-toggle', [CallFlowController::class, 'bulkToggle'])->name('call-flows.bulk.toggle');
+
+    // Conference Centers
+    Route::post('conference-centers', [ConferenceCenterController::class, 'store'])->name('conference-centers.store');
+    Route::put('conference-centers/{conference_center}', [ConferenceCenterController::class, 'update'])->name('conference-centers.update');
+    Route::get('/conference-centers/data', [ConferenceCenterController::class, 'getData'])->name('conference-centers.data');
+    Route::post('/conference-centers/item-options', [ConferenceCenterController::class, 'getItemOptions'])->name('conference-centers.item.options');
+    Route::post('/conference-centers/select-all', [ConferenceCenterController::class, 'selectAll'])->name('conference-centers.select.all');
+    Route::post('/conference-centers/bulk-delete', [ConferenceCenterController::class, 'bulkDelete'])->name('conference-centers.bulk.delete');
+    Route::post('/conference-centers/bulk-toggle', [ConferenceCenterController::class, 'bulkToggle'])->name('conference-centers.bulk.toggle');
 
     // Phone Numbers
     Route::post('phone-numbers', [PhoneNumbersController::class, 'store'])->name('phone-numbers.store');
