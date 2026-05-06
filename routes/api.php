@@ -12,6 +12,7 @@ use App\Http\Controllers\CallTranscriptionController;
 use App\Http\Controllers\CdrsController;
 use App\Http\Controllers\CharPmsWebhookController;
 use App\Http\Controllers\ConferenceCenterController;
+use App\Http\Controllers\ConferenceRoomController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
@@ -328,6 +329,16 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/conference-centers/select-all', [ConferenceCenterController::class, 'selectAll'])->name('conference-centers.select.all');
     Route::post('/conference-centers/bulk-delete', [ConferenceCenterController::class, 'bulkDelete'])->name('conference-centers.bulk.delete');
     Route::post('/conference-centers/bulk-toggle', [ConferenceCenterController::class, 'bulkToggle'])->name('conference-centers.bulk.toggle');
+
+    // Conference Rooms
+    Route::post('conference-rooms', [ConferenceRoomController::class, 'store'])->name('conference-rooms.store');
+    Route::put('conference-rooms/{conference_room}', [ConferenceRoomController::class, 'update'])->name('conference-rooms.update');
+    Route::get('/conference-rooms/data', [ConferenceRoomController::class, 'getData'])->name('conference-rooms.data');
+    Route::post('/conference-rooms/item-options', [ConferenceRoomController::class, 'getItemOptions'])->name('conference-rooms.item.options');
+    Route::post('/conference-rooms/select-all', [ConferenceRoomController::class, 'selectAll'])->name('conference-rooms.select.all');
+    Route::post('/conference-rooms/bulk-delete', [ConferenceRoomController::class, 'bulkDelete'])->name('conference-rooms.bulk.delete');
+    Route::post('/conference-rooms/bulk-toggle', [ConferenceRoomController::class, 'bulkToggle'])->name('conference-rooms.bulk.toggle');
+    Route::post('/conference-rooms/users/delete', [ConferenceRoomController::class, 'destroyUser'])->name('conference-rooms.users.destroy');
 
     // Phone Numbers
     Route::post('phone-numbers', [PhoneNumbersController::class, 'store'])->name('phone-numbers.store');

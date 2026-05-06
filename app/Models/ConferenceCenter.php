@@ -42,4 +42,40 @@ class ConferenceCenter extends Model
     {
         return $this->belongsTo(Dialplans::class, 'dialplan_uuid', 'dialplan_uuid');
     }
+
+    public function generateUniqueSequenceNumber(): ?string
+    {
+        // Conference Centers will have extensions in the range between 9300 and 9349 by default.
+        $rangeStart = 9300;
+        $rangeEnd = 9349;
+        $domainUuid = session('domain_uuid');
+
+        $usedExtensions = Dialplans::where('domain_uuid', $domainUuid)
+            ->where('dialplan_number', 'not like', '*%')
+            ->pluck('dialplan_number')
+            ->merge(
+                Voicemails::where('domain_uuid', $domainUuid)
+                    ->pluck('voicemail_id')
+            )
+            ->merge(
+                Extensions::where('domain_uuid', $domainUuid)
+                    ->pluck('extension')
+            )
+            ->merge(
+                self::where('domain_uuid', $domainUuid)
+                    ->pluck('conference_center_extension')
+            )
+            ->filter(fn ($value) => ctype_digit((string) $value))
+            ->map(fn ($value) => (string) (int) $value)
+            ->unique()
+            ->flip();
+
+        for ($ext = $rangeStart; $ext <= $rangeEnd; $ext++) {
+            if (! isset($usedExtensions[(string) $ext])) {
+                return (string) $ext;
+            }
+        }
+
+        return null;
+    }
 }

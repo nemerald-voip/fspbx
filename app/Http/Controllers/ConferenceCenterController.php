@@ -31,7 +31,7 @@ class ConferenceCenterController extends Controller
                 'bulk_toggle' => route('conference-centers.bulk.toggle'),
                 'store' => route('conference-centers.store'),
                 'item_options' => route('conference-centers.item.options'),
-                'rooms' => '/app/conference_centers/conference_rooms.php',
+                'rooms' => route('conference-rooms.index'),
                 'active_conferences' => '/app/conferences_active/conferences_active.php',
             ],
             'permissions' => [
@@ -108,6 +108,7 @@ class ConferenceCenterController extends Controller
                 ->firstOrFail();
         } else {
             $item = new ConferenceCenter();
+            $item->conference_center_extension = $item->generateUniqueSequenceNumber();
             $item->conference_center_enabled = 'true';
             $item->conference_center_pin_length = 9;
         }

@@ -3,10 +3,10 @@
 
     <div class="m-3">
         <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>Conference Centers</template>
+            <template #title>Conference Rooms</template>
 
             <template #subtitle>
-                Manage conference center entry points and their generated dialplans.
+                Manage individual meeting rooms within conference centers.
             </template>
 
             <template #filters>
@@ -14,43 +14,31 @@
                     <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                         <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
                     </div>
-                    <input type="text" v-model="filterData.search" name="mobile-search-conference-centers"
-                        id="mobile-search-conference-centers"
+                    <input type="text" v-model="filterData.search" name="mobile-search-conference-rooms"
+                        id="mobile-search-conference-rooms"
                         class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
                         placeholder="Search" @keydown.enter="handleSearchButtonClick" />
-                    <input type="text" v-model="filterData.search" name="desktop-search-conference-centers"
-                        id="desktop-search-conference-centers"
+                    <input type="text" v-model="filterData.search" name="desktop-search-conference-rooms"
+                        id="desktop-search-conference-rooms"
                         class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
                         placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                 </div>
             </template>
 
             <template #action>
-                <a v-if="permissions.view_active" :href="routes.active_conferences"
+                <a :href="routes.centers"
                     class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Active Conferences
+                    Centers
                 </a>
 
-                <a :href="routes.rooms"
+                <a v-if="permissions.active_view" :href="routes.active_conferences"
                     class="ml-2 sm:ml-4 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Rooms
+                    Active Conferences
                 </a>
 
                 <button v-if="permissions.create" type="button" @click.prevent="handleCreateButtonClick"
                     class="ml-2 sm:ml-4 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create
-                </button>
-
-                <!-- <button v-if="!filterData.showGlobal && permissions.view_global" type="button"
-                    @click.prevent="handleShowGlobal"
-                    class="ml-2 sm:ml-4 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Show all
-                </button> -->
-
-                <button v-if="filterData.showGlobal && permissions.view_global" type="button"
-                    @click.prevent="handleShowLocal"
-                    class="ml-2 sm:ml-4 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Show local
                 </button>
             </template>
 
@@ -67,34 +55,26 @@
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                     <div class="pl-4 flex items-center cursor-pointer select-none"
-                        @click="handleSortRequest('conference_center_name')">
+                        @click="handleSortRequest('conference_room_name')">
                         <span class="mr-2">Name</span>
-                        <ChevronUpIcon v-if="sortData.name === 'conference_center_name' && sortData.order === 'asc'"
+                        <ChevronUpIcon v-if="sortData.name === 'conference_room_name' && sortData.order === 'asc'"
                             class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'conference_center_name' && sortData.order === 'desc'"
-                            class="h-4 w-4 text-gray-500" />
-                    </div>
-                </TableColumnHeader>
-
-                <TableColumnHeader v-if="filterData.showGlobal" header="Domain"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-
-                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
-                    <div class="flex items-center cursor-pointer select-none"
-                        @click="handleSortRequest('conference_center_extension')">
-                        <span class="mr-2">Extension</span>
-                        <ChevronUpIcon v-if="sortData.name === 'conference_center_extension' && sortData.order === 'asc'"
-                            class="h-4 w-4 text-gray-500" />
-                        <ChevronDownIcon v-else-if="sortData.name === 'conference_center_extension' && sortData.order === 'desc'"
+                        <ChevronDownIcon v-else-if="sortData.name === 'conference_room_name' && sortData.order === 'desc'"
                             class="h-4 w-4 text-gray-500" />
                     </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Greeting" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="PIN Length" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Enabled" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Description"
+                <TableColumnHeader header="Center" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Moderator PIN" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Participant PIN" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Record" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Wait Moderator" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Muted" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Sounds" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Members" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader v-if="permissions.enabled" header="Enabled"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
@@ -117,48 +97,71 @@
             </template>
 
             <template #table-body>
-                <tr v-for="row in data.data" :key="row.conference_center_uuid">
-                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.conference_center_name">
+                <tr v-for="row in data.data" :key="row.conference_room_uuid">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500" :text="row.conference_room_name">
                         <div class="flex items-center">
                             <input v-model="selectedItems" type="checkbox" name="action_box[]"
-                                :value="row.conference_center_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="ml-4"
-                                :class="{ 'cursor-pointer hover:text-gray-900': permissions.update }"
-                                @click="permissions.update && handleEditButtonClick(row.conference_center_uuid)">
-                                {{ row.conference_center_name }}
+                                :value="row.conference_room_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <div class="ml-4" :class="{ 'cursor-pointer hover:text-gray-900': permissions.update }"
+                                @click="permissions.update && handleEditButtonClick(row.conference_room_uuid)">
+                                {{ row.conference_room_name }}
                             </div>
                         </div>
                     </TableField>
 
-                    <TableField v-if="filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.domain?.domain_description || row.domain?.domain_name || 'Global'" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.conference_center_extension" />
-                    <TableField class="px-2 py-2 text-sm text-gray-500"
-                        :text="displayGreeting(row.conference_center_greeting)" />
+                        :text="centerLabel(row)" />
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.conference_center_pin_length" />
+                        :text="formatPin(row.moderator_pin)" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        :text="formatPin(row.participant_pin)" />
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <button v-if="permissions.update" type="button" class="cursor-pointer"
-                            @click="executeToggle([row.conference_center_uuid])">
-                            <Badge :text="row.conference_center_enabled === 'true' ? 'True' : 'False'"
-                                v-bind="enabledBadgeProps(row.conference_center_enabled)" />
-                        </button>
-                        <Badge v-else :text="row.conference_center_enabled === 'true' ? 'True' : 'False'"
-                            v-bind="enabledBadgeProps(row.conference_center_enabled)" />
+                        <BooleanToggle :enabled="row.record" :editable="permissions.update && permissions.record"
+                            @toggle="executeToggle([row.conference_room_uuid], 'record')" />
+                    </TableField>
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <BooleanToggle :enabled="row.wait_mod" :editable="permissions.update && permissions.wait_mod"
+                            @toggle="executeToggle([row.conference_room_uuid], 'wait_mod')" />
+                    </TableField>
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <BooleanToggle :enabled="row.mute" :editable="permissions.update && permissions.mute"
+                            @toggle="executeToggle([row.conference_room_uuid], 'mute')" />
+                    </TableField>
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <BooleanToggle :enabled="row.sounds" :editable="permissions.update && permissions.sounds"
+                            @toggle="executeToggle([row.conference_room_uuid], 'sounds')" />
                     </TableField>
 
-                    <TableField class="px-2 py-2 text-sm text-gray-500" :text="row.conference_center_description" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.member_count" />
+
+                    <TableField v-if="permissions.enabled" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <BooleanToggle :enabled="row.enabled" :editable="permissions.update"
+                            @toggle="executeToggle([row.conference_room_uuid], 'enabled')" />
+                    </TableField>
+
+                    <TableField class="px-2 py-2 text-sm text-gray-500" :text="row.description" />
 
                     <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                         <template #action-buttons>
-                            <div class="flex items-center whitespace-nowrap justify-end">
-                                <PencilSquareIcon v-if="permissions.update" @click="handleEditButtonClick(row.conference_center_uuid)"
+                            <div class="flex items-center whitespace-nowrap justify-end gap-1">
+                                <a v-if="permissions.interactive_view || permissions.active_view"
+                                    :href="toolUrl(permissions.interactive_view ? routes.interactive : routes.active_conferences, row.conference_room_uuid)"
+                                    class="rounded px-2 py-1 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+                                    View
+                                </a>
+                                <a v-if="permissions.cdr_view" :href="toolUrl(routes.cdr, row.conference_room_uuid)"
+                                    class="rounded px-2 py-1 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+                                    CDR
+                                </a>
+                                <a v-if="permissions.session_view" :href="toolUrl(routes.sessions, row.conference_room_uuid)"
+                                    class="rounded px-2 py-1 text-xs font-medium text-gray-500 hover:bg-gray-100 hover:text-gray-700">
+                                    Sessions
+                                </a>
+                                <PencilSquareIcon v-if="permissions.update" @click="handleEditButtonClick(row.conference_room_uuid)"
                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
                                     title="Edit" />
-
-                                <TrashIcon v-if="permissions.destroy" @click="handleSingleItemDeleteRequest(row.conference_center_uuid)"
+                                <TrashIcon v-if="permissions.destroy" @click="handleSingleItemDeleteRequest(row.conference_room_uuid)"
                                     class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
                                     title="Delete" />
                             </div>
@@ -191,16 +194,16 @@
         @confirm="confirmAction" :header="confirmationHeader" :text="confirmationText"
         :confirm-button-label="confirmationButtonLabel" cancel-button-label="Cancel" />
 
-    <ConferenceCenterForm :show="showForm" :options="itemOptions" :mode="formMode" :loading="loadingForm"
+    <ConferenceRoomForm :show="showForm" :options="itemOptions" :mode="formMode" :loading="loadingForm"
         :header="formHeader" @close="handleFormClose" @error="handleErrorResponse" @success="showNotification"
-        @refresh-data="refreshCurrentPage" />
+        @refresh-data="refreshCurrentPage" @reload-options="reloadCurrentOptions" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, defineComponent, h, onMounted, ref } from "vue";
 import axios from "axios";
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
@@ -209,10 +212,28 @@ import Paginator from "./components/general/Paginator.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import Notification from "./components/notifications/Notification.vue";
-import ConferenceCenterForm from "./components/forms/ConferenceCenterForm.vue";
+import ConferenceRoomForm from "./components/forms/ConferenceRoomForm.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon, PencilSquareIcon, TrashIcon } from "@heroicons/vue/24/solid";
+
+const BooleanToggle = defineComponent({
+    props: {
+        enabled: { type: String, default: "false" },
+        editable: { type: Boolean, default: false },
+    },
+    emits: ["toggle"],
+    setup(props, { emit }) {
+        return () => h(
+            props.editable ? "button" : "span",
+            props.editable ? { type: "button", onClick: () => emit("toggle") } : {},
+            h(Badge, {
+                text: props.enabled === "true" ? "True" : "False",
+                ...enabledBadgeProps(props.enabled),
+            }),
+        );
+    },
+});
 
 const props = defineProps({
     routes: Object,
@@ -235,9 +256,14 @@ const notificationShow = ref(false);
 const showForm = ref(false);
 const formMode = ref("create");
 const loadingForm = ref(false);
+const editingItemUuid = ref(null);
 const itemOptions = ref({
     item: {},
-    sound_options: [],
+    conference_centers: [],
+    profiles: [],
+    users: [],
+    assigned_users: [],
+    permissions: {},
     routes: {},
 });
 
@@ -258,11 +284,10 @@ const data = ref({
 
 const filterData = ref({
     search: null,
-    showGlobal: false,
 });
 
 const sortData = ref({
-    name: "conference_center_name",
+    name: "description",
     order: "asc",
 });
 
@@ -270,7 +295,9 @@ const bulkActions = computed(() => {
     const actions = [];
 
     if (permissions.update) {
-        actions.push({ id: "bulk_toggle", label: "Toggle Enabled", icon: "PencilSquareIcon" });
+        actions.push({ id: "toggle_enabled", label: "Toggle Enabled", icon: "PencilSquareIcon" });
+        actions.push({ id: "toggle_record", label: "Toggle Record", icon: "PencilSquareIcon" });
+        actions.push({ id: "toggle_wait_mod", label: "Toggle Wait Moderator", icon: "PencilSquareIcon" });
     }
 
     if (permissions.destroy) {
@@ -280,14 +307,14 @@ const bulkActions = computed(() => {
     return actions;
 });
 
-const selectionColspan = computed(() => filterData.value.showGlobal ? 8 : 7);
+const selectionColspan = computed(() => permissions.enabled ? 12 : 11);
 
 const formHeader = computed(() => {
     if (formMode.value === "create") {
-        return "Create Conference Center";
+        return "Create Conference Room";
     }
 
-    return `Update Conference Center - ${itemOptions.value?.item?.conference_center_name || itemOptions.value?.item?.conference_center_extension || "Loading..."}`;
+    return `Update Conference Room - ${itemOptions.value?.item?.conference_room_name || "Loading..."}`;
 });
 
 onMounted(() => {
@@ -352,25 +379,17 @@ const renderRequestedPage = (url) => {
     getData(pageParam);
 };
 
-const handleShowGlobal = () => {
-    filterData.value.showGlobal = true;
-    getData(1);
-};
-
-const handleShowLocal = () => {
-    filterData.value.showGlobal = false;
-    getData(1);
-};
-
 const handleCreateButtonClick = () => {
     showForm.value = true;
     formMode.value = "create";
+    editingItemUuid.value = null;
     getItemOptions();
 };
 
 const handleEditButtonClick = (uuid) => {
     showForm.value = true;
     formMode.value = "update";
+    editingItemUuid.value = uuid;
     getItemOptions(uuid);
 };
 
@@ -390,22 +409,29 @@ const getItemOptions = (itemUuid = null) => {
         });
 };
 
+const reloadCurrentOptions = () => {
+    getItemOptions(editingItemUuid.value);
+};
+
 const handleFormClose = () => {
     showForm.value = false;
     formMode.value = "create";
+    editingItemUuid.value = null;
     itemOptions.value = {
         item: {},
-        sound_options: [],
+        conference_centers: [],
+        profiles: [],
+        users: [],
+        assigned_users: [],
+        permissions: {},
         routes: {},
     };
 };
 
 const handleSelectPageItems = () => {
-    if (selectPageItems.value) {
-        selectedItems.value = data.value.data.map((item) => item.conference_center_uuid);
-    } else {
-        selectedItems.value = [];
-    }
+    selectedItems.value = selectPageItems.value
+        ? data.value.data.map((item) => item.conference_room_uuid)
+        : [];
 };
 
 const handleSelectAll = () => {
@@ -430,7 +456,7 @@ const handleClearSelection = () => {
 const handleSingleItemDeleteRequest = (uuid) => {
     showConfirmation({
         header: "Confirm Deletion",
-        text: "This action will permanently delete the selected conference center and its generated dialplan.",
+        text: "This action will permanently delete the selected conference room.",
         button: "Delete",
         action: () => executeBulkDelete([uuid]),
     });
@@ -440,20 +466,20 @@ const handleBulkActionRequest = (action) => {
     if (action === "bulk_delete") {
         showConfirmation({
             header: "Confirm Deletion",
-            text: "This action will permanently delete the selected conference center(s) and generated dialplan(s).",
+            text: "This action will permanently delete the selected conference room(s).",
             button: "Delete",
             action: () => executeBulkDelete(),
         });
+        return;
     }
 
-    if (action === "bulk_toggle") {
-        showConfirmation({
-            header: "Confirm Toggle",
-            text: "Toggle enabled for the selected conference center(s)?",
-            button: "Toggle",
-            action: () => executeToggle(selectedItems.value),
-        });
-    }
+    const field = action.replace("toggle_", "");
+    showConfirmation({
+        header: "Confirm Toggle",
+        text: "Toggle this setting for the selected conference room(s)?",
+        button: "Toggle",
+        action: () => executeToggle(selectedItems.value, field),
+    });
 };
 
 const showConfirmation = ({ header, text, button, action }) => {
@@ -479,8 +505,8 @@ const executeBulkDelete = (items = selectedItems.value) => {
         });
 };
 
-const executeToggle = (items) => {
-    axios.post(routes.bulk_toggle, { items })
+const executeToggle = (items, field) => {
+    axios.post(routes.bulk_toggle, { items, field })
         .then((response) => {
             handleModalClose();
             handleClearSelection();
@@ -521,23 +547,25 @@ const handleErrorResponse = (error) => {
     }
 };
 
-const enabledBadgeProps = (enabled) => enabled === "true"
-    ? {
-        backgroundColor: "bg-green-50",
-        textColor: "text-green-700",
-        ringColor: "ring-green-600/20",
-    }
-    : {
-        backgroundColor: "bg-gray-50",
-        textColor: "text-gray-700",
-        ringColor: "ring-gray-600/20",
-    };
+function enabledBadgeProps(value) {
+    return value === "true"
+        ? { backgroundColor: "bg-green-50", textColor: "text-green-700", ringColor: "ring-green-600/20" }
+        : { backgroundColor: "bg-gray-50", textColor: "text-gray-600", ringColor: "ring-gray-500/20" };
+}
 
-const displayGreeting = (greeting) => {
-    if (!greeting) {
-        return "-";
+const formatPin = (pin) => {
+    const value = String(pin || "");
+    if (value.length === 9) {
+        return `${value.slice(0, 3)}-${value.slice(3, 6)}-${value.slice(6)}`;
     }
 
-    return String(greeting).replace(/^.*\/recordings\/[^/]+\//, "");
+    return value;
 };
+
+const centerLabel = (row) => {
+    if (!row.conference_center) return "-";
+    return `${row.conference_center.conference_center_name} (${row.conference_center.conference_center_extension})`;
+};
+
+const toolUrl = (template, uuid) => template.replace(":uuid", encodeURIComponent(uuid));
 </script>
