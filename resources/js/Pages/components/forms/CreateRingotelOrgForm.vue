@@ -212,6 +212,7 @@ const showConnectionModal = ref(false);
 const showConnectionDeletingStatus = ref(false);
 const selectedConnection = ref(null);
 const showEditConnectionModal = ref(false);
+const pendingEditConnectionId = ref(null);
 
 // Map icon names to their respective components
 const iconComponents = {
@@ -219,13 +220,32 @@ const iconComponents = {
     'BuildingOfficeIcon': BuildingOfficeIcon,
 };
 
-const connections = ref([...props.options.connections]);
+const formatConnectionRows = (sourceConnections) => {
+    return sourceConnections.map((conn) => ({
+        org_id: conn.accountId ?? conn.org_id,
+        conn_id: conn.id ?? conn.conn_id,
+        connection_name: conn.name ?? conn.connection_name,
+        domain: conn.address ?? conn.domain,
+    }));
+};
+
+const connections = ref(formatConnectionRows(props.options.connections));
 
 // Watch for changes in props.options.connections and update the local variable
 watch(
     () => props.options.connections,
     (newConnections) => {
-        connections.value = [...newConnections];
+        connections.value = formatConnectionRows(newConnections);
+
+        if (pendingEditConnectionId.value) {
+            const matchedConnection = newConnections.find((conn) => conn.id === pendingEditConnectionId.value);
+
+            if (matchedConnection) {
+                selectedConnection.value = matchedConnection;
+                showEditConnectionModal.value = true;
+                pendingEditConnectionId.value = null;
+            }
+        }
     }
 );
 
@@ -242,7 +262,7 @@ const form = reactive({
     _token: page.props.csrf_token,
 })
 
-const emits = defineEmits(['submit', 'cancel', 'error', 'success', 'clear-errors']);
+const emits = defineEmits(['submit', 'cancel', 'error', 'success', 'clear-errors', 'refresh-data']);
 
 const submitForm = () => {
     emits('submit', form); // Emit the event with the form data
@@ -273,16 +293,10 @@ const handleCreateConnectionRequest = (form) => {
         .then((response) => {
             ringotelConnectionFormSubmiting.value = false;
             emits('success', response.data.messages);
+            pendingEditConnectionId.value = response.data.conn_id;
+            emits('refresh-data', props.options.model.domain_uuid);
 
-            // Add the new connection to the connections array
-            connections.value.push({
-                org_id: response.data.org_id,
-                conn_id: response.data.conn_id,
-                connection_name: response.data.connection_name,
-                domain: response.data.domain
-            });
-
-            handleModalClose();
+            showConnectionModal.value = false;
             // handleClearSelection();
         }).catch((error) => {
             ringotelConnectionFormSubmiting.value = false;
@@ -297,18 +311,11 @@ const handleUpdateConnectionRequest = (form) => {
     ringotelConnectionFormSubmiting.value = true;
     emits('clear-errors');
 
-    axios.post(props.options.routes.create_connection, form)
+    axios.put(props.options.routes.update_connection, form)
         .then((response) => {
             ringotelConnectionFormSubmiting.value = false;
             emits('success', response.data.messages);
-
-            // Add the new connection to the connections array
-            connections.value.push({
-                org_id: response.data.org_id,
-                conn_id: response.data.conn_id,
-                connection_name: response.data.connection_name,
-                domain: response.data.domain
-            });
+            emits('refresh-data', props.options.model.domain_uuid);
 
             handleModalClose();
             // handleClearSelection();
@@ -323,9 +330,10 @@ const handleUpdateConnectionRequest = (form) => {
 
 const handleEditConnection = (connection) => {
     emits('clear-errors');
+    const connectionId = connection.conn_id ?? connection.id;
     // Find the matching connection from props.options.connections
     const matchedConnection = props.options.connections.find(
-        (conn) => conn.id === connection.conn_id
+        (conn) => conn.id === connectionId || conn.conn_id === connectionId
     );
 
     if (matchedConnection) {

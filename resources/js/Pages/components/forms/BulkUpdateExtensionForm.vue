@@ -59,6 +59,7 @@
                                                 <FormTab name="caller_id" label="Caller ID" :elements="callerIdElements" />
                                                 <FormTab name="call_forward" label="Call Forward" :elements="callForwardElements" />
                                                 <FormTab name="voicemail" label="Voicemail" :elements="voicemailElements" />
+                                                <FormTab name="mobile_app" label="Mobile App" :elements="mobileAppElements" :conditions="[() => permissions.manage_mobile_app]" />
                                             </FormTabs>
                                         </div>
 
@@ -235,6 +236,41 @@
 
                                                 <GroupElement name="voicemail_footer" />
                                                 <ButtonElement name="submit_voicemail" button-label="Save" :submits="true" align="right" />
+
+                                                <StaticElement name="mobile_app_title" tag="h4" content="Mobile App" />
+
+                                                <StaticElement name="mobile_app_info">
+                                                    <div class="text-sm text-gray-500">
+                                                        Choose one action to apply to the selected extensions. Extensions that are not eligible for the selected action will be skipped.
+                                                    </div>
+                                                </StaticElement>
+
+                                                <SelectElement name="mobile_app_action" :items="mobileAppActionOptions"
+                                                    :native="false" label="Action" input-type="search"
+                                                    autocomplete="off" placeholder="Choose Action"
+                                                    :floating="false" :columns="{ container: 12 }" />
+
+                                                <SelectElement name="mobile_app_connection"
+                                                    :items="options.mobile_app?.connections ?? []" :search="true"
+                                                    :native="false" label="Connection" label-prop="name"
+                                                    value-prop="id" input-type="search" autocomplete="off"
+                                                    placeholder="Choose Connection" :floating="false" :columns="{ container: 12 }"
+                                                    :conditions="[['mobile_app_action', 'in', ['enable', 'add_contact']]]" />
+
+                                                <StaticElement name="mobile_app_unavailable"
+                                                    :conditions="[() => !(options.mobile_app?.org_id)]">
+                                                    <div class="border-l-4 border-yellow-400 bg-yellow-50 p-4">
+                                                        <p class="text-sm text-yellow-700">
+                                                            Contact your administrator to enable mobile apps.
+                                                        </p>
+                                                    </div>
+                                                </StaticElement>
+
+                                                <GroupElement name="mobile_app_footer" />
+                                                <ButtonElement name="submit_mobile_app" button-label="Apply"
+                                                    :loading="isMobileAppSubmitting" align="right"
+                                                    @click="handleBulkMobileAppActionButtonClick"
+                                                    :conditions="[() => !!options.mobile_app?.org_id]" />
                                             </FormElements>
                                         </div>
                                     </div>
@@ -250,6 +286,7 @@
 
 <script setup>
 import { computed, ref } from "vue";
+import axios from "axios";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 
@@ -270,6 +307,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data']);
 
 const form$ = ref(null);
+const isMobileAppSubmitting = ref(false);
 const permissions = computed(() => props.options.permissions ?? {});
 
 const generalElements = [
@@ -352,6 +390,24 @@ const voicemailElements = [
     'voicemail_local_after_email',
     'voicemail_footer',
     'submit_voicemail',
+];
+
+const mobileAppElements = [
+    'mobile_app_title',
+    'mobile_app_info',
+    'mobile_app_action',
+    'mobile_app_connection',
+    'mobile_app_unavailable',
+    'mobile_app_footer',
+    'submit_mobile_app',
+];
+
+const mobileAppActionOptions = [
+    { value: 'enable', label: 'Enable/Activate' },
+    { value: 'add_contact', label: 'Add As BLF Contact' },
+    { value: 'deactivate', label: 'Deactivate' },
+    { value: 'remove', label: 'Remove' },
+    { value: 'reset_credentials', label: 'Reset Credentials' },
 ];
 
 const recordingOptions = [
@@ -511,6 +567,41 @@ const handleSuccess = (response) => {
     emit('success', 'success', response.data.messages);
     emit('close');
     emit('refresh-data');
+};
+
+const handleBulkMobileAppActionButtonClick = async () => {
+    form$.value?.messageBag?.clear();
+
+    const action = form$.value?.el$('mobile_app_action')?.value;
+    const connection = form$.value?.el$('mobile_app_connection')?.value;
+
+    if (!action) {
+        form$.value?.el$('mobile_app_action')?.messageBag?.append('Choose a mobile app action.');
+        return;
+    }
+
+    if (['enable', 'add_contact'].includes(action) && !connection) {
+        form$.value?.el$('mobile_app_connection')?.messageBag?.append('Choose a mobile app connection.');
+        return;
+    }
+
+    isMobileAppSubmitting.value = true;
+
+    try {
+        const response = await axios.post(props.options.routes.bulk_mobile_app_action, {
+            items: props.items,
+            action,
+            connection,
+        });
+
+        emit('success', 'success', response.data.messages);
+        emit('close');
+        emit('refresh-data');
+    } catch (error) {
+        emit('error', error);
+    } finally {
+        isMobileAppSubmitting.value = false;
+    }
 };
 
 const handleError = (error, details, form$) => {

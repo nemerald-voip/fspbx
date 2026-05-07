@@ -258,6 +258,7 @@ const showConnectionModal = ref(false);
 const showConnectionDeletingStatus = ref(false);
 const selectedConnection = ref(null);
 const showEditConnectionModal = ref(false);
+const pendingEditConnectionId = ref(null);
 
 // Map icon names to their respective components
 const iconComponents = {
@@ -266,25 +267,32 @@ const iconComponents = {
     'UsersIcon': UsersIcon,
 };
 
-const connections = ref(
-    props.options.connections.map((conn) => ({
-        org_id: conn.accountId,
-        conn_id: conn.id,
-        connection_name: conn.name,
-        domain: conn.address
-    }))
-);
+const formatConnectionRows = (sourceConnections) => {
+    return sourceConnections.map((conn) => ({
+        org_id: conn.accountId ?? conn.org_id,
+        conn_id: conn.id ?? conn.conn_id,
+        connection_name: conn.name ?? conn.connection_name,
+        domain: conn.address ?? conn.domain,
+    }));
+};
+
+const connections = ref(formatConnectionRows(props.options.connections));
 
 // Watch for changes in props.options.connections and update the local variable
 watch(
     () => props.options.connections,
     (newConnections) => {
-        connections.value = newConnections.map((conn) => ({
-            org_id: conn.accountId,
-            conn_id: conn.id,
-            connection_name: conn.name,
-            domain: conn.address
-        }));
+        connections.value = formatConnectionRows(newConnections);
+
+        if (pendingEditConnectionId.value) {
+            const matchedConnection = newConnections.find((conn) => conn.id === pendingEditConnectionId.value);
+
+            if (matchedConnection) {
+                selectedConnection.value = matchedConnection;
+                showEditConnectionModal.value = true;
+                pendingEditConnectionId.value = null;
+            }
+        }
     }
 );
 
@@ -333,16 +341,10 @@ const handleCreateConnectionRequest = (form) => {
         .then((response) => {
             ringotelConnectionFormSubmiting.value = false;
             emits('success', response.data.messages);
+            pendingEditConnectionId.value = response.data.conn_id;
+            emits('refresh-data', props.options.model.domain_uuid);
 
-            // Add the new connection to the connections array
-            connections.value.push({
-                org_id: response.data.org_id,
-                conn_id: response.data.conn_id,
-                connection_name: response.data.connection_name,
-                domain: response.data.domain
-            });
-
-            handleModalClose();
+            showConnectionModal.value = false;
         }).catch((error) => {
             ringotelConnectionFormSubmiting.value = false;
             emits('error', error); // Emit the event with error
@@ -391,9 +393,10 @@ const handleUpdateConnectionRequest = (form) => {
 
 const handleEditConnection = (connection) => {
     emits('clear-errors');
+    const connectionId = connection.conn_id ?? connection.id;
     // Find the matching connection from props.options.connections
     const matchedConnection = props.options.connections.find(
-        (conn) => conn.id === connection.conn_id
+        (conn) => conn.id === connectionId || conn.conn_id === connectionId
     );
 
     if (matchedConnection) {

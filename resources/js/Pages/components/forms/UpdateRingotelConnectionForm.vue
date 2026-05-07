@@ -251,13 +251,15 @@
 
                             <div class="grid grid-cols-6 gap-6">
 
-                                <div class="col-span-5">
-                                    <div class="flex items-center">
-                                        <LabelInputRequired target="call_delay"
-                                            label="Call Delay for 'At the Desk' Status (Seconds)"
-                                            class="mb-1 mr-1 flex-initial w-72" />
-                                        <InputField v-model="form.call_delay" type="text" name="call_delay" id="call_delay"
-                                            class="flex-none w-14" :error="!!errors?.call_delay" :placeholder="''" />
+                                <div class="col-span-6">
+                                    <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
+                                        <label for="call_delay"
+                                            class="block text-sm font-medium leading-6 text-gray-900 sm:whitespace-nowrap">
+                                            Call Delay for 'At the Desk' Status (Seconds)<span class="ml-1 ordinal text-red-600">*</span>
+                                        </label>
+                                        <input v-model="form.call_delay" type="text" name="call_delay" id="call_delay"
+                                            inputmode="numeric" maxlength="2" @input="handleCallDelayInput"
+                                            :class="[errors?.call_delay ? 'text-red-900 ring-red-600' : 'text-gray-900 ring-gray-300', 'block w-20 rounded-md border-0 py-1.5 text-center shadow-sm ring-1 ring-inset placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6']" />
                                     </div>
 
                                     <div v-if="errors?.call_delay" class="mt-2 text-xs text-red-600">
@@ -395,6 +397,391 @@
 
                             </div>
 
+                            <div v-if="form.pbx_features">
+                                <div>
+                                    <h3 class="text-base font-semibold leading-6 text-gray-900">Call Waiting</h3>
+                                </div>
+
+                                <div class="grid grid-cols-6 gap-6 mt-1">
+                                    <div class="col-span-6 sm:col-span-3">
+                                        <LabelInputOptional target="callwaiting_on" label="Call Waiting On Code"
+                                            class="truncate mb-1" />
+                                        <InputField v-model="form.callwaiting.on" type="text" name="callwaiting_on"
+                                            id="callwaiting_on" class="mt-1" :error="!!errors?.['callwaiting.on']"
+                                            :placeholder="''" />
+                                        <div v-if="errors?.['callwaiting.on']" class="mt-2 text-xs text-red-600">
+                                            {{ errors['callwaiting.on'][0] }}
+                                        </div>
+                                    </div>
+
+                                    <div class="col-span-6 sm:col-span-3">
+                                        <LabelInputOptional target="callwaiting_off" label="Call Waiting Off Code"
+                                            class="truncate mb-1" />
+                                        <InputField v-model="form.callwaiting.off" type="text" name="callwaiting_off"
+                                            id="callwaiting_off" class="mt-1" :error="!!errors?.['callwaiting.off']"
+                                            :placeholder="''" />
+                                        <div v-if="errors?.['callwaiting.off']" class="mt-2 text-xs text-red-600">
+                                            {{ errors['callwaiting.off'][0] }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                                <button type="sumbit" :disabled="isSubmitting"
+                                    class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto"
+                                    @click="open = false">
+                                    <Spinner :show="isSubmitting" />
+                                    Save
+                                </button>
+                                <button type="button" @click="emits('cancel')"
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="activeTab === 'sms_settings'">
+                    <div class="shadow sm:rounded-md">
+                        <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
+                            <div>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">SMS Settings</h3>
+                            </div>
+
+                            <div class="grid grid-cols-6 gap-6">
+                                <div class="col-span-6 sm:col-span-3">
+                                    <LabelInputOptional target="sms" label="Enable SMS" class="truncate mb-1" />
+                                    <select v-model.number="form.sms" name="sms" id="sms"
+                                        class="mt-1 block w-full rounded-md border-0 py-1.5 pl-3 pr-10 text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                                        <option v-for="option in smsModeOptions" :key="option.value"
+                                            :value="option.value">
+                                            {{ option.label }}
+                                        </option>
+                                    </select>
+                                    <div v-if="errors?.sms" class="mt-2 text-xs text-red-600">
+                                        {{ errors.sms[0] }}
+                                    </div>
+                                </div>
+
+                                <div class="divide-y divide-gray-200 col-span-6">
+                                    <Toggle label="Send missed SMS, voicemail and call notifications to email" description="" v-model="form.sms2email"
+                                        customClass="py-4" />
+                                </div>
+                            </div>
+
+                            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                                <button type="sumbit" :disabled="isSubmitting"
+                                    class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto"
+                                    @click="open = false">
+                                    <Spinner :show="isSubmitting" />
+                                    Save
+                                </button>
+                                <button type="button" @click="emits('cancel')"
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="activeTab === 'visual_call_park'">
+                    <div class="shadow sm:rounded-md">
+                        <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
+                            <div>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">Visual Call Park</h3>
+                            </div>
+
+                            <div class="grid grid-cols-6 gap-6">
+                                <div class="col-span-6 sm:col-span-3">
+                                    <LabelInputOptional target="callpark_subscribe" label="BLF Subscription Prefix"
+                                        class="truncate mb-1" />
+                                    <InputField v-model="form.callpark.subscribe" type="text" name="callpark_subscribe"
+                                        id="callpark_subscribe" class="mt-1" :error="!!errors?.['callpark.subscribe']"
+                                        :placeholder="''" />
+                                    <div v-if="errors?.['callpark.subscribe']" class="mt-2 text-xs text-red-600">
+                                        {{ errors['callpark.subscribe'][0] }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="w-full border-t border-gray-300" />
+
+                            <div>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">Parking Slots</h3>
+                            </div>
+
+                            <div class="space-y-3">
+                                <div v-for="(slot, index) in form.callpark.slots" :key="index"
+                                    class="grid grid-cols-6 gap-4 rounded-md border border-gray-200 bg-white p-4">
+                                    <div class="col-span-6 sm:col-span-3">
+                                        <LabelInputOptional :target="`callpark_slot_alias_${index}`" label="Label"
+                                            class="truncate mb-1" />
+                                        <InputField v-model="slot.alias" type="text"
+                                            :name="`callpark_slot_alias_${index}`"
+                                            :id="`callpark_slot_alias_${index}`" class="mt-1"
+                                            :error="!!errors?.[`callpark.slots.${index}.alias`]" :placeholder="''" />
+                                        <div v-if="errors?.[`callpark.slots.${index}.alias`]"
+                                            class="mt-2 text-xs text-red-600">
+                                            {{ errors[`callpark.slots.${index}.alias`][0] }}
+                                        </div>
+                                    </div>
+
+                                    <div class="col-span-6 sm:col-span-2">
+                                        <LabelInputOptional :target="`callpark_slot_${index}`" label="Number"
+                                            class="truncate mb-1" />
+                                        <InputField v-model="slot.slot" type="text" :name="`callpark_slot_${index}`"
+                                            :id="`callpark_slot_${index}`" class="mt-1"
+                                            :error="!!errors?.[`callpark.slots.${index}.slot`]" :placeholder="''" />
+                                        <div v-if="errors?.[`callpark.slots.${index}.slot`]"
+                                            class="mt-2 text-xs text-red-600">
+                                            {{ errors[`callpark.slots.${index}.slot`][0] }}
+                                        </div>
+                                    </div>
+
+                                    <div class="col-span-6 flex items-end sm:col-span-1">
+                                        <button type="button" @click="removeCallParkSlot(index)"
+                                            class="inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                            Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="button" @click="addCallParkSlot"
+                                class="inline-flex justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                Add Slot
+                            </button>
+
+                            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                                <button type="sumbit" :disabled="isSubmitting"
+                                    class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto"
+                                    @click="open = false">
+                                    <Spinner :show="isSubmitting" />
+                                    Save
+                                </button>
+                                <button type="button" @click="emits('cancel')"
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="activeTab === 'speed_dial'">
+                    <div class="shadow sm:rounded-md">
+                        <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
+                            <div>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">Speed Dial Numbers</h3>
+                            </div>
+
+                            <div class="space-y-3">
+                                <div v-for="(item, index) in form.speeddial" :key="index"
+                                    class="grid grid-cols-6 gap-4 rounded-md border border-gray-200 bg-white p-4">
+                                    <div class="col-span-6 sm:col-span-3">
+                                        <LabelInputOptional :target="`speeddial_title_${index}`" label="Title"
+                                            class="truncate mb-1" />
+                                        <InputField v-model="item.title" type="text" :name="`speeddial_title_${index}`"
+                                            :id="`speeddial_title_${index}`" class="mt-1"
+                                            :error="!!errors?.[`speeddial.${index}.title`]" :placeholder="''" />
+                                    </div>
+
+                                    <div class="col-span-6 sm:col-span-2">
+                                        <LabelInputOptional :target="`speeddial_number_${index}`" label="Number"
+                                            class="truncate mb-1" />
+                                        <InputField v-model="item.number" type="text" :name="`speeddial_number_${index}`"
+                                            :id="`speeddial_number_${index}`" class="mt-1"
+                                            :error="!!errors?.[`speeddial.${index}.number`]" :placeholder="''" />
+                                    </div>
+
+                                    <div class="col-span-6 flex items-end sm:col-span-1">
+                                        <button type="button" @click="removeSpeedDial(index)"
+                                            class="inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                            Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="button" @click="addSpeedDial"
+                                class="inline-flex justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                Add Speed Dial
+                            </button>
+
+                            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                                <button type="sumbit" :disabled="isSubmitting"
+                                    class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto"
+                                    @click="open = false">
+                                    <Spinner :show="isSubmitting" />
+                                    Save
+                                </button>
+                                <button type="button" @click="emits('cancel')"
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="activeTab === 'blf_indicators'">
+                    <div class="shadow sm:rounded-md">
+                        <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
+                            <div>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">BLF Indicators</h3>
+                            </div>
+
+                            <div class="space-y-3">
+                                <div v-for="(item, index) in form.blfs" :key="index"
+                                    class="grid grid-cols-6 gap-4 rounded-md border border-gray-200 bg-white p-4">
+                                    <div class="col-span-6 sm:col-span-3">
+                                        <LabelInputOptional :target="`blf_title_${index}`" label="Label"
+                                            class="truncate mb-1" />
+                                        <InputField v-model="item.title" type="text" :name="`blf_title_${index}`"
+                                            :id="`blf_title_${index}`" class="mt-1"
+                                            :error="!!errors?.[`blfs.${index}.title`]" :placeholder="''" />
+                                    </div>
+
+                                    <div class="col-span-6 sm:col-span-2">
+                                        <LabelInputOptional :target="`blf_number_${index}`" label="Number/BLF Code"
+                                            class="truncate mb-1" />
+                                        <InputField v-model="item.number" type="text" :name="`blf_number_${index}`"
+                                            :id="`blf_number_${index}`" class="mt-1"
+                                            :error="!!errors?.[`blfs.${index}.number`]" :placeholder="''" />
+                                    </div>
+
+                                    <div class="col-span-6 flex items-end sm:col-span-1">
+                                        <button type="button" @click="removeBlf(index)"
+                                            class="inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                            Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="button" @click="addBlf"
+                                class="inline-flex justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                Add BLF
+                            </button>
+
+                            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                                <button type="sumbit" :disabled="isSubmitting"
+                                    class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto"
+                                    @click="open = false">
+                                    <Spinner :show="isSubmitting" />
+                                    Save
+                                </button>
+                                <button type="button" @click="emits('cancel')"
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="activeTab === 'miscellaneous'">
+                    <div class="shadow sm:rounded-md">
+                        <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
+                            <div>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">Miscellaneous</h3>
+                            </div>
+
+                            <div class="grid grid-cols-6 gap-6">
+                                <div class="divide-y divide-gray-200 col-span-6">
+                                    <Toggle label="Don't log &quot;Answered elsewhere&quot;" description=""
+                                        v-model="form.nologae" customClass="py-4" />
+                                    <Toggle label="Don't log Missed calls" description=""
+                                        v-model="form.nologmc" customClass="py-4" />
+                                    <Toggle label="Allow users to block contacts" description=""
+                                        v-model="form.allow_block_contacts" customClass="py-4" />
+                                    <Toggle label="Screenshot prevention" description=""
+                                        v-model="form.screenshotPrevention" customClass="py-4" />
+                                </div>
+                            </div>
+
+                            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                                <button type="sumbit" :disabled="isSubmitting"
+                                    class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto"
+                                    @click="open = false">
+                                    <Spinner :show="isSubmitting" />
+                                    Save
+                                </button>
+                                <button type="button" @click="emits('cancel')"
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="activeTab === 'custom_web_pages'">
+                    <div class="shadow sm:rounded-md">
+                        <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
+                            <div>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">Custom Web Pages</h3>
+                            </div>
+
+                            <div class="space-y-3">
+                                <div v-for="(page, index) in form.custompages" :key="index"
+                                    class="grid grid-cols-6 gap-4 rounded-md border border-gray-200 bg-white p-4">
+                                    <div class="col-span-6 sm:col-span-2">
+                                        <LabelInputOptional :target="`custom_page_title_${index}`" label="Title"
+                                            class="truncate mb-1" />
+                                        <InputField v-model="page.title" type="text"
+                                            :name="`custom_page_title_${index}`"
+                                            :id="`custom_page_title_${index}`" class="mt-1"
+                                            :error="!!errors?.[`custompages.${index}.title`]" :placeholder="''" />
+                                        <div v-if="errors?.[`custompages.${index}.title`]"
+                                            class="mt-2 text-xs text-red-600">
+                                            {{ errors[`custompages.${index}.title`][0] }}
+                                        </div>
+                                    </div>
+
+                                    <div class="col-span-6 sm:col-span-3">
+                                        <LabelInputOptional :target="`custom_page_url_${index}`" label="URL"
+                                            class="truncate mb-1" />
+                                        <InputField v-model="page.url" type="text" :name="`custom_page_url_${index}`"
+                                            :id="`custom_page_url_${index}`" class="mt-1"
+                                            :error="!!errors?.[`custompages.${index}.url`]" :placeholder="''" />
+                                        <div v-if="errors?.[`custompages.${index}.url`]"
+                                            class="mt-2 text-xs text-red-600">
+                                            {{ errors[`custompages.${index}.url`][0] }}
+                                        </div>
+                                    </div>
+
+                                    <div class="col-span-6 flex items-end sm:col-span-1">
+                                        <button type="button" @click="removeCustomPage(index)"
+                                            class="inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                            Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="button" @click="addCustomPage"
+                                class="inline-flex justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                Add Web Page
+                            </button>
+
+                            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                                <button type="sumbit" :disabled="isSubmitting"
+                                    class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:ml-3 sm:w-auto"
+                                    @click="open = false">
+                                    <Spinner :show="isSubmitting" />
+                                    Save
+                                </button>
+                                <button type="button" @click="emits('cancel')"
+                                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="activeTab === 'app_updates'">
+                    <div class="shadow sm:rounded-md">
+                        <div class="space-y-6 bg-gray-100 px-4 py-6 sm:p-6">
+                            <div>
+                                <h3 class="text-base font-semibold leading-6 text-gray-900">App Updates</h3>
+                            </div>
+
+                            <div class="divide-y divide-gray-200">
+                                <Toggle label="Beta updates" description="" v-model="form.beta_updates"
+                                    customClass="py-4" />
+                            </div>
 
                             <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
                                 <button type="sumbit" :disabled="isSubmitting"
@@ -425,7 +812,17 @@ import InputField from "../general/InputField.vue";
 import LabelInputOptional from "../general/LabelInputOptional.vue";
 import LabelInputRequired from "../general/LabelInputRequired.vue";
 import Spinner from "../general/Spinner.vue";
-import { Cog6ToothIcon, AdjustmentsHorizontalIcon } from '@heroicons/vue/24/outline';
+import {
+    AdjustmentsHorizontalIcon,
+    ArrowPathIcon,
+    ChatBubbleLeftRightIcon,
+    Cog6ToothIcon,
+    EyeIcon,
+    GlobeAltIcon,
+    HashtagIcon,
+    Squares2X2Icon,
+    WrenchScrewdriverIcon,
+} from '@heroicons/vue/24/outline';
 import { ExclamationCircleIcon } from '@heroicons/vue/20/solid'
 import Toggle from "@generalComponents/Toggle.vue";
 import SettingsApplications from "@icons/SettingsApplications.vue"
@@ -441,6 +838,11 @@ const props = defineProps({
 const page = usePage();
 
 const availableCodecs = ['G.711 Ulaw', 'G.711 Alaw', 'G.722', 'G.729', 'Opus'];
+const smsModeOptions = [
+    { value: 0, label: 'Disabled' },
+    { value: 2, label: 'via API' },
+    { value: 3, label: 'via Integrations' },
+];
 // Safely ensure it is an array
 const apiCodecsArray = Array.isArray(props.selectedConnection?.provision?.codecs) 
     ? props.selectedConnection.provision.codecs 
@@ -466,6 +868,50 @@ availableCodecs.forEach(ac => {
     }
 });
 
+const apiCallPark = props.selectedConnection?.provision?.callpark ?? {};
+const apiCallParkSubscribe = typeof apiCallPark?.subscribe === 'string'
+    ? apiCallPark.subscribe.trim()
+    : '';
+const initialCallParkSlots = Array.isArray(apiCallPark?.slots)
+    ? apiCallPark.slots.map(slot => ({
+        alias: slot?.alias ?? '',
+        slot: slot?.slot ?? '',
+    }))
+    : [];
+const initialSpeedDial = Array.isArray(props.selectedConnection?.provision?.speeddial)
+    ? props.selectedConnection.provision.speeddial.map(item => ({
+        title: item?.title ?? '',
+        number: item?.number ?? '',
+    }))
+    : [];
+const initialBlfs = Array.isArray(props.selectedConnection?.provision?.blfs)
+    ? props.selectedConnection.provision.blfs.map(item => ({
+        title: item?.title ?? '',
+        number: item?.number ?? '',
+    }))
+    : [];
+const initialCustomPages = Array.isArray(props.selectedConnection?.provision?.custompages)
+    ? props.selectedConnection.provision.custompages.map(page => ({
+        title: page?.title ?? '',
+        url: page?.url ?? '',
+    }))
+    : [];
+
+const parseBoolean = (value, defaultValue = false) => {
+    if (typeof value === 'boolean') {
+        return value;
+    }
+
+    if (typeof value === 'number') {
+        return value === 1;
+    }
+
+    if (typeof value === 'string') {
+        return ['1', 'true', 't', 'yes', 'on'].includes(value.toLowerCase());
+    }
+
+    return defaultValue;
+};
 
 const form = reactive({
     org_id: props.options?.orgId ?? null,
@@ -497,6 +943,39 @@ const form = reactive({
     dnd_off_code: props.selectedConnection?.provision?.dnd?.off ?? '',
     cf_on_code: props.selectedConnection?.provision?.forwarding?.cfon ?? '',
     cf_off_code: props.selectedConnection?.provision?.forwarding?.cfoff ?? '',
+    sms: props.selectedConnection?.provision?.sms ?? 0,
+    sms2phone: props.selectedConnection?.provision?.sms2phone ?? false,
+    sms2email: props.selectedConnection?.provision?.sms2email ?? false,
+    inboundFormat: props.selectedConnection?.provision?.inboundFormat ?? '',
+    custompages: initialCustomPages,
+    callwaiting: {
+        on: props.selectedConnection?.provision?.callwaiting?.on ?? '',
+        off: props.selectedConnection?.provision?.callwaiting?.off ?? '',
+    },
+    remotehold: props.selectedConnection?.provision?.remotehold ?? false,
+    passanumber: props.selectedConnection?.provision?.passanumber ?? false,
+    fallback: {
+        prefix: props.selectedConnection?.provision?.fallback?.prefix ?? '',
+        type: props.selectedConnection?.provision?.fallback?.type ?? '',
+    },
+    callpark: {
+        park: apiCallPark?.park ?? '',
+        retrieve: apiCallPark?.retrieve ?? '',
+        subscribe: apiCallParkSubscribe !== '' ? apiCallParkSubscribe : 'park+',
+        slots: initialCallParkSlots,
+    },
+    speeddial: initialSpeedDial,
+    blfs: initialBlfs,
+    paging: props.selectedConnection?.provision?.paging ?? 0,
+    meetings: props.selectedConnection?.provision?.meetings ?? 0,
+    integrations: props.selectedConnection?.provision?.integrations ?? 0,
+    nologae: props.selectedConnection?.provision?.nologae ?? false,
+    nologmc: props.selectedConnection?.provision?.nologmc ?? false,
+    noblocks: parseBoolean(props.selectedConnection?.provision?.noblocks),
+    allow_block_contacts: !parseBoolean(props.selectedConnection?.provision?.noblocks),
+    notranscription: props.selectedConnection?.provision?.notranscription ?? false,
+    screenshotPrevention: props.selectedConnection?.provision?.screenshotPrevention ?? false,
+    beta_updates: props.selectedConnection?.provision?.beta_updates ?? false,
     _token: page.props.csrf_token,
 });
 
@@ -525,7 +1004,58 @@ const handleDrop = (index) => {
     draggedIndex.value = null;
 };
 
+const addCallParkSlot = () => {
+    form.callpark.slots.push({
+        alias: '',
+        slot: '',
+    });
+};
+
+const removeCallParkSlot = (index) => {
+    form.callpark.slots.splice(index, 1);
+};
+
+const addSpeedDial = () => {
+    form.speeddial.push({
+        title: '',
+        number: '',
+    });
+};
+
+const removeSpeedDial = (index) => {
+    form.speeddial.splice(index, 1);
+};
+
+const addBlf = () => {
+    form.blfs.push({
+        title: '',
+        number: '',
+    });
+};
+
+const removeBlf = (index) => {
+    form.blfs.splice(index, 1);
+};
+
+const addCustomPage = () => {
+    form.custompages.push({
+        title: '',
+        url: '',
+    });
+};
+
+const removeCustomPage = (index) => {
+    form.custompages.splice(index, 1);
+};
+
+const handleCallDelayInput = (event) => {
+    const value = event.target.value.replace(/\D/g, '').slice(0, 2);
+    event.target.value = value;
+    form.call_delay = value;
+};
+
 const submitForm = () => {
+    form.noblocks = !form.allow_block_contacts;
     // console.log(form);
     emits('submit', form); // Emit the event with the form data
 }
@@ -539,6 +1069,13 @@ const iconComponents = {
     'Cog6ToothIcon': Cog6ToothIcon,
     'SettingsApplications': SettingsApplications,
     'AdjustmentsHorizontalIcon': AdjustmentsHorizontalIcon,
+    'ChatBubbleLeftRightIcon': ChatBubbleLeftRightIcon,
+    'Squares2X2Icon': Squares2X2Icon,
+    'HashtagIcon': HashtagIcon,
+    'EyeIcon': EyeIcon,
+    'GlobeAltIcon': GlobeAltIcon,
+    'WrenchScrewdriverIcon': WrenchScrewdriverIcon,
+    'ArrowPathIcon': ArrowPathIcon,
 };
 
 const setActiveTab = (tabSlug) => {

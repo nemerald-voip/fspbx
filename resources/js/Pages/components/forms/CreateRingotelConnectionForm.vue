@@ -2,7 +2,7 @@
     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
         <aside class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
             <nav class="space-y-1">
-                <a v-for="item in options.conn_navigation" :key="item.name" href="#"
+                <a v-for="item in createConnectionNavigation" :key="item.name" href="#"
                     :class="[activeTab === item.slug ? 'bg-gray-200 text-indigo-700 hover:bg-gray-100 hover:text-indigo-700' : 'text-gray-900 hover:bg-gray-200 hover:text-gray-900', 'group flex items-center rounded-md px-3 py-2 text-sm font-medium']"
                     @click.prevent="setActiveTab(item.slug)" :aria-current="item.current ? 'page' : undefined">
                     <component :is="iconComponents[item.icon]"
@@ -423,7 +423,7 @@
 </template>
 
 <script setup>
-import { reactive, ref } from "vue";
+import { computed, reactive, ref } from "vue";
 import { usePage } from '@inertiajs/vue3';
 
 import ComboBox from "../general/ComboBox.vue";
@@ -443,6 +443,10 @@ const props = defineProps({
 });
 
 const page = usePage();
+const createConnectionTabs = ['settings', 'features', 'pbx_features'];
+const createConnectionNavigation = computed(() => {
+    return props.options.conn_navigation.filter((item) => createConnectionTabs.includes(item.slug));
+});
 
 // 1. Get the default order from settings (fallback if not set yet)
 const defaultOrderString = props.options.settings.codec_priority || "G.711 Ulaw, G.711 Alaw, G.722, G.729, Opus";
@@ -463,6 +467,27 @@ const initialCodecs = defaultOrder.map(codec => ({
     enabled: settingMap[codec] ?? false,
     frame: 20
 }));
+
+const parseDefaultCustomPages = (value) => {
+    if (!value) {
+        return [];
+    }
+
+    try {
+        const pages = JSON.parse(value);
+
+        if (!Array.isArray(pages)) {
+            return [];
+        }
+
+        return pages.map(page => ({
+            title: page?.title ?? '',
+            url: page?.url ?? '',
+        }));
+    } catch (error) {
+        return [];
+    }
+};
 
 const form = reactive({
     org_id: props.options.orgId,
@@ -489,6 +514,12 @@ const form = reactive({
     disable_iphone_recents: props.options.settings.disable_iphone_recents === "true", 
     call_delay: props.options.settings.call_delay,
     desktop_app_delay: props.options.settings.desktop_app_delay === "true", 
+    noblocks: (props.options.settings.allow_block_contacts ?? 'true') !== "true",
+    sms: Number(props.options.settings.sms_mode ?? 2),
+    sms2phone: false,
+    sms2email: false,
+    inboundFormat: '',
+    custompages: parseDefaultCustomPages(props.options.settings.custom_web_pages),
     pbx_features: props.options.settings.pbx_features === "true",
     voicemail_extension: props.options.settings.voicemail_extension,
     dnd_on_code: props.options.settings.dnd_on_code,
@@ -500,7 +531,7 @@ const form = reactive({
 
 const emits = defineEmits(['submit', 'cancel']);
 
-const activeTab = ref(props.options.conn_navigation.find(item => item.slug)?.slug || props.options.conn_navigation[0].slug);
+const activeTab = ref(createConnectionNavigation.value[0]?.slug || 'settings');
 
 // Drag and drop logic
 const draggedIndex = ref(null);

@@ -255,6 +255,55 @@ class RingotelApiService
                 }
             }
         }
+        $callparkSlots = collect($params['callpark']['slots'] ?? [])
+            ->filter(function ($slot) {
+                return !empty($slot['alias']) || !empty($slot['slot']);
+            })
+            ->map(function ($slot) {
+                return [
+                    'alias' => $slot['alias'] ?? '',
+                    'slot' => $slot['slot'] ?? '',
+                ];
+            })
+            ->values()
+            ->all();
+        $speedDial = collect($params['speeddial'] ?? [])
+            ->filter(function ($item) {
+                return !empty($item['title']) || !empty($item['number']);
+            })
+            ->map(function ($item) {
+                return [
+                    'number' => $item['number'] ?? '',
+                    'title' => $item['title'] ?? '',
+                ];
+            })
+            ->values()
+            ->all();
+        $blfs = collect($params['blfs'] ?? [])
+            ->filter(function ($item) {
+                return !empty($item['title']) || !empty($item['number']);
+            })
+            ->map(function ($item) {
+                return [
+                    'number' => $item['number'] ?? '',
+                    'title' => $item['title'] ?? '',
+                ];
+            })
+            ->values()
+            ->all();
+        $customPages = collect($params['custompages'] ?? [])
+            ->filter(function ($page) {
+                return !empty($page['title']) || !empty($page['url']);
+            })
+            ->map(function ($page) {
+                return [
+                    'title' => $page['title'] ?? '',
+                    'url' => $page['url'] ?? '',
+                ];
+            })
+            ->values()
+            ->all();
+
         // Build data array
         $data = array(
             'method' => 'createBranch',
@@ -294,17 +343,37 @@ class RingotelApiService
                     'novideo' => !$params['allow_video_calls'],
                     'nostates' => !$params['allow_state_change'],
                     'nochats' => !$params['allow_internal_chat'],
+                    'sms' => (int) ($params['sms'] ?? 0),
+                    'sms2phone' => $params['sms2phone'] ?? false,
+                    'sms2email' => $params['sms2email'] ?? false,
+                    'inboundFormat' => $params['inboundFormat'] ?? '',
+                    'custompages' => $customPages,
+                    'callwaiting' => [
+                        'off' => $params['callwaiting']['off'] ?? '',
+                        'on' => $params['callwaiting']['on'] ?? '',
+                    ],
+                    'remotehold' => $params['remotehold'] ?? false,
+                    'passanumber' => $params['passanumber'] ?? false,
+                    'fallback' => [
+                        'prefix' => $params['fallback']['prefix'] ?? '',
+                        'type' => $params['fallback']['type'] ?? '',
+                    ],
                     'calldelay' => $params['call_delay'],
                     'pcdelay' => $params['desktop_app_delay'],
                     'features' => $params['pbx_features'] ? 'pbx' : '',
-                    "speeddial" => array(
-                        [
-                            'number' => $params['voicemail_extension'],
-                            'title' => 'Voicemail'
-                        ]
-                    ),
+                    'speeddial' => $speedDial,
+                    'blfs' => $blfs,
+                    'paging' => (int) ($params['paging'] ?? 0),
+                    'meetings' => (int) ($params['meetings'] ?? 0),
+                    'integrations' => (int) ($params['integrations'] ?? 0),
+                    'nologae' => $params['nologae'] ?? false,
+                    'nologmc' => $params['nologmc'] ?? false,
+                    'noblocks' => $params['noblocks'] ?? false,
+                    'notranscription' => $params['notranscription'] ?? false,
+                    'screenshotPrevention' => $params['screenshotPrevention'] ?? false,
+                    'beta_updates' => $params['beta_updates'] ?? false,
                     'vmail' => [
-                        'ext' => $params['voicemail_extension'],
+                        'ext' => $params['voicemail_extension'] ?? '',
                         'name' => 'Voicemail',
                         'mess' => 'You have a new message',
                         'off' => '',
@@ -322,6 +391,12 @@ class RingotelApiService
                         'cfbon' => '',
                         'cfuoff' => '',
                         'cfoff' => $params['cf_off_code'] ?? ''
+                    ],
+                    'callpark' => [
+                        'slots' => $callparkSlots,
+                        'subscribe' => $params['callpark']['subscribe'] ?? '',
+                        'retrieve' => $params['callpark']['retrieve'] ?? '',
+                        'park' => $params['callpark']['park'] ?? '',
                     ],
 
                     'codecs' => $codecs,
@@ -376,6 +451,54 @@ class RingotelApiService
                 }
             }
         }
+        $callparkSlots = collect($params['callpark']['slots'] ?? [])
+            ->filter(function ($slot) {
+                return !empty($slot['alias']) || !empty($slot['slot']);
+            })
+            ->map(function ($slot) {
+                return [
+                    'alias' => $slot['alias'] ?? '',
+                    'slot' => $slot['slot'] ?? '',
+                ];
+            })
+            ->values()
+            ->all();
+        $speedDial = collect($params['speeddial'] ?? [])
+            ->filter(function ($item) {
+                return !empty($item['title']) || !empty($item['number']);
+            })
+            ->map(function ($item) {
+                return [
+                    'number' => $item['number'] ?? '',
+                    'title' => $item['title'] ?? '',
+                ];
+            })
+            ->values()
+            ->all();
+        $blfs = collect($params['blfs'] ?? [])
+            ->filter(function ($item) {
+                return !empty($item['title']) || !empty($item['number']);
+            })
+            ->map(function ($item) {
+                return [
+                    'number' => $item['number'] ?? '',
+                    'title' => $item['title'] ?? '',
+                ];
+            })
+            ->values()
+            ->all();
+        $customPages = collect($params['custompages'] ?? [])
+            ->filter(function ($page) {
+                return !empty($page['title']) || !empty($page['url']);
+            })
+            ->map(function ($page) {
+                return [
+                    'title' => $page['title'] ?? '',
+                    'url' => $page['url'] ?? '',
+                ];
+            })
+            ->values()
+            ->all();
 
         // Build data array
         $data = array(
@@ -417,17 +540,37 @@ class RingotelApiService
                     'novideo' => !$params['allow_video_calls'],
                     'nostates' => !$params['allow_state_change'],
                     'nochats' => !$params['allow_internal_chat'],
+                    'sms' => (int) ($params['sms'] ?? 0),
+                    'sms2phone' => $params['sms2phone'] ?? false,
+                    'sms2email' => $params['sms2email'] ?? false,
+                    'inboundFormat' => $params['inboundFormat'] ?? '',
+                    'custompages' => $customPages,
+                    'callwaiting' => [
+                        'off' => $params['callwaiting']['off'] ?? '',
+                        'on' => $params['callwaiting']['on'] ?? '',
+                    ],
+                    'remotehold' => $params['remotehold'] ?? false,
+                    'passanumber' => $params['passanumber'] ?? false,
+                    'fallback' => [
+                        'prefix' => $params['fallback']['prefix'] ?? '',
+                        'type' => $params['fallback']['type'] ?? '',
+                    ],
                     'calldelay' => $params['call_delay'],
                     'pcdelay' => $params['desktop_app_delay'],
                     'features' => $params['pbx_features'] ? 'pbx' : '',
-                    "speeddial" => array(
-                        [
-                            'number' => $params['voicemail_extension'],
-                            'title' => 'Voicemail'
-                        ]
-                    ),
+                    'speeddial' => $speedDial,
+                    'blfs' => $blfs,
+                    'paging' => (int) ($params['paging'] ?? 0),
+                    'meetings' => (int) ($params['meetings'] ?? 0),
+                    'integrations' => (int) ($params['integrations'] ?? 0),
+                    'nologae' => $params['nologae'] ?? false,
+                    'nologmc' => $params['nologmc'] ?? false,
+                    'noblocks' => $params['noblocks'] ?? false,
+                    'notranscription' => $params['notranscription'] ?? false,
+                    'screenshotPrevention' => $params['screenshotPrevention'] ?? false,
+                    'beta_updates' => $params['beta_updates'] ?? false,
                     'vmail' => [
-                        'ext' => $params['voicemail_extension'],
+                        'ext' => $params['voicemail_extension'] ?? '',
                         'name' => 'Voicemail',
                         'mess' => 'You have a new message',
                         'off' => '',
@@ -435,16 +578,22 @@ class RingotelApiService
                         'spref' => ''
                     ],
                     'dnd' => [
-                        'off' => $params['dnd_on_code'],
-                        'on' => $params['dnd_off_code']
+                        'off' => $params['dnd_on_code'] ?? '',
+                        'on' => $params['dnd_off_code'] ?? ''
                     ],
                     'forwarding' => [
                         'cfuon' => '',
                         'cfboff' => '',
-                        'cfon' => $params['cf_on_code'],
+                        'cfon' => $params['cf_on_code'] ?? '',
                         'cfbon' => '',
                         'cfuoff' => '',
-                        'cfoff' => $params['cf_off_code']
+                        'cfoff' => $params['cf_off_code'] ?? ''
+                    ],
+                    'callpark' => [
+                        'slots' => $callparkSlots,
+                        'subscribe' => $params['callpark']['subscribe'] ?? '',
+                        'retrieve' => $params['callpark']['retrieve'] ?? '',
+                        'park' => $params['callpark']['park'] ?? '',
                     ],
 
                     'codecs' => $codecs,

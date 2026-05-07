@@ -2024,6 +2024,19 @@ const submitForm = async (FormData, form$) => {
     return await form$.$vueform.services.axios.put(props.options.routes.update_route, requestData)
 };
 
+const saveExtensionBeforeMobileAppAction = async () => {
+    try {
+        const response = await submitForm(null, form$.value)
+        handleResponse(response, form$.value)
+        return response
+    } catch (error) {
+        if (error?.response && form$.value) {
+            handleResponse(error.response, form$.value)
+        }
+        throw error
+    }
+}
+
 function clearErrorsRecursive(el$) {
     // clear this element’s errors
     el$.messageBag?.clear()
@@ -2231,126 +2244,121 @@ const handleMobileAppContactButtonClick = async () => {
 
 const handleMobileAppSubmitButtonClick = async () => {
     isMobileAppLoading.submit = true
-    axios.post(props.options.routes.create_mobile_app,
-        {
+    try {
+        await saveExtensionBeforeMobileAppAction()
+
+        const response = await axios.post(props.options.routes.create_mobile_app, {
             extension_uuid: props.options.item.extension_uuid,
             connection: form$.value.el$('mobile_app_connection').value,
             org_id: mobileAppOptions.value.org_id,
             app_domain: mobileAppOptions.value.app_domain,
             status: mobileAppContactOnly.value ? -1 : 1,
+        })
+
+        if (!mobileAppContactOnly.value) {
+            mobileApp.value = response.data;
         }
-    )
-        .then((response) => {
-            if (!mobileAppContactOnly.value) {
-                mobileApp.value = response.data;
-            }
 
-            getMobileAppOptions()
-            creatingInitiated.value = false
-
-        }).catch((error) => {
-            emit('error', error)
-        }).finally(() => {
-            isMobileAppLoading.submit = false
-        });
+        getMobileAppOptions()
+        creatingInitiated.value = false
+    } catch (error) {
+        emit('error', error)
+    } finally {
+        isMobileAppLoading.submit = false
+    }
 }
 
 const handleMobileAppRemoveButtonClick = async () => {
     isMobileAppLoading.remove = true
-    axios.post(props.options.routes.delete_mobile_app,
-        {
+    try {
+        const response = await axios.post(props.options.routes.delete_mobile_app, {
             mobile_app_user_uuid: mobileAppOptions?.value?.mobile_app?.mobile_app_user_uuid,
             org_id: mobileAppOptions?.value?.mobile_app?.org_id,
             user_id: mobileAppOptions?.value?.mobile_app?.user_id
-        }
-    )
-        .then((response) => {
-            emit('success', 'success', response.data.messages);
+        })
 
-            getMobileAppOptions()
+        emit('success', 'success', response.data.messages);
 
-        }).catch((error) => {
-            emit('error', error)
-        }).finally(() => {
-            isMobileAppLoading.remove = false
-            mobileApp.value = false
-        });
+
+        getMobileAppOptions()
+    } catch (error) {
+        emit('error', error)
+    } finally {
+        isMobileAppLoading.remove = false
+        mobileApp.value = false
+    }
 }
 
 const handleMobileAppResetButtonClick = async () => {
     isMobileAppLoading.reset = true
-    axios.post(props.options.routes.reset_mobile_app,
-        {
+    try {
+        await saveExtensionBeforeMobileAppAction()
+
+        const response = await axios.post(props.options.routes.reset_mobile_app, {
             extension_uuid: props.options.item.extension_uuid,
-            email: props.options.item.email,
             org_id: mobileAppOptions?.value?.mobile_app?.org_id,
             user_id: mobileAppOptions?.value?.mobile_app?.user_id
-        }
-    )
-        .then((response) => {
-            mobileApp.value = response.data;
-            // console.log(mobileApp.value);
+        })
 
-            emit('success', 'success', response.data.messages);
+        mobileApp.value = response.data;
+        // console.log(mobileApp.value);
 
-            getMobileAppOptions()
+        emit('success', 'success', response.data.messages);
 
-        }).catch((error) => {
-            emit('error', error)
-        }).finally(() => {
-            isMobileAppLoading.reset = false
-        });
+        getMobileAppOptions()
+    } catch (error) {
+        emit('error', error)
+    } finally {
+        isMobileAppLoading.reset = false
+    }
 }
 
 const handleMobileAppDeactivateButtonClick = async () => {
     isMobileAppLoading.deactivate = true
-    axios.post(props.options.routes.deactivate_mobile_app,
-        {
+    try {
+        const response = await axios.post(props.options.routes.deactivate_mobile_app, {
             mobile_app_user_uuid: mobileAppOptions?.value?.mobile_app?.mobile_app_user_uuid,
             ext: props.options.item.extension,
             org_id: mobileAppOptions?.value?.mobile_app?.org_id,
             conn_id: mobileAppOptions?.value?.mobile_app?.conn_id,
             user_id: mobileAppOptions?.value?.mobile_app?.user_id
-        }
-    )
-        .then((response) => {
+        })
 
-            emit('success', 'success', response.data.messages);
+        emit('success', 'success', response.data.messages);
 
-            getMobileAppOptions()
+        getMobileAppOptions()
 
-        }).catch((error) => {
-            emit('error', error)
-        }).finally(() => {
-            isMobileAppLoading.deactivate = false
-            mobileApp.value = null
-        });
+    } catch (error) {
+        emit('error', error)
+    } finally {
+        isMobileAppLoading.deactivate = false
+        mobileApp.value = null
+    }
 }
 
 const handleMobileAppActivateButtonClick = async () => {
     mobileApp.value = null
     isMobileAppLoading.activate = true
-    axios.post(props.options.routes.activate_mobile_app,
-        {
+    try {
+        await saveExtensionBeforeMobileAppAction()
+
+        const response = await axios.post(props.options.routes.activate_mobile_app, {
             extension_uuid: props.options.item.extension_uuid,
-            email: props.options.item.email,
             org_id: mobileAppOptions?.value?.mobile_app?.org_id,
             user_id: mobileAppOptions?.value?.mobile_app?.user_id
-        }
-    )
-        .then((response) => {
-            mobileApp.value = response.data;
-            // console.log(mobileApp.value);
+        })
 
-            emit('success', 'success', response.data.messages);
+        mobileApp.value = response.data;
+        // console.log(mobileApp.value);
 
-            getMobileAppOptions()
+        emit('success', 'success', response.data.messages);
 
-        }).catch((error) => {
-            emit('error', error)
-        }).finally(() => {
-            isMobileAppLoading.activate = false
-        });
+        getMobileAppOptions()
+    } catch (error) {
+        emit('error', error)
+    } finally {
+        isMobileAppLoading.activate = false
+    }
 }
 
 

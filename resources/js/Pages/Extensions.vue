@@ -618,7 +618,7 @@ const handleBulkActionRequest = (action) => {
         confirmDeleteAction.value = () => executeBulkDelete();
     }
     if (action === 'bulk_update') {
-        getItemOptions();
+        getItemOptions(null, { include_mobile_app_bulk: true });
         bulkUpdateModalTrigger.value = true;
     }
 };
@@ -768,10 +768,12 @@ const renderRequestedPage = (url) => {
 };
 
 
-const getItemOptions = (itemUuid = null) => {
+const getItemOptions = (itemUuid = null, extraPayload = {}) => {
     itemOptions.value = {}
-    const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
-    isModalLoading.value = true
+    const payload = {
+        ...extraPayload,
+        ...(itemUuid ? { item_uuid: itemUuid } : {}),
+    };    isModalLoading.value = true
     axios.post(props.routes.item_options, payload)
         .then((response) => {
             itemOptions.value = response.data;

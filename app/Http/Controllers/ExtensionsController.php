@@ -769,6 +769,25 @@ class ExtensionsController extends Controller
         // 2) Permissions array
         $permissions = $this->getUserPermissions();
 
+        if ($permissions['manage_mobile_app'] && $request->boolean('include_mobile_app_bulk')) {
+            $routes['bulk_mobile_app_action'] = route('apps.users.bulk-action');
+
+            $mobileAppOrgId = DomainSettings::where('domain_uuid', session('domain_uuid'))
+                ->where('domain_setting_category', 'app shell')
+                ->where('domain_setting_subcategory', 'org_id')
+                ->where('domain_setting_enabled', true)
+                ->value('domain_setting_value');
+
+            if (!empty($mobileAppOrgId)) {
+                try {
+                    $mobileAppConnections = app(\App\Services\RingotelApiService::class)->getConnections($mobileAppOrgId);
+                } catch (\Throwable $e) {
+                    logger('ExtensionsController@getItemOptions mobile app bulk options error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+                    $mobileAppConnections = [];
+                }
+            }
+        }
+
         // 3) Any routes your front end needs
         $routes = array_merge($routes, [
             'store_route'  => route('extensions.store'),

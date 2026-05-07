@@ -230,30 +230,45 @@ class AppsController extends Controller
                     'icon' => 'SettingsApplications',
                     'slug' => 'pbx_features',
                 ],
-                // [
-                //     'name' => 'SMS Settings',
-                //     'icon' => 'AdjustmentsHorizontalIcon',
-                //     'slug' => 'sms_settings',
-                // ],
+                [
+                    'name' => 'SMS Settings',
+                    'icon' => 'ChatBubbleLeftRightIcon',
+                    'slug' => 'sms_settings',
+                ],
+                [
+                    'name' => 'Visual Call Park',
+                    'icon' => 'Squares2X2Icon',
+                    'slug' => 'visual_call_park',
+                ],
+                [
+                    'name' => 'Speed Dial Numbers',
+                    'icon' => 'HashtagIcon',
+                    'slug' => 'speed_dial',
+                ],
+                [
+                    'name' => 'BLF Indicators',
+                    'icon' => 'EyeIcon',
+                    'slug' => 'blf_indicators',
+                ],
+                [
+                    'name' => 'Custom Web Pages',
+                    'icon' => 'GlobeAltIcon',
+                    'slug' => 'custom_web_pages',
+                ],
+                [
+                    'name' => 'Miscellaneous',
+                    'icon' => 'WrenchScrewdriverIcon',
+                    'slug' => 'miscellaneous',
+                ],
+                [
+                    'name' => 'App Updates',
+                    'icon' => 'ArrowPathIcon',
+                    'slug' => 'app_updates',
+                ],
                 // [
                 //     'name' => 'Screen Pop-ups',
                 //     'icon' => 'AdjustmentsHorizontalIcon',
                 //     'slug' => 'screen_popups',
-                // ],
-                // [
-                //     'name' => 'Visual Call Park',
-                //     'icon' => 'AdjustmentsHorizontalIcon',
-                //     'slug' => 'screen_popups',
-                // ],
-                // [
-                //     'name' => 'Speed Dial',
-                //     'icon' => 'AdjustmentsHorizontalIcon',
-                //     'slug' => 'speed_dial',
-                // ],
-                // [
-                //     'name' => 'BLFs',
-                //     'icon' => 'AdjustmentsHorizontalIcon',
-                //     'slug' => 'blfs',
                 // ],
                 // [
                 //     'name' => 'Web Pages',
@@ -936,6 +951,7 @@ class AppsController extends Controller
                     },
 
                 ])
+                ->where('domain_uuid', $currentDomain)
                 ->whereKey(request('extension_uuid'))
                 ->firstOrFail();
 
@@ -1070,6 +1086,28 @@ class AppsController extends Controller
     {
         $this->ringotelApiService = $ringotelApiService;
         try {
+            $currentDomain = session('domain_uuid');
+
+            $extension = QueryBuilder::for(Extensions::class)
+                ->select([
+                    'extension_uuid',
+                    'domain_uuid',
+                    'extension',
+                ])
+                ->with([
+                    'voicemail' => function ($query) use ($currentDomain) {
+                        $query->where('domain_uuid', $currentDomain)
+                            ->select(
+                                'voicemail_uuid',
+                                'domain_uuid',
+                                'voicemail_id',
+                                'voicemail_mail_to',
+                            );
+                    },
+                ])
+                ->where('domain_uuid', $currentDomain)
+                ->whereKey(request('extension_uuid'))
+                ->firstOrFail();
 
             $params = [
                 'org_id' => request('org_id'),
@@ -1088,13 +1126,18 @@ class AppsController extends Controller
 
             // If success and user is activated send user email with credentials
             if ($user) {
+                $email = $extension->email;
+                if ($email) {
+                    $user['email'] = $email;
+                }
+
                 if ($hidePassInEmail == 'true') {
                     // Include get-password link
                     $passwordToken = Str::random(40);
-                    MobileAppPasswordResetLinks::where('extension_uuid', request('extension_uuid'))->delete();
+                    MobileAppPasswordResetLinks::where('extension_uuid', $extension->extension_uuid)->delete();
                     $appCredentials = new MobileAppPasswordResetLinks();
                     $appCredentials->token = $passwordToken;
-                    $appCredentials->extension_uuid = request('extension_uuid');
+                    $appCredentials->extension_uuid = $extension->extension_uuid;
                     $appCredentials->domain = $user['domain'];
                     $appCredentials->save();
 
@@ -1102,7 +1145,7 @@ class AppsController extends Controller
                     $includePasswordUrl = $passwordUrlShow == 'true' ? route('appsGetPasswordByToken', $passwordToken) : null;
                     $user['password_url'] = $includePasswordUrl;
                 }
-                if (request('email')) {
+                if ($email) {
                     SendAppCredentials::dispatch($user)->onQueue('emails');
                 }
             }
@@ -1128,6 +1171,273 @@ class AppsController extends Controller
                 'errors' => ['error' => [$e->getMessage()]],
             ], 404);
         }
+    }
+
+    /**
+     * Submit bulk mobile app user actions for selected extensions.
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function bulkUserAction(Request $request, RingotelApiService $ringotelApiService)
+    {
+        if (!userCheckPermission('extension_edit') || !userCheckPermission('extension_mobile_app_settings')) {
+            return response()->json([
+                'success' => false,
+                'errors' => ['permission' => ['Access denied.']],
+            ], 403);
+        }
+
+        $data = $request->validate([
+            'items' => ['required', 'array', 'min:1'],
+            'items.*' => ['uuid'],
+            'action' => ['required', 'in:enable,add_contact,deactivate,remove,reset_credentials'],
+            'connection' => ['nullable', 'string'],
+        ]);
+
+        if (in_array($data['action'], ['enable', 'add_contact'], true) && empty($data['connection'])) {
+            return response()->json([
+                'success' => false,
+                'errors' => ['connection' => ['A mobile app connection is required.']],
+            ], 422);
+        }
+
+        $orgId = DomainSettings::where('domain_uuid', session('domain_uuid'))
+            ->where('domain_setting_category', 'app shell')
+            ->where('domain_setting_subcategory', 'org_id')
+            ->where('domain_setting_enabled', true)
+            ->value('domain_setting_value');
+
+        if (empty($orgId)) {
+            return response()->json([
+                'success' => false,
+                'errors' => ['mobile_app' => ['Contact your administrator to enable mobile apps.']],
+            ], 422);
+        }
+
+        $hidePassInEmail = get_domain_setting('dont_send_user_credentials');
+        if ($hidePassInEmail === null) {
+            $hidePassInEmail = 'false';
+        }
+
+        $ids = array_values(array_unique($data['items']));
+
+        $extensions = Extensions::query()
+            ->with([
+                'mobile_app',
+                'voicemail' => function ($query) {
+                    $query->where('domain_uuid', session('domain_uuid'))
+                        ->select('voicemail_uuid', 'domain_uuid', 'voicemail_id', 'voicemail_mail_to');
+                },
+            ])
+            ->where('domain_uuid', session('domain_uuid'))
+            ->whereIn('extension_uuid', $ids)
+            ->get();
+
+        $processed = 0;
+        $skipped = max(count($ids) - $extensions->count(), 0);
+        $failed = 0;
+
+        foreach ($extensions as $extension) {
+            try {
+                $mobileApp = $extension->mobile_app;
+                $user = null;
+
+                if ($data['action'] === 'add_contact') {
+                    if ($mobileApp) {
+                        $skipped++;
+                        continue;
+                    }
+
+                    $status = -1;
+
+                    $user = $ringotelApiService->createUser([
+                        'org_id' => $orgId,
+                        'conn_id' => $data['connection'],
+                        'name' => $extension->effective_caller_id_name,
+                        'email' => $extension->email ?: '',
+                        'ext' => $extension->extension,
+                        'username' => $extension->extension,
+                        'authname' => $extension->extension,
+                        'password' => $extension->password,
+                        'status' => $status,
+                        'noemail' => true,
+                    ]);
+
+                    MobileAppUsers::where('extension_uuid', $extension->extension_uuid)->delete();
+
+                    $appUser = new MobileAppUsers();
+                    $appUser->extension_uuid = $extension->extension_uuid;
+                    $appUser->domain_uuid = $extension->domain_uuid;
+                    $appUser->org_id = $orgId;
+                    $appUser->conn_id = $data['connection'];
+                    $appUser->user_id = $user['id'];
+                    $appUser->status = $user['status'];
+                    $appUser->save();
+
+                    $processed++;
+                    continue;
+                }
+
+                if ($data['action'] === 'enable') {
+                    if (!$mobileApp) {
+                        if ($resp = $this->enforceLimit('mobile_app_users', MobileAppUsers::class, 'domain_uuid')) {
+                            $skipped++;
+                            continue;
+                        }
+
+                        $user = $ringotelApiService->createUser([
+                            'org_id' => $orgId,
+                            'conn_id' => $data['connection'],
+                            'name' => $extension->effective_caller_id_name,
+                            'email' => $extension->email ?: '',
+                            'ext' => $extension->extension,
+                            'username' => $extension->extension,
+                            'authname' => $extension->extension,
+                            'password' => $extension->password,
+                            'status' => 1,
+                            'noemail' => true,
+                        ]);
+
+                        MobileAppUsers::where('extension_uuid', $extension->extension_uuid)->delete();
+
+                        $appUser = new MobileAppUsers();
+                        $appUser->extension_uuid = $extension->extension_uuid;
+                        $appUser->domain_uuid = $extension->domain_uuid;
+                        $appUser->org_id = $orgId;
+                        $appUser->conn_id = $data['connection'];
+                        $appUser->user_id = $user['id'];
+                        $appUser->status = $user['status'];
+                        $appUser->save();
+                    } elseif ((int) $mobileApp->status !== 1) {
+                        $user = $ringotelApiService->updateUser([
+                            'user_id' => $mobileApp->user_id,
+                            'org_id' => $mobileApp->org_id,
+                            'conn_id' => $mobileApp->conn_id,
+                            'status' => 1,
+                            'no_email' => true,
+                            'name' => $extension->effective_caller_id_name,
+                            'email' => $extension->email ?: '',
+                            'ext' => $extension->extension,
+                            'password' => $extension->password,
+                        ]);
+
+                        $mobileApp->status = 1;
+                        $mobileApp->save();
+                    } else {
+                        $skipped++;
+                        continue;
+                    }
+
+                    if ($user && $extension->email) {
+                        $user['email'] = $user['email'] ?? $extension->email;
+
+                        if ($hidePassInEmail === 'true') {
+                            $passwordToken = Str::random(40);
+                            MobileAppPasswordResetLinks::where('extension_uuid', $extension->extension_uuid)->delete();
+                            $appCredentials = new MobileAppPasswordResetLinks();
+                            $appCredentials->token = $passwordToken;
+                            $appCredentials->extension_uuid = $extension->extension_uuid;
+                            $appCredentials->domain = $user['domain'];
+                            $appCredentials->save();
+                            $user['password_url'] = route('appsGetPasswordByToken', $passwordToken);
+                        }
+
+                        SendAppCredentials::dispatch($user)->onQueue('emails');
+                    }
+
+                    $processed++;
+                    continue;
+                }
+
+                if (!$mobileApp) {
+                    $skipped++;
+                    continue;
+                }
+
+                if ($data['action'] === 'deactivate') {
+                    if ((int) $mobileApp->status !== 1) {
+                        $skipped++;
+                        continue;
+                    }
+
+                    $ringotelApiService->deactivateUser([
+                        'org_id' => $mobileApp->org_id,
+                        'user_id' => $mobileApp->user_id,
+                    ]);
+
+                    $users = $ringotelApiService->getUsers($mobileApp->org_id, $mobileApp->conn_id);
+                    $user = collect($users)->firstWhere('username', $extension->extension);
+
+                    if ($user) {
+                        $mobileApp->user_id = $user->id;
+                    }
+
+                    $mobileApp->status = -1;
+                    $mobileApp->save();
+                    $processed++;
+                    continue;
+                }
+
+                if ($data['action'] === 'remove') {
+                    $ringotelApiService->deleteUser([
+                        'org_id' => $mobileApp->org_id,
+                        'user_id' => $mobileApp->user_id,
+                    ]);
+
+                    $mobileApp->delete();
+                    $processed++;
+                    continue;
+                }
+
+                if ($data['action'] === 'reset_credentials') {
+                    if ((int) $mobileApp->status !== 1) {
+                        $skipped++;
+                        continue;
+                    }
+
+                    $user = $ringotelApiService->resetPassword([
+                        'org_id' => $mobileApp->org_id,
+                        'user_id' => $mobileApp->user_id,
+                        'noemail' => true,
+                    ]);
+
+                    if ($user && $extension->email) {
+                        $user['email'] = $user['email'] ?? $extension->email;
+
+                        if ($hidePassInEmail === 'true') {
+                            $passwordToken = Str::random(40);
+                            MobileAppPasswordResetLinks::where('extension_uuid', $extension->extension_uuid)->delete();
+                            $appCredentials = new MobileAppPasswordResetLinks();
+                            $appCredentials->token = $passwordToken;
+                            $appCredentials->extension_uuid = $extension->extension_uuid;
+                            $appCredentials->domain = $user['domain'];
+                            $appCredentials->save();
+                            $user['password_url'] = route('appsGetPasswordByToken', $passwordToken);
+                        }
+
+                        SendAppCredentials::dispatch($user)->onQueue('emails');
+                    }
+
+                    $processed++;
+                    continue;
+                }
+            } catch (\Throwable $e) {
+                $failed++;
+                logger('AppsController@bulkUserAction item error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine(), [
+                    'extension_uuid' => $extension->extension_uuid,
+                    'action' => $data['action'],
+                ]);
+            }
+        }
+
+        return response()->json([
+            'messages' => [
+                'success' => [
+                    'Mobile app bulk action completed successfully.',
+                    "Processed {$processed}, skipped " . ($skipped + $failed) . '.',
+                ],
+            ],
+        ], 200);
     }
 
 
@@ -1172,6 +1482,7 @@ class AppsController extends Controller
                     },
 
                 ])
+                ->where('domain_uuid', $currentDomain)
                 ->whereKey(request('extension_uuid'))
                 ->firstOrFail();
 
