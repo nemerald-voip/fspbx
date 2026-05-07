@@ -33,6 +33,7 @@ use App\Http\Controllers\FaxesController;
 use App\Http\Controllers\FaxInboxController;
 use App\Http\Controllers\FaxLogController;
 use App\Http\Controllers\FaxSentController;
+use App\Http\Controllers\FirewallController;
 use App\Http\Controllers\GreetingsController;
 use App\Http\Controllers\GatewayController;
 use App\Http\Controllers\GroupsController;
@@ -347,6 +348,12 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/conferences/bulk-copy', [ConferenceController::class, 'bulkCopy'])->name('conferences.bulk.copy');
     Route::post('/conferences/bulk-delete', [ConferenceController::class, 'bulkDelete'])->name('conferences.bulk.delete');
     Route::post('/conferences/bulk-toggle', [ConferenceController::class, 'bulkToggle'])->name('conferences.bulk.toggle');
+
+    // Firewall
+    Route::get('/firewall/data', [FirewallController::class, 'getData'])->name('firewall.data');
+    Route::post('/firewall/block', [FirewallController::class, 'store'])->name('firewall.block');
+    Route::post('/firewall/unblock', [FirewallController::class, 'destroy'])->name('firewall.unblock');
+    Route::post('/firewall/select-all', [FirewallController::class, 'selectAll'])->name('firewall.select.all');
 
     // Conference Controls
     Route::post('/conference-controls', [ConferenceControlController::class, 'store'])->name('conference-controls.store');

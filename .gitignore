@@ -22,3 +22,4 @@ modules_statuses.json
 
 #codex
 .codex/
+.agents/

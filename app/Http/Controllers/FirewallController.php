@@ -22,6 +22,7 @@ class FirewallController extends Controller
     public $sortOrder;
     protected $viewName = 'Firewall';
     protected $searchable = ['hostname', 'ip', 'filter', 'extension', 'user_agent'];
+    protected $sortable = ['hostname', 'ip', 'filter', 'extension', 'user_agent', 'date', 'status'];
 
     public function __construct()
     {
@@ -39,12 +40,9 @@ class FirewallController extends Controller
         return Inertia::render(
             $this->viewName,
             [
-                'data' => function () {
-                    return $this->getData();
-                },
-
                 'routes' => [
                     'current_page' => route('firewall.index'),
+                    'data_route' => route('firewall.data'),
                     'unblock' => route('firewall.unblock'),
                     'block' => route('firewall.block'),
                     'select_all' => route('firewall.select.all'),
@@ -56,14 +54,29 @@ class FirewallController extends Controller
     /**
      * Get data.
      */
-    public function getData($paginate = 50)
+    public function getData(Request $request, $paginate = 50)
     {
-        if (!empty(request('filterData.search'))) {
-            $this->filters['search'] = request('filterData.search');
+        if (!userCheckPermission("firewall_list_view")) {
+            return response()->json([
+                'messages' => ['error' => ['Access denied.']],
+            ], 403);
         }
 
-        $this->sortField = request()->get('sortField', 'ip');
-        $this->sortOrder = request()->get('sortOrder', 'asc');
+        $this->filters = [];
+
+        if (!empty($request->input('filter.search'))) {
+            $this->filters['search'] = $request->input('filter.search');
+        } elseif (!empty($request->input('filterData.search'))) {
+            $this->filters['search'] = $request->input('filterData.search');
+        }
+
+        $sort = (string) $request->input('sort', $request->input('sortField', 'ip'));
+        $this->sortOrder = str_starts_with($sort, '-') || $request->input('sortOrder') === 'desc' ? 'desc' : 'asc';
+        $this->sortField = ltrim($sort, '-');
+
+        if (!in_array($this->sortField, $this->sortable, true)) {
+            $this->sortField = 'ip';
+        }
 
         $data = $this->builder($this->filters);
 
@@ -476,50 +489,17 @@ class FirewallController extends Controller
     public function selectAll()
     {
         try {
-            $ips = [];
-            $process = new Process(['sudo', '-n', 'iptables', '-L', '-n']);
-            $process->setTimeout(10);
-            $process->run();
-
-            if (!$process->isSuccessful()) {
-                throw new ProcessFailedException($process);
+            if (!userCheckPermission("firewall_list_view")) {
+                return response()->json([
+                    'messages' => ['error' => ['Access denied.']],
+                ], 403);
             }
 
-            $output = $process->getOutput();
-            $lines = explode("\n", $output);
-
-            foreach ($lines as $line) {
-                if (strpos($line, 'DROP') !== false || strpos($line, 'REJECT') !== false) {
-                    $parts = preg_split('/\s+/', trim($line));
-
-                    // Standard `iptables -L -n` output:
-                    // 0:target, 1:prot, 2:opt, 3:source
-                    if (!isset($parts[3])) {
-                        continue;
-                    }
-
-                    $source = $parts[3];
-
-                    if ($source === '0.0.0.0/0') {
-                        continue;
-                    }
-
-                    $isIp = filter_var($source, FILTER_VALIDATE_IP);
-                    $isCidr = (
-                        !$isIp &&
-                        strpos($source, '/') !== false &&
-                        filter_var(explode('/', $source)[0], FILTER_VALIDATE_IP)
-                    );
-
-                    if ($isIp || $isCidr) {
-                        $ips[] = $source;
-                    }
-                }
-            }
+            $ips = $this->getData(request(), false)->pluck('ip');
 
             return response()->json([
                 'messages' => ['success' => ['All items selected']],
-                'items' => array_values(array_unique($ips)),
+                'items' => $ips->values(),
             ], 200);
         } catch (\Exception $e) {
             logger($e->getMessage());

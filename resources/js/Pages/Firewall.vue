@@ -32,25 +32,78 @@
             <template #navigation>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    @pagination-change-page="renderRequestedPage" :bulk-actions="bulkActions"
+                    @bulk-action="handleBulkActionRequest" :has-selected-items="selectedItems.length > 0" />
             </template>
             <template #table-header>
                 <TableColumnHeader header=""
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
-                        :has-selected-items="selectedItems.length > 0" />
-                    <span class="pl-4">Hostname</span>
+                    <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('hostname')">
+                        <span class="mr-2">Hostname</span>
+                        <ChevronUpIcon v-if="sortData.name === 'hostname' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'hostname' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
                 </TableColumnHeader>
 
 
-                <TableColumnHeader header="IP Address" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Filter" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Extension" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="User Agent" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Date" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('ip')">
+                        <span class="mr-2">IP Address</span>
+                        <ChevronUpIcon v-if="sortData.name === 'ip' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'ip' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('filter')">
+                        <span class="mr-2">Filter</span>
+                        <ChevronUpIcon v-if="sortData.name === 'filter' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'filter' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('extension')">
+                        <span class="mr-2">Extension</span>
+                        <ChevronUpIcon v-if="sortData.name === 'extension' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'extension' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('user_agent')">
+                        <span class="mr-2">User Agent</span>
+                        <ChevronUpIcon v-if="sortData.name === 'user_agent' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'user_agent' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('date')">
+                        <span class="mr-2">Date</span>
+                        <ChevronUpIcon v-if="sortData.name === 'date' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'date' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('status')">
+                        <span class="mr-2">Status</span>
+                        <ChevronUpIcon v-if="sortData.name === 'status' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'status' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
                 <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
@@ -162,33 +215,27 @@
 
 <script setup>
 import { computed, onMounted, ref } from "vue";
-import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
-import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
 import Paginator from "./components/general/Paginator.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
-import NotificationSimple from "./components/notifications/Simple.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import CreateNewIpBlockForm from "./components/forms/CreateNewIpBlockForm.vue";
 import Loading from "./components/general/Loading.vue";
 import Badge from "./components/general/Badge.vue";
-import { MagnifyingGlassIcon, } from "@heroicons/vue/24/solid";
-import BulkActionButton from "./components/general/BulkActionButton.vue";
+import { ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon, } from "@heroicons/vue/24/solid";
 import MainLayout from "../Layouts/MainLayout.vue";
 import Notification from "./components/notifications/Notification.vue";
 
-const page = usePage()
 const loading = ref(false)
+const currentPage = ref(1)
 const loadingModal = ref(false)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
 const createModalTrigger = ref(false);
-const editModalTrigger = ref(false);
-const bulkUpdateModalTrigger = ref(false);
 const confirmationModalTrigger = ref(false);
 const confirmationModalLoading = ref(false);
 const createFormSubmiting = ref(null);
@@ -199,15 +246,28 @@ const notificationMessages = ref(null);
 const notificationShow = ref(null);
 
 const props = defineProps({
-    data: Object,
     routes: Object,
-    // itemData: Object,
-    // itemOptions: Object,
 });
 
+const data = ref({
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: 0,
+    to: 0,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
+});
 
 const filterData = ref({
     search: null,
+});
+
+const sortData = ref({
+    name: 'ip',
+    order: 'asc',
 });
 
 
@@ -217,7 +277,7 @@ const bulkActions = computed(() => {
         {
             id: 'bulk_unblock',
             label: 'Unblock',
-            icon: ''
+            icon: 'LinkOffIcon'
         },
 
     ];
@@ -226,37 +286,45 @@ const bulkActions = computed(() => {
 });
 
 onMounted(() => {
-    // console.log(props.data);
+    getData();
 });
 
-const handleEditRequest = (itemUuid) => {
-    editModalTrigger.value = true
-    formErrors.value = null;
-    loadingModal.value = true
+const handleSortRequest = (column) => {
+    if (sortData.value.name === column) {
+        sortData.value.order = sortData.value.order === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortData.value.name = column;
+        sortData.value.order = 'asc';
+    }
 
-    router.get(props.routes.current_page,
-        {
-            itemUuid: itemUuid,
+    getData(currentPage.value);
+};
+
+const getData = (page = 1) => {
+    loading.value = true;
+    currentPage.value = Number(page) || 1;
+
+    let sort = sortData.value.name;
+    if (sortData.value.order === 'desc') {
+        sort = `-${sort}`;
+    }
+
+    axios.get(props.routes.data_route, {
+        params: {
+            filter: filterData.value,
+            page: currentPage.value,
+            sort,
         },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: [
-                'itemData',
-                'itemOptions',
-            ],
-            onSuccess: (page) => {
-                loadingModal.value = false;
-            },
-            onFinish: () => {
-                loadingModal.value = false;
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
-
+    })
+        .then((response) => {
+            data.value = response.data;
+            currentPage.value = response.data.current_page ?? currentPage.value;
+        })
+        .catch(handleErrorResponse)
+        .finally(() => {
+            loading.value = false;
         });
-}
+};
 
 const handleCreateRequest = (form) => {
     createFormSubmiting.value = true;
@@ -266,9 +334,9 @@ const handleCreateRequest = (form) => {
         .then((response) => {
             createFormSubmiting.value = false;
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
             handleModalClose();
             handleClearSelection();
+            getData(1);
         }).catch((error) => {
             createFormSubmiting.value = false;
             handleClearSelection();
@@ -292,7 +360,8 @@ const executeSingleDelete = (ip) => {
         .then((response) => {
             showNotification('success', response.data.messages);
             handleModalClose();
-            handleSearchButtonClick();
+            handleClearSelection();
+            getData(currentPage.value);
             confirmationModalLoading.value = false;
         }).catch((error) => {
             handleModalClose();
@@ -312,16 +381,22 @@ const handleBulkActionRequest = (action) => {
 
 
 const executeBulkDelete = () => {
+    confirmationModalLoading.value = true;
+
     axios.post(props.routes.unblock, { items: selectedItems.value })
         .then((response) => {
             handleModalClose();
+            handleClearSelection();
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+            getData(currentPage.value);
         })
         .catch((error) => {
             handleClearSelection();
             handleModalClose();
             handleErrorResponse(error);
+        })
+        .finally(() => {
+            confirmationModalLoading.value = false;
         });
 }
 
@@ -329,12 +404,11 @@ const executeBulkDelete = () => {
 const handleCreateButtonClick = () => {
     createModalTrigger.value = true
     formErrors.value = null;
-    loadingModal.value = true
-    getItemOptions();
+    loadingModal.value = false
 }
 
 const handleSelectAll = () => {
-    axios.post(props.routes.select_all, filterData._rawValue)
+    axios.post(props.routes.select_all, { filter: filterData.value })
         .then((response) => {
             selectedItems.value = response.data.items;
             selectAll.value = true;
@@ -348,38 +422,9 @@ const handleSelectAll = () => {
 };
 
 
-const handleUnblock = (message_uuid) => {
-    axios.post(props.routes.retry,
-        { 'items': [message_uuid] },
-    )
-        .then((response) => {
-            showNotification('success', response.data.messages);
-
-            handleClearSelection();
-        }).catch((error) => {
-            handleClearSelection();
-            handleFormErrorResponse(error);
-        });
-}
-
-
-
 const handleSearchButtonClick = () => {
-    loading.value = true;
-    router.visit(props.routes.current_page, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-        ],
-        onSuccess: (page) => {
-            loading.value = false;
-            handleClearSelection();
-        }
-    });
+    getData(1);
+    handleClearSelection();
 };
 
 const handleFiltersReset = () => {
@@ -390,44 +435,13 @@ const handleFiltersReset = () => {
 
 
 const renderRequestedPage = (url) => {
-    loading.value = true;
-    router.visit(url, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
-    });
+    if (!url) return;
+
+    const urlObj = new URL(url, window.location.origin);
+    const pageParam = urlObj.searchParams.get('page') ?? 1;
+    getData(pageParam);
 };
 
-
-const getItemOptions = (domain_uuid) => {
-    router.get(props.routes.current_page,
-        {
-            'domain_uuid': domain_uuid,
-        },
-        {
-            preserveScroll: true,
-            preserveState: true,
-            only: [
-                'itemOptions',
-            ],
-            onSuccess: (page) => {
-                loadingModal.value = false;
-            },
-            onFinish: () => {
-                loadingModal.value = false;
-            },
-            onError: (errors) => {
-                console.log(errors);
-            },
-
-        });
-}
 
 const handleFormErrorResponse = (error) => {
     if (error.request?.status == 419) {
@@ -473,7 +487,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.ip);
+        selectedItems.value = data.value.data.map(item => item.ip);
     } else {
         selectedItems.value = [];
     }
@@ -482,8 +496,8 @@ const handleSelectPageItems = () => {
 
 
 const handleClearSelection = () => {
-    selectedItems.value = [],
-        selectPageItems.value = false;
+    selectedItems.value = [];
+    selectPageItems.value = false;
     selectAll.value = false;
 }
 
