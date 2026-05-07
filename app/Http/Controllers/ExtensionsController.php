@@ -810,6 +810,10 @@ class ExtensionsController extends Controller
             'permissions' => $permissions,
             'routes'      => $routes,
             'phone_numbers' => $phone_numbers ?? null,
+            'mobile_app' => [
+                'org_id' => $mobileAppOrgId ?? null,
+                'connections' => $mobileAppConnections ?? [],
+            ],
             'forwarding_types' => $forwardingTypes ?? null,
             'follow_me_destination_options' => $followMeDestinationOptions ?? null,
             'voices' => isset($openAiService) && $openAiService ? $openAiService->getVoices() : null,
