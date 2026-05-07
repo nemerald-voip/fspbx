@@ -51,6 +51,7 @@ const StopIcon = defineAsyncComponent(() => import('@heroicons/vue/20/solid/Stop
 const TrashIcon = defineAsyncComponent(() => import('@heroicons/vue/24/solid/TrashIcon'));
 const EnvelopeIcon = defineAsyncComponent(() => import('@heroicons/vue/24/solid/EnvelopeIcon'));
 const EnvelopeOpenIcon = defineAsyncComponent(() => import('@heroicons/vue/24/solid/EnvelopeOpenIcon'));
+const DocumentDuplicateIcon = defineAsyncComponent(() => import('@heroicons/vue/24/outline/DocumentDuplicateIcon'));
 
 // Define props to accept actions from the parent component
 const props = defineProps({
@@ -69,6 +70,7 @@ const iconMap = {
     SyncIcon,
     EnvelopeIcon,
     EnvelopeOpenIcon,
+    DocumentDuplicateIcon,
 };
 
 const getIconComponent = (iconKey) => {
