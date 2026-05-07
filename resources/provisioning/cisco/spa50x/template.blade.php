@@ -1,4 +1,4 @@
-{{-- version: 1.0.0 --}}
+{{-- version: 1.0.1 --}}
 
 @switch($flavor)
 
@@ -136,7 +136,7 @@
 <Resync_Fails_On_FNF group="Provisioning/Configuration_Profile">Yes</Resync_Fails_On_FNF>
 
 @if(!empty($settings['http_auth_username']))
-<Profile_Rule group="Provisioning/Configuration_Profile">[--uid {{ $settings['http_auth_username'] }} --pwd {{ $settings['http_auth_password'] ?? '' }}]http://{{ $domain_name }}:12480/prov/$MA.xml</Profile_Rule>
+<Profile_Rule group="Provisioning/Configuration_Profile">[--uid {{ $settings['http_auth_username'] }} --pwd {{ $settings['http_auth_password'] ?? '' }}]http://{{ $domain_name }}/prov/$MA.xml</Profile_Rule>
 @else
 <Profile_Rule group="Provisioning/Configuration_Profile">http://{{ $domain_name }}/prov/$MA.xml</Profile_Rule>
 @endif
