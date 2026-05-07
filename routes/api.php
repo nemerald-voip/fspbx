@@ -13,6 +13,7 @@ use App\Http\Controllers\CallTranscriptionController;
 use App\Http\Controllers\CdrsController;
 use App\Http\Controllers\CharPmsWebhookController;
 use App\Http\Controllers\ConferenceCenterController;
+use App\Http\Controllers\ConferenceController;
 use App\Http\Controllers\ConferenceControlController;
 use App\Http\Controllers\ConferenceProfileController;
 use App\Http\Controllers\ConferenceRoomController;
@@ -332,6 +333,16 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/conference-centers/select-all', [ConferenceCenterController::class, 'selectAll'])->name('conference-centers.select.all');
     Route::post('/conference-centers/bulk-delete', [ConferenceCenterController::class, 'bulkDelete'])->name('conference-centers.bulk.delete');
     Route::post('/conference-centers/bulk-toggle', [ConferenceCenterController::class, 'bulkToggle'])->name('conference-centers.bulk.toggle');
+
+    // Conferences
+    Route::post('conferences', [ConferenceController::class, 'store'])->name('conferences.store');
+    Route::put('conferences/{conference}', [ConferenceController::class, 'update'])->name('conferences.update');
+    Route::get('/conferences/data', [ConferenceController::class, 'getData'])->name('conferences.data');
+    Route::post('/conferences/item-options', [ConferenceController::class, 'getItemOptions'])->name('conferences.item.options');
+    Route::post('/conferences/select-all', [ConferenceController::class, 'selectAll'])->name('conferences.select.all');
+    Route::post('/conferences/bulk-copy', [ConferenceController::class, 'bulkCopy'])->name('conferences.bulk.copy');
+    Route::post('/conferences/bulk-delete', [ConferenceController::class, 'bulkDelete'])->name('conferences.bulk.delete');
+    Route::post('/conferences/bulk-toggle', [ConferenceController::class, 'bulkToggle'])->name('conferences.bulk.toggle');
 
     // Conference Controls
     Route::post('/conference-controls', [ConferenceControlController::class, 'store'])->name('conference-controls.store');

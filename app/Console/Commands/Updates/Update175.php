@@ -17,6 +17,7 @@ class Update175
         try {
             DB::transaction(function () {
                 $this->updateActiveConferenceMenuItems();
+                $this->updateConferenceMenuItems();
                 $this->updateConferenceCenterMenuItems();
                 $this->removeConferenceControlMenuItems();
                 $this->removeConferenceProfileMenuItems();
@@ -36,6 +37,15 @@ class Update175
             'Conference Centers',
             '/app/conference_centers/conference_centers.php',
             '/conference-centers'
+        );
+    }
+
+    private function updateConferenceMenuItems(): void
+    {
+        $this->updateMenuItemLink(
+            'Conferences',
+            '/app/conferences/conferences.php',
+            '/conferences'
         );
     }
 
