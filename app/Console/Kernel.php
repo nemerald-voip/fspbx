@@ -85,6 +85,12 @@ class Kernel extends ConsoleKernel
             $schedule->job(new \App\Jobs\CheckFaxServiceStatus())->everyThirtyMinutes();
         }
 
+        // Reap stuck outbound faxes — required safety net for the new
+        // event-driven outbound flow (recovers from lost webhooks, orphaned
+        // FS calls, primary crashes mid-send). Always on; runs on each server
+        // independently with atomic state transitions deduplicating overlap.
+        $schedule->job(new \App\Jobs\CheckStuckFaxesJob())->everyFiveMinutes();
+
         // Find stale Ringotel users
         if (isset($jobSettings['audit_stale_ringotel_users']) && $jobSettings['audit_stale_ringotel_users'] === "true") {
             $schedule->job(new \App\Jobs\AuditStaleRingotelUsers())->monthlyOn(1, '00:00');

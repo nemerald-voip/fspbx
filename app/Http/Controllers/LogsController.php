@@ -58,6 +58,7 @@ class LogsController extends Controller
                     'fax_logs' => route('fax-logs.data'),
                     'fax_logs_select_all' => route('fax-logs.select.all'),
                     'fax_logs_bulk_delete' => route('fax-logs.bulk.delete'),
+                    'fax_logs_retry' => route('fax-logs.retry', ['faxLog' => ':faxLog']),
 
                 ],
                 'permissions' => function () {
@@ -180,6 +181,7 @@ class LogsController extends Controller
         $permissions['location_delete'] = userCheckPermission('location_delete');
         $permissions['fax_log_view'] = userCheckPermission('fax_log_view');
         $permissions['fax_log_delete'] = userCheckPermission('fax_log_delete');
+        $permissions['fax_send'] = userCheckPermission('fax_send');
 
         return $permissions;
     }

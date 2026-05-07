@@ -58,6 +58,11 @@ abstract class FaxWebhookProfile implements WebhookProfile
             $domainRecord = FaxAllowedDomainNames::where('domain', $domain)->first();
             if ($domainRecord) {
                 $request['fax_uuid'] = $domainRecord->fax_uuid;
+                fax_webhook_debug('FaxWebhookProfile: sender authorized by allowed domain', [
+                    'from'     => $fromEmail,
+                    'domain'   => $domain,
+                    'fax_uuid' => $request['fax_uuid'],
+                ]);
                 return true;
             }
 
@@ -66,6 +71,12 @@ abstract class FaxWebhookProfile implements WebhookProfile
             foreach ($users as $user) {
                 if (!$user->domain->faxes->isEmpty()) {
                     $request['fax_uuid'] = $user->domain->faxes->first()->fax_uuid;
+                    fax_webhook_debug('FaxWebhookProfile: sender authorized by user email', [
+                        'from'        => $fromEmail,
+                        'user_uuid'   => $user->user_uuid ?? null,
+                        'domain_uuid' => $user->domain_uuid ?? null,
+                        'fax_uuid'    => $request['fax_uuid'],
+                    ]);
                     break;
                 }
             }
@@ -76,6 +87,12 @@ abstract class FaxWebhookProfile implements WebhookProfile
                 foreach ($voicemails as $voicemail) {
                     if (!$voicemail->domain->faxes->isEmpty()) {
                         $request['fax_uuid'] = $voicemail->domain->faxes->first()->fax_uuid;
+                        fax_webhook_debug('FaxWebhookProfile: sender authorized by voicemail email', [
+                            'from'           => $fromEmail,
+                            'voicemail_uuid' => $voicemail->voicemail_uuid ?? null,
+                            'domain_uuid'    => $voicemail->domain_uuid ?? null,
+                            'fax_uuid'       => $request['fax_uuid'],
+                        ]);
                         break;
                     }
                 }
@@ -86,6 +103,10 @@ abstract class FaxWebhookProfile implements WebhookProfile
                 $emailRecord = FaxAllowedEmails::where('email', $fromEmail)->first();
                 if ($emailRecord) {
                     $request['fax_uuid'] = $emailRecord->fax_uuid;
+                    fax_webhook_debug('FaxWebhookProfile: sender authorized by allowed email', [
+                        'from'     => $fromEmail,
+                        'fax_uuid' => $request['fax_uuid'],
+                    ]);
                 }
             }
 
@@ -96,6 +117,12 @@ abstract class FaxWebhookProfile implements WebhookProfile
             return true;
         } catch (Throwable $e) {
             Log::alert('Fax sender not authorized: ' . $e->getMessage());
+            fax_webhook_debug('FaxWebhookProfile: sender not authorized', [
+                'from'            => $fromEmail,
+                'raw_destination' => $rawDestination,
+                'error'           => $e->getMessage(),
+            ]);
+
             SendFaxInvalidEmailNotification::dispatch([
                 'from'            => $fromEmail,
                 'fax_destination' => $rawDestination,
@@ -121,6 +148,13 @@ abstract class FaxWebhookProfile implements WebhookProfile
             $countryCode,
             PhoneNumberFormat::E164
         );
+
+        fax_webhook_debug('FaxWebhookProfile: destination normalized', [
+            'fax_uuid'        => $faxUuid,
+            'country_code'    => $countryCode,
+            'raw_destination' => $phoneNumber,
+            'fax_destination' => $request['fax_destination'],
+        ]);
     }
 
     /**

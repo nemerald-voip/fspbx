@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use libphonenumber\PhoneNumberFormat;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
@@ -21,6 +22,8 @@ class FaxLogs extends Model
 
     protected $appends = [
         'fax_date_formatted',
+        'source_formatted',
+        'destination_formatted',
     ];
 
     protected $casts = [
@@ -46,8 +49,46 @@ class FaxLogs extends Model
             ->format('g:i:s A M d, Y');
     }
 
+    public function getSourceFormattedAttribute()
+    {
+        if (empty($this->source)) {
+            return null;
+        }
+
+        $countryCode = $this->phoneCountryCode();
+
+        return $countryCode
+            ? formatPhoneNumber($this->source, $countryCode, PhoneNumberFormat::NATIONAL)
+            : $this->source;
+    }
+
+    public function getDestinationFormattedAttribute()
+    {
+        if (empty($this->destination)) {
+            return null;
+        }
+
+        $countryCode = $this->phoneCountryCode();
+
+        return $countryCode
+            ? formatPhoneNumber($this->destination, $countryCode, PhoneNumberFormat::NATIONAL)
+            : $this->destination;
+    }
+
+    private function phoneCountryCode(): ?string
+    {
+        return $this->domain_uuid
+            ? get_domain_setting('country', $this->domain_uuid)
+            : null;
+    }
+
     public function fax()
     {
         return $this->belongsTo(Faxes::class, 'fax_uuid', 'fax_uuid');
+    }
+
+    public function outboundFax()
+    {
+        return $this->belongsTo(OutboundFax::class, 'outbound_fax_uuid', 'outbound_fax_uuid');
     }
 }

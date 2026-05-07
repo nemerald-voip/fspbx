@@ -3,6 +3,7 @@
 namespace App\Http\Webhooks\Jobs;
 
 use App\Jobs\CreateVoicemailEscalationNotificationsJob;
+use App\Jobs\HandleFaxTxEventJob;
 use App\Jobs\HandleVoicemailEscalationAttemptEventJob;
 use App\Jobs\ProcessFaxWebhookEventJob;
 use App\Jobs\SendNewVoicemailNotificationByEmail;
@@ -134,8 +135,21 @@ class ProcessFreeswitchWebhookJob extends SpatieProcessWebhookJob
                         $response = $this->transcribeCall($data);
                         break;
 
-                    case 'fax.received':
                     case 'fax.sent':
+                        // Outbound faxes originated by SendFaxJob carry an
+                        // outbound_fax_uuid channel var; route those to the new
+                        // handler. Anything else (legacy origination paths) falls
+                        // through to ProcessFaxWebhookEventJob.
+                        if (!empty($data['outbound_fax_uuid'])) {
+                            fax_webhook_debug('ProcessFreeswitchWebhookJob: routing fax.sent to HandleFaxTxEventJob', [
+                                'outbound_fax_uuid'         => $data['outbound_fax_uuid'],
+                                'outbound_fax_attempt_uuid' => $data['outbound_fax_attempt_uuid'] ?? null,
+                            ]);
+                            HandleFaxTxEventJob::dispatch($data)->onQueue('faxes');
+                            break;
+                        }
+                        // fall through to legacy handler
+                    case 'fax.received':
                         if (!$this->validateFaxPayload($data)) {
                             Log::warning('[Webhook] Invalid fax payload', $payload);
                             break;

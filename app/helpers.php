@@ -185,129 +185,273 @@ if (!function_exists('event_socket_request_cmd')) {
     }
 }
 if (!function_exists('outbound_route_to_bridge')) {
-    function outbound_route_to_bridge($domain_uuid, $destination_number, ?array $channel_variables = null)
-    {
+    function outbound_route_to_bridge(
+        $domain_uuid,
+        $destination_number,
+        ?array $channel_variables = null,
+        bool $withMeta = false,
+        ?string $prefix = null,
+        bool $fallbackWithoutPrefix = false
+    ) {
+        $channel_variables = $channel_variables ?? [];
+        $destination_number = trim((string) $destination_number);
+        $prefix = trim((string) $prefix);
+        $primaryDestination = $prefix !== '' ? $prefix . $destination_number : $destination_number;
 
-        $destination_number = trim($destination_number);
-        preg_match('/^[\*\+0-9]*$/', $destination_number, $matches, PREG_OFFSET_CAPTURE);
-        if (count($matches) > 0) {
-            //not found, continue to process the function
-        } else {
-            //not a number, brige_array and exit the function
-            $bridge_array[0] = $destination_number;
-            return $bridge_array;
+        fax_webhook_debug('outbound_route_to_bridge called', [
+            'domain_uuid' => $domain_uuid,
+            'destination_number' => $primaryDestination,
+            'raw_destination_number' => $destination_number,
+            'prefix' => $prefix,
+            'fallback_without_prefix' => $fallbackWithoutPrefix,
+            'channel_variables' => $channel_variables,
+        ]);
+
+        // If this is not a dialable number/prefix pattern, return it unchanged.
+        if (!preg_match('/^[\*\+0-9]*$/', $primaryDestination)) {
+            return $withMeta
+                ? [
+                    'bridges' => [$primaryDestination],
+                    'selected_route' => null,
+                    'matched_routes' => [],
+                    'route_destination' => $primaryDestination,
+                    'fallback_used' => false,
+                ]
+                : [$primaryDestination];
         }
 
-        //get the hostname
+        // Get the hostname.
         $hostname = trim(event_socket_request_cmd('api switchname'));
-        if (strlen($hostname) == 0) {
+        if (strlen($hostname) === 0) {
             $hostname = 'unknown';
         }
 
-        $dialplans = Dialplans::where('dialplan_enabled', 'true')
+        $dialplans = Dialplans::query()
+            ->with([
+                'dialplan_details' => function ($q) {
+                    $q->where('dialplan_detail_enabled', 'true')
+                        ->orderBy('dialplan_detail_order');
+                },
+            ])
+            ->where('dialplan_enabled', 'true')
             ->where('app_uuid', '8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3')
             ->where(function ($q) use ($domain_uuid) {
                 $q->where('domain_uuid', $domain_uuid)
-                    ->orWhere('domain_uuid', null);
+                    ->orWhereNull('domain_uuid');
             })
             ->where(function ($q) use ($hostname) {
                 $q->where('hostname', $hostname)
-                    ->orWhere('hostname', null);
+                    ->orWhereNull('hostname')
+                    ->orWhere('hostname', '');
             })
+            // Prefer domain-specific routes before global routes.
+            ->orderByRaw('CASE WHEN domain_uuid = ? THEN 0 ELSE 1 END', [$domain_uuid])
+            ->orderBy('dialplan_order')
+            ->orderBy('dialplan_name')
             ->get([
                 'dialplan_uuid',
+                'domain_uuid',
+                'hostname',
                 'dialplan_continue',
-                'dialplan_name'
+                'dialplan_name',
+                'dialplan_order',
             ]);
 
-        // if (is_array($result) && @sizeof($result) != 0) {
-        //     foreach ($result as &$row) {
-        //         $dialplan_uuid = $row["dialplan_uuid"];
-        //         $dialplan_detail_uuid = $row["dialplan_detail_uuid"];
-        //         $outbound_routes[$dialplan_uuid][$dialplan_detail_uuid]["dialplan_detail_tag"] = $row["dialplan_detail_tag"];
-        //         $outbound_routes[$dialplan_uuid][$dialplan_detail_uuid]["dialplan_detail_type"] = $row["dialplan_detail_type"];
-        //         $outbound_routes[$dialplan_uuid][$dialplan_detail_uuid]["dialplan_detail_data"] = $row["dialplan_detail_data"];
-        //         $outbound_routes[$dialplan_uuid]["dialplan_continue"] = $row["dialplan_continue"];
-        //     }
-        // }
-
         if ($dialplans->isEmpty()) {
-            return;
+            return $withMeta
+                ? [
+                    'bridges' => [],
+                    'selected_route' => null,
+                    'matched_routes' => [],
+                    'route_destination' => $primaryDestination,
+                    'fallback_used' => false,
+                ]
+                : [];
         }
 
-        $x = 0;
-        foreach ($dialplans as $dialplan) {
-            $condition_match = false;
-            foreach ($dialplan->dialplan_details as $dialplan_detail) {
-                if ($dialplan_detail['dialplan_detail_tag'] == "condition") {
-
-                    if ($dialplan_detail['dialplan_detail_type'] == "destination_number") {
-                        $pattern = '/' . $dialplan_detail['dialplan_detail_data'] . '/';
-                        preg_match($pattern, $destination_number, $matches, PREG_OFFSET_CAPTURE);
-                        if (count($matches) == 0) {
-                            $condition_match = 'false';
-                        } else {
-                            $condition_match = 'true';
-                            if (isset($matches[1])) {
-                                $regex_match_1 = $matches[1][0];
-                            }
-                            if (isset($matches[2])) {
-                                $regex_match_2 = $matches[2][0];
-                            }
-                            if (isset($matches[3])) {
-                                $regex_match_3 = $matches[1][0];
-                            }
-                            if (isset($matches[4])) {
-                                $regex_match_4 = $matches[4][0];
-                            }
-                            if (isset($matches[5])) {
-                                $regex_match_5 = $matches[5][0];
-                            }
-                        }
-                    } elseif ($dialplan_detail['dialplan_detail_type'] == "\${toll_allow}") {
-                        $pattern = '/' . $dialplan_detail['dialplan_detail_data'] . '/';
-                        preg_match($pattern, $channel_variables['toll_allow'], $matches, PREG_OFFSET_CAPTURE);
-                        if (count($matches) == 0) {
-                            $condition_match = 'false';
-                        } else {
-                            $condition_match = 'true';
-                        }
-                    }
-                }
+        $expandData = function (string $data, array $regexMatches, array $vars): string {
+            // Replace regex captures: $1, $2, $3, etc.
+            foreach ($regexMatches as $index => $value) {
+                $data = str_replace('$' . $index, $value, $data);
             }
 
-            if ($condition_match == 'true') {
+            // Replace known ${variables}; leave unknown variables untouched.
+            $data = preg_replace_callback('/\$\{([^}]+)\}/', function ($matches) use ($vars) {
+                $key = $matches[1];
+
+                return array_key_exists($key, $vars)
+                    ? (string) $vars[$key]
+                    : $matches[0];
+            }, $data);
+
+            return $data;
+        };
+
+        $matchDestination = function (string $routeDestination) use ($dialplans, $channel_variables, $expandData): array {
+            $bridges = [];
+            $matchedRoutes = [];
+            $selectedRoute = null;
+
+            foreach ($dialplans as $dialplan) {
+                $conditionMatch = true;
+                $hasDestinationCondition = false;
+                $regexMatches = [];
+
                 foreach ($dialplan->dialplan_details as $dialplan_detail) {
-                    // log::alert($dialplan_detail);
-                    $dialplan_detail_data = $dialplan_detail['dialplan_detail_data'];
-                    if ($dialplan_detail['dialplan_detail_tag'] == "action" && $dialplan_detail['dialplan_detail_type'] == "bridge" && $dialplan_detail_data != "\${enum_auto_route}") {
-                        if (isset($regex_match_1)) {
-                            $dialplan_detail_data = str_replace("\$1", $regex_match_1, $dialplan_detail_data);
+                    if ($dialplan_detail['dialplan_detail_tag'] !== 'condition') {
+                        continue;
+                    }
+
+                    $conditionType = $dialplan_detail['dialplan_detail_type'];
+                    $conditionData = $dialplan_detail['dialplan_detail_data'];
+
+                    if ($conditionType === 'destination_number') {
+                        $hasDestinationCondition = true;
+
+                        $pattern = '/' . $conditionData . '/';
+
+                        if (!preg_match($pattern, $routeDestination, $matches)) {
+                            $conditionMatch = false;
+                            break;
                         }
-                        if (isset($regex_match_2)) {
-                            $dialplan_detail_data = str_replace("\$2", $regex_match_2, $dialplan_detail_data);
+
+                        foreach ($matches as $index => $value) {
+                            if ($index === 0) {
+                                continue;
+                            }
+
+                            $regexMatches[$index] = $value;
                         }
-                        if (isset($regex_match_3)) {
-                            $dialplan_detail_data = str_replace("\$3", $regex_match_3, $dialplan_detail_data);
+
+                        continue;
+                    }
+
+                    if ($conditionType === '${toll_allow}' || $conditionType === "\${toll_allow}") {
+                        $tollAllow = $channel_variables['toll_allow'] ?? '';
+                        $pattern = '/' . $conditionData . '/';
+
+                        if (!preg_match($pattern, $tollAllow)) {
+                            $conditionMatch = false;
+                            break;
                         }
-                        if (isset($regex_match_4)) {
-                            $dialplan_detail_data = str_replace("\$4", $regex_match_4, $dialplan_detail_data);
-                        }
-                        if (isset($regex_match_5)) {
-                            $dialplan_detail_data = str_replace("\$5", $regex_match_5, $dialplan_detail_data);
-                        }
-                        $bridge_array[$x] = $dialplan_detail_data;
-                        $x++;
+
+                        continue;
+                    }
+
+                    // Other conditions such as ${user_exists} are intentionally ignored
+                    // to preserve the old behavior of this helper.
+                }
+
+                if (!$hasDestinationCondition || !$conditionMatch) {
+                    continue;
+                }
+
+                $routeBridges = [];
+                $luaActions = [];
+
+                foreach ($dialplan->dialplan_details as $dialplan_detail) {
+                    if ($dialplan_detail['dialplan_detail_tag'] !== 'action') {
+                        continue;
+                    }
+
+                    $actionType = $dialplan_detail['dialplan_detail_type'];
+                    $actionData = $expandData(
+                        (string) $dialplan_detail['dialplan_detail_data'],
+                        $regexMatches,
+                        $channel_variables
+                    );
+
+                    if (
+                        in_array($actionType, ['lua', 'luarun'], true)
+                        && $actionData !== ''
+                    ) {
+                        $luaActions[] = [
+                            'application' => $actionType,
+                            'data' => $actionData,
+                        ];
+
+                        continue;
+                    }
+
+                    if (
+                        $actionType === 'bridge'
+                        && $actionData !== '${enum_auto_route}'
+                        && $actionData !== "\${enum_auto_route}"
+                    ) {
+                        $routeBridges[] = $actionData;
+                        $bridges[] = $actionData;
                     }
                 }
 
-                if ($dialplan["dialplan_continue"] == "false") {
+                $matchedRoute = [
+                    'dialplan_uuid' => $dialplan->dialplan_uuid,
+                    'dialplan_name' => $dialplan->dialplan_name,
+                    'dialplan_order' => $dialplan->dialplan_order,
+                    'dialplan_continue' => $dialplan->dialplan_continue,
+                    'bridges' => $routeBridges,
+                    'lua_actions' => $luaActions,
+                ];
+
+                $matchedRoutes[] = $matchedRoute;
+
+                if ($selectedRoute === null && !empty($routeBridges)) {
+                    $selectedRoute = $matchedRoute;
+                }
+
+                fax_webhook_debug('outbound_route_to_bridge matched route', [
+                    'destination_number' => $routeDestination,
+                    'dialplan_uuid' => $dialplan->dialplan_uuid,
+                    'dialplan_name' => $dialplan->dialplan_name,
+                    'dialplan_order' => $dialplan->dialplan_order,
+                    'dialplan_continue' => $dialplan->dialplan_continue,
+                    'bridges' => $routeBridges,
+                    'lua_actions' => $luaActions,
+                ]);
+
+                if ($dialplan->dialplan_continue === 'false') {
                     break;
                 }
             }
+
+            return [
+                'bridges' => $bridges,
+                'selected_route' => $selectedRoute,
+                'matched_routes' => $matchedRoutes,
+            ];
+        };
+
+        $result = $matchDestination($primaryDestination);
+        $matchedDestination = $primaryDestination;
+        $fallbackUsed = false;
+
+        if (empty($result['bridges']) && $fallbackWithoutPrefix && $prefix !== '') {
+            fax_webhook_debug('outbound_route_to_bridge no prefixed route matched, trying unprefixed destination', [
+                'domain_uuid' => $domain_uuid,
+                'destination_number' => $primaryDestination,
+                'fallback_destination_number' => $destination_number,
+                'channel_variables' => $channel_variables,
+            ]);
+
+            $fallbackResult = $matchDestination($destination_number);
+
+            if (!empty($fallbackResult['bridges'])) {
+                $result = $fallbackResult;
+                $matchedDestination = $destination_number;
+                $fallbackUsed = true;
+            }
         }
 
-        return $bridge_array ?? [];
+        if ($withMeta) {
+            return [
+                'bridges' => $result['bridges'],
+                'selected_route' => $result['selected_route'],
+                'matched_routes' => $result['matched_routes'],
+                'route_destination' => $matchedDestination,
+                'fallback_used' => $fallbackUsed,
+            ];
+        }
+
+        return $result['bridges'];
     }
 }
 
@@ -2004,6 +2148,17 @@ if (!function_exists('buildDestinationAction')) {
         function messaging_webhook_debug(string $message, array $context = []): void
         {
             if (!config('messaging.webhook_debug')) {
+                return;
+            }
+
+            logger($message . (!empty($context) ? ' ' . json_encode($context) : ''));
+        }
+    }
+
+    if (!function_exists('fax_webhook_debug')) {
+        function fax_webhook_debug(string $message, array $context = []): void
+        {
+            if (!config('fax.webhook_debug')) {
                 return;
             }
 

@@ -10,12 +10,11 @@ use App\Data\FaxData;
 use App\Models\Faxes;
 use App\Models\FaxLogs;
 use App\Models\FaxFiles;
-use App\Data\FaxFileData;
 use App\Models\Dialplans;
 use App\Models\FaxQueues;
-use App\Data\FaxQueueData;
 use App\Data\FaxDetailData;
 use App\Models\FusionCache;
+use App\Models\OutboundFax;
 use Illuminate\Support\Str;
 use App\Models\Destinations;
 use Illuminate\Http\Request;
@@ -48,43 +47,9 @@ class FaxesController extends Controller
             return redirect('/');
         }
 
-        $perPage = 50;
         $currentDomain = session('domain_uuid');
 
-        $faxes = QueryBuilder::for(Faxes::class)
-            // only users in the current domain
-            ->where('domain_uuid', $currentDomain)
-            ->inUsersLocations()
-            ->select([
-                'fax_uuid',
-                'domain_uuid',
-                'fax_email',
-                'fax_name',
-                'fax_extension',
-                'fax_destination_number',
-                'fax_caller_id_number',
-                'fax_description',
-            ])
-            // allow ?filter[username]=foo or ?filter[user_email]=bar
-            ->allowedFilters([
-                // Only email and name_formatted
-                AllowedFilter::callback('search', function ($query, $value) {
-                    $query->where(function ($q) use ($value) {
-                        $q->where('fax_name', 'ilike', "%{$value}%")
-                            ->orWhere('fax_email', 'ilike', "%{$value}%")
-                            ->orWhere('fax_caller_id_number', 'ilike', "%{$value}%")
-                            ->orWhere('fax_extension', 'ilike', "%{$value}%");
-                    });
-                }),
-            ])
-            // allow ?sort=-username or ?sort=add_date
-            ->allowedSorts(['fax_name', 'fax_caller_id_number'])
-            // let your front-end optionally eager-load relations
-            ->defaultSort('fax_caller_id_number')
-            ->paginate($perPage);
-
-
-        // wrap in your DTO
+        $faxes = $this->getFaxServers();
         $faxesDto = FaxData::collect($faxes);
 
         // logger($faxesDto);
@@ -147,6 +112,7 @@ class FaxesController extends Controller
 
                 'routes' => [
                     'current_page' => route('faxes.index'),
+                    'data_route' => route('faxes.data'),
                     'recent_outbound_route' => route('faxes.recent-outbound'),
                     'recent_inbound_route' => route('faxes.recent-inbound'),
                     'item_options' => route('faxes.item.options'),
@@ -157,6 +123,56 @@ class FaxesController extends Controller
                 ]
             ]
         );
+    }
+
+    /**
+     * Get fax server table data.
+     */
+    public function getData()
+    {
+        if (!userCheckPermission("fax_view")) {
+            abort(403);
+        }
+
+        return FaxData::collect($this->getFaxServers());
+    }
+
+    private function getFaxServers()
+    {
+        $perPage = 50;
+        $currentDomain = session('domain_uuid');
+
+        return QueryBuilder::for(Faxes::class)
+            ->where('domain_uuid', $currentDomain)
+            ->inUsersLocations()
+            ->select([
+                'fax_uuid',
+                'domain_uuid',
+                'fax_email',
+                'fax_name',
+                'fax_extension',
+                'fax_destination_number',
+                'fax_caller_id_number',
+                'fax_description',
+            ])
+            ->allowedFilters([
+                AllowedFilter::callback('search', function ($query, $value) {
+                    $query->where(function ($q) use ($value) {
+                        $q->where('fax_name', 'ilike', "%{$value}%")
+                            ->orWhere('fax_email', 'ilike', "%{$value}%")
+                            ->orWhere('fax_caller_id_number', 'ilike', "%{$value}%")
+                            ->orWhere('fax_extension', 'ilike', "%{$value}%");
+                    });
+                }),
+            ])
+            ->allowedSorts([
+                'fax_name',
+                'fax_extension',
+                'fax_caller_id_number',
+                'fax_email',
+            ])
+            ->defaultSort('fax_caller_id_number')
+            ->paginate($perPage);
     }
 
     /**
@@ -242,27 +258,39 @@ class FaxesController extends Controller
 
         $currentDomain = session('domain_uuid');
 
-        $outboundFaxes = QueryBuilder::for(FaxQueues::class)
+        $outboundFaxes = QueryBuilder::for(OutboundFax::class)
             ->select([
-                'fax_queue_uuid',
+                'outbound_fax_uuid',
                 'domain_uuid',
-                'fax_caller_id_number',
-                'fax_number',
-                'fax_date',
-                'fax_status',
+                'fax_uuid',
+                'source',
+                'destination',
+                'status',
+                'retry_count',
+                'retry_limit',
+                'created_at',
             ])
             ->where('domain_uuid', $currentDomain)
-            ->inUsersLocations()
-            ->whereBetween('fax_date', $period)
-            ->orderByDesc('fax_date')
+            ->whereHas('faxServer', function ($q) {
+                $q->inUsersLocations();
+            })
+            ->with([
+                'logs' => function ($q) {
+                    $q->select([
+                        'fax_log_uuid',
+                        'outbound_fax_uuid',
+                        'fax_result_code',
+                        'fax_result_text',
+                        'fax_success',
+                        'fax_date',
+                    ])->orderByDesc('fax_date');
+                },
+            ])
+            ->whereBetween('created_at', $period)
+            ->orderByDesc('created_at')
             ->limit(5)
             ->get();
 
-        // logger($outboundFaxes);
-
-        $outboundFaxesDto = FaxQueueData::collect($outboundFaxes);
-
-        // logger($outboundFaxesDto);
         return response()->json([
             'data'        => $outboundFaxes,
 
@@ -279,42 +307,29 @@ class FaxesController extends Controller
         $currentDomain = session('domain_uuid');
 
 
-        $inboundFaxes = QueryBuilder::for(\App\Models\FaxFiles::class)
+        $inboundFaxes = QueryBuilder::for(FaxLogs::class)
             ->select([
-                'fax_file_uuid',
+                'fax_log_uuid',
                 'fax_uuid',
                 'domain_uuid',
-                'fax_caller_id_number',
+                'source',
+                'destination',
                 'fax_date',
                 'fax_epoch',
             ])
             ->where('domain_uuid', $currentDomain)
-            ->inUsersLocations()
+            ->whereNull('outbound_fax_uuid')
+            ->where('fax_file', 'ilike', '%/inbox/%')
+            ->whereHas('fax', function ($q) {
+                $q->inUsersLocations();
+            })
             ->whereBetween('fax_date', $period)
-            ->where('fax_mode', 'rx')
-
-            ->with([
-                'fax' => function ($q) {
-                    $q->select([
-                        'fax_uuid',
-                        'fax_extension',
-                        'fax_caller_id_number',
-                        'domain_uuid',
-                    ]);
-                },
-            ])
-
             ->orderByDesc('fax_date')
             ->limit(5)
             ->get();
 
-        // logger($inboundFaxes);
-
-        $inboundFaxesDto = FaxFileData::collect($inboundFaxes);
-
-        // logger($inboundFaxesDto);
         return response()->json([
-            'data'        => $inboundFaxesDto,
+            'data'        => $inboundFaxes,
 
         ]);
     }
@@ -469,6 +484,7 @@ class FaxesController extends Controller
         $phone_numbers = QueryBuilder::for(Faxes::class)
             ->allowedSorts('fax_caller_id_number')
             ->where('domain_uuid', $currentDomain)
+            ->defaultSort('fax_caller_id_number')
             ->get([
                 'fax_uuid',
                 'fax_caller_id_number',
@@ -477,7 +493,7 @@ class FaxesController extends Controller
             // ->each->append('label', 'destination_number_e164')
             ->map(function ($fax) {
                 return [
-                    'value' => $fax->fax_caller_id_number,
+                    'value' => $fax->fax_uuid,
                     'label' => $fax->fax_caller_id_number_formatted . ' - ' . $fax->fax_name,
                 ];
             })
@@ -1119,23 +1135,25 @@ class FaxesController extends Controller
             ], [], $attributes);
 
             if ($validator->fails()) {
-                // return response()->json(['error' => $validator->errors()]);
                 return response()->json([
-                    'error' => $validator->errors()->first() // Sending the first error message for simplicity
-                ], 400); // Bad Request status code
+                    'message' => $validator->errors()->first(),
+                    'errors'  => $validator->errors(),
+                ], 422);
             }
 
             $data['send_confirmation'] = $request->has('send_confirmation') && $data['send_confirmation'] == 'true';
             // logger($data['send_confirmation']);
 
             if (!isset($data['fax_uuid'])) {
-                $fax = Faxes::where('domain_uuid', session('domain_uuid'))
-                    ->where('fax_caller_id_number', $data['sender_fax_number'])
-                    ->first();
-                if (!$fax) {
-                    throw new \Exception("There was a problem scheduling your fax. Fax server not found.");
-                }
-                $data['fax_uuid'] = $fax->fax_uuid;
+                $data['fax_uuid'] = $data['sender_fax_number'];
+            }
+
+            $fax = Faxes::where('domain_uuid', session('domain_uuid'))
+                ->where('fax_uuid', $data['fax_uuid'])
+                ->first();
+
+            if (!$fax) {
+                throw new \Exception("There was a problem scheduling your fax. Fax server not found.");
             }
 
             // Persist uploads to the fax disk and build attachment metadata
@@ -1171,7 +1189,8 @@ class FaxesController extends Controller
                 . " at " . $e->getFile() . ":" . $e->getLine());
 
             return response()->json([
-                'messages' => ['error' => [$e->getMessage()]]
+                'message' => $e->getMessage(),
+                'errors'  => ['request' => [$e->getMessage()]],
             ], 500);
         }
     }

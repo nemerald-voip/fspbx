@@ -2,20 +2,19 @@
 
 namespace App\Mail;
 
-use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Attachment;
+use Illuminate\Mail\Mailables\Content;
 
-class FaxReceived extends BaseMailable
+class FaxSent extends BaseMailable
 {
     public function __construct(array $attributes = [])
     {
-        $sender = $attributes['caller_id_number']
-            ?? $attributes['caller_id_name']
-            ?? '';
-        $pages = $attributes['fax_pages'] ?? '';
+        $destination = $attributes['fax_destination'] ?? '';
+        $pages       = $attributes['fax_pages'] ?? '';
 
         $attributes['email_subject'] = $attributes['email_subject']
-            ?? 'Fax received from ' . $sender
+            ?? 'Fax sent'
+                . ($destination ? ' to ' . $destination : '')
                 . ($pages !== '' ? ' (' . $pages . ' page' . ((string) $pages === '1' ? '' : 's') . ')' : '');
 
         parent::__construct($attributes);
@@ -24,8 +23,8 @@ class FaxReceived extends BaseMailable
     public function content(): Content
     {
         return new Content(
-            view: 'emails.fax.received',
-            text: 'emails.fax.received-text',
+            view: 'emails.fax.success',
+            text: 'emails.fax.success-text',
         );
     }
 
@@ -40,7 +39,7 @@ class FaxReceived extends BaseMailable
         return [
             Attachment::fromPath($path)
                 ->as($this->attributes['attachment_name'] ?? basename($path))
-                ->withMime($this->attributes['attachment_mime'] ?? 'application/octet-stream'),
+                ->withMime($this->attributes['attachment_mime'] ?? 'application/pdf'),
         ];
     }
 }

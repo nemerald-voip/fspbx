@@ -41,8 +41,19 @@ class CreateNewFaxRequest extends FormRequest
 
     public function prepareForValidation()
     {
+        $recipient = $this->input('recipient');
 
-        // logger($this);
+        $this->merge([
+            'recipient' => is_string($recipient)
+                ? preg_replace('/\D+/', '', trim($recipient))
+                : $recipient,
+            'sender_fax_number' => is_string($this->input('sender_fax_number'))
+                ? trim($this->input('sender_fax_number'))
+                : $this->input('sender_fax_number'),
+            'fax_message' => is_string($this->input('fax_message'))
+                ? trim($this->input('fax_message'))
+                : $this->input('fax_message'),
+        ]);
 
     }
 }

@@ -14,6 +14,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use libphonenumber\PhoneNumberFormat;
 use Symfony\Component\Process\Process;
 use Throwable;
 
@@ -55,8 +56,18 @@ class ProcessFaxWebhookEventJob implements ShouldQueue
                 $faxLog->fax_log_uuid = $faxLogUuid;
             }
 
+            $phoneCountryCode = get_domain_setting('country', $domainUuid);
+
             $faxLog->domain_uuid = $domainUuid;
             $faxLog->fax_uuid = $faxUuid;
+            $faxLog->source = $this->formatFaxPhoneNumber(
+                $this->stringOrNull($this->data['caller_id_number'] ?? null),
+                $phoneCountryCode
+            );
+            $faxLog->destination = $this->formatFaxPhoneNumber(
+                $this->resolveFaxDestination($callDirection),
+                $phoneCountryCode
+            );
             $faxLog->fax_success = $this->stringOrNull($this->data['fax_success'] ?? null);
             $faxLog->fax_result_code = $this->numericOrNull($this->data['fax_result_code'] ?? null);
             $faxLog->fax_result_text = $this->stringOrNull($this->data['fax_result_text'] ?? null);
@@ -89,12 +100,7 @@ class ProcessFaxWebhookEventJob implements ShouldQueue
 
                 $faxFile->fax_uuid = $faxUuid;
                 $faxFile->fax_mode = $callDirection === 'outbound' ? 'tx' : 'rx';
-                $faxFile->fax_destination = $callDirection === 'outbound'
-                    ? ($this->stringOrNull($this->data['fax_destination_number'] ?? null)
-                        ?? $this->stringOrNull($this->data['sip_to_user'] ?? null))
-                    : ($this->stringOrNull($this->data['caller_destination'] ?? null)
-                        ?? $this->stringOrNull($this->data['sip_to_user'] ?? null)
-                        ?? $this->stringOrNull($fax->fax_extension ?? null));
+                $faxFile->fax_destination = $this->resolveFaxDestination($callDirection);
                 $faxFile->fax_file_type = pathinfo($faxFilePath, PATHINFO_EXTENSION) ?: 'tif';
                 $faxFile->fax_file_path = $faxFilePath;
                 $faxFile->fax_caller_id_name = $this->stringOrNull($this->data['caller_id_name'] ?? null);
@@ -281,6 +287,60 @@ class ProcessFaxWebhookEventJob implements ShouldQueue
         $value = trim((string) $value);
 
         return $value === '' ? null : $value;
+    }
+
+    private function resolveFaxDestination(?string $callDirection): ?string
+    {
+        if ($callDirection === 'inbound') {
+            return $this->firstDataValue([
+                'caller_destination',
+                'sip_to_user',
+                'destination_number',
+                'channel_destination_number',
+            ]);
+        }
+
+        if ($callDirection === 'outbound') {
+            return $this->firstDataValue([
+                'destination_number',
+                'caller_destination',
+                'sip_to_user',
+                'channel_destination_number',
+            ]);
+        }
+
+        return $this->firstDataValue([
+            'destination_number',
+            'caller_destination',
+            'sip_to_user',
+            'channel_destination_number',
+        ]);
+    }
+
+    private function firstDataValue(array $keys): ?string
+    {
+        foreach ($keys as $key) {
+            $value = $this->stringOrNull($this->data[$key] ?? null);
+
+            if ($value !== null) {
+                return $value;
+            }
+        }
+
+        return null;
+    }
+
+    private function formatFaxPhoneNumber(?string $number, ?string $countryCode): ?string
+    {
+        if (!$number) {
+            return null;
+        }
+
+        if (!$countryCode) {
+            return $number;
+        }
+
+        return formatPhoneNumber($number, $countryCode, PhoneNumberFormat::E164);
     }
 
     private function numericOrNull($value): int|float|null

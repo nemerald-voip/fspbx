@@ -2,7 +2,17 @@
   <MainLayout>
     <div class="m-3">
       <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-        <template #title>Fax Logs</template>
+        <template #title>
+          <h1 class="text-xl font-bold text-gray-900 flex items-center">
+            <a :href="props.routes.faxes_index" class="hover:text-indigo-600">
+              Fax Dashboard
+            </a>
+            <svg class="mx-3 h-5 w-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+            <span class="font-medium text-gray-500">{{ props.fax_label ? `${props.fax_label} Logs` : 'Fax Logs' }}</span>
+          </h1>
+        </template>
 
         <template #filters>
           <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
@@ -86,7 +96,7 @@
           <TableColumnHeader header="Transferred Pages" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
           <TableColumnHeader header="Total Pages" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
           <!-- <TableColumnHeader header="Destination" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" /> -->
-          <TableColumnHeader v-if="permissions.delete" header="" class="px-2 py-3.5 text-center text-sm font-semibold text-gray-900" />
+          <TableColumnHeader v-if="permissions.delete || permissions.retry" header="" class="px-2 py-3.5 text-center text-sm font-semibold text-gray-900" />
         </template>
 
         <template v-if="permissions.delete && (selectPageItems || selectAll)" v-slot:current-selection>
@@ -129,26 +139,20 @@
               </div>
             </TableField>
 
-            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_file?.fax_caller_id_number_formatted ?? ''" />
+            <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="faxSource(row)" />
 
             <TableField
                 class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                :text="
-                    row.fax_file?.fax_mode === 'rx'
-                        ? (row.fax?.fax_caller_id_number_formatted ?? row.fax_file?.fax_caller_id_number_formatted ?? '')
-                        : row.fax_file?.fax_mode === 'tx'
-                            ? (row.fax_file?.fax_destination_formatted ?? '')
-                            : ''
-                "
+                :text="faxDestination(row)"
             />
 
             <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
               <template #default>
                 <span
                   class="inline-flex items-center rounded-md px-2 py-1 text-xs font-semibold"
-                  :class="row.fax_success == '1' ? 'bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20' : 'bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20'"
+                  :class="statusBadge(row).classes"
                 >
-                  {{ row.fax_success == "1" ? 'Success' : 'Failed' }}
+                  {{ statusBadge(row).text }}
                 </span>
               </template>
             </TableField>
@@ -164,10 +168,18 @@
             <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_document_total_pages" />
             <!-- <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.fax_uri ?? ''" /> -->
 
-            <TableField v-if="permissions.delete" class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+            <TableField v-if="permissions.delete || permissions.retry" class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
               <template #action-buttons>
                 <div class="flex items-center whitespace-nowrap justify-end">
-                  <ejs-tooltip :content="'Delete'" position="TopCenter" target="#delete_tooltip_target">
+                  <ejs-tooltip v-if="canRetry(row)" :content="'Retry outbound fax'" position="TopCenter" target="#retry_tooltip_target">
+                    <div id="retry_tooltip_target">
+                      <ArrowPathIcon
+                        @click="handleRetryButtonClick(row)"
+                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                      />
+                    </div>
+                  </ejs-tooltip>
+                  <ejs-tooltip v-if="permissions.delete" :content="'Delete'" position="TopCenter" target="#delete_tooltip_target">
                     <div id="delete_tooltip_target">
                       <TrashIcon
                         @click="handleDeleteButtonClick(row.fax_log_uuid)"
@@ -238,7 +250,7 @@ import Loading from "./components/general/Loading.vue";
 import Notification from "./components/notifications/Notification.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 
-import { MagnifyingGlassIcon, TrashIcon } from "@heroicons/vue/24/solid";
+import { ArrowPathIcon, MagnifyingGlassIcon, TrashIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import { registerLicense } from "@syncfusion/ej2-base";
 
@@ -268,6 +280,8 @@ const data = ref({
 });
 
 const props = defineProps({
+  fax_uuid: String,
+  fax_label: String,
   startPeriod: String,
   endPeriod: String,
   timezone: String,
@@ -281,6 +295,7 @@ const startLocal = moment.utc(props.startPeriod).tz(props.timezone);
 const endLocal = moment.utc(props.endPeriod).tz(props.timezone);
 
 const filterData = ref({
+  fax_uuid: props.fax_uuid,
   search: null,
   status: "all",
   dateRange: [
@@ -329,6 +344,7 @@ const handleUpdateDateRange = (newDateRange) => {
 };
 
 const handleFiltersReset = () => {
+  filterData.value.fax_uuid = props.fax_uuid;
   filterData.value.search = null;
   filterData.value.status = "all";
   filterData.value.dateRange = [
@@ -348,6 +364,22 @@ const handleBulkActionRequest = (action) => {
 const handleDeleteButtonClick = (uuid) => {
   showDeleteConfirmationModal.value = true;
   confirmDeleteAction.value = () => executeBulkDelete([uuid]);
+};
+
+const handleRetryButtonClick = (row) => {
+  if (!canRetry(row)) return;
+
+  const url = props.routes.retry.replace(":faxLog", encodeURIComponent(row.fax_log_uuid));
+
+  axios
+    .post(url)
+    .then((response) => {
+      showNotification("success", response.data.messages);
+      handleSearchButtonClick();
+    })
+    .catch((error) => {
+      handleErrorResponse(error);
+    });
 };
 
 const executeBulkDelete = (items = selectedItems.value) => {
@@ -422,6 +454,81 @@ const handleErrorResponse = (error) => {
   }
 };
 
+const faxSource = (row) => {
+  return row.source_formatted ?? row.source ?? row.fax_file?.fax_caller_id_number_formatted ?? "";
+};
+
+const faxDestination = (row) => {
+  if (row.destination_formatted || row.destination) {
+    return row.destination_formatted ?? row.destination;
+  }
+
+  if (row.fax_file?.fax_mode === "rx") {
+    return row.fax?.fax_caller_id_number_formatted ?? row.fax_file?.fax_caller_id_number_formatted ?? "";
+  }
+
+  if (row.fax_file?.fax_mode === "tx") {
+    return row.fax_file?.fax_destination_formatted ?? "";
+  }
+
+  return "";
+};
+
+const canRetry = (row) => {
+  return Boolean(
+    props.permissions?.retry &&
+    row?.outbound_fax_uuid &&
+    String(row?.fax_success ?? "0") !== "1" &&
+    row?.outbound_fax?.status === "failed"
+  );
+};
+
+const isRetryRequestedFromRow = (row) => {
+  return Boolean(
+    row?.fax_log_uuid &&
+    row?.outbound_fax?.response?.includes(`Manual retry requested from fax log ${row.fax_log_uuid}`)
+  );
+};
+
+const statusBadge = (row) => {
+  if (String(row?.fax_success ?? "0") === "1") {
+    return {
+      text: "Success",
+      classes: "bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20",
+    };
+  }
+
+  if (isRetryRequestedFromRow(row)) {
+    switch (row?.outbound_fax?.status) {
+      case "waiting":
+        return {
+          text: "Retry queued",
+          classes: "bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-600/20",
+        };
+      case "sending":
+        return {
+          text: "Sending",
+          classes: "bg-indigo-50 text-indigo-700 ring-1 ring-inset ring-indigo-600/20",
+        };
+      case "trying":
+      case "busy":
+        return {
+          text: "Retrying",
+          classes: "bg-yellow-50 text-yellow-800 ring-1 ring-inset ring-yellow-600/20",
+        };
+      case "sent":
+        return {
+          text: "Retried",
+          classes: "bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20",
+        };
+    }
+  }
+
+  return {
+    text: "Failed",
+    classes: "bg-red-50 text-red-700 ring-1 ring-inset ring-red-600/20",
+  };
+};
 
 const fileBase = (path) => {
   if (!path) return "";

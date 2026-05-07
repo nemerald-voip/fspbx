@@ -420,6 +420,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('faxes/new-fax-options', [FaxesController::class, 'getNewFaxOptions'])->name('faxes.new.fax.options');
     Route::post('/faxes/bulk-delete', [FaxesController::class, 'bulkDelete'])->name('faxes.bulk.delete');
     Route::post('/faxes/bulk-update', [FaxesController::class, 'bulkUpdate'])->name('faxes.bulk.update');
+    Route::get('faxes/data', [FaxesController::class, 'getData'])->name('faxes.data');
     Route::get('faxes/recent-outbound', [FaxesController::class, 'getRecentOutbound'])->name('faxes.recent-outbound');
     Route::get('faxes/recent-inbound', [FaxesController::class, 'getRecentInbound'])->name('faxes.recent-inbound');
     Route::get('/faxes/newfax/create', [FaxesController::class, 'new'])->name('faxes.newfax');
@@ -440,6 +441,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/fax/sent/bulk-delete', [FaxSentController::class, 'bulkDelete'])->name('fax-sent.bulk.delete');
     Route::post('/fax/sent/select-all', [FaxSentController::class, 'selectAll'])->name('fax-sent.select.all');
     Route::get('/fax/log/data', [FaxLogController::class, 'getData'])->name('fax-logs.data');
+    Route::post('/fax/log/{faxLog}/retry', [FaxLogController::class, 'retryOutbound'])->name('fax-logs.retry');
     Route::post('/fax/log/bulk-delete', [FaxLogController::class, 'bulkDelete'])->name('fax-logs.bulk.delete');
     Route::post('/fax/log/select-all', [FaxLogController::class, 'selectAll'])->name('fax-logs.select.all');
     // Route::get('/fax/sent/{faxQueue}/{status?}', [FaxesController::class, 'updateStatus'])->name('faxes.file.updateStatus');

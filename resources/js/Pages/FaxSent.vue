@@ -3,9 +3,16 @@
 
         <div class="m-3">
             <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-                <template #title>Sent Faxes</template>
-
-                <template #action>
+                <template #title>
+                    <h1 class="text-xl font-bold text-gray-900 flex items-center">
+                        <a :href="props.routes.faxes_index" class="hover:text-indigo-600">
+                            Fax Dashboard
+                        </a>
+                        <svg class="mx-3 h-5 w-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                        <span class="font-medium text-gray-500">{{ props.fax_label ? `${props.fax_label} Sent` : 'Sent Faxes' }}</span>
+                    </h1>
                 </template>
 
                 <template #filters>
@@ -263,6 +270,7 @@ const data = ref({
 
 const props = defineProps({
     fax_uuid: String,
+    fax_label: String,
     startPeriod: String,
     endPeriod: String,
     timezone: String,

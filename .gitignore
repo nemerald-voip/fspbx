@@ -19,3 +19,6 @@ modules_statuses.json
 
 # Scribe generated docs/cache
 .scribe/
+
+#codex
+.codex/

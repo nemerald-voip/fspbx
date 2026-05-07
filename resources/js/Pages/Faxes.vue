@@ -66,19 +66,19 @@
                 </template>
 
                 <template #table-body>
-                    <tr v-for="row in recentOutboundFaxes.data" :key="row.fax_queue_uuid">
+                    <tr v-for="row in recentOutboundFaxes.data" :key="row.outbound_fax_uuid">
                         <!-- Checkbox + From -->
                         <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500">
                             <div class="flex items-center">
                                 <div class="ml-2">
-                                    {{ row.fax_caller_id_number_formatted }}
+                                    {{ row.source_formatted ?? row.source ?? '' }}
                                 </div>
                             </div>
                         </TableField>
 
                         <!-- To -->
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                            {{ row.fax_number_formatted }}
+                            {{ row.destination_formatted ?? row.destination ?? '' }}
                         </TableField>
 
                         <!-- Date -->
@@ -88,10 +88,10 @@
 
                         <!-- Status -->
                         <TableField class="px-2 py-2 text-sm">
-                            <Badge :text="row.fax_status"
-                                :backgroundColor="determineColor(row.fax_status).backgroundColor"
-                                :textColor="determineColor(row.fax_status).textColor"
-                                :ringColor="determineColor(row.fax_status).ringColor" />
+                            <Badge :text="row.status"
+                                :backgroundColor="determineColor(row.status).backgroundColor"
+                                :textColor="determineColor(row.status).textColor"
+                                :ringColor="determineColor(row.status).ringColor" />
                         </TableField>
 
 
@@ -138,15 +138,15 @@
                 </template>
 
                 <template #table-body>
-                    <tr v-for="row in recentInboundFaxes.data" :key="row.fax_file_uuid">
+                    <tr v-for="row in recentInboundFaxes.data" :key="row.fax_log_uuid">
                         <!-- From -->
                         <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500">
-                            {{ row.fax_caller_id_number_formatted }}
+                            {{ row.source_formatted ?? row.source ?? '' }}
                         </TableField>
 
-                        <!-- To (extension) -->
+                        <!-- To -->
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                            {{ row.fax?.fax_caller_id_number_formatted ?? '-' }}
+                            {{ row.destination_formatted ?? row.destination ?? '' }}
                         </TableField>
 
                         <!-- Date -->
@@ -162,7 +162,7 @@
 
                 <template #empty>
                     <!-- Conditional rendering for 'no records' message -->
-                    <div v-if="!recentOutboundLoading && recentInboundFaxes?.data?.length === 0"
+                    <div v-if="!recentInboundLoading && recentInboundFaxes?.data?.length === 0"
                         class="text-center my-5 ">
                         <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
                         <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
@@ -173,7 +173,7 @@
                 </template>
 
                 <template #loading>
-                    <Loading :show="recentOutboundLoading" />
+                    <Loading :show="recentInboundLoading" />
                 </template>
 
 
@@ -226,24 +226,58 @@
             <template #table-header>
                 <!-- Checkbox + Name column -->
                 <TableColumnHeader
-                    class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
                     <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems"
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                    <BulkActionButton :actions="bulkActions" @bulk-action="handleBulkActionRequest"
-                        :has-selected-items="selectedItems.length > 0" />
-                    <span class="pl-4">Name</span>
+                    <div class="pl-4 flex items-center cursor-pointer select-none"
+                        @click="handleSortRequest('fax_name')">
+                        <span class="mr-2">Name</span>
+                        <ChevronUpIcon v-if="sortData.name === 'fax_name' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'fax_name' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
                 </TableColumnHeader>
 
                 <!-- Extension -->
-                <TableColumnHeader header="Extension"
-                    class="hidden lg:table-cell px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader
+                    class="hidden lg:table-cell px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none"
+                        @click="handleSortRequest('fax_extension')">
+                        <span class="mr-2">Extension</span>
+                        <ChevronUpIcon v-if="sortData.name === 'fax_extension' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'fax_extension' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
 
                 <!-- Caller ID -->
-                <TableColumnHeader header="Caller ID"
-                    class="hidden lg:table-cell px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader
+                    class="hidden lg:table-cell px-2 py-3.5 text-left text-sm font-semibold text-gray-900 min-w-32">
+                    <div class="flex items-center cursor-pointer select-none"
+                        @click="handleSortRequest('fax_caller_id_number')">
+                        <span class="mr-2 whitespace-nowrap">Caller ID</span>
+                        <ChevronUpIcon
+                            v-if="sortData.name === 'fax_caller_id_number' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon
+                            v-else-if="sortData.name === 'fax_caller_id_number' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
 
                 <!-- Email column -->
-                <TableColumnHeader header="Email" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none"
+                        @click="handleSortRequest('fax_email')">
+                        <span class="mr-2">Email</span>
+                        <ChevronUpIcon v-if="sortData.name === 'fax_email' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'fax_email' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
 
                 <!-- Tools column -->
                 <TableColumnHeader header="Tools" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
@@ -280,7 +314,7 @@
                         <div class="flex items-center">
                             <input v-if="row.fax_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
                                 :value="row.fax_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
-                            <div class="ml-9"
+                            <div class="ml-4"
                                 :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.fax_server_update, }"
                                 @click="page.props.auth.can.fax_server_update && handleEditButtonClick(row.fax_uuid)">
                                 <span class="flex items-center">
@@ -295,14 +329,20 @@
                         :text="row.fax_extension" />
 
                     <!-- Caller ID -->
-                    <TableField class="hidden lg:table-cell px-2 py-2 text-sm text-gray-500"
+                    <TableField class="hidden lg:table-cell px-2 py-2 text-sm text-gray-500 whitespace-nowrap min-w-32"
                         :text="row.fax_caller_id_number_formatted" />
 
                     <TableField class="px-2 py-2 text-sm">
-                        <span v-for="(email, i) in (row.fax_email || '').split(',').filter(e => e.trim())" :key="i">
-                            <Badge :text="email.trim()" backgroundColor="bg-gray-100" textColor="text-gray-700"
+                        <div class="flex max-w-2xl flex-wrap gap-1">
+                            <Badge v-for="(email, i) in visibleFaxEmails(row)" :key="`${email}-${i}`" :text="email"
+                                backgroundColor="bg-gray-100" textColor="text-gray-700"
                                 ringColor="ring-gray-400/20" class="px-2 py-1 text-xs font-semibold" />
-                        </span>
+                            <button v-if="hiddenFaxEmailCount(row) > 0" type="button"
+                                class="inline-flex items-center rounded-md bg-indigo-50 px-2 py-1 text-xs font-semibold text-indigo-700 ring-1 ring-inset ring-indigo-200 hover:bg-indigo-100"
+                                @click="toggleEmailExpansion(row.fax_uuid)">
+                                {{ isEmailExpanded(row.fax_uuid) ? 'Show less' : `+${hiddenFaxEmailCount(row)} more` }}
+                            </button>
+                        </div>
                     </TableField>
 
 
@@ -400,11 +440,11 @@
 
     <UpdateFaxServerForm :show="showUpdateModal" :options="itemOptions" :loading="isModalLoading"
         :header="'Update Fax Server - ' + (itemOptions?.item?.fax_name ?? 'loading')" @close="showUpdateModal = false"
-        @error="handleErrorResponse" @success="showNotification" @refresh-data="handleSearchButtonClick" />
+        @error="handleErrorResponse" @success="showNotification" @refresh-data="refreshCurrentPage" />
 
     <CreateFaxServerForm :show="showCreateModal" :options="itemOptions" :loading="isModalLoading"
         :header="'Create New Fax Server'" @close="showCreateModal = false" @error="handleErrorResponse"
-        @success="showNotification" @refresh-data="handleSearchButtonClick" />
+        @success="showNotification" @refresh-data="refreshCurrentPage" />
 
     <NewFaxForm :show="showNewFaxModal" :options="newFaxOptions" :loading="isModalLoading"
         :header="'Create New Fax Server'" @close="showNewFaxModal = false" @error="handleErrorResponse"
@@ -424,7 +464,6 @@
 import { computed, ref, onMounted } from "vue";
 import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
-import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
 import TableField from "./components/general/TableField.vue";
@@ -432,7 +471,7 @@ import Paginator from "./components/general/Paginator.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon } from "@heroicons/vue/24/solid";
+import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon, ChevronUpIcon, ChevronDownIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import BulkActionButton from "./components/general/BulkActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -451,6 +490,7 @@ const loading = ref(false)
 const recentOutboundLoading = ref(false)
 const recentInboundLoading = ref(false)
 const isModalLoading = ref(false)
+const currentPage = ref(1)
 const selectAll = ref(false);
 const selectedItems = ref([]);
 const selectPageItems = ref(false);
@@ -474,12 +514,62 @@ const filterData = ref({
     search: null,
 });
 
-// console.log(props.data);
+const data = ref(props.data ?? {
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: 0,
+    to: 0,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
+});
+currentPage.value = data.value.current_page ?? 1;
+
+const sortData = ref({
+    name: 'fax_caller_id_number',
+    order: 'asc',
+});
 
 const itemOptions = ref({})
 const newFaxOptions = ref({})
 const recentOutboundFaxes = ref({})
 const recentInboundFaxes = ref({})
+const expandedEmailRows = ref(new Set())
+
+const getFaxEmails = (row) => {
+    return (row.fax_email || '')
+        .split(',')
+        .map(email => email.trim())
+        .filter(Boolean);
+}
+
+const isEmailExpanded = (uuid) => {
+    return expandedEmailRows.value.has(uuid);
+}
+
+const visibleFaxEmails = (row) => {
+    const emails = getFaxEmails(row);
+
+    return isEmailExpanded(row.fax_uuid) ? emails : emails.slice(0, 2);
+}
+
+const hiddenFaxEmailCount = (row) => {
+    return Math.max(getFaxEmails(row).length - 2, 0);
+}
+
+const toggleEmailExpansion = (uuid) => {
+    const nextExpandedRows = new Set(expandedEmailRows.value);
+
+    if (nextExpandedRows.has(uuid)) {
+        nextExpandedRows.delete(uuid);
+    } else {
+        nextExpandedRows.add(uuid);
+    }
+
+    expandedEmailRows.value = nextExpandedRows;
+}
 
 
 onMounted(() => {
@@ -561,7 +651,7 @@ const executeBulkDelete = (items = selectedItems.value) => {
         .then((response) => {
             handleModalClose();
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+            refreshCurrentPage();
         })
         .catch((error) => {
             handleModalClose();
@@ -606,47 +696,62 @@ const handleSelectAll = () => {
 
 
 const handleSearchButtonClick = () => {
+    getData(1)
+};
+
+const handleSortRequest = (column) => {
+    if (sortData.value.name === column) {
+        sortData.value.order = sortData.value.order === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortData.value.name = column;
+        sortData.value.order = 'asc';
+    }
+    getData();
+};
+
+const refreshCurrentPage = () => {
+    getData(currentPage.value)
+};
+
+const getData = (page = 1) => {
     loading.value = true;
-    router.visit(props.routes.current_page, {
-        data: {
-            filter: {
-                search: filterData.value.search,
-            },
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-        ],
-        onSuccess: (page) => {
-            loading.value = false;
-            handleClearSelection();
+    currentPage.value = Number(page) || 1;
+
+    let sort = sortData.value.name;
+    if (sortData.value.order === 'desc') {
+        sort = `-${sort}`;
+    }
+
+    axios.get(props.routes.data_route, {
+        params: {
+            filter: filterData.value,
+            page: currentPage.value,
+            sort,
         }
-    });
+    })
+        .then((response) => {
+            data.value = response.data;
+            currentPage.value = response.data.current_page ?? currentPage.value;
+            handleClearSelection();
+        }).catch((error) => {
+            handleErrorResponse(error);
+        }).finally(() => {
+            loading.value = false
+        })
 };
 
 const handleFiltersReset = () => {
     filterData.value.search = null;
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
-    handleSearchButtonClick();
+    getData(1);
 }
 
 
 const renderRequestedPage = (url) => {
-    loading.value = true;
-    router.visit(url, {
-        data: {
-            filter: {
-                search: filterData.value.search,
-            },
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
-    });
+    const urlObj = new URL(url, window.location.origin);
+    const pageParam = urlObj.searchParams.get("page") ?? 1;
+
+    getData(pageParam);
 };
 
 
@@ -704,7 +809,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.fax_uuid);
+        selectedItems.value = data.value.data.map(item => item.fax_uuid);
     } else {
         selectedItems.value = [];
     }
@@ -756,6 +861,12 @@ const determineColor = (status) => {
                 backgroundColor: 'bg-cyan-50',
                 textColor: 'text-cyan-700',
                 ringColor: 'ring-cyan-600/20'
+            };
+        case 'busy':
+            return {
+                backgroundColor: 'bg-amber-50',
+                textColor: 'text-amber-700',
+                ringColor: 'ring-amber-600/20'
             };
         case 'failed':
             return {

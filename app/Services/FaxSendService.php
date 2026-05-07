@@ -4,9 +4,9 @@ namespace App\Services;
 
 use fpdi;
 use TCPDF_FONTS;
-use Carbon\Carbon;
+use App\Jobs\SendFaxJob;
 use App\Models\Faxes;
-use App\Models\FaxQueues;
+use App\Models\OutboundFax;
 use Illuminate\Support\Str;
 use App\Models\DefaultSettings;
 use Illuminate\Support\Facades\Log;
@@ -61,7 +61,19 @@ class FaxSendService
 
             $faxServer = $instance->getFaxServerInstance($payload);
 
-            // Create all fax directories 
+            // Normalize the destination to E.164 using the tenant's country
+            // setting. Webhook profiles already do this before calling send(),
+            // but the dashboard / future API callers may pass a raw number.
+            // formatPhoneNumber is idempotent on already-E.164 input.
+            if (is_object($faxServer)) {
+                $payload['fax_destination'] = formatPhoneNumber(
+                    $payload['fax_destination'] ?? '',
+                    get_domain_setting('country', $faxServer->domain_uuid) ?? 'US',
+                    \libphonenumber\PhoneNumberFormat::E164
+                );
+            }
+
+            // Create all fax directories
             $instance->CreateFaxDirectories($faxServer);
 
             // Remove HTML tags
@@ -91,7 +103,6 @@ class FaxSendService
             $payload['fax_resolution'] = 'normal';
             $payload['gs_r'] = '204x98';
             $payload['gs_g'] = ((int)(8.5 * 204)) . 'x' . ((int)(11 * 98));
-            $payload['dialplan_variables'] = [];
 
             $notify_in_transit = false;
 
@@ -153,10 +164,6 @@ class FaxSendService
                         $payload['smtp_from'] = $setting->default_setting_value;
                         break;
 
-                    case 'variable':
-                        $payload['dialplan_variables'][] = $setting->default_setting_value;
-                        break;
-
                     case 'notify_in_transit':
                         if ($setting->default_setting_value == 'true') {
                             $notify_in_transit = true;
@@ -178,140 +185,70 @@ class FaxSendService
                 return "Failed to convert";
             }
 
-            $payload['fax_queue_uuid'] = Str::uuid()->toString();
-
-            $dial_string = $instance->getDialstring(
+            // Persist the outbound fax record. SendFaxJob will pick it up and
+            // perform the actual originate; the row's status drives retries
+            // and reaping.
+            $outboundFax = $instance->createOutboundFax(
                 $payload,
-                $faxServer->toArray(),
+                $faxServer,
                 $conversionResult['tif_file'],
-                $payload['dialplan_variables'] ?? []
+                $conversionResult['total_pages'] ?? null
             );
 
-            // Add to queue
-            $result = $instance->addToFaxQueue(
-                $payload,
-                $faxServer->toArray(),
-                $conversionResult['tif_file'],
-                $dial_string
-            );
+            fax_webhook_debug('FaxSendService row created', [
+                'outbound_fax_uuid' => $outboundFax->outbound_fax_uuid,
+                'prefix'            => $outboundFax->prefix,
+                'destination'       => $outboundFax->destination,
+                'total_pages'       => $outboundFax->total_pages,
+            ]);
+
+            // Dispatch the worker. Wrap in try/catch so a Redis outage doesn't
+            // fail the request — CheckStuckFaxesJob will pick the row up later.
+            try {
+                SendFaxJob::dispatch($outboundFax->outbound_fax_uuid);
+            } catch (\Throwable $e) {
+                logger('FaxSendService@send: SendFaxJob dispatch failed (row remains in waiting): ' . $e->getMessage());
+            }
 
             if ($notify_in_transit) {
                 // Send notification to user that fax is in transit
                 SendFaxInTransitNotification::dispatch($payload)->onQueue('emails');
             }
 
-            return $result;
+            return $outboundFax->outbound_fax_uuid;
         } catch (\Throwable $e) {
             logger('FaxSendService@send error : ' . $e->getMessage() . " at " . $e->getFile() . ":" . $e->getLine());
             return $e->getMessage();
         }
     }
 
-    public function addToFaxQueue(
+    /**
+     * Create the outbound_faxes row that drives the rest of the lifecycle.
+     */
+    public function createOutboundFax(
         array $payload,
-        array $faxServer,
+        Faxes $faxServer,
         string $fax_file,
-        string $dial_string
-    ) {
-        $fax_queue = new FaxQueues();
-        $fax_queue->fax_queue_uuid     = $payload['fax_queue_uuid'];
-        $fax_queue->domain_uuid        = $faxServer['domain_uuid'] ?? null;
-        $fax_queue->fax_uuid           = $faxServer['fax_uuid'] ?? null;
-        $fax_queue->fax_date           = Carbon::now(get_local_time_zone($faxServer['domain_uuid'] ?? null))->utc()->toIso8601String();
-        $fax_queue->hostname           = gethostname();
-        $fax_queue->fax_caller_id_name = $faxServer['fax_caller_id_name'] ?? '';
-        $fax_queue->fax_caller_id_number = $faxServer['fax_caller_id_number'] ?? '';
-        $fax_queue->fax_number         = $payload['fax_destination'] ?? '';
-        $fax_queue->fax_prefix         = $faxServer['fax_prefix'] ?? '';
-        $fax_queue->fax_email_address  = $payload['from'] ?? '';
-        $fax_queue->fax_file           = $fax_file;
-        $fax_queue->fax_status         = 'waiting';
-        $fax_queue->fax_retry_count    = 0;
-        $fax_queue->fax_accountcode    = $faxServer['accountcode'] ?? '';
-        $fax_queue->fax_command        = 'originate ' . $dial_string;
-
-        $fax_queue->save();
-
-        return $fax_queue->fax_queue_uuid;
-    }
-
-
-    public function getDialstring(array $payload, array $faxServer, string $fax_file, array $dialplan_variables = [])
-    {
-        $fax_queue_uuid        = $payload['fax_queue_uuid'];
-        $accountcode           = $faxServer['accountcode'] ?? '';
-        $sip_h_accountcode     = $faxServer['accountcode'] ?? '';
-        $domain_uuid           = $faxServer['domain_uuid'] ?? '';
-        $domain_name           = $faxServer['domain']['domain_name'] ?? '';
-        $fax_caller_id_name    = $faxServer['fax_caller_id_name'] ?? '';
-        $fax_caller_id_number  = $faxServer['fax_caller_id_number'] ?? '';
-        $fax_ident             = $fax_caller_id_number;
-        $fax_header            = $fax_caller_id_name;
-        // $fax_extension         = $faxServer['fax_extension'] ?? '';
-        $fax_prefix            = $faxServer['fax_prefix'] ?? '';
-        $fax_email             = $faxServer['fax_email'] ?? '';
-        $fax_from              = $payload['from'] ?? '';
-        $fax_destination       = $payload['fax_destination'] ?? '';
-        $fax_toll_allow        = $faxServer['fax_toll_allow'] ?? '';
-
-        $channel_variables = [];
-        if (!empty($fax_toll_allow)) {
-            $channel_variables["toll_allow"] = $fax_toll_allow;
-        }
-
-        $route_array = outbound_route_to_bridge($domain_uuid, $fax_prefix . $fax_destination, $channel_variables);
-        if (empty($route_array)) {
-            Log::error("No outbound route found for fax to $fax_destination (domain: $domain_uuid)");
-            return null;
-        }
-        $fax_uri = $route_array[0];
-
-        // Helper for escaping (simple, expand as needed)
-        $e = fn($val) => str_replace(["'", '{', '}'], ["\\'", '', ''], $val);
-
-        // Build dial string as an array
-        $vars = [
-            "fax_queue_uuid={$e($fax_queue_uuid)}",
-            "accountcode='{$e($accountcode)}'",
-            "sip_h_X-customacc='{$e($accountcode)}'",
-            "execute_on_answer='sched_hangup +14400'",
-            "call_direction='outbound'",
-            "domain_uuid={$e($domain_uuid)}",
-            "domain_name={$e($domain_name)}",
-            "origination_caller_id_name='{$e($fax_caller_id_name)}'",
-            "origination_caller_id_number='{$e($fax_caller_id_number)}'",
-            "fax_ident='{$e($fax_ident)}'",
-            "fax_header='{$e($fax_header)}'",
-            "fax_file='{$e($fax_file)}'",
-            "hangup_after_bridge=true",
-            "continue_on_fail=true",
-            "media_mix_inbound_outbound_codecs='true'",
-            "sip_renegotiate-codec-on-reinvite='true'",
-            "caller_destination={$e($fax_destination)}",
-        ];
-
-        // Add dialplan variables
-        foreach ($dialplan_variables as $variable) {
-            $vars[] = $variable;
-        }
-
-        // Rest of the vars
-        $vars = array_merge($vars, [
-            "mailto_address='{$e($fax_email)}'",
-            "mailfrom_address='{$e($fax_from)}'",
-            "fax_uri={$e($fax_uri)}",
-            "fax_retry_attempts=1",
-            "fax_retry_limit=20",
-            "fax_retry_sleep=180",
-            // "fax_verbose=true",
-            "fax_use_ecm=off",
-            "api_hangup_hook='lua app/fax/resources/scripts/hangup_tx.lua'",
+        ?int $total_pages
+    ): OutboundFax {
+        return OutboundFax::create([
+            'domain_uuid'      => $faxServer->domain_uuid,
+            'fax_uuid'         => $faxServer->fax_uuid,
+            'status'           => 'waiting',
+            'source'           => $faxServer->fax_caller_id_number,
+            'source_name'      => $faxServer->fax_caller_id_name,
+            'destination'      => $payload['fax_destination'] ?? '',
+            'email'            => $payload['from'] ?? '',
+            'subject'          => $payload['subject'] ?? '',
+            'body'             => $payload['body'] ?? '',
+            'file_path'        => $fax_file,
+            'total_pages'      => $total_pages,
+            'prefix'           => $faxServer->fax_prefix,
+            'accountcode'      => $faxServer->accountcode,
+            'retry_count'      => 0,
+            'retry_limit'      => 5,
+            'retry_at'         => null,
         ]);
-
-        // Join with commas
-        $dial_string = '{' . implode(',', $vars) . '}' . $fax_uri . " &txfax('{$e($fax_file)}')";
-
-        return $dial_string;
     }
 
 
@@ -619,11 +556,35 @@ class FaxSendService
         }
 
         return [
-            'success' => $success,
-            'tif_file' => $final_tif_path,
+            'success'           => $success,
+            'tif_file'          => $final_tif_path,
             'fax_instance_uuid' => $fax_instance_uuid,
-            'sent_dir' => $sent_dir,
+            'sent_dir'          => $sent_dir,
+            'total_pages'       => $success ? $this->countTiffPages($final_tif_path) : null,
         ];
+    }
+
+    /**
+     * Count pages in a multi-page TIFF using tiffinfo (already a dependency
+     * of tiffcp/tiff2pdf). Returns null on any failure — the reaper has a
+     * generous fallback when total_pages is unknown.
+     */
+    public function countTiffPages(?string $tif_path): ?int
+    {
+        if (!$tif_path || !file_exists($tif_path)) {
+            return null;
+        }
+
+        try {
+            $process = new Process(['tiffinfo', $tif_path], null, ['HOME' => '/tmp']);
+            $process->mustRun();
+            $output = $process->getOutput();
+            $count = preg_match_all('/^TIFF Directory at offset/m', $output);
+            return $count > 0 ? $count : null;
+        } catch (\Throwable $e) {
+            logger('FaxSendService@countTiffPages failed: ' . $e->getMessage());
+            return null;
+        }
     }
 
 

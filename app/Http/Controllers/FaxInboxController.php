@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Inertia\Inertia;
+use App\Models\Faxes;
 use App\Models\FaxFiles;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -31,6 +32,15 @@ class FaxInboxController extends Controller
         }
 
         $domain_uuid = session('domain_uuid');
+        $fax = Faxes::query()
+            ->where('domain_uuid', $domain_uuid)
+            ->where('fax_uuid', $fax_uuid)
+            ->first(['fax_uuid', 'fax_name', 'fax_extension']);
+
+        $faxLabel = $fax
+            ? trim(implode(' - ', array_filter([$fax->fax_extension, $fax->fax_name])))
+            : null;
+
         $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->startOfDay()->setTimeZone('UTC');
         $endPeriod = Carbon::now(get_local_time_zone($domain_uuid))->endOfDay()->setTimeZone('UTC');
 
@@ -38,6 +48,7 @@ class FaxInboxController extends Controller
             $this->viewName,
             [
                 'fax_uuid' => $fax_uuid,
+                'fax_label' => $faxLabel,
                 'startPeriod' => function () use ($startPeriod) {
                     return $startPeriod;
                 },
@@ -49,6 +60,7 @@ class FaxInboxController extends Controller
                 },
                 'routes' => [
                     // 'current_page' => route('fax-inbox.index'),
+                    'faxes_index' => route('faxes.index'),
                     'select_all' => route('fax-inbox.select.all'),
                     'bulk_delete' => route('fax-inbox.bulk.delete'),
                     'data_route' => route('fax-inbox.data'),
@@ -102,7 +114,7 @@ class FaxInboxController extends Controller
                 'fax' => function ($query) {
                     $query->select('fax_uuid', 'fax_caller_id_number');
                 },
-                'faxLog:fax_log_uuid,fax_document_transferred_pages,fax_document_total_pages',
+                'faxLog:fax_log_uuid,domain_uuid,source,destination,fax_document_transferred_pages,fax_document_total_pages',
             ])
             ->allowedFilters([
                 AllowedFilter::callback('fax_uuid', function ($query, $value) {

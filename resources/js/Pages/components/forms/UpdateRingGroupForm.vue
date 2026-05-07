@@ -193,16 +193,13 @@ Rollover: This option rings each phone one at a time, but it skips busy phones."
                                 description="Manage members of this ring group"
                                 :conditions="[() => localOptions.permissions.destination_view]" />
 
-                            <TagsElement name="selectedMembers" :close-on-select="false" :items="availableMembers"
+                            <TagsElement name="selectedMembers" :close-on-select="true" :items="availableMembers"
                                 :create="true" :search="true" :groups="true" :native="false" label="Add Member(s)"
                                 input-type="search" autocomplete="off" placeholder="Search by name or extension"
                                 :floating="false" :hide-selected="false" :object="true" :group-hide-empty="true"
                                 :append-new-option="false" :submit="false"
-                                description="Choose from the list of available options or enter an external number manually."
-                                :conditions="[() => localOptions.permissions.destination_create, () => localOptions.permissions.destination_view]" />
-
-                            <ButtonElement @click="addSelectedMembers" name="secondaryButton_1"
-                                button-label="Add Selected Members" :secondary="true" align="center" :full="false"
+                                @select="handleMemberSelect"
+                                description="Pick from the list or type an external number — members are added immediately."
                                 :conditions="[() => localOptions.permissions.destination_create, () => localOptions.permissions.destination_view]" />
 
                             <GroupElement name="container_1"
@@ -615,24 +612,22 @@ const availableMembers = computed(() => {
     }));
 });
 
-const addSelectedMembers = () => {
-    const selectedItems = form$.value.el$('selectedMembers').value.map(item => {
-        return {
-            ring_group_destination_uuid: item.destination ? item.value : null,
-            destination_number: item.destination ? item.destination : item.label,
-            type: item.type ? item.type : "other",
-            destination_delay: "0",
-            destination_timeout: "25",
-            destination_prompt: false,
-            destination_enabled: true
-        }
-    });
+const handleMemberSelect = (option) => {
+    const newMember = {
+        ring_group_destination_uuid: option.destination ? option.value : null,
+        destination_number: option.destination ? option.destination : option.label,
+        type: option.type ? option.type : "other",
+        destination_delay: "0",
+        destination_timeout: "25",
+        destination_prompt: false,
+        destination_enabled: true,
+    };
 
-    const currentMembers = form$.value.el$('members').value
+    const currentMembers = form$.value.el$('members').value;
 
     form$.value.update({
-        members: [...currentMembers, ...selectedItems]
-    })
+        members: [...currentMembers, newMember],
+    });
 
     form$.value.el$('selectedMembers').update([]);
 };

@@ -3,10 +3,16 @@
 
         <div class="m-3">
             <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-                <template #title>Fax Inbox</template>
-
-                <template #action>
-
+                <template #title>
+                    <h1 class="text-xl font-bold text-gray-900 flex items-center">
+                        <a :href="props.routes.faxes_index" class="hover:text-indigo-600">
+                            Fax Dashboard
+                        </a>
+                        <svg class="mx-3 h-5 w-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                        <span class="font-medium text-gray-500">{{ props.fax_label ? `${props.fax_label} Inbox` : 'Fax Inbox' }}</span>
+                    </h1>
                 </template>
 
                 <template #filters>
@@ -104,15 +110,15 @@
                                     <span class="flex flex-col items-center">
                                         <span v-if="row.fax_caller_id_name != row.fax_caller_id_number">{{
                                             row.fax_caller_id_name ?? '' }}</span>
-                                        <span>{{ row.fax_caller_id_number_formatted ?? '' }}</span>
+                                        <span>{{ row.fax_log?.source_formatted ?? row.fax_log?.source ?? row.fax_caller_id_number_formatted ?? '' }}</span>
                                     </span>
                                 </div>
                             </div>
                         </TableField>
 
-                        <!-- Email -->
+                        <!-- To -->
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                            :text="row.fax?.fax_caller_id_number_formatted ?? ''" />
+                            :text="row.fax_log?.destination_formatted ?? row.fax_log?.destination ?? row.fax?.fax_caller_id_number_formatted ?? ''" />
 
 
 
@@ -260,6 +266,7 @@ const data = ref({
 
 const props = defineProps({
     fax_uuid: String,
+    fax_label: String,
     startPeriod: String,
     endPeriod: String,
     timezone: String,

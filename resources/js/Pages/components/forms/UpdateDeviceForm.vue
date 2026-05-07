@@ -62,7 +62,11 @@
                                     ),
                                     multi_purpose_keys: normalizeDeviceKeysForForm(
                                         filterKeysByArea(options.item?.keys ?? [], 'multi_purpose')
-                                    ), device_settings: options.item?.settings,
+                                    ),
+                                    expansion_keys: normalizeDeviceKeysForForm(
+                                        filterKeysByArea(options.item?.keys ?? [], 'expansion')
+                                    ),
+                                    device_settings: options.item?.settings,
                                     device_description: options.item?.device_description ?? null,
                                 }">
 
@@ -126,6 +130,18 @@
 
                                                 ]"
                                                     :conditions="[() => options?.item?.device_vendor == 'grandstream']" />
+
+                                                <FormTab name="expansion_keys" label="Expansion Keys" :elements="[
+                                                    'expansion_keys_container',
+                                                    'expansion_keys_title',
+                                                    // 'add_key',
+                                                    'expansion_keys',
+                                                    'expansion_keys_container2',
+                                                    'expansion_keys_submit_keys',
+
+                                                ]"
+                                                    :conditions="[() => options?.item?.device_vendor == 'cisco']" />
+
                                                 <FormTab name="cloud_provisioning" label="Cloud Provisioning" :elements="[
                                                     'cloud_provisioning_title',
                                                     'cloud_provisioning_status',
@@ -827,6 +843,133 @@
                                                 <ButtonElement name="multi_purpose_keys_submit_keys" button-label="Save"
                                                     :submits="true" align="right" />
 
+                                                <!-- Expansion Keys -->
+                                                <StaticElement name="expansion_keys_title" tag="h4"
+                                                    content="Expansion Keys"
+                                                    description="Assign expansion keys to this device. Expansion Module required for this device." />
+
+                                                <GroupElement name="expansion_keys_container" />
+                                                <ListElement name="expansion_keys" :sort="true" size="sm"
+                                                    :controls="{ add: options.permissions.device_key_create, remove: options.permissions.device_key_destroy, sort: options.permissions.device_key_up }"
+                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-md' } }">
+                                                    <template #default="{ index }">
+                                                        <ObjectElement :name="index"
+                                                            :key="form$?.data?.expansion_keys?.[index]?.key_uuid">
+
+                                                            <HiddenElement name="key_area" :meta="true"
+                                                                default="expansion" />
+
+                                                            <HiddenElement name="key_uuid" :meta="true"
+                                                                :default="Math.random().toString(36).slice(2)" />
+                                                            <HiddenElement name="_generated_label" :meta="true"
+                                                                :default="null" />
+
+                                                            <TextElement name="key_index" label="Key" :rules="[
+                                                                'nullable',
+                                                                'numeric',
+                                                            ]" autocomplete="off" :columns="{
+
+                                                                sm: {
+                                                                    container: 1,
+                                                                },
+                                                            }" :default="getNextKeyNumber('expansion_keys')" />
+
+                                                            <SelectElement name="key_type" label="Type"
+                                                                :items="keyTypes" :search="true" label-prop="name"
+                                                                :native="false" input-type="search" autocomplete="off"
+                                                                :columns="{
+
+                                                                    sm: {
+                                                                        container: 3,
+                                                                    },
+                                                                }" placeholder="Choose Function" :floating="false"
+                                                                @change="(newValue, oldValue, el$) => {
+
+                                                                    let key_value_select = el$.form$.el$('expansion_keys.' + index + '.key_value_select')
+
+                                                                    // only clear when this isn’t the very first time (i.e. oldValue was set)
+                                                                    if (oldValue !== null && oldValue !== undefined) {
+                                                                        key_value_select.clear();
+                                                                    }
+
+                                                                    key_value_select.updateItems()
+
+                                                                }" />
+
+                                                            <SelectElement name="key_value_select" label="Value"
+                                                                label-prop="name" value-prop="extension" :search="true"
+                                                                :native="false" :submit="false"
+                                                                :create="['blf', 'speed_dial', 'park']
+                                                                    .includes(form$?.data?.expansion_keys?.[index]?.key_type)"
+                                                                :append-new-option="false" input-type="search"
+                                                                autocomplete="off" :columns="{
+
+                                                                    sm: {
+                                                                        container: 4,
+                                                                    },
+                                                                }" placeholder="Choose Ext/Number" :floating="false"
+                                                                :items="(query, input) => getKeyValueSelectItems(query, input, index, 'expansion_keys')"
+                                                                @change="(newValue, oldValue, el$) => updateLabel(newValue, oldValue, el$, index, 'expansion_keys')"
+                                                                :conditions="[
+                                                                    ['expansion_keys.*.key_type', ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']]
+                                                                ]" />
+
+                                                            <TextElement name="key_value_text" label="Value" :columns="{
+                                                                sm: {
+                                                                    container: 4,
+                                                                },
+                                                            }" placeholder="Enter Value" :floating="false" :disabled="[
+                                                                ['expansion_keys.*.key_type', '']
+                                                            ]" :conditions="[
+                                                                ['expansion_keys.*.key_type', '!=', ['line', 'check_voicemail', 'blf', 'speed_dial', 'park']]
+                                                            ]" />
+
+                                                            <HiddenElement name="key_value" :meta="true"
+                                                                :default="null" />
+
+                                                            <TextElement name="key_label" label="Label" :columns="{
+
+                                                                default: {
+                                                                    container: 10,
+                                                                },
+                                                                sm: {
+                                                                    container: 3,
+                                                                },
+                                                            }" :placeholder="form$?.data?.expansion_keys?.[index]?._generated_label ?? 'Enter Value'"
+                                                                :floating="false" :disabled="[
+                                                                    ['expansion_keys.*.key_type', ['', 'line']]
+                                                                ]" />
+
+                                                            <StaticElement label="&nbsp;" name="key_advanced" :columns="{
+
+                                                                default: {
+                                                                    container: 1,
+                                                                },
+                                                                sm: {
+                                                                    container: 1,
+                                                                },
+                                                            }"
+                                                                :conditions="[() => options?.permissions?.device_key_advanced]">
+
+
+                                                                <!-- <Cog8ToothIcon @click="showLineAdvSettings(index)"
+                                                                    class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" /> -->
+
+                                                            </StaticElement>
+
+
+
+
+                                                        </ObjectElement>
+                                                    </template>
+                                                </ListElement>
+
+
+                                                <GroupElement name="expansion_keys_container2" />
+
+                                                <ButtonElement name="expansion_keys_submit_keys" button-label="Save"
+                                                    :submits="true" align="right" />
+
                                                 <!-- Cloud Provisioning tab-->
                                                 <StaticElement name="cloud_provisioning_title" tag="h4"
                                                     content="Cloud Provisioning"
@@ -1462,9 +1605,14 @@ const submitForm = async (FormData, form$) => {
             ...k,
             key_area: k.key_area ?? 'multi_purpose',
         })),
+        ...(data.expansion_keys ?? []).map(k => ({
+            ...k,
+            key_area: k.key_area ?? 'expansion',
+        })),
     ]
 
     delete data.multi_purpose_keys
+    delete data.expansion_keys
 
     return await form$.$vueform.services.axios.put(props.options.routes.update_route, data)
 };

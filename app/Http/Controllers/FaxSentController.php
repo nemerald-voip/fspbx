@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Faxes;
 use App\Models\FaxFiles;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Carbon;
@@ -32,6 +33,15 @@ class FaxSentController extends Controller
         }
 
         $domain_uuid = session('domain_uuid');
+        $fax = Faxes::query()
+            ->where('domain_uuid', $domain_uuid)
+            ->where('fax_uuid', $fax_uuid)
+            ->first(['fax_uuid', 'fax_name', 'fax_extension']);
+
+        $faxLabel = $fax
+            ? trim(implode(' - ', array_filter([$fax->fax_extension, $fax->fax_name])))
+            : null;
+
         $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->startOfDay()->setTimeZone('UTC');
         $endPeriod = Carbon::now(get_local_time_zone($domain_uuid))->endOfDay()->setTimeZone('UTC');
 
@@ -39,6 +49,7 @@ class FaxSentController extends Controller
             $this->viewName,
             [
                 'fax_uuid' => $fax_uuid,
+                'fax_label' => $faxLabel,
                 'startPeriod' => function () use ($startPeriod) {
                     return $startPeriod;
                 },
@@ -49,6 +60,7 @@ class FaxSentController extends Controller
                     return get_local_time_zone($domain_uuid);
                 },
                 'routes' => [
+                    'faxes_index' => route('faxes.index'),
                     'select_all' => route('fax-sent.select.all'),
                     'bulk_delete' => route('fax-sent.bulk.delete'),
                     'data_route' => route('fax-sent.data'),

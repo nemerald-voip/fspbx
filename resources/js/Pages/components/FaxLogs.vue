@@ -99,13 +99,13 @@
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Result</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">ECM</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Pages</th>
-                                <th v-if="canDelete" class="px-6 py-3 text-right text-sm font-semibold text-gray-900">Action</th>
+                                <th v-if="hasActions" class="px-6 py-3 text-right text-sm font-semibold text-gray-900">Action</th>
                             </tr>
                         </thead>
 
                         <tbody v-if="!isDataLoading && data.data?.length" class="divide-y divide-gray-200 bg-white">
                             <tr v-if="canDelete && (selectPageItems || selectAll)">
-                                <td colspan="9">
+                                <td :colspan="hasActions ? 9 : 8">
                                     <div class="text-sm text-center m-2">
                                         <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
                                         <button
@@ -148,17 +148,17 @@
                                         </div>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
-                                        {{ row.fax_file?.fax_caller_id_number_formatted ?? '' }}
+                                        {{ faxSource(row) }}
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
                                         {{ faxDestination(row) }}
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
                                         <Badge
-                                            :text="row.fax_success == '1' ? 'Success' : 'Failed'"
-                                            :backgroundColor="row.fax_success == '1' ? 'bg-green-50' : 'bg-red-50'"
-                                            :textColor="row.fax_success == '1' ? 'text-green-700' : 'text-red-700'"
-                                            :ringColor="row.fax_success == '1' ? 'ring-green-600/20' : 'ring-red-600/20'"
+                                            :text="statusBadge(row).text"
+                                            :backgroundColor="statusBadge(row).backgroundColor"
+                                            :textColor="statusBadge(row).textColor"
+                                            :ringColor="statusBadge(row).ringColor"
                                         />
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
@@ -171,11 +171,21 @@
                                         {{ row.fax_ecm_used ?? '' }}
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
-                                        {{ row.fax_document_transferred_pages ?? '' }} / {{ row.fax_document_total_pages ?? '' }}
+                                        {{ pagesText(row) }}
                                     </td>
-                                    <td v-if="canDelete" class="whitespace-nowrap px-6 py-2 text-sm text-gray-500" @click.stop>
+                                    <td v-if="hasActions" class="whitespace-nowrap px-6 py-2 text-sm text-gray-500" @click.stop>
                                         <div class="flex items-center justify-end">
-                                            <div class="relative group flex items-center justify-center cursor-pointer">
+                                            <div v-if="canRetry(row)" class="relative group flex items-center justify-center cursor-pointer">
+                                                <ArrowPathIcon
+                                                    @click="handleRetryButtonClick(row)"
+                                                    class="h-7 w-7 transition duration-300 ease-in-out p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600 rounded-full"
+                                                />
+                                                <div class="absolute bottom-full mb-1 hidden group-hover:block whitespace-nowrap bg-gray-800 text-white text-xs rounded py-1 px-2 z-10 shadow-lg">
+                                                    Retry outbound fax
+                                                    <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-gray-800 rotate-45"></div>
+                                                </div>
+                                            </div>
+                                            <div v-if="canDelete" class="relative group flex items-center justify-center cursor-pointer">
                                                 <TrashIcon
                                                     @click="handleDeleteButtonClick(row.fax_log_uuid)"
                                                     class="h-7 w-7 transition duration-300 ease-in-out p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600 rounded-full"
@@ -190,7 +200,7 @@
                                 </tr>
 
                                 <tr v-if="expandedRow === row.fax_log_uuid">
-                                    <td :colspan="canDelete ? 9 : 8" class="bg-gray-50 px-6 py-4 shadow-inner">
+                                    <td :colspan="hasActions ? 9 : 8" class="bg-gray-50 px-6 py-4 shadow-inner">
                                         <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
                                             <div class="rounded-md border border-gray-200 bg-white p-4">
                                                 <div class="text-sm font-semibold text-gray-900 mb-2">Overview</div>
@@ -206,12 +216,12 @@
                                             <div class="rounded-md border border-gray-200 bg-white p-4">
                                                 <div class="text-sm font-semibold text-gray-900 mb-2">Transmission</div>
                                                 <div class="space-y-2 text-sm text-gray-600">
-                                                    <div><span class="font-medium text-gray-700">From:</span> {{ displayValue(row.fax_file?.fax_caller_id_number_formatted) }}</div>
+                                                    <div><span class="font-medium text-gray-700">From:</span> {{ displayValue(faxSource(row)) }}</div>
                                                     <div><span class="font-medium text-gray-700">To:</span> {{ displayValue(faxDestination(row)) }}</div>
                                                     <div><span class="font-medium text-gray-700">Local Station ID:</span> {{ displayValue(row.fax_local_station_id) }}</div>
                                                     <div><span class="font-medium text-gray-700">Transfer Rate:</span> {{ displayValue(row.fax_transfer_rate) }}</div>
                                                     <div><span class="font-medium text-gray-700">Bad Rows:</span> {{ displayValue(row.fax_bad_rows) }}</div>
-                                                    <div><span class="font-medium text-gray-700">Pages:</span> {{ displayValue(row.fax_document_transferred_pages) }} / {{ displayValue(row.fax_document_total_pages) }}</div>
+                                                    <div><span class="font-medium text-gray-700">Pages:</span> {{ displayValue(pagesText(row)) }}</div>
                                                 </div>
                                             </div>
 
@@ -286,7 +296,7 @@ import Paginator from "@generalComponents/Paginator.vue";
 import Badge from "@generalComponents/Badge.vue";
 import Notification from "./notifications/Notification.vue";
 import ConfirmationModal from "./modal/ConfirmationModal.vue";
-import { MagnifyingGlassIcon, TrashIcon } from "@heroicons/vue/24/solid";
+import { ArrowPathIcon, MagnifyingGlassIcon, TrashIcon } from "@heroicons/vue/24/solid";
 
 const props = defineProps({
     startPeriod: String,
@@ -333,6 +343,8 @@ const filterData = ref({
 });
 
 const canDelete = computed(() => Boolean(props.permissions?.fax_log_delete));
+const canRetryPermission = computed(() => Boolean(props.permissions?.fax_send));
+const hasActions = computed(() => canDelete.value || canRetryPermission.value);
 
 const fetchData = (page = 1) => {
     isDataLoading.value = true;
@@ -426,6 +438,22 @@ const handleDeleteButtonClick = (uuid) => {
     confirmDeleteAction.value = () => executeBulkDelete([uuid]);
 };
 
+const handleRetryButtonClick = (row) => {
+    if (!canRetry(row)) return;
+
+    const url = props.routes.fax_logs_retry.replace(":faxLog", encodeURIComponent(row.fax_log_uuid));
+
+    axios
+        .post(url)
+        .then((response) => {
+            showNotification("success", response.data.messages);
+            handleSearchButtonClick();
+        })
+        .catch((error) => {
+            handleErrorResponse(error);
+        });
+};
+
 const executeBulkDelete = (items = selectedItems.value) => {
     axios
         .post(props.routes.fax_logs_bulk_delete, { items })
@@ -442,7 +470,15 @@ const executeBulkDelete = (items = selectedItems.value) => {
         });
 };
 
+const faxSource = (row) => {
+    return row.source_formatted ?? row.source ?? row.fax_file?.fax_caller_id_number_formatted ?? "";
+};
+
 const faxDestination = (row) => {
+    if (row.destination_formatted || row.destination) {
+        return row.destination_formatted ?? row.destination;
+    }
+
     if (row.fax_file?.fax_mode === "rx") {
         return row.fax?.fax_caller_id_number_formatted ?? row.fax_file?.fax_caller_id_number_formatted ?? "";
     }
@@ -452,6 +488,98 @@ const faxDestination = (row) => {
     }
 
     return "";
+};
+
+const isEmptyValue = (value) => value === null || value === undefined || value === "";
+
+const pagesText = (row) => {
+    const transferred = row?.fax_document_transferred_pages;
+    const total = !isEmptyValue(row?.fax_document_total_pages)
+        ? row.fax_document_total_pages
+        : row?.outbound_fax?.total_pages;
+
+    if (isEmptyValue(transferred) && isEmptyValue(total)) {
+        return "";
+    }
+
+    if (isEmptyValue(transferred)) {
+        return `0 / ${total}`;
+    }
+
+    if (isEmptyValue(total)) {
+        return String(transferred);
+    }
+
+    return `${transferred} / ${total}`;
+};
+
+const canRetry = (row) => {
+    return Boolean(
+        canRetryPermission.value &&
+        props.routes?.fax_logs_retry &&
+        row?.outbound_fax_uuid &&
+        String(row?.fax_success ?? "0") !== "1" &&
+        row?.outbound_fax?.status === "failed"
+    );
+};
+
+const isRetryRequestedFromRow = (row) => {
+    return Boolean(
+        row?.fax_log_uuid &&
+        row?.outbound_fax?.response?.includes(`Manual retry requested from fax log ${row.fax_log_uuid}`)
+    );
+};
+
+const statusBadge = (row) => {
+    if (String(row?.fax_success ?? "0") === "1") {
+        return {
+            text: "Success",
+            backgroundColor: "bg-green-50",
+            textColor: "text-green-700",
+            ringColor: "ring-green-600/20",
+        };
+    }
+
+    if (isRetryRequestedFromRow(row)) {
+        switch (row?.outbound_fax?.status) {
+            case "waiting":
+                return {
+                    text: "Retry queued",
+                    backgroundColor: "bg-blue-50",
+                    textColor: "text-blue-700",
+                    ringColor: "ring-blue-600/20",
+                };
+            case "sending":
+                return {
+                    text: "Sending",
+                    backgroundColor: "bg-indigo-50",
+                    textColor: "text-indigo-700",
+                    ringColor: "ring-indigo-600/20",
+                };
+            case "trying":
+            case "busy":
+                return {
+                    text: "Retrying",
+                    backgroundColor: "bg-yellow-50",
+                    textColor: "text-yellow-800",
+                    ringColor: "ring-yellow-600/20",
+                };
+            case "sent":
+                return {
+                    text: "Retried",
+                    backgroundColor: "bg-green-50",
+                    textColor: "text-green-700",
+                    ringColor: "ring-green-600/20",
+                };
+        }
+    }
+
+    return {
+        text: "Failed",
+        backgroundColor: "bg-red-50",
+        textColor: "text-red-700",
+        ringColor: "ring-red-600/20",
+    };
 };
 
 const displayValue = (value) => {

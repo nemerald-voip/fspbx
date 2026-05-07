@@ -252,11 +252,17 @@ class ProvisioningController extends Controller
             'mac'           => $device->device_address ?? null,
 
             // all keys flattened for legacy templates that expect a single list:
-            'keys' => $keyAreas['main'] ?? [],
+            'keys' => array_merge(
+                $keyAreas['main'] ?? [],
+                $keyAreas['multi_purpose'] ?? [],
+                $keyAreas['expansion'] ?? []
+            ),
+
             // keys separated by area for newer templates that want to organize by area:
             'keys_by_area' => $keyAreas,
             'main_keys' => $keyAreas['main'] ?? [],
             'multi_purpose_keys' => $keyAreas['multi_purpose'] ?? [],
+            'expansion_keys' => $keyAreas['expansion'] ?? [],
 
             'lines'       => $lines,
             'line_count'  => count($lines),
@@ -367,6 +373,18 @@ class ProvisioningController extends Controller
         ) {
             return [
                 'flavor' => 'cfgmac.xml',
+                'mime'   => 'application/xml',
+            ];
+        }
+
+        // Cisco per-device: <MAC>.xml (e.g., 000b82877bd4.xml)
+        if (
+            $vendor === 'cisco' &&
+            $extLower === 'xml' &&
+            preg_match('/^[0-9a-f]{12}$/', $idLower)
+        ) {
+            return [
+                'flavor' => 'mac.xml',
                 'mime'   => 'application/xml',
             ];
         }
@@ -500,6 +518,7 @@ class ProvisioningController extends Controller
         $maps = [
             'main' => [],
             'multi_purpose' => [],
+            'expansion' => [],
         ];
 
         // Normalize old/profile/legacy keys into the same effective shape
@@ -555,6 +574,14 @@ class ProvisioningController extends Controller
                 $pk->profile_key_category
             );
 
+            if (
+                strtolower((string) $device->device_vendor) === 'cisco'
+                && $area === 'expansion'
+                && $category === 'expansion-2'
+            ) {
+                $id += 32;
+            }
+
             if (!array_key_exists($area, $maps)) {
                 $maps[$area] = [];
             }
@@ -582,6 +609,14 @@ class ProvisioningController extends Controller
                 $device->device_vendor,
                 $dk->device_key_category
             );
+
+            if (
+                strtolower((string) $device->device_vendor) === 'cisco'
+                && $area === 'expansion'
+                && $category === 'expansion-2'
+            ) {
+                $id += 32;
+            }
 
             if (!array_key_exists($area, $maps)) {
                 $maps[$area] = [];
@@ -666,6 +701,14 @@ class ProvisioningController extends Controller
         if ($vendor === 'grandstream' && $category === 'memory') {
             return ['multi_purpose', 'line'];
         }
+
+    // Cisco SPA expansion module profile/legacy keys.
+    // Treat expansion-1 and expansion-2 as the new "expansion" key area.
+    if ($vendor === 'cisco' && in_array($category, ['expansion-1', 'expansion-2'], true)) {
+        return ['expansion', $category];
+
+
+        
 
         return ['main', $category ?: null];
     }
