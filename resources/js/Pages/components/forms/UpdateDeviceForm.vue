@@ -201,7 +201,7 @@
                                                 </StaticElement>
                                                 <TextElement name="device_address" label="MAC Address"
                                                     placeholder="Enter MAC address" :floating="false"
-                                                    :disabled="[() => !options?.permissions?.device_address_update]"
+                                                    :disabled="true"
                                                     :columns="{
                                                         sm: {
                                                             container: 6,
