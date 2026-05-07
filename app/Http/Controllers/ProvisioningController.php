@@ -702,13 +702,11 @@ class ProvisioningController extends Controller
             return ['multi_purpose', 'line'];
         }
 
-    // Cisco SPA expansion module profile/legacy keys.
-    // Treat expansion-1 and expansion-2 as the new "expansion" key area.
-    if ($vendor === 'cisco' && in_array($category, ['expansion-1', 'expansion-2'], true)) {
-        return ['expansion', $category];
-
-
-        
+        // Cisco SPA expansion module profile/legacy keys.
+        // Treat expansion-1 and expansion-2 as the new "expansion" key area.
+        if ($vendor === 'cisco' && in_array($category, ['expansion-1', 'expansion-2'], true)) {
+            return ['expansion', $category];
+        }
 
         return ['main', $category ?: null];
     }
