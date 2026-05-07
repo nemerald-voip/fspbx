@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\AccessControlController;
+use App\Http\Controllers\ActiveConferenceController;
 use App\Http\Controllers\ActiveCallsController;
 use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AppsController;
@@ -13,6 +14,8 @@ use App\Http\Controllers\CallFlowController;
 use App\Http\Controllers\CallRoutingOptionsController;
 use App\Http\Controllers\CdrsController;
 use App\Http\Controllers\ConferenceCenterController;
+use App\Http\Controllers\ConferenceControlController;
+use App\Http\Controllers\ConferenceProfileController;
 use App\Http\Controllers\ConferenceRoomController;
 use App\Http\Controllers\CsrfTokenController;
 use App\Http\Controllers\DashboardController;
@@ -216,6 +219,8 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Conference Centers
     Route::get('conference-centers', [ConferenceCenterController::class, 'index'])->name('conference-centers.index');
+    Route::get('conference-controls', [ConferenceControlController::class, 'index'])->name('conference-controls.index');
+    Route::get('conference-profiles', [ConferenceProfileController::class, 'index'])->name('conference-profiles.index');
     Route::get('conference-rooms', [ConferenceRoomController::class, 'index'])->name('conference-rooms.index');
 
     //Voicemails
@@ -401,6 +406,8 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('sansay/active-calls/delete', [SansayActiveCallsController::class, 'destroy'])->name('sansay.active-calls.delete');
 
     // Active Calls
+    Route::get('active-conferences', [ActiveConferenceController::class, 'index'])->name('active-conferences.index');
+    Route::get('active-conferences/{conference}/interactive', [ActiveConferenceController::class, 'interactive'])->name('active-conferences.interactive');
     Route::resource('active-calls', ActiveCallsController::class);
     Route::post('/active-calls/select-all', [ActiveCallsController::class, 'selectAll'])->name('active-calls.select.all');
     Route::post('/active-calls/action', [ActiveCallsController::class, 'handleAction'])->name('active-calls.action');

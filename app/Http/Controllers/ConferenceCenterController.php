@@ -32,7 +32,8 @@ class ConferenceCenterController extends Controller
                 'store' => route('conference-centers.store'),
                 'item_options' => route('conference-centers.item.options'),
                 'rooms' => route('conference-rooms.index'),
-                'active_conferences' => '/app/conferences_active/conferences_active.php',
+                'active_conferences' => route('active-conferences.index'),
+                'conference_controls' => route('conference-controls.index'),
             ],
             'permissions' => [
                 'create' => userCheckPermission('conference_center_add'),
@@ -40,6 +41,7 @@ class ConferenceCenterController extends Controller
                 'destroy' => userCheckPermission('conference_center_delete'),
                 'view_global' => userCheckPermission('conference_center_all'),
                 'view_active' => userCheckPermission('conference_active_view'),
+                'view_controls' => userCheckPermission('conference_control_view'),
             ],
         ]);
     }
@@ -102,7 +104,7 @@ class ConferenceCenterController extends Controller
         }
 
         if ($itemUuid) {
-            $item = ConferenceCenter::query()
+            $item = QueryBuilder::for(ConferenceCenter::class)
                 ->where('domain_uuid', session('domain_uuid'))
                 ->whereKey($itemUuid)
                 ->firstOrFail();
@@ -192,7 +194,7 @@ class ConferenceCenterController extends Controller
             ], 422);
         }
 
-        $items = ConferenceCenter::query()
+        $items = QueryBuilder::for(ConferenceCenter::class)
             ->where('domain_uuid', session('domain_uuid'))
             ->whereIn('conference_center_uuid', $uuids)
             ->get();
@@ -219,7 +221,7 @@ class ConferenceCenterController extends Controller
             ], 422);
         }
 
-        $items = ConferenceCenter::query()
+        $items = QueryBuilder::for(ConferenceCenter::class)
             ->where('domain_uuid', session('domain_uuid'))
             ->whereIn('conference_center_uuid', $uuids)
             ->get();

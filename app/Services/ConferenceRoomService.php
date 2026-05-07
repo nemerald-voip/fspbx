@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\ConferenceCenter;
 use App\Models\ConferenceRoom;
-use App\Models\ConferenceRoomUser;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -50,17 +49,6 @@ class ConferenceRoomService
                 'created_by' => $isNew ? session('user_uuid') : $conferenceRoom->created_by,
             ])->save();
 
-            $userUuid = $validated['user_uuid'] ?? ($isNew ? session('user_uuid') : null);
-            if (is_string($userUuid) && Str::isUuid($userUuid)) {
-                ConferenceRoomUser::query()->firstOrCreate([
-                    'domain_uuid' => session('domain_uuid'),
-                    'conference_room_uuid' => $conferenceRoomUuid,
-                    'user_uuid' => $userUuid,
-                ], [
-                    'conference_room_user_uuid' => (string) Str::uuid(),
-                ]);
-            }
-
             return $conferenceRoom;
         });
     }
@@ -69,11 +57,6 @@ class ConferenceRoomService
     {
         return DB::transaction(function () use ($conferenceRooms) {
             $roomUuids = $conferenceRooms->pluck('conference_room_uuid');
-
-            ConferenceRoomUser::query()
-                ->where('domain_uuid', session('domain_uuid'))
-                ->whereIn('conference_room_uuid', $roomUuids)
-                ->delete();
 
             return ConferenceRoom::query()
                 ->where('domain_uuid', session('domain_uuid'))
@@ -91,14 +74,6 @@ class ConferenceRoomService
                 ])->save();
             }
         });
-    }
-
-    public function removeUser(string $conferenceRoomUserUuid): bool
-    {
-        return (bool) ConferenceRoomUser::query()
-            ->where('domain_uuid', session('domain_uuid'))
-            ->where('conference_room_user_uuid', $conferenceRoomUserUuid)
-            ->delete();
     }
 
     public function generatePin(?string $conferenceCenterUuid, ?string $currentRoomUuid = null): ?string

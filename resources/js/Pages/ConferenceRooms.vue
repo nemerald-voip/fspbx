@@ -28,7 +28,12 @@
             <template #action>
                 <a :href="routes.centers"
                     class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    Centers
+                    Conference Centers
+                </a>
+
+                <a v-if="permissions.profile_view" :href="routes.conference_profiles"
+                    class="ml-2 sm:ml-4 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    Profiles
                 </a>
 
                 <a v-if="permissions.active_view" :href="routes.active_conferences"
@@ -196,7 +201,7 @@
 
     <ConferenceRoomForm :show="showForm" :options="itemOptions" :mode="formMode" :loading="loadingForm"
         :header="formHeader" @close="handleFormClose" @error="handleErrorResponse" @success="showNotification"
-        @refresh-data="refreshCurrentPage" @reload-options="reloadCurrentOptions" />
+        @refresh-data="refreshCurrentPage" />
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
@@ -261,8 +266,6 @@ const itemOptions = ref({
     item: {},
     conference_centers: [],
     profiles: [],
-    users: [],
-    assigned_users: [],
     permissions: {},
     routes: {},
 });
@@ -409,10 +412,6 @@ const getItemOptions = (itemUuid = null) => {
         });
 };
 
-const reloadCurrentOptions = () => {
-    getItemOptions(editingItemUuid.value);
-};
-
 const handleFormClose = () => {
     showForm.value = false;
     formMode.value = "create";
@@ -421,8 +420,6 @@ const handleFormClose = () => {
         item: {},
         conference_centers: [],
         profiles: [],
-        users: [],
-        assigned_users: [],
         permissions: {},
         routes: {},
     };

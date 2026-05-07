@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class ConferenceRoom extends Model
 {
@@ -50,11 +49,6 @@ class ConferenceRoom extends Model
     public function conferenceCenter(): BelongsTo
     {
         return $this->belongsTo(ConferenceCenter::class, 'conference_center_uuid', 'conference_center_uuid');
-    }
-
-    public function roomUsers(): HasMany
-    {
-        return $this->hasMany(ConferenceRoomUser::class, 'conference_room_uuid', 'conference_room_uuid');
     }
 
     public function domain(): BelongsTo

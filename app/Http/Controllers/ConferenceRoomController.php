@@ -6,7 +6,6 @@ use App\Http\Requests\StoreConferenceRoomRequest;
 use App\Http\Requests\UpdateConferenceRoomRequest;
 use App\Models\ConferenceCenter;
 use App\Models\ConferenceRoom;
-use App\Models\User;
 use App\Services\ConferenceRoomService;
 use App\Services\FreeswitchEslService;
 use Illuminate\Http\JsonResponse;
@@ -47,8 +46,9 @@ class ConferenceRoomController extends Controller
                 'store' => route('conference-rooms.store'),
                 'item_options' => route('conference-rooms.item.options'),
                 'centers' => route('conference-centers.index'),
-                'active_conferences' => '/app/conferences_active/conferences_active.php',
-                'interactive' => '/app/conferences_active/conference_interactive.php?c=:uuid',
+                'conference_profiles' => route('conference-profiles.index'),
+                'active_conferences' => route('active-conferences.index'),
+                'interactive' => url('/active-conferences/:uuid/interactive'),
                 'cdr' => '/app/conference_cdr/conference_cdr.php?id=:uuid',
                 'sessions' => '/app/conference_centers/conference_sessions.php?id=:uuid',
             ],
@@ -113,16 +113,15 @@ class ConferenceRoomController extends Controller
             ], 403);
         }
 
-        $conferenceCenters = ConferenceCenter::query()
+        $conferenceCenters = QueryBuilder::for(ConferenceCenter::class)
             ->where('domain_uuid', session('domain_uuid'))
-            ->orderBy('conference_center_name')
+            ->defaultSort('conference_center_name')
             ->get(['conference_center_uuid', 'conference_center_name', 'conference_center_extension', 'conference_center_pin_length']);
 
         if ($itemUuid) {
-            $item = ConferenceRoom::query()
+            $item = QueryBuilder::for(ConferenceRoom::class)
                 ->where('domain_uuid', session('domain_uuid'))
                 ->whereKey($itemUuid)
-                ->with(['roomUsers.user:user_uuid,username'])
                 ->firstOrFail();
         } else {
             $centerUuid = $conferenceCenters->first()?->conference_center_uuid;
@@ -141,13 +140,7 @@ class ConferenceRoomController extends Controller
             $item->mute = 'false';
             $item->sounds = 'false';
             $item->enabled = 'true';
-            $item->setRelation('roomUsers', collect());
         }
-
-        $assignedUserUuids = $item->roomUsers
-            ->pluck('user_uuid')
-            ->filter()
-            ->values();
 
         return response()->json([
             'item' => $item,
@@ -157,22 +150,10 @@ class ConferenceRoomController extends Controller
                 'pin_length' => $center->conference_center_pin_length,
             ]),
             'profiles' => $this->conferenceProfiles(),
-            'users' => User::query()
-                ->where('domain_uuid', session('domain_uuid'))
-                ->when($assignedUserUuids->isNotEmpty(), fn ($query) => $query->whereNotIn('user_uuid', $assignedUserUuids))
-                ->orderBy('username')
-                ->get(['user_uuid', 'username'])
-                ->map(fn ($user) => ['value' => $user->user_uuid, 'label' => $user->username]),
-            'assigned_users' => $item->roomUsers->map(fn ($roomUser) => [
-                'conference_room_user_uuid' => $roomUser->conference_room_user_uuid,
-                'user_uuid' => $roomUser->user_uuid,
-                'username' => $roomUser->user?->username,
-            ])->values(),
             'permissions' => $this->permissions(),
             'routes' => [
                 'store_route' => route('conference-rooms.store'),
                 'update_route' => $itemUuid ? route('conference-rooms.update', ['conference_room' => $item->conference_room_uuid]) : null,
-                'remove_user_route' => route('conference-rooms.users.destroy'),
             ],
         ]);
     }
@@ -187,7 +168,7 @@ class ConferenceRoomController extends Controller
 
         $memberCounts = $this->activeMemberCounts();
 
-        return $this->scopedConferenceRooms($request)
+        return $this->scopedConferenceRooms()
             ->select([
                 'domain_uuid',
                 'conference_room_uuid',
@@ -238,7 +219,7 @@ class ConferenceRoomController extends Controller
             ], 403);
         }
 
-        $items = $this->scopedConferenceRooms($request)
+        $items = $this->scopedConferenceRooms()
             ->select(['conference_room_uuid'])
             ->defaultSort('description')
             ->pluck('conference_room_uuid');
@@ -264,7 +245,7 @@ class ConferenceRoomController extends Controller
             ], 422);
         }
 
-        $items = ConferenceRoom::query()
+        $items = QueryBuilder::for(ConferenceRoom::class)
             ->where('domain_uuid', session('domain_uuid'))
             ->whereIn('conference_room_uuid', $uuids)
             ->get();
@@ -298,7 +279,7 @@ class ConferenceRoomController extends Controller
             ], 422);
         }
 
-        $items = ConferenceRoom::query()
+        $items = QueryBuilder::for(ConferenceRoom::class)
             ->where('domain_uuid', session('domain_uuid'))
             ->whereIn('conference_room_uuid', $uuids)
             ->get();
@@ -310,32 +291,10 @@ class ConferenceRoomController extends Controller
         ]);
     }
 
-    public function destroyUser(Request $request, ConferenceRoomService $service): JsonResponse
-    {
-        if (! userCheckPermission('conference_room_delete')) {
-            return response()->json([
-                'messages' => ['error' => ['Access denied.']],
-            ], 403);
-        }
-
-        $validated = $request->validate([
-            'conference_room_user_uuid' => ['required', 'uuid'],
-        ]);
-
-        $service->removeUser($validated['conference_room_user_uuid']);
-
-        return response()->json([
-            'messages' => ['success' => ['User removed from conference room.']],
-        ]);
-    }
-
-    private function scopedConferenceRooms(Request $request): QueryBuilder
+    private function scopedConferenceRooms(): QueryBuilder
     {
         return QueryBuilder::for(ConferenceRoom::class)
             ->where('domain_uuid', session('domain_uuid'))
-            ->when(! userCheckPermission('conference_room_view_all'), function ($query) {
-                $query->whereHas('roomUsers', fn ($query) => $query->where('user_uuid', session('user_uuid')));
-            })
             ->allowedFilters([
                 AllowedFilter::callback('search', function ($query, $value) {
                     $needle = trim((string) $value);
@@ -407,6 +366,7 @@ class ConferenceRoomController extends Controller
             'destroy' => userCheckPermission('conference_room_delete'),
             'enabled' => userCheckPermission('conference_room_enabled'),
             'profile' => userCheckPermission('conference_room_profile'),
+            'profile_view' => userCheckPermission('conference_profile_view'),
             'record' => userCheckPermission('conference_room_record'),
             'max_members' => userCheckPermission('conference_room_max_members'),
             'wait_mod' => userCheckPermission('conference_room_wait_mod'),

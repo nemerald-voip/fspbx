@@ -51,6 +51,7 @@
                                                 <FormTab name="settings" label="Settings" :elements="[
                                                     'conference_room_uuid',
                                                     'settings_header',
+                                                    'conference_room_uuid_clean',
                                                     'conference_center_uuid',
                                                     'conference_room_name',
                                                     'moderator_pin',
@@ -60,18 +61,12 @@
                                                     'button_container',
                                                     'settings_submit',
                                                 ]" />
-                                                <FormTab name="users" label="Users" :elements="[
-                                                    'users_header',
-                                                    'assigned_users',
-                                                    'user_uuid',
-                                                    'users_button_container',
-                                                    'users_submit',
-                                                ]" />
                                                 <FormTab name="advanced" label="Advanced" :elements="[
                                                     'advanced_header',
                                                     'profile',
                                                     'record',
                                                     'max_members',
+                                                    'placeholder',
                                                     'start_datetime',
                                                     'stop_datetime',
                                                     'wait_mod',
@@ -82,6 +77,7 @@
                                                     'mute',
                                                     'sounds',
                                                     'email_address',
+                                                    'placeholder1',
                                                     'account_code',
                                                     'advanced_button_container',
                                                     'advanced_submit',
@@ -96,6 +92,29 @@
 
                                                 <StaticElement name="settings_header" tag="h4" content="Conference Room Settings"
                                                     description="Configure the room name, access PINs, and availability." />
+
+                                                <StaticElement name="conference_room_uuid_clean"
+                                                    :conditions="[() => props.options?.item?.conference_room_uuid]">
+                                                    <div class="mb-1">
+                                                        <div class="text-sm font-medium text-gray-600 mb-1">
+                                                            Unique ID
+                                                        </div>
+
+                                                        <div class="flex items-center group">
+                                                            <span class="text-sm text-gray-900 select-all font-normal">
+                                                                {{ props.options?.item?.conference_room_uuid }}
+                                                            </span>
+
+                                                            <button type="button"
+                                                                @click="handleCopyToClipboard(props.options?.item?.conference_room_uuid)"
+                                                                class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                                                title="Copy to clipboard">
+                                                                <ClipboardDocumentIcon
+                                                                    class="h-4 w-4 text-gray-500 hover:text-gray-900 cursor-pointer" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </StaticElement>
 
                                                 <SelectElement name="conference_center_uuid" label="Conference Center"
                                                     :items="conferenceCenters" :search="true" :native="false"
@@ -125,35 +144,6 @@
                                                 <ButtonElement name="settings_submit" button-label="Save"
                                                     :submits="true" align="right" />
 
-                                                <StaticElement name="users_header" tag="h4" content="Assigned Users"
-                                                    description="Users assigned to this room can see it when room access is restricted." />
-
-                                                <StaticElement name="assigned_users">
-                                                    <div class="space-y-2">
-                                                        <div v-if="assignedUsers.length === 0" class="text-sm text-gray-500">
-                                                            No users assigned.
-                                                        </div>
-                                                        <div v-for="user in assignedUsers" :key="user.conference_room_user_uuid"
-                                                            class="flex items-center justify-between rounded-md border border-gray-200 bg-white px-3 py-2">
-                                                            <span class="text-sm text-gray-700">{{ user.username }}</span>
-                                                            <button v-if="permissions.destroy" type="button"
-                                                                class="text-sm font-medium text-red-600 hover:text-red-800"
-                                                                @click="removeUser(user.conference_room_user_uuid)">
-                                                                Remove
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </StaticElement>
-
-                                                <SelectElement name="user_uuid" label="Add User" :items="users"
-                                                    :search="true" :native="false" input-type="search"
-                                                    autocomplete="off" allow-absent :floating="false"
-                                                    :conditions="[() => permissions.create && users.length > 0]" />
-
-                                                <GroupElement name="users_button_container" />
-                                                <ButtonElement name="users_submit" button-label="Save"
-                                                    :submits="true" align="right" />
-
                                                 <StaticElement name="advanced_header" tag="h4" content="Advanced Settings"
                                                     description="Manage room behavior, scheduling, and optional accounting fields." />
 
@@ -171,12 +161,20 @@
                                                     :floating="false" :conditions="[() => permissions.max_members]"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="start_datetime" label="Start Date/Time"
-                                                    placeholder="YYYY-MM-DD HH:MM:SS" :floating="false"
+                                                <GroupElement name="placeholder" />
+
+                                                <DateElement name="start_datetime" label="Start Date/Time"
+                                                    :time="true" :seconds="true" :hour24="true"
+                                                    value-format="YYYY-MM-DD HH:mm:ss"
+                                                    load-format="YYYY-MM-DD HH:mm:ss"
+                                                    display-format="YYYY-MM-DD HH:mm:ss"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="stop_datetime" label="Stop Date/Time"
-                                                    placeholder="YYYY-MM-DD HH:MM:SS" :floating="false"
+                                                <DateElement name="stop_datetime" label="Stop Date/Time"
+                                                    :time="true" :seconds="true" :hour24="true"
+                                                    value-format="YYYY-MM-DD HH:mm:ss"
+                                                    load-format="YYYY-MM-DD HH:mm:ss"
+                                                    display-format="YYYY-MM-DD HH:mm:ss"
                                                     :columns="{ sm: { container: 6 } }" />
 
                                                 <ToggleElement name="wait_mod" text="Wait for Moderator"
@@ -218,6 +216,8 @@
                                                     :floating="false" :conditions="[() => permissions.email_address]"
                                                     :columns="{ sm: { container: 6 } }" />
 
+                                                <GroupElement name="placeholder1" />
+
                                                 <TextElement name="account_code" label="Account Code"
                                                     :floating="false" :conditions="[() => permissions.account_code]"
                                                     :columns="{ sm: { container: 6 } }" />
@@ -240,8 +240,8 @@
 
 <script setup>
 import { computed, ref } from "vue";
-import axios from "axios";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
+import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 
 const props = defineProps({
@@ -258,15 +258,21 @@ const props = defineProps({
     },
 });
 
-const emit = defineEmits(["close", "error", "success", "refresh-data", "reload-options"]);
+const emit = defineEmits(["close", "error", "success", "refresh-data"]);
 
 const form$ = ref(null);
 
 const permissions = computed(() => props.options?.permissions ?? {});
 const conferenceCenters = computed(() => props.options?.conference_centers ?? []);
 const profiles = computed(() => props.options?.profiles ?? []);
-const users = computed(() => props.options?.users ?? []);
-const assignedUsers = computed(() => props.options?.assigned_users ?? []);
+
+const handleCopyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        emit("success", "success", { message: ["Copied to clipboard."] });
+    }).catch(() => {
+        emit("error", { response: { data: { errors: { request: ["Failed to copy to clipboard."] } } } });
+    });
+};
 
 const defaultValues = computed(() => ({
     conference_room_uuid: props.options?.item?.conference_room_uuid ?? null,
@@ -290,7 +296,6 @@ const defaultValues = computed(() => ({
     account_code: props.options?.item?.account_code ?? null,
     enabled: props.options?.item?.enabled ?? "true",
     description: props.options?.item?.description ?? null,
-    user_uuid: null,
 }));
 
 const submitForm = async (FormData, form$) => {
@@ -304,18 +309,6 @@ const submitForm = async (FormData, form$) => {
     }
 
     return await form$.$vueform.services.axios.put(route, requestData);
-};
-
-const removeUser = (conferenceRoomUserUuid) => {
-    axios.post(props.options.routes.remove_user_route, {
-        conference_room_user_uuid: conferenceRoomUserUuid,
-    })
-        .then((response) => {
-            emit("success", "success", response.data.messages);
-            emit("reload-options");
-            emit("refresh-data");
-        })
-        .catch((error) => emit("error", error));
 };
 
 function clearErrorsRecursive(el$) {

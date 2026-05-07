@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\AccessControlController;
+use App\Http\Controllers\ActiveConferenceController;
 use App\Http\Controllers\Api\EmergencyCallController;
 use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\LocationsController;
@@ -12,6 +13,8 @@ use App\Http\Controllers\CallTranscriptionController;
 use App\Http\Controllers\CdrsController;
 use App\Http\Controllers\CharPmsWebhookController;
 use App\Http\Controllers\ConferenceCenterController;
+use App\Http\Controllers\ConferenceControlController;
+use App\Http\Controllers\ConferenceProfileController;
 use App\Http\Controllers\ConferenceRoomController;
 use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
@@ -330,6 +333,38 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/conference-centers/bulk-delete', [ConferenceCenterController::class, 'bulkDelete'])->name('conference-centers.bulk.delete');
     Route::post('/conference-centers/bulk-toggle', [ConferenceCenterController::class, 'bulkToggle'])->name('conference-centers.bulk.toggle');
 
+    // Conference Controls
+    Route::post('/conference-controls', [ConferenceControlController::class, 'store'])->name('conference-controls.store');
+    Route::get('/conference-controls/data', [ConferenceControlController::class, 'getData'])->name('conference-controls.data');
+    Route::post('/conference-controls/item-options', [ConferenceControlController::class, 'getItemOptions'])->name('conference-controls.item.options');
+    Route::post('/conference-controls/select-all', [ConferenceControlController::class, 'selectAll'])->name('conference-controls.select.all');
+    Route::post('/conference-controls/bulk-copy', [ConferenceControlController::class, 'bulkCopy'])->name('conference-controls.bulk.copy');
+    Route::post('/conference-controls/bulk-delete', [ConferenceControlController::class, 'bulkDelete'])->name('conference-controls.bulk.delete');
+    Route::post('/conference-controls/bulk-toggle', [ConferenceControlController::class, 'bulkToggle'])->name('conference-controls.bulk.toggle');
+    Route::put('/conference-controls/{conference_control}', [ConferenceControlController::class, 'update'])->name('conference-controls.update');
+    Route::delete('/conference-controls/{conference_control}', [ConferenceControlController::class, 'destroy'])->name('conference-controls.destroy');
+    Route::post('/conference-controls/{conference_control}/details', [ConferenceControlController::class, 'storeDetail'])->name('conference-controls.details.store');
+    Route::post('/conference-controls/details/bulk-delete', [ConferenceControlController::class, 'bulkDeleteDetails'])->name('conference-controls.details.bulk.delete');
+    Route::post('/conference-controls/details/bulk-toggle', [ConferenceControlController::class, 'bulkToggleDetails'])->name('conference-controls.details.bulk.toggle');
+    Route::put('/conference-controls/details/{conference_control_detail}', [ConferenceControlController::class, 'updateDetail'])->name('conference-controls.details.update');
+    Route::delete('/conference-controls/details/{conference_control_detail}', [ConferenceControlController::class, 'destroyDetail'])->name('conference-controls.details.destroy');
+
+    // Conference Profiles
+    Route::post('/conference-profiles', [ConferenceProfileController::class, 'store'])->name('conference-profiles.store');
+    Route::get('/conference-profiles/data', [ConferenceProfileController::class, 'getData'])->name('conference-profiles.data');
+    Route::post('/conference-profiles/item-options', [ConferenceProfileController::class, 'getItemOptions'])->name('conference-profiles.item.options');
+    Route::post('/conference-profiles/select-all', [ConferenceProfileController::class, 'selectAll'])->name('conference-profiles.select.all');
+    Route::post('/conference-profiles/bulk-copy', [ConferenceProfileController::class, 'bulkCopy'])->name('conference-profiles.bulk.copy');
+    Route::post('/conference-profiles/bulk-delete', [ConferenceProfileController::class, 'bulkDelete'])->name('conference-profiles.bulk.delete');
+    Route::post('/conference-profiles/bulk-toggle', [ConferenceProfileController::class, 'bulkToggle'])->name('conference-profiles.bulk.toggle');
+    Route::put('/conference-profiles/{conference_profile}', [ConferenceProfileController::class, 'update'])->name('conference-profiles.update');
+    Route::delete('/conference-profiles/{conference_profile}', [ConferenceProfileController::class, 'destroy'])->name('conference-profiles.destroy');
+    Route::post('/conference-profiles/{conference_profile}/params', [ConferenceProfileController::class, 'storeParam'])->name('conference-profiles.params.store');
+    Route::post('/conference-profiles/params/bulk-delete', [ConferenceProfileController::class, 'bulkDeleteParams'])->name('conference-profiles.params.bulk.delete');
+    Route::post('/conference-profiles/params/bulk-toggle', [ConferenceProfileController::class, 'bulkToggleParams'])->name('conference-profiles.params.bulk.toggle');
+    Route::put('/conference-profiles/params/{conference_profile_param}', [ConferenceProfileController::class, 'updateParam'])->name('conference-profiles.params.update');
+    Route::delete('/conference-profiles/params/{conference_profile_param}', [ConferenceProfileController::class, 'destroyParam'])->name('conference-profiles.params.destroy');
+
     // Conference Rooms
     Route::post('conference-rooms', [ConferenceRoomController::class, 'store'])->name('conference-rooms.store');
     Route::put('conference-rooms/{conference_room}', [ConferenceRoomController::class, 'update'])->name('conference-rooms.update');
@@ -338,7 +373,11 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/conference-rooms/select-all', [ConferenceRoomController::class, 'selectAll'])->name('conference-rooms.select.all');
     Route::post('/conference-rooms/bulk-delete', [ConferenceRoomController::class, 'bulkDelete'])->name('conference-rooms.bulk.delete');
     Route::post('/conference-rooms/bulk-toggle', [ConferenceRoomController::class, 'bulkToggle'])->name('conference-rooms.bulk.toggle');
-    Route::post('/conference-rooms/users/delete', [ConferenceRoomController::class, 'destroyUser'])->name('conference-rooms.users.destroy');
+
+    // Active Conferences
+    Route::get('/active-conferences/data', [ActiveConferenceController::class, 'getData'])->name('active-conferences.data');
+    Route::get('/active-conferences/{conference}/interactive/data', [ActiveConferenceController::class, 'getInteractiveData'])->name('active-conferences.interactive.data');
+    Route::post('/active-conferences/{conference}/interactive/action', [ActiveConferenceController::class, 'executeInteractiveAction'])->name('active-conferences.interactive.action');
 
     // Phone Numbers
     Route::post('phone-numbers', [PhoneNumbersController::class, 'store'])->name('phone-numbers.store');

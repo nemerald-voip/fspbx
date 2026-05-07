@@ -118,8 +118,6 @@ class CreateFSPBXMenu extends Command
                     ['title' => 'Call History', 'link' => '/call-detail-records', 'groups' => ['superadmin', 'admin', 'user']],
                     ['title' => 'Call Flows', 'link' => '/call-flows', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Conference Centers', 'link' => '/conference-centers', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Conference Controls', 'link' => '/app/conference_controls/conference_controls.php', 'groups' => ['superadmin']],
-                    ['title' => 'Conference Profiles', 'link' => '/app/conference_profiles/conference_profiles.php', 'groups' => ['superadmin']],
                     ['title' => 'Conferences', 'link' => '/app/conferences/conferences.php', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Faxes', 'link' => '/faxes', 'groups' => ['superadmin', 'admin', 'fax', 'user']],
                     ['title' => 'Virtual Receptionists', 'link' => '/virtual-receptionists', 'groups' => ['superadmin', 'admin']],
@@ -139,7 +137,7 @@ class CreateFSPBXMenu extends Command
                 'groups' => ['superadmin', 'admin'],
                 'subcategories' => [
                     ['title' => 'Active Calls', 'link' => '/active-calls', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Active Conferences', 'link' => '/app/conferences_active/conferences_active.php', 'groups' => ['superadmin', 'admin']],
+                    ['title' => 'Active Conferences', 'link' => '/active-conferences', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Active Queues', 'link' => '/app/fifo_list/fifo_list.php', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Extension Statistics', 'link' => '/extension-statistics', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Firewall', 'link' => '/firewall', 'groups' => ['superadmin']],

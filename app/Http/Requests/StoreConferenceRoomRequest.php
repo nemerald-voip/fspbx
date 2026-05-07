@@ -76,11 +76,6 @@ class StoreConferenceRoomRequest extends FormRequest
             'account_code' => ['nullable', 'string', 'max:255'],
             'enabled' => ['required', 'in:true,false'],
             'description' => ['nullable', 'string', 'max:255'],
-            'user_uuid' => [
-                'nullable',
-                'uuid',
-                Rule::exists('v_users', 'user_uuid')->where('domain_uuid', $domainUuid),
-            ],
         ];
     }
 
