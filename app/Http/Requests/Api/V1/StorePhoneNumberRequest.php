@@ -48,6 +48,7 @@ class StorePhoneNumberRequest extends FormRequest
                     'ivrs',
                     'business_hours',
                     'contact_centers',
+                    'bridges',
                     'faxes',
                     'conferences',
                     'call_flows',
@@ -69,6 +70,10 @@ class StorePhoneNumberRequest extends FormRequest
 
                     if ($value === null || $value === '') {
                         $fail('The extension is required for this routing option.');
+                        return;
+                    }
+
+                    if ($type === 'bridges') {
                         return;
                     }
 
@@ -96,6 +101,10 @@ class StorePhoneNumberRequest extends FormRequest
         $routing = $this->input('routing_options', []);
         if (is_array($routing) && count($routing)) {
             foreach ($routing as $i => $r) {
+                if (($r['type'] ?? null) === 'bridges') {
+                    continue;
+                }
+
                 if (array_key_exists('extension', $r) && $r['extension'] !== null && $r['extension'] !== '') {
                     $v = preg_replace('/[^\d+]+/', '', (string) $r['extension']);
                     // allow one leading +

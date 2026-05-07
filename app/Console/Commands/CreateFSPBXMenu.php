@@ -113,7 +113,7 @@ class CreateFSPBXMenu extends Command
                 'link' => null,
                 'groups' => ['superadmin', 'admin', 'user', 'fax', 'agent'],
                 'subcategories' => [
-                    ['title' => 'Bridges', 'link' => '/app/bridges/bridges.php', 'groups' => ['superadmin']],
+                    ['title' => 'Bridges', 'link' => '/bridges', 'groups' => ['superadmin']],
                     ['title' => 'Call Block', 'link' => '/app/call_block/call_block.php', 'groups' => ['superadmin', 'admin', 'user']],
                     ['title' => 'Call History', 'link' => '/call-detail-records', 'groups' => ['superadmin', 'admin', 'user']],
                     ['title' => 'Call Flows', 'link' => '/call-flows', 'groups' => ['superadmin', 'admin']],

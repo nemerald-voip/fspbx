@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\{BusinessHour, CallCenterQueues, CallFlows, Conferences, Dialplans, Domain, Extensions, Faxes, IvrMenus, Recordings, RingGroups, Voicemails};
+use App\Models\{Bridge, BusinessHour, CallCenterQueues, CallFlows, Conferences, Dialplans, Domain, Extensions, Faxes, IvrMenus, Recordings, RingGroups, Voicemails};
 use App\Models\ConferenceCenter;
 
 class CallRoutingOptionsService
@@ -18,6 +18,7 @@ class CallRoutingOptionsService
         ['value' => 'business_hours', 'name' => 'Business Hours'],
         ['value' => 'time_conditions', 'name' => 'Schedule'],
         ['value' => 'contact_centers', 'name' => 'Contact Center'],
+        ['value' => 'bridges', 'name' => 'Bridge'],
         ['value' => 'faxes', 'name' => 'Fax'],
         ['value' => 'call_flows', 'name' => 'Call Flow'],
         ['value' => 'recordings', 'name' => 'Play Greeting'],
@@ -54,6 +55,7 @@ class CallRoutingOptionsService
         'business_hours'   => \App\Models\BusinessHour::class,
         'time_conditions'  => \App\Models\Dialplans::class,
         'contact_centers'  => \App\Models\CallCenterQueues::class,
+        'bridges'          => \App\Models\Bridge::class,
         'conferences'      => \App\Models\Conferences::class,
         'conference_centers' => \App\Models\ConferenceCenter::class,
         'faxes'            => \App\Models\Faxes::class,
@@ -75,6 +77,8 @@ class CallRoutingOptionsService
         switch (request('category')) {
             case 'contact_centers':
                 return $this->buildOptions(CallCenterQueues::class, 'queue_extension', 'queue_name');
+            case 'bridges':
+                return $this->buildBridgeOptions();
             case 'call_flows':
                 return $this->buildOptions(CallFlows::class, 'call_flow_extension', 'call_flow_name');
                 // case 'dial_plans':
@@ -165,6 +169,24 @@ class CallRoutingOptionsService
         return $options;
     }
 
+    protected function buildBridgeOptions(): array
+    {
+        return Bridge::query()
+            ->where('domain_uuid', $this->domainUuid)
+            ->where('bridge_enabled', 'true')
+            ->whereNotNull('bridge_destination')
+            ->where('bridge_destination', '<>', '')
+            ->orderBy('bridge_name')
+            ->get(['bridge_uuid', 'bridge_name', 'bridge_destination'])
+            ->map(fn (Bridge $bridge) => [
+                'value' => $bridge->bridge_uuid,
+                'extension' => $bridge->bridge_destination,
+                'name' => $bridge->bridge_name ?: $bridge->bridge_destination,
+            ])
+            ->values()
+            ->all();
+    }
+
     protected function otherOptions(): array
     {
         return [
@@ -213,6 +235,10 @@ class CallRoutingOptionsService
                         case 'lua':
                             // Handle recordings
                             $routing_options[] =  $this->extractRecordingUuidFromData($action['destination_data']);
+                            break;
+
+                        case 'bridge':
+                            $routing_options[] = $this->reverseEngineerBridgeAction($action['destination_data'] ?? null);
                             break;
 
                         case 'hangup':
@@ -275,13 +301,21 @@ class CallRoutingOptionsService
             $action = trim($action);
             // Split the string by spaces to extract details
             $parts = explode(' ', $action);
+            $actionType = $parts[0]; // e.g., "transfer"
 
-            if (count($parts) < 3 && $action != "hangup") {
+            if ($actionType === 'bridge') {
+                if (count($parts) < 2) {
+                    throw new \Exception("Invalid {$label} bridge action format");
+                }
+
+                return $this->reverseEngineerBridgeAction(implode(' ', array_slice($parts, 1)));
+            }
+
+            if (count($parts) < 3 && $actionType != "hangup") {
                 throw new \Exception("Invalid {$label} action format");
             }
 
             // Extract relevant data
-            $actionType = $parts[0]; // e.g., "transfer"
             if ($actionType != 'hangup') {
                 $destination = $parts[1]; // e.g., "201"
                 $context = $parts[2]; // e.g., "XML"
@@ -609,6 +643,31 @@ class CallRoutingOptionsService
         }
     }
 
+    protected function reverseEngineerBridgeAction(?string $destinationData): array
+    {
+        $destination = trim((string) $destinationData);
+
+        if ($destination === '') {
+            return [
+                'type' => 'bridges',
+                'extension' => null,
+                'option' => null,
+                'name' => null,
+            ];
+        }
+
+        $bridge = Bridge::where('domain_uuid', $this->domainUuid)
+            ->where('bridge_destination', $destination)
+            ->first(['bridge_uuid', 'bridge_name', 'bridge_destination']);
+
+        return [
+            'type' => 'bridges',
+            'extension' => $destination,
+            'option' => $bridge?->bridge_uuid,
+            'name' => $bridge?->bridge_name ?? $destination,
+        ];
+    }
+
     public function getFriendlyTypeName(string $type): string
     {
         $typeMapping = [
@@ -620,6 +679,7 @@ class CallRoutingOptionsService
             'faxes' => "Fax",
             'business_hours' => 'Business Hours',
             'time_conditions' => 'Schedules',
+            'bridges' => 'Bridge',
             'call_flows' => 'Call Flow',
             'conferences' => 'Conference',
             'conference_centers' => 'Conference Center',

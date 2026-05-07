@@ -1578,6 +1578,12 @@ if (!function_exists('buildDestinationAction')) {
                     'destination_data' => $option['extension'] . ' XML ' . $domain_name,
                 ];
 
+            case 'bridges':
+                return [
+                    'destination_app' => 'bridge',
+                    'destination_data' => $option['extension'],
+                ];
+
             case 'voicemails':
                 return [
                     'destination_app' => 'transfer',

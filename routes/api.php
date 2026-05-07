@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\LocationsController;
 use App\Http\Controllers\Api\ProvisioningTemplateController;
 use App\Http\Controllers\BusinessHoursController;
+use App\Http\Controllers\BridgeController;
 use App\Http\Controllers\CallFlowController;
 use App\Http\Controllers\CallTranscriptionController;
 use App\Http\Controllers\CdrsController;
@@ -329,6 +330,16 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/call-flows/bulk-delete', [CallFlowController::class, 'bulkDelete'])->name('call-flows.bulk.delete');
     Route::post('/call-flows/bulk-copy', [CallFlowController::class, 'bulkCopy'])->name('call-flows.bulk.copy');
     Route::post('/call-flows/bulk-toggle', [CallFlowController::class, 'bulkToggle'])->name('call-flows.bulk.toggle');
+
+    // Bridges
+    Route::post('bridges', [BridgeController::class, 'store'])->name('bridges.store');
+    Route::put('bridges/{bridge}', [BridgeController::class, 'update'])->name('bridges.update');
+    Route::get('/bridges/data', [BridgeController::class, 'getData'])->name('bridges.data');
+    Route::post('/bridges/item-options', [BridgeController::class, 'getItemOptions'])->name('bridges.item.options');
+    Route::post('/bridges/select-all', [BridgeController::class, 'selectAll'])->name('bridges.select.all');
+    Route::post('/bridges/bulk-copy', [BridgeController::class, 'bulkCopy'])->name('bridges.bulk.copy');
+    Route::post('/bridges/bulk-delete', [BridgeController::class, 'bulkDelete'])->name('bridges.bulk.delete');
+    Route::post('/bridges/bulk-toggle', [BridgeController::class, 'bulkToggle'])->name('bridges.bulk.toggle');
 
     // Conference Centers
     Route::post('conference-centers', [ConferenceCenterController::class, 'store'])->name('conference-centers.store');

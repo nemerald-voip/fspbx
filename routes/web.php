@@ -9,6 +9,7 @@ use App\Http\Controllers\AppsController;
 use App\Http\Controllers\AppsCredentialsController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\BusinessHoursController;
+use App\Http\Controllers\BridgeController;
 use App\Http\Controllers\CallRecordingController;
 use App\Http\Controllers\CallFlowController;
 use App\Http\Controllers\CallRoutingOptionsController;
@@ -214,6 +215,9 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Business hours
     Route::get('business-hours', [BusinessHoursController::class, 'index'])->name('business-hours.index');
+
+    // Bridges
+    Route::get('bridges', [BridgeController::class, 'index'])->name('bridges.index');
 
     // Call Flows
     Route::get('call-flows', [CallFlowController::class, 'index'])->name('call-flows.index');

@@ -35,7 +35,7 @@ class UpdateRingGroupRequest extends FormRequest
 
             'timeout_action' => [
                 'sometimes',
-                Rule::in(['extensions', 'ring_groups', 'ivrs', 'business_hours', 'contact_centers', 'faxes', 'conferences', 'call_flows', 'voicemails', 'recordings', 'check_voicemail', 'company_directory', 'hangup']),
+                Rule::in(['extensions', 'ring_groups', 'ivrs', 'business_hours', 'contact_centers', 'bridges', 'faxes', 'conferences', 'call_flows', 'voicemails', 'recordings', 'check_voicemail', 'company_directory', 'hangup']),
             ],
             'timeout_target' => [
                 'sometimes',
