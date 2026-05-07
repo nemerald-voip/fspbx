@@ -335,12 +335,18 @@ class UsersController extends Controller
         try {
             DB::beginTransaction();
 
-            $user = User::create([
+            $userAttributes = [
                 'username'     => $username,
                 'user_email'   => $data['user_email'],
                 'user_enabled' => $data['user_enabled'] ?? 'true',
                 'domain_uuid'  => $data['domain_uuid'],
-            ]);
+            ];
+
+            if (Schema::hasColumn('v_users', 'extension_uuid')) {
+                $userAttributes['extension_uuid'] = $data['extension_uuid'] ?? null;
+            }
+
+            $user = User::create($userAttributes);
 
             $user->user_adv_fields()->create([
                 'first_name' => $data['first_name'],
