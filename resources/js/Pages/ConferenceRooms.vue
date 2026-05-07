@@ -70,16 +70,79 @@
                 </TableColumnHeader>
 
                 <TableColumnHeader header="Center" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Moderator PIN" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Participant PIN" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Record" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Wait Moderator" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Muted" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Sounds" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('moderator_pin')">
+                        <span class="mr-2">Moderator PIN</span>
+                        <ChevronUpIcon v-if="sortData.name === 'moderator_pin' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'moderator_pin' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('participant_pin')">
+                        <span class="mr-2">Participant PIN</span>
+                        <ChevronUpIcon v-if="sortData.name === 'participant_pin' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'participant_pin' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('record')">
+                        <span class="mr-2">Record</span>
+                        <ChevronUpIcon v-if="sortData.name === 'record' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'record' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('wait_mod')">
+                        <span class="mr-2">Wait Moderator</span>
+                        <ChevronUpIcon v-if="sortData.name === 'wait_mod' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'wait_mod' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('mute')">
+                        <span class="mr-2">Muted</span>
+                        <ChevronUpIcon v-if="sortData.name === 'mute' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'mute' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('sounds')">
+                        <span class="mr-2">Sounds</span>
+                        <ChevronUpIcon v-if="sortData.name === 'sounds' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'sounds' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
                 <TableColumnHeader header="Members" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader v-if="permissions.enabled" header="Enabled"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Description" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader v-if="permissions.enabled" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('enabled')">
+                        <span class="mr-2">Enabled</span>
+                        <ChevronUpIcon v-if="sortData.name === 'enabled' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'enabled' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('description')">
+                        <span class="mr-2">Description</span>
+                        <ChevronUpIcon v-if="sortData.name === 'description' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'description' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 

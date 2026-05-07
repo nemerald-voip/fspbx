@@ -67,13 +67,51 @@
 
                 <TableColumnHeader v-if="filterData.showGlobal" header="Domain"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Number" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader v-if="permissions.context" header="Context"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Order" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Enabled" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Description"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('dialplan_number')">
+                        <span class="mr-2">Number</span>
+                        <ChevronUpIcon v-if="sortData.name === 'dialplan_number' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'dialplan_number' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader v-if="permissions.context" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('dialplan_context')">
+                        <span class="mr-2">Context</span>
+                        <ChevronUpIcon v-if="sortData.name === 'dialplan_context' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'dialplan_context' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('dialplan_order')">
+                        <span class="mr-2">Order</span>
+                        <ChevronUpIcon v-if="sortData.name === 'dialplan_order' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'dialplan_order' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('dialplan_enabled')">
+                        <span class="mr-2">Enabled</span>
+                        <ChevronUpIcon v-if="sortData.name === 'dialplan_enabled' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'dialplan_enabled' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('dialplan_description')">
+                        <span class="mr-2">Description</span>
+                        <ChevronUpIcon v-if="sortData.name === 'dialplan_description' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'dialplan_description' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 

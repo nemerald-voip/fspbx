@@ -82,9 +82,26 @@
                     </div>
                 </TableColumnHeader>
 
-                <TableColumnHeader header="Feature Code"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Status" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none"
+                        @click="handleSortRequest('call_flow_feature_code')">
+                        <span class="mr-2">Feature Code</span>
+                        <ChevronUpIcon v-if="sortData.name === 'call_flow_feature_code' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'call_flow_feature_code' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none"
+                        @click="handleSortRequest('call_flow_status')">
+                        <span class="mr-2">Status</span>
+                        <ChevronUpIcon v-if="sortData.name === 'call_flow_status' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'call_flow_status' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
                     <div class="flex items-center cursor-pointer select-none"
                         @click="handleSortRequest('call_flow_group')">
@@ -95,9 +112,26 @@
                             class="h-4 w-4 text-gray-500" />
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader header="Enabled" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Description"
-                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none"
+                        @click="handleSortRequest('call_flow_enabled')">
+                        <span class="mr-2">Enabled</span>
+                        <ChevronUpIcon v-if="sortData.name === 'call_flow_enabled' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'call_flow_enabled' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none"
+                        @click="handleSortRequest('call_flow_description')">
+                        <span class="mr-2">Description</span>
+                        <ChevronUpIcon v-if="sortData.name === 'call_flow_description' && sortData.order === 'asc'"
+                            class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'call_flow_description' && sortData.order === 'desc'"
+                            class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
                 <TableColumnHeader header="" class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" />
             </template>
 
