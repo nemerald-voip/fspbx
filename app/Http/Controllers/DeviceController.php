@@ -7,6 +7,7 @@ use App\Models\Devices;
 use App\Data\DeviceData;
 use App\Models\Extensions;
 use App\Models\DeviceLines;
+use App\Models\ProvisioningTemplate;
 use Illuminate\Support\Str;
 use App\Traits\ChecksLimits;
 use Illuminate\Http\Request;
@@ -675,7 +676,7 @@ class DeviceController extends Controller
             // Construct the itemOptions object
             $itemOptions = [
                 'item' => $deviceDto ?? null,
-                'templates' => getVendorTemplateCollection(),
+                'templates' => $this->getDeviceTemplateDropdownOptions(),
                 'profiles' => getProfileCollection($domain_uuid),
                 'extensions' => $extensionOptions,
                 'domains' => $domainOptions,
@@ -902,6 +903,8 @@ class DeviceController extends Controller
         $permissions['device_key_advanced'] = userCheckPermission('device_key_advanced');
         $permissions['device_address_update'] = userCheckPermission('device_address');
         $permissions['device_template_update'] = userCheckPermission('device_template');
+        $permissions['device_template_dropdown_default'] = userCheckPermission('device_template_dropdown_default');
+        $permissions['device_template_dropdown_custom'] = userCheckPermission('device_template_dropdown_custom');
         $permissions['device_domain_update'] = userCheckPermission('device_domain');
         $permissions['manage_device_cloud_provisioning_settings'] = userCheckPermission('manage_device_cloud_provisioning_settings');
         $permissions['device_setting_view'] = userCheckPermission('device_setting_view');
@@ -921,5 +924,48 @@ class DeviceController extends Controller
         $permissions['is_superadmin'] = isSuperAdmin();
 
         return $permissions;
+    }
+
+    private function getDeviceTemplateDropdownOptions(): array
+    {
+        $showDefaultTemplates = userCheckPermission('device_template_dropdown_default');
+        $showCustomTemplates = userCheckPermission('device_template_dropdown_custom');
+
+        if ($showDefaultTemplates && $showCustomTemplates) {
+            return getVendorTemplateCollection();
+        }
+
+        if (!$showDefaultTemplates && !$showCustomTemplates) {
+            return [];
+        }
+
+        $templates = collect(getVendorTemplateCollection());
+        $templateUuids = $templates
+            ->pluck('value')
+            ->filter(fn ($value) => is_string($value) && Str::isUuid($value))
+            ->values();
+
+        $templateTypes = $templateUuids->isEmpty()
+            ? collect()
+            : ProvisioningTemplate::query()
+                ->whereIn('template_uuid', $templateUuids)
+                ->pluck('type', 'template_uuid');
+
+        return $templates
+            ->filter(function ($template) use ($showDefaultTemplates, $showCustomTemplates, $templateTypes) {
+                $value = $template['value'] ?? null;
+
+                if (!is_string($value) || !Str::isUuid($value)) {
+                    return $showDefaultTemplates;
+                }
+
+                return match ($templateTypes->get($value)) {
+                    'custom' => $showCustomTemplates,
+                    'default' => $showDefaultTemplates,
+                    default => false,
+                };
+            })
+            ->values()
+            ->all();
     }
 }
