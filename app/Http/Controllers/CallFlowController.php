@@ -299,9 +299,8 @@ class CallFlowController extends Controller
                 'call_flow_extension',
                 'call_flow_feature_code',
                 'call_flow_status',
-                'call_flow_context',
-                'call_flow_enabled',
                 'call_flow_group',
+                'call_flow_enabled',
                 'call_flow_description',
             ])
             ->defaultSort('call_flow_name')
