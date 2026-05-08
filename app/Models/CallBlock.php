@@ -24,4 +24,13 @@ class CallBlock extends Model
      */
     protected $guarded = [];
 
+    public function domain()
+    {
+        return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
+    }
+
+    public function extension()
+    {
+        return $this->belongsTo(Extensions::class, 'extension_uuid', 'extension_uuid');
+    }
 }

@@ -2,11 +2,19 @@
 
 namespace App\Console\Commands\Updates;
 
+use App\Models\DialplanDetails;
+use App\Models\Dialplans;
+use App\Models\MenuItem;
+use App\Services\DialplanService;
 use Illuminate\Support\Facades\File;
 use Symfony\Component\Process\Process;
 
 class Update177
 {
+    private const CALL_BLOCK_DIALPLAN_APP_UUID = 'b1b31930-d0ee-4395-a891-04df94599f1f';
+    private const OLD_CALL_BLOCK_SCRIPT = 'app.lua call_block';
+    private const NEW_CALL_BLOCK_SCRIPT = 'lua/call_block.lua';
+
     private string $freeswitchSource = '/usr/src/freeswitch';
     private string $autoloadConfigPath = '/etc/freeswitch/autoload_configs';
 
@@ -17,6 +25,9 @@ class Update177
      */
     public function apply()
     {
+        $this->updateCallBlockMenuItems();
+        $this->updateCallBlockDialplanScriptPath();
+
         echo "== FS PBX: mod_hiredis setup ==\n";
 
         try {
@@ -45,6 +56,83 @@ class Update177
         }
 
         return true;
+    }
+
+    private function updateCallBlockMenuItems(): void
+    {
+        try {
+            $updatedMenuItems = MenuItem::query()
+                ->where('menu_item_title', 'Call Block')
+                ->where('menu_item_link', '/app/call_block/call_block.php')
+                ->update([
+                    'menu_item_link' => '/call-blocks',
+                ]);
+
+            echo $updatedMenuItems === 0
+                ? "No Call Block menu items required updating.\n"
+                : "Updated {$updatedMenuItems} Call Block menu item(s).\n";
+        } catch (\Throwable $e) {
+            echo "WARNING: Unable to update Call Block menu item: {$e->getMessage()}\n";
+        }
+    }
+
+    private function updateCallBlockDialplanScriptPath(): void
+    {
+        try {
+            $dialplans = Dialplans::query()
+                ->where('app_uuid', self::CALL_BLOCK_DIALPLAN_APP_UUID)
+                ->get(['dialplan_uuid', 'dialplan_context', 'dialplan_xml']);
+
+            $updatedDialplans = 0;
+            $contextsToClear = collect();
+
+            foreach ($dialplans as $dialplan) {
+                $xml = (string) $dialplan->dialplan_xml;
+                $updatedXml = str_replace(self::OLD_CALL_BLOCK_SCRIPT, self::NEW_CALL_BLOCK_SCRIPT, $xml);
+
+                if ($updatedXml === $xml) {
+                    continue;
+                }
+
+                $dialplan->forceFill([
+                    'dialplan_xml' => $updatedXml,
+                    'update_date' => now(),
+                ])->save();
+
+                $updatedDialplans++;
+                $contextsToClear->push($dialplan->dialplan_context);
+            }
+
+            $updatedDetails = 0;
+            $dialplanUuids = $dialplans->pluck('dialplan_uuid')->filter()->values();
+
+            if ($dialplanUuids->isNotEmpty()) {
+                $updatedDetails = DialplanDetails::query()
+                    ->whereIn('dialplan_uuid', $dialplanUuids)
+                    ->where('dialplan_detail_tag', 'action')
+                    ->where('dialplan_detail_type', 'lua')
+                    ->where('dialplan_detail_data', self::OLD_CALL_BLOCK_SCRIPT)
+                    ->update([
+                        'dialplan_detail_data' => self::NEW_CALL_BLOCK_SCRIPT,
+                        'update_date' => now(),
+                    ]);
+
+                if ($updatedDetails > 0) {
+                    $contextsToClear = $contextsToClear
+                        ->merge($dialplans->pluck('dialplan_context'));
+                }
+            }
+
+            $contextsToClear
+                ->filter()
+                ->unique()
+                ->each(fn ($context) => app(DialplanService::class)->clearDialplanCache($context));
+
+            echo "Updated {$updatedDialplans} Call Block dialplan XML record(s).\n";
+            echo "Updated {$updatedDetails} Call Block dialplan detail record(s).\n";
+        } catch (\Throwable $e) {
+            echo "WARNING: Unable to update Call Block dialplan XML: {$e->getMessage()}\n";
+        }
     }
 
     private function writeHiredisConfig(): void

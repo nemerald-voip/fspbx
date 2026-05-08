@@ -154,6 +154,8 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'XML CDR', 'permission_name' => 'xml_cdr_search_sentiment'],
             ['application_name' => 'XML CDR', 'permission_name' => 'xml_cdr_view_self_records'],
             ['application_name' => 'XML CDR', 'permission_name' => 'xml_cdr_view_all_records'],
+            ['application_name' => 'Call Block', 'permission_name' => 'call_block_view_self_records'],
+            ['application_name' => 'Call Block', 'permission_name' => 'call_block_view_all_records'],
             ['application_name' => 'Messages', 'permission_name' => 'messages_view'],
             ['application_name' => 'Messages', 'permission_name' => 'messages_view_as'],
         ];
@@ -257,6 +259,7 @@ class DatabaseSeeder extends Seeder
                 'messages_view',
                 'messages_view_as',
                 'xml_cdr_view_all_records',
+                'call_block_view_all_records',
                 'ring_group_cid_name_prefix',
             ],
             'admin' => [
@@ -290,6 +293,7 @@ class DatabaseSeeder extends Seeder
                 'voicemail_message_update',
                 'xml_cdr_search_sentiment',
                 'xml_cdr_view_all_records',
+                'call_block_view_all_records',
                 'messages_view',
                 'messages_view_as',
                 'ring_group_cid_name_prefix',
@@ -302,6 +306,7 @@ class DatabaseSeeder extends Seeder
             ],
             'user' => [
                 'xml_cdr_view_self_records',
+                'call_block_view_self_records',
                 'extension_do_not_disturb',
                 'extension_forward_all',
                 'extension_forward_busy',

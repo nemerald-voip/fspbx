@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\LocationsController;
 use App\Http\Controllers\Api\ProvisioningTemplateController;
 use App\Http\Controllers\BusinessHoursController;
 use App\Http\Controllers\BridgeController;
+use App\Http\Controllers\CallBlockController;
 use App\Http\Controllers\CallFlowController;
 use App\Http\Controllers\CallTranscriptionController;
 use App\Http\Controllers\CdrsController;
@@ -340,6 +341,15 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/bridges/bulk-copy', [BridgeController::class, 'bulkCopy'])->name('bridges.bulk.copy');
     Route::post('/bridges/bulk-delete', [BridgeController::class, 'bulkDelete'])->name('bridges.bulk.delete');
     Route::post('/bridges/bulk-toggle', [BridgeController::class, 'bulkToggle'])->name('bridges.bulk.toggle');
+
+    // Call Blocks
+    Route::post('call-blocks', [CallBlockController::class, 'store'])->name('call-blocks.store');
+    Route::put('call-blocks/{call_block}', [CallBlockController::class, 'update'])->name('call-blocks.update');
+    Route::get('/call-blocks/data', [CallBlockController::class, 'getData'])->name('call-blocks.data');
+    Route::post('/call-blocks/item-options', [CallBlockController::class, 'getItemOptions'])->name('call-blocks.item.options');
+    Route::post('/call-blocks/select-all', [CallBlockController::class, 'selectAll'])->name('call-blocks.select.all');
+    Route::post('/call-blocks/bulk-delete', [CallBlockController::class, 'bulkDelete'])->name('call-blocks.bulk.delete');
+    Route::post('/call-blocks/bulk-toggle', [CallBlockController::class, 'bulkToggle'])->name('call-blocks.bulk.toggle');
 
     // Conference Centers
     Route::post('conference-centers', [ConferenceCenterController::class, 'store'])->name('conference-centers.store');
