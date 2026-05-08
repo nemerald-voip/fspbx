@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Carbon\Carbon;
+use App\Models\Domain;
 use libphonenumber\PhoneNumberFormat;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -85,6 +86,11 @@ class FaxLogs extends Model
     public function fax()
     {
         return $this->belongsTo(Faxes::class, 'fax_uuid', 'fax_uuid');
+    }
+
+    public function domain()
+    {
+        return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
     }
 
     public function outboundFax()

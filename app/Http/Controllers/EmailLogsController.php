@@ -10,6 +10,7 @@ use App\Models\HotelRoom;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\QueryBuilder;
 
@@ -19,12 +20,15 @@ class EmailLogsController extends Controller
     {
         $params = request()->all();
         $params['paginate'] = 50;
-        $domain_uuid = session('domain_uuid');
-        $params['domain_uuid'] = $domain_uuid;
+        $domainUuid = $this->requestedDomainUuid();
 
         if (!empty(request('filter.dateRange'))) {
             $startPeriod = Carbon::parse(request('filter.dateRange')[0])->setTimeZone('UTC');
             $endPeriod = Carbon::parse(request('filter.dateRange')[1])->setTimeZone('UTC');
+        } else {
+            $sessionDomainUuid = session('domain_uuid');
+            $startPeriod = Carbon::now(get_local_time_zone($sessionDomainUuid))->startOfDay()->setTimeZone('UTC');
+            $endPeriod = Carbon::now(get_local_time_zone($sessionDomainUuid))->endOfDay()->setTimeZone('UTC');
         }
 
         $params['filter']['startPeriod'] = $startPeriod;
@@ -38,6 +42,7 @@ class EmailLogsController extends Controller
         $query = QueryBuilder::for(EmailLog::class, request()->merge($params))
             ->select([
                 'uuid',
+                'domain_uuid',
                 'from',
                 'to',
                 'cc',
@@ -47,7 +52,16 @@ class EmailLogsController extends Controller
                 'created_at',
                 'sent_debug_info'
             ])
+            ->with(['domain:domain_uuid,domain_name,domain_description'])
+            ->when(
+                $domainUuid,
+                fn ($query) => $query->where('domain_uuid', $domainUuid),
+                fn ($query) => $query->whereIn('domain_uuid', $this->allowedDomainUuids())
+            )
             ->allowedFilters([
+                AllowedFilter::callback('domain_uuid', function ($query, $value) {
+                    // Domain scope is validated and applied before QueryBuilder filters run.
+                }),
                 AllowedFilter::callback('startPeriod', function ($query, $value) {
                     $query->where('created_at', '>=', $value);
                 }),
@@ -236,10 +250,10 @@ class EmailLogsController extends Controller
             'items.*' => ['required', 'uuid'],
         ]);
 
-        // $domainUuid = session('domain_uuid');
+        $allowedDomainUuids = $this->allowedDomainUuids();
 
         $logs = EmailLog::query()
-            // ->where('domain_uuid', $domainUuid)
+            ->whereIn('domain_uuid', $allowedDomainUuids)
             ->whereIn('uuid', $validated['items'])
             ->get()
             ->keyBy('uuid');
@@ -250,14 +264,14 @@ class EmailLogsController extends Controller
         foreach ($validated['items'] as $uuid) {
             $log = $logs->get($uuid);
 
-            $log->update([
-                'status' => 'queued',
-            ]);
-
             if (! $log) {
                 $errors[] = "Email log {$uuid} was not found.";
                 continue;
             }
+
+            $log->update([
+                'status' => 'queued',
+            ]);
 
             RetryLoggedEmail::dispatch($log->uuid);
 
@@ -273,5 +287,36 @@ class EmailLogsController extends Controller
         return response()->json([
             'messages' => ['server' => $messages],
         ], 200);
+    }
+
+    protected function requestedDomainUuid(): ?string
+    {
+        $requested = request('filter.domain_uuid') ?: session('domain_uuid');
+
+        if ($requested === 'all') {
+            return null;
+        }
+
+        $allowedDomainUuids = $this->allowedDomainUuids();
+
+        return in_array((string) $requested, $allowedDomainUuids, true)
+            ? (string) $requested
+            : (string) session('domain_uuid');
+    }
+
+    protected function allowedDomainUuids(): array
+    {
+        $domains = Session::get('domains');
+
+        if ($domains) {
+            return collect($domains)
+                ->pluck('domain_uuid')
+                ->filter()
+                ->map(fn ($uuid) => (string) $uuid)
+                ->values()
+                ->all();
+        }
+
+        return array_values(array_filter([(string) session('domain_uuid')]));
     }
 }

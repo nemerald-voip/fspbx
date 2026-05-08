@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -70,8 +71,7 @@ class FaxLogController extends Controller
         $params = request()->all();
         $params['paginate'] = 50;
 
-        $domain_uuid = session('domain_uuid');
-        $params['domain_uuid'] = $domain_uuid;
+        $domainUuid = $this->requestedDomainUuid();
 
         // Convert dateRange -> startPeriod/endPeriod (epoch)
         if (! empty(data_get($params, 'filter.dateRange'))) {
@@ -110,6 +110,13 @@ class FaxLogController extends Controller
                 'outbound_fax_attempt_uuid',
             ])
             ->with([
+                'domain' => function ($q) {
+                    $q->select([
+                        'domain_uuid',
+                        'domain_name',
+                        'domain_description',
+                    ]);
+                },
                 'fax' => function ($q) {
                     $q->select([
                         'fax_uuid',
@@ -137,8 +144,15 @@ class FaxLogController extends Controller
                     ]);
                 },
             ])
-            ->where('domain_uuid', $domain_uuid)
+            ->when(
+                $domainUuid,
+                fn ($query) => $query->where('domain_uuid', $domainUuid),
+                fn ($query) => $query->whereIn('domain_uuid', $this->allowedDomainUuids())
+            )
             ->allowedFilters([
+                AllowedFilter::callback('domain_uuid', function ($query, $value) {
+                    // Domain scope is validated and applied before QueryBuilder filters run.
+                }),
                 AllowedFilter::callback('startPeriod', function ($query, $value) {
                     $query->where('fax_epoch', '>=', (int) $value);
                 }),
@@ -185,8 +199,7 @@ class FaxLogController extends Controller
     {
         try {
             $params = request()->all();
-            $domain_uuid = session('domain_uuid');
-            $params['domain_uuid'] = $domain_uuid;
+            $domainUuid = $this->requestedDomainUuid();
 
             if (! empty(data_get($params, 'filter.dateRange'))) {
                 $startTs = Carbon::parse(data_get($params, 'filter.dateRange.0'))->setTimezone('UTC')->getTimestamp();
@@ -200,8 +213,15 @@ class FaxLogController extends Controller
 
             $ids = QueryBuilder::for(FaxLogs::class, request()->merge($params))
                 ->select(['fax_log_uuid', 'domain_uuid', 'fax_epoch', 'fax_success'])
-                ->where('domain_uuid', $domain_uuid)
+                ->when(
+                    $domainUuid,
+                    fn ($query) => $query->where('domain_uuid', $domainUuid),
+                    fn ($query) => $query->whereIn('domain_uuid', $this->allowedDomainUuids())
+                )
                 ->allowedFilters([
+                    AllowedFilter::callback('domain_uuid', function ($query, $value) {
+                        // Domain scope is validated and applied before QueryBuilder filters run.
+                    }),
                     AllowedFilter::callback('startPeriod', fn ($q, $v) => $q->where('fax_epoch', '>=', (int) $v)),
                     AllowedFilter::callback('endPeriod',   fn ($q, $v) => $q->where('fax_epoch', '<=', (int) $v)),
                     AllowedFilter::callback('fax_uuid', function ($q, $v) {
@@ -257,14 +277,14 @@ class FaxLogController extends Controller
             'items.*' => ['uuid'],
         ]);
 
-        $domainUuid = session('domain_uuid');
+        $allowedDomainUuids = $this->allowedDomainUuids();
         $uuids = request()->input('items', []);
 
         try {
             DB::beginTransaction();
 
             $records = FaxLogs::query()
-                ->where('domain_uuid', $domainUuid)
+                ->whereIn('domain_uuid', $allowedDomainUuids)
                 ->whereIn('fax_log_uuid', $uuids)
                 ->select('fax_log_uuid', 'fax_file')
                 ->get();
@@ -344,11 +364,11 @@ class FaxLogController extends Controller
             ], 403);
         }
 
-        $domainUuid = session('domain_uuid');
+        $allowedDomainUuids = $this->allowedDomainUuids();
 
         $log = FaxLogs::query()
             ->with('outboundFax')
-            ->where('domain_uuid', $domainUuid)
+            ->whereIn('domain_uuid', $allowedDomainUuids)
             ->where('fax_log_uuid', $faxLog)
             ->first();
 
@@ -371,7 +391,7 @@ class FaxLogController extends Controller
         }
 
         $updated = OutboundFax::query()
-            ->where('domain_uuid', $domainUuid)
+            ->whereIn('domain_uuid', $allowedDomainUuids)
             ->where('outbound_fax_uuid', $log->outbound_fax_uuid)
             ->where('status', 'failed')
             ->update([
@@ -395,5 +415,36 @@ class FaxLogController extends Controller
         return response()->json([
             'messages' => ['success' => ['Outbound fax queued for retry.']]
         ]);
+    }
+
+    protected function requestedDomainUuid(): ?string
+    {
+        $requested = request('filter.domain_uuid') ?: session('domain_uuid');
+
+        if ($requested === 'all') {
+            return null;
+        }
+
+        $allowedDomainUuids = $this->allowedDomainUuids();
+
+        return in_array((string) $requested, $allowedDomainUuids, true)
+            ? (string) $requested
+            : (string) session('domain_uuid');
+    }
+
+    protected function allowedDomainUuids(): array
+    {
+        $domains = Session::get('domains');
+
+        if ($domains) {
+            return collect($domains)
+                ->pluck('domain_uuid')
+                ->filter()
+                ->map(fn ($uuid) => (string) $uuid)
+                ->values()
+                ->all();
+        }
+
+        return array_values(array_filter([(string) session('domain_uuid')]));
     }
 }

@@ -11,7 +11,8 @@
                 </Vueform>
 
                 <EmailLogs :trigger="emailsTrigger" :startPeriod="startPeriod" :endPeriod="endPeriod"
-                    :timezone="timezone" :routes="routes" :permissions="permissions" />
+                    :timezone="timezone" :routes="routes" :permissions="permissions" :domain-options="domainOptions"
+                    :selected-domain-uuid="selectedDomainUuid" />
             </section>
 
             <!-- WEBHOOKS -->
@@ -41,7 +42,8 @@
                 </Vueform>
 
                 <FaxLogs :trigger="faxLogsTrigger" :startPeriod="startPeriod" :endPeriod="endPeriod"
-                    :timezone="timezone" :routes="routes" :permissions="permissions" />
+                    :timezone="timezone" :routes="routes" :permissions="permissions" :domain-options="domainOptions"
+                    :selected-domain-uuid="selectedDomainUuid" />
             </section>
 
         </template>
@@ -84,6 +86,11 @@ const props = defineProps({
     timezone: String,
     routes: Object,
     permissions: Object,
+    domainOptions: {
+        type: Array,
+        default: () => [],
+    },
+    selectedDomainUuid: String,
 
 })
 

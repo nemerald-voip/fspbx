@@ -48,6 +48,10 @@ class LogsController extends Controller
                 'timezone' => function () use ($domain_uuid) {
                     return get_local_time_zone($domain_uuid);
                 },
+                'selectedDomainUuid' => $domain_uuid,
+                'domainOptions' => function () use ($domain_uuid) {
+                    return $this->getLogDomainOptions($domain_uuid);
+                },
                 'routes' => [
                     'dashboard_route' => route('dashboard'),
                     'email_logs' => route('email-logs.index'),
@@ -184,5 +188,33 @@ class LogsController extends Controller
         $permissions['fax_send'] = userCheckPermission('fax_send');
 
         return $permissions;
+    }
+
+    protected function getLogDomainOptions(?string $currentDomainUuid): array
+    {
+        $domains = collect(session('domains') ?: []);
+
+        if ($domains->isEmpty() && $currentDomainUuid) {
+            $domain = Domain::query()
+                ->where('domain_uuid', $currentDomainUuid)
+                ->first(['domain_uuid', 'domain_name', 'domain_description']);
+
+            if ($domain) {
+                $domains = collect([$domain]);
+            }
+        }
+
+        return $domains
+            ->map(function ($domain) {
+                $domainName = data_get($domain, 'domain_name');
+
+                return [
+                    'value' => (string) data_get($domain, 'domain_uuid'),
+                    'label' => data_get($domain, 'domain_description') ?: $domainName,
+                ];
+            })
+            ->filter(fn ($domain) => $domain['value'] !== '')
+            ->values()
+            ->all();
     }
 }

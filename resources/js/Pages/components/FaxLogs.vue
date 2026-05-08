@@ -29,6 +29,17 @@
                 />
             </div>
 
+            <div v-if="showDomainFilter" class="relative min-w-56 mb-2 shrink-0 sm:mr-4">
+                <select
+                    v-model="filterData.domain_uuid"
+                    class="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                >
+                    <option v-for="domain in domainFilterOptions" :key="domain.value" :value="domain.value">
+                        {{ domain.label }}
+                    </option>
+                </select>
+            </div>
+
             <div class="relative min-w-40 mb-2 shrink-0 sm:mr-4">
                 <select
                     v-model="filterData.status"
@@ -92,6 +103,7 @@
                                         <span :class="canDelete ? 'pl-4' : ''">Date</span>
                                     </div>
                                 </th>
+                                <th v-if="showDomainColumn" class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Domain</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">From</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">To</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
@@ -105,7 +117,7 @@
 
                         <tbody v-if="!isDataLoading && data.data?.length" class="divide-y divide-gray-200 bg-white">
                             <tr v-if="canDelete && (selectPageItems || selectAll)">
-                                <td :colspan="hasActions ? 9 : 8">
+                                <td :colspan="faxColumnCount">
                                     <div class="text-sm text-center m-2">
                                         <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
                                         <button
@@ -146,6 +158,9 @@
                                             />
                                             <span :class="canDelete ? 'ml-4' : ''">{{ row.fax_date_formatted }}</span>
                                         </div>
+                                    </td>
+                                    <td v-if="showDomainColumn" class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                        {{ domainLabel(row) }}
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
                                         {{ faxSource(row) }}
@@ -200,7 +215,7 @@
                                 </tr>
 
                                 <tr v-if="expandedRow === row.fax_log_uuid">
-                                    <td :colspan="hasActions ? 9 : 8" class="bg-gray-50 px-6 py-4 shadow-inner">
+                                    <td :colspan="faxColumnCount" class="bg-gray-50 px-6 py-4 shadow-inner">
                                         <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
                                             <div class="rounded-md border border-gray-200 bg-white p-4">
                                                 <div class="text-sm font-semibold text-gray-900 mb-2">Overview</div>
@@ -305,6 +320,11 @@ const props = defineProps({
     routes: Object,
     permissions: Object,
     trigger: Boolean,
+    domainOptions: {
+        type: Array,
+        default: () => [],
+    },
+    selectedDomainUuid: String,
 });
 
 const isDataLoading = ref(false);
@@ -336,6 +356,7 @@ const endLocal = moment.utc(props.endPeriod).tz(props.timezone);
 const filterData = ref({
     search: null,
     status: "all",
+    domain_uuid: props.selectedDomainUuid,
     dateRange: [
         startLocal.clone().startOf("day").toISOString(),
         endLocal.clone().endOf("day").toISOString(),
@@ -345,6 +366,13 @@ const filterData = ref({
 const canDelete = computed(() => Boolean(props.permissions?.fax_log_delete));
 const canRetryPermission = computed(() => Boolean(props.permissions?.fax_send));
 const hasActions = computed(() => canDelete.value || canRetryPermission.value);
+const showDomainFilter = computed(() => props.domainOptions.length > 1);
+const showDomainColumn = computed(() => showDomainFilter.value);
+const domainFilterOptions = computed(() => [
+    { value: "all", label: "All domains" },
+    ...props.domainOptions,
+]);
+const faxColumnCount = computed(() => 8 + (showDomainColumn.value ? 1 : 0) + (hasActions.value ? 1 : 0));
 
 const fetchData = (page = 1) => {
     isDataLoading.value = true;
@@ -391,6 +419,7 @@ const handleUpdateDateRange = (newDateRange) => {
 const handleFiltersReset = () => {
     filterData.value.search = null;
     filterData.value.status = "all";
+    filterData.value.domain_uuid = props.selectedDomainUuid;
     filterData.value.dateRange = [
         startLocal.clone().startOf("day").toISOString(),
         endLocal.clone().endOf("day").toISOString(),
@@ -472,6 +501,10 @@ const executeBulkDelete = (items = selectedItems.value) => {
 
 const faxSource = (row) => {
     return row.source_formatted ?? row.source ?? row.fax_file?.fax_caller_id_number_formatted ?? "";
+};
+
+const domainLabel = (row) => {
+    return row.domain?.domain_description || row.domain?.domain_name || "";
 };
 
 const faxDestination = (row) => {

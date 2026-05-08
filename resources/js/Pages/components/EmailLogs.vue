@@ -21,6 +21,15 @@
                     @update:date-range="handleUpdateDateRange" />
             </div>
 
+            <div v-if="showDomainFilter" class="relative min-w-56 mb-2 shrink-0 sm:mr-4">
+                <select v-model="filterData.domain_uuid"
+                    class="block w-full rounded-md border-0 py-2 pl-3 pr-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600">
+                    <option v-for="domain in domainFilterOptions" :key="domain.value" :value="domain.value">
+                        {{ domain.label }}
+                    </option>
+                </select>
+            </div>
+
             <div class="relative">
                 <div class="flex justify-between">
 
@@ -48,6 +57,7 @@
                         <thead class="bg-gray-100">
                             <tr>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Date</th>
+                                <th v-if="showDomainColumn" class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Domain</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">To</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Subject</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
@@ -63,6 +73,9 @@
                                         {{ row.created_at_formatted ?? '' }}
                                     </td>
 
+                                    <td v-if="showDomainColumn" class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
+                                        {{ domainLabel(row) }}
+                                    </td>
 
                                     <td class=" whitespace-nowrap px-6 py-2 text-sm text-gray-500">
                                         {{ row.to ?? '' }}
@@ -110,7 +123,7 @@
                                 </tr>
                                 <!-- EXPANDABLE ROW -->
                                 <tr v-if="expandedRow === row.uuid">
-                                    <td :colspan="5" class="bg-gray-50 px-6 py-4">
+                                    <td :colspan="emailColumnCount" class="bg-gray-50 px-6 py-4">
 
                                         <div class="flex gap-2">
                                             <div class="text-gray-500 text-sm ">ID: </div>
@@ -199,7 +212,12 @@ const props = defineProps({
     timezone: String,
     routes: Object,
     permissions: Object,
-    trigger: Boolean
+    trigger: Boolean,
+    domainOptions: {
+        type: Array,
+        default: () => [],
+    },
+    selectedDomainUuid: String,
 })
 
 const showCreateModal = ref(false);
@@ -240,10 +258,23 @@ const dateRange = [
 const filterData = ref({
     search: props.search,
     showGlobal: props.showGlobal,
+    domain_uuid: props.selectedDomainUuid,
     dateRange: dateRange,
     // dateRange: ['2024-07-01T00:00:00', '2024-07-01T23:59:59'],
 
 });
+
+const showDomainFilter = computed(() => props.domainOptions.length > 1);
+const showDomainColumn = computed(() => showDomainFilter.value);
+const domainFilterOptions = computed(() => [
+    { value: 'all', label: 'All domains' },
+    ...props.domainOptions,
+]);
+const emailColumnCount = computed(() => showDomainColumn.value ? 6 : 5);
+
+const domainLabel = (row) => {
+    return row.domain?.domain_description || row.domain?.domain_name || '';
+};
 
 // const emits = defineEmits(['edit-item', 'delete-item']);
 
@@ -323,6 +354,7 @@ const handleSearchButtonClick = () => {
 
 const handleFiltersReset = () => {
     filterData.value.search = null;
+    filterData.value.domain_uuid = props.selectedDomainUuid;
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();
 }
