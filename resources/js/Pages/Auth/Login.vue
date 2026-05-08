@@ -117,6 +117,7 @@ const submitForm = () => {
         .then((response) => {
             // Update the form's token value
             form._token = response.data.token;
+            axios.defaults.headers.common['X-CSRF-TOKEN'] = response.data.token;
 
             form.post('/login', {
                 onFinish: () => {

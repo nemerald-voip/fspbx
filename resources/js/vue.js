@@ -1,5 +1,5 @@
 import { createApp, h } from 'vue';
-import { createInertiaApp } from '@inertiajs/vue3';
+import { createInertiaApp, router } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import Vueform from '@vueform/vueform';
 import vueformConfig from './vueform.config.js';
@@ -8,6 +8,14 @@ import vueformConfig from './vueform.config.js';
 import './bootstrap';
 
 const appName = window.document.getElementsByTagName('title')[0]?.innerText || 'Laravel';
+
+const syncAxiosCsrfToken = (page) => {
+    const token = page?.props?.csrf_token;
+
+    if (token) {
+        axios.defaults.headers.common['X-CSRF-TOKEN'] = token;
+    }
+};
 
 function resolvePage(name) {
     const [page, module] = name.split('::');
@@ -33,6 +41,9 @@ createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: async (name) => await resolvePage(name),
     setup({ el, App, props, plugin }) {
+      syncAxiosCsrfToken(props.initialPage);
+      router.on('navigate', (event) => syncAxiosCsrfToken(event.detail.page));
+
       const vueApp = createApp({ render: () => h(App, props) });
   
       vueApp.use(plugin);
