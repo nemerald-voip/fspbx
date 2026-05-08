@@ -2161,6 +2161,46 @@ if (!function_exists('buildDestinationAction')) {
         }
     }
 
+    if (!function_exists('fspbx_pagination_options')) {
+        function fspbx_pagination_options(): array
+        {
+            return [50, 100, 200, 500, 1000];
+        }
+    }
+
+    if (!function_exists('fspbx_pagination_per_page')) {
+        function fspbx_pagination_per_page(?\Illuminate\Http\Request $request = null, string $key = 'per_page'): int
+        {
+            $request ??= request();
+            $perPage = (int) $request->input($key, 50);
+
+            return in_array($perPage, fspbx_pagination_options(), true) ? $perPage : 50;
+        }
+    }
+
+    if (!function_exists('fspbx_paginate_collection')) {
+        function fspbx_paginate_collection($items, ?int $perPage = null, ?int $page = null, array $options = []): \Illuminate\Pagination\LengthAwarePaginator
+        {
+            $perPage ??= fspbx_pagination_per_page();
+            $page = $page ?: (\Illuminate\Pagination\Paginator::resolveCurrentPage() ?: 1);
+            $items = $items instanceof \Illuminate\Support\Collection
+                ? $items
+                : \Illuminate\Support\Collection::make($items);
+
+            $paginator = new \Illuminate\Pagination\LengthAwarePaginator(
+                $items->forPage($page, $perPage)->values(),
+                $items->count(),
+                $perPage,
+                $page,
+                $options
+            );
+
+            $paginator->setPath(url()->current());
+
+            return $paginator;
+        }
+    }
+
     if (!function_exists('fax_webhook_debug')) {
         function fax_webhook_debug(string $message, array $context = []): void
         {

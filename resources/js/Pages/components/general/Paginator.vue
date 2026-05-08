@@ -6,7 +6,14 @@
         </div>
        
 
-        <div class="flex flex-1 justify-end sm:hidden">
+        <div class="flex flex-1 items-center justify-end sm:hidden">
+            <select v-if="showPageSizeSelector && pageSizeOptions.length" :value="pageSize" aria-label="Rows per page"
+                @change="$emit('page-size-change', Number($event.target.value))"
+                class="block rounded-md border-0 py-1.5 pl-2 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600">
+                <option v-for="option in pageSizeOptions" :key="option" :value="option">
+                    {{ option }}
+                </option>
+            </select>
             <button type="button" @click="$emit('pagination-change-page', previous)"
                 class="relative inline-flex items-center rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                 Previous
@@ -17,7 +24,7 @@
             </button>
         </div>
         <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-            <div>
+            <div class="flex items-center gap-3">
                 <p class="text-sm text-gray-700">
                     Showing
                     {{ ' ' }}
@@ -33,6 +40,13 @@
                     {{ ' ' }}
                     results
                 </p>
+                <select v-if="showPageSizeSelector && pageSizeOptions.length" :value="pageSize" aria-label="Rows per page"
+                    @change="$emit('page-size-change', Number($event.target.value))"
+                    class="block rounded-md border-0 py-1.5 pl-2 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600">
+                    <option v-for="option in pageSizeOptions" :key="option" :value="option">
+                        {{ option }}
+                    </option>
+                </select>
             </div>
             <div>
                 <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
@@ -66,6 +80,18 @@ const props = defineProps({
     filterData: Object,
     bulkActions: Array,
     hasSelectedItems: Boolean,
+    pageSize: {
+        type: Number,
+        default: 50,
+    },
+    pageSizeOptions: {
+        type: Array,
+        default: () => [],
+    },
+    showPageSizeSelector: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 const hasBulkActions = computed(() => props.bulkActions && props.bulkActions.length > 0);
