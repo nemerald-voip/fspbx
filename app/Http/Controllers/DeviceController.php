@@ -14,12 +14,14 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use App\Services\DeviceService;
 use App\Services\DeviceActionService;
+use Illuminate\Support\Facades\Validator;
 use Spatie\QueryBuilder\QueryBuilder;
 use App\Services\FreeswitchEslService;
 use Spatie\QueryBuilder\AllowedFilter;
 use App\Http\Requests\StoreDeviceRequest;
 use App\Http\Requests\UpdateDeviceRequest;
 use App\Http\Requests\BulkUpdateDeviceRequest;
+use Illuminate\Validation\Rule;
 use Spatie\QueryBuilder\AllowedSort;
 
 /**
@@ -83,11 +85,38 @@ class DeviceController extends Controller
      */
     public function duplicate(Request $request)
     {
-        // 1. Validate Input
-        $request->validate([
-            'uuid' => 'required|uuid|exists:v_devices,device_uuid',
-            'new_mac_address' => 'required|string', // Ensure we receive the new MAC
-        ]);
+        // 1. Normalize and validate input the same way new device creation does.
+        $macAddress = strtolower(trim(tokenizeMacAddress($request->input('new_mac_address') ?? '')));
+        $validator = Validator::make(
+            array_merge($request->all(), [
+                'new_mac_address' => formatMacAddress($macAddress, false),
+                'new_mac_address_modified' => $macAddress,
+            ]),
+            [
+                'uuid' => ['required', 'uuid', 'exists:v_devices,device_uuid'],
+                'new_mac_address' => ['required', 'mac_address'],
+                'new_mac_address_modified' => [
+                    'nullable',
+                    Rule::unique('v_devices', 'device_address'),
+                ],
+            ],
+            [
+                'new_mac_address.required' => 'MAC address is required',
+                'new_mac_address.mac_address' => 'MAC address is invalid',
+                'new_mac_address_modified.unique' => 'Duplicate MAC address has been found',
+            ]
+        );
+
+        if ($validator->fails()) {
+            $errors = $validator->errors();
+
+            if ($errors->has('new_mac_address_modified')) {
+                $errors->add('new_mac_address', $errors->first('new_mac_address_modified'));
+                $errors->forget('new_mac_address_modified');
+            }
+
+            return response()->json(['errors' => $errors], 422);
+        }
 
         // 2. Permission Check
         if (!userCheckPermission('device_add')) {
@@ -99,23 +128,6 @@ class DeviceController extends Controller
         try {
             DB::beginTransaction();
 
-            // 3. Sanitize MAC Address
-            $rawMac = $request->input('new_mac_address');
-            $cleanMac = strtolower(preg_replace('/[^0-9a-f]/i', '', $rawMac));
-
-            if (strlen($cleanMac) !== 12) {
-                throw new \Exception("Invalid MAC Address format. It must contain 12 hexadecimal characters.");
-            }
-
-            // Check uniqueness
-            $exists = $this->model::where('device_address', $cleanMac)
-                ->where('domain_uuid', session('domain_uuid'))
-                ->exists();
-
-            if ($exists) {
-                throw new \Exception("Device with this MAC address already exists.");
-            }
-
             // 4. Fetch Original
             $original = $this->model::where('device_uuid', $request->uuid)
                 ->with(['lines', 'settings', 'keys'])
@@ -125,7 +137,7 @@ class DeviceController extends Controller
             $newDevice = $original->replicate();
             $newDevice->device_uuid = Str::uuid();
             $newDevice->device_label = $original->device_label . ' (Copy)';
-            $newDevice->device_address = $cleanMac;
+            $newDevice->device_address = $macAddress;
 
             $newDevice->save();
 
