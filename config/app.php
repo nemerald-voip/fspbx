@@ -240,5 +240,8 @@ return [
     // Set deafault app version
     'version' => env('VERSION', '0.9.0'),  
 
+    // Set provisioning debug logging
+    'provisioning_debug' => env('PROVISIONING_DEBUG', false),
+
 
 ];

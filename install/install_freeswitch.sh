@@ -63,7 +63,7 @@ apt install -y autoconf automake devscripts g++ git-core libncurses5-dev libtool
                pkg-config flac libgdbm-dev libdb-dev gettext sudo equivs git dpkg-dev \
                libpq-dev liblua5.2-dev libtiff5-dev libperl-dev libcurl4-openssl-dev libsqlite3-dev \
                devscripts libspeexdsp-dev libspeex-dev libldns-dev libedit-dev libopus-dev \
-               libmemcached-dev libshout3-dev libmpg123-dev libmp3lame-dev yasm nasm libsndfile1-dev \
+               libmemcached-dev libhiredis-dev libshout3-dev libmpg123-dev libmp3lame-dev yasm nasm libsndfile1-dev \
                libuv1-dev libvpx-dev libavformat-dev libswscale-dev libvlc-dev \
                sox libsox-fmt-all sqlite3 unzip cmake uuid-dev libssl-dev
 
@@ -154,6 +154,7 @@ print_success "Configuring FreeSWITCH modules..."
 sed -i modules.conf -e s:'#applications/mod_callcenter:applications/mod_callcenter:'
 sed -i modules.conf -e s:'#applications/mod_cidlookup:applications/mod_cidlookup:'
 sed -i modules.conf -e s:'#applications/mod_memcache:applications/mod_memcache:'
+sed -i modules.conf -e s:'#applications/mod_hiredis:applications/mod_hiredis:'
 sed -i modules.conf -e s:'#applications/mod_curl:applications/mod_curl:'
 sed -i modules.conf -e s:'#applications/mod_translate:applications/mod_translate:'
 sed -i modules.conf -e s:'#formats/mod_shout:formats/mod_shout:'

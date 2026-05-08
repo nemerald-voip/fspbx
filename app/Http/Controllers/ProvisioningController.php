@@ -24,6 +24,15 @@ class ProvisioningController extends Controller
         // Extract {id}.{ext} from $path or from the current request path
         [$id, $ext] = $this->extractIdAndExt($request, $path);
 
+        provisioning_debug('ProvisioningController: processing provisioning request', [
+            'id' => $id,
+            'ext' => $ext,
+            'path' => $path,
+            'request_path' => $request->path(),
+            'client_ip' => $request->ip(),
+            'user_agent' => (string) $request->userAgent(),
+        ]);
+
         // Device is attached by DigestProvisionAuth; otherwise 404
         /** @var Devices|null $device */
         $device = $request->attributes->get('prov.device');

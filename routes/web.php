@@ -10,6 +10,7 @@ use App\Http\Controllers\AppsCredentialsController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\BusinessHoursController;
 use App\Http\Controllers\BridgeController;
+use App\Http\Controllers\CallBlockController;
 use App\Http\Controllers\CallRecordingController;
 use App\Http\Controllers\CallFlowController;
 use App\Http\Controllers\CallRoutingOptionsController;
@@ -218,6 +219,9 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Bridges
     Route::get('bridges', [BridgeController::class, 'index'])->name('bridges.index');
+
+    // Call Blocks
+    Route::get('call-blocks', [CallBlockController::class, 'index'])->name('call-blocks.index');
 
     // Call Flows
     Route::get('call-flows', [CallFlowController::class, 'index'])->name('call-flows.index');

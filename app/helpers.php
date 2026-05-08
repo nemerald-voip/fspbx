@@ -2171,4 +2171,15 @@ if (!function_exists('buildDestinationAction')) {
             logger($message . (!empty($context) ? ' ' . json_encode($context) : ''));
         }
     }
+
+    if (!function_exists('provisioning_debug')) {
+        function provisioning_debug(string $message, array $context = []): void
+        {
+            if (!config('app.provisioning_debug')) {
+                return;
+            }
+
+            logger($message . (!empty($context) ? ' ' . json_encode($context) : ''));
+        }
+    }
 }
