@@ -117,6 +117,7 @@ const submitForm = () => {
         .then((response) => {
             // Update the form's token value
             form._token = response.data.token;
+            axios.defaults.headers.common['X-CSRF-TOKEN'] = response.data.token;
 
             form.post(props.links['email-challenge'], {
                 onFinish: () => {
@@ -139,6 +140,7 @@ const requestNewCode = () => {
         .then((response) => {
             // Update the form's token value
             form._token = response.data.token;
+            axios.defaults.headers.common['X-CSRF-TOKEN'] = response.data.token;
 
             form.put(props.links['email-challenge'], {
                 onFinish: () => {
