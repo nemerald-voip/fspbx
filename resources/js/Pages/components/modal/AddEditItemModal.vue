@@ -21,11 +21,11 @@
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
                             </div>
-                            <div v-if="!loading">
+                            <div v-if="!loading" :class="['min-h-0', contentClass]">
                                 <DialogTitle as="h3" class="pr-8 text-base font-semibold leading-6 text-gray-900">
                                     {{ header }}
                                 </DialogTitle>
-                                <div class="mt-4 pb-4">
+                                <div :class="['mt-4 pb-4', bodyClass]">
                                     <slot name="modal-body"></slot>
                                 </div>
                             </div>
@@ -52,6 +52,14 @@ const props = defineProps({
     customClass: {
         type: String,
         default: 'sm:max-w-lg'
+    },
+    contentClass: {
+        type: String,
+        default: ''
+    },
+    bodyClass: {
+        type: String,
+        default: ''
     },
     ManagementTabs: Array,
     selectedTab: Number,

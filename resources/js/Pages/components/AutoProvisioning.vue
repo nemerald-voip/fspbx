@@ -188,8 +188,10 @@
         </div>
     </div>
 
-    <AddEditItemModal :customClass="'sm:max-w-8xl'" :show="showCreateModal" :header="'Create New Provisioning Template'"
-        :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :customClass="'h-[90vh] max-h-[90vh] flex flex-col overflow-hidden sm:max-w-8xl'"
+        :contentClass="'flex min-h-0 flex-1 flex-col'" :bodyClass="'min-h-0 flex-1 overflow-hidden'"
+        :show="showCreateModal" :header="'Create New Provisioning Template'" :loading="loadingModal"
+        @close="handleModalClose">
         <template #modal-body>
             <CreateProvisioningTemplateForm :options="itemOptions" :errors="formErrors"
                 :is-submitting="createFormSubmiting" @submit="handleCreateRequest" @cancel="handleModalClose"
@@ -198,8 +200,10 @@
         </template>
     </AddEditItemModal>
 
-    <AddEditItemModal :customClass="'sm:max-w-8xl'" :show="showEditModal" :header="'Edit Provisioning Template'"
-        :loading="loadingModal" @close="handleModalClose">
+    <AddEditItemModal :customClass="'h-[90vh] max-h-[90vh] flex flex-col overflow-hidden sm:max-w-8xl'"
+        :contentClass="'flex min-h-0 flex-1 flex-col'" :bodyClass="'min-h-0 flex-1 overflow-hidden'"
+        :show="showEditModal" :header="'Edit Provisioning Template'" :loading="loadingModal"
+        @close="handleModalClose">
         <template #modal-body>
             <UpdateProvisioningTemplateForm :options="itemOptions" :errors="formErrors" :read-only="readOnly"
                 :is-submitting="updateFormSubmiting" @submit="handleUpdateRequest" @cancel="handleModalClose"

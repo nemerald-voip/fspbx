@@ -42,6 +42,7 @@ use App\Http\Controllers\LogsController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MessageMediaController;
 use App\Http\Controllers\MessageSettingsController;
+use App\Http\Controllers\MusicOnHoldController;
 use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\PolycomLogController;
 use App\Http\Controllers\ProFeaturesController;
@@ -207,6 +208,12 @@ Route::group(['middleware' => 'auth'], function () {
     // Recordings Manager
     Route::get('recordings-manager', [RecordingsManagerController::class, 'index'])->name('recordings-manager.index');
     Route::get('recordings-manager/{recording}/download', [RecordingsManagerController::class, 'download'])->name('recordings-manager.download');
+
+    // Music on Hold
+    Route::get('music-on-hold', [MusicOnHoldController::class, 'index'])->name('music-on-hold.index');
+    Route::get('music-on-hold/{music_on_hold}/files/{file}', [MusicOnHoldController::class, 'download'])
+        ->where('file', '[^/]+')
+        ->name('music-on-hold.files.download');
 
     // SIP Status
     Route::get('sip-status', [SipStatusController::class, 'index'])->name('sip-status.index');
