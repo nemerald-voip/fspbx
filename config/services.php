@@ -32,6 +32,8 @@ return [
 
     'openai' => [
         'api_key' => env('OPENAI_API_KEY'),
+        'speech_timeout' => env('OPENAI_SPEECH_TIMEOUT', 60),
+        'speech_max_attempts' => env('OPENAI_SPEECH_MAX_ATTEMPTS', 2),
     ],
 
     'google' => [
