@@ -53,6 +53,13 @@ class ProvisioningController extends Controller
             'template_uuid' => $device->device_template_uuid,
         ]);
 
+        if (!$ext && $device->device_vendor=='grandstream') {
+            provisioning_debug('ProvisioningController: no extension found', [
+                'ext' => $ext,
+            ]);
+            return response('', 404);
+        }
+
         // Choose content type based on ext
         $contentType = $this->contentTypeFromExt($ext);
         provisioning_debug('ProvisioningController: selected response content type', [
@@ -507,11 +514,11 @@ class ProvisioningController extends Controller
         provisioning_debug('ProvisioningController: provisioning request identifier did not include a known extension', [
             'tail' => $tail,
             'id' => $tail,
-            'ext' => 'cfg',
+            'ext' => null,
             'matched_extension' => false,
         ]);
 
-        return [$tail, 'cfg'];
+        return [$tail, null];
     }
 
     private function computeFlavor(Request $request, Devices $device, string $id, string $ext): array
