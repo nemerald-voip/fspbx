@@ -17,7 +17,7 @@ class StoreMusicOnHoldRequest extends FormRequest
         return [
             'domain_uuid' => ['nullable', 'uuid'],
             'music_on_hold_name' => ['required', 'string', 'max:255'],
-            'music_on_hold_path' => ['required', 'string', 'max:1024'],
+            'music_on_hold_path' => ['nullable', 'string', 'max:1024'],
             'music_on_hold_rate' => ['nullable', Rule::in(['8000', '16000', '32000', '48000'])],
             'music_on_hold_shuffle' => ['required', Rule::in(['true', 'false'])],
             'music_on_hold_channels' => ['required', Rule::in(['1', '2'])],
@@ -33,6 +33,7 @@ class StoreMusicOnHoldRequest extends FormRequest
     {
         $this->merge([
             'domain_uuid' => userCheckPermission('music_on_hold_domain') ? $this->blankToNull($this->input('domain_uuid')) : session('domain_uuid'),
+            'music_on_hold_path' => null,
             'music_on_hold_rate' => $this->blankToNull($this->input('music_on_hold_rate')),
             'music_on_hold_shuffle' => $this->input('music_on_hold_shuffle', 'false'),
             'music_on_hold_channels' => (string) $this->input('music_on_hold_channels', '1'),
@@ -52,6 +53,6 @@ class StoreMusicOnHoldRequest extends FormRequest
 
         $value = trim((string) $value);
 
-        return $value === '' ? null : $value;
+        return in_array($value, ['', '__global__'], true) ? null : $value;
     }
 }

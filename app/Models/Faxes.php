@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Faxes extends Model
 {
-    use HasFactory, FilterableByLocation, \App\Models\Traits\TraitUuid;
+    use HasFactory, FilterableByLocation, \App\Models\Traits\GeneratesUniqueExtensions, \App\Models\Traits\TraitUuid;
 
     protected $table = "v_fax";
 
@@ -114,40 +114,6 @@ class Faxes extends Model
      */
     public function generateUniqueSequenceNumber()
     {
-        // Fax Servers will have extensions in the range between 50000 and 50500 by default
-        $rangeStart = 50000;
-        $rangeEnd = 50500;
-
-        $domainUuid = session('domain_uuid');
-
-        // Fetch all used extensions from Dialplans, Voicemails, and Extensions
-        $usedExtensions = Dialplans::where('domain_uuid', $domainUuid)
-            ->where('dialplan_number', 'not like', '*%')
-            ->pluck('dialplan_number')
-            ->merge(
-                Voicemails::where('domain_uuid', $domainUuid)
-                    ->pluck('voicemail_id')
-            )
-            ->merge(
-                Extensions::where('domain_uuid', $domainUuid)
-                    ->pluck('extension')
-            )
-            ->unique();
-
-        // Find the first available extension
-        for ($ext = $rangeStart; $ext <= $rangeEnd; $ext++) {
-            if (!$usedExtensions->contains($ext)) {
-                // This is your unique extension
-                $uniqueExtension = $ext;
-                break;
-            }
-        }
-
-        if (isset($uniqueExtension)) {
-            return (string) $uniqueExtension;
-        }
-
-        // Return null if unable to generate a unique sequence number
-        return null;
+        return $this->firstAvailableExtensionInRange(50000, 50500);
     }
 }

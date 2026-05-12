@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class IvrMenus extends Model
 {
-    use HasFactory, \App\Models\Traits\TraitUuid;
+    use HasFactory, \App\Models\Traits\GeneratesUniqueExtensions, \App\Models\Traits\TraitUuid;
 
     protected $table = 'v_ivr_menus';
 
@@ -126,29 +126,6 @@ class IvrMenus extends Model
      */
     public function generateUniqueSequenceNumber(): ?string
     {
-        $rangeStart = 9150;
-        $rangeEnd = 9199;
-        $domainUuid = session('domain_uuid');
-
-        $usedExtensions = Dialplans::where('domain_uuid', $domainUuid)
-            ->where('dialplan_number', 'not like', '*%')
-            ->pluck('dialplan_number')
-            ->merge(
-                Voicemails::where('domain_uuid', $domainUuid)->pluck('voicemail_id')
-            )
-            ->merge(
-                Extensions::where('domain_uuid', $domainUuid)->pluck('extension')
-            )
-            ->map(fn($value) => (string) $value)
-            ->unique()
-            ->values();
-
-        for ($ext = $rangeStart; $ext <= $rangeEnd; $ext++) {
-            if (!$usedExtensions->contains((string) $ext)) {
-                return (string) $ext;
-            }
-        }
-
-        return null;
+        return $this->firstAvailableExtensionInRange(9150, 9199);
     }
 }

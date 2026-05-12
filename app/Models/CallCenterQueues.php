@@ -2,13 +2,15 @@
 
 namespace App\Models;
 
+use App\Services\CallRoutingOptionsService;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\Session;
 
 class CallCenterQueues extends Model
 {
-    use HasFactory, \App\Models\Traits\TraitUuid;
+    use HasFactory, \App\Models\Traits\GeneratesUniqueExtensions, \App\Models\Traits\TraitUuid;
 
     protected $table = "v_call_center_queues";
 
@@ -59,6 +61,13 @@ class CallCenterQueues extends Model
         'queue_email_address'
     ];
 
+    protected function timeoutOptionDetails(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->computeTimeoutOptionDetails()
+        )->shouldCache();
+    }
+
     public function __construct(array $attributes = [])
     {
         parent::__construct();
@@ -84,7 +93,8 @@ class CallCenterQueues extends Model
 
     public function agents()
     {
-        return $this->belongsToMany(CallCenterAgents::class, CallCenterQueueAgents::class, 'call_center_queue_uuid', 'call_center_agent_uuid');
+        return $this->belongsToMany(CallCenterAgents::class, 'v_call_center_tiers', 'call_center_queue_uuid', 'call_center_agent_uuid')
+            ->withPivot(['call_center_tier_uuid', 'tier_level', 'tier_position']);
     }
 
     public function domain()
@@ -95,5 +105,52 @@ class CallCenterQueues extends Model
     public function dialplan()
     {
         return $this->belongsTo(Dialplans::class, 'dialplan_uuid', 'dialplan_uuid');
+    }
+
+    protected function computeTimeoutOptionDetails(): array
+    {
+        if (blank($this->queue_timeout_action) || ! str_contains($this->queue_timeout_action, ':')) {
+            return [
+                'type' => null,
+                'extension' => null,
+                'option' => null,
+                'name' => null,
+            ];
+        }
+
+        [$application, $data] = explode(':', $this->queue_timeout_action, 2);
+
+        return (new CallRoutingOptionsService($this->domain_uuid))
+            ->reverseEngineerRingGroupExitAction(trim($application . ' ' . $data)) ?? [
+                'type' => null,
+                'extension' => null,
+                'option' => null,
+                'name' => null,
+            ];
+    }
+
+    public function getTimeoutTargetUuidAttribute(): ?string
+    {
+        return $this->timeout_option_details['option'] ?? null;
+    }
+
+    public function getTimeoutActionAttribute(): ?string
+    {
+        return $this->timeout_option_details['type'] ?? null;
+    }
+
+    public function getTimeoutTargetNameAttribute(): ?string
+    {
+        return $this->timeout_option_details['name'] ?? null;
+    }
+
+    public function getTimeoutTargetExtensionAttribute(): ?string
+    {
+        return $this->timeout_option_details['extension'] ?? null;
+    }
+
+    public function generateUniqueSequenceNumber(): ?string
+    {
+        return $this->firstAvailableExtensionInRange(9400, 9449);
     }
 }

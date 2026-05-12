@@ -8,52 +8,92 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class MusicOnHoldService
 {
     private const APP_UUID = '1dafe0f8-c08a-289b-0312-15baf4f20f81';
+    private const OUTPUT_RATES = ['8000', '16000', '32000', '48000'];
     private const VALID_EXTENSIONS = ['wav', 'mp3', 'ogg'];
 
     public function save(array $validated, ?MusicOnHold $musicOnHold = null): MusicOnHold
     {
         return DB::transaction(function () use ($validated, $musicOnHold) {
             $musicOnHold ??= new MusicOnHold();
-            $isNew = ! $musicOnHold->exists;
+            $domainUuid = $this->saveDomainUuid($musicOnHold, $validated['domain_uuid'] ?? null);
+            $name = $this->safeCategoryName($validated['music_on_hold_name']);
+            $familyPath = $this->defaultStreamPath($domainUuid, $name);
+            $existingFamily = $musicOnHold->exists ? $this->streamFamily($musicOnHold) : collect();
+            $representative = null;
 
-            $musicOnHold->forceFill([
-                'music_on_hold_uuid' => $musicOnHold->music_on_hold_uuid ?: (string) Str::uuid(),
-                'domain_uuid' => $this->authorizedDomainUuid($validated['domain_uuid'] ?? null),
-                'music_on_hold_name' => $validated['music_on_hold_name'],
-                'music_on_hold_path' => $validated['music_on_hold_path'],
-                'music_on_hold_rate' => $validated['music_on_hold_rate'] ?? null,
-                'music_on_hold_shuffle' => $validated['music_on_hold_shuffle'],
-                'music_on_hold_channels' => $validated['music_on_hold_channels'],
-                'music_on_hold_interval' => $validated['music_on_hold_interval'] ?? null,
-                'music_on_hold_timer_name' => $validated['music_on_hold_timer_name'] ?? 'soft',
-                'music_on_hold_chime_list' => $validated['music_on_hold_chime_list'] ?? null,
-                'music_on_hold_chime_freq' => $validated['music_on_hold_chime_freq'] ?? null,
-                'music_on_hold_chime_max' => $validated['music_on_hold_chime_max'] ?? null,
-                $isNew ? 'insert_date' : 'update_date' => now(),
-                $isNew ? 'insert_user' : 'update_user' => session('user_uuid'),
-            ])->save();
+            foreach (self::OUTPUT_RATES as $rate) {
+                $stream = $existingFamily->firstWhere('music_on_hold_rate', $rate)
+                    ?? ($rate === '48000' ? $this->defaultRateStream($existingFamily) : null)
+                    ?? $this->findExistingFamilyStreamForRate($domainUuid, $name, $rate, $familyPath)
+                    ?? new MusicOnHold();
+
+                $isNew = ! $stream->exists;
+                $stream->forceFill([
+                    'music_on_hold_uuid' => $stream->music_on_hold_uuid ?: (string) Str::uuid(),
+                    'domain_uuid' => $domainUuid,
+                    'music_on_hold_name' => $name,
+                    'music_on_hold_path' => $this->ratePath($familyPath, $rate),
+                    'music_on_hold_rate' => $rate,
+                    'music_on_hold_shuffle' => $validated['music_on_hold_shuffle'],
+                    'music_on_hold_channels' => $validated['music_on_hold_channels'],
+                    'music_on_hold_interval' => $validated['music_on_hold_interval'] ?? null,
+                    'music_on_hold_timer_name' => $validated['music_on_hold_timer_name'] ?? 'soft',
+                    'music_on_hold_chime_list' => $validated['music_on_hold_chime_list'] ?? null,
+                    'music_on_hold_chime_freq' => $validated['music_on_hold_chime_freq'] ?? null,
+                    'music_on_hold_chime_max' => $validated['music_on_hold_chime_max'] ?? null,
+                    $isNew ? 'insert_date' : 'update_date' => now(),
+                    $isNew ? 'insert_user' : 'update_user' => session('user_uuid'),
+                ])->save();
+
+                if ($rate === '48000') {
+                    $representative = $stream;
+                }
+            }
 
             $this->refreshRuntime();
 
-            return $musicOnHold;
+            return $representative ?? $musicOnHold;
         });
     }
 
     public function upload(array $validated, UploadedFile $file): MusicOnHold
     {
-        $stream = ! empty($validated['music_on_hold_uuid'])
-            ? $this->scopedQuery()->whereKey($validated['music_on_hold_uuid'])->firstOrFail()
-            : $this->findOrCreateUploadStream($validated);
+        if (! empty($validated['music_on_hold_uuid'])) {
+            $stream = $this->scopedQuery()->whereKey($validated['music_on_hold_uuid'])->firstOrFail();
+            $streams = $this->uploadTargetStreams($stream);
+        } else {
+            $streams = $this->findOrCreateUploadStreams($validated);
+            $stream = $streams->firstWhere('music_on_hold_rate', '48000') ?? $streams->first();
+        }
 
-        $targetPath = $this->resolvedStreamPath($stream);
-        File::ensureDirectoryExists($targetPath, 0770, true);
+        $fileName = $this->safeConvertedFileName($file->getClientOriginalName());
+        $sourcePath = $file->getRealPath();
+        $writtenFiles = [];
 
-        $file->move($targetPath, $this->safeFileName($file->getClientOriginalName()));
+        try {
+            foreach ($streams as $targetStream) {
+                $targetPath = $this->resolvedStreamPath($targetStream);
+                File::ensureDirectoryExists($targetPath, 0770, true);
+
+                $targetFile = $targetPath . DIRECTORY_SEPARATOR . $fileName;
+                $this->convertUpload(
+                    $sourcePath,
+                    $targetFile,
+                    (string) ($targetStream->music_on_hold_rate ?: '48000')
+                );
+                $writtenFiles[] = $targetFile;
+            }
+        } catch (ValidationException $exception) {
+            File::delete($writtenFiles);
+            throw $exception;
+        }
 
         $this->refreshRuntime();
 
@@ -63,20 +103,38 @@ class MusicOnHoldService
     public function deleteStreams(Collection $streams): int
     {
         $deleted = 0;
+        $directoriesToDelete = collect();
+        $parentPaths = collect();
 
-        DB::transaction(function () use ($streams, &$deleted) {
-            foreach ($streams as $stream) {
+        DB::transaction(function () use ($streams, &$deleted, $directoriesToDelete, $parentPaths) {
+            foreach ($this->streamFamilies($streams) as $stream) {
                 $streamPath = $this->resolvedStreamPath($stream);
+                $familyPath = $this->resolvedPath($this->formPath($stream));
+
+                $directoriesToDelete->push($streamPath, $familyPath);
+                $parentPaths->push(dirname($familyPath));
                 $stream->delete();
                 $deleted++;
-
-                @rmdir($streamPath);
-                $namePath = dirname($streamPath);
-                if (is_dir($namePath) && count(scandir($namePath) ?: []) === 2) {
-                    @rmdir($namePath);
-                }
             }
         });
+
+        $directoriesToDelete
+            ->unique()
+            ->sortByDesc(fn (string $path) => substr_count($path, DIRECTORY_SEPARATOR))
+            ->each(function (string $path) {
+                if ($this->isDeletableStreamDirectory($path)) {
+                    File::deleteDirectory($path);
+                }
+            });
+
+        $parentPaths
+            ->unique()
+            ->sortByDesc(fn (string $path) => substr_count($path, DIRECTORY_SEPARATOR))
+            ->each(function (string $path) {
+                if (File::isDirectory($path) && count(scandir($path) ?: []) === 2) {
+                    @rmdir($path);
+                }
+            });
 
         if ($deleted > 0) {
             $this->refreshRuntime();
@@ -87,13 +145,15 @@ class MusicOnHoldService
 
     public function deleteFile(MusicOnHold $stream, string $fileName): bool
     {
-        $filePath = $this->streamFilePath($stream, $fileName);
+        $deleted = false;
 
-        if (! $filePath || ! File::exists($filePath)) {
-            return false;
+        foreach ($this->streamFamily($stream) as $familyStream) {
+            $filePath = $this->streamFilePath($familyStream, $fileName);
+
+            if ($filePath && File::exists($filePath)) {
+                $deleted = File::delete($filePath) || $deleted;
+            }
         }
-
-        $deleted = File::delete($filePath);
 
         if ($deleted) {
             $this->refreshRuntime();
@@ -125,7 +185,7 @@ class MusicOnHoldService
 
     public function resolvedStreamPath(MusicOnHold $stream): string
     {
-        return str_replace('$${sounds_dir}', $this->soundsRoot(), (string) $stream->music_on_hold_path);
+        return $this->resolvedPath((string) $stream->music_on_hold_path);
     }
 
     public function fileRows(MusicOnHold $stream): array
@@ -160,6 +220,20 @@ class MusicOnHoldService
         }, $files);
     }
 
+    public function formPath(MusicOnHold $stream): string
+    {
+        return $this->familyPath((string) $stream->music_on_hold_path);
+    }
+
+    public function representativeQuery()
+    {
+        return $this->scopedQuery()
+            ->where(function ($query) {
+                $query->where('music_on_hold_rate', '48000')
+                    ->orWhereNull('music_on_hold_rate');
+            });
+    }
+
     public function accessibleDomainUuids(): array
     {
         $domains = session('domains', []);
@@ -188,6 +262,27 @@ class MusicOnHoldService
         abort_unless(in_array($domainUuid, $this->accessibleDomainUuids(), true), 403);
 
         return $domainUuid;
+    }
+
+    private function saveDomainUuid(MusicOnHold $musicOnHold, ?string $domainUuid): ?string
+    {
+        if (userCheckPermission('music_on_hold_domain')) {
+            return $this->authorizedDomainUuid($domainUuid);
+        }
+
+        if ($musicOnHold->exists) {
+            return $musicOnHold->domain_uuid;
+        }
+
+        return session('domain_uuid');
+    }
+
+    public function defaultStreamPath(?string $domainUuid, string $name): string
+    {
+        $domainName = $this->domainPathName($domainUuid);
+        $pathName = $this->safeCategoryName($name);
+
+        return '$${sounds_dir}/music/' . $domainName . '/' . $pathName;
     }
 
     public function scopedQuery()
@@ -232,19 +327,40 @@ class MusicOnHoldService
         ];
     }
 
-    private function findOrCreateUploadStream(array $validated): MusicOnHold
+    private function findOrCreateUploadStreams(array $validated): Collection
     {
         $domainUuid = $this->authorizedDomainUuid($validated['domain_uuid'] ?? null);
         $name = $this->safeCategoryName($validated['music_on_hold_name']);
-        $rate = $validated['music_on_hold_rate'] ?? null;
-        $pathRate = $rate ?: '48000';
-        $path = $this->uploadPath($domainUuid, $name, $pathRate);
 
-        $existing = MusicOnHold::query()
-            ->where('music_on_hold_path', $path)
-            ->first();
+        return collect(self::OUTPUT_RATES)
+            ->map(fn (string $rate) => $this->findOrCreateUploadStreamForRate($domainUuid, $name, $rate))
+            ->values();
+    }
+
+    private function findOrCreateUploadStreamForRate(?string $domainUuid, string $name, string $rate): MusicOnHold
+    {
+        $familyPath = $this->defaultStreamPath($domainUuid, $name);
+        $path = $this->ratePath($familyPath, $rate);
+
+        $existing = $this->findExistingFamilyStreamForRate($domainUuid, $name, $rate, $familyPath);
 
         if ($existing) {
+            $updates = [];
+
+            if ((string) $existing->music_on_hold_rate !== $rate) {
+                $updates['music_on_hold_rate'] = $rate;
+            }
+
+            if ((string) $existing->music_on_hold_path !== $path) {
+                $updates['music_on_hold_path'] = $path;
+            }
+
+            if (! empty($updates)) {
+                $updates['update_date'] = now();
+                $updates['update_user'] = session('user_uuid');
+                $existing->forceFill($updates)->save();
+            }
+
             return $existing;
         }
 
@@ -266,15 +382,187 @@ class MusicOnHoldService
         return $stream;
     }
 
-    private function uploadPath(?string $domainUuid, string $name, string $rate): string
+    private function uploadTargetStreams(MusicOnHold $stream): Collection
     {
-        $domainName = $domainUuid
-            ? data_get(collect(session('domains', []))->firstWhere('domain_uuid', $domainUuid), 'domain_name', session('domain_name'))
-            : 'global';
+        $familyPath = $this->formPath($stream);
+        $name = $this->safeCategoryName($stream->music_on_hold_name);
 
-        $path = $this->soundsRoot() . '/music/' . $domainName . '/' . $name . '/' . $rate;
+        return collect(self::OUTPUT_RATES)
+            ->map(function (string $rate) use ($stream, $name, $familyPath) {
+                $target = $this->findExistingFamilyStreamForRate($stream->domain_uuid, $name, $rate, $familyPath)
+                    ?? new MusicOnHold();
 
-        return str_replace('.loc', '._loc', $path);
+                $isNew = ! $target->exists;
+                $target->forceFill([
+                    'music_on_hold_uuid' => $target->music_on_hold_uuid ?: (string) Str::uuid(),
+                    'domain_uuid' => $stream->domain_uuid,
+                    'music_on_hold_name' => $name,
+                    'music_on_hold_path' => $this->ratePath($familyPath, $rate),
+                    'music_on_hold_rate' => $rate,
+                    'music_on_hold_shuffle' => $stream->music_on_hold_shuffle,
+                    'music_on_hold_channels' => $stream->music_on_hold_channels,
+                    'music_on_hold_interval' => $stream->music_on_hold_interval,
+                    'music_on_hold_timer_name' => $stream->music_on_hold_timer_name ?: 'soft',
+                    'music_on_hold_chime_list' => $stream->music_on_hold_chime_list,
+                    'music_on_hold_chime_freq' => $stream->music_on_hold_chime_freq,
+                    'music_on_hold_chime_max' => $stream->music_on_hold_chime_max,
+                    $isNew ? 'insert_date' : 'update_date' => now(),
+                    $isNew ? 'insert_user' : 'update_user' => session('user_uuid'),
+                ])->save();
+
+                return $target;
+            })
+            ->values();
+    }
+
+    private function convertUpload(string $sourcePath, string $targetPath, string $rate): void
+    {
+        $process = Process::run([
+            'ffmpeg',
+            '-nostdin',
+            '-y',
+            '-i',
+            $sourcePath,
+            '-vn',
+            '-acodec',
+            'pcm_s16le',
+            '-ac',
+            '1',
+            '-ar',
+            $rate,
+            $targetPath,
+        ]);
+
+        if ($process->failed()) {
+            File::delete($targetPath);
+
+            throw ValidationException::withMessages([
+                'file' => ['Could not convert the uploaded file for FreeSWITCH playback.'],
+            ]);
+        }
+    }
+
+    private function pathAlternates(string $path): array
+    {
+        return collect([
+            $path,
+            $this->resolvedPath($path),
+        ])->unique()->values()->all();
+    }
+
+    private function streamFamily(MusicOnHold $stream): Collection
+    {
+        $familyPath = $this->formPath($stream);
+        $query = MusicOnHold::query()
+            ->where('music_on_hold_name', $stream->music_on_hold_name)
+            ->where(function ($query) use ($stream) {
+                $stream->domain_uuid === null
+                    ? $query->whereNull('domain_uuid')
+                    : $query->where('domain_uuid', $stream->domain_uuid);
+            })
+            ->where(function ($query) use ($familyPath) {
+                foreach (self::OUTPUT_RATES as $rate) {
+                    $query->orWhereIn('music_on_hold_path', $this->pathAlternates($this->ratePath($familyPath, $rate)));
+                }
+            });
+
+        $family = $query->get();
+
+        if (! $family->contains('music_on_hold_uuid', $stream->music_on_hold_uuid)) {
+            $family->push($stream);
+        }
+
+        return $family;
+    }
+
+    private function streamFamilies(Collection $streams): Collection
+    {
+        return $streams
+            ->flatMap(fn (MusicOnHold $stream) => $this->streamFamily($stream))
+            ->unique('music_on_hold_uuid')
+            ->values();
+    }
+
+    private function defaultRateStream(Collection $streams): ?MusicOnHold
+    {
+        return $streams->first(function (MusicOnHold $stream) {
+            return $stream->music_on_hold_rate === null;
+        });
+    }
+
+    private function findExistingFamilyStreamForRate(?string $domainUuid, string $name, string $rate, string $familyPath): ?MusicOnHold
+    {
+        $query = MusicOnHold::query()
+            ->where(function ($query) use ($domainUuid) {
+                $domainUuid === null
+                    ? $query->whereNull('domain_uuid')
+                    : $query->where('domain_uuid', $domainUuid);
+            })
+            ->where('music_on_hold_name', $name)
+            ->where(function ($query) use ($rate, $familyPath) {
+                $query->where('music_on_hold_rate', $rate)
+                    ->orWhereIn('music_on_hold_path', $this->pathAlternates($this->ratePath($familyPath, $rate)));
+            });
+
+        if ($rate === '48000') {
+            $query->orWhere(function ($query) use ($domainUuid, $name, $familyPath) {
+                $query->where(function ($query) use ($domainUuid) {
+                    $domainUuid === null
+                        ? $query->whereNull('domain_uuid')
+                        : $query->where('domain_uuid', $domainUuid);
+                    })
+                    ->where('music_on_hold_name', $name)
+                    ->whereNull('music_on_hold_rate')
+                    ->whereIn('music_on_hold_path', $this->pathAlternates($this->ratePath($familyPath, '48000')));
+            });
+        }
+
+        return $query->first();
+    }
+
+    private function familyPath(string $path): string
+    {
+        $path = rtrim($path, '/');
+
+        foreach (self::OUTPUT_RATES as $rate) {
+            if (str_ends_with($path, '/' . $rate)) {
+                return substr($path, 0, -strlen('/' . $rate));
+            }
+        }
+
+        return $path;
+    }
+
+    private function ratePath(string $familyPath, string $rate): string
+    {
+        return rtrim($familyPath, '/') . '/' . $rate;
+    }
+
+    private function resolvedPath(string $path): string
+    {
+        return str_replace('$${sounds_dir}', $this->soundsRoot(), $path);
+    }
+
+    private function isDeletableStreamDirectory(string $path): bool
+    {
+        $musicRoot = realpath($this->soundsRoot() . DIRECTORY_SEPARATOR . 'music');
+
+        if (! $musicRoot) {
+            return false;
+        }
+
+        $resolvedPath = realpath($path) ?: $path;
+        $musicRoot = rtrim(str_replace('\\', '/', $musicRoot), '/');
+        $resolvedPath = rtrim(str_replace('\\', '/', $resolvedPath), '/');
+
+        if ($resolvedPath === $musicRoot || ! str_starts_with($resolvedPath, $musicRoot . '/')) {
+            return false;
+        }
+
+        $relativePath = trim(substr($resolvedPath, strlen($musicRoot)), '/');
+        $parts = array_values(array_filter(explode('/', $relativePath), fn (string $part) => $part !== ''));
+
+        return count($parts) >= 2;
     }
 
     private function safeCategoryName(string $name): string
@@ -293,9 +581,28 @@ class MusicOnHoldService
         return str_replace(' ', '-', $fileName);
     }
 
+    private function safeConvertedFileName(string $fileName): string
+    {
+        $fileName = pathinfo($this->safeFileName($fileName), PATHINFO_FILENAME);
+        $fileName = trim($fileName, '.');
+
+        return ($fileName !== '' ? $fileName : 'music_on_hold') . '.wav';
+    }
+
     private function soundsRoot(): string
     {
         return rtrim(config('filesystems.disks.sounds.root', '/usr/share/freeswitch/sounds'), '/');
+    }
+
+    private function domainPathName(?string $domainUuid): string
+    {
+        if ($domainUuid === null || $domainUuid === '') {
+            return 'global';
+        }
+
+        return data_get(collect(session('domains', []))->firstWhere('domain_uuid', $domainUuid), 'domain_name')
+            ?: session('domain_name')
+            ?: 'global';
     }
 
     private function bytesForHumans(int $bytes): string

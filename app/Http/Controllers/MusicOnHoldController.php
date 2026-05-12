@@ -114,8 +114,11 @@ class MusicOnHoldController extends Controller
             : new MusicOnHold();
 
         if (! $item->exists) {
+            $domainUuid = userCheckPermission('music_on_hold_domain') ? null : session('domain_uuid');
+
             $item->forceFill([
-                'domain_uuid' => session('domain_uuid'),
+                'domain_uuid' => $domainUuid,
+                'music_on_hold_path' => $service->defaultStreamPath($domainUuid, 'default'),
                 'music_on_hold_shuffle' => 'false',
                 'music_on_hold_channels' => '1',
                 'music_on_hold_interval' => 20,
@@ -125,13 +128,18 @@ class MusicOnHoldController extends Controller
 
         if ($item->exists) {
             abort_unless($this->canManage($item), 403);
+            $item->forceFill([
+                'music_on_hold_path' => $service->formPath($item),
+                'music_on_hold_rate' => null,
+            ]);
         }
 
         return response()->json([
             'item' => $item,
-            'rates' => $this->rateOptions(true),
             'domains' => $this->domainOptions($service),
             'current_domain_uuid' => session('domain_uuid'),
+            'current_domain_name' => session('domain_name'),
+            'sounds_path_prefix' => '$${sounds_dir}/music',
             'streams' => $this->streamOptions($request, $service),
             'chime_options' => $this->chimeOptions(),
         ]);
@@ -245,7 +253,7 @@ class MusicOnHoldController extends Controller
 
     private function baseQuery(Request $request, MusicOnHoldService $service): QueryBuilder
     {
-        $query = $service->scopedQuery()
+        $query = $service->representativeQuery()
             ->when(! ($request->boolean('filter.showGlobal') && userCheckPermission('music_on_hold_all')), function ($query) {
                 $query->where(function ($query) {
                     $query->where('domain_uuid', session('domain_uuid'))
@@ -309,9 +317,9 @@ class MusicOnHoldController extends Controller
             'domain_uuid' => $stream->domain_uuid,
             'domain_label' => $stream->domain?->domain_description ?: $stream->domain?->domain_name ?: 'Global',
             'music_on_hold_name' => $stream->music_on_hold_name,
-            'music_on_hold_path' => $stream->music_on_hold_path,
-            'music_on_hold_rate' => $stream->music_on_hold_rate,
-            'rate_label' => $stream->music_on_hold_rate ? ((int) $stream->music_on_hold_rate / 1000) . ' kHz' : 'Default',
+            'music_on_hold_path' => $service->formPath($stream),
+            'music_on_hold_rate' => null,
+            'rate_label' => '8, 16, 32, 48 kHz',
             'music_on_hold_shuffle' => $stream->music_on_hold_shuffle,
             'music_on_hold_channels' => $stream->music_on_hold_channels,
             'music_on_hold_interval' => $stream->music_on_hold_interval,
@@ -329,7 +337,7 @@ class MusicOnHoldController extends Controller
             ->defaultSort('music_on_hold_name')
             ->get()
             ->map(fn (MusicOnHold $stream) => [
-                'label' => $stream->music_on_hold_name . ($stream->music_on_hold_rate ? '/' . $stream->music_on_hold_rate : ''),
+                'label' => $stream->music_on_hold_name,
                 'value' => $stream->music_on_hold_uuid,
             ])
             ->values()
@@ -346,11 +354,12 @@ class MusicOnHoldController extends Controller
             ->map(fn ($domain) => [
                 'label' => data_get($domain, 'domain_description') ?? data_get($domain, 'domain_name') ?? data_get($domain, 'domain_uuid'),
                 'value' => data_get($domain, 'domain_uuid'),
+                'domain_name' => data_get($domain, 'domain_name'),
             ])
             ->values()
             ->all();
 
-        array_unshift($domains, ['label' => 'Global', 'value' => null]);
+        array_unshift($domains, ['label' => 'Global', 'value' => '__global__', 'domain_name' => 'global']);
 
         return $domains;
     }

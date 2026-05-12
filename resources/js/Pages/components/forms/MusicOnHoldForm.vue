@@ -46,11 +46,10 @@
                                                     'music_on_hold_uuid',
                                                     'settings_header',
                                                     'music_on_hold_name',
-                                                    'music_on_hold_path',
-                                                    'music_on_hold_rate',
-                                                    'music_on_hold_shuffle',
-                                                    'music_on_hold_channels',
                                                     'domain_uuid',
+                                                    'music_on_hold_channels',
+                                                    'music_on_hold_shuffle',
+                                                    'music_on_hold_path',
                                                     'settings_button_container',
                                                     'settings_submit',
                                                 ]" />
@@ -75,13 +74,17 @@
                                                     description="Configure the stream category, source path, and playback behavior." />
 
                                                 <TextElement name="music_on_hold_name" label="Name" placeholder="default" :floating="false" :columns="{ sm: { container: 6 } }" />
-                                                <TextElement name="music_on_hold_path" label="Path" placeholder="$${sounds_dir}/music/default/48000" :floating="false" :columns="{ sm: { container: 6 } }" />
+                                                <SelectElement v-if="canManageDomain" name="domain_uuid" :items="domainOptions" label="Domain" :native="false" :floating="false" :columns="{ sm: { container: 6 } }" />
 
-                                                <SelectElement name="music_on_hold_rate" :items="rateOptions" label="Rate" :native="false" :floating="false" :columns="{ sm: { container: 4 } }" />
-                                                <ToggleElement name="music_on_hold_shuffle" text="Shuffle" true-value="true" false-value="false" :labels="{ on: 'On', off: 'Off' }" :columns="{ sm: { container: 4 } }" label="&nbsp;" />
-                                                <SelectElement name="music_on_hold_channels" :items="channelOptions" label="Channels" :native="false" :floating="false" :columns="{ sm: { container: 4 } }" />
+                                                <SelectElement name="music_on_hold_channels" :items="channelOptions" label="Channels" :native="false" :floating="false" :columns="{ sm: { container: 6 } }" />
+                                                <ToggleElement name="music_on_hold_shuffle" text="Shuffle" true-value="true" false-value="false" :labels="{ on: 'On', off: 'Off' }" :columns="{ sm: { container: 6 } }" label="&nbsp;" />
 
-                                                <SelectElement v-if="domainOptions.length" name="domain_uuid" :items="domainOptions" label="Domain" :native="false" :floating="false" :columns="{ sm: { container: 6 } }" />
+                                                <StaticElement name="music_on_hold_path" tag="div" :columns="{ container: 12 }">
+                                                    <div class="rounded-md bg-gray-100 px-3 py-2">
+                                                        <div class="text-xs font-medium uppercase tracking-wide text-gray-500">Generated path</div>
+                                                        <div class="mt-1 break-all font-mono text-xs text-gray-700">{{ suggestedPath }}</div>
+                                                    </div>
+                                                </StaticElement>
 
                                                 <GroupElement name="settings_button_container" />
                                                 <ButtonElement name="settings_submit" button-label="Save" :submits="true" align="right" />
@@ -115,13 +118,14 @@
 </template>
 
 <script setup>
-import { computed, ref } from "vue";
+import { computed, ref, watch, watchEffect } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 
 const props = defineProps({
     show: Boolean,
     options: Object,
+    permissions: Object,
     routes: Object,
     loading: Boolean,
     header: {
@@ -136,13 +140,17 @@ const props = defineProps({
 
 const emit = defineEmits(["close", "error", "success", "refresh-data"]);
 const form$ = ref(null);
+const previousGeneratedPath = ref(null);
+const GLOBAL_DOMAIN_VALUE = "__global__";
 
 const defaultValues = computed(() => ({
     music_on_hold_uuid: props.options?.item?.music_on_hold_uuid ?? null,
-    domain_uuid: props.options?.item?.domain_uuid ?? null,
+    domain_uuid: normalizeDomainValue(props.options?.item?.domain_uuid),
     music_on_hold_name: props.options?.item?.music_on_hold_name ?? null,
-    music_on_hold_path: props.options?.item?.music_on_hold_path ?? null,
-    music_on_hold_rate: props.options?.item?.music_on_hold_rate ?? "",
+    music_on_hold_path: props.options?.item?.music_on_hold_path ?? buildSuggestedPath(
+        props.options?.item?.music_on_hold_name,
+        props.options?.item?.domain_uuid
+    ),
     music_on_hold_shuffle: props.options?.item?.music_on_hold_shuffle ?? "false",
     music_on_hold_channels: String(props.options?.item?.music_on_hold_channels ?? "1"),
     music_on_hold_interval: props.options?.item?.music_on_hold_interval ?? 20,
@@ -152,13 +160,90 @@ const defaultValues = computed(() => ({
     music_on_hold_chime_max: props.options?.item?.music_on_hold_chime_max ?? null,
 }));
 
-const rateOptions = computed(() => props.options?.rates ?? []);
 const domainOptions = computed(() => props.options?.domains ?? []);
+const canManageDomain = computed(() => Boolean(props.permissions?.manage_domain) && domainOptions.value.length > 0);
 const chimeOptions = computed(() => props.options?.chime_options ?? []);
 const channelOptions = [
     { label: "Mono", value: "1" },
     { label: "Stereo", value: "2" },
 ];
+
+const suggestedPath = computed(() => buildSuggestedPath(
+    form$.value?.data?.music_on_hold_name ?? props.options?.item?.music_on_hold_name,
+    normalizeDomainValue(form$.value?.data?.domain_uuid ?? props.options?.item?.domain_uuid)
+));
+
+watch(
+    () => [props.show, props.mode],
+    () => {
+        previousGeneratedPath.value = null;
+    }
+);
+
+watchEffect(() => {
+    if (!props.show || props.mode !== "create" || !form$.value?.data) {
+        return;
+    }
+
+    const path = buildSuggestedPath(
+        form$.value.data.music_on_hold_name,
+        form$.value.data.domain_uuid
+    );
+    const currentPath = form$.value.data.music_on_hold_path;
+
+    if (currentPath && previousGeneratedPath.value === null && currentPath === path) {
+        previousGeneratedPath.value = path;
+    }
+
+    if (currentPath && currentPath !== previousGeneratedPath.value) {
+        return;
+    }
+
+    form$.value.data.music_on_hold_path = path;
+    previousGeneratedPath.value = path;
+});
+
+function buildSuggestedPath(name, domainUuid) {
+    const pathName = safeCategoryName(name || "default");
+    const domainName = domainNameForPath(domainUuid);
+
+    return `${props.options?.sounds_path_prefix || "$${sounds_dir}/music"}/${domainName}/${pathName}`;
+}
+
+function domainNameForPath(domainUuid) {
+    const normalizedDomainUuid = normalizeDomainValue(domainUuid);
+
+    if (!normalizedDomainUuid || normalizedDomainUuid === GLOBAL_DOMAIN_VALUE) {
+        return "global";
+    }
+
+    const option = props.options?.domains?.find((domain) => String(domain.value) === String(normalizedDomainUuid));
+
+    if (option?.domain_name) {
+        return option.domain_name;
+    }
+
+    return canManageDomain.value ? "global" : (props.options?.current_domain_name || "global");
+}
+
+function normalizeDomainValue(domainUuid) {
+    if (domainUuid === null || domainUuid === undefined) {
+        return GLOBAL_DOMAIN_VALUE;
+    }
+
+    if (typeof domainUuid === "object") {
+        return domainUuid.value ?? GLOBAL_DOMAIN_VALUE;
+    }
+
+    return domainUuid;
+}
+
+function safeCategoryName(name) {
+    return String(name)
+        .replace(/[\\/]/g, "")
+        .replace(/\s+/g, "_")
+        .trim() || "default";
+}
 
 const submitForm = async (FormData, form$) => {
     const requestData = form$.requestData;

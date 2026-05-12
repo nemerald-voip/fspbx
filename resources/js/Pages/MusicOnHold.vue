@@ -535,6 +535,7 @@
         :mode="formMode"
         :routes="routes"
         :options="itemOptions"
+        :permissions="permissions"
         @close="closeForm"
         @error="handleError"
         @success="showNotification"
@@ -555,12 +556,8 @@
                     :columns="{ container: 12, sm: 6 }" :error="formErrors.music_on_hold_name?.[0]"
                     :conditions="[() => !selectedUploadStreamUuid]" />
 
-                <SelectElement name="music_on_hold_rate" :items="itemOptions.rates" label="Rate"
-                    :native="false" :floating="false" :columns="{ container: 12, sm: 6 }"
-                    :conditions="[() => !selectedUploadStreamUuid]" />
-
                 <FileElement name="file" label="Audio File" accept=".wav,.mp3,.ogg"
-                    description="Supported formats: WAV, MP3, or OGG" :upload-temp-endpoint="false"
+                    description="The file will be converted to mono WAV at 8, 16, 32, and 48 kHz." :upload-temp-endpoint="false"
                     :remove-temp-endpoint="false" :remove-endpoint="false" :drop="true"
                     :error="formErrors.file?.[0]" @change="handleVueformFileUpload"
                     :columns="{ container: 12 }" />
@@ -757,7 +754,6 @@ const uploadDefaultValues = computed(() => ({
     domain_uuid: itemOptions.value.current_domain_uuid
         ?? itemOptions.value.domains.find((domain) => domain.value)?.value
         ?? null,
-    music_on_hold_rate: "",
 }));
 
 const selectedUploadStreamUuid = computed(() => uploadForm$.value?.data?.music_on_hold_uuid ?? "");
@@ -969,7 +965,6 @@ const submitUpload = () => {
     requestData.append("music_on_hold_uuid", uploadData.music_on_hold_uuid || "");
     requestData.append("music_on_hold_name", uploadData.music_on_hold_name || "");
     requestData.append("domain_uuid", uploadData.domain_uuid || "");
-    requestData.append("music_on_hold_rate", uploadData.music_on_hold_rate || "");
     if (uploadFile.value) {
         requestData.append("file", uploadFile.value);
     }
