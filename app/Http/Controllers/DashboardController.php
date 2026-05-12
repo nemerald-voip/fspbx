@@ -49,6 +49,7 @@ class DashboardController extends Controller
                 'my_extension_status' => null,
                 'data' => [],
                 'counts' => [],
+                'permissions' => $this->getUserPermissions(),
                 'routes' => [
                     'account_settings_page' => route('account-settings.index'),
                     'data_route' => route('dashboard.data'),
@@ -58,6 +59,15 @@ class DashboardController extends Controller
                 ]
             ]
         );
+    }
+
+    private function getUserPermissions()
+    {
+        $permissions = [];
+        $permissions['extension_view'] = userCheckPermission('extension_view');
+        $permissions['account_settings_index'] = userCheckPermission('account_settings_list_view');
+
+        return $permissions;
     }
 
     public function getCounts()

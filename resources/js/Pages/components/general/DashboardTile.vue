@@ -3,7 +3,7 @@
         class="group relative flex h-full overflow-hidden rounded-lg bg-white ring-1 ring-gray-200 transition duration-150 hover:-translate-y-0.5 hover:shadow-md hover:ring-cyan-200">
         <div class="grid min-h-24 flex-1 grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-3 p-4">
             <a :href="card.href || '#'" @click="handleCardClick"
-                class="row-span-2 min-w-0 rounded-md focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
+                class="row-span-2 min-w-0 rounded-md focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 before:absolute before:inset-0 before:content-['']">
                 <dl class="min-w-0">
                     <dt class="truncate text-base font-medium leading-5 text-gray-500 group-hover:text-gray-700">{{
                         card.name }}</dt>
@@ -17,12 +17,12 @@
             </a>
 
             <span
-                :class="[iconStyles.bgColor, iconStyles.textColor, 'inline-flex h-10 w-10 items-center justify-center justify-self-end rounded-lg ring-1 ring-inset ring-current/10 transition group-hover:scale-105']">
+                :class="[iconStyles.bgColor, iconStyles.textColor, 'pointer-events-none inline-flex h-10 w-10 items-center justify-center justify-self-end rounded-lg ring-1 ring-inset ring-current/10 transition group-hover:scale-105']">
                 <component :is="iconComponent" class="dashboard-tile-icon" aria-hidden="true" />
             </span>
 
             <a v-if="card.alt_href" :href="card.alt_href"
-                class="self-end whitespace-nowrap rounded-md px-2 py-1 text-sm font-medium text-cyan-700 transition hover:bg-cyan-50 hover:text-cyan-900 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
+                class="relative z-10 self-end whitespace-nowrap rounded-md px-2 py-1 text-sm font-medium text-cyan-700 transition hover:bg-cyan-50 hover:text-cyan-900 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2">
                 {{ card.alt_link_label }}
             </a>
         </div>
