@@ -21,8 +21,6 @@ use Spatie\QueryBuilder\QueryBuilder;
 
 class DialplanController extends Controller
 {
-    protected int $perPage = 50;
-
     private const INBOUND_ROUTES_APP_UUID = 'c03b422e-13a8-bd1b-e42b-b6b9b4d27ce4';
 
     private const OUTBOUND_ROUTES_APP_UUID = '8c914ec3-9fc0-8ab5-4cda-6c9288bdc9a3';
@@ -79,6 +77,10 @@ class DialplanController extends Controller
                 'domain' => userCheckPermission('dialplan_domain'),
                 'context' => userCheckPermission('dialplan_context'),
                 'outbound_route_pin_numbers' => userCheckPermission('outbound_route_pin_numbers'),
+            ],
+            'pagination' => [
+                'per_page' => fspbx_pagination_per_page(),
+                'per_page_options' => fspbx_pagination_options(),
             ],
         ]);
     }
@@ -221,7 +223,8 @@ class DialplanController extends Controller
                 'dialplan_description',
             ])
             ->defaultSort('dialplan_order', 'dialplan_name')
-            ->paginate($this->perPage);
+            ->paginate(fspbx_pagination_per_page($request))
+            ->appends($request->query());
 
         $items->getCollection()->each(function (Dialplans $dialplan) {
             $enabled = $dialplan->getRawOriginal('dialplan_enabled') ?: 'false';

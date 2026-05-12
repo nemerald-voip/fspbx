@@ -195,7 +195,9 @@
             <template #footer>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    :page-size="pagination.per_page" :page-size-options="pagination.per_page_options"
+                    :show-page-size-selector="true"
+                    @pagination-change-page="renderRequestedPage" @page-size-change="handlePageSizeChange" />
             </template>
         </DataTable>
     </div>
@@ -241,10 +243,15 @@ import {
 const props = defineProps({
     routes: Object,
     permissions: Object,
+    pagination: Object,
 });
 
 const routes = props.routes;
 const permissions = props.permissions;
+const pagination = ref({
+    per_page: props.pagination?.per_page ?? 50,
+    per_page_options: props.pagination?.per_page_options ?? [50, 100, 200, 500, 1000],
+});
 
 const loading = ref(false);
 const currentPage = ref(1);
@@ -406,6 +413,7 @@ const getData = (page = 1) => {
         params: {
             filter: filterData.value,
             page: currentPage.value,
+            per_page: pagination.value.per_page,
             sort,
         },
     })
@@ -438,6 +446,12 @@ const renderRequestedPage = (url) => {
     const urlObj = new URL(url, window.location.origin);
     const pageParam = urlObj.searchParams.get("page") ?? 1;
     getData(pageParam);
+};
+
+const handlePageSizeChange = (perPage) => {
+    pagination.value.per_page = perPage;
+    handleClearSelection();
+    getData(1);
 };
 
 const handleShowGlobal = () => {

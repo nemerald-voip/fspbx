@@ -235,7 +235,9 @@
             <template #footer>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    :page-size="pagination.per_page" :page-size-options="pagination.per_page_options"
+                    :show-page-size-selector="true"
+                    @pagination-change-page="renderRequestedPage" @page-size-change="handlePageSizeChange" />
             </template>
         </DataTable>
         <div class="px-4 sm:px-6 lg:px-8"></div>
@@ -286,6 +288,7 @@ const bulkActionLabel = ref('');
 const props = defineProps({
     data: Object,
     showGlobal: Boolean,
+    pagination: Object,
     routes: Object,
     // itemData: Object,
     // itemOptions: Object,
@@ -303,6 +306,10 @@ const sortData = ref({
 });
 
 const showGlobal = ref(props.showGlobal);
+const pagination = ref({
+    per_page: props.pagination?.per_page ?? 50,
+    per_page_options: props.pagination?.per_page_options ?? [50, 100, 200, 500, 1000],
+});
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
@@ -447,15 +454,18 @@ const handleSearchButtonClick = () => {
             filterData: filterData._rawValue,
             sortField: sortData.value.name,
             sortOrder: sortData.value.order,
+            per_page: pagination.value.per_page,
         },
         preserveScroll: true,
         preserveState: true,
         only: [
             "data",
             'showGlobal',
+            'pagination',
         ],
         onSuccess: (page) => {
             loading.value = false;
+            pagination.value.per_page = page.props.pagination?.per_page ?? pagination.value.per_page;
             handleClearSelection();
         }
     });
@@ -475,6 +485,7 @@ const renderRequestedPage = (url) => {
             filterData: filterData._rawValue,
             sortField: sortData.value.name,
             sortOrder: sortData.value.order,
+            per_page: pagination.value.per_page,
         },
         preserveScroll: true,
         preserveState: true,
@@ -483,6 +494,12 @@ const renderRequestedPage = (url) => {
             loading.value = false;
         }
     });
+};
+
+const handlePageSizeChange = (perPage) => {
+    pagination.value.per_page = perPage;
+    handleClearSelection();
+    handleSearchButtonClick();
 };
 
 
