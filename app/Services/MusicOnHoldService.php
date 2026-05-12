@@ -210,8 +210,26 @@ class MusicOnHoldService
 
     public function refreshRuntime(): void
     {
+        $this->reloadLocalStream();
+    }
+
+    public function reloadLocalStream(): array
+    {
         FusionCache::clear('configuration:local_stream.conf');
-        app(FreeswitchEslService::class)->executeCommand('reload mod_local_stream');
+        $response = app(FreeswitchEslService::class)->executeCommand('reload mod_local_stream');
+        $message = is_string($response) ? trim($response) : null;
+
+        if ($message === null || $message === '') {
+            return [
+                'success' => false,
+                'message' => 'No response received from FreeSWITCH.',
+            ];
+        }
+
+        return [
+            'success' => ! str_starts_with($message, '-ERR'),
+            'message' => $message,
+        ];
     }
 
     private function findOrCreateUploadStream(array $validated): MusicOnHold

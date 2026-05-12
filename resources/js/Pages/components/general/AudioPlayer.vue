@@ -85,7 +85,7 @@
 
                 <!-- Play / Pause -->
                 <button type="button"
-                    class="grid h-10 w-12 place-items-center rounded-full bg-slate-800 text-white hover:bg-slate-700 transition"
+                    class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-slate-800 text-white hover:bg-slate-700 transition"
                     @click="toggle" :title="playing ? 'Pause' : 'Play'">
                     <!-- Play -->
                     <svg v-if="!playing" class="h-6 w-6" viewBox="0 0 24 24" aria-hidden="true">

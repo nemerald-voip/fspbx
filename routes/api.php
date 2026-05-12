@@ -370,6 +370,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/music-on-hold/bulk-delete', [MusicOnHoldController::class, 'bulkDelete'])->name('music-on-hold.bulk.delete');
     Route::post('/music-on-hold/upload', [MusicOnHoldController::class, 'upload'])->name('music-on-hold.upload');
     Route::post('/music-on-hold/files/delete', [MusicOnHoldController::class, 'deleteFile'])->name('music-on-hold.files.delete');
+    Route::post('/music-on-hold/reload', [MusicOnHoldController::class, 'reload'])->name('music-on-hold.reload');
 
     // Conferences
     Route::post('conferences', [ConferenceController::class, 'store'])->name('conferences.store');

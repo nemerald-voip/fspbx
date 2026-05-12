@@ -141,7 +141,6 @@ class CreateFSPBXMenu extends Command
                     ['title' => 'Active Queues', 'link' => '/app/fifo_list/fifo_list.php', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Extension Statistics', 'link' => '/extension-statistics', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Firewall', 'link' => '/firewall', 'groups' => ['superadmin']],
-                    ['title' => 'Fax Queue', 'link' => '/faxqueue', 'groups' => ['superadmin']],
                     ['title' => 'Logs', 'link' => '/logs', 'groups' => ['superadmin']],
                     ['title' => 'Log Viewer', 'link' => '/app/log_viewer/log_viewer.php', 'groups' => ['superadmin']],
                     ['title' => 'Registrations', 'link' => '/registrations', 'groups' => ['superadmin', 'admin']],

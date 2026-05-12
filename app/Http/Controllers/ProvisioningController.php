@@ -118,7 +118,7 @@ class ProvisioningController extends Controller
         // logger($vars);
         // Compute flavor + MIME
         $flv = $this->computeFlavor($request, $device, $id, $ext);
-        provisioning_debug('ProvisioningController: computed provisioning flavor', [
+        provisioning_debug('ProvisioningController: computed provisioning flavor: ' . $flv['flavor'] ?? null, [
             'device_uuid' => (string) $device->device_uuid,
             'flavor' => $flv['flavor'] ?? null,
             'mime' => $flv['mime'] ?? null,
@@ -438,6 +438,7 @@ class ProvisioningController extends Controller
 
         $keyAreas = $this->getEffectiveDeviceKeysByArea($device, $settings);
         // logger($keyAreas);
+        // logger($lines);
 
         provisioning_debug('ProvisioningController: built effective provisioning keys', [
             'device_uuid' => (string) $device->device_uuid,
@@ -624,6 +625,22 @@ class ProvisioningController extends Controller
 
             return [
                 'flavor' => 'cfgmac.xml',
+                'mime'   => 'application/xml',
+            ];
+        }
+
+        // Snom per-device: <MAC>.xml (e.g., 000b82877bd4.xml)
+        if (
+            $vendor === 'snom' &&
+            $extLower === 'xml' &&
+            preg_match('/^[0-9a-f]{12}$/', $idLower)
+        ) {
+            provisioning_debug('ProvisioningController: matched Snom MAC XML flavor', [
+                'device_uuid' => (string) $device->device_uuid,
+            ]);
+
+            return [
+                'flavor' => 'mac.xml',
                 'mime'   => 'application/xml',
             ];
         }
@@ -826,6 +843,17 @@ class ProvisioningController extends Controller
             $value = $item['value'] ?? null;
             $label = $item['label'] ?? null;
 
+            if ($vendor === 'snom') {
+                $normalizedType = match (true) {
+                    $type === 'orbit' && str_starts_with((string) $value, 'park+*') => 'park',
+                    $type === 'speed' => 'speed_dial',
+                    default => $type,
+                };
+
+                $item['type'] = $normalizedType;
+                $type = $normalizedType;
+            }
+
             if ($type === 'line') {
                 // Polycom legacy/profile line keys already store the correct value.
                 // Do not rewrite them from the device line's auth_id/display_name.
@@ -961,7 +989,7 @@ class ProvisioningController extends Controller
         provisioning_debug('ProvisioningController: applied new device keys', [
             'device_uuid' => (string) $device->device_uuid,
             'device_keys_applied' => $newKeysApplied,
-            'raw_area_counts' => collect($maps)->map(fn ($map) => count($map))->all(),
+            'raw_area_counts' => collect($maps)->map(fn($map) => count($map))->all(),
         ]);
 
         foreach ($maps as $area => $map) {
@@ -975,7 +1003,7 @@ class ProvisioningController extends Controller
         }
         provisioning_debug('ProvisioningController: finished effective device keys', [
             'device_uuid' => (string) $device->device_uuid,
-            'area_counts' => collect($maps)->map(fn ($map) => count($map))->all(),
+            'area_counts' => collect($maps)->map(fn($map) => count($map))->all(),
         ]);
 
         return $maps;
@@ -1357,7 +1385,7 @@ class ProvisioningController extends Controller
         if (!$ok) {
             $errors = collect(libxml_get_errors())
                 ->take(3)
-                ->map(fn ($error) => trim($error->message))
+                ->map(fn($error) => trim($error->message))
                 ->filter()
                 ->values()
                 ->all();

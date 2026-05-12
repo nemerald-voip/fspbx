@@ -37,11 +37,13 @@ class MusicOnHoldController extends Controller
                 'bulk_delete' => route('music-on-hold.bulk.delete'),
                 'upload' => route('music-on-hold.upload'),
                 'file_delete' => route('music-on-hold.files.delete'),
+                'reload' => route('music-on-hold.reload'),
             ],
             'permissions' => [
                 'create' => userCheckPermission('music_on_hold_add'),
                 'update' => userCheckPermission('music_on_hold_edit'),
                 'destroy' => userCheckPermission('music_on_hold_delete'),
+                'reload' => userCheckPermission('music_on_hold_edit'),
                 'view_all' => userCheckPermission('music_on_hold_all'),
                 'manage_domain' => userCheckPermission('music_on_hold_domain'),
                 'view_path' => userCheckPermission('music_on_hold_path'),
@@ -78,6 +80,21 @@ class MusicOnHoldController extends Controller
             'messages' => ['success' => ['File uploaded.']],
             'music_on_hold_uuid' => $stream->music_on_hold_uuid,
         ]);
+    }
+
+    public function reload(MusicOnHoldService $service): JsonResponse
+    {
+        if (! userCheckPermission('music_on_hold_edit')) {
+            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+        }
+
+        $result = $service->reloadLocalStream();
+
+        return response()->json([
+            'messages' => [
+                $result['success'] ? 'success' : 'error' => [$result['message']],
+            ],
+        ], $result['success'] ? 200 : 409);
     }
 
     public function getItemOptions(Request $request, MusicOnHoldService $service): JsonResponse
@@ -391,7 +408,7 @@ class MusicOnHoldController extends Controller
         ];
 
         if ($includeDefault) {
-            array_unshift($rates, ['label' => 'Default', 'value' => null]);
+            array_unshift($rates, ['label' => 'Default', 'value' => '']);
         }
 
         return $rates;

@@ -142,7 +142,7 @@ const defaultValues = computed(() => ({
     domain_uuid: props.options?.item?.domain_uuid ?? null,
     music_on_hold_name: props.options?.item?.music_on_hold_name ?? null,
     music_on_hold_path: props.options?.item?.music_on_hold_path ?? null,
-    music_on_hold_rate: props.options?.item?.music_on_hold_rate ?? null,
+    music_on_hold_rate: props.options?.item?.music_on_hold_rate ?? "",
     music_on_hold_shuffle: props.options?.item?.music_on_hold_shuffle ?? "false",
     music_on_hold_channels: String(props.options?.item?.music_on_hold_channels ?? "1"),
     music_on_hold_interval: props.options?.item?.music_on_hold_interval ?? 20,

@@ -2,7 +2,7 @@
     <MainLayout />
 
     <div class="m-3">
-        <DataTable @search-action="fetchData(1)" @reset-filters="resetFilters">
+        <DataTable v-if="viewMode === 'list'" @search-action="fetchData(1)" @reset-filters="resetFilters">
             <template #title>Music on Hold</template>
 
             <template #subtitle>
@@ -25,11 +25,23 @@
             </template>
 
             <template #action>
+                <ViewToggle :model-value="viewMode" @update:model-value="setViewMode" />
+
+                <button
+                    v-if="permissions.reload"
+                    type="button"
+                    class="ml-2 sm:ml-4 inline-flex items-center gap-1 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    @click="confirmReload"
+                >
+                    <ArrowPathIcon class="h-4 w-4 text-gray-500" />
+                    Reload
+                </button>
+
                 <button
                     v-if="permissions.create"
                     type="button"
-                    class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-                    @click="openUploadModal"
+                    class="ml-2 sm:ml-4 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    @click="openUploadModal()"
                 >
                     Upload
                 </button>
@@ -40,7 +52,7 @@
                     class="ml-2 sm:ml-4 rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
                     @click="openCreateForm"
                 >
-                    Create
+                    Create stream
                 </button>
 
                 <button
@@ -245,7 +257,276 @@
                 />
             </template>
         </DataTable>
+
+        <div v-else class="px-4 sm:px-6 lg:px-8">
+            <div class="sm:flex sm:items-center">
+                <div class="sm:flex-auto">
+                    <div class="mt-3 text-lg font-semibold leading-6 text-gray-600">Music on Hold</div>
+                    <p class="mt-2 text-sm text-gray-700">Manage hold music streams and audio files.</p>
+                </div>
+                <div class="mt-4 flex flex-wrap items-center gap-2 sm:ml-16 sm:mt-0 sm:flex-none">
+                    <ViewToggle :model-value="viewMode" @update:model-value="setViewMode" />
+
+                    <button
+                        v-if="permissions.reload"
+                        type="button"
+                        class="inline-flex items-center gap-1 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        @click="confirmReload"
+                    >
+                        <ArrowPathIcon class="h-4 w-4 text-gray-500" />
+                        Reload
+                    </button>
+
+                    <button
+                        v-if="permissions.create"
+                        type="button"
+                        class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        @click="openUploadModal()"
+                    >
+                        Upload
+                    </button>
+
+                    <button
+                        v-if="permissions.create"
+                        type="button"
+                        class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                        @click="openCreateForm"
+                    >
+                        Create stream
+                    </button>
+
+                    <button
+                        v-if="permissions.view_all && filterData.showGlobal"
+                        type="button"
+                        class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        @click="showLocal"
+                    >
+                        Show local
+                    </button>
+
+                    <button
+                        v-else-if="permissions.view_all"
+                        type="button"
+                        class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        @click="showAll"
+                    >
+                        Show all
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                <div class="relative min-w-64 focus-within:z-10 sm:mr-4">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                    </div>
+                    <input
+                        v-model="filterData.search"
+                        type="text"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                        placeholder="Search"
+                        @keydown.enter="fetchData(1)"
+                    />
+                </div>
+
+                <button
+                    type="button"
+                    class="inline-flex items-center gap-1 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    title="Toggle sort order"
+                    @click="toggleNameSort"
+                >
+                    <span>Name</span>
+                    <ChevronUpIcon v-if="sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                    <ChevronDownIcon v-else class="h-4 w-4 text-gray-500" />
+                </button>
+
+                <button
+                    type="button"
+                    class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500"
+                    @click.prevent="fetchData(1)"
+                >
+                    Search
+                </button>
+
+                <button
+                    type="button"
+                    class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    @click.prevent="resetFilters"
+                >
+                    Reset
+                </button>
+            </div>
+
+            <div v-if="selectedItems.length > 0" class="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-md bg-indigo-50 px-4 py-2 text-sm">
+                <div class="text-indigo-900">
+                    <span class="font-semibold">{{ selectedItems.length }}</span> selected
+                    <button
+                        v-if="!selectAll && selectedItems.length !== data.total"
+                        class="ml-2 rounded px-2 py-1 text-blue-600 transition hover:bg-blue-100"
+                        @click="handleSelectAll"
+                    >
+                        Select all {{ data.total }}
+                    </button>
+                    <button
+                        v-if="selectAll"
+                        class="ml-2 rounded px-2 py-1 text-blue-600 transition hover:bg-blue-100"
+                        @click="clearSelection"
+                    >
+                        Clear selection
+                    </button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button
+                        v-if="permissions.destroy"
+                        type="button"
+                        class="inline-flex items-center gap-1 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-red-600 shadow-sm ring-1 ring-inset ring-red-200 hover:bg-red-50"
+                        @click="handleBulkAction('bulk_delete')"
+                    >
+                        <TrashIcon class="h-4 w-4" />
+                        Delete
+                    </button>
+                    <button
+                        type="button"
+                        class="rounded-md px-2 py-1 text-sm text-gray-600 hover:bg-white"
+                        @click="clearSelection"
+                    >
+                        Clear
+                    </button>
+                </div>
+            </div>
+
+            <div class="relative mt-6">
+                <Loading :show="loading" />
+
+                <div v-if="!loading && data.data.length === 0" class="text-center my-12">
+                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                    <p class="mt-1 text-sm text-gray-500">Adjust your search and try again.</p>
+                </div>
+
+                <div
+                    v-else
+                    class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+                >
+                    <div
+                        v-for="row in data.data"
+                        :key="row.music_on_hold_uuid"
+                        :class="[
+                            'group relative flex cursor-pointer flex-col rounded-lg bg-white ring-1 transition hover:-translate-y-0.5 hover:shadow-md',
+                            selectedItems.includes(row.music_on_hold_uuid)
+                                ? 'ring-2 ring-indigo-500'
+                                : 'ring-gray-200 hover:ring-indigo-200',
+                        ]"
+                        @click="openDrawer(row)"
+                    >
+                        <div class="absolute left-3 top-3 z-10" @click.stop>
+                            <input
+                                v-model="selectedItems"
+                                type="checkbox"
+                                :value="row.music_on_hold_uuid"
+                                :class="[
+                                    'h-4 w-4 rounded border-gray-300 text-indigo-600 transition',
+                                    selectedItems.includes(row.music_on_hold_uuid)
+                                        ? 'opacity-100'
+                                        : 'opacity-0 group-hover:opacity-100 focus:opacity-100',
+                                ]"
+                            />
+                        </div>
+
+                        <div class="absolute right-3 top-3 z-10 flex items-center gap-1 opacity-0 transition group-hover:opacity-100" @click.stop>
+                            <button
+                                v-if="permissions.update"
+                                type="button"
+                                class="rounded-full bg-white/80 p-1.5 text-gray-500 shadow-sm hover:bg-white hover:text-indigo-600"
+                                title="Edit"
+                                @click="openEditForm(row.music_on_hold_uuid)"
+                            >
+                                <PencilSquareIcon class="h-4 w-4" />
+                            </button>
+                            <button
+                                v-if="permissions.destroy"
+                                type="button"
+                                class="rounded-full bg-white/80 p-1.5 text-gray-500 shadow-sm hover:bg-white hover:text-red-600"
+                                title="Delete"
+                                @click="confirmStreamDelete([row.music_on_hold_uuid])"
+                            >
+                                <TrashIcon class="h-4 w-4" />
+                            </button>
+                        </div>
+
+                        <div class="flex flex-col items-center px-6 pb-5 pt-8">
+                            <div class="relative flex h-20 w-20 items-center justify-center rounded-full bg-indigo-50 text-indigo-500 ring-1 ring-indigo-100 transition group-hover:scale-105">
+                                <MusicalNoteIcon class="h-9 w-9" />
+                                <button
+                                    v-if="row.files.length"
+                                    type="button"
+                                    class="absolute -bottom-1 -right-1 flex h-9 w-9 items-center justify-center rounded-full bg-indigo-600 text-white shadow-sm transition hover:bg-indigo-500"
+                                    title="Play first track"
+                                    @click.stop="quickPlay(row)"
+                                >
+                                    <PlayIcon class="h-4 w-4" />
+                                </button>
+                            </div>
+
+                            <h3
+                                class="mt-4 w-full truncate text-center font-semibold text-gray-900"
+                                :title="row.music_on_hold_name"
+                            >
+                                {{ row.music_on_hold_name }}
+                            </h3>
+                            <p
+                                v-if="filterData.showGlobal && row.domain_label"
+                                class="mt-0.5 truncate text-xs text-gray-500"
+                                :title="row.domain_label"
+                            >
+                                {{ row.domain_label }}
+                            </p>
+
+                            <div class="mt-3 flex flex-wrap justify-center gap-1">
+                                <Badge v-if="row.rate_label" :text="row.rate_label" v-bind="grayBadge" />
+                                <Badge :text="row.music_on_hold_channels === '2' ? 'Stereo' : 'Mono'" v-bind="grayBadge" />
+                                <Badge
+                                    :text="row.music_on_hold_shuffle === 'true' ? 'Shuffle' : 'Ordered'"
+                                    v-bind="row.music_on_hold_shuffle === 'true' ? blueBadge : grayBadge"
+                                />
+                                <Badge v-if="row.music_on_hold_chime_list" text="Chime" v-bind="amberBadge" />
+                            </div>
+                        </div>
+
+                        <div class="mt-auto border-t border-gray-100 px-6 py-3 text-center text-xs text-gray-500">
+                            {{ row.files.length }} file{{ row.files.length === 1 ? "" : "s" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6">
+                <Paginator
+                    :previous="data.prev_page_url"
+                    :next="data.next_page_url"
+                    :from="data.from"
+                    :to="data.to"
+                    :total="data.total"
+                    :currentPage="data.current_page"
+                    :lastPage="data.last_page"
+                    :links="data.links"
+                    @pagination-change-page="changePage"
+                />
+            </div>
+        </div>
     </div>
+
+    <MusicOnHoldDrawer
+        :show="showDrawer"
+        :stream="drawerStream"
+        :permissions="permissions"
+        @close="closeDrawer"
+        @edit="editFromDrawer"
+        @delete="deleteFromDrawer"
+        @delete-file="confirmFileDelete(drawerStream, $event)"
+        @download="downloadFile"
+        @upload="uploadFromDrawer"
+    />
 
     <MusicOnHoldForm
         :show="showForm"
@@ -325,7 +606,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, h, onMounted, ref, watch } from "vue";
 import axios from "axios";
 import MainLayout from "../Layouts/MainLayout.vue";
 import DataTable from "./components/general/DataTable.vue";
@@ -339,7 +620,61 @@ import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Notification from "./components/notifications/Notification.vue";
 import AudioPlayer from "./components/general/AudioPlayer.vue";
 import MusicOnHoldForm from "./components/forms/MusicOnHoldForm.vue";
-import { ArrowDownTrayIcon, ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon, PencilSquareIcon, PlayCircleIcon, TrashIcon } from "@heroicons/vue/24/solid";
+import MusicOnHoldDrawer from "./components/MusicOnHoldDrawer.vue";
+import {
+    ArrowPathIcon,
+    ArrowDownTrayIcon,
+    ChevronDownIcon,
+    ChevronUpIcon,
+    ListBulletIcon,
+    MagnifyingGlassIcon,
+    MusicalNoteIcon,
+    PencilSquareIcon,
+    PlayCircleIcon,
+    PlayIcon,
+    Squares2X2Icon,
+    TrashIcon,
+} from "@heroicons/vue/24/solid";
+
+const ViewToggle = {
+    name: "ViewToggle",
+    props: { modelValue: { type: String, default: "grid" } },
+    emits: ["update:modelValue"],
+    setup(props, { emit }) {
+        const baseBtn = "inline-flex items-center justify-center px-2.5 py-1.5 text-sm font-medium transition";
+        const select = (mode) => emit("update:modelValue", mode);
+        return () =>
+            h("div", { class: "inline-flex overflow-hidden rounded-md shadow-sm ring-1 ring-inset ring-gray-300" }, [
+                h(
+                    "button",
+                    {
+                        type: "button",
+                        title: "Grid view",
+                        class: [
+                            baseBtn,
+                            props.modelValue === "grid" ? "bg-indigo-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50",
+                        ],
+                        onClick: () => select("grid"),
+                    },
+                    [h(Squares2X2Icon, { class: "h-4 w-4" })]
+                ),
+                h(
+                    "button",
+                    {
+                        type: "button",
+                        title: "List view",
+                        class: [
+                            baseBtn,
+                            "border-l border-gray-300",
+                            props.modelValue === "list" ? "bg-indigo-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50",
+                        ],
+                        onClick: () => select("list"),
+                    },
+                    [h(ListBulletIcon, { class: "h-4 w-4" })]
+                ),
+            ]);
+    },
+};
 
 const props = defineProps({
     routes: Object,
@@ -348,6 +683,8 @@ const props = defineProps({
 
 const routes = props.routes;
 const permissions = props.permissions;
+
+const VIEW_MODE_KEY = "moh:viewMode";
 
 const data = ref({
     data: [],
@@ -368,6 +705,8 @@ const showForm = ref(false);
 const showUploadModal = ref(false);
 const showPlayerModal = ref(false);
 const showConfirmationModal = ref(false);
+const showDrawer = ref(false);
+const drawerStream = ref(null);
 const notificationShow = ref(false);
 const notificationType = ref(null);
 const notificationMessages = ref(null);
@@ -379,12 +718,14 @@ const selectedFile = ref(null);
 const uploadForm$ = ref(null);
 const uploadFormKey = ref(0);
 const uploadFile = ref(null);
+const uploadInitialStreamUuid = ref("");
 const confirmAction = ref(() => {});
 const confirmationHeader = ref("Are you sure?");
 const confirmationText = ref("");
 const confirmationButtonLabel = ref("Continue");
 const filterData = ref({ search: null, showGlobal: false });
 const sortData = ref({ name: "music_on_hold_name", order: "asc" });
+const viewMode = ref(loadViewMode());
 
 const itemOptions = ref({
     item: {},
@@ -401,8 +742,8 @@ const amberBadge = { backgroundColor: "bg-amber-50", textColor: "text-amber-700"
 
 const columnCount = computed(() => filterData.value.showGlobal ? 6 : 5);
 const formHeader = computed(() => formMode.value === "create"
-    ? "Create Music on Hold"
-    : `Update Music on Hold - ${itemOptions.value?.item?.music_on_hold_name || "Loading..."}`);
+    ? "Create stream"
+    : `Update stream - ${itemOptions.value?.item?.music_on_hold_name || "Loading..."}`);
 
 const sortParam = computed(() => sortData.value.order === "desc" ? `-${sortData.value.name}` : sortData.value.name);
 const uploadStreamOptions = computed(() => [
@@ -411,12 +752,12 @@ const uploadStreamOptions = computed(() => [
 ]);
 
 const uploadDefaultValues = computed(() => ({
-    music_on_hold_uuid: "",
+    music_on_hold_uuid: uploadInitialStreamUuid.value || "",
     music_on_hold_name: "",
     domain_uuid: itemOptions.value.current_domain_uuid
         ?? itemOptions.value.domains.find((domain) => domain.value)?.value
         ?? null,
-    music_on_hold_rate: null,
+    music_on_hold_rate: "",
 }));
 
 const selectedUploadStreamUuid = computed(() => uploadForm$.value?.data?.music_on_hold_uuid ?? "");
@@ -447,7 +788,38 @@ const selectPageItems = computed({
     },
 });
 
+watch(
+    () => data.value.data,
+    (rows) => {
+        if (!showDrawer.value || !drawerStream.value) return;
+        const fresh = rows.find((r) => r.music_on_hold_uuid === drawerStream.value.music_on_hold_uuid);
+        if (fresh) {
+            drawerStream.value = fresh;
+        } else {
+            closeDrawer();
+        }
+    }
+);
+
 onMounted(() => fetchData());
+
+function loadViewMode() {
+    try {
+        const stored = window.localStorage.getItem(VIEW_MODE_KEY);
+        return stored === "list" ? "list" : "grid";
+    } catch (e) {
+        return "grid";
+    }
+}
+
+const setViewMode = (mode) => {
+    viewMode.value = mode;
+    try {
+        window.localStorage.setItem(VIEW_MODE_KEY, mode);
+    } catch (e) {
+        // ignore — non-essential persistence
+    }
+};
 
 const fetchData = (page = 1) => {
     loading.value = true;
@@ -487,6 +859,8 @@ const setSort = (column) => {
     fetchData(1);
 };
 
+const toggleNameSort = () => setSort("music_on_hold_name");
+
 const changePage = (url) => {
     if (!url) return;
     fetchData(Number(new URL(url, window.location.origin).searchParams.get("page") || 1));
@@ -522,8 +896,9 @@ const closeForm = () => {
     resetItemOptions();
 };
 
-const openUploadModal = () => {
+const openUploadModal = (streamUuid = "") => {
     formErrors.value = {};
+    uploadInitialStreamUuid.value = streamUuid;
     showUploadModal.value = true;
     resetUploadForm();
     getItemOptions();
@@ -532,7 +907,40 @@ const openUploadModal = () => {
 const closeUploadModal = () => {
     showUploadModal.value = false;
     formErrors.value = {};
+    uploadInitialStreamUuid.value = "";
     resetUploadForm();
+};
+
+const openDrawer = (row) => {
+    drawerStream.value = row;
+    showDrawer.value = true;
+};
+
+const closeDrawer = () => {
+    showDrawer.value = false;
+    drawerStream.value = null;
+};
+
+const editFromDrawer = () => {
+    if (!drawerStream.value) return;
+    const uuid = drawerStream.value.music_on_hold_uuid;
+    closeDrawer();
+    openEditForm(uuid);
+};
+
+const deleteFromDrawer = () => {
+    if (!drawerStream.value) return;
+    confirmStreamDelete([drawerStream.value.music_on_hold_uuid]);
+};
+
+const uploadFromDrawer = () => {
+    if (!drawerStream.value) return;
+    openUploadModal(drawerStream.value.music_on_hold_uuid);
+};
+
+const quickPlay = (row) => {
+    if (!row.files?.length) return;
+    openDrawer(row);
 };
 
 const getItemOptions = (itemUuid = null) => {
@@ -597,11 +1005,37 @@ const confirmStreamDelete = (items) => {
 };
 
 const confirmFileDelete = (stream, file) => {
+    if (!stream || !file) return;
     showConfirmationModal.value = true;
     confirmationHeader.value = "Confirm File Deletion";
     confirmationText.value = `Delete ${file.name}?`;
     confirmationButtonLabel.value = "Delete";
     confirmAction.value = () => deleteFile(stream, file);
+};
+
+const confirmReload = () => {
+    showConfirmationModal.value = true;
+    confirmationHeader.value = "Reload mod_local_stream";
+    confirmationText.value = "Only continue if there are no current calls on hold being played. FreeSWITCH will not reload mod_local_stream while it is in use.";
+    confirmationButtonLabel.value = "Reload";
+    confirmAction.value = executeReload;
+};
+
+const executeReload = () => {
+    formSubmitting.value = true;
+
+    axios.post(routes.reload)
+        .then((response) => {
+            closeConfirmation();
+            showNotification("success", response.data.messages);
+        })
+        .catch((error) => {
+            closeConfirmation();
+            handleError(error);
+        })
+        .finally(() => {
+            formSubmitting.value = false;
+        });
 };
 
 const deleteStreams = (items) => {
@@ -611,6 +1045,7 @@ const deleteStreams = (items) => {
         .then((response) => {
             closeConfirmation();
             clearSelection();
+            closeDrawer();
             showNotification("success", response.data.messages);
             refreshCurrentPage();
         })
@@ -665,6 +1100,7 @@ const openPlayer = (stream, file) => {
 };
 
 const downloadFile = (url) => {
+    if (!url) return;
     const link = document.createElement("a");
     link.href = url;
     link.download = "";
