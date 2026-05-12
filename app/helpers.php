@@ -986,26 +986,28 @@ if (!function_exists('debugEloquentSqlWithBindings')) {
  * ]
  */
 if (!function_exists('getVendorTemplateCollection')) {
-    function getVendorTemplateCollection(): array
+    function getVendorTemplateCollection(bool $includeDefaultTemplates = true, bool $includeCustomTemplates = true): array
     {
         $vendors = DeviceVendor::where('enabled', 'true')->orderBy('name')->get();
         $templates = [];
 
         // 1) Legacy filesystem 
-        $legacyBase = public_path('resources/templates/provision');
-        foreach ($vendors as $vendor) {
-            $vname = $vendor->name;
-            $vdir  = $legacyBase . '/' . $vname;
-            if (!is_dir($vdir)) continue;
+        if ($includeDefaultTemplates) {
+            $legacyBase = public_path('resources/templates/provision');
+            foreach ($vendors as $vendor) {
+                $vname = $vendor->name;
+                $vdir  = $legacyBase . '/' . $vname;
+                if (!is_dir($vdir)) continue;
 
-            foreach (scandir($vdir) as $dir) {
-                if ($dir === '.' || $dir === '..' || $dir[0] === '.') continue;
-                if (!is_dir($vdir . '/' . $dir)) continue;
+                foreach (scandir($vdir) as $dir) {
+                    if ($dir === '.' || $dir === '..' || $dir[0] === '.') continue;
+                    if (!is_dir($vdir . '/' . $dir)) continue;
 
-                $templates[] = [
-                    'name'  => $vname . '/' . $dir,
-                    'value' => $vname . '/' . $dir,
-                ];
+                    $templates[] = [
+                        'name'  => $vname . '/' . $dir,
+                        'value' => $vname . '/' . $dir,
+                    ];
+                }
             }
         }
 
@@ -1049,9 +1051,11 @@ if (!function_exists('getVendorTemplateCollection')) {
         };
 
         // latest DEFAULT per (vendor,name)
-        $latestDefaults = $rows->where('type', 'default')
-            ->groupBy(fn($r) => $r->vendor . '|' . $r->name)
-            ->map->first();
+        $latestDefaults = $includeDefaultTemplates
+            ? $rows->where('type', 'default')
+                ->groupBy(fn($r) => $r->vendor . '|' . $r->name)
+                ->map->first()
+            : collect();
 
         foreach ($latestDefaults as $r) {
             $templates[] = [
@@ -1061,11 +1065,13 @@ if (!function_exists('getVendorTemplateCollection')) {
         }
 
         // include each CUSTOM row (unique by template_uuid)
-        foreach ($rows->where('type', 'custom') as $r) {
-            $templates[] = [
-                'name'  => $buildLabel($r),
-                'value' => (string) $r->template_uuid,
-            ];
+        if ($includeCustomTemplates) {
+            foreach ($rows->where('type', 'custom') as $r) {
+                $templates[] = [
+                    'name'  => $buildLabel($r),
+                    'value' => (string) $r->template_uuid,
+                ];
+            }
         }
 
         return collect($templates)

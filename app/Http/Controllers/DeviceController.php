@@ -675,7 +675,7 @@ class DeviceController extends Controller
             // Construct the itemOptions object
             $itemOptions = [
                 'item' => $deviceDto ?? null,
-                'templates' => getVendorTemplateCollection(),
+                'templates' => $this->getDeviceTemplateDropdownOptions(),
                 'profiles' => getProfileCollection($domain_uuid),
                 'extensions' => $extensionOptions,
                 'domains' => $domainOptions,
@@ -902,6 +902,8 @@ class DeviceController extends Controller
         $permissions['device_key_advanced'] = userCheckPermission('device_key_advanced');
         $permissions['device_address_update'] = userCheckPermission('device_address');
         $permissions['device_template_update'] = userCheckPermission('device_template');
+        $permissions['device_template_view_all'] = userCheckPermission('device_template_view_all');
+        $permissions['device_template_view_custom_only'] = userCheckPermission('device_template_view_custom_only');
         $permissions['device_domain_update'] = userCheckPermission('device_domain');
         $permissions['manage_device_cloud_provisioning_settings'] = userCheckPermission('manage_device_cloud_provisioning_settings');
         $permissions['device_setting_view'] = userCheckPermission('device_setting_view');
@@ -921,5 +923,17 @@ class DeviceController extends Controller
         $permissions['is_superadmin'] = isSuperAdmin();
 
         return $permissions;
+    }
+    private function getDeviceTemplateDropdownOptions(): array
+    {
+        if (userCheckPermission('device_template_view_all')) {
+            return getVendorTemplateCollection();
+        }
+
+        if (userCheckPermission('device_template_view_custom_only')) {
+            return getVendorTemplateCollection(false, true);
+        }
+
+        return [];
     }
 }
