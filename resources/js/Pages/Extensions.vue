@@ -195,15 +195,24 @@
 
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap">
-                                    <DevicePhoneMobileIcon v-if="String(row.mobile_app?.status) === '1'"
-                                        class="h-5 w-5 text-blue-400 hover:text-blue-600 active:bg-blue-300"
-                                        title="Mobile app active" aria-label="Mobile app active" />
-                                    <BookOpenIcon v-if="String(row.mobile_app?.status) === '-1'"
-                                        class="h-5 w-5 text-sky-400 hover:text-sky-600 active:bg-sky-300"
-                                        title="Address book / BLF contact only"
-                                        aria-label="Address book / BLF contact only" />
-                                    <MicrophoneIcon v-if="!!row.user_record"
-                                        class="h-5 w-5 text-rose-400 hover:text-rose-600 active:bg-rose-300" />
+                                    <ejs-tooltip v-if="String(row.mobile_app?.status) === '1'"
+                                        :content="'Mobile App (Activated)'" position='TopCenter'>
+                                        <DevicePhoneMobileSolidIcon
+                                            class="h-5 w-5 text-blue-400 hover:text-blue-600 active:bg-blue-300"
+                                            aria-label="Mobile App (Activated)" />
+                                    </ejs-tooltip>
+                                    <ejs-tooltip v-if="String(row.mobile_app?.status) === '-1'"
+                                        :content="'Mobile App (Phonebook Only)'" position='TopCenter'>
+                                        <DevicePhoneMobileIcon
+                                            class="h-5 w-5 text-gray-400 hover:text-gray-600 active:bg-gray-300"
+                                            aria-label="Mobile App (Phonebook Only)" />
+                                    </ejs-tooltip>
+                                    <ejs-tooltip v-if="!!row.user_record" :content="'Record Calls'"
+                                        position='TopCenter'>
+                                        <MicrophoneIcon
+                                            class="h-5 w-5 text-rose-400 hover:text-rose-600 active:bg-rose-300"
+                                            aria-label="Record Calls" />
+                                    </ejs-tooltip>
 
                                 </div>
                             </template>
@@ -351,7 +360,7 @@ import Paginator from "./components/general/Paginator.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import Loading from "./components/general/Loading.vue";
 import { registerLicense } from '@syncfusion/ej2-base';
-import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon, ChevronUpIcon, ChevronDownIcon } from "@heroicons/vue/24/solid";
+import { MagnifyingGlassIcon, TrashIcon, PencilSquareIcon, ChevronUpIcon, ChevronDownIcon, DevicePhoneMobileIcon as DevicePhoneMobileSolidIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
 import AdvancedActionButton from "./components/general/AdvancedActionButton.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
@@ -362,7 +371,7 @@ import Notification from "./components/notifications/Notification.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { MicrophoneIcon } from "@heroicons/vue/24/outline";
 import UploadModal from "./components/modal/UploadModal.vue";
-import { BookOpenIcon, DocumentArrowUpIcon, DocumentArrowDownIcon, DevicePhoneMobileIcon } from "@heroicons/vue/24/outline";
+import { DocumentArrowUpIcon, DocumentArrowDownIcon, DevicePhoneMobileIcon } from "@heroicons/vue/24/outline";
 
 
 const loading = ref(false)
