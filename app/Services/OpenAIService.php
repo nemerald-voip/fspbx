@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Http;
 
 class OpenAIService
@@ -20,17 +21,27 @@ class OpenAIService
         }
 
         $url = 'https://api.openai.com/v1/audio/speech';
+        $timeout = (int) config('services.openai.speech_timeout', 60);
+        $maxAttempts = max(1, (int) config('services.openai.speech_max_attempts', 2));
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->apiKey,
             'Content-Type' => 'application/json',
-        ])->post($url, [
-            'model' => $model,
-            'input' => $input,
-            'voice' => $voice,
-            'response_format' => $response_format,
-            'speed' => (float) $speed,
-        ]);
+        ])
+            ->timeout($timeout)
+            ->retry(
+                $maxAttempts,
+                500,
+                fn($exception) => $exception instanceof ConnectionException,
+                throw: true
+            )
+            ->post($url, [
+                'model' => $model,
+                'input' => $input,
+                'voice' => $voice,
+                'response_format' => $response_format,
+                'speed' => (float) $speed,
+            ]);
 
         return $this->handleResponse($response);
     }
