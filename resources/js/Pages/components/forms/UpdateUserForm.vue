@@ -311,10 +311,43 @@
     <CreateApiTokenModal :show="showApiTokenModal" :options="options" @close="showApiTokenModal = false"
         @error="emitErrorToParentFromChild" @success="emitSuccessToParentFromChild" @refresh-data="getTokens" />
 
-    <ConfirmationModal :show="showResetConfirmationModal" @close="showResetConfirmationModal = false"
-        @confirm="confirmResetPassword" header="Confirm Password Reset"
-        text="Are you sure you want to reset the password for this user?" confirm-button-label="Reset"
-        cancel-button-label="Cancel" />
+    <Teleport to="body">
+        <div v-if="showResetConfirmationModal" class="fixed inset-0 z-50 overflow-y-auto">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+            <div class="relative z-10 flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div
+                    class="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+                    <div>
+                        <div class="mt-3 text-center sm:mt-5">
+                            <h3 class="text-base font-semibold leading-6 text-gray-900">
+                                Confirm Password Reset
+                            </h3>
+                        </div>
+
+                        <div class="mt-2">
+                            <p class="text-sm text-gray-500">
+                                Are you sure you want to reset the password for this user?
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 sm:mt-6 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+                        <button type="button" :disabled="isPasswordResetLoading"
+                            class="inline-flex w-full justify-center rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 sm:col-start-2"
+                            @click="confirmResetPassword">
+                            Reset
+                            <Spinner class="ml-2" :show="isPasswordResetLoading" />
+                        </button>
+                        <button type="button"
+                            class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
+                            @click="showResetConfirmationModal = false">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </Teleport>
 
     <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
         @confirm="confirmDeleteAction" :header="'Confirm Deletion'" :loading="isDeleteTokenLoading"
@@ -330,6 +363,7 @@ import ConfirmationModal from "./../modal/ConfirmationModal.vue";
 import ApiTokens from "./../ApiTokens.vue";
 import CreateApiTokenModal from "./../modal/CreateApiTokenModal.vue"
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
+import Spinner from "@generalComponents/Spinner.vue";
 
 
 const emit = defineEmits(['close', 'error', 'success', 'refresh-data'])
