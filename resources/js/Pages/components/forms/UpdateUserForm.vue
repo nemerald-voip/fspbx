@@ -294,6 +294,16 @@
                                                         :permissions="options.permissions"
                                                         @delete-item="handleDeleteTokenButtonClick" />
                                                 </StaticElement>
+
+                                                <ConfirmationModal :show="showResetConfirmationModal" @close="showResetConfirmationModal = false"
+                                                    @confirm="confirmResetPassword" header="Confirm Password Reset"
+                                                    text="Are you sure you want to reset the password for this user?" confirm-button-label="Reset"
+                                                    cancel-button-label="Cancel" />
+
+                                                <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
+                                                    @confirm="confirmDeleteAction" :header="'Confirm Deletion'" :loading="isDeleteTokenLoading"
+                                                    :text="'This action will permanently delete the selected API Key. Are you sure you want to proceed?'"
+                                                    confirm-button-label="Delete" cancel-button-label="Cancel" />
                                             </FormElements>
                                         </div>
                                     </div>
@@ -311,15 +321,6 @@
     <CreateApiTokenModal :show="showApiTokenModal" :options="options" @close="showApiTokenModal = false"
         @error="emitErrorToParentFromChild" @success="emitSuccessToParentFromChild" @refresh-data="getTokens" />
 
-    <ConfirmationModal :show="showResetConfirmationModal" @close="showResetConfirmationModal = false"
-        @confirm="confirmResetPassword" header="Confirm Password Reset"
-        text="Are you sure you want to reset the password for this user?" confirm-button-label="Reset"
-        cancel-button-label="Cancel" />
-
-    <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
-        @confirm="confirmDeleteAction" :header="'Confirm Deletion'" :loading="isDeleteTokenLoading"
-        :text="'This action will permanently delete the selected API Key. Are you sure you want to proceed?'"
-        confirm-button-label="Delete" cancel-button-label="Cancel" />
 </template>
 
 <script setup>
