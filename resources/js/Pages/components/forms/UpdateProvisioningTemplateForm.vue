@@ -1,5 +1,5 @@
 <template>
-    <div class="bg-white px-4 py-6 sm:px-6 lg:px-8">
+    <div class="flex h-full min-h-0 flex-col bg-white px-4 py-6 sm:px-6 lg:px-8">
 
 
 
@@ -51,9 +51,9 @@
         </div>
 
 
-        <div class="mt-4">
+        <div class="mt-4 flex min-h-0 flex-1 flex-col">
             <!-- Toolbar -->
-            <div class="flex items-center justify-between mb-2">
+            <div class="mb-2 flex flex-none items-center justify-between">
                 <div class="flex gap-2">
                     <!-- Language selector -->
                     <select v-model="editorLang"
@@ -75,7 +75,7 @@
             </div>
 
             <!-- Editor wrapper -->
-            <div class="editor-wrapper relative rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+            <div class="editor-wrapper relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-gray-200 shadow-lg">
                 <!-- Loading overlay -->
                 <div v-if="isLoadingTemplate"
                     class="absolute inset-0 z-10 bg-white/60 backdrop-blur-[1px] flex items-center justify-center">
@@ -84,22 +84,22 @@
                 </div>
 
                 <AceEditor v-model="form.content" :lang="editorLang" :theme="editorTheme"
-                    :options="{ fontSize: 16, tabSize: 4, readOnly: isLoadingTemplate || readOnly }" :height="'80vh'"
+                    :options="{ fontSize: 16, tabSize: 4, readOnly: isLoadingTemplate || readOnly }" :height="'100%'"
                     class="editor_wrap" />
             </div>
         </div>
 
 
-        <div class="col-span-3 border-t mt-4">
-            <div class="mt-4 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
+        <div class="mt-4 flex-none border-t">
+            <div class="mt-4 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                 <button @click.prevent="submitForm" v-if="form.global == false || form.type == 'custom'"
-                    class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:col-start-2"
+                    class="inline-flex justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 sm:min-w-24"
                     :disabled="isSubmitting">
                     <Spinner :show="isSubmitting" />
                     Save
                 </button>
                 <button type="button"
-                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
+                    class="inline-flex justify-center rounded-md bg-white px-4 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:min-w-24"
                     @click="emits('cancel')">Cancel
                 </button>
             </div>

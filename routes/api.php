@@ -45,6 +45,7 @@ use App\Http\Controllers\HotelRoomStatusController;
 use App\Http\Controllers\InboundWebhooksController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MessageSettingsController;
+use App\Http\Controllers\MusicOnHoldController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Controllers\PhoneNumbersController;
@@ -359,6 +360,17 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/conference-centers/select-all', [ConferenceCenterController::class, 'selectAll'])->name('conference-centers.select.all');
     Route::post('/conference-centers/bulk-delete', [ConferenceCenterController::class, 'bulkDelete'])->name('conference-centers.bulk.delete');
     Route::post('/conference-centers/bulk-toggle', [ConferenceCenterController::class, 'bulkToggle'])->name('conference-centers.bulk.toggle');
+
+    // Music on Hold
+    Route::post('music-on-hold', [MusicOnHoldController::class, 'store'])->name('music-on-hold.store');
+    Route::put('music-on-hold/{music_on_hold}', [MusicOnHoldController::class, 'update'])->name('music-on-hold.update');
+    Route::get('/music-on-hold/data', [MusicOnHoldController::class, 'getData'])->name('music-on-hold.data');
+    Route::post('/music-on-hold/item-options', [MusicOnHoldController::class, 'getItemOptions'])->name('music-on-hold.item.options');
+    Route::post('/music-on-hold/select-all', [MusicOnHoldController::class, 'selectAll'])->name('music-on-hold.select.all');
+    Route::post('/music-on-hold/bulk-delete', [MusicOnHoldController::class, 'bulkDelete'])->name('music-on-hold.bulk.delete');
+    Route::post('/music-on-hold/upload', [MusicOnHoldController::class, 'upload'])->name('music-on-hold.upload');
+    Route::post('/music-on-hold/files/delete', [MusicOnHoldController::class, 'deleteFile'])->name('music-on-hold.files.delete');
+    Route::post('/music-on-hold/reload', [MusicOnHoldController::class, 'reload'])->name('music-on-hold.reload');
 
     // Conferences
     Route::post('conferences', [ConferenceController::class, 'store'])->name('conferences.store');
