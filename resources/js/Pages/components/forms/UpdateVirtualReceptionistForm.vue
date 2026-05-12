@@ -433,6 +433,10 @@
                                                     :show="showEditGreetingModal" :loading="isGreetingUpdating"
                                                     @confirm="handleGreetingUpdate"
                                                     @close="showEditGreetingModal = false" />
+                                                <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
+                                                    @confirm="confirmGreetingDeleteAction" :header="'Confirm Deletion'"
+                                                    :text="'This action will permanently delete this greeting. Are you sure you want to proceed?'"
+                                                    :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
                                             </FormElements>
                                         </div>
                                     </div>
@@ -444,11 +448,6 @@
             </div>
         </Dialog>
     </TransitionRoot>
-
-    <ConfirmationModal :show="showDeleteConfirmationModal" @close="showDeleteConfirmationModal = false"
-        @confirm="confirmGreetingDeleteAction" :header="'Confirm Deletion'"
-        :text="'This action will permanently delete this greeting. Are you sure you want to proceed?'"
-        :confirm-button-label="'Delete'" cancel-button-label="Cancel" />
 
 </template>
 
