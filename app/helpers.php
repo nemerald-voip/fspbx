@@ -20,6 +20,7 @@ use App\Models\DefaultSettings;
 use libphonenumber\PhoneNumberUtil;
 use App\Models\ProvisioningTemplate;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use libphonenumber\PhoneNumberFormat;
 use Illuminate\Support\Facades\Session;
@@ -30,12 +31,15 @@ if (!function_exists('userCheckPermission')) {
     function userCheckPermission($permission)
     {
         $list = Session::get('permissions', false);
-        if (!$list) {
+        if (!is_iterable($list)) {
             return false;
         }
 
         foreach ($list as $item) {
-            if ($item->permission_name == $permission) {
+            if (is_object($item)
+                && isset($item->permission_name)
+                && $item->permission_name === $permission
+            ) {
                 return true;
             }
         }
@@ -43,12 +47,63 @@ if (!function_exists('userCheckPermission')) {
     }
 }
 
-// Check if currenlty signed in user a superadmin
 if (!function_exists('isSuperAdmin')) {
-    function isSuperAdmin()
+    /**
+     * @param  \Illuminate\Contracts\Auth\Authenticatable|null  $user
+     *         Optional explicit user. When provided, takes precedence over
+     *         `Auth::user()`. Some callers (e.g. Eloquent observers receiving
+     *         an explicit user) pass it positionally as `isSuperadmin($user)`.
+     *
+     * SECURITY NOTE — When an authenticated identity (`$user` or
+     * `Auth::user()`) is present, this helper MUST evaluate ONLY that
+     * identity's groups. Falling through to `Session::get('user.groups')`
+     * would mix identity sources: a Sanctum bearer holder with limited
+     * scope could inherit superadmin from a concurrent or stale web
+     * session in dual-flow deployments (privilege escalation).
+     *
+     * The Session fallback is preserved ONLY for the legacy code path
+     * where neither `$user` nor `Auth::user()` is available — i.e.
+     * unauthenticated contexts where Session was historically the only
+     * source of truth for cookie-session web auth.
+     */
+    function isSuperAdmin(?\Illuminate\Contracts\Auth\Authenticatable $user = null)
     {
-        foreach (Session::get('user.groups') as $group) {
-            if ($group->group_name == "superadmin" && $group->group_level >= 80) {
+        $resolved = $user ?? Auth::user();
+
+        if ($resolved !== null) {
+            // Authenticated identity present — ONLY consult its groups.
+            // Do NOT fall through to Session (would allow identity confusion).
+            if (method_exists($resolved, 'groups')) {
+                $groups = $resolved->groups();
+                if (is_iterable($groups) && _isSuperAdminInGroups($groups)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        // No authenticated identity — legacy web-session fallback only.
+        $sessionGroups = Session::get('user.groups');
+        return is_iterable($sessionGroups) && _isSuperAdminInGroups($sessionGroups);
+    }
+}
+
+if (!function_exists('_isSuperAdminInGroups')) {
+    /**
+     * Internal helper — returns true if the iterable contains a superadmin
+     * group entry with `group_level >= 80`. Defensive against malformed
+     * elements (non-objects, missing properties).
+     *
+     * @param  iterable  $groups
+     */
+    function _isSuperAdminInGroups(iterable $groups): bool
+    {
+        foreach ($groups as $group) {
+            if (is_object($group)
+                && isset($group->group_name, $group->group_level)
+                && $group->group_name === 'superadmin'
+                && (int) $group->group_level >= 80
+            ) {
                 return true;
             }
         }
