@@ -361,18 +361,19 @@ class ExtensionsController extends Controller
     public function getItemOptions(Request $request)
     {
         $itemUuid = $request->input('item_uuid');
+        $isBulkUpdate = $request->boolean('bulk_update');
         $selfService = $itemUuid && !userCheckPermission('extension_view') && $this->userOwnsExtension($itemUuid);
 
         if ($itemUuid && !userCheckPermission('extension_view') && !$selfService) {
             abort(403);
         }
 
-        if (!$itemUuid && !userCheckPermission('extension_add') && !userCheckPermission('extension_create')) {
+        if (!$itemUuid && !$isBulkUpdate && !userCheckPermission('extension_add') && !userCheckPermission('extension_create')) {
             abort(403);
         }
 
         //Check for limits
-        if (!$itemUuid) {
+        if (!$itemUuid && !$isBulkUpdate) {
             if ($resp = $this->enforceLimit(
                 'extensions',
                 \App\Models\Extensions::class
@@ -1487,10 +1488,19 @@ public function store(StoreExtensionRequest $request)
                 $extensionData = $this->prepareBulkExtensionUpdateData($extension, $data);
 
                 if (!empty($extensionData)) {
-                    $extension->fill($extensionData);
+                    $dirtyPayload = [];
+                    foreach ($extensionData as $field => $value) {
+                        if ($extension->{$field} !== $value) {
+                            $dirtyPayload[$field] = $value;
+                        }
+                    }
 
-                    if ($extension->isDirty()) {
-                        $extension->save();
+                    if (!empty($dirtyPayload)) {
+                        Extensions::where('domain_uuid', $currentDomain)
+                            ->where('extension_uuid', $extension->extension_uuid)
+                            ->update($dirtyPayload);
+
+                        $extension->forceFill($dirtyPayload);
                     }
                 }
 

@@ -632,7 +632,7 @@ const handleBulkActionRequest = (action) => {
         confirmDeleteAction.value = () => executeBulkDelete();
     }
     if (action === 'bulk_update') {
-        getItemOptions(null, { include_mobile_app_bulk: true });
+        getItemOptions(null, { include_mobile_app_bulk: true, bulk_update: true });
         bulkUpdateModalTrigger.value = true;
     }
 };
