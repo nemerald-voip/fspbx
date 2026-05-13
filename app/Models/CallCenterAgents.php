@@ -51,7 +51,8 @@ class CallCenterAgents extends Model
 
     public function queues()
     {
-        return $this->belongsToMany(CallCenterQueues::class, CallCenterQueueAgents::class, 'call_center_agent_uuid', 'call_center_queue_uuid');
+        return $this->belongsToMany(CallCenterQueues::class, 'v_call_center_tiers', 'call_center_agent_uuid', 'call_center_queue_uuid')
+            ->withPivot(['call_center_tier_uuid', 'tier_level', 'tier_position']);
     }
 
     public function queue()

@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class CallFlows extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Models\Traits\GeneratesUniqueExtensions;
 
     protected $table = "v_call_flows";
 
@@ -223,37 +223,6 @@ class CallFlows extends Model
 
     public function generateUniqueSequenceNumber(): ?string
     {
-        // Call Flows will have extensions in the range between 9250 and 9299 by default.
-        $rangeStart = 9250;
-        $rangeEnd = 9299;
-        $domainUuid = session('domain_uuid');
-
-        $usedExtensions = Dialplans::where('domain_uuid', $domainUuid)
-            ->where('dialplan_number', 'not like', '*%')
-            ->pluck('dialplan_number')
-            ->merge(
-                Voicemails::where('domain_uuid', $domainUuid)
-                    ->pluck('voicemail_id')
-            )
-            ->merge(
-                Extensions::where('domain_uuid', $domainUuid)
-                    ->pluck('extension')
-            )
-            ->merge(
-                self::where('domain_uuid', $domainUuid)
-                    ->pluck('call_flow_extension')
-            )
-            ->filter(fn ($value) => ctype_digit((string) $value))
-            ->map(fn ($value) => (string) (int) $value)
-            ->unique()
-            ->flip();
-
-        for ($ext = $rangeStart; $ext <= $rangeEnd; $ext++) {
-            if (!isset($usedExtensions[(string) $ext])) {
-                return (string) $ext;
-            }
-        }
-
-        return null;
+        return $this->firstAvailableExtensionInRange(9250, 9299);
     }
 }

@@ -8,7 +8,7 @@
 --
 -- Debugging: set DEBUG_MODE = true to log the important runtime decisions.
 
-DEBUG_MODE = true
+DEBUG_MODE = false
 
 local json = require "resources.functions.lunajson"
 require "resources.functions.base64"

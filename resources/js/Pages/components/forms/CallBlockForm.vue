@@ -40,6 +40,11 @@
                                 </div>
                             </div>
 
+                            <div v-if="duplicateCallBlock"
+                                class="mb-4 rounded-md bg-amber-50 p-3 text-sm text-amber-800 ring-1 ring-inset ring-amber-200">
+                                This caller already has a call block rule: {{ duplicateCallBlock.label }}.
+                            </div>
+
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false"
                                 :default="defaultValues">
@@ -175,6 +180,7 @@ const defaultValues = computed(() => ({
 const extensionScopeOptions = computed(() => props.options?.extension_scope_options ?? []);
 const actionOptions = computed(() => props.options?.action_options ?? []);
 const voicemailOptions = computed(() => props.options?.voicemail_options ?? []);
+const duplicateCallBlock = computed(() => props.options?.duplicate_call_block ?? null);
 
 const submitForm = async (FormData, form$) => {
     const requestData = form$.requestData;

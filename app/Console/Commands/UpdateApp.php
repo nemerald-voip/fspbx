@@ -34,6 +34,7 @@ use App\Console\Commands\Updates\Update175;
 use App\Console\Commands\Updates\Update176;
 use App\Console\Commands\Updates\Update177;
 use App\Console\Commands\Updates\Update178;
+use App\Console\Commands\Updates\Update179;
 use App\Console\Commands\Updates\Update0917;
 use App\Console\Commands\Updates\Update0918;
 use App\Console\Commands\Updates\Update0924;
@@ -144,6 +145,7 @@ class UpdateApp extends Command
             '1.7.6' => Update176::class,
             '1.7.7' => Update177::class,
             '1.7.8' => Update178::class,
+            '1.7.9' => Update179::class,
             // Add more versions as needed
         ];
 

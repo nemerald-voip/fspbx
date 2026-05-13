@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class RingGroups extends Model
 {
-    use HasFactory, \App\Models\Traits\TraitUuid;
+    use HasFactory, \App\Models\Traits\GeneratesUniqueExtensions, \App\Models\Traits\TraitUuid;
 
     protected $table = "v_ring_groups";
 
@@ -200,47 +200,8 @@ class RingGroups extends Model
         return $this->hasMany(RingGroupsDestinations::class, 'ring_group_uuid', 'ring_group_uuid');
     }
 
-    /**
-     * Generates a unique sequence number.
-     *
-     * @return int|null The generated sequence number, or null if unable to generate.
-     */
-    public function generateUniqueSequenceNumber()
+    public function generateUniqueSequenceNumber(): ?string
     {
-        // Virtual Receptionists will have extensions in the range between 9150 and 9199 by default
-        $rangeStart = 9000;
-        $rangeEnd = 9099;
-
-        $domainUuid = session('domain_uuid');
-
-        // Fetch all used extensions from Dialplans, Voicemails, and Extensions
-        $usedExtensions = Dialplans::where('domain_uuid', $domainUuid)
-            ->where('dialplan_number', 'not like', '*%')
-            ->pluck('dialplan_number')
-            ->merge(
-                Voicemails::where('domain_uuid', $domainUuid)
-                    ->pluck('voicemail_id')
-            )
-            ->merge(
-                Extensions::where('domain_uuid', $domainUuid)
-                    ->pluck('extension')
-            )
-            ->unique();
-
-        // Find the first available extension
-        for ($ext = $rangeStart; $ext <= $rangeEnd; $ext++) {
-            if (!$usedExtensions->contains($ext)) {
-                // This is your unique extension
-                $uniqueExtension = $ext;
-                break;
-            }
-        }
-
-        if (isset($uniqueExtension)) {
-            return (string) $uniqueExtension;
-        }
-
-        // Return null if unable to generate a unique sequence number
-        return null;
+        return $this->firstAvailableExtensionInRange(9000, 9099);
     }
 }

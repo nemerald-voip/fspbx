@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Conferences extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Models\Traits\GeneratesUniqueExtensions;
 
     protected $table = "v_conferences";
 
@@ -51,37 +51,6 @@ class Conferences extends Model
 
     public function generateUniqueSequenceNumber(): ?string
     {
-        // Conferences will have extensions in the range between 9350 and 9399 by default.
-        $rangeStart = 9350;
-        $rangeEnd = 9399;
-        $domainUuid = session('domain_uuid');
-
-        $usedExtensions = Dialplans::where('domain_uuid', $domainUuid)
-            ->where('dialplan_number', 'not like', '*%')
-            ->pluck('dialplan_number')
-            ->merge(
-                Voicemails::where('domain_uuid', $domainUuid)
-                    ->pluck('voicemail_id')
-            )
-            ->merge(
-                Extensions::where('domain_uuid', $domainUuid)
-                    ->pluck('extension')
-            )
-            ->merge(
-                self::where('domain_uuid', $domainUuid)
-                    ->pluck('conference_extension')
-            )
-            ->filter(fn ($value) => ctype_digit((string) $value))
-            ->map(fn ($value) => (string) (int) $value)
-            ->unique()
-            ->flip();
-
-        for ($ext = $rangeStart; $ext <= $rangeEnd; $ext++) {
-            if (! isset($usedExtensions[(string) $ext])) {
-                return (string) $ext;
-            }
-        }
-
-        return null;
+        return $this->firstAvailableExtensionInRange(9350, 9399);
     }
 }

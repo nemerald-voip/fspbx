@@ -156,7 +156,7 @@
                     <TableColumnHeader header="Rec" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
                     <TableColumnHeader header="Actions"
-                        class="px-2 py-3.5 text-sm font-semibold text-center text-gray-900" />
+                        class="w-24 px-1 py-3.5 text-sm font-semibold text-center text-gray-900" />
 
                 </template>
 
@@ -245,9 +245,9 @@
                             </template>
                         </TableField>
 
-                        <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                        <TableField class="w-24 whitespace-nowrap px-1 py-1 text-sm text-gray-500">
                             <template #action-buttons>
-                                <div class="flex items-center whitespace-nowrap justify-center">
+                                <div class="grid w-[72px] grid-cols-2 place-items-center gap-0 whitespace-nowrap">
                                     <ejs-tooltip v-if="page.props.auth.can.cdr_view_details" :content="'View details'"
                                         position='TopCenter' target="#view_tooltip_target">
                                         <div id="view_tooltip_target">
@@ -256,6 +256,11 @@
 
                                         </div>
                                     </ejs-tooltip>
+                                    <div v-else class="h-9 w-9" aria-hidden="true"></div>
+
+                                    <AdvancedActionButton v-if="canBlockCallHistoryNumber(row)" :actions="callBlockAdvancedActions(row)"
+                                        @advanced-action="(action) => handleCallBlockAdvancedAction(action, row)" />
+                                    <div v-else class="h-9 w-9" aria-hidden="true"></div>
 
                                 </div>
                             </template>
@@ -298,12 +303,16 @@
     <CallRecordingModal :show="showCallRecordingModal" :cdr_uuid="selectedUuid" :routes="routes"
         @close="showCallRecordingModal = false" @error="handleErrorResponse" @success="showNotification" />
 
+    <CallBlockForm :show="showCallBlockForm" :options="callBlockOptions" mode="create" :loading="loadingCallBlockForm"
+        :header="callBlockHeader" @close="handleCallBlockFormClose" @error="handleErrorResponse"
+        @success="showNotification" />
+
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { usePage } from '@inertiajs/vue3'
 import { router } from "@inertiajs/vue3";
 import MainLayout from '../Layouts/MainLayout.vue'
@@ -321,6 +330,8 @@ import { registerLicense } from '@syncfusion/ej2-base';
 import DatePicker from "./components/general/DatePicker.vue";
 import CallDetailsModal from "./components/modal/CallDetailsModal.vue"
 import CallRecordingModal from "./components/modal/CallRecordingModal.vue"
+import CallBlockForm from "./components/forms/CallBlockForm.vue";
+import AdvancedActionButton from "./components/general/AdvancedActionButton.vue";
 import Notification from "./components/notifications/Notification.vue";
 import {
     ChevronDownIcon,
@@ -341,12 +352,15 @@ const page = usePage()
 const loading = ref(false)
 const showDetailsModal = ref(false);
 const showCallRecordingModal = ref(false);
+const showCallBlockForm = ref(false);
 const loadingModal = ref(false)
+const loadingCallBlockForm = ref(false)
 const notificationType = ref(null);
 const notificationMessages = ref(null);
 const notificationShow = ref(null);
 const isExporting = ref(null);
 const recordingOptions = ref(null)
+const callBlockOptions = ref({ item: {}, extension_scope_options: [], action_options: [], routes: {} });
 
 const data = ref({
     data: [],
@@ -405,6 +419,26 @@ const sortData = ref({
 const showGlobal = ref(props.showGlobal);
 const itemOptions = ref({});
 const selectedUuid = ref(null)
+const callBlockHeader = computed(() => {
+    const item = callBlockOptions.value?.item ?? {};
+    const value = item.call_block_number || item.call_block_name;
+    const label = item.call_block_direction === "outbound" ? "Block Destination" : "Block Caller";
+
+    return value ? `${label} - ${value}` : label;
+});
+
+const callBlockAdvancedActions = (row) => [
+    {
+        category: "Advanced",
+        actions: [
+            {
+                id: "block_call_history_number",
+                label: row.direction === "outbound" ? "Block destination" : "Block caller",
+                icon: "NoSymbolIcon",
+            },
+        ],
+    },
+];
 
 const callDirections = [
     { value: 'outbound', name: 'Outbound' },
@@ -431,6 +465,52 @@ const handleCallRecordingButtonClick = (uuid) => {
     showCallRecordingModal.value = true
     // getCallRecordingOptions(uuid);
     selectedUuid.value = uuid
+};
+
+const canBlockCallHistoryNumber = (row) => {
+    if (!props.permissions.call_block_create || showGlobal.value) {
+        return false;
+    }
+
+    if (row.direction === 'inbound') {
+        return Boolean(row.caller_id_number || row.caller_id_name);
+    }
+
+    if (row.direction === 'outbound') {
+        return Boolean(row.destination_number || row.caller_destination);
+    }
+
+    return false;
+};
+
+const handleBlockCallHistoryNumberRequest = (row) => {
+    showCallBlockForm.value = true;
+    loadingCallBlockForm.value = true;
+
+    axios.post(props.routes.call_block_item_options, {
+        source_cdr_uuid: row.xml_cdr_uuid,
+    })
+        .then((response) => {
+            callBlockOptions.value = response.data;
+        })
+        .catch((error) => {
+            handleCallBlockFormClose();
+            handleErrorResponse(error);
+        })
+        .finally(() => {
+            loadingCallBlockForm.value = false;
+        });
+};
+
+const handleCallBlockAdvancedAction = (action, row) => {
+    if (action === "block_call_history_number") {
+        handleBlockCallHistoryNumberRequest(row);
+    }
+};
+
+const handleCallBlockFormClose = () => {
+    showCallBlockForm.value = false;
+    callBlockOptions.value = { item: {}, extension_scope_options: [], action_options: [], routes: {} };
 };
 
 // const getCallRecordingOptions = (uuid) => {
@@ -622,7 +702,7 @@ const handleErrorResponse = (error) => {
         // The request was made and the server responded with a status code
         // that falls out of the range of 2xx
         // console.log(error.response.data);
-        showNotification('error', error.response.data.errors || { request: [error.message] });
+        showNotification('error', error.response.data.errors || error.response.data.messages || { request: [error.message] });
     } else if (error.request) {
         // The request was made but no response was received
         // `error.request` is an instance of XMLHttpRequest in the browser and an instance of

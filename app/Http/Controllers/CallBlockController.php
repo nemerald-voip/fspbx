@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreCallBlockRequest;
 use App\Http\Requests\UpdateCallBlockRequest;
 use App\Models\CallBlock;
+use App\Models\CDR;
 use App\Models\Extensions;
 use App\Models\Voicemails;
 use App\Services\CallBlockService;
@@ -88,6 +89,7 @@ class CallBlockController extends Controller
     public function getItemOptions(Request $request): JsonResponse
     {
         $itemUuid = $request->input('itemUuid', $request->input('item_uuid'));
+        $sourceCdrUuid = $request->input('source_cdr_uuid');
 
         if ($itemUuid && ! userCheckPermission('call_block_edit')) {
             return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
@@ -113,10 +115,15 @@ class CallBlockController extends Controller
                 'call_block_app' => 'reject',
                 'call_block_enabled' => 'true',
             ]);
+
+            if ($sourceCdrUuid) {
+                $item = $this->prefillFromCdr($sourceCdrUuid, $item);
+            }
         }
 
         return response()->json([
             'item' => $item,
+            'duplicate_call_block' => $sourceCdrUuid ? $this->duplicateCallBlock($item) : null,
             'extension_scope_options' => $this->extensionScopeOptions(),
             'action_options' => $this->actionOptions(),
             'voicemail_options' => $this->voicemailOptions(),
@@ -349,5 +356,97 @@ class CallBlockController extends Controller
             ])
             ->values()
             ->all();
+    }
+
+    private function prefillFromCdr(string $sourceCdrUuid, CallBlock $item): CallBlock
+    {
+        $cdr = CDR::query()
+            ->where('domain_uuid', session('domain_uuid'))
+            ->whereKey($sourceCdrUuid)
+            ->select([
+                'xml_cdr_uuid',
+                'domain_uuid',
+                'direction',
+                'caller_id_name',
+                'caller_id_number',
+                'caller_destination',
+                'destination_number',
+                'start_epoch',
+            ])
+            ->firstOrFail();
+
+        $direction = $cdr->direction === 'outbound' ? 'outbound' : 'inbound';
+        $callerIdName = $direction === 'inbound' ? trim((string) $cdr->caller_id_name) : '';
+        $number = $direction === 'outbound'
+            ? trim((string) ($cdr->destination_number ?: $cdr->caller_destination))
+            : trim((string) $cdr->caller_id_number);
+
+        if ($callerIdName !== '' && preg_replace('/\D+/', '', $callerIdName) === preg_replace('/\D+/', '', $number)) {
+            $callerIdName = '';
+        }
+
+        $description = 'Created from call history';
+        if ($cdr->start_date && $cdr->start_time) {
+            $description .= ' on ' . $cdr->start_date . ' at ' . $cdr->start_time;
+        }
+
+        $item->forceFill([
+            'call_block_direction' => $direction,
+            'call_block_name' => $callerIdName ?: null,
+            'call_block_country_code' => null,
+            'call_block_number' => $number ?: null,
+            'call_block_description' => $description,
+        ]);
+
+        return $item;
+    }
+
+    private function duplicateCallBlock(CallBlock $item): ?array
+    {
+        $name = trim((string) $item->call_block_name);
+        $number = trim((string) $item->call_block_number);
+        $digits = preg_replace('/\D+/', '', $number);
+
+        if ($name === '' && $digits === '') {
+            return null;
+        }
+
+        $duplicate = CallBlock::query()
+            ->where('domain_uuid', session('domain_uuid'))
+            ->where('call_block_direction', $item->call_block_direction ?: 'inbound')
+            ->when(! userCheckPermission('call_block_view_all_records'), function ($query) {
+                $query->where('extension_uuid', optional(auth()->user())->extension_uuid);
+            })
+            ->where(function ($query) use ($name, $digits) {
+                if ($name !== '') {
+                    $query->orWhereRaw('lower(call_block_name) = ?', [mb_strtolower($name)]);
+                }
+
+                if ($digits !== '') {
+                    $query->orWhereRaw("regexp_replace(coalesce(call_block_country_code::text, '') || coalesce(call_block_number::text, ''), '\\D+', '', 'g') = ?", [$digits]);
+                }
+            })
+            ->select([
+                'call_block_uuid',
+                'call_block_name',
+                'call_block_country_code',
+                'call_block_number',
+                'extension_uuid',
+                'call_block_enabled',
+            ])
+            ->first();
+
+        if (! $duplicate) {
+            return null;
+        }
+
+        return [
+            'call_block_uuid' => $duplicate->call_block_uuid,
+            'label' => collect([
+                trim((string) $duplicate->call_block_name),
+                trim((string) $duplicate->call_block_country_code . $duplicate->call_block_number),
+            ])->filter()->implode(' - '),
+            'enabled' => $duplicate->call_block_enabled === 'true',
+        ];
     }
 }

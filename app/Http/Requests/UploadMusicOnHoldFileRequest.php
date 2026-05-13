@@ -41,6 +41,6 @@ class UploadMusicOnHoldFileRequest extends FormRequest
 
         $value = trim((string) $value);
 
-        return $value === '' ? null : $value;
+        return in_array($value, ['', '__global__'], true) ? null : $value;
     }
 }
