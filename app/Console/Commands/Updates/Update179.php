@@ -179,8 +179,7 @@ class Update179
             ->where('menu_uuid', $menu->menu_uuid)
             ->where('menu_item_title', 'Status')
             ->where(function ($query) {
-                $query->whereNull('menu_item_parent_uuid')
-                    ->orWhere('menu_item_parent_uuid', '');
+                $query->whereNull('menu_item_parent_uuid');
             })
             ->first();
 
