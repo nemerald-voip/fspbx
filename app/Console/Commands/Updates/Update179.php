@@ -7,8 +7,10 @@ use App\Models\Menu;
 use App\Models\MenuItem;
 use App\Models\MenuItemGroup;
 use App\Models\MenuLanguage;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Symfony\Component\Process\Process;
 use Throwable;
 
 class Update179
@@ -42,6 +44,7 @@ class Update179
         $this->ensureActiveBasicQueuesStatusMenuItem();
         $this->removeObsoleteFspbxMenuItems();
         $this->removeObsoleteMenuItemsFromAllMenus();
+        $this->ensureHiredisAutoloads();
         $this->patchLocalStreamXmlGenerator();
 
         echo "Update 1.7.9 completed successfully.\n";
@@ -105,8 +108,7 @@ class Update179
             ->where('menu_uuid', $menu->menu_uuid)
             ->where('menu_item_title', 'Applications')
             ->where(function ($query) {
-                $query->whereNull('menu_item_parent_uuid')
-                    ->orWhere('menu_item_parent_uuid', '');
+                $query->whereNull('menu_item_parent_uuid');
             })
             ->first();
 
@@ -437,6 +439,147 @@ class Update179
         }
 
         return $allMenuItemUuids;
+    }
+
+    private function ensureHiredisAutoloads(): void
+    {
+        $this->ensureHiredisModuleRecord();
+        $this->ensureHiredisModuleLoadLine();
+        $this->loadHiredisModule();
+    }
+
+    private function ensureHiredisModuleRecord(): void
+    {
+        try {
+            $values = [
+                'module_label' => 'Hiredis',
+                'module_category' => 'Applications',
+                'module_order' => 151,
+                'module_enabled' => 'true',
+                'module_default_enabled' => 'true',
+                'module_description' => 'Redis API integration for FreeSWITCH.',
+            ];
+
+            $module = DB::table('v_modules')
+                ->where('module_name', 'mod_hiredis')
+                ->first();
+
+            if ($module) {
+                DB::table('v_modules')
+                    ->where('module_name', 'mod_hiredis')
+                    ->update($values + [
+                        'update_date' => now(),
+                    ]);
+
+                echo "Ensured mod_hiredis is enabled in v_modules.\n";
+                return;
+            }
+
+            DB::table('v_modules')->insert($values + [
+                'module_uuid' => (string) Str::uuid(),
+                'module_name' => 'mod_hiredis',
+                'insert_date' => now(),
+            ]);
+
+            echo "Added enabled mod_hiredis row to v_modules.\n";
+        } catch (Throwable $exception) {
+            echo "WARNING: Unable to ensure mod_hiredis in v_modules: {$exception->getMessage()}\n";
+        }
+    }
+
+    private function ensureHiredisModuleLoadLine(): void
+    {
+        $modulesPath = '/etc/freeswitch/autoload_configs/modules.conf.xml';
+
+        if (! File::exists($modulesPath)) {
+            echo "{$modulesPath} was not found; skipping mod_hiredis autoload file update.\n";
+            return;
+        }
+
+        try {
+            $contents = File::get($modulesPath);
+
+            if (preg_match('/^[ \t]*<load\s+module=["\']mod_hiredis["\']\s*\/>[ \t]*$/mi', $contents)) {
+                echo "modules.conf.xml already loads mod_hiredis.\n";
+                return;
+            }
+
+            $loadLine = "\t\t<load module=\"mod_hiredis\"/>\n";
+            $updated = null;
+
+            foreach (['mod_memcache', 'mod_commands'] as $anchorModule) {
+                $pattern = '/^([ \t]*<load\s+module=["\']' . preg_quote($anchorModule, '/') . '["\']\s*\/>[ \t]*\R?)/mi';
+                $updated = preg_replace($pattern, '$1' . $loadLine, $contents, 1, $count);
+
+                if ($count > 0 && $updated !== null) {
+                    break;
+                }
+            }
+
+            if ($updated === null || $updated === $contents) {
+                $updated = preg_replace('/^([ \t]*<\/modules>[ \t]*\R?)/mi', $loadLine . '$1', $contents, 1, $count);
+
+                if ($count === 0 || $updated === null) {
+                    echo "WARNING: Could not find an insertion point in modules.conf.xml for mod_hiredis.\n";
+                    return;
+                }
+            }
+
+            File::put($modulesPath, $updated);
+            echo "Added mod_hiredis to modules.conf.xml.\n";
+        } catch (Throwable $exception) {
+            echo "WARNING: Unable to update modules.conf.xml for mod_hiredis: {$exception->getMessage()}\n";
+        }
+    }
+
+    private function loadHiredisModule(): void
+    {
+        if ($this->moduleExists('mod_hiredis')) {
+            echo "mod_hiredis is already loaded.\n";
+            return;
+        }
+
+        $this->runFreeswitchCommand('reloadxml');
+        $this->runFreeswitchCommand('load mod_hiredis');
+
+        echo $this->moduleExists('mod_hiredis')
+            ? "mod_hiredis loaded successfully.\n"
+            : "WARNING: mod_hiredis is configured to autoload, but it is not loaded right now.\n";
+    }
+
+    private function moduleExists(string $module): bool
+    {
+        $process = new Process(['fs_cli', '-x', "module_exists {$module}"]);
+        $process->setTimeout(20);
+
+        if (! $this->runProcess($process, false)) {
+            return false;
+        }
+
+        return str_contains(strtolower(trim($process->getOutput() . $process->getErrorOutput())), 'true');
+    }
+
+    private function runFreeswitchCommand(string $command): bool
+    {
+        $process = new Process(['fs_cli', '-x', $command]);
+        $process->setTimeout(30);
+
+        return $this->runProcess($process);
+    }
+
+    private function runProcess(Process $process, bool $warn = true): bool
+    {
+        $process->run();
+
+        if ($process->isSuccessful()) {
+            return true;
+        }
+
+        if ($warn) {
+            echo "WARNING: Command failed: {$process->getCommandLine()}\n";
+        }
+
+        return false;
     }
 
     private function patchLocalStreamXmlGenerator(): void
