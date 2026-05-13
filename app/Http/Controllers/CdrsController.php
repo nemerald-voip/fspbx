@@ -85,6 +85,7 @@ class CdrsController extends Controller
                     'data_route' => route('cdrs.data'),
                     'entities_route' => route('cdrs.entities'),
                     'call_recording_route' => route('cdrs.recording.options'),
+                    'call_block_item_options' => route('call-blocks.item.options'),
                 ],
                 'permissions' => function () {
                     return $this->getPermissions();
@@ -543,6 +544,7 @@ class CdrsController extends Controller
         $permissions['call_recording_play'] = userCheckPermission('call_recording_play');
         $permissions['call_recording_download'] = userCheckPermission('call_recording_download');
         $permissions['transcription_summary'] = userCheckPermission('transcription_summary');
+        $permissions['call_block_create'] = userCheckPermission('call_block_add');
 
         // Is call transcription service enabled for this account
         $transcriptionService = app(CallTranscriptionService::class);

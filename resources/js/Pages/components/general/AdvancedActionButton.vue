@@ -60,6 +60,7 @@ const UserPlusIcon = defineAsyncComponent(() => import('@heroicons/vue/24/outlin
 const KeyIcon = defineAsyncComponent(() => import('@heroicons/vue/24/outline/KeyIcon'));
 const TrashIcon = defineAsyncComponent(() => import('@heroicons/vue/20/solid/TrashIcon'));
 const DocumentDuplicateIcon = defineAsyncComponent(() => import('@heroicons/vue/24/outline/DocumentDuplicateIcon'));
+const NoSymbolIcon = defineAsyncComponent(() => import('@heroicons/vue/24/outline/NoSymbolIcon'));
 
 
 const props = defineProps({
@@ -76,7 +77,8 @@ const iconMap = {
   UserPlusIcon,
   KeyIcon,
   SupportAgent,
-  DocumentDuplicateIcon
+  DocumentDuplicateIcon,
+  NoSymbolIcon
 };
 
 const getIconComponent = (iconKey) => {
