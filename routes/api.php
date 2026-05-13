@@ -114,6 +114,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/basic-queues/agents/bulk-delete', [BasicQueueController::class, 'bulkDeleteAgents'])->name('basic-queues.agents.bulk.delete');
     Route::get('/basic-queues/agents/status/data', [BasicQueueController::class, 'getAgentStatusData'])->name('basic-queues.agents.status.data');
     Route::post('/basic-queues/agents/status', [BasicQueueController::class, 'updateAgentStatus'])->name('basic-queues.agents.status.update');
+    Route::get('/active-basic-queues/data', [BasicQueueController::class, 'getActiveBasicQueueData'])->name('active-basic-queues.data');
 
     // Inbound Webhooks
     Route::resource('/inbound-webhooks', InboundWebhooksController::class);

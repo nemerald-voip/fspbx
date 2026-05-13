@@ -138,7 +138,6 @@ class CreateFSPBXMenu extends Command
                 'subcategories' => [
                     ['title' => 'Active Calls', 'link' => '/active-calls', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Active Conferences', 'link' => '/active-conferences', 'groups' => ['superadmin', 'admin']],
-                    ['title' => 'Active Queues', 'link' => '/app/fifo_list/fifo_list.php', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Extension Statistics', 'link' => '/extension-statistics', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Firewall', 'link' => '/firewall', 'groups' => ['superadmin']],
                     ['title' => 'Logs', 'link' => '/logs', 'groups' => ['superadmin']],

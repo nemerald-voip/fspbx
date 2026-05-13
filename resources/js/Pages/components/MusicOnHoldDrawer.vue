@@ -118,10 +118,10 @@
                                                             ? 'bg-indigo-600 text-white hover:bg-indigo-500'
                                                             : 'text-indigo-500 hover:bg-indigo-100 hover:text-indigo-700',
                                                     ]"
-                                                    title="Play"
+                                                    title="Select file"
                                                     @click="setActiveFile(file)"
                                                 >
-                                                    <PlayIcon class="h-4 w-4" />
+                                                    <MusicalNoteIcon class="h-4 w-4" />
                                                 </button>
                                                 <button
                                                     type="button"
@@ -187,7 +187,6 @@ import {
     ArrowUpTrayIcon,
     MusicalNoteIcon,
     PencilSquareIcon,
-    PlayIcon,
     TrashIcon,
     XMarkIcon,
 } from "@heroicons/vue/24/solid";

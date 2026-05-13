@@ -21,6 +21,36 @@ This repo is a Laravel, Vue/Inertia, VueForm, and FreeSWITCH application. Before
 - Use VueForm for create/update modals.
 - Keep forms clear and operational. Avoid marketing-style UI.
 
+## Basic Queues
+
+- Basic Queues are a main-repo feature and must work without optional modules under `Modules/`. Do not route Basic Queue status/detail pages into module controllers.
+- Basic Queue pages use FS PBX call center tables and FreeSWITCH `mod_callcenter`. The database is the source of truth, but queue, tier, and agent changes also need the matching event socket commands so FreeSWITCH runtime state changes immediately.
+- For Basic Queue Music on Hold selects, mirror the Phone Number update modal pattern: use grouped `getMusicOnHoldCollection(session('domain_uuid'))` options with VueForm `:groups="true"`, searchable non-native selects, `:strict="false"`, and `allow-absent`.
+- Keep Music on Hold values compatible with FreeSWITCH. Domain streams should use `local_stream://{domain_name}/{music_on_hold_name}`; global streams can remain `local_stream://{name}`. Do not rebuild full recording paths as relative filenames when saving existing values.
+- Queue extension generation must avoid colliding with Ring Groups and other extension-like features. Keep Basic Queue ranges separate from Ring Group ranges.
+- Basic Queue agent forms should put Contact first. Selecting a contact should autofill agent name, agent ID, and agent password from the selected extension/contact. Do not reintroduce the deprecated User field.
+- Keep Basic Queue agent status choices simple unless the product scope changes: `Logged Out`, `Available`, and `On Break`.
+- For queue tier changes, keep the FreeSWITCH command order close to the legacy call center behavior. Removing an agent from a queue should delete the live tier before reloading the queue. Deleting an assigned agent should delete the live tier, reload the queue, then delete the live agent. Avoid extra `reloadxml` calls for pure tier removals.
+
+## Optional Modules
+
+- Not every server has optional modules under `Modules/`. Main-repo features should not assume an optional module exists unless the code has an explicit availability check and a safe fallback.
+- Module-specific implementation notes belong in an `AGENTS.md` inside that module instead of the root guide.
+
+## Music On Hold
+
+- The native Music on Hold page replaces the old `/app/music_on_hold/music_on_hold.php` surface. Keep create/update/upload forms in VueForm.
+- Treat a visible stream as a family of FreeSWITCH `mod_local_stream` rows, normally one row for each rate: `8000`, `16000`, `32000`, and `48000`. Do not expose a rate dropdown for normal stream creation; create, edit, upload, and delete the family together.
+- Uploaded audio should be converted with `ffmpeg` to mono 16-bit PCM WAV for all supported rates to avoid FreeSWITCH transcoding surprises.
+- Stream paths are generated, not user editable. Use `$${sounds_dir}/music/{domain-or-global}/{stream-name}/{rate}` for stored rows. The UI can display the family root without the trailing rate.
+- Global Music on Hold streams use `global` in the generated filesystem path and `NULL` `domain_uuid` in the database. If a VueForm select needs a non-empty value for Global, use a UI-only sentinel and normalize it back to `NULL` before validation.
+- Users without `music_on_hold_domain` should not see the domain selector. Creating a stream should assign their session domain. Editing an existing stream must preserve its stored `domain_uuid`.
+- When Music on Hold rows or files change, clear the FS PBX local stream XML cache with `FusionCache::clear('configuration:local_stream.conf')` and reload `mod_local_stream` when requested. The generated cache file lives at `/var/cache/fusionpbx/configuration.local_stream.conf`.
+- The FS PBX Lua XML generator for `local_stream.conf` may need patches in two places: `public/app/switch/resources/scripts/app/xml_handler/resources/scripts/configuration/local_stream.conf.lua` for future installs and `/usr/share/freeswitch/scripts/app/xml_handler/resources/scripts/configuration/local_stream.conf.lua` for existing servers.
+- The Lua XML generator should build directory names as `{domain_name}/{music_on_hold_name}` without appending the rate, while the row path still points to the rate-specific directory. It should default blank or null rates to `48000` and honor row-level `channels` and `interval` values.
+- Deleting a stream should delete the whole generated stream folder under `/usr/share/freeswitch/sounds/music/{domain-or-global}/{stream-name}`, not just individual DB rows. Keep deletion guarded so it cannot remove the music root or a domain root.
+- Avoid icons that look like playback unless the action actually starts playback. For file selection rows, prefer an audio/file icon; reserve play icons for buttons that open or start the player.
+
 ## Logs Page
 
 - `/logs` is the shared logs surface. `LogsController` provides the Inertia page props and routes; individual log components usually fetch data through existing API controllers.
@@ -80,6 +110,6 @@ This repo is a Laravel, Vue/Inertia, VueForm, and FreeSWITCH application. Before
 - In the sandbox, Vite may fail with permission errors while writing temporary config files. If that happens, rerun the same build outside the sandbox when approved.
 - If a runtime issue depends on FreeSWITCH, verify with real `fs_cli` output or logs when available.
 
-## included FusionPBX
+## Included Legacy Files
 
-- FusionPBX with all legacy files is incuded in /public directory. This directory is not tracked. All updates must be made via an update file. 
+- Legacy admin files are included in the `/public` directory. This directory is not tracked. All updates must be made via an update file.

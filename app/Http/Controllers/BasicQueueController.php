@@ -13,6 +13,7 @@ use App\Services\BasicQueueService;
 use App\Services\CallRoutingOptionsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -43,6 +44,7 @@ class BasicQueueController extends Controller
                 'agent_select_all' => route('basic-queues.agents.select.all'),
                 'agent_bulk_delete' => route('basic-queues.agents.bulk.delete'),
                 'agent_status' => route('basic-queues.agents.status'),
+                'queue_status' => route('active-basic-queues.index'),
                 'wallboard' => '/app/call_center_wallboard/call_center_wallboard.php',
                 'queue_import' => '/app/call_center_imports/call_center_imports.php?import_type=call_center_queues',
                 'agent_import' => '/app/call_center_imports/call_center_imports.php?import_type=call_center_agents',
@@ -55,6 +57,7 @@ class BasicQueueController extends Controller
                     'view_all' => userCheckPermission('call_center_all'),
                     'imports' => userCheckPermission('call_center_imports'),
                     'wallboard' => userCheckPermission('call_center_wallboard'),
+                    'active' => userCheckPermission('call_center_active_view'),
                 ],
                 'agents' => [
                     'view' => userCheckPermission('call_center_agent_view'),
@@ -63,6 +66,21 @@ class BasicQueueController extends Controller
                     'destroy' => userCheckPermission('call_center_agent_delete'),
                     'imports' => userCheckPermission('call_center_imports'),
                 ],
+            ],
+        ]);
+    }
+
+    public function activeBasicQueues()
+    {
+        if (! userCheckPermission('call_center_active_view')) {
+            return redirect('/');
+        }
+
+        return Inertia::render('ActiveBasicQueues', [
+            'routes' => [
+                'current_page' => route('active-basic-queues.index'),
+                'data' => route('active-basic-queues.data'),
+                'basic_queues' => route('basic-queues.index'),
             ],
         ]);
     }
@@ -154,6 +172,8 @@ class BasicQueueController extends Controller
 
         $rows = $agents->map(function (CallCenterAgents $agent) use ($runtimeAgents) {
             $runtime = $runtimeAgents->get($agent->call_center_agent_uuid, []);
+            $defaultStatus = $this->normalizeAgentStatus($agent->agent_status);
+            $runtimeStatus = $this->normalizeAgentStatus($runtime['status'] ?? $defaultStatus);
 
             return [
                 'call_center_agent_uuid' => $agent->call_center_agent_uuid,
@@ -161,8 +181,8 @@ class BasicQueueController extends Controller
                 'agent_id' => $agent->agent_id,
                 'agent_type' => $agent->agent_type,
                 'agent_contact' => $agent->agent_contact,
-                'default_status' => $agent->agent_status,
-                'runtime_status' => $runtime['status'] ?? $agent->agent_status ?? 'Logged Out',
+                'default_status' => $defaultStatus,
+                'runtime_status' => $runtimeStatus,
                 'runtime_state' => $runtime['state'] ?? null,
                 'calls_answered' => $runtime['calls_answered'] ?? null,
                 'no_answer_count' => $runtime['no_answer_count'] ?? null,
@@ -184,8 +204,10 @@ class BasicQueueController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'agent_uuid' => ['required', 'uuid'],
-            'status' => ['required', 'in:Available,Available (On Demand),On Break,Logged Out'],
+            'agent_uuid' => ['nullable', 'uuid', 'required_without:agent_uuids'],
+            'agent_uuids' => ['nullable', 'array', 'required_without:agent_uuid'],
+            'agent_uuids.*' => ['uuid'],
+            'status' => ['required', 'in:Available,On Break,Logged Out'],
         ]);
 
         if ($validator->fails()) {
@@ -195,32 +217,49 @@ class BasicQueueController extends Controller
             ], 422);
         }
 
-        $agent = CallCenterAgents::query()
+        $agentUuids = collect($request->input('agent_uuids', []))
+            ->when($request->filled('agent_uuid'), fn (Collection $uuids) => $uuids->push($request->input('agent_uuid')))
+            ->unique()
+            ->values();
+
+        $agents = CallCenterAgents::query()
             ->where('domain_uuid', session('domain_uuid'))
-            ->whereKey($request->input('agent_uuid'))
-            ->firstOrFail();
+            ->whereIn('call_center_agent_uuid', $agentUuids)
+            ->get();
+
+        if ($agents->isEmpty()) {
+            return response()->json(['messages' => ['error' => ['No matching agents found.']]], 404);
+        }
 
         if (! $this->eventSocketAvailable()) {
             return response()->json(['messages' => ['error' => ['FreeSWITCH event socket is not available.']]], 503);
         }
 
         $status = $request->input('status');
-        $response = $this->callCenterCommand(sprintf(
-            "api callcenter_config agent set status %s '%s'",
-            $agent->call_center_agent_uuid,
-            str_replace("'", "\\'", $status)
-        ));
+        $responses = [];
 
-        if (in_array($status, ['Available', 'Logged Out'], true)) {
-            $this->callCenterCommand(sprintf(
-                "api callcenter_config agent set state %s 'Waiting'",
-                $agent->call_center_agent_uuid
+        foreach ($agents as $agent) {
+            $responses[$agent->call_center_agent_uuid] = $this->callCenterCommand(sprintf(
+                "api callcenter_config agent set status %s '%s'",
+                $agent->call_center_agent_uuid,
+                str_replace("'", "\\'", $status)
             ));
+
+            if (in_array($status, ['Available', 'Logged Out'], true)) {
+                $this->callCenterCommand(sprintf(
+                    "api callcenter_config agent set state %s 'Waiting'",
+                    $agent->call_center_agent_uuid
+                ));
+            }
         }
 
+        $message = $agents->count() === 1
+            ? "{$agents->first()->agent_name} status updated."
+            : "{$agents->count()} agents updated to {$status}.";
+
         return response()->json([
-            'response' => $response,
-            'messages' => ['success' => ["{$agent->agent_name} status updated."]],
+            'response' => $responses,
+            'messages' => ['success' => [$message]],
         ]);
     }
 
@@ -256,6 +295,73 @@ class BasicQueueController extends Controller
             ->defaultSort('queue_name')
             ->paginate($this->perPage)
             ->appends($request->query());
+    }
+
+    public function getActiveBasicQueueData(Request $request)
+    {
+        if (! userCheckPermission('call_center_active_view')) {
+            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+        }
+
+        $paginator = QueryBuilder::for(CallCenterQueues::class)
+            ->where('domain_uuid', session('domain_uuid'))
+            ->select([
+                'domain_uuid',
+                'call_center_queue_uuid',
+                'queue_name',
+                'queue_extension',
+                'queue_strategy',
+                'queue_description',
+            ])
+            ->withCount('agents')
+            ->allowedFilters([
+                AllowedFilter::callback('search', function ($query, $value) {
+                    $needle = trim((string) $value);
+
+                    if ($needle === '') {
+                        return;
+                    }
+
+                    $query->where(function ($query) use ($needle) {
+                        $query->where('queue_name', 'ilike', "%{$needle}%")
+                            ->orWhere('queue_extension', 'ilike', "%{$needle}%")
+                            ->orWhere('queue_strategy', 'ilike', "%{$needle}%")
+                            ->orWhere('queue_description', 'ilike', "%{$needle}%");
+                    });
+                }),
+            ])
+            ->allowedSorts([
+                'queue_name',
+                'queue_extension',
+                'queue_strategy',
+                'queue_description',
+            ])
+            ->defaultSort('queue_name')
+            ->paginate($this->perPage)
+            ->appends($request->query());
+
+        $runtimeAvailable = $this->eventSocketAvailable();
+        $agentNames = CallCenterAgents::query()
+            ->where('domain_uuid', session('domain_uuid'))
+            ->pluck('agent_name', 'call_center_agent_uuid');
+
+        $paginator->getCollection()->transform(function (CallCenterQueues $queue) use ($agentNames, $runtimeAvailable) {
+            $runtime = $runtimeAvailable
+                ? $this->activeQueueRuntime($queue, $agentNames)
+                : [
+                    'waiting_count' => 0,
+                    'trying_count' => 0,
+                    'answered_count' => 0,
+                    'calls' => [],
+                ];
+
+            return array_merge($queue->toArray(), $runtime);
+        });
+
+        $payload = $paginator->toArray();
+        $payload['runtime_available'] = $runtimeAvailable;
+
+        return response()->json($payload);
     }
 
     public function getAgentData(Request $request)
@@ -335,16 +441,33 @@ class BasicQueueController extends Controller
                 ->values()
             : collect();
 
+        $openAiService = app(\App\Services\OpenAIService::class);
+
         return response()->json([
             'item' => $item,
             'tiers' => $tiers,
             'agent_options' => $this->agentOptions(),
             'routing_types' => (new CallRoutingOptionsService)->routingTypes,
             'music_on_hold_options' => getMusicOnHoldCollection(session('domain_uuid')),
+            'voices' => $openAiService->getVoices(),
+            'default_voice' => $openAiService->getDefaultVoice(),
+            'speeds' => $openAiService->getSpeeds(),
+            'phone_call_instructions' => [
+                'Dial <strong>*732</strong> from your phone.',
+                'Enter the basic queue extension number when prompted and press <strong>#</strong>.',
+                'Follow the prompts to record your greeting.',
+            ],
+            'sample_message' => 'Thank you for calling. Please hold while we connect you with the next available agent.',
             'routes' => [
                 'store_route' => route('basic-queues.queues.store'),
                 'update_route' => $itemUuid ? route('basic-queues.queues.update', ['queue' => $item->call_center_queue_uuid]) : null,
                 'get_routing_options' => route('routing.options'),
+                'greeting_route' => route('greetings.greetings'),
+                'serve_greeting_route' => route('greeting.file.serve', ['file_name' => ':file_name']),
+                'update_greeting_route' => route('greetings.file.update'),
+                'delete_greeting_route' => route('greetings.file.delete'),
+                'upload_greeting_route' => route('greetings.file.upload'),
+                'text_to_speech_route' => route('greetings.textToSpeech'),
             ],
         ]);
     }
@@ -542,10 +665,60 @@ class BasicQueueController extends Controller
     {
         return [
             ['value' => 'Available', 'label' => 'Available'],
-            ['value' => 'Available (On Demand)', 'label' => 'Available On Demand'],
             ['value' => 'On Break', 'label' => 'On Break'],
             ['value' => 'Logged Out', 'label' => 'Logged Out'],
         ];
+    }
+
+    private function normalizeAgentStatus(?string $status): string
+    {
+        return $status === 'Available (On Demand)'
+            ? 'Available'
+            : ($status ?: 'Logged Out');
+    }
+
+    private function activeQueueRuntime(CallCenterQueues $queue, Collection $agentNames): array
+    {
+        $rows = collect($this->callCenterList(sprintf(
+            'callcenter_config queue list members %s@%s',
+            $queue->queue_extension,
+            session('domain_name')
+        )));
+
+        $calls = $rows->map(function (array $row) use ($agentNames) {
+            $state = $row['state'] ?? null;
+            $joinedEpoch = (int) ($row['joined_epoch'] ?? 0);
+            $servingAgent = $row['serving_agent'] ?? null;
+
+            return [
+                'uuid' => $row['uuid'] ?? null,
+                'session_uuid' => $row['session_uuid'] ?? null,
+                'caller_name' => $row['cid_name'] ?? null,
+                'caller_number' => $row['cid_number'] ?? null,
+                'state' => $state,
+                'joined_epoch' => $joinedEpoch ?: null,
+                'wait_time' => $this->formatElapsedSeconds($joinedEpoch ? time() - $joinedEpoch : 0),
+                'serving_agent_uuid' => $servingAgent,
+                'serving_agent_name' => $servingAgent ? ($agentNames->get($servingAgent) ?: $servingAgent) : null,
+            ];
+        })->values();
+
+        return [
+            'waiting_count' => $calls->where('state', 'Waiting')->count(),
+            'trying_count' => $calls->where('state', 'Trying')->count(),
+            'answered_count' => $calls->where('state', 'Answered')->count(),
+            'calls' => $calls->all(),
+        ];
+    }
+
+    private function formatElapsedSeconds(int $seconds): string
+    {
+        $seconds = max(0, $seconds);
+        $hours = intdiv($seconds, 3600);
+        $minutes = intdiv($seconds % 3600, 60);
+        $remainingSeconds = $seconds % 60;
+
+        return sprintf('%d:%02d:%02d', $hours, $minutes, $remainingSeconds);
     }
 
     private function callCenterList(string $command): array
@@ -618,7 +791,7 @@ class BasicQueueController extends Controller
 
                 return $row;
             })
-            ->filter(fn ($row) => ! empty($row['name']))
+            ->filter(fn ($row) => collect($row)->filter(fn ($value) => filled($value))->isNotEmpty())
             ->values()
             ->all();
     }

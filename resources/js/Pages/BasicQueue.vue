@@ -39,6 +39,11 @@
                         Wallboard
                     </a>
 
+                    <a v-if="activeTab === 'queues' && permissions.queues.active" :href="routes.queue_status"
+                        class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                        Status
+                    </a>
+
                     <a v-if="activeTab === 'agents'" :href="routes.agent_status"
                         class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                         Status
@@ -608,7 +613,6 @@ const amberBadge = {
 
 const statusBadge = (status) => {
     if (status === "Available") return greenBadge;
-    if (status === "Available (On Demand)") return blueBadge;
     if (status === "On Break") return amberBadge;
     return grayBadge;
 };

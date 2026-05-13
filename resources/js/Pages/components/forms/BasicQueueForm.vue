@@ -11,8 +11,10 @@
                     <TransitionChild as="template" enter="ease-out duration-300"
                         enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
                         enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200"
-                        leave-from="opacity-100 sm:scale-100" leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
-                        <DialogPanel class="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
+                        leave-from="opacity-100 sm:scale-100"
+                        leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+                        <DialogPanel
+                            class="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-5xl sm:p-6">
                             <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
                                 {{ header }}
                             </DialogTitle>
@@ -28,7 +30,7 @@
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false"
-                                :default="defaultValues">
+                                :float-placeholders="false" :default="defaultValues">
                                 <template #empty>
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
@@ -37,6 +39,10 @@
                                                     'queue_name',
                                                     'queue_extension',
                                                     'queue_strategy',
+                                                    'queue_greeting',
+                                                    'placeholder',
+                                                    'placeholder2',
+                                                    'queue_greeting_action_buttons',
                                                     'queue_moh_sound',
                                                     'queue_tier_rules_apply',
                                                     'queue_description',
@@ -55,12 +61,14 @@
                                                     'queue_cid_prefix',
                                                     'timeout_action',
                                                     'timeout_target',
+                                                    'placeholder3',
                                                     'advanced_submit',
                                                 ]" />
                                             </FormTabs>
                                         </div>
 
-                                        <div class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
+                                        <div
+                                            class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                                             <FormElements>
                                                 <TextElement name="queue_name" label="Name" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
@@ -71,18 +79,89 @@
                                                 <SelectElement name="queue_strategy" label="Strategy" :native="false"
                                                     :items="strategyOptions" :columns="{ sm: { container: 6 } }" />
 
+                                                <GroupElement name="placeholder" />
+
+                                                <SelectElement name="queue_greeting" label="Greeting"
+                                                    :items="fetchGreetings" :search="true" :native="false"
+                                                    input-type="search" autocomplete="off" placeholder="Select greeting"
+                                                    :strict="false" allow-absent :columns="{ sm: { container: 6 } }">
+                                                    <template #after>
+                                                        <span v-if="greetingTranscription" class="text-xs italic">
+                                                            "{{ greetingTranscription }}"
+                                                        </span>
+                                                    </template>
+                                                </SelectElement>
+
+                                                <GroupElement name="queue_greeting_action_buttons"
+                                                    :columns="{ container: 6 }">
+                                                    <ButtonElement v-if="!isAudioPlaying" @click="playGreeting"
+                                                        :columns="{ container: 2 }" name="play_button" label="&nbsp;"
+                                                        :secondary="true" :conditions="[hasPlayableGreeting]"
+                                                        :remove-classes="buttonIconClassOverrides">
+                                                        <PlayCircleIcon
+                                                            class="h-8 w-8 shrink-0 rounded-full py-1 text-blue-400 ring-1 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                    </ButtonElement>
+                                                    <ButtonElement v-if="isAudioPlaying" @click="pauseGreeting"
+                                                        name="pause_button" label="&nbsp;" :secondary="true"
+                                                        :columns="{ container: 2 }"
+                                                        :remove-classes="buttonIconClassOverrides">
+                                                        <PauseCircleIcon
+                                                            class="h-8 w-8 shrink-0 rounded-full py-1 text-red-400 ring-1 transition duration-500 ease-in-out hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+                                                    </ButtonElement>
+                                                    <ButtonElement v-if="!isDownloading" @click="downloadGreeting"
+                                                        name="download_button" label="&nbsp;" :secondary="true"
+                                                        :columns="{ container: 2 }" :conditions="[hasPlayableGreeting]"
+                                                        :remove-classes="buttonIconClassOverrides">
+                                                        <CloudArrowDownIcon
+                                                            class="h-8 w-8 shrink-0 rounded-full py-1 text-blue-400 ring-1 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                    </ButtonElement>
+                                                    <ButtonElement v-if="isDownloading" name="download_spinner_button"
+                                                        label="&nbsp;" :secondary="true" :columns="{ container: 2 }"
+                                                        :remove-classes="buttonIconClassOverrides">
+                                                        <Spinner :show="true"
+                                                            class="ml-0 mr-0 h-8 w-8 shrink-0 rounded-full py-1 text-blue-400 ring-1 transition duration-500 ease-in-out" />
+                                                    </ButtonElement>
+                                                    <ButtonElement @click="editGreeting" name="edit_button"
+                                                        label="&nbsp;" :secondary="true" :columns="{ container: 2 }"
+                                                        :conditions="[hasPlayableGreeting]"
+                                                        :remove-classes="buttonIconClassOverrides">
+                                                        <PencilSquareIcon
+                                                            class="h-8 w-8 shrink-0 rounded-full py-1 text-blue-400 ring-1 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                    </ButtonElement>
+                                                    <ButtonElement @click="deleteGreeting" name="delete_button"
+                                                        label="&nbsp;" :secondary="true" :columns="{ container: 2 }"
+                                                        :conditions="[hasPlayableGreeting]"
+                                                        :remove-classes="buttonIconClassOverrides">
+                                                        <TrashIcon
+                                                            class="h-8 w-8 shrink-0 rounded-full py-1 text-red-400 ring-1 transition duration-500 ease-in-out hover:bg-red-200 hover:text-red-600 active:bg-red-300 active:duration-150 cursor-pointer" />
+                                                    </ButtonElement>
+                                                    <ButtonElement @click="handleNewGreetingButtonClick"
+                                                        name="add_button" label="&nbsp;" :secondary="true"
+                                                        :columns="{ container: 2 }"
+                                                        :remove-classes="buttonIconClassOverrides">
+                                                        <PlusIcon
+                                                            class="h-8 w-8 shrink-0 rounded-full py-1 text-blue-400 ring-1 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150 cursor-pointer" />
+                                                    </ButtonElement>
+                                                </GroupElement>
+
                                                 <SelectElement name="queue_moh_sound" label="Music on Hold"
-                                                    :items="musicOnHoldOptions" :groups="true" default="local_stream://default"
-                                                    :search="true" :native="false" input-type="search" autocomplete="off"
-                                                    :strict="false" allow-absent :columns="{ sm: { container: 6 } }" />
+                                                    :items="musicOnHoldOptions" :groups="true"
+                                                    default="local_stream://default" :search="true" :native="false"
+                                                    input-type="search" autocomplete="off" :strict="false" allow-absent
+                                                    :columns="{ sm: { container: 6 } }" />
+
+                                                <GroupElement name="placeholder2" />
 
                                                 <ToggleElement name="queue_tier_rules_apply" text="Tier Rules"
-                                                    true-value="true" false-value="false" :labels="{ on: 'On', off: 'Off' }"
-                                                    label="&nbsp;" :columns="{ sm: { container: 6 } }" />
+                                                    true-value="true" false-value="false"
+                                                    :labels="{ on: 'On', off: 'Off' }" label="&nbsp;"
+                                                    :columns="{ sm: { container: 6 } }" />
 
-                                                <TextareaElement name="queue_description" label="Description" :rows="2" />
+                                                <TextareaElement name="queue_description" label="Description"
+                                                    :rows="2" />
 
-                                                <ButtonElement name="settings_submit" button-label="Save" :submits="true" align="right" />
+                                                <ButtonElement name="settings_submit" button-label="Save"
+                                                    :submits="true" align="right" />
 
                                                 <StaticElement name="tiers_header" tag="h4" content="Queue Agents"
                                                     description="Assign agents to this queue and order them by level and position." />
@@ -112,34 +191,42 @@
                                                                     );
                                                                     return `<span class='text-base font-semibold'>${label}</span>`;
                                                                 }" />
-                                                            <SelectElement name="tier_level" :items="tierOptions" :search="true"
-                                                                :native="false" label="Level" input-type="search"
-                                                                autocomplete="off" :columns="{ sm: { container: 3 } }" size="sm" />
-                                                            <SelectElement name="tier_position" :items="tierOptions" :search="true"
-                                                                :native="false" label="Position" input-type="search"
-                                                                autocomplete="off" :columns="{ sm: { container: 3 } }" size="sm" />
+                                                            <SelectElement name="tier_level" :items="tierOptions"
+                                                                :search="true" :native="false" label="Level"
+                                                                input-type="search" autocomplete="off"
+                                                                :columns="{ sm: { container: 3 } }" size="sm" />
+                                                            <SelectElement name="tier_position" :items="tierOptions"
+                                                                :search="true" :native="false" label="Position"
+                                                                input-type="search" autocomplete="off"
+                                                                :columns="{ sm: { container: 3 } }" size="sm" />
                                                         </ObjectElement>
                                                     </template>
                                                 </ListElement>
 
-                                                <ButtonElement name="tiers_submit" button-label="Save" :submits="true" align="right" />
+                                                <ButtonElement name="tiers_submit" button-label="Save" :submits="true"
+                                                    align="right" />
 
-                                                <StaticElement name="advanced_header" tag="h4" content="Advanced Settings" />
+                                                <StaticElement name="advanced_header" tag="h4"
+                                                    content="Advanced Settings" />
 
-                                                <TextElement name="queue_max_wait_time" input-type="number" label="Max Wait Time"
-                                                    :floating="false" :columns="{ sm: { container: 6 } }" />
+                                                <TextElement name="queue_max_wait_time" input-type="number"
+                                                    label="Max Wait Time" :floating="false"
+                                                    :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="queue_max_wait_time_with_no_agent" input-type="number"
-                                                    label="Max Wait No Agent" :floating="false" :columns="{ sm: { container: 6 } }" />
+                                                <TextElement name="queue_max_wait_time_with_no_agent"
+                                                    input-type="number" label="Max Wait No Agent" :floating="false"
+                                                    :columns="{ sm: { container: 6 } }" />
 
                                                 <TextElement name="queue_cid_prefix" label="Caller ID Prefix"
                                                     :floating="false" :columns="{ sm: { container: 6 } }" />
 
-                                                <SelectElement name="timeout_action" :items="routingTypes" label-prop="name"
-                                                    :search="true" :native="false" label="Timeout Action" input-type="search"
-                                                    autocomplete="off" placeholder="Choose Action" :floating="false"
-                                                    :strict="false" :columns="{ sm: { container: 6 } }"
-                                                    @change="(newValue, oldValue, el$) => {
+                                                <GroupElement name="placeholder3" />
+
+                                                <SelectElement name="timeout_action" :items="routingTypes"
+                                                    label-prop="name" :search="true" :native="false"
+                                                    label="Timeout Action" input-type="search" autocomplete="off"
+                                                    placeholder="Choose Action" :floating="false" :strict="false"
+                                                    :columns="{ sm: { container: 6 } }" @change="(newValue, oldValue, el$) => {
                                                         const timeoutTarget = el$.form$.el$('timeout_target');
 
                                                         if (oldValue !== null && oldValue !== undefined) {
@@ -164,14 +251,34 @@
                                                         return [];
                                                     }
                                                 }" :search="true" label-prop="name" :native="false" label="Target"
-                                                    input-type="search" allow-absent :object="true" :format-data="formatTarget"
-                                                    autocomplete="off" placeholder="Choose Target" :floating="false"
-                                                    :strict="false" :columns="{ sm: { container: 6 } }" :conditions="[
+                                                    input-type="search" allow-absent :object="true"
+                                                    :format-data="formatTarget" autocomplete="off"
+                                                    placeholder="Choose Target" :floating="false" :strict="false"
+                                                    :columns="{ sm: { container: 6 } }" :conditions="[
                                                         ['timeout_action', 'not_empty'],
                                                         ['timeout_action', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
                                                     ]" />
 
-                                                <ButtonElement name="advanced_submit" button-label="Save" :submits="true" align="right" />
+                                                <ButtonElement name="advanced_submit" button-label="Save"
+                                                    :submits="true" align="right" />
+
+                                                <UpdateGreetingModal :greeting="greetingLabel" :show="showEditModal"
+                                                    :loading="isGreetingUpdating" @confirm="handleGreetingUpdate"
+                                                    @close="showEditModal = false" />
+                                                <NewGreetingForm header="New Greeting Message"
+                                                    :show="showNewGreetingModal" :voices="options?.voices"
+                                                    :speeds="options?.speeds" :default_voice="options?.default_voice"
+                                                    :phone_call_instructions="options?.phone_call_instructions"
+                                                    :sample_message="options?.sample_message"
+                                                    :routes="getRoutesForGreetingForm"
+                                                    @close="showNewGreetingModal = false" @error="emit('error', $event)"
+                                                    @success="showNotificationFromChild"
+                                                    @saved="handleNewGreetingAdded" />
+                                                <ConfirmationModal :show="showGreetingDeleteConfirmationModal"
+                                                    @close="showGreetingDeleteConfirmationModal = false"
+                                                    @confirm="confirmGreetingDeleteAction" header="Confirm Deletion"
+                                                    text="This action will permanently delete this greeting. Are you sure you want to proceed?"
+                                                    confirm-button-label="Delete" cancel-button-label="Cancel" />
                                             </FormElements>
                                         </div>
                                     </div>
@@ -182,13 +289,22 @@
                 </div>
             </div>
         </Dialog>
+
     </TransitionRoot>
 </template>
 
 <script setup>
 import { computed, ref } from "vue";
+import axios from "axios";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
+import { PlusIcon, TrashIcon } from "@heroicons/vue/24/outline";
+import { CloudArrowDownIcon, PauseCircleIcon, PlayCircleIcon } from "@heroicons/vue/24/solid";
+import { PencilSquareIcon } from "@heroicons/vue/20/solid";
+import ConfirmationModal from "../modal/ConfirmationModal.vue";
+import NewGreetingForm from "./NewGreetingForm.vue";
+import Spinner from "../general/Spinner.vue";
+import UpdateGreetingModal from "../modal/UpdateGreetingModal.vue";
 
 const props = defineProps({
     show: Boolean,
@@ -203,6 +319,25 @@ const props = defineProps({
 
 const emit = defineEmits(["close", "error", "success", "refresh-data"]);
 const form$ = ref(null);
+const availableGreetings = ref(null);
+const currentAudio = ref(null);
+const currentAudioGreeting = ref(null);
+const greetingLabel = ref(null);
+const isAudioPlaying = ref(false);
+const isDownloading = ref(false);
+const isGreetingUpdating = ref(false);
+const showEditModal = ref(false);
+const showGreetingDeleteConfirmationModal = ref(false);
+const showNewGreetingModal = ref(false);
+
+const buttonIconClassOverrides = {
+    ButtonElement: {
+        button_secondary: ["form-bg-btn-secondary"],
+        button: ["form-border-width-btn"],
+        button_enabled: ["focus:form-ring"],
+        button_md: ["form-p-btn"],
+    },
+};
 
 const strategyOptions = [
     { value: "ring-all", label: "Ring All" },
@@ -224,6 +359,7 @@ const defaultValues = computed(() => ({
     queue_name: props.options?.item?.queue_name ?? null,
     queue_extension: props.options?.item?.queue_extension ?? null,
     queue_strategy: props.options?.item?.queue_strategy ?? "ring-all",
+    queue_greeting: props.options?.item?.queue_greeting || "disabled",
     queue_moh_sound: props.options?.item?.queue_moh_sound ?? "local_stream://default",
     queue_max_wait_time: props.options?.item?.queue_max_wait_time ?? 0,
     queue_max_wait_time_with_no_agent: props.options?.item?.queue_max_wait_time_with_no_agent ?? 90,
@@ -239,14 +375,27 @@ const defaultValues = computed(() => ({
     tiers: (props.options?.tiers ?? []).map((tier) => ({
         call_center_agent_uuid: tier.call_center_agent_uuid,
         agent_label: tier.agent_label || tier.agent_name || null,
-        tier_level: String(tier.tier_level ?? 1),
-        tier_position: String(tier.tier_position ?? 1),
+        tier_level: String(tier.tier_level ?? 0),
+        tier_position: String(tier.tier_position ?? 0),
     })),
 }));
 
 const agentOptions = computed(() => props.options?.agent_options ?? []);
 const routingTypes = computed(() => props.options?.routing_types ?? []);
 const musicOnHoldOptions = computed(() => props.options?.music_on_hold_options ?? []);
+const greetingTranscription = computed(() => {
+    const selectedId = form$.value?.data?.queue_greeting ?? null;
+
+    if (!selectedId || !availableGreetings.value) {
+        return null;
+    }
+
+    const selectedItem = availableGreetings.value.find(
+        (item) => String(item.value) === String(selectedId),
+    );
+
+    return selectedItem?.description || null;
+});
 
 const availableAgentOptions = computed(() => {
     const tiersField = form$.value?.el$("tiers");
@@ -270,8 +419,8 @@ const handleAgentSelect = (option) => {
             {
                 call_center_agent_uuid: option.value,
                 agent_label: option.label,
-                tier_level: "1",
-                tier_position: String(currentTiers.length + 1),
+                tier_level: "0",
+                tier_position: "0",
             },
         ],
     });
@@ -284,6 +433,229 @@ const getAgentLabel = (agentUuid, fallback = null) => {
 
     return agent?.label || fallback || agentUuid || "Agent";
 };
+
+const fetchGreetings = async () => {
+    const route = props.options?.routes?.greeting_route;
+
+    if (!route) {
+        availableGreetings.value = [{ value: "disabled", label: "No greeting" }];
+        return availableGreetings.value;
+    }
+
+    try {
+        const response = await axios.get(route);
+        availableGreetings.value = [
+            { value: "disabled", label: "No greeting" },
+            ...(response.data || []),
+        ];
+        return availableGreetings.value;
+    } catch (error) {
+        emit("error", error);
+        availableGreetings.value = [{ value: "disabled", label: "No greeting" }];
+        return availableGreetings.value;
+    }
+};
+
+const getSelectedGreetingFileName = () => {
+    return form$.value?.data?.queue_greeting ?? null;
+};
+
+const hasPlayableGreeting = (form$) => {
+    const val = form$?.el$("queue_greeting")?.value ?? null;
+
+    return val !== "disabled" && val !== "0" && val !== "-1" && val !== null && val !== "";
+};
+
+const showNotification = (type, messages = null) => {
+    emit("success", type, messages);
+};
+
+const showNotificationFromChild = (type, messages = null) => {
+    if (typeof type === "string") {
+        showNotification(type, messages);
+        return;
+    }
+
+    showNotification("success", type);
+};
+
+const handleNewGreetingButtonClick = () => {
+    stopGreetingAudio();
+    showNewGreetingModal.value = true;
+};
+
+const playGreeting = () => {
+    const greeting = getSelectedGreetingFileName();
+
+    if (!greeting || !props.options?.routes?.serve_greeting_route) {
+        return;
+    }
+
+    if (currentAudio.value && currentAudioGreeting.value === greeting) {
+        if (currentAudio.value.paused) {
+            currentAudio.value.play();
+            isAudioPlaying.value = true;
+        }
+        return;
+    }
+
+    stopGreetingAudio();
+
+    const fileUrl = props.options.routes.serve_greeting_route.replace(":file_name", encodeURIComponent(greeting));
+
+    currentAudio.value = new Audio(fileUrl);
+    currentAudioGreeting.value = greeting;
+    isAudioPlaying.value = true;
+
+    currentAudio.value.play().catch(() => {
+        isAudioPlaying.value = false;
+        showNotification("error", { request: ["Audio playback failed"] });
+    });
+
+    currentAudio.value.addEventListener("ended", () => {
+        isAudioPlaying.value = false;
+    });
+
+    currentAudio.value.addEventListener("error", () => {
+        isAudioPlaying.value = false;
+        showNotification("error", { request: ["File not found or failed to load audio"] });
+    });
+};
+
+const pauseGreeting = () => {
+    if (currentAudio.value) {
+        currentAudio.value.pause();
+        isAudioPlaying.value = false;
+    }
+};
+
+const stopGreetingAudio = () => {
+    if (currentAudio.value) {
+        currentAudio.value.pause();
+        currentAudio.value.currentTime = 0;
+        currentAudio.value = null;
+    }
+
+    isAudioPlaying.value = false;
+    currentAudioGreeting.value = null;
+};
+
+const downloadGreeting = () => {
+    isDownloading.value = true;
+    const greeting = getSelectedGreetingFileName();
+
+    if (!greeting || !props.options?.routes?.serve_greeting_route) {
+        isDownloading.value = false;
+        return;
+    }
+
+    const downloadUrl = props.options.routes.serve_greeting_route.replace(":file_name", encodeURIComponent(greeting))
+        + `?download=true&v=${Date.now()}`;
+
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = greeting || "greeting.wav";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    isDownloading.value = false;
+};
+
+const editGreeting = () => {
+    const selectedId = getSelectedGreetingFileName();
+
+    if (!selectedId || !availableGreetings.value) {
+        return;
+    }
+
+    const selectedItem = availableGreetings.value.find(
+        (item) => String(item.value) === String(selectedId),
+    );
+
+    if (selectedItem) {
+        greetingLabel.value = selectedItem;
+        showEditModal.value = true;
+    }
+};
+
+const handleGreetingUpdate = async (updatedGreeting) => {
+    const newName = updatedGreeting?.label?.trim();
+
+    if (!newName) {
+        showNotification("error", { request: ["Greeting name cannot be empty."] });
+        return;
+    }
+
+    isGreetingUpdating.value = true;
+
+    try {
+        const response = await axios.post(props.options.routes.update_greeting_route, {
+            file_name: updatedGreeting.value,
+            new_name: updatedGreeting.label,
+        });
+
+        if (response.data.success) {
+            form$.value.el$("queue_greeting").clear();
+            await form$.value.el$("queue_greeting").updateItems();
+            form$.value.update({ queue_greeting: updatedGreeting.value });
+            showNotification("success", response.data.messages);
+        }
+    } catch (error) {
+        emit("error", error);
+    } finally {
+        isGreetingUpdating.value = false;
+        showEditModal.value = false;
+    }
+};
+
+const deleteGreeting = () => {
+    stopGreetingAudio();
+    showGreetingDeleteConfirmationModal.value = true;
+};
+
+const confirmGreetingDeleteAction = async () => {
+    const fileName = getSelectedGreetingFileName();
+
+    if (!fileName) {
+        showGreetingDeleteConfirmationModal.value = false;
+        return;
+    }
+
+    try {
+        const response = await axios.post(props.options.routes.delete_greeting_route, { file_name: fileName });
+
+        if (response.data.success) {
+            stopGreetingAudio();
+
+            if (availableGreetings.value) {
+                availableGreetings.value = availableGreetings.value.filter(
+                    (greeting) => String(greeting.value) !== String(fileName),
+                );
+            }
+
+            form$.value.update({ queue_greeting: "disabled" });
+            await form$.value.el$("queue_greeting").updateItems();
+            showNotification("success", response.data.messages);
+        }
+    } catch (error) {
+        emit("error", error);
+    } finally {
+        showGreetingDeleteConfirmationModal.value = false;
+    }
+};
+
+const handleNewGreetingAdded = async (greetingId) => {
+    await form$.value.el$("queue_greeting").updateItems();
+    form$.value.update({ queue_greeting: greetingId });
+    showNewGreetingModal.value = false;
+};
+
+const getRoutesForGreetingForm = computed(() => ({
+    ...props.options?.routes,
+    text_to_speech_route: props.options?.routes?.text_to_speech_route ?? null,
+    upload_greeting_route: props.options?.routes?.upload_greeting_route ?? null,
+}));
 
 const formatTarget = (name, value) => {
     return { [name]: value?.extension ?? null };

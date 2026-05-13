@@ -28,7 +28,7 @@ class StoreBasicQueueAgentRequest extends FormRequest
             ],
             'agent_password' => ['nullable', 'string', 'max:255'],
             'agent_contact' => ['required', 'string', 'max:1024'],
-            'agent_status' => ['nullable', 'in:Logged Out,Available,Available (On Demand),On Break'],
+            'agent_status' => ['nullable', 'in:Logged Out,Available,On Break'],
             'agent_no_answer_delay_time' => ['nullable', 'integer', 'min:0'],
             'agent_max_no_answer' => ['nullable', 'integer', 'min:0'],
             'agent_wrap_up_time' => ['nullable', 'integer', 'min:0'],

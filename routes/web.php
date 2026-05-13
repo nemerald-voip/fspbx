@@ -237,6 +237,7 @@ Route::group(['middleware' => 'auth'], function () {
     // Basic Queues
     Route::get('basic-queues', [BasicQueueController::class, 'index'])->name('basic-queues.index');
     Route::get('basic-queues/agent-status', [BasicQueueController::class, 'agentStatus'])->name('basic-queues.agents.status');
+    Route::get('active-basic-queues', [BasicQueueController::class, 'activeBasicQueues'])->name('active-basic-queues.index');
 
     // Conference Centers
     Route::get('conference-centers', [ConferenceCenterController::class, 'index'])->name('conference-centers.index');

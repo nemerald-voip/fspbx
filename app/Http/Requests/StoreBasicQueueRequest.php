@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Rules\UniqueExtension;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreBasicQueueRequest extends FormRequest
 {
@@ -18,6 +19,11 @@ class StoreBasicQueueRequest extends FormRequest
             'queue_name' => ['required', 'string', 'max:255'],
             'queue_extension' => ['required', 'string', 'max:255', new UniqueExtension($this->queueUuid())],
             'queue_strategy' => ['required', 'string', 'max:255'],
+            'queue_greeting' => [
+                'nullable',
+                Rule::exists('v_recordings', 'recording_filename')
+                    ->where('domain_uuid', session('domain_uuid')),
+            ],
             'queue_moh_sound' => ['nullable', 'string', 'max:1024'],
             'queue_max_wait_time' => ['nullable', 'integer', 'min:0'],
             'queue_max_wait_time_with_no_agent' => ['nullable', 'integer', 'min:0'],
@@ -58,6 +64,7 @@ class StoreBasicQueueRequest extends FormRequest
     {
         $this->merge([
             'queue_strategy' => $this->input('queue_strategy', 'ring-all'),
+            'queue_greeting' => $this->input('queue_greeting') === 'disabled' ? null : $this->input('queue_greeting'),
             'queue_moh_sound' => blank($this->input('queue_moh_sound')) ? 'local_stream://default' : $this->input('queue_moh_sound'),
             'queue_max_wait_time' => $this->input('queue_max_wait_time', 0),
             'queue_max_wait_time_with_no_agent' => $this->input('queue_max_wait_time_with_no_agent', 90),

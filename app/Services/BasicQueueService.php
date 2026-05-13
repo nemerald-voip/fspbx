@@ -11,6 +11,7 @@ use App\Models\Dialplans;
 use App\Models\FusionCache;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class BasicQueueService
@@ -31,6 +32,7 @@ class BasicQueueService
                 'dialplan_uuid' => $dialplanUuid,
                 'queue_name' => $validated['queue_name'],
                 'queue_extension' => $validated['queue_extension'],
+                'queue_greeting' => $validated['queue_greeting'] ?? '',
                 'queue_strategy' => $validated['queue_strategy'],
                 'queue_moh_sound' => $validated['queue_moh_sound'] ?? 'local_stream://default',
                 'queue_record_template' => $queue->queue_record_template ?: 'true',
@@ -47,13 +49,33 @@ class BasicQueueService
                 'queue_cid_prefix' => $this->blankToNull($validated['queue_cid_prefix'] ?? null),
                 'queue_timeout_action' => $this->buildQueueTimeoutAction($validated, session('domain_name')),
                 'queue_description' => $this->blankToNull($validated['queue_description'] ?? null),
-                $isNew ? 'insert_date' : 'update_date' => now(),
-                $isNew ? 'insert_user' : 'update_user' => session('user_uuid'),
-            ])->save();
+            ]);
 
-            $this->syncTiers($queue, $validated['tiers'] ?? []);
-            $this->saveDialplan($queue, $isNew);
+            $queueChanged = $isNew || $queue->isDirty();
+
+            if ($queueChanged) {
+                $queue->forceFill([
+                    $isNew ? 'insert_date' : 'update_date' => now(),
+                    $isNew ? 'insert_user' : 'update_user' => session('user_uuid'),
+                ])->save();
+            }
+
+            $tierSync = $this->syncTiers($queue, $validated['tiers'] ?? []);
+            if ($queueChanged) {
+                $this->saveDialplan($queue, $isNew);
+            }
             $this->clearCaches();
+
+            $reloadXml = ! (
+                ! $queueChanged
+                && $tierSync['removed']->isNotEmpty()
+                && ! $tierSync['added']
+                && ! $tierSync['updated']
+            );
+
+            $isNew
+                ? $this->loadRuntimeQueues(collect([$queue]))
+                : $this->reloadRuntimeQueues(collect([$queue]), $reloadXml);
 
             return $queue;
         });
@@ -95,6 +117,7 @@ class BasicQueueService
                 ]);
 
             $this->clearCaches();
+            $this->refreshRuntimeAgent($agent);
 
             return $agent;
         });
@@ -103,6 +126,8 @@ class BasicQueueService
     public function deleteQueues(Collection $queues): int
     {
         return DB::transaction(function () use ($queues) {
+            $this->unloadRuntimeQueues($queues);
+
             $queueUuids = $queues->pluck('call_center_queue_uuid');
             $dialplanUuids = $queues->pluck('dialplan_uuid')->filter();
 
@@ -136,6 +161,14 @@ class BasicQueueService
     {
         return DB::transaction(function () use ($agents) {
             $agentUuids = $agents->pluck('call_center_agent_uuid');
+            $tiers = CallCenterQueueAgents::query()
+                ->where('domain_uuid', session('domain_uuid'))
+                ->whereIn('call_center_agent_uuid', $agentUuids)
+                ->with(['queue.domain'])
+                ->get();
+
+            $this->deleteRuntimeTiers($tiers);
+            $this->deleteRuntimeAgents($agents);
 
             CallCenterQueueAgents::query()
                 ->where('domain_uuid', session('domain_uuid'))
@@ -153,11 +186,35 @@ class BasicQueueService
         });
     }
 
-    private function syncTiers(CallCenterQueues $queue, array $tiers): void
+    private function syncTiers(CallCenterQueues $queue, array $tiers): array
     {
         $incoming = collect($tiers)
             ->filter(fn ($tier) => ! empty($tier['call_center_agent_uuid']))
             ->values();
+
+        $existing = CallCenterQueueAgents::query()
+            ->where('domain_uuid', session('domain_uuid'))
+            ->where('call_center_queue_uuid', $queue->call_center_queue_uuid)
+            ->with(['queue.domain'])
+            ->get();
+        $existingAgentUuids = $existing->pluck('call_center_agent_uuid');
+        $incomingAgentUuids = $incoming->pluck('call_center_agent_uuid');
+        $removed = $existing
+            ->whereNotIn('call_center_agent_uuid', $incomingAgentUuids->all())
+            ->values();
+        $existingByAgent = $existing->keyBy('call_center_agent_uuid');
+        $updated = $incoming->contains(function ($tier) use ($existingByAgent) {
+            $existingTier = $existingByAgent->get($tier['call_center_agent_uuid']);
+
+            if (! $existingTier) {
+                return false;
+            }
+
+            return (string) ($tier['tier_level'] ?? 0) !== (string) $existingTier->tier_level
+                || (string) ($tier['tier_position'] ?? 0) !== (string) $existingTier->tier_position;
+        });
+
+        $this->deleteRuntimeTiers($removed, false);
 
         $agents = CallCenterAgents::query()
             ->where('domain_uuid', session('domain_uuid'))
@@ -183,13 +240,19 @@ class BasicQueueService
                 'call_center_queue_uuid' => $queue->call_center_queue_uuid,
                 'call_center_agent_uuid' => $agent->call_center_agent_uuid,
                 'agent_name' => $agent->agent_name,
-                'queue_name' => $queue->queue_name,
-                'tier_level' => (string) ($tier['tier_level'] ?? 1),
-                'tier_position' => (string) ($tier['tier_position'] ?? 1),
+                'queue_name' => $queue->queue_extension . '@' . session('domain_name'),
+                'tier_level' => (string) ($tier['tier_level'] ?? 0),
+                'tier_position' => (string) ($tier['tier_position'] ?? 0),
                 'insert_date' => now(),
                 'insert_user' => session('user_uuid'),
             ]);
         }
+
+        return [
+            'removed' => $removed,
+            'added' => $incomingAgentUuids->diff($existingAgentUuids)->isNotEmpty(),
+            'updated' => $updated,
+        ];
     }
 
     private function buildQueueTimeoutAction(array $validated, string $domainName): ?string
@@ -299,6 +362,13 @@ class BasicQueueService
             );
         }
 
+        if ($recordingPath = $this->queueGreetingPath($queue)) {
+            $lines[] = sprintf(
+                "\t\t" . '<action application="playback" data="%s"/>',
+                $this->xml($recordingPath)
+            );
+        }
+
         $lines[] = sprintf(
             "\t\t" . '<action application="callcenter" data="%s@%s"/>',
             $this->xml($queue->queue_extension),
@@ -324,7 +394,181 @@ class BasicQueueService
     {
         $this->writeCallCenterXml();
         app(DialplanService::class)->clearDialplanCache(session('domain_name'));
-        FusionCache::clear('configuration:callcenter.conf');
+        FusionCache::clear('dialplan:' . session('domain_name'));
+        FusionCache::clear('configuration:callcenter.conf*');
+
+        if (isset($_SESSION['destinations']['array'])) {
+            unset($_SESSION['destinations']['array']);
+        }
+    }
+
+    private function reloadRuntimeQueues(Collection $queues, bool $reloadXml = true): void
+    {
+        $queues = $this->runtimeQueues($queues);
+
+        if ($queues->isEmpty()) {
+            $this->reloadXml();
+            return;
+        }
+
+        $this->withEventSocket(function ($fp) use ($queues, $reloadXml) {
+            if ($reloadXml) {
+                event_socket_request($fp, 'api reloadxml');
+            }
+
+            foreach ($queues as $queue) {
+                event_socket_request($fp, sprintf(
+                    'bgapi callcenter_config queue reload %s@%s',
+                    $queue->queue_extension,
+                    $this->domainName($queue->domain_uuid, $queue->domain)
+                ));
+            }
+        });
+    }
+
+    private function loadRuntimeQueues(Collection $queues): void
+    {
+        $queues = $this->runtimeQueues($queues);
+
+        if ($queues->isEmpty()) {
+            $this->reloadXml();
+            return;
+        }
+
+        $this->withEventSocket(function ($fp) use ($queues) {
+            event_socket_request($fp, 'api reloadxml');
+
+            foreach ($queues as $queue) {
+                event_socket_request($fp, sprintf(
+                    'api callcenter_config queue load %s@%s',
+                    $queue->queue_extension,
+                    $this->domainName($queue->domain_uuid, $queue->domain)
+                ));
+            }
+        });
+    }
+
+    private function unloadRuntimeQueues(Collection $queues): void
+    {
+        $queues = $this->runtimeQueues($queues);
+
+        if ($queues->isEmpty()) {
+            return;
+        }
+
+        $this->withEventSocket(function ($fp) use ($queues) {
+            foreach ($queues as $queue) {
+                event_socket_request($fp, sprintf(
+                    'api callcenter_config queue unload %s@%s',
+                    $queue->queue_extension,
+                    $this->domainName($queue->domain_uuid, $queue->domain)
+                ));
+            }
+        });
+    }
+
+    private function refreshRuntimeAgent(CallCenterAgents $agent): void
+    {
+        if (blank($agent->call_center_agent_uuid)) {
+            return;
+        }
+
+        $this->withEventSocket(function ($fp) use ($agent) {
+            event_socket_request($fp, sprintf(
+                'bgapi callcenter_config agent add %s %s',
+                $agent->call_center_agent_uuid,
+                $agent->agent_type ?: 'callback'
+            ));
+            event_socket_request($fp, sprintf(
+                'bgapi callcenter_config agent reload %s',
+                $agent->call_center_agent_uuid
+            ));
+        });
+    }
+
+    private function deleteRuntimeAgents(Collection $agents): void
+    {
+        $agents = $agents
+            ->filter(fn ($agent) => $agent instanceof CallCenterAgents && filled($agent->call_center_agent_uuid))
+            ->unique('call_center_agent_uuid')
+            ->values();
+
+        if ($agents->isEmpty()) {
+            return;
+        }
+
+        $this->withEventSocket(function ($fp) use ($agents) {
+            foreach ($agents as $agent) {
+                event_socket_request($fp, sprintf(
+                    'api callcenter_config agent del %s',
+                    $agent->call_center_agent_uuid
+                ));
+            }
+        });
+    }
+
+    private function deleteRuntimeTiers(Collection $tiers, bool $reloadQueues = true): void
+    {
+        if ($tiers->isEmpty()) {
+            return;
+        }
+
+        $this->withEventSocket(function ($fp) use ($tiers, $reloadQueues) {
+            foreach ($tiers as $tier) {
+                if (! $tier->queue) {
+                    continue;
+                }
+
+                event_socket_request($fp, sprintf(
+                    'api callcenter_config tier del %s@%s %s',
+                    $tier->queue->queue_extension,
+                    $this->domainName($tier->queue->domain_uuid, $tier->queue->domain),
+                    $tier->call_center_agent_uuid
+                ));
+
+                if ($reloadQueues) {
+                    event_socket_request($fp, sprintf(
+                        'api callcenter_config queue reload %s@%s',
+                        $tier->queue->queue_extension,
+                        $this->domainName($tier->queue->domain_uuid, $tier->queue->domain)
+                    ));
+                }
+            }
+        });
+    }
+
+    private function reloadXml(): void
+    {
+        $this->withEventSocket(fn ($fp) => event_socket_request($fp, 'api reloadxml'));
+    }
+
+    private function runtimeQueues(Collection $queues): Collection
+    {
+        return $queues
+            ->filter(fn ($queue) => $queue instanceof CallCenterQueues && filled($queue->queue_extension))
+            ->each(fn (CallCenterQueues $queue) => $queue->loadMissing('domain'))
+            ->unique('call_center_queue_uuid')
+            ->values();
+    }
+
+    private function withEventSocket(callable $callback): void
+    {
+        try {
+            $fp = event_socket_create(
+                config('eventsocket.ip'),
+                config('eventsocket.port'),
+                config('eventsocket.password')
+            );
+
+            if (! $fp) {
+                return;
+            }
+
+            $callback($fp);
+            fclose($fp);
+        } catch (\Throwable $e) {
+            logger('BasicQueueService FreeSWITCH refresh failed: ' . $e->getMessage());
+        }
     }
 
     private function writeCallCenterXml(): void
@@ -335,8 +579,12 @@ class BasicQueueService
                 return;
             }
 
-            $template = public_path('app/switch/resources/conf/autoload_configs/callcenter.conf.xml.noload');
-            if (! is_readable($template)) {
+            $template = collect([
+                public_path('app/switch/resources/conf/autoload_configs/callcenter.conf.xml.noload'),
+                public_path('app/switch/resources/conf/autoload_configs/callcenter.conf.xml'),
+            ])->first(fn (string $path) => is_readable($path));
+
+            if (! $template || ! is_readable($template)) {
                 return;
             }
 
@@ -345,9 +593,13 @@ class BasicQueueService
                 return;
             }
 
-            $contents = str_replace('{v_queues}', $this->queueXml(), $contents);
-            $contents = str_replace('{v_agents}', $this->agentXml(), $contents);
-            $contents = str_replace('{v_tiers}', $this->tierXml(), $contents);
+            if (str_contains($contents, '{v_queues}')) {
+                $contents = str_replace('{v_queues}', $this->queueXml(), $contents);
+                $contents = str_replace('{v_agents}', $this->agentXml(), $contents);
+                $contents = str_replace('{v_tiers}', $this->tierXml(), $contents);
+            } else {
+                $contents = $this->callCenterXml();
+            }
 
             $target = rtrim($confDir, '/') . '/autoload_configs/callcenter.conf.xml';
             if (! is_dir(dirname($target))) {
@@ -360,6 +612,31 @@ class BasicQueueService
         }
     }
 
+    private function callCenterXml(): string
+    {
+        return implode("\n", [
+            '<configuration name="callcenter.conf" description="CallCenter">',
+            "\t<settings>",
+            "\t\t" . '<!--<param name="odbc-dsn" value="$${dsn}"/>-->',
+            "\t\t" . '<!--<param name="dbname" value="/usr/local/freeswitch/db/call_center.db"/>-->',
+            "\t</settings>",
+            "\t<queues>",
+            $this->queueXml(),
+            "\t</queues>",
+            "\t" . '<!-- WARNING: Configuration of XML Agents will be updated into the DB upon restart. -->',
+            "\t" . '<!-- WARNING: Configuration of XML Tiers will reset the level and position if those were supplied. -->',
+            "\t" . "<!-- WARNING: Agents and Tiers XML config shouldn't be used in a multi FS shared DB setup (Not currently supported anyway) -->",
+            "\t<agents>",
+            $this->agentXml(),
+            "\t</agents>",
+            "\t" . '<!-- If no level or position is provided, they will default to 1.  You should do this to keep db value on restart. -->',
+            "\t<tiers>",
+            $this->tierXml(),
+            "\t</tiers>",
+            '</configuration>',
+        ]);
+    }
+
     private function queueXml(): string
     {
         return CallCenterQueues::query()
@@ -368,11 +645,17 @@ class BasicQueueService
             ->get()
             ->map(function (CallCenterQueues $queue) {
                 $domainName = $this->domainName($queue->domain_uuid, $queue->domain);
-                $queueName = str_replace(' ', '_', (string) $queue->queue_name);
+                $queueLabel = str_replace(' ', '-', (string) $queue->queue_name);
                 $mohSound = $queue->queue_moh_sound ?: 'local_stream://default';
 
                 return implode("\n", [
-                    sprintf("\t\t<queue name=\"%s@%s\">", $this->xml($queueName), $this->xml($domainName)),
+                    sprintf(
+                        "\t\t<queue name=\"%s@%s\" label=\"%s@%s\">",
+                        $this->xml($queue->queue_extension),
+                        $this->xml($domainName),
+                        $this->xml($queueLabel),
+                        $this->xml($domainName)
+                    ),
                     sprintf("\t\t\t<param name=\"strategy\" value=\"%s\"/>", $this->xml($queue->queue_strategy ?: 'ring-all')),
                     sprintf("\t\t\t<param name=\"moh-sound\" value=\"%s\"/>", $this->xml($this->mohSound($mohSound))),
                     $queue->queue_record_template
@@ -407,7 +690,8 @@ class BasicQueueService
                 $domainName = $this->domainName($agent->domain_uuid, $agent->domain);
 
                 return sprintf(
-                    '<agent name="%s@%s" type="%s" contact="%s" status="%s" no-answer-delay-time="%s" max-no-answer="%s" wrap-up-time="%s" reject-delay-time="%s" busy-delay-time="%s"/>',
+                    '<agent name="%s" label="%s@%s" type="%s" contact="%s" status="%s" no-answer-delay-time="%s" max-no-answer="%s" wrap-up-time="%s" reject-delay-time="%s" busy-delay-time="%s"/>',
+                    $this->xml($agent->call_center_agent_uuid),
                     $this->xml($agent->agent_name),
                     $this->xml($domainName),
                     $this->xml($agent->agent_type ?: 'callback'),
@@ -426,20 +710,26 @@ class BasicQueueService
     private function tierXml(): string
     {
         return CallCenterQueueAgents::query()
-            ->with('domain:domain_uuid,domain_name')
+            ->with([
+                'domain:domain_uuid,domain_name',
+                'queue:call_center_queue_uuid,domain_uuid,queue_extension',
+            ])
             ->orderBy('queue_name')
             ->orderBy('tier_level')
             ->orderBy('tier_position')
             ->get()
             ->map(function (CallCenterQueueAgents $tier) {
+                $queue = $tier->queue;
                 $domainName = $this->domainName($tier->domain_uuid, $tier->domain);
+                $queueName = $queue?->queue_extension ?: $tier->queue_name;
+                $queueIdentifier = str_contains((string) $queueName, '@')
+                    ? (string) $queueName
+                    : $queueName . '@' . $domainName;
 
                 return sprintf(
-                    '<tier agent="%s@%s" queue="%s@%s" level="%s" position="%s"/>',
-                    $this->xml($tier->agent_name),
-                    $this->xml($domainName),
-                    $this->xml($tier->queue_name),
-                    $this->xml($domainName),
+                    '<tier agent="%s" queue="%s" level="%s" position="%s"/>',
+                    $this->xml($tier->call_center_agent_uuid),
+                    $this->xml($queueIdentifier),
                     $this->xml($tier->tier_level ?? '1'),
                     $this->xml($tier->tier_position ?? '1'),
                 );
@@ -472,6 +762,19 @@ class BasicQueueService
         $position = strrpos($contact, '}');
 
         return substr($contact, 0, $position) . ",call_timeout={$timeout}" . substr($contact, $position);
+    }
+
+    private function queueGreetingPath(CallCenterQueues $queue): ?string
+    {
+        if (blank($queue->queue_greeting)) {
+            return null;
+        }
+
+        $path = $this->domainName($queue->domain_uuid, $queue->domain) . '/' . $queue->queue_greeting;
+
+        return Storage::disk('recordings')->exists($path)
+            ? Storage::disk('recordings')->path($path)
+            : null;
     }
 
     private function domainName(?string $domainUuid, ?Domain $domain = null): string

@@ -28,15 +28,15 @@
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false"
-                                :default="defaultValues">
+                                :float-placeholders="false" :default="defaultValues">
                                 <template #empty>
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical">
                                                 <FormTab name="settings" label="Settings" :elements="[
+                                                    'agent_contact',
                                                     'agent_name',
                                                     'agent_type',
-                                                    'agent_contact',
                                                     'agent_status',
                                                     'agent_call_timeout',
                                                     'settings_submit',
@@ -57,15 +57,16 @@
 
                                         <div class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                                             <FormElements>
+                                                <SelectElement name="agent_contact" label="Contact" :items="contactOptions"
+                                                    :search="true" :native="false" :strict="false" allow-absent
+                                                    @change="handleAgentContactChange"
+                                                    :columns="{ sm: { container: 12 } }" />
+
                                                 <TextElement name="agent_name" label="Agent Name" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
 
                                                 <SelectElement name="agent_type" label="Type" :native="false"
                                                     :items="typeOptions" :columns="{ sm: { container: 6 } }" />
-
-                                                <SelectElement name="agent_contact" label="Contact" :items="contactOptions"
-                                                    :search="true" :native="false" :strict="false" allow-absent
-                                                    :columns="{ sm: { container: 12 } }" />
 
                                                 <SelectElement name="agent_status" label="Default Status" :native="false"
                                                     :items="statusOptions" :columns="{ sm: { container: 6 } }" />
@@ -141,7 +142,6 @@ const typeOptions = [
 const statusOptions = [
     { value: "Logged Out", label: "Logged Out" },
     { value: "Available", label: "Available" },
-    { value: "Available (On Demand)", label: "Available On Demand" },
     { value: "On Break", label: "On Break" },
 ];
 
@@ -162,6 +162,58 @@ const defaultValues = computed(() => ({
 }));
 
 const contactOptions = computed(() => props.options?.contact_options ?? []);
+
+function handleAgentContactChange(newValue, oldValue, el$) {
+    if (String(newValue ?? '') === String(oldValue ?? '')) {
+        return;
+    }
+
+    const extension = extensionFromAgentContact(newValue);
+    if (!extension) {
+        return;
+    }
+
+    const form = el$.form$;
+    const name = agentNameFromContact(newValue);
+
+    if (name) {
+        form.el$('agent_name')?.update(name);
+    }
+
+    form.el$('agent_id')?.update(extension);
+    form.el$('agent_password')?.update(extension);
+}
+
+function extensionFromAgentContact(value) {
+    const contact = typeof value === "object" && value !== null
+        ? (value.value ?? value.agent_contact ?? "")
+        : value;
+
+    const match = String(contact ?? "").match(/^user\/([^@]+)@/);
+    return match?.[1] ?? null;
+}
+
+function agentNameFromContact(value) {
+    const contact = typeof value === "object" && value !== null
+        ? (value.value ?? value.agent_contact ?? "")
+        : value;
+    const selectedContact = contactOptions.value.find(
+        (option) => String(option.value) === String(contact)
+    );
+
+    if (!selectedContact?.label) {
+        return null;
+    }
+
+    const extension = extensionFromAgentContact(contact);
+    const label = String(selectedContact.label);
+
+    if (extension && label.startsWith(`${extension} - `)) {
+        return label.slice(`${extension} - `.length).trim() || extension;
+    }
+
+    return label.trim() || null;
+}
 
 const submitForm = async (FormData, form$) => {
     const requestData = form$.requestData;
