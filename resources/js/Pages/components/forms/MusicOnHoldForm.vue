@@ -42,17 +42,7 @@
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
                                             <FormTabs view="vertical">
-                                                <FormTab name="settings" label="Settings" :elements="[
-                                                    'music_on_hold_uuid',
-                                                    'settings_header',
-                                                    'music_on_hold_name',
-                                                    'domain_uuid',
-                                                    'music_on_hold_channels',
-                                                    'music_on_hold_shuffle',
-                                                    'music_on_hold_path',
-                                                    'settings_button_container',
-                                                    'settings_submit',
-                                                ]" />
+                                                <FormTab name="settings" label="Settings" :elements="settingsElements" />
                                                 <FormTab name="advanced" label="Advanced" :elements="[
                                                     'advanced_header',
                                                     'music_on_hold_interval',
@@ -79,7 +69,7 @@
                                                 <SelectElement name="music_on_hold_channels" :items="channelOptions" label="Channels" :native="false" :floating="false" :columns="{ sm: { container: 6 } }" />
                                                 <ToggleElement name="music_on_hold_shuffle" text="Shuffle" true-value="true" false-value="false" :labels="{ on: 'On', off: 'Off' }" :columns="{ sm: { container: 6 } }" label="&nbsp;" />
 
-                                                <StaticElement name="music_on_hold_path" tag="div" :columns="{ container: 12 }">
+                                                <StaticElement v-if="canViewPath" name="music_on_hold_path" tag="div" :columns="{ container: 12 }">
                                                     <div class="rounded-md bg-gray-100 px-3 py-2">
                                                         <div class="text-xs font-medium uppercase tracking-wide text-gray-500">Generated path</div>
                                                         <div class="mt-1 break-all font-mono text-xs text-gray-700">{{ suggestedPath }}</div>
@@ -162,6 +152,18 @@ const defaultValues = computed(() => ({
 
 const domainOptions = computed(() => props.options?.domains ?? []);
 const canManageDomain = computed(() => Boolean(props.permissions?.manage_domain) && domainOptions.value.length > 0);
+const canViewPath = computed(() => Boolean(props.permissions?.view_path));
+const settingsElements = computed(() => [
+    'music_on_hold_uuid',
+    'settings_header',
+    'music_on_hold_name',
+    'domain_uuid',
+    'music_on_hold_channels',
+    'music_on_hold_shuffle',
+    ...(canViewPath.value ? ['music_on_hold_path'] : []),
+    'settings_button_container',
+    'settings_submit',
+]);
 const chimeOptions = computed(() => props.options?.chime_options ?? []);
 const channelOptions = [
     { label: "Mono", value: "1" },

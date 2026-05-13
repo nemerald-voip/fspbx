@@ -45,7 +45,7 @@ class MusicOnHoldController extends Controller
                 'destroy' => userCheckPermission('music_on_hold_delete'),
                 'reload' => userCheckPermission('music_on_hold_edit'),
                 'view_all' => userCheckPermission('music_on_hold_all'),
-                'manage_domain' => userCheckPermission('music_on_hold_domain'),
+                'manage_domain' => false,
                 'view_path' => userCheckPermission('music_on_hold_path'),
             ],
         ]);
@@ -114,7 +114,7 @@ class MusicOnHoldController extends Controller
             : new MusicOnHold();
 
         if (! $item->exists) {
-            $domainUuid = userCheckPermission('music_on_hold_domain') ? null : session('domain_uuid');
+            $domainUuid = session('domain_uuid');
 
             $item->forceFill([
                 'domain_uuid' => $domainUuid,
@@ -283,13 +283,7 @@ class MusicOnHoldController extends Controller
     private function manageableQuery(MusicOnHoldService $service)
     {
         return $service->scopedQuery()
-            ->where(function ($query) {
-                $query->where('domain_uuid', session('domain_uuid'));
-
-                if (userCheckPermission('music_on_hold_domain')) {
-                    $query->orWhereNull('domain_uuid');
-                }
-            });
+            ->where('domain_uuid', session('domain_uuid'));
     }
 
     private function canView(MusicOnHold $stream, MusicOnHoldService $service): bool
@@ -303,11 +297,7 @@ class MusicOnHoldController extends Controller
 
     private function canManage(MusicOnHold $stream): bool
     {
-        if ($stream->domain_uuid === session('domain_uuid')) {
-            return true;
-        }
-
-        return $stream->domain_uuid === null && userCheckPermission('music_on_hold_domain');
+        return $stream->domain_uuid === session('domain_uuid');
     }
 
     private function serializeStream(MusicOnHold $stream, MusicOnHoldService $service): array
@@ -327,13 +317,14 @@ class MusicOnHoldController extends Controller
             'music_on_hold_chime_list' => $stream->music_on_hold_chime_list,
             'music_on_hold_chime_freq' => $stream->music_on_hold_chime_freq,
             'music_on_hold_chime_max' => $stream->music_on_hold_chime_max,
+            'can_modify' => $this->canManage($stream),
             'files' => $service->fileRows($stream),
         ];
     }
 
     private function streamOptions(Request $request, MusicOnHoldService $service): array
     {
-        return $this->baseQuery($request, $service)
+        return QueryBuilder::for($this->manageableQuery($service))
             ->defaultSort('music_on_hold_name')
             ->get()
             ->map(fn (MusicOnHold $stream) => [

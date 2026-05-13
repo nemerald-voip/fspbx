@@ -32,7 +32,7 @@ class StoreMusicOnHoldRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->merge([
-            'domain_uuid' => userCheckPermission('music_on_hold_domain') ? $this->blankToNull($this->input('domain_uuid')) : session('domain_uuid'),
+            'domain_uuid' => session('domain_uuid'),
             'music_on_hold_path' => null,
             'music_on_hold_rate' => $this->blankToNull($this->input('music_on_hold_rate')),
             'music_on_hold_shuffle' => $this->input('music_on_hold_shuffle', 'false'),

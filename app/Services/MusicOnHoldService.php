@@ -66,7 +66,10 @@ class MusicOnHoldService
     public function upload(array $validated, UploadedFile $file): MusicOnHold
     {
         if (! empty($validated['music_on_hold_uuid'])) {
-            $stream = $this->scopedQuery()->whereKey($validated['music_on_hold_uuid'])->firstOrFail();
+            $stream = $this->scopedQuery()
+                ->where('domain_uuid', session('domain_uuid'))
+                ->whereKey($validated['music_on_hold_uuid'])
+                ->firstOrFail();
             $streams = $this->uploadTargetStreams($stream);
         } else {
             $streams = $this->findOrCreateUploadStreams($validated);
@@ -251,30 +254,24 @@ class MusicOnHoldService
 
     public function authorizedDomainUuid(?string $domainUuid): ?string
     {
-        if (! userCheckPermission('music_on_hold_domain')) {
-            return session('domain_uuid');
-        }
+        $sessionDomainUuid = session('domain_uuid');
 
         if ($domainUuid === null || $domainUuid === '') {
-            return null;
+            return $sessionDomainUuid;
         }
 
-        abort_unless(in_array($domainUuid, $this->accessibleDomainUuids(), true), 403);
+        abort_unless($domainUuid === $sessionDomainUuid, 403);
 
         return $domainUuid;
     }
 
     private function saveDomainUuid(MusicOnHold $musicOnHold, ?string $domainUuid): ?string
     {
-        if (userCheckPermission('music_on_hold_domain')) {
-            return $this->authorizedDomainUuid($domainUuid);
-        }
-
         if ($musicOnHold->exists) {
             return $musicOnHold->domain_uuid;
         }
 
-        return session('domain_uuid');
+        return $this->authorizedDomainUuid($domainUuid);
     }
 
     public function defaultStreamPath(?string $domainUuid, string $name): string
