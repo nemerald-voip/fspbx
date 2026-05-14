@@ -262,6 +262,12 @@ Route::group(['middleware' => 'auth'], function () {
     // Account settings
     Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings.index');
 
+    // Default settings
+    Route::get('default-settings', [\App\Http\Controllers\DefaultSettingsController::class, 'index'])->name('default-settings.index');
+
+    // Domain settings
+    Route::get('domains/{domain}/settings', [\App\Http\Controllers\DomainSettingsController::class, 'index'])->name('domains.settings.index');
+
     // Logs
     Route::get('logs', [LogsController::class, 'index'])->name('logs.index');
 
