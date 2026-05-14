@@ -35,13 +35,13 @@
                     Refresh
                 </button>
 
-                <button v-if="!showGlobal && page.props.auth.can.active_calls_view_global" type="button"
+                <button v-if="!showGlobal && permissions.view_global" type="button"
                     @click.prevent="handleShowGlobal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show global
                 </button>
 
-                <button v-if="showGlobal && page.props.auth.can.active_calls_view_global" type="button"
+                <button v-if="showGlobal && permissions.view_global" type="button"
                     @click.prevent="handleShowLocal()"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Show local
@@ -57,7 +57,8 @@
             <template #table-header>
                 <TableColumnHeader header="User"
                     class="flex whitespace-nowrap px-4 py-1.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
-                    <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems" @click.stop
+                    <input v-if="permissions.hangup" type="checkbox" v-model="selectPageItems"
+                        @change="handleSelectPageItems" @click.stop
                         class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                 </TableColumnHeader>
 
@@ -128,11 +129,12 @@
                         <ChevronDownIcon v-else-if="sortData.name === 'secure' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
                     </div>
                 </TableColumnHeader>
-                <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader v-if="permissions.hangup" header="Action"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
             </template>
 
-            <template v-if="selectPageItems" v-slot:current-selection>
-                <td colspan="10">
+            <template v-if="selectPageItems && permissions.hangup" v-slot:current-selection>
+                <td :colspan="detailColspan">
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
                         <button v-if="!selectAll && selectedItems.length != data.total"
@@ -155,8 +157,9 @@
                     <tr>
                         <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 ">
                             <div class="flex items-center">
-                                <input v-if="row.uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
-                                    :value="row.uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                                <input v-if="row.uuid && permissions.hangup" v-model="selectedItems" type="checkbox"
+                                    name="action_box[]" :value="row.uuid"
+                                    class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                                 <div class="ml-9">
                                     <ejs-tooltip :content="row.direction + ' call'" position='TopLeft'
                                         target="#destination_tooltip_target">
@@ -201,13 +204,14 @@
                         <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="row.secure" />
 
 
-                        <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                        <TableField v-if="permissions.hangup" class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap">
                                     <ejs-tooltip :content="'End Call'" position='TopCenter'
                                         target="#restart_tooltip_target">
                                         <div id="restart_tooltip_target">
-                                            <CallEndIcon @click="handleSingleItemActionRequest(row.uuid, 'end_call')"
+                                            <CallEndIcon v-if="permissions.hangup"
+                                                @click="handleSingleItemActionRequest(row.uuid, 'end_call')"
                                                 class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                         </div>
                                     </ejs-tooltip>
@@ -227,7 +231,7 @@
 
                     <!-- EXPANDED DETAILS ROW -->
                     <tr v-if="expandedCallUuid === row.uuid">
-                        <td :colspan="showGlobal ? 10 : 9" class="bg-gray-50 px-6 py-4">
+                        <td :colspan="detailColspan" class="bg-gray-50 px-6 py-4">
                             <div class="flex items-start justify-between gap-4">
                                 <div class="min-w-0">
                                     <div class="text-sm font-semibold text-gray-700 mb-2">Call Details</div>
@@ -301,7 +305,6 @@
 
 <script setup>
 import { computed, onMounted, ref, onUnmounted } from "vue";
-import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import { router } from "@inertiajs/vue3";
 import DataTable from "./components/general/DataTable.vue";
@@ -321,7 +324,6 @@ import PhoneLocalIcon from "./components/icons/PhoneLocalIcon.vue"
 import CallEndIcon from "./components/icons/CallEndIcon.vue"
 import Refresh from "./components/icons/Refresh.vue"
 
-const page = usePage()
 const loading = ref(false)
 const isRefreshing = ref(false)
 const selectAll = ref(false);
@@ -339,6 +341,7 @@ const expandedCallUuid = ref(null);
 const props = defineProps({
     data: Object,
     showGlobal: Boolean,
+    permissions: Object,
     routes: Object,
     // itemData: Object,
     // itemOptions: Object,
@@ -356,9 +359,15 @@ const sortData = ref({
 });
 
 const showGlobal = ref(props.showGlobal);
+const permissions = computed(() => props.permissions ?? {});
+const detailColspan = computed(() => (showGlobal.value ? 10 : 9) - (permissions.value.hangup ? 0 : 1));
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
+    if (!permissions.value.hangup) {
+        return [];
+    }
+
     const actions = [
         {
             id: 'bulk_end_call',
