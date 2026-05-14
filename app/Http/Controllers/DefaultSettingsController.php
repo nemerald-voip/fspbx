@@ -60,11 +60,13 @@ class DefaultSettingsController extends Controller
             return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
         }
 
+        $perPage = min(max((int) $request->input('per_page', 50), 1), 5000);
+
         $paginator = $this->settings->defaultSettings(
             $request->input('filter', []),
             $request->input('sort'),
             (int) $request->input('page', 1),
-            50
+            $perPage
         );
 
         return response()->json($paginator);
