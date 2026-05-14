@@ -169,7 +169,9 @@
             <template #footer>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    :page-size="pagination.per_page" :page-size-options="pagination.per_page_options"
+                    :show-page-size-selector="true"
+                    @pagination-change-page="renderRequestedPage" @page-size-change="handlePageSizeChange" />
             </template>
         </DataTable>
         <div class="px-4 sm:px-6 lg:px-8"></div>
@@ -235,6 +237,12 @@ const props = defineProps({
     data: Object,
     routes: Object,
     itemData: Object,
+    pagination: Object,
+});
+
+const pagination = ref({
+    per_page: props.pagination?.per_page ?? 50,
+    per_page_options: props.pagination?.per_page_options ?? [50, 100, 200, 500, 1000],
 });
 
 
@@ -346,6 +354,7 @@ const handleSearchButtonClick = () => {
     router.visit(props.routes.current_page, {
         data: {
             filterData: filterData._rawValue,
+            per_page: pagination.value.per_page,
         },
         preserveScroll: true,
         preserveState: true,
@@ -365,12 +374,19 @@ const handleFiltersReset = () => {
     handleSearchButtonClick();
 }
 
+const handlePageSizeChange = (perPage) => {
+    pagination.value.per_page = perPage;
+    handleClearSelection();
+    handleSearchButtonClick();
+};
+
 
 const renderRequestedPage = (url) => {
     loading.value = true;
     router.visit(url, {
         data: {
             filterData: filterData._rawValue,
+            per_page: pagination.value.per_page,
         },
         preserveScroll: true,
         preserveState: true,

@@ -18,7 +18,6 @@ use Spatie\QueryBuilder\QueryBuilder;
 
 class MusicOnHoldController extends Controller
 {
-    protected int $perPage = 50;
 
     public function index()
     {
@@ -27,6 +26,10 @@ class MusicOnHoldController extends Controller
         }
 
         return Inertia::render('MusicOnHold', [
+            'pagination' => [
+                'per_page' => fspbx_pagination_per_page(),
+                'per_page_options' => fspbx_pagination_options(),
+            ],
             'routes' => [
                 'current_page' => route('music-on-hold.index'),
                 'data_route' => route('music-on-hold.data'),
@@ -160,7 +163,7 @@ class MusicOnHoldController extends Controller
                 'music_on_hold_shuffle',
             ])
             ->defaultSort('music_on_hold_name')
-            ->paginate($this->perPage)
+            ->paginate(fspbx_pagination_per_page($request))
             ->appends($request->query());
 
         return response()->json(

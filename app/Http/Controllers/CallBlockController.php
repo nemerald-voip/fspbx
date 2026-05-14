@@ -17,8 +17,6 @@ use Spatie\QueryBuilder\QueryBuilder;
 
 class CallBlockController extends Controller
 {
-    protected int $perPage = 50;
-
     public function index()
     {
         if (! userCheckPermission('call_block_view')) {
@@ -41,6 +39,10 @@ class CallBlockController extends Controller
                 'destroy' => userCheckPermission('call_block_delete'),
                 'view_all_records' => userCheckPermission('call_block_view_all_records'),
                 'view_self_records' => userCheckPermission('call_block_view_self_records'),
+            ],
+            'pagination' => [
+                'per_page' => fspbx_pagination_per_page(),
+                'per_page_options' => fspbx_pagination_options(),
             ],
         ]);
     }
@@ -169,7 +171,7 @@ class CallBlockController extends Controller
                 'call_block_description',
             ])
             ->defaultSort('call_block_direction', 'call_block_number')
-            ->paginate($this->perPage);
+            ->paginate(fspbx_pagination_per_page($request));
     }
 
     public function selectAll(Request $request): JsonResponse
