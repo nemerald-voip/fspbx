@@ -160,7 +160,7 @@ class CreateFSPBXMenu extends Command
                     ['title' => 'Group Manager', 'link' => '/groups', 'groups' => ['superadmin']],
                     ['title' => 'Menu Manager', 'link' => '/core/menu/menu.php', 'groups' => ['superadmin']],
                     ['title' => 'Message Settings', 'link' => '/message-settings', 'groups' => ['superadmin']],
-                    ['title' => 'Modules', 'link' => '/app/modules/modules.php', 'groups' => ['superadmin']],
+                    ['title' => 'Modules', 'link' => '/modules', 'groups' => ['superadmin']],
                     ['title' => 'Pro Features', 'link' => '/pro-features', 'groups' => ['superadmin']],
                     ['title' => 'Provision Templates', 'link' => '/app/edit/index.php?dir=provision', 'groups' => ['superadmin']],
                     ['title' => 'Ringotel App Settings', 'link' => '/apps', 'groups' => ['superadmin', 'admin']],

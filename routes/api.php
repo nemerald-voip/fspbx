@@ -54,6 +54,7 @@ use App\Http\Controllers\RecordingsManagerController;
 use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\SipStatusController;
 use App\Http\Controllers\SpeedDialController;
+use App\Http\Controllers\SwitchModuleController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\TokenController;
@@ -389,6 +390,14 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/music-on-hold/upload', [MusicOnHoldController::class, 'upload'])->name('music-on-hold.upload');
     Route::post('/music-on-hold/files/delete', [MusicOnHoldController::class, 'deleteFile'])->name('music-on-hold.files.delete');
     Route::post('/music-on-hold/reload', [MusicOnHoldController::class, 'reload'])->name('music-on-hold.reload');
+
+    // Modules
+    Route::get('/modules/data', [SwitchModuleController::class, 'getData'])->name('modules.data');
+    Route::post('/modules/select-all', [SwitchModuleController::class, 'selectAll'])->name('modules.select.all');
+    Route::post('/modules/bulk-start', [SwitchModuleController::class, 'bulkStart'])->name('modules.bulk.start');
+    Route::post('/modules/bulk-stop', [SwitchModuleController::class, 'bulkStop'])->name('modules.bulk.stop');
+    Route::post('/modules/bulk-toggle', [SwitchModuleController::class, 'bulkToggle'])->name('modules.bulk.toggle');
+    Route::post('/modules/bulk-delete', [SwitchModuleController::class, 'bulkDelete'])->name('modules.bulk.delete');
 
     // Conferences
     Route::post('conferences', [ConferenceController::class, 'store'])->name('conferences.store');

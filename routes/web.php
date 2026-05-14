@@ -57,6 +57,7 @@ use App\Http\Controllers\SansayActiveCallsController;
 use App\Http\Controllers\SansayRegistrationsController;
 use App\Http\Controllers\SipStatusController;
 use App\Http\Controllers\SpeedDialController;
+use App\Http\Controllers\SwitchModuleController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\UserLogsController;
@@ -215,6 +216,9 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('music-on-hold/{music_on_hold}/files/{file}', [MusicOnHoldController::class, 'download'])
         ->where('file', '[^/]+')
         ->name('music-on-hold.files.download');
+
+    // Modules
+    Route::get('modules', [SwitchModuleController::class, 'index'])->name('modules.index');
 
     // SIP Status
     Route::get('sip-status', [SipStatusController::class, 'index'])->name('sip-status.index');
