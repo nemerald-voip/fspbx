@@ -10,16 +10,21 @@ use Illuminate\Support\Str;
 class InstallSchema
 {
     private const EXTENSIONS_APP_UUID = 'e68d9689-2769-e013-28fa-6214bf47fca3';
+    private const RING_GROUPS_APP_UUID = '1d61fb65-1eec-bc73-a6ee-a6203b4fe6f2';
 
     public function ensureSchemas(): void
     {
         $this->ensureExtensionsSchema();
+        $this->ensureRingGroupsSchema();
     }
 
     public function ensureMetadata(): void
     {
         $this->seedExtensionPermissions();
         $this->seedExtensionDefaultSettings();
+        $this->seedRingGroupPermissions();
+        $this->seedRingGroupDefaultSettings();
+        $this->applyRingGroupDefaults();
     }
 
     private function ensureExtensionsSchema(): void
@@ -98,6 +103,78 @@ class InstallSchema
                 $table->uuid('extension_user_uuid')->primary();
                 $table->uuid('domain_uuid')->nullable()->index();
                 $table->uuid('extension_uuid')->nullable()->index();
+                $table->uuid('user_uuid')->nullable()->index();
+                $table->timestampTz('insert_date')->nullable();
+                $table->uuid('insert_user')->nullable();
+                $table->timestampTz('update_date')->nullable();
+                $table->uuid('update_user')->nullable();
+            });
+        }
+    }
+
+    private function ensureRingGroupsSchema(): void
+    {
+        $this->ensureNaturalSortFunction();
+
+        if (!Schema::hasTable('v_ring_groups')) {
+            Schema::create('v_ring_groups', function (Blueprint $table) {
+                $table->uuid('domain_uuid')->nullable()->index();
+                $table->uuid('ring_group_uuid')->primary();
+                $table->text('ring_group_name')->nullable()->index();
+                $table->text('ring_group_extension')->nullable()->index();
+                $table->text('ring_group_greeting')->nullable();
+                $table->text('ring_group_context')->nullable()->index();
+                $table->decimal('ring_group_call_timeout', 20, 0)->nullable();
+                $table->text('ring_group_forward_destination')->nullable();
+                $table->text('ring_group_forward_enabled')->nullable();
+                $table->text('ring_group_caller_id_name')->nullable();
+                $table->text('ring_group_caller_id_number')->nullable();
+                $table->text('ring_group_cid_name_prefix')->nullable();
+                $table->text('ring_group_cid_number_prefix')->nullable();
+                $table->text('ring_group_strategy')->nullable()->index();
+                $table->text('ring_group_timeout_app')->nullable();
+                $table->text('ring_group_timeout_data')->nullable();
+                $table->text('ring_group_distinctive_ring')->nullable();
+                $table->text('ring_group_ringback')->nullable();
+                $table->text('ring_group_call_forward_enabled')->nullable();
+                $table->text('ring_group_follow_me_enabled')->nullable();
+                $table->text('ring_group_missed_call_app')->nullable();
+                $table->text('ring_group_missed_call_data')->nullable();
+                $table->text('ring_group_enabled')->nullable();
+                $table->text('ring_group_description')->nullable()->index();
+                $table->uuid('dialplan_uuid')->nullable()->index();
+                $table->text('ring_group_forward_toll_allow')->nullable();
+                $table->timestampTz('insert_date')->nullable();
+                $table->uuid('insert_user')->nullable();
+                $table->timestampTz('update_date')->nullable();
+                $table->uuid('update_user')->nullable();
+
+                $table->index(['domain_uuid', 'ring_group_extension']);
+            });
+        }
+
+        if (!Schema::hasTable('v_ring_group_destinations')) {
+            Schema::create('v_ring_group_destinations', function (Blueprint $table) {
+                $table->uuid('ring_group_destination_uuid')->primary();
+                $table->uuid('domain_uuid')->nullable()->index();
+                $table->uuid('ring_group_uuid')->nullable()->index();
+                $table->text('destination_number')->nullable()->index();
+                $table->decimal('destination_delay', 20, 0)->nullable();
+                $table->decimal('destination_timeout', 20, 0)->nullable();
+                $table->boolean('destination_enabled')->nullable();
+                $table->decimal('destination_prompt', 20, 0)->nullable();
+                $table->timestampTz('insert_date')->nullable();
+                $table->uuid('insert_user')->nullable();
+                $table->timestampTz('update_date')->nullable();
+                $table->uuid('update_user')->nullable();
+            });
+        }
+
+        if (!Schema::hasTable('v_ring_group_users')) {
+            Schema::create('v_ring_group_users', function (Blueprint $table) {
+                $table->uuid('ring_group_user_uuid')->primary();
+                $table->uuid('domain_uuid')->nullable()->index();
+                $table->uuid('ring_group_uuid')->nullable()->index();
                 $table->uuid('user_uuid')->nullable()->index();
                 $table->timestampTz('insert_date')->nullable();
                 $table->uuid('insert_user')->nullable();
@@ -243,6 +320,137 @@ SQL);
         }
     }
 
+    private function seedRingGroupPermissions(): void
+    {
+        if (!Schema::hasTable('v_permissions')) {
+            return;
+        }
+
+        $permissions = $this->ringGroupPermissions();
+        $permissionNames = array_keys($permissions);
+        $now = now();
+
+        $existingPermissions = DB::table('v_permissions')
+            ->whereIn('permission_name', $permissionNames)
+            ->pluck('permission_name')
+            ->all();
+
+        $permissionRows = [];
+        foreach ($permissionNames as $permissionName) {
+            if (in_array($permissionName, $existingPermissions, true)) {
+                continue;
+            }
+
+            $row = [
+                'permission_uuid' => (string) Str::uuid(),
+                'permission_name' => $permissionName,
+                'application_name' => 'Ring Groups',
+                'insert_date' => $now,
+            ];
+
+            if (Schema::hasColumn('v_permissions', 'application_uuid')) {
+                $row['application_uuid'] = self::RING_GROUPS_APP_UUID;
+            }
+
+            $permissionRows[] = $row;
+        }
+
+        if ($permissionRows !== []) {
+            DB::table('v_permissions')->insert($permissionRows);
+        }
+
+        if (!Schema::hasTable('v_group_permissions') || !Schema::hasTable('v_groups')) {
+            return;
+        }
+
+        $groups = DB::table('v_groups')
+            ->whereIn('group_name', ['superadmin', 'admin', 'user'])
+            ->pluck('group_uuid', 'group_name');
+
+        if ($groups->isEmpty()) {
+            return;
+        }
+
+        $existingGroupPermissions = DB::table('v_group_permissions')
+            ->whereIn('group_uuid', $groups->values()->all())
+            ->whereIn('permission_name', $permissionNames)
+            ->get(['group_uuid', 'permission_name'])
+            ->mapWithKeys(fn ($row) => [$row->group_uuid . '|' . $row->permission_name => true]);
+
+        $groupPermissionRows = [];
+        foreach ($permissions as $permissionName => $groupNames) {
+            foreach ($groupNames as $groupName) {
+                $groupUuid = $groups[$groupName] ?? null;
+                if (!$groupUuid || $existingGroupPermissions->has($groupUuid . '|' . $permissionName)) {
+                    continue;
+                }
+
+                $row = [
+                    'group_permission_uuid' => (string) Str::uuid(),
+                    'group_uuid' => $groupUuid,
+                    'group_name' => $groupName,
+                    'permission_name' => $permissionName,
+                    'permission_protected' => 'false',
+                    'permission_assigned' => 'true',
+                    'insert_date' => $now,
+                ];
+
+                if (Schema::hasColumn('v_group_permissions', 'domain_uuid')) {
+                    $row['domain_uuid'] = null;
+                }
+
+                $groupPermissionRows[] = $row;
+            }
+        }
+
+        if ($groupPermissionRows !== []) {
+            DB::table('v_group_permissions')->insert($groupPermissionRows);
+        }
+    }
+
+    private function seedRingGroupDefaultSettings(): void
+    {
+        if (!Schema::hasTable('v_default_settings')) {
+            return;
+        }
+
+        foreach ($this->ringGroupDefaultSettings() as $setting) {
+            $exists = DB::table('v_default_settings')
+                ->where('default_setting_category', $setting['default_setting_category'])
+                ->where('default_setting_subcategory', $setting['default_setting_subcategory'])
+                ->where('default_setting_name', $setting['default_setting_name'])
+                ->exists();
+
+            if ($exists) {
+                continue;
+            }
+
+            $row = array_merge($setting, ['insert_date' => now()]);
+
+            if (Schema::hasColumn('v_default_settings', 'app_uuid')) {
+                $row['app_uuid'] = self::RING_GROUPS_APP_UUID;
+            }
+
+            DB::table('v_default_settings')->insert($row);
+        }
+    }
+
+    private function applyRingGroupDefaults(): void
+    {
+        if (Schema::hasTable('v_ring_groups') && Schema::hasTable('v_domains')) {
+            DB::table('v_ring_groups')
+                ->join('v_domains', 'v_ring_groups.domain_uuid', '=', 'v_domains.domain_uuid')
+                ->whereNull('v_ring_groups.ring_group_context')
+                ->update(['ring_group_context' => DB::raw('v_domains.domain_name')]);
+        }
+
+        if (Schema::hasTable('v_ring_group_destinations')) {
+            DB::table('v_ring_group_destinations')
+                ->whereNull('destination_enabled')
+                ->update(['destination_enabled' => true]);
+        }
+    }
+
     private function extensionPermissions(): array
     {
         return [
@@ -293,6 +501,36 @@ SQL);
             'extension_call_group' => ['superadmin', 'admin', 'user'],
             'extension_hold_music' => ['superadmin', 'admin', 'user'],
             'extension_type' => ['superadmin', 'admin', 'user'],
+        ];
+    }
+
+    private function ringGroupPermissions(): array
+    {
+        return [
+            'ring_group_view' => ['superadmin', 'admin', 'user'],
+            'ring_group_add' => ['superadmin', 'admin'],
+            'ring_group_edit' => ['superadmin', 'admin'],
+            'ring_group_delete' => ['superadmin', 'admin'],
+            'ring_group_forward' => ['superadmin', 'admin'],
+            'ring_group_prompt' => ['superadmin', 'admin'],
+            'ring_group_destination_view' => ['superadmin', 'admin'],
+            'ring_group_destination_add' => ['superadmin', 'admin'],
+            'ring_group_destination_edit' => ['superadmin', 'admin'],
+            'ring_group_destination_delete' => ['superadmin', 'admin'],
+            'ring_group_user_view' => ['superadmin', 'admin'],
+            'ring_group_user_add' => ['superadmin', 'admin'],
+            'ring_group_user_edit' => ['superadmin', 'admin'],
+            'ring_group_user_delete' => ['superadmin', 'admin'],
+            'ring_group_missed_call' => ['superadmin', 'admin'],
+            'ring_group_forward_toll_allow' => ['superadmin', 'admin'],
+            'ring_group_caller_id_name' => ['superadmin'],
+            'ring_group_caller_id_number' => ['superadmin'],
+            'ring_group_cid_name_prefix' => [],
+            'ring_group_cid_number_prefix' => [],
+            'ring_group_context' => ['superadmin'],
+            'ring_group_domain' => ['superadmin', 'admin'],
+            'ring_group_all' => ['superadmin'],
+            'ring_group_destinations' => ['superadmin', 'admin'],
         ];
     }
 
@@ -424,6 +662,102 @@ SQL);
                 'default_setting_value' => '0',
                 'default_setting_enabled' => 'true',
                 'default_setting_description' => '',
+            ],
+        ];
+    }
+
+    private function ringGroupDefaultSettings(): array
+    {
+        return [
+            [
+                'default_setting_uuid' => '745d8fdc-57bc-4f43-97d7-508fda8f70a8',
+                'default_setting_category' => 'ring_group',
+                'default_setting_subcategory' => 'destination_add_rows',
+                'default_setting_name' => 'numeric',
+                'default_setting_value' => '5',
+                'default_setting_enabled' => 'true',
+                'default_setting_description' => '',
+            ],
+            [
+                'default_setting_uuid' => 'ddf306c9-6f58-40f7-910e-2f27dc33fa57',
+                'default_setting_category' => 'ring_group',
+                'default_setting_subcategory' => 'destination_edit_rows',
+                'default_setting_name' => 'numeric',
+                'default_setting_value' => '1',
+                'default_setting_enabled' => 'true',
+                'default_setting_description' => '',
+            ],
+            [
+                'default_setting_uuid' => '9917d8e3-1c3c-4771-b2c6-e931c448d6e0',
+                'default_setting_category' => 'ring_group',
+                'default_setting_subcategory' => 'destination_delay_max',
+                'default_setting_name' => 'numeric',
+                'default_setting_value' => '999',
+                'default_setting_enabled' => 'true',
+                'default_setting_description' => '',
+            ],
+            [
+                'default_setting_uuid' => 'c54fc772-7aa5-40de-8da8-39e0e707658e',
+                'default_setting_category' => 'ring_group',
+                'default_setting_subcategory' => 'destination_timeout_max',
+                'default_setting_name' => 'numeric',
+                'default_setting_value' => '999',
+                'default_setting_enabled' => 'true',
+                'default_setting_description' => '',
+            ],
+            [
+                'default_setting_uuid' => 'de655030-ae71-4b53-8068-5cf0b14cf635',
+                'default_setting_category' => 'limit',
+                'default_setting_subcategory' => 'ring_groups',
+                'default_setting_name' => 'numeric',
+                'default_setting_value' => '3',
+                'default_setting_enabled' => 'false',
+                'default_setting_description' => '',
+            ],
+            [
+                'default_setting_uuid' => '79aec8c7-c9ae-48d6-b343-4359f4f867c9',
+                'default_setting_category' => 'dashboard',
+                'default_setting_subcategory' => 'ring_group_forward_chart_color_forwarding',
+                'default_setting_name' => 'text',
+                'default_setting_value' => '#ea4c46',
+                'default_setting_enabled' => 'true',
+                'default_setting_description' => '',
+            ],
+            [
+                'default_setting_uuid' => '3b23cd36-b1c1-45fd-a533-8d9604dcb46a',
+                'default_setting_category' => 'dashboard',
+                'default_setting_subcategory' => 'ring_group_forward_chart_color_active',
+                'default_setting_name' => 'text',
+                'default_setting_value' => '#d4d4d4',
+                'default_setting_enabled' => 'true',
+                'default_setting_description' => '',
+            ],
+            [
+                'default_setting_uuid' => 'abc10faf-7277-40cd-a7b3-0df4ea6c6c2b',
+                'default_setting_category' => 'dashboard',
+                'default_setting_subcategory' => 'ring_group_forward_chart_border_color',
+                'default_setting_name' => 'text',
+                'default_setting_value' => 'rgba(0,0,0,0)',
+                'default_setting_enabled' => 'true',
+                'default_setting_description' => '',
+            ],
+            [
+                'default_setting_uuid' => '506d4482-dee8-4047-9e1c-4375c9a521bb',
+                'default_setting_category' => 'dashboard',
+                'default_setting_subcategory' => 'ring_group_forward_chart_border_width',
+                'default_setting_name' => 'text',
+                'default_setting_value' => '0',
+                'default_setting_enabled' => 'true',
+                'default_setting_description' => '',
+            ],
+            [
+                'default_setting_uuid' => '88297698-339d-4971-8019-3f7095ec1f33',
+                'default_setting_category' => 'ring_group',
+                'default_setting_subcategory' => 'destination_range_enabled',
+                'default_setting_name' => 'boolean',
+                'default_setting_value' => 'true',
+                'default_setting_enabled' => 'false',
+                'default_setting_description' => 'Enable or disable the feature to add a range of extensions.',
             ],
         ];
     }
