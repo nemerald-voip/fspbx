@@ -11,11 +11,13 @@ class InstallSchema
 {
     private const EXTENSIONS_APP_UUID = 'e68d9689-2769-e013-28fa-6214bf47fca3';
     private const RING_GROUPS_APP_UUID = '1d61fb65-1eec-bc73-a6ee-a6203b4fe6f2';
+    private const IVR_MENUS_APP_UUID = 'a5788e9b-58bc-bd1b-df59-fff5d51253ab';
 
     public function ensureSchemas(): void
     {
         $this->ensureExtensionsSchema();
         $this->ensureRingGroupsSchema();
+        $this->ensureIvrMenusSchema();
     }
 
     public function ensureMetadata(): void
@@ -24,7 +26,8 @@ class InstallSchema
         $this->seedExtensionDefaultSettings();
         $this->seedRingGroupPermissions();
         $this->seedRingGroupDefaultSettings();
-        $this->applyRingGroupDefaults();
+        $this->seedIvrMenuPermissions();
+        $this->seedIvrMenuDefaultSettings();
     }
 
     private function ensureExtensionsSchema(): void
@@ -184,6 +187,72 @@ class InstallSchema
         }
     }
 
+    private function ensureIvrMenusSchema(): void
+    {
+        $this->ensureNaturalSortFunction();
+
+        if (!Schema::hasTable('v_ivr_menus')) {
+            Schema::create('v_ivr_menus', function (Blueprint $table) {
+                $table->uuid('ivr_menu_uuid')->primary();
+                $table->uuid('domain_uuid')->nullable()->index();
+                $table->uuid('dialplan_uuid')->nullable()->index();
+                $table->text('ivr_menu_name')->nullable()->index();
+                $table->text('ivr_menu_extension')->nullable()->index();
+                $table->uuid('ivr_menu_parent_uuid')->nullable()->index();
+                $table->text('ivr_menu_language')->nullable();
+                $table->text('ivr_menu_dialect')->nullable();
+                $table->text('ivr_menu_voice')->nullable();
+                $table->text('ivr_menu_greet_long')->nullable();
+                $table->text('ivr_menu_greet_short')->nullable();
+                $table->text('ivr_menu_invalid_sound')->nullable();
+                $table->text('ivr_menu_exit_sound')->nullable();
+                $table->text('ivr_menu_pin_number')->nullable();
+                $table->text('ivr_menu_confirm_macro')->nullable();
+                $table->text('ivr_menu_confirm_key')->nullable();
+                $table->text('ivr_menu_tts_engine')->nullable();
+                $table->text('ivr_menu_tts_voice')->nullable();
+                $table->decimal('ivr_menu_confirm_attempts', 20, 0)->nullable();
+                $table->decimal('ivr_menu_timeout', 20, 0)->nullable();
+                $table->text('ivr_menu_exit_app')->nullable();
+                $table->text('ivr_menu_exit_data')->nullable();
+                $table->decimal('ivr_menu_inter_digit_timeout', 20, 0)->nullable();
+                $table->decimal('ivr_menu_max_failures', 20, 0)->nullable();
+                $table->decimal('ivr_menu_max_timeouts', 20, 0)->nullable();
+                $table->decimal('ivr_menu_digit_len', 20, 0)->nullable();
+                $table->text('ivr_menu_direct_dial')->nullable();
+                $table->text('ivr_menu_ringback')->nullable();
+                $table->text('ivr_menu_cid_prefix')->nullable();
+                $table->text('ivr_menu_context')->nullable()->index();
+                $table->text('ivr_menu_enabled')->nullable();
+                $table->text('ivr_menu_description')->nullable()->index();
+                $table->timestampTz('insert_date')->nullable();
+                $table->uuid('insert_user')->nullable();
+                $table->timestampTz('update_date')->nullable();
+                $table->uuid('update_user')->nullable();
+
+                $table->index(['domain_uuid', 'ivr_menu_extension']);
+            });
+        }
+
+        if (!Schema::hasTable('v_ivr_menu_options')) {
+            Schema::create('v_ivr_menu_options', function (Blueprint $table) {
+                $table->uuid('ivr_menu_option_uuid')->primary();
+                $table->uuid('ivr_menu_uuid')->nullable()->index();
+                $table->uuid('domain_uuid')->nullable()->index();
+                $table->text('ivr_menu_option_digits')->nullable()->index();
+                $table->text('ivr_menu_option_action')->nullable();
+                $table->text('ivr_menu_option_param')->nullable();
+                $table->decimal('ivr_menu_option_order', 20, 0)->nullable();
+                $table->text('ivr_menu_option_description')->nullable();
+                $table->boolean('ivr_menu_option_enabled')->nullable();
+                $table->timestampTz('insert_date')->nullable();
+                $table->uuid('insert_user')->nullable();
+                $table->timestampTz('update_date')->nullable();
+                $table->uuid('update_user')->nullable();
+            });
+        }
+    }
+
     private function ensureNaturalSortFunction(): void
     {
         if (DB::connection()->getDriverName() !== 'pgsql') {
@@ -207,126 +276,40 @@ SQL);
 
     private function seedExtensionPermissions(): void
     {
-        if (!Schema::hasTable('v_permissions')) {
-            return;
-        }
-
-        $permissions = $this->extensionPermissions();
-        $permissionNames = array_keys($permissions);
-        $now = now();
-
-        $existingPermissions = DB::table('v_permissions')
-            ->whereIn('permission_name', $permissionNames)
-            ->pluck('permission_name')
-            ->all();
-
-        $permissionRows = [];
-        foreach ($permissionNames as $permissionName) {
-            if (in_array($permissionName, $existingPermissions, true)) {
-                continue;
-            }
-
-            $row = [
-                'permission_uuid' => (string) Str::uuid(),
-                'permission_name' => $permissionName,
-                'application_name' => 'Extensions',
-                'insert_date' => $now,
-            ];
-
-            if (Schema::hasColumn('v_permissions', 'application_uuid')) {
-                $row['application_uuid'] = self::EXTENSIONS_APP_UUID;
-            }
-
-            $permissionRows[] = $row;
-        }
-
-        if ($permissionRows !== []) {
-            DB::table('v_permissions')->insert($permissionRows);
-        }
-
-        if (!Schema::hasTable('v_group_permissions') || !Schema::hasTable('v_groups')) {
-            return;
-        }
-
-        $groups = DB::table('v_groups')
-            ->whereIn('group_name', ['superadmin', 'admin', 'user'])
-            ->pluck('group_uuid', 'group_name');
-
-        if ($groups->isEmpty()) {
-            return;
-        }
-
-        $existingGroupPermissions = DB::table('v_group_permissions')
-            ->whereIn('group_uuid', $groups->values()->all())
-            ->whereIn('permission_name', $permissionNames)
-            ->get(['group_uuid', 'permission_name'])
-            ->mapWithKeys(fn ($row) => [$row->group_uuid . '|' . $row->permission_name => true]);
-
-        $groupPermissionRows = [];
-        foreach ($permissions as $permissionName => $groupNames) {
-            foreach ($groupNames as $groupName) {
-                $groupUuid = $groups[$groupName] ?? null;
-                if (!$groupUuid || $existingGroupPermissions->has($groupUuid . '|' . $permissionName)) {
-                    continue;
-                }
-
-                $row = [
-                    'group_permission_uuid' => (string) Str::uuid(),
-                    'group_uuid' => $groupUuid,
-                    'group_name' => $groupName,
-                    'permission_name' => $permissionName,
-                    'permission_protected' => 'false',
-                    'permission_assigned' => 'true',
-                    'insert_date' => $now,
-                ];
-
-                if (Schema::hasColumn('v_group_permissions', 'domain_uuid')) {
-                    $row['domain_uuid'] = null;
-                }
-
-                $groupPermissionRows[] = $row;
-            }
-        }
-
-        if ($groupPermissionRows !== []) {
-            DB::table('v_group_permissions')->insert($groupPermissionRows);
-        }
+        $this->seedPermissions($this->extensionPermissions(), 'Extensions', self::EXTENSIONS_APP_UUID);
     }
 
     private function seedExtensionDefaultSettings(): void
     {
-        if (!Schema::hasTable('v_default_settings')) {
-            return;
-        }
-
-        foreach ($this->extensionDefaultSettings() as $setting) {
-            $exists = DB::table('v_default_settings')
-                ->where('default_setting_category', $setting['default_setting_category'])
-                ->where('default_setting_subcategory', $setting['default_setting_subcategory'])
-                ->where('default_setting_name', $setting['default_setting_name'])
-                ->exists();
-
-            if ($exists) {
-                continue;
-            }
-
-            $row = array_merge($setting, ['insert_date' => now()]);
-
-            if (Schema::hasColumn('v_default_settings', 'app_uuid')) {
-                $row['app_uuid'] = self::EXTENSIONS_APP_UUID;
-            }
-
-            DB::table('v_default_settings')->insert($row);
-        }
+        $this->seedDefaultSettings($this->extensionDefaultSettings(), self::EXTENSIONS_APP_UUID);
     }
 
     private function seedRingGroupPermissions(): void
+    {
+        $this->seedPermissions($this->ringGroupPermissions(), 'Ring Groups', self::RING_GROUPS_APP_UUID);
+    }
+
+    private function seedRingGroupDefaultSettings(): void
+    {
+        $this->seedDefaultSettings($this->ringGroupDefaultSettings(), self::RING_GROUPS_APP_UUID);
+    }
+
+    private function seedIvrMenuPermissions(): void
+    {
+        $this->seedPermissions($this->ivrMenuPermissions(), 'IVR Menus', self::IVR_MENUS_APP_UUID);
+    }
+
+    private function seedIvrMenuDefaultSettings(): void
+    {
+        $this->seedDefaultSettings($this->ivrMenuDefaultSettings(), self::IVR_MENUS_APP_UUID);
+    }
+
+    private function seedPermissions(array $permissions, string $applicationName, string $appUuid): void
     {
         if (!Schema::hasTable('v_permissions')) {
             return;
         }
 
-        $permissions = $this->ringGroupPermissions();
         $permissionNames = array_keys($permissions);
         $now = now();
 
@@ -344,12 +327,12 @@ SQL);
             $row = [
                 'permission_uuid' => (string) Str::uuid(),
                 'permission_name' => $permissionName,
-                'application_name' => 'Ring Groups',
+                'application_name' => $applicationName,
                 'insert_date' => $now,
             ];
 
             if (Schema::hasColumn('v_permissions', 'application_uuid')) {
-                $row['application_uuid'] = self::RING_GROUPS_APP_UUID;
+                $row['application_uuid'] = $appUuid;
             }
 
             $permissionRows[] = $row;
@@ -408,13 +391,13 @@ SQL);
         }
     }
 
-    private function seedRingGroupDefaultSettings(): void
+    private function seedDefaultSettings(array $settings, string $appUuid): void
     {
         if (!Schema::hasTable('v_default_settings')) {
             return;
         }
 
-        foreach ($this->ringGroupDefaultSettings() as $setting) {
+        foreach ($settings as $setting) {
             $exists = DB::table('v_default_settings')
                 ->where('default_setting_category', $setting['default_setting_category'])
                 ->where('default_setting_subcategory', $setting['default_setting_subcategory'])
@@ -428,26 +411,10 @@ SQL);
             $row = array_merge($setting, ['insert_date' => now()]);
 
             if (Schema::hasColumn('v_default_settings', 'app_uuid')) {
-                $row['app_uuid'] = self::RING_GROUPS_APP_UUID;
+                $row['app_uuid'] = $appUuid;
             }
 
             DB::table('v_default_settings')->insert($row);
-        }
-    }
-
-    private function applyRingGroupDefaults(): void
-    {
-        if (Schema::hasTable('v_ring_groups') && Schema::hasTable('v_domains')) {
-            DB::table('v_ring_groups')
-                ->join('v_domains', 'v_ring_groups.domain_uuid', '=', 'v_domains.domain_uuid')
-                ->whereNull('v_ring_groups.ring_group_context')
-                ->update(['ring_group_context' => DB::raw('v_domains.domain_name')]);
-        }
-
-        if (Schema::hasTable('v_ring_group_destinations')) {
-            DB::table('v_ring_group_destinations')
-                ->whereNull('destination_enabled')
-                ->update(['destination_enabled' => true]);
         }
     }
 
@@ -531,6 +498,26 @@ SQL);
             'ring_group_domain' => ['superadmin', 'admin'],
             'ring_group_all' => ['superadmin'],
             'ring_group_destinations' => ['superadmin', 'admin'],
+        ];
+    }
+
+    private function ivrMenuPermissions(): array
+    {
+        return [
+            'ivr_menu_view' => ['admin', 'superadmin'],
+            'ivr_menu_add' => ['admin', 'superadmin'],
+            'ivr_menu_edit' => ['admin', 'superadmin'],
+            'ivr_menu_delete' => ['admin', 'superadmin'],
+            'ivr_menu_all' => ['superadmin'],
+            'ivr_menu_option_view' => ['superadmin', 'admin'],
+            'ivr_menu_option_add' => ['superadmin', 'admin'],
+            'ivr_menu_option_edit' => ['superadmin', 'admin'],
+            'ivr_menu_option_delete' => ['superadmin', 'admin'],
+            'ivr_menu_context' => ['superadmin'],
+            'ivr_menu_domain' => ['superadmin'],
+            'ivr_menu_destinations' => ['superadmin', 'admin'],
+            'ivr_menus_sub_destinations' => ['superadmin', 'admin'],
+            'ivr_menus_other_destinations' => ['superadmin', 'admin'],
         ];
     }
 
@@ -758,6 +745,102 @@ SQL);
                 'default_setting_value' => 'true',
                 'default_setting_enabled' => 'false',
                 'default_setting_description' => 'Enable or disable the feature to add a range of extensions.',
+            ],
+        ];
+    }
+
+    private function ivrMenuDefaultSettings(): array
+    {
+        return [
+            [
+                'default_setting_uuid' => 'ce17d7af-650a-49c0-b3e4-3bb8c1dad566',
+                'default_setting_category' => 'ivr_menu',
+                'default_setting_subcategory' => 'option_add_rows',
+                'default_setting_name' => 'numeric',
+                'default_setting_value' => '5',
+                'default_setting_enabled' => 'true',
+                'default_setting_description' => '',
+            ],
+            [
+                'default_setting_uuid' => '74376817-89de-49e1-bddd-868a8ebb49ec',
+                'default_setting_category' => 'ivr_menu',
+                'default_setting_subcategory' => 'option_edit_rows',
+                'default_setting_name' => 'numeric',
+                'default_setting_value' => '1',
+                'default_setting_enabled' => 'true',
+                'default_setting_description' => '',
+            ],
+            [
+                'default_setting_uuid' => 'ac4ff01d-51a2-433f-9243-be9b6dd8ba9c',
+                'default_setting_category' => 'ivr_menu',
+                'default_setting_subcategory' => 'direct_dial_digits_min',
+                'default_setting_name' => 'numeric',
+                'default_setting_value' => '2',
+                'default_setting_enabled' => 'true',
+                'default_setting_description' => '',
+            ],
+            [
+                'default_setting_uuid' => '35772199-3dd3-4c8e-9651-a50c885602d9',
+                'default_setting_category' => 'ivr_menu',
+                'default_setting_subcategory' => 'direct_dial_digits_max',
+                'default_setting_name' => 'numeric',
+                'default_setting_value' => '11',
+                'default_setting_enabled' => 'true',
+                'default_setting_description' => '',
+            ],
+            [
+                'default_setting_uuid' => '1012fd92-acf9-4ce9-89da-f02d4cd0e794',
+                'default_setting_category' => 'ivr_menu',
+                'default_setting_subcategory' => 'confirm_attempts',
+                'default_setting_name' => 'numeric',
+                'default_setting_value' => '1',
+                'default_setting_enabled' => 'false',
+                'default_setting_description' => '',
+            ],
+            [
+                'default_setting_uuid' => '028bab4e-60e3-48d0-8892-4f678c8b72af',
+                'default_setting_category' => 'ivr_menu',
+                'default_setting_subcategory' => 'inter_digit_timeout',
+                'default_setting_name' => 'numeric',
+                'default_setting_value' => '2000',
+                'default_setting_enabled' => 'false',
+                'default_setting_description' => 'Digit timeout in milliseconds',
+            ],
+            [
+                'default_setting_uuid' => 'f5829fb7-8bd6-4c42-af16-565882fad7ca',
+                'default_setting_category' => 'ivr_menu',
+                'default_setting_subcategory' => 'max_failures',
+                'default_setting_name' => 'numeric',
+                'default_setting_value' => '1',
+                'default_setting_enabled' => 'false',
+                'default_setting_description' => '',
+            ],
+            [
+                'default_setting_uuid' => '46dc3c7b-8a8d-4957-b4bd-27708c933af9',
+                'default_setting_category' => 'ivr_menu',
+                'default_setting_subcategory' => 'max_timeouts',
+                'default_setting_name' => 'numeric',
+                'default_setting_value' => '1',
+                'default_setting_enabled' => 'false',
+                'default_setting_description' => '',
+            ],
+            [
+                'default_setting_uuid' => '26984efd-2445-4ac9-b459-bb7bda4217c6',
+                'default_setting_category' => 'limit',
+                'default_setting_subcategory' => 'ivr_menus',
+                'default_setting_name' => 'numeric',
+                'default_setting_value' => '3',
+                'default_setting_enabled' => 'false',
+                'default_setting_description' => '',
+            ],
+            [
+                'default_setting_uuid' => 'e04151d4-f055-4cc8-a97c-84dac6add3fa',
+                'default_setting_category' => 'ivr_menu',
+                'default_setting_subcategory' => 'answer',
+                'default_setting_name' => 'boolean',
+                'default_setting_value' => 'true',
+                'default_setting_enabled' => 'true',
+                'default_setting_description' => 'Add answer to IVR Menu dialplan.',
             ],
         ];
     }
