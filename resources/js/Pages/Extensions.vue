@@ -594,7 +594,7 @@ const exportExtensionsCsv = () => {
 
 const handleEditButtonClick = (itemUuid) => {
     showUpdateModal.value = true
-    getItemOptions(itemUuid);
+    getItemOptions(itemUuid, { mode: 'update' });
 }
 
 const retainVoicemail = ref(false);
@@ -632,7 +632,7 @@ const handleBulkActionRequest = (action) => {
         confirmDeleteAction.value = () => executeBulkDelete();
     }
     if (action === 'bulk_update') {
-        getItemOptions(null, { include_mobile_app_bulk: true });
+        getItemOptions(null, { include_mobile_app_bulk: true, mode: 'bulk_update' });
         bulkUpdateModalTrigger.value = true;
     }
 };
@@ -697,7 +697,7 @@ const handleAdvancedActionRequest = (action, extension_uuid) => {
 
 const handleCreateButtonClick = () => {
     showCreateModal.value = true
-    getItemOptions();
+    getItemOptions(null, { mode: 'create' });
 }
 
 const handleSelectAll = () => {

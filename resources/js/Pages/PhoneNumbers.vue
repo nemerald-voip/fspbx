@@ -463,7 +463,7 @@ const handleEditRequest = (itemUuid) => {
     showUpdateModal.value = true
     formErrors.value = null;
     loadingModal.value = true;
-    getItemOptions(itemUuid);
+    getItemOptions(itemUuid, { mode: 'update' });
 }
 
 const handleImportSuccess = (messages) => {
@@ -476,7 +476,7 @@ const handleImportSuccess = (messages) => {
 const handleImportButtonClick = () => {
     uploadErrors.value = null;
     showUploadModal.value = true;
-    getItemOptions();
+    getItemOptions(null, { mode: 'create' });
 };
 
 const uploadFile = (file) => {
@@ -575,7 +575,7 @@ const handleSingleItemDeleteRequest = (uuid) => {
 
 const handleBulkActionRequest = (action) => {
     if (action === 'bulk_update') {
-        getItemOptions();
+        getItemOptions(null, { mode: 'bulk_update' });
         loadingModal.value = true
         showBulkUpdateModal.value = true;
     }
@@ -600,10 +600,11 @@ const executeBulkDelete = (items = selectedItems.value) => {
 }
 
 const handleCreateButtonClick = () => {
-    showCreateModal.value = true
     formErrors.value = null;
     loadingModal.value = true
-    getItemOptions();
+    getItemOptions(null, { mode: 'create' }, () => {
+        showCreateModal.value = true
+    });
 }
 
 const handleSelectAll = () => {
@@ -651,13 +652,19 @@ const handleFiltersReset = () => {
 }
 
 
-const getItemOptions = (itemUuid = null) => {
-    const payload = itemUuid ? { item_uuid: itemUuid } : {}; // Conditionally add itemUuid to payload
+const getItemOptions = (itemUuid = null, extraPayload = {}, onSuccess = null) => {
+    const payload = {
+        ...extraPayload,
+        ...(itemUuid ? { item_uuid: itemUuid } : {}),
+    }; // Conditionally add itemUuid to payload
 
     axios.post(props.routes.item_options, payload)
         .then((response) => {
             loadingModal.value = false;
             itemOptions.value = response.data;
+            if (typeof onSuccess === 'function') {
+                onSuccess();
+            }
             // console.log(itemOptions.value);
 
         }).catch((error) => {

@@ -572,7 +572,7 @@
                     :conditions="[() => !selectedUploadStreamUuid]" />
 
                 <FileElement name="file" label="Audio File" accept=".wav,.mp3,.ogg"
-                    description="The file will be converted to mono WAV at 8, 16, 32, and 48 kHz." :upload-temp-endpoint="false"
+                    description="The file will be converted to mono WAV at 8 and 16 kHz." :upload-temp-endpoint="false"
                     :remove-temp-endpoint="false" :remove-endpoint="false" :drop="true"
                     :error="formErrors.file?.[0]" @change="handleVueformFileUpload"
                     :columns="{ container: 12 }" />

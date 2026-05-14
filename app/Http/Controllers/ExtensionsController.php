@@ -360,19 +360,32 @@ class ExtensionsController extends Controller
 
     public function getItemOptions(Request $request)
     {
-        $itemUuid = $request->input('item_uuid');
-        $selfService = $itemUuid && !userCheckPermission('extension_view') && $this->userOwnsExtension($itemUuid);
+        $itemUuid = $request->input('item_uuid') ?? $request->input('itemUuid');
+        $mode = $request->input('mode') ?: ($itemUuid ? 'update' : 'create');
+        $selfService = $itemUuid && !userCheckPermission('extension_edit') && $this->userOwnsExtension($itemUuid);
 
-        if ($itemUuid && !userCheckPermission('extension_view') && !$selfService) {
+        if (!in_array($mode, ['create', 'update', 'bulk_update'], true)) {
+            abort(422, 'Invalid item options mode.');
+        }
+
+        if ($mode === 'update' && !$itemUuid) {
+            abort(422, 'Item UUID is required for update mode.');
+        }
+
+        if ($mode === 'update' && !userCheckPermission('extension_edit') && !$selfService) {
             abort(403);
         }
 
-        if (!$itemUuid && !userCheckPermission('extension_add') && !userCheckPermission('extension_create')) {
+        if ($mode === 'bulk_update' && !userCheckPermission('extension_edit')) {
+            abort(403);
+        }
+
+        if ($mode === 'create' && !userCheckPermission('extension_add') && !userCheckPermission('extension_create')) {
             abort(403);
         }
 
         //Check for limits
-        if (!$itemUuid) {
+        if ($mode === 'create') {
             if ($resp = $this->enforceLimit(
                 'extensions',
                 \App\Models\Extensions::class

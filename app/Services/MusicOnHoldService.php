@@ -15,7 +15,9 @@ use Illuminate\Validation\ValidationException;
 class MusicOnHoldService
 {
     private const APP_UUID = '1dafe0f8-c08a-289b-0312-15baf4f20f81';
-    private const OUTPUT_RATES = ['8000', '16000', '32000', '48000'];
+    private const DEFAULT_RATE = '16000';
+    private const OUTPUT_RATES = ['8000', '16000'];
+    private const KNOWN_RATES = ['8000', '16000', '32000', '48000'];
     private const VALID_EXTENSIONS = ['wav', 'mp3', 'ogg'];
 
     public function save(array $validated, ?MusicOnHold $musicOnHold = null): MusicOnHold
@@ -30,7 +32,7 @@ class MusicOnHoldService
 
             foreach (self::OUTPUT_RATES as $rate) {
                 $stream = $existingFamily->firstWhere('music_on_hold_rate', $rate)
-                    ?? ($rate === '48000' ? $this->defaultRateStream($existingFamily) : null)
+                    ?? ($rate === self::DEFAULT_RATE ? $this->defaultRateStream($existingFamily) : null)
                     ?? $this->findExistingFamilyStreamForRate($domainUuid, $name, $rate, $familyPath)
                     ?? new MusicOnHold();
 
@@ -52,7 +54,7 @@ class MusicOnHoldService
                     $isNew ? 'insert_user' : 'update_user' => session('user_uuid'),
                 ])->save();
 
-                if ($rate === '48000') {
+                if ($rate === self::DEFAULT_RATE) {
                     $representative = $stream;
                 }
             }
@@ -73,7 +75,7 @@ class MusicOnHoldService
             $streams = $this->uploadTargetStreams($stream);
         } else {
             $streams = $this->findOrCreateUploadStreams($validated);
-            $stream = $streams->firstWhere('music_on_hold_rate', '48000') ?? $streams->first();
+            $stream = $streams->firstWhere('music_on_hold_rate', self::DEFAULT_RATE) ?? $streams->first();
         }
 
         $fileName = $this->safeConvertedFileName($file->getClientOriginalName());
@@ -89,7 +91,7 @@ class MusicOnHoldService
                 $this->convertUpload(
                     $sourcePath,
                     $targetFile,
-                    (string) ($targetStream->music_on_hold_rate ?: '48000')
+                    (string) ($targetStream->music_on_hold_rate ?: self::DEFAULT_RATE)
                 );
                 $writtenFiles[] = $targetFile;
             }
@@ -232,7 +234,7 @@ class MusicOnHoldService
     {
         return $this->scopedQuery()
             ->where(function ($query) {
-                $query->where('music_on_hold_rate', '48000')
+                $query->where('music_on_hold_rate', self::DEFAULT_RATE)
                     ->orWhereNull('music_on_hold_rate');
             });
     }
@@ -458,7 +460,7 @@ class MusicOnHoldService
                     : $query->where('domain_uuid', $stream->domain_uuid);
             })
             ->where(function ($query) use ($familyPath) {
-                foreach (self::OUTPUT_RATES as $rate) {
+                foreach (self::KNOWN_RATES as $rate) {
                     $query->orWhereIn('music_on_hold_path', $this->pathAlternates($this->ratePath($familyPath, $rate)));
                 }
             });
@@ -501,7 +503,7 @@ class MusicOnHoldService
                     ->orWhereIn('music_on_hold_path', $this->pathAlternates($this->ratePath($familyPath, $rate)));
             });
 
-        if ($rate === '48000') {
+        if ($rate === self::DEFAULT_RATE) {
             $query->orWhere(function ($query) use ($domainUuid, $name, $familyPath) {
                 $query->where(function ($query) use ($domainUuid) {
                     $domainUuid === null
@@ -510,7 +512,7 @@ class MusicOnHoldService
                     })
                     ->where('music_on_hold_name', $name)
                     ->whereNull('music_on_hold_rate')
-                    ->whereIn('music_on_hold_path', $this->pathAlternates($this->ratePath($familyPath, '48000')));
+                    ->whereIn('music_on_hold_path', $this->pathAlternates($this->ratePath($familyPath, self::DEFAULT_RATE)));
             });
         }
 
@@ -521,7 +523,7 @@ class MusicOnHoldService
     {
         $path = rtrim($path, '/');
 
-        foreach (self::OUTPUT_RATES as $rate) {
+        foreach (self::KNOWN_RATES as $rate) {
             if (str_ends_with($path, '/' . $rate)) {
                 return substr($path, 0, -strlen('/' . $rate));
             }

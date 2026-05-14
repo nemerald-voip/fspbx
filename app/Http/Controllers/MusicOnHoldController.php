@@ -309,7 +309,7 @@ class MusicOnHoldController extends Controller
             'music_on_hold_name' => $stream->music_on_hold_name,
             'music_on_hold_path' => $service->formPath($stream),
             'music_on_hold_rate' => null,
-            'rate_label' => '8, 16, 32, 48 kHz',
+            'rate_label' => '8, 16 kHz',
             'music_on_hold_shuffle' => $stream->music_on_hold_shuffle,
             'music_on_hold_channels' => $stream->music_on_hold_channels,
             'music_on_hold_interval' => $stream->music_on_hold_interval,
@@ -403,8 +403,6 @@ class MusicOnHoldController extends Controller
         $rates = [
             ['label' => '8 kHz', 'value' => '8000'],
             ['label' => '16 kHz', 'value' => '16000'],
-            ['label' => '32 kHz', 'value' => '32000'],
-            ['label' => '48 kHz', 'value' => '48000'],
         ];
 
         if ($includeDefault) {

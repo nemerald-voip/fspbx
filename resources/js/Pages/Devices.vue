@@ -527,15 +527,18 @@ const bulkActions = computed(() => {
 const handleEditButtonClick = (itemUuid) => {
     //Removed to make way for checking limits:
     //    showUpdateModal.value = true
-    getItemOptions(itemUuid);
+    getItemOptions(itemUuid, { mode: 'update' });
 }
 
-const getItemOptions = async (itemUuid = null) => {
+const getItemOptions = async (itemUuid = null, extraPayload = {}) => {
     itemOptions.value = {};
     isModalLoading.value = true;
 
     try {
-        const payload = itemUuid ? { itemUuid } : {};
+        const payload = {
+            ...extraPayload,
+            ...(itemUuid ? { itemUuid } : {}),
+        };
         const response = await axios.post(props.routes.item_options, payload);
         itemOptions.value = response.data;
 
@@ -558,6 +561,7 @@ const handleCreateButtonClick = async () => {
     try {
         const response = await axios.post(props.routes.item_options, {
             itemUuid: null,
+            mode: 'create',
         });
 
         // Only open modal if no limit error
@@ -587,7 +591,7 @@ const handleBulkActionRequest = (action) => {
         confirmDeleteAction.value = () => executeBulkDelete();
     }
     if (action === 'bulk_update') {
-        getItemOptions();
+        getItemOptions(null, { mode: 'bulk_update' });
         isModalLoading.value = true
         showBulkUpdateModal.value = true;
     }

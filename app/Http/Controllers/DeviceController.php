@@ -273,6 +273,13 @@ class DeviceController extends Controller
     {
         $validated = $request->validated();
 
+        if ($resp = $this->enforceLimit(
+            'devices',
+            \App\Models\Devices::class
+        )) {
+            return $resp;
+        }
+
         try {
             app(DeviceService::class)->create($validated);
 
@@ -486,14 +493,30 @@ class DeviceController extends Controller
         }
     }
 
-    public function getItemOptions()
+    public function getItemOptions(Request $request)
     {
+        $itemUuid = $request->input('itemUuid') ?? $request->input('item_uuid');
+        $mode = $request->input('mode') ?: ($itemUuid ? 'update' : 'create');
+
+        if (!in_array($mode, ['create', 'update', 'bulk_update'], true)) {
+            abort(422, 'Invalid item options mode.');
+        }
+
+        if ($mode === 'update' && !$itemUuid) {
+            abort(422, 'Item UUID is required for update mode.');
+        }
+
+        if (in_array($mode, ['update', 'bulk_update'], true) && !userCheckPermission('device_edit')) {
+            abort(403);
+        }
+
+        if ($mode === 'create' && !userCheckPermission('device_add')) {
+            abort(403);
+        }
+
         try {
-
-            $itemUuid = request('itemUuid');
-
             // Check for limits
-            if (!$itemUuid) {
+            if ($mode === 'create') {
                 if ($resp = $this->enforceLimit(
                     'devices',
                     \App\Models\Devices::class

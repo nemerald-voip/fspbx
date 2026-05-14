@@ -18,7 +18,7 @@ class StoreMusicOnHoldRequest extends FormRequest
             'domain_uuid' => ['nullable', 'uuid'],
             'music_on_hold_name' => ['required', 'string', 'max:255'],
             'music_on_hold_path' => ['nullable', 'string', 'max:1024'],
-            'music_on_hold_rate' => ['nullable', Rule::in(['8000', '16000', '32000', '48000'])],
+            'music_on_hold_rate' => ['nullable', Rule::in(['8000', '16000'])],
             'music_on_hold_shuffle' => ['required', Rule::in(['true', 'false'])],
             'music_on_hold_channels' => ['required', Rule::in(['1', '2'])],
             'music_on_hold_interval' => ['nullable', 'integer', 'min:0'],

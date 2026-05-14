@@ -286,20 +286,15 @@ class DeviceService
 
         $device->keys()->delete();
 
-        $rows = [];
         foreach ($deviceKeys as $key) {
-            $rows[] = [
-                'device_uuid' => $device->device_uuid,
-                'key_area' => $key['key_area'] ?? 'main',
-                'key_index' => $key['key_index'],
-                'key_type' => $key['key_type'] ?? null,
-                'key_value' => $key['key_value'] ?? null,
-                'key_label' => $key['key_label'] ?? null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+            $deviceKey = new DeviceKey();
+            $deviceKey->device_uuid = $device->device_uuid;
+            $deviceKey->key_area = $key['key_area'] ?? 'main';
+            $deviceKey->key_index = $key['key_index'];
+            $deviceKey->key_type = $key['key_type'] ?? null;
+            $deviceKey->key_value = $key['key_value'] ?? null;
+            $deviceKey->key_label = $key['key_label'] ?? null;
+            $deviceKey->save();
         }
-
-        DeviceKey::insert($rows);
     }
 }

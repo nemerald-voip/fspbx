@@ -98,15 +98,30 @@ class PhoneNumbersController extends Controller
     }
 
 
-    public function getItemOptions()
+    public function getItemOptions(Request $request)
     {
+        $item_uuid = $request->input('item_uuid') ?? $request->input('itemUuid'); // Retrieve item_uuid from the request
+        $mode = $request->input('mode') ?: ($item_uuid ? 'update' : 'create');
+
+        if (!in_array($mode, ['create', 'update', 'bulk_update'], true)) {
+            abort(422, 'Invalid item options mode.');
+        }
+
+        if ($mode === 'update' && !$item_uuid) {
+            abort(422, 'Item UUID is required for update mode.');
+        }
+
+        if (in_array($mode, ['update', 'bulk_update'], true) && !userCheckPermission('destination_edit')) {
+            abort(403);
+        }
+
+        if ($mode === 'create' && !userCheckPermission('destination_add')) {
+            abort(403);
+        }
+
         try {
-
-            $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
-
-
             // Check for limits
-            if (!$item_uuid) {
+            if ($mode === 'create') {
                 if ($resp = $this->enforceLimit('destinations', \App\Models\Destinations::class)) {
                     return $resp;
                 }
