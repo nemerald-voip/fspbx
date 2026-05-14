@@ -1,111 +1,155 @@
 <template>
     <MainLayout />
 
-    <div class="m-3">
-        <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>{{ domain.domain_description || domain.domain_name }} Settings</template>
-            <template #subtitle>Manage domain overrides and revert settings back to global defaults.</template>
+    <div class="m-3 space-y-4">
+        <!-- Header -->
+        <header class="flex flex-wrap items-end justify-between gap-3">
+            <div>
+                <p class="text-xs font-medium uppercase tracking-wider text-indigo-600">Domain settings</p>
+                <h1 class="mt-1 text-2xl font-semibold text-gray-900">{{ domain.domain_description || domain.domain_name }}</h1>
+                <p class="mt-1 text-sm text-gray-500">Override global defaults for this domain, or revert customizations back to the system default.</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <a :href="routes.default_settings" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    <ArrowUturnLeftIcon class="h-4 w-4" /> Defaults
+                </a>
+                <button type="button" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="reloadSettings">
+                    <ArrowPathIcon class="h-4 w-4" /> Reload
+                </button>
+                <button v-if="permissions.create" type="button" class="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500" @click="openEditor()">
+                    <PlusIcon class="h-4 w-4" /> New override
+                </button>
+            </div>
+        </header>
 
-            <template #filters>
-                <div class="relative min-w-64 mb-2 sm:mr-4">
-                    <MagnifyingGlassIcon class="pointer-events-none absolute inset-y-0 left-3 h-5 w-5 text-gray-400" />
-                    <input v-model="filterData.search" type="text" class="block w-full rounded-md border-0 py-1.5 pl-10 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600" placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+        <!-- Stats -->
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <StatTile label="Total settings" :value="stats.total" tone="gray" />
+            <StatTile label="Overridden" :value="stats.overrides" tone="amber" />
+            <StatTile label="Domain only" :value="stats.custom" tone="purple" />
+            <StatTile label="Disabled" :value="stats.disabled" tone="rose" />
+        </div>
+
+        <!-- Main two-column layout -->
+        <div class="flex flex-col gap-4 lg:flex-row">
+            <!-- Sidebar -->
+            <aside class="lg:w-72 lg:shrink-0">
+                <div class="rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-200">
+                    <div class="relative mb-3">
+                        <MagnifyingGlassIcon class="pointer-events-none absolute inset-y-0 left-3 h-4 w-4 my-auto text-gray-400" />
+                        <input v-model="filterData.search" type="text" placeholder="Search settings..." class="block w-full rounded-md border-0 py-1.5 pl-9 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600" />
+                    </div>
+
+                    <div class="mb-3 space-y-2">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500">Source</label>
+                            <select v-model="filterData.source" class="mt-1 block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300">
+                                <option value="all">All sources</option>
+                                <option value="default">Defaults</option>
+                                <option value="overrides">Overrides &amp; custom</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-gray-500">Status</label>
+                            <select v-model="filterData.enabled" class="mt-1 block w-full rounded-md border-0 py-1.5 pl-2 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300">
+                                <option value="all">Any status</option>
+                                <option value="true">Enabled</option>
+                                <option value="false">Disabled</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <p class="px-1 pb-1 text-xs font-medium uppercase tracking-wider text-gray-400">Categories</p>
+                    <nav class="max-h-[60vh] space-y-0.5 overflow-y-auto">
+                        <button type="button" :class="categoryButtonClass('')" @click="selectedCategory = ''">
+                            <span class="truncate">All</span>
+                            <span :class="categoryBadgeClass('')">{{ filteredRows.length }}</span>
+                        </button>
+                        <button v-for="cat in categoriesWithCounts" :key="cat.value" type="button" :class="categoryButtonClass(cat.value)" @click="selectedCategory = cat.value">
+                            <span class="truncate">{{ cat.label }}</span>
+                            <span :class="categoryBadgeClass(cat.value)">{{ cat.count }}</span>
+                        </button>
+                        <p v-if="!categoriesWithCounts.length" class="px-3 py-2 text-xs text-gray-400">No matching categories</p>
+                    </nav>
                 </div>
-                <select v-model="filterData.category" class="mb-2 sm:mr-4 rounded-md border-0 py-1.5 pl-3 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300">
-                    <option value="">All categories</option>
-                    <option v-for="category in options.categories" :key="category.value" :value="category.value">{{ category.label }}</option>
-                </select>
-                <select v-model="filterData.source" class="mb-2 sm:mr-4 rounded-md border-0 py-1.5 pl-3 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300">
-                    <option value="all">All sources</option>
-                    <option value="default">Defaults</option>
-                    <option value="overrides">Overrides</option>
-                </select>
-                <select v-model="filterData.enabled" class="mb-2 sm:mr-4 rounded-md border-0 py-1.5 pl-3 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300">
-                    <option value="all">Any status</option>
-                    <option value="true">Enabled</option>
-                    <option value="false">Disabled</option>
-                </select>
-            </template>
+            </aside>
 
-            <template #action>
-                <div class="flex gap-2">
-                    <a :href="routes.default_settings" class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Defaults</a>
-                    <button type="button" class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="reloadSettings">Reload</button>
-                    <button v-if="permissions.create" type="button" class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500" @click="openEditor()">Create</button>
+            <!-- Main panel -->
+            <section class="min-w-0 flex-1">
+                <div class="rounded-lg bg-white shadow-sm ring-1 ring-gray-200">
+                    <header class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-4 py-3">
+                        <div>
+                            <h2 class="text-base font-semibold text-gray-900">{{ selectedCategoryLabel }}</h2>
+                            <p class="text-xs text-gray-500">{{ displayedRows.length }} setting{{ displayedRows.length === 1 ? '' : 's' }} shown</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button v-if="selectableRowUuids.length" type="button" class="text-xs text-gray-500 hover:text-gray-900" @click="toggleSelectAllVisible">
+                                {{ allVisibleSelected ? 'Clear selection' : 'Select visible' }}
+                            </button>
+                            <div v-if="selectedItems.length" class="flex items-center gap-1 rounded-md bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700">
+                                <span>{{ selectedItems.length }} selected</span>
+                                <button v-if="permissions.update" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="handleBulkActionRequest('bulk_toggle')">Toggle</button>
+                                <button v-if="permissions.destroy" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="handleBulkActionRequest('bulk_revert')">Revert</button>
+                                <button v-if="permissions.copy" type="button" class="rounded px-1.5 py-0.5 hover:bg-indigo-100" @click="handleBulkActionRequest('bulk_copy')">Copy</button>
+                            </div>
+                        </div>
+                    </header>
+
+                    <div v-if="loading" class="px-4 py-12">
+                        <Loading :show="true" />
+                    </div>
+
+                    <ul v-else-if="displayedRows.length" class="divide-y divide-gray-100">
+                        <li v-for="row in displayedRows" :key="row.id" :class="['relative flex items-start gap-3 px-4 py-3 transition hover:bg-gray-50', rowAccentClass(row)]">
+                            <input v-if="row.domain_setting_uuid" v-model="selectedItems" type="checkbox" :value="row.domain_setting_uuid" class="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600" />
+                            <span v-else class="mt-1 inline-block h-4 w-4 shrink-0" />
+
+                            <div class="min-w-0 flex-1">
+                                <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                                    <h3 class="text-sm font-semibold text-gray-900">{{ formatLabel(row.subcategory) }}</h3>
+                                    <span class="font-mono text-xs text-gray-400">{{ row.subcategory }}</span>
+                                    <span class="text-xs text-gray-300">·</span>
+                                    <span class="text-xs text-gray-500">{{ row.type_label }}</span>
+                                </div>
+                                <p v-if="row.description" class="mt-1 text-xs text-gray-500">{{ row.description }}</p>
+
+                                <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                                    <div class="inline-flex items-center gap-1.5">
+                                        <span class="text-xs text-gray-400">Value</span>
+                                        <code class="rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-800">{{ displayValue(row.effective_value, row.is_secret) }}</code>
+                                    </div>
+                                    <div v-if="row.source === 'override'" class="inline-flex items-center gap-1.5 text-xs text-gray-400">
+                                        <span>default</span>
+                                        <code class="rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-500 line-through">{{ displayValue(row.default_value, row.is_secret) }}</code>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex shrink-0 flex-col items-end gap-1.5">
+                                <div class="flex items-center gap-1.5">
+                                    <span :class="['inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset', sourceClass(row.source)]">{{ row.source_label }}</span>
+                                    <span :class="['inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset', row.enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-rose-50 text-rose-700 ring-rose-600/20']">
+                                        <span :class="['mr-1 inline-block h-1.5 w-1.5 rounded-full', row.enabled ? 'bg-green-500' : 'bg-rose-500']" />
+                                        {{ row.enabled ? 'On' : 'Off' }}
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <button v-if="permissions.create && !row.domain_setting_uuid" type="button" class="rounded-md px-2 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50" @click="openEditor(row)">Override</button>
+                                    <button v-if="permissions.update && row.domain_setting_uuid" type="button" class="rounded-md px-2 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50" @click="openEditor(row)">Edit</button>
+                                    <button v-if="permissions.destroy && row.domain_setting_uuid" type="button" class="rounded-md px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50" @click="confirmRevert([row.domain_setting_uuid])">Revert</button>
+                                </div>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <div v-else class="px-4 py-12 text-center">
+                        <p class="text-sm font-medium text-gray-900">No settings match your filters</p>
+                        <p class="mt-1 text-xs text-gray-500">Try clearing search, source, or status filters.</p>
+                        <button type="button" class="mt-3 rounded-md bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="handleFiltersReset">Reset filters</button>
+                    </div>
                 </div>
-            </template>
-
-            <template #navigation>
-                <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
-                    :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    :bulk-actions="bulkActions" :has-selected-items="selectedItems.length > 0"
-                    @pagination-change-page="renderRequestedPage" @bulk-action="handleBulkActionRequest" />
-            </template>
-
-            <template #table-header>
-                <TableColumnHeader class="px-4 py-3.5 text-left text-sm font-semibold text-gray-900" :sortable="false">
-                    <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems" class="h-4 w-4 rounded border-gray-300 text-indigo-600" />
-                </TableColumnHeader>
-                <TableColumnHeader header="Setting" field="subcategory" :sortedField="sortData.name" :sortOrder="sortData.order" @sort="handleSortRequest" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Default" field="default_value" :sortedField="sortData.name" :sortOrder="sortData.order" @sort="handleSortRequest" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Effective" field="effective_value" :sortedField="sortData.name" :sortOrder="sortData.order" @sort="handleSortRequest" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Source" field="source" :sortedField="sortData.name" :sortOrder="sortData.order" @sort="handleSortRequest" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Status" field="enabled" :sortedField="sortData.name" :sortOrder="sortData.order" @sort="handleSortRequest" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader class="px-2 py-3.5 text-right text-sm font-semibold text-gray-900" :sortable="false" />
-            </template>
-
-            <template #current-selection>
-                <tr v-if="selectedItems.length">
-                    <td colspan="7" class="bg-indigo-50 px-4 py-2 text-center text-sm text-indigo-700">{{ selectedItems.length }} override(s) selected.</td>
-                </tr>
-            </template>
-
-            <template #table-body>
-                <tr v-for="row in data.data" :key="row.id">
-                    <TableField class="px-4 py-2 text-sm text-gray-500">
-                        <input v-if="row.domain_setting_uuid" v-model="selectedItems" type="checkbox" :value="row.domain_setting_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600" />
-                    </TableField>
-                    <TableField class="px-2 py-2 text-sm text-gray-700">
-                        <div class="font-medium text-gray-900">{{ row.subcategory }}</div>
-                        <div class="text-xs text-gray-500">{{ row.category_label }} · {{ row.type_label }}</div>
-                        <div v-if="row.description" class="mt-1 max-w-md truncate text-xs text-gray-400">{{ row.description }}</div>
-                    </TableField>
-                    <TableField class="max-w-xs px-2 py-2 text-sm text-gray-500">
-                        <span class="block truncate font-mono text-xs">{{ displayValue(row.default_value, row.is_secret) }}</span>
-                    </TableField>
-                    <TableField class="max-w-xs px-2 py-2 text-sm text-gray-700">
-                        <span class="block truncate font-mono text-xs">{{ displayValue(row.effective_value, row.is_secret) }}</span>
-                    </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm">
-                        <span :class="sourceClass(row.source)" class="inline-flex rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset">{{ row.source_label }}</span>
-                    </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm">
-                        <span :class="row.enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-rose-50 text-rose-700 ring-rose-600/20'" class="inline-flex rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset">
-                            {{ row.enabled ? 'Enabled' : 'Disabled' }}
-                        </span>
-                    </TableField>
-                    <TableField class="whitespace-nowrap px-2 py-1 text-right text-sm">
-                        <button v-if="permissions.create && !row.domain_setting_uuid" type="button" class="rounded-md px-2 py-1 text-indigo-600 hover:bg-indigo-50" @click="openEditor(row)">Override</button>
-                        <button v-if="permissions.update && row.domain_setting_uuid" type="button" class="rounded-md px-2 py-1 text-indigo-600 hover:bg-indigo-50" @click="openEditor(row)">Edit</button>
-                        <button v-if="permissions.destroy && row.domain_setting_uuid" type="button" class="rounded-md px-2 py-1 text-rose-600 hover:bg-rose-50" @click="confirmRevert([row.domain_setting_uuid])">Revert</button>
-                    </TableField>
-                </tr>
-            </template>
-
-            <template #empty>
-                <div v-if="!loading && data.data.length === 0" class="py-8 text-center text-sm text-gray-500">No settings found.</div>
-            </template>
-
-            <template #loading>
-                <Loading :show="loading" />
-            </template>
-
-            <template #footer>
-                <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
-                    :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
-            </template>
-        </DataTable>
+            </section>
+        </div>
     </div>
 
     <SettingsEditModal :show="showEditor" mode="domain" :item="editorItem" :types="options.types" :route="editorRoute"
@@ -131,19 +175,29 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, h, onMounted, ref, watch } from 'vue'
 import axios from 'axios'
 import MainLayout from '../Layouts/MainLayout.vue'
-import DataTable from './components/general/DataTable.vue'
-import TableColumnHeader from './components/general/TableColumnHeader.vue'
-import TableField from './components/general/TableField.vue'
-import Paginator from './components/general/Paginator.vue'
 import Loading from './components/general/Loading.vue'
 import Notification from './components/notifications/Notification.vue'
 import ConfirmationModal from './components/modal/ConfirmationModal.vue'
 import AddEditItemModal from './components/modal/AddEditItemModal.vue'
 import SettingsEditModal from './components/modal/SettingsEditModal.vue'
-import { MagnifyingGlassIcon } from '@heroicons/vue/24/solid'
+import { MagnifyingGlassIcon, ArrowPathIcon, ArrowUturnLeftIcon, PlusIcon } from '@heroicons/vue/24/outline'
+
+const StatTile = (props) => {
+    const toneMap = {
+        gray: 'text-gray-900',
+        amber: 'text-amber-600',
+        purple: 'text-purple-600',
+        rose: 'text-rose-600',
+    }
+    return h('div', { class: 'rounded-lg bg-white p-3 shadow-sm ring-1 ring-gray-200' }, [
+        h('p', { class: 'text-xs text-gray-500' }, props.label),
+        h('p', { class: ['mt-0.5 text-xl font-semibold', toneMap[props.tone] || toneMap.gray] }, String(props.value ?? 0)),
+    ])
+}
+StatTile.props = ['label', 'value', 'tone']
 
 const props = defineProps({
     domain: Object,
@@ -152,11 +206,9 @@ const props = defineProps({
     options: Object,
 })
 
-const data = ref({ data: [], links: [], total: 0, from: 0, to: 0, current_page: 1, last_page: 1 })
+const allRows = ref([])
 const loading = ref(false)
-const currentPage = ref(1)
 const selectedItems = ref([])
-const selectPageItems = ref(false)
 const showEditor = ref(false)
 const editorLoading = ref(false)
 const editorItem = ref({})
@@ -169,49 +221,111 @@ const notificationShow = ref(false)
 const notificationType = ref(null)
 const notificationMessages = ref(null)
 
-const filterData = ref({ search: '', category: '', source: 'all', enabled: 'all' })
-const sortData = ref({ name: 'category', order: 'asc' })
+const filterData = ref({ search: '', source: 'all', enabled: 'all' })
+const selectedCategory = ref('')
 
-const bulkActions = computed(() => {
-    const actions = []
-    if (props.permissions.update) actions.push({ id: 'bulk_toggle', label: 'Toggle', icon: 'PencilSquareIcon' })
-    if (props.permissions.destroy) actions.push({ id: 'bulk_revert', label: 'Revert', icon: 'TrashIcon' })
-    if (props.permissions.copy) actions.push({ id: 'bulk_copy', label: 'Copy', icon: 'DocumentDuplicateIcon' })
-    return actions
+const categoryLabelMap = computed(() => {
+    const map = {}
+    for (const cat of props.options?.categories || []) map[cat.value] = cat.label
+    return map
+})
+
+const stats = computed(() => {
+    const total = allRows.value.length
+    const overrides = allRows.value.filter(r => r.source === 'override').length
+    const custom = allRows.value.filter(r => r.source === 'custom').length
+    const disabled = allRows.value.filter(r => !r.enabled).length
+    return { total, overrides, custom, disabled }
+})
+
+// Rows after sidebar filters (search/source/enabled) but BEFORE category filter
+const filteredRows = computed(() => {
+    const search = filterData.value.search.trim().toLowerCase()
+    return allRows.value.filter(row => {
+        if (filterData.value.source !== 'all') {
+            if (filterData.value.source === 'overrides') {
+                if (row.source !== 'override' && row.source !== 'custom') return false
+            } else if (row.source !== filterData.value.source) return false
+        }
+        if (filterData.value.enabled !== 'all') {
+            const wantEnabled = filterData.value.enabled === 'true'
+            if (Boolean(row.enabled) !== wantEnabled) return false
+        }
+        if (search) {
+            const hay = [row.category, row.subcategory, row.type, row.effective_value, row.default_value, row.description]
+                .filter(v => v !== null && v !== undefined)
+                .join(' ')
+                .toLowerCase()
+            if (!hay.includes(search)) return false
+        }
+        return true
+    })
+})
+
+const categoriesWithCounts = computed(() => {
+    const counts = new Map()
+    for (const row of filteredRows.value) {
+        const key = row.category || ''
+        counts.set(key, (counts.get(key) || 0) + 1)
+    }
+    return Array.from(counts.entries())
+        .map(([value, count]) => ({ value, label: categoryLabelMap.value[value] || value || 'Uncategorized', count }))
+        .sort((a, b) => a.label.localeCompare(b.label))
+})
+
+const displayedRows = computed(() => {
+    if (!selectedCategory.value) return filteredRows.value
+    return filteredRows.value.filter(row => row.category === selectedCategory.value)
+})
+
+const selectedCategoryLabel = computed(() => {
+    if (!selectedCategory.value) return 'All settings'
+    return categoryLabelMap.value[selectedCategory.value] || selectedCategory.value
+})
+
+const selectableRowUuids = computed(() => displayedRows.value.map(r => r.domain_setting_uuid).filter(Boolean))
+
+const allVisibleSelected = computed(() => {
+    if (!selectableRowUuids.value.length) return false
+    return selectableRowUuids.value.every(uuid => selectedItems.value.includes(uuid))
+})
+
+watch([selectedCategory, () => filterData.value.search, () => filterData.value.source, () => filterData.value.enabled], () => {
+    selectedItems.value = []
+})
+
+// Auto-jump out of an empty category when filters narrow results
+watch(categoriesWithCounts, (cats) => {
+    if (!selectedCategory.value) return
+    if (!cats.find(c => c.value === selectedCategory.value)) selectedCategory.value = ''
 })
 
 onMounted(() => getData())
 
-const getData = (page = 1) => {
+const getData = () => {
     loading.value = true
-    currentPage.value = Number(page) || 1
-    let sort = sortData.value.name
-    if (sortData.value.order === 'desc') sort = `-${sort}`
-    axios.get(props.routes.data_route, { params: { filter: filterData.value, page: currentPage.value, sort } })
+    axios.get(props.routes.data_route, { params: { per_page: 5000, page: 1 } })
         .then(response => {
-            data.value = response.data
+            allRows.value = response.data?.data || []
             selectedItems.value = []
-            selectPageItems.value = false
         })
         .catch(handleErrorResponse)
         .finally(() => loading.value = false)
 }
 
-const handleSearchButtonClick = () => getData(1)
 const handleFiltersReset = () => {
-    filterData.value = { search: '', category: '', source: 'all', enabled: 'all' }
-    getData(1)
-}
-const renderRequestedPage = (url) => getData(new URL(url, window.location.origin).searchParams.get('page') ?? 1)
-const handleSortRequest = (sort) => {
-    sortData.value = sort
-    getData(1)
+    filterData.value = { search: '', source: 'all', enabled: 'all' }
+    selectedCategory.value = ''
 }
 
-const handleSelectPageItems = () => {
-    selectedItems.value = selectPageItems.value
-        ? data.value.data.map(row => row.domain_setting_uuid).filter(Boolean)
-        : []
+const toggleSelectAllVisible = () => {
+    if (allVisibleSelected.value) {
+        selectedItems.value = selectedItems.value.filter(uuid => !selectableRowUuids.value.includes(uuid))
+    } else {
+        const set = new Set(selectedItems.value)
+        selectableRowUuids.value.forEach(uuid => set.add(uuid))
+        selectedItems.value = Array.from(set)
+    }
 }
 
 const openEditor = (row = null) => {
@@ -239,7 +353,7 @@ const openEditor = (row = null) => {
 const confirmRevert = (items = selectedItems.value) => {
     confirmedAction.value = () => axios.post(props.routes.bulk_revert, { items }).then(response => {
         showNotification('success', response.data.messages)
-        getData(currentPage.value)
+        getData()
     })
     showConfirmModal.value = true
 }
@@ -255,7 +369,7 @@ const handleBulkActionRequest = (action) => {
         axios.post(props.routes.bulk_toggle, { items: selectedItems.value })
             .then(response => {
                 showNotification('success', response.data.messages)
-                getData(currentPage.value)
+                getData()
             })
             .catch(handleErrorResponse)
     }
@@ -278,14 +392,14 @@ const reloadSettings = () => {
     axios.post(props.routes.reload)
         .then(response => {
             showNotification('success', response.data.messages)
-            getData(currentPage.value)
+            getData()
         })
         .catch(handleErrorResponse)
 }
 
 const handleModalSuccess = (messages) => {
     showNotification('success', messages)
-    getData(currentPage.value)
+    getData()
 }
 
 const showNotification = (type, messages) => {
@@ -295,17 +409,44 @@ const showNotification = (type, messages) => {
 }
 
 const handleErrorResponse = (error) => {
-    showNotification('error', error.response?.data?.messages || error.response?.data?.errors || { error: ['Request failed.'] })
+    showNotification('error', error?.response?.data?.messages || error?.response?.data?.errors || { error: ['Request failed.'] })
 }
 
 const displayValue = (value, secret = false) => {
-    if (value === null || value === undefined || value === '') return 'null'
-    return secret ? '********' : String(value)
+    if (value === null || value === undefined || value === '') return '—'
+    return secret ? '••••••••' : String(value)
+}
+
+const formatLabel = (value) => {
+    if (!value) return '—'
+    return String(value).replace(/[_-]+/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 }
 
 const sourceClass = (source) => {
     if (source === 'override') return 'bg-amber-50 text-amber-700 ring-amber-600/20'
     if (source === 'custom') return 'bg-purple-50 text-purple-700 ring-purple-600/20'
-    return 'bg-slate-50 text-slate-700 ring-slate-600/20'
+    return 'bg-slate-50 text-slate-600 ring-slate-500/20'
+}
+
+const rowAccentClass = (row) => {
+    if (row.source === 'override') return 'border-l-4 border-amber-400'
+    if (row.source === 'custom') return 'border-l-4 border-purple-400'
+    return 'border-l-4 border-transparent'
+}
+
+const categoryButtonClass = (value) => {
+    const active = selectedCategory.value === value
+    return [
+        'flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-left text-sm transition',
+        active ? 'bg-indigo-50 font-semibold text-indigo-700' : 'text-gray-700 hover:bg-gray-50',
+    ]
+}
+
+const categoryBadgeClass = (value) => {
+    const active = selectedCategory.value === value
+    return [
+        'inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium',
+        active ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600',
+    ]
 }
 </script>
