@@ -47,7 +47,7 @@
                                 <template #empty>
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
-                                            <FormTabs view="vertical">
+                                            <FormTabs view="vertical" @select="handleTabSelected">
                                                 <FormTab name="settings" label="Settings" :elements="[
                                                     'dialplan_uuid',
                                                     'dialplan_uuid_clean',
@@ -376,7 +376,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
@@ -400,6 +400,7 @@ const emit = defineEmits(["close", "error", "success", "refresh-data", "saved"])
 
 const form$ = ref(null);
 const submitMode = ref("builder");
+const activeTabName = ref("settings");
 const xmlEditorTheme = ref("chrome");
 const xmlEditorContent = ref("");
 const xmlEditorError = ref(null);
@@ -490,7 +491,25 @@ const defaultXmlTemplate = (item = {}) => {
 
 watch(() => props.options?.item, (item) => {
     xmlEditorContent.value = item?.dialplan_xml || defaultXmlTemplate(item);
+    restoreActiveTab();
 }, { immediate: true });
+
+watch(() => props.show, (show) => {
+    if (show) {
+        restoreActiveTab();
+        return;
+    }
+
+    activeTabName.value = "settings";
+    submitMode.value = "builder";
+    xmlEditorError.value = null;
+});
+
+watch(() => props.loading, (loading) => {
+    if (!loading) {
+        restoreActiveTab();
+    }
+});
 
 const toggleIsEnabled = (value) => value === true || value === "true" || value === 1 || value === "1";
 
@@ -671,6 +690,20 @@ const handleCopyToClipboard = (text) => {
         emit("error", { response: { data: { errors: { request: ["Failed to copy to clipboard."] } } } });
     });
 };
+
+const handleTabSelected = (activeTab) => {
+    activeTabName.value = activeTab?.name || "settings";
+};
+
+function restoreActiveTab() {
+    if (!props.show || props.loading) {
+        return;
+    }
+
+    nextTick(() => {
+        form$.value?.tabs$?.goTo(activeTabName.value);
+    });
+}
 
 const submitForm = async (FormData, form$) => {
     const requestData = { ...form$.requestData };
