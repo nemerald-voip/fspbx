@@ -146,7 +146,9 @@
             <template #footer>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    :page-size="pagination.per_page" :page-size-options="pagination.per_page_options"
+                    :show-page-size-selector="true"
+                    @pagination-change-page="renderRequestedPage" @page-size-change="handlePageSizeChange" />
             </template>
         </DataTable>
     </div>
@@ -181,6 +183,7 @@ import { ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon, PencilSquareIcon, 
 const props = defineProps({
     routes: Object,
     permissions: Object,
+    pagination: Object,
 });
 
 const loading = ref(false);
@@ -203,6 +206,10 @@ const itemOptions = ref({ item: {}, extension_scope_options: [], action_options:
 
 const routes = props.routes;
 const permissions = props.permissions;
+const pagination = ref({
+    per_page: props.pagination?.per_page ?? 50,
+    per_page_options: props.pagination?.per_page_options ?? [50, 100, 200, 500, 1000],
+});
 
 const data = ref({
     data: [],
@@ -247,7 +254,14 @@ const getData = (page = 1) => {
     currentPage.value = Number(page) || 1;
     const sort = sortData.value.order === "desc" ? `-${sortData.value.name}` : sortData.value.name;
 
-    axios.get(routes.data_route, { params: { filter: filterData.value, page: currentPage.value, sort } })
+    axios.get(routes.data_route, {
+        params: {
+            filter: filterData.value,
+            page: currentPage.value,
+            per_page: pagination.value.per_page,
+            sort,
+        },
+    })
         .then((response) => {
             data.value = response.data;
             currentPage.value = response.data.current_page ?? currentPage.value;
@@ -262,6 +276,12 @@ const handleSearchButtonClick = () => getData(1);
 const refreshCurrentPage = () => getData(currentPage.value);
 const handleFiltersReset = () => {
     filterData.value.search = null;
+    getData(1);
+};
+
+const handlePageSizeChange = (perPage) => {
+    pagination.value.per_page = perPage;
+    handleClearSelection();
     getData(1);
 };
 

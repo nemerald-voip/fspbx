@@ -157,7 +157,9 @@
             <template #footer>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    :page-size="pagination.per_page" :page-size-options="pagination.per_page_options"
+                    :show-page-size-selector="true"
+                    @pagination-change-page="renderRequestedPage" @page-size-change="handlePageSizeChange" />
             </template>
         </DataTable>
         <div class="px-4 sm:px-6 lg:px-8"></div>
@@ -216,6 +218,12 @@ const notificationShow = ref(null);
 const props = defineProps({
     routes: Object,
     permissions: Object,
+    pagination: Object,
+});
+
+const pagination = ref({
+    per_page: props.pagination?.per_page ?? 50,
+    per_page_options: props.pagination?.per_page_options ?? [50, 100, 200, 500, 1000],
 });
 
 const data = ref({
@@ -261,6 +269,7 @@ const getData = (page = 1) => {
         params: {
             filter: filterData.value,
             page,
+            per_page: pagination.value.per_page,
             sort,
         }
     })
@@ -374,6 +383,17 @@ const renderRequestedPage = (url) => {
     const pageParam = urlObj.searchParams.get("page") ?? 1;
     getData(pageParam);
 };
+
+const handlePageSizeChange = (perPage) => {
+    pagination.value.per_page = perPage;
+
+    if (typeof handleClearSelection === 'function') {
+        handleClearSelection();
+    }
+
+    getData(1);
+};
+
 
 const getItemOptions = (itemUuid = null) => {
     const payload = itemUuid ? { item_uuid: itemUuid } : {};

@@ -90,6 +90,10 @@ class CdrsController extends Controller
                 'permissions' => function () {
                     return $this->getPermissions();
                 },
+                'pagination' => [
+                    'per_page' => fspbx_pagination_per_page(),
+                    'per_page_options' => fspbx_pagination_options(),
+                ],
 
             ]
         );
@@ -448,7 +452,7 @@ class CdrsController extends Controller
         }
         // --- end normalize search ---
 
-        $params['paginate'] = 50;
+        $params['paginate'] = fspbx_pagination_per_page();
         $domain_uuid = session('domain_uuid');
         $params['domain_uuid'] = $domain_uuid;
 

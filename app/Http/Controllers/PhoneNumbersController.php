@@ -71,6 +71,10 @@ class PhoneNumbersController extends Controller
         return Inertia::render(
             $this->viewName,
             [
+                'pagination' => [
+                    'per_page' => fspbx_pagination_per_page(),
+                    'per_page_options' => fspbx_pagination_options(),
+                ],
 
                 'routes' => [
                     'current_page' => route('phone-numbers.index'),
@@ -236,7 +240,7 @@ class PhoneNumbersController extends Controller
 
     public function getData()
     {
-        $perPage = 50;
+        $perPage = fspbx_pagination_per_page();
         $currentDomain = session('domain_uuid');
 
         // If the filter is not present, assign default value before QueryBuilder

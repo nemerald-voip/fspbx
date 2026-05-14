@@ -61,6 +61,10 @@ class AppsController extends Controller
                 'data' => function () {
                     return $this->getData();
                 },
+                'pagination' => [
+                    'per_page' => fspbx_pagination_per_page(),
+                    'per_page_options' => fspbx_pagination_options(),
+                ],
 
                 'routes' => [
                     'current_page' => route('apps.index'),
@@ -80,8 +84,9 @@ class AppsController extends Controller
     /**
      *  Get data
      */
-    public function getData($paginate = 50)
+    public function getData($paginate = null)
     {
+        $paginate ??= fspbx_pagination_per_page();
 
         // Check if search parameter is present and not empty
         if (!empty(request('filterData.search'))) {

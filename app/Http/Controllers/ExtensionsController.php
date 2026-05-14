@@ -100,6 +100,10 @@ class ExtensionsController extends Controller
             $this->viewName,
             [
                 'permissions' => $permissions,
+                'pagination' => [
+                    'per_page' => fspbx_pagination_per_page(),
+                    'per_page_options' => fspbx_pagination_options(),
+                ],
 
                 'routes' => [
                     'current_page' => route('extensions.index'),
@@ -122,7 +126,7 @@ class ExtensionsController extends Controller
 
     public function getData()
     {
-        $perPage = 50;
+        $perPage = fspbx_pagination_per_page();
         $currentDomain = session('domain_uuid');
 
         if (!userCheckPermission('extension_view')) {

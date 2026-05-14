@@ -100,6 +100,10 @@ class FaxesController extends Controller
             $this->viewName,
             [
                 'data' => $faxesDto,
+                'pagination' => [
+                    'per_page' => fspbx_pagination_per_page(),
+                    'per_page_options' => fspbx_pagination_options(),
+                ],
 
                 'stats' => [
                     ['name' => 'Faxes Sent (Last 30 Days)', 'stat' => $totalSent],
@@ -139,7 +143,7 @@ class FaxesController extends Controller
 
     private function getFaxServers()
     {
-        $perPage = 50;
+        $perPage = fspbx_pagination_per_page();
         $currentDomain = session('domain_uuid');
 
         return QueryBuilder::for(Faxes::class)
