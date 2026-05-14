@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\Install\InstallSchema;
 use App\Models\DefaultSettings;
 use App\Models\User;
 use App\Models\UserSetting;
@@ -24,9 +25,13 @@ class FSPBXInitialDBSeed extends Command
     public function handle()
     {
         $this->info('Seeding Database ...');
+        $installSchema = app(InstallSchema::class);
 
         // Step 1: Run Upgrade Schema
         $this->runUpgradeSchema();
+        $this->info("Ensuring FS PBX install schemas...");
+        $installSchema->ensureSchemas();
+        $this->info("FS PBX install schemas are ready.");
 
         // Step 2: Create the Admin Domain
         $domain = Domain::firstOrCreate(
@@ -97,6 +102,9 @@ class FSPBXInitialDBSeed extends Command
 
         // Step 6: Run Upgrade Defaults
         $this->runUpgradeDefaults();
+        $this->info("Ensuring FS PBX install metadata...");
+        $installSchema->ensureMetadata();
+        $this->info("FS PBX install metadata is ready.");
 
         // Step 6a: configure Reverb
         $this->configureReverb();
