@@ -57,6 +57,7 @@ class UpdateRingGroupRequest extends FormRequest
             'members.*.destination_timeout'         => ['required_with:members', 'numeric', 'min:0'],
             'members.*.destination_prompt'          => ['required_with:members', 'boolean'],
             'members.*.destination_enabled'         => ['required_with:members', 'boolean'],
+            'members.*.destination_ignore_voicemail' => ['sometimes', 'boolean'],
 
             // timeout logic: action + optional target
             'timeout_action' => [

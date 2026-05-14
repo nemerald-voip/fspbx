@@ -32,6 +32,7 @@ class RingGroupsDestinations extends Model
         'destination_timeout',
         'destination_prompt',
         'destination_enabled',
+        'destination_ignore_voicemail',
         'insert_date',
         'insert_user',
         'update_date',

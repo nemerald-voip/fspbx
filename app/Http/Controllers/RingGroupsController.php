@@ -240,6 +240,7 @@ class RingGroupsController extends Controller
                                 'v_ring_group_destinations.destination_number',
                                 'v_ring_group_destinations.destination_prompt',
                                 'v_ring_group_destinations.destination_timeout',
+                                'v_ring_group_destinations.destination_ignore_voicemail',
                                 DB::raw("CASE 
                             WHEN extension_advanced_settings.suspended = 'true' THEN true
                             ELSE false
@@ -490,6 +491,7 @@ class RingGroupsController extends Controller
                             'destination_timeout'         => isset($member['destination_timeout']) ? (float) $member['destination_timeout'] : 0,
                             'destination_enabled'         => !empty($member['destination_enabled']),
                             'destination_prompt'          => !empty($member['destination_prompt']) ? 1 : null,
+                            'destination_ignore_voicemail' => !empty($member['destination_ignore_voicemail']),
                             'update_date'                 => $now,
                         ];
                     }
