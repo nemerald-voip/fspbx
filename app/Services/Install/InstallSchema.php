@@ -13,6 +13,7 @@ class InstallSchema
     private const RING_GROUPS_APP_UUID = '1d61fb65-1eec-bc73-a6ee-a6203b4fe6f2';
     private const IVR_MENUS_APP_UUID = 'a5788e9b-58bc-bd1b-df59-fff5d51253ab';
     private const FOLLOW_ME_APP_UUID = 'f5210fba-337d-4e05-86b6-7a2fd9dc7c42';
+    private const ACTIVE_CALLS_APP_UUID = 'ec8530a9-903a-469d-3717-281f798b9ef6';
 
     public function ensureSchemas(): void
     {
@@ -32,6 +33,7 @@ class InstallSchema
         $this->seedIvrMenuDefaultSettings();
         $this->seedFollowMePermissions();
         $this->seedFollowMeDefaultSettings();
+        $this->seedActiveCallPermissions();
     }
 
     private function ensureExtensionsSchema(): void
@@ -354,6 +356,11 @@ SQL);
         $this->seedDefaultSettings($this->followMeDefaultSettings(), self::FOLLOW_ME_APP_UUID);
     }
 
+    private function seedActiveCallPermissions(): void
+    {
+        $this->seedPermissions($this->activeCallPermissions(), 'Active Calls', self::ACTIVE_CALLS_APP_UUID);
+    }
+
     private function seedPermissions(array $permissions, string $applicationName, string $appUuid): void
     {
         if (!Schema::hasTable('v_permissions')) {
@@ -586,6 +593,15 @@ SQL);
             'follow_me_cid_name_prefix' => [],
             'follow_me_cid_number_prefix' => [],
             'follow_me_prompt' => ['superadmin', 'admin', 'user', 'agent'],
+        ];
+    }
+
+    private function activeCallPermissions(): array
+    {
+        return [
+            'call_active_view' => ['superadmin', 'admin'],
+            'call_active_hangup' => ['superadmin', 'admin'],
+            'call_active_all' => ['superadmin'],
         ];
     }
 

@@ -481,13 +481,14 @@ class FSPBXInitialDBSeed extends Command
             echo "⚠️ Failed to change ownership for $path\n";
         }
 
-        // Change permissions to 755
-        $chmodProcess = new Process(['chmod', '-R', '755', $path]);
-        $chmodProcess->run();
-        if ($chmodProcess->isSuccessful()) {
-            echo "✅ Permissions set to 755 for $path\n";
+        // Directories need execute permission for traversal. Leave file modes as tracked.
+        $directoryPermissionsProcess = new Process(['find', $path, '-type', 'd', '-exec', 'chmod', '755', '{}', '+']);
+        $directoryPermissionsProcess->run();
+
+        if ($directoryPermissionsProcess->isSuccessful()) {
+            echo "✅ Directory permissions set to 755 for $path\n";
         } else {
-            echo "⚠️ Failed to change permissions for $path\n";
+            echo "⚠️ Failed to set permissions for $path\n";
         }
     }
 
