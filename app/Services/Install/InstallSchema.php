@@ -12,12 +12,14 @@ class InstallSchema
     private const EXTENSIONS_APP_UUID = 'e68d9689-2769-e013-28fa-6214bf47fca3';
     private const RING_GROUPS_APP_UUID = '1d61fb65-1eec-bc73-a6ee-a6203b4fe6f2';
     private const IVR_MENUS_APP_UUID = 'a5788e9b-58bc-bd1b-df59-fff5d51253ab';
+    private const FOLLOW_ME_APP_UUID = 'f5210fba-337d-4e05-86b6-7a2fd9dc7c42';
 
     public function ensureSchemas(): void
     {
         $this->ensureExtensionsSchema();
         $this->ensureRingGroupsSchema();
         $this->ensureIvrMenusSchema();
+        $this->ensureFollowMeSchema();
     }
 
     public function ensureMetadata(): void
@@ -28,6 +30,8 @@ class InstallSchema
         $this->seedRingGroupDefaultSettings();
         $this->seedIvrMenuPermissions();
         $this->seedIvrMenuDefaultSettings();
+        $this->seedFollowMePermissions();
+        $this->seedFollowMeDefaultSettings();
     }
 
     private function ensureExtensionsSchema(): void
@@ -253,6 +257,42 @@ class InstallSchema
         }
     }
 
+    private function ensureFollowMeSchema(): void
+    {
+        if (!Schema::hasTable('v_follow_me')) {
+            Schema::create('v_follow_me', function (Blueprint $table) {
+                $table->uuid('domain_uuid')->nullable()->index();
+                $table->uuid('follow_me_uuid')->primary();
+                $table->text('cid_name_prefix')->nullable();
+                $table->text('cid_number_prefix')->nullable();
+                $table->text('dial_string')->nullable();
+                $table->text('follow_me_enabled')->nullable();
+                $table->text('follow_me_ignore_busy')->nullable();
+                $table->timestampTz('insert_date')->nullable();
+                $table->uuid('insert_user')->nullable();
+                $table->timestampTz('update_date')->nullable();
+                $table->uuid('update_user')->nullable();
+            });
+        }
+
+        if (!Schema::hasTable('v_follow_me_destinations')) {
+            Schema::create('v_follow_me_destinations', function (Blueprint $table) {
+                $table->uuid('domain_uuid')->nullable()->index();
+                $table->uuid('follow_me_uuid')->nullable()->index();
+                $table->uuid('follow_me_destination_uuid')->primary();
+                $table->text('follow_me_destination')->nullable()->index();
+                $table->decimal('follow_me_delay', 20, 0)->nullable();
+                $table->decimal('follow_me_timeout', 20, 0)->nullable();
+                $table->text('follow_me_prompt')->nullable();
+                $table->decimal('follow_me_order', 20, 0)->nullable();
+                $table->timestampTz('insert_date')->nullable();
+                $table->uuid('insert_user')->nullable();
+                $table->timestampTz('update_date')->nullable();
+                $table->uuid('update_user')->nullable();
+            });
+        }
+    }
+
     private function ensureNaturalSortFunction(): void
     {
         if (DB::connection()->getDriverName() !== 'pgsql') {
@@ -304,6 +344,16 @@ SQL);
         $this->seedDefaultSettings($this->ivrMenuDefaultSettings(), self::IVR_MENUS_APP_UUID);
     }
 
+    private function seedFollowMePermissions(): void
+    {
+        $this->seedPermissions($this->followMePermissions(), 'Follow Me', self::FOLLOW_ME_APP_UUID);
+    }
+
+    private function seedFollowMeDefaultSettings(): void
+    {
+        $this->seedDefaultSettings($this->followMeDefaultSettings(), self::FOLLOW_ME_APP_UUID);
+    }
+
     private function seedPermissions(array $permissions, string $applicationName, string $appUuid): void
     {
         if (!Schema::hasTable('v_permissions')) {
@@ -347,7 +397,7 @@ SQL);
         }
 
         $groups = DB::table('v_groups')
-            ->whereIn('group_name', ['superadmin', 'admin', 'user'])
+            ->whereIn('group_name', ['superadmin', 'admin', 'user', 'agent'])
             ->pluck('group_uuid', 'group_name');
 
         if ($groups->isEmpty()) {
@@ -518,6 +568,24 @@ SQL);
             'ivr_menu_destinations' => ['superadmin', 'admin'],
             'ivr_menus_sub_destinations' => ['superadmin', 'admin'],
             'ivr_menus_other_destinations' => ['superadmin', 'admin'],
+        ];
+    }
+
+    private function followMePermissions(): array
+    {
+        return [
+            'follow_me_view' => ['superadmin', 'admin', 'user', 'agent'],
+            'follow_me_add' => ['superadmin', 'admin', 'user', 'agent'],
+            'follow_me_edit' => ['superadmin', 'admin', 'user', 'agent'],
+            'follow_me_delete' => ['superadmin', 'admin', 'user', 'agent'],
+            'follow_me_destination_view' => ['superadmin', 'admin', 'user', 'agent'],
+            'follow_me_destination_add' => ['superadmin', 'admin', 'user', 'agent'],
+            'follow_me_destination_edit' => ['superadmin', 'admin', 'user', 'agent'],
+            'follow_me_destination_delete' => ['superadmin', 'admin', 'user', 'agent'],
+            'follow_me_ignore_busy' => ['superadmin', 'admin', 'user', 'agent'],
+            'follow_me_cid_name_prefix' => [],
+            'follow_me_cid_number_prefix' => [],
+            'follow_me_prompt' => ['superadmin', 'admin', 'user', 'agent'],
         ];
     }
 
@@ -841,6 +909,21 @@ SQL);
                 'default_setting_value' => 'true',
                 'default_setting_enabled' => 'true',
                 'default_setting_description' => 'Add answer to IVR Menu dialplan.',
+            ],
+        ];
+    }
+
+    private function followMeDefaultSettings(): array
+    {
+        return [
+            [
+                'default_setting_uuid' => 'ee68b6d6-a510-48c4-bb71-4e65fae8a5e5',
+                'default_setting_category' => 'follow_me',
+                'default_setting_subcategory' => 'strategy',
+                'default_setting_name' => 'text',
+                'default_setting_value' => 'enterprise',
+                'default_setting_enabled' => 'true',
+                'default_setting_description' => 'Options: simultaneous, enterprise ',
             ],
         ];
     }
