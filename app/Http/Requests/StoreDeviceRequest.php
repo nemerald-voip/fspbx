@@ -43,10 +43,18 @@ class StoreDeviceRequest extends FormRequest
                 Rule::when(
                     function ($input) {
                         // Check if the value is not the literal string "NULL"
-                        return $input['device_profile_uuid'] !== 'NULL';
+                        return ($input['device_profile_uuid'] ?? null) !== 'NULL';
                     },
                     Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid'),
                 )
+            ],
+            'device_key_template_uuid' => [
+                'nullable',
+                Rule::when(
+                    fn ($input) => ($input['device_key_template_uuid'] ?? null) !== 'NULL',
+                    Rule::exists('device_key_templates', 'device_key_template_uuid')
+                        ->where('domain_uuid', session('domain_uuid')),
+                ),
             ],
 
             // LEGACY template path (kept only when not a UUID)
@@ -130,6 +138,7 @@ class StoreDeviceRequest extends FormRequest
             'device_address.required' => 'MAC address is required',
             'device_address.mac_address' => 'MAC address is invalid',
             'device_profile_uuid.required' => 'Profile is required',
+            'device_key_template_uuid.exists' => 'Selected key template was not found.',
             'device_template.required' => 'Template is required',
             'device_address_modified.unique' => 'Duplicate MAC address has been found',
             'device_template_uuid.uuid'   => 'Selected template is invalid.',

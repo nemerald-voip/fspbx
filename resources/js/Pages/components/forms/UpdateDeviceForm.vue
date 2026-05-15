@@ -55,6 +55,7 @@
                                         ?? options.item?.device_template
                                         ?? null,
                                     device_profile_uuid: options.item?.device_profile_uuid,
+                                    device_key_template_uuid: options.item?.device_key_template_uuid,
                                     domain_uuid: options.item?.domain_uuid,
                                     device_lines: options.lines,
                                     device_keys: normalizeDeviceKeysForForm(
@@ -80,6 +81,7 @@
                                                     'device_address',
                                                     'uuid_clean',
                                                     'device_template',
+                                                    'device_key_template_uuid',
                                                     'device_profile_uuid',
                                                     'domain_uuid',
                                                     'device_description',
@@ -104,6 +106,9 @@
                                                     'keys_title',
                                                     'add_key',
                                                     'device_keys',
+                                                    'new_key_template_name',
+                                                    'new_key_template_description',
+                                                    'save_key_template',
                                                     'advanced',
                                                     'keys_container2',
                                                     'submit_keys',
@@ -221,8 +226,15 @@
                                                     value-prop="value" :floating="false" placeholder="Select Template"
                                                     :conditions="[() => options?.permissions?.device_template_update]" />
 
+                                                <SelectElement name="device_key_template_uuid"
+                                                    :items="options.key_templates" :search="true" :native="false"
+                                                    label="Key Template" input-type="search" autocomplete="off"
+                                                    label-prop="name" value-prop="value"
+                                                    placeholder="Select Key Template (Optional)" :floating="false"
+                                                    :conditions="[() => options?.permissions?.device_key_template_assign]" />
+
                                                 <SelectElement name="device_profile_uuid" :items="options.profiles"
-                                                    :search="true" :native="false" label="Device Profile"
+                                                    :search="true" :native="false" label="Device Profile (Depreciated)"
                                                     input-type="search" autocomplete="off" label-prop="name"
                                                     value-prop="value" placeholder="Select Profile (Optional)"
                                                     :floating="false" />
@@ -589,6 +601,21 @@
                                                 </ListElement>
 
                                                 <GroupElement name="keys_container2" />
+
+                                                <TextElement name="new_key_template_name" label="New Template Name"
+                                                    placeholder="Save these keys as a template" :floating="false"
+                                                    :conditions="[() => options?.permissions?.device_key_template_create && options?.routes?.save_key_template_from_device]"
+                                                    :columns="{ sm: { container: 6 } }" />
+
+                                                <TextareaElement name="new_key_template_description"
+                                                    label="New Template Description" :rows="2" :floating="false"
+                                                    :conditions="[() => options?.permissions?.device_key_template_create && options?.routes?.save_key_template_from_device]"
+                                                    :columns="{ sm: { container: 6 } }" />
+
+                                                <ButtonElement name="save_key_template" button-label="Save as Template"
+                                                    :submits="false" align="left" :loading="savingKeyTemplate"
+                                                    @click="handleSaveKeyTemplate"
+                                                    :conditions="[() => options?.permissions?.device_key_template_create && options?.routes?.save_key_template_from_device]" />
 
                                                 <ButtonElement name="submit_keys" button-label="Save" :submits="true"
                                                     align="right" />
@@ -1214,6 +1241,7 @@ const props = defineProps({
 
 const form$ = ref(null)
 const advModalIndex = ref(null)
+const savingKeyTemplate = ref(false)
 const isCloudProvisioningLoading = reactive({
     register: false,
     deregister: false,
@@ -1613,9 +1641,37 @@ const submitForm = async (FormData, form$) => {
 
     delete data.multi_purpose_keys
     delete data.expansion_keys
+    delete data.new_key_template_name
+    delete data.new_key_template_description
 
     return await form$.$vueform.services.axios.put(props.options.routes.update_route, data)
 };
+
+const handleSaveKeyTemplate = async () => {
+    const name = form$?.value?.el$('new_key_template_name')?.value
+    const description = form$?.value?.el$('new_key_template_description')?.value
+
+    if (!name || String(name).trim() === '') {
+        form$?.value?.el$('new_key_template_name')?.messageBag?.clear()
+        form$?.value?.el$('new_key_template_name')?.messageBag?.append('Template name is required.')
+        return
+    }
+
+    savingKeyTemplate.value = true
+
+    try {
+        const response = await axios.post(props.options.routes.save_key_template_from_device, {
+            name,
+            description,
+        })
+
+        emit('success', 'success', response.data.messages)
+    } catch (error) {
+        emit('error', error)
+    } finally {
+        savingKeyTemplate.value = false
+    }
+}
 
 
 function clearErrorsRecursive(el$) {

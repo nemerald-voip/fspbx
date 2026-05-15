@@ -68,6 +68,8 @@
                                                     'h4',
                                                     'device_template_checkbox',
                                                     'device_template',
+                                                    'device_key_template_uuid_checkbox',
+                                                    'device_key_template_uuid',
                                                     'device_profile_uuid_checkbox',
                                                     'device_profile_uuid',
                                                     'domain_uuid_checkbox',
@@ -115,6 +117,23 @@
                                                     value-prop="value" :floating="false" placeholder="Select Template"
                                                     :conditions="[() => options?.permissions?.device_template_update]"
                                                     :disabled="[['device_template_checkbox', false]]" :columns="{
+                                                        container: 11,
+                                                    }" />
+
+                                                <CheckboxElement name="device_key_template_uuid_checkbox"
+                                                    :submit="false" label="&nbsp;" :columns="{
+                                                        container: 1,
+                                                    }"
+                                                    :conditions="[() => options?.permissions?.device_key_template_assign]" />
+
+                                                <SelectElement name="device_key_template_uuid"
+                                                    :items="options.key_templates" :search="true" :native="false"
+                                                    label="Key Template" input-type="search" autocomplete="off"
+                                                    label-prop="name" value-prop="value"
+                                                    placeholder="Select Key Template" :floating="false"
+                                                    :disabled="[['device_key_template_uuid_checkbox', false]]"
+                                                    :conditions="[() => options?.permissions?.device_key_template_assign]"
+                                                    :columns="{
                                                         container: 11,
                                                     }" />
 

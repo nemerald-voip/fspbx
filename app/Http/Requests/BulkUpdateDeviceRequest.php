@@ -29,10 +29,18 @@ class BulkUpdateDeviceRequest extends FormRequest
                 Rule::when(
                     function ($input) {
                         // Check if the value is not the literal string "NULL"
-                        return $input['device_profile_uuid'] !== 'NULL';
+                        return ($input['device_profile_uuid'] ?? null) !== 'NULL';
                     },
                     Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid'),
                 )
+            ],
+            'device_key_template_uuid' => [
+                'nullable',
+                Rule::when(
+                    fn ($input) => ($input['device_key_template_uuid'] ?? null) !== 'NULL',
+                    Rule::exists('device_key_templates', 'device_key_template_uuid')
+                        ->where('domain_uuid', session('domain_uuid')),
+                ),
             ],
             'device_template' => [
                 'nullable',
@@ -73,6 +81,7 @@ class BulkUpdateDeviceRequest extends FormRequest
         return [
             'items.required' => 'No items selected to update',
             'domain_uuid.required' => 'Acccount must be selected.',
+            'device_key_template_uuid.exists' => 'Selected key template was not found.',
         ];
     }
 

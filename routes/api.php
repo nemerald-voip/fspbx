@@ -25,6 +25,7 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\DeviceController;
+use App\Http\Controllers\DeviceKeyTemplateController;
 use App\Http\Controllers\DialplanController;
 use App\Http\Controllers\DefaultSettingsController;
 use App\Http\Controllers\DomainController;
@@ -308,6 +309,15 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('devices/item-options', [DeviceController::class, 'getItemOptions'])->name('devices.item.options');
     Route::post('devices/assign', [DeviceController::class, 'assign'])->name('devices.assign');
     Route::post('devices/bulk-unassign', [DeviceController::class, 'bulkUnassign'])->name('devices.bulk.unassign');
+
+    // Device Key Templates
+    Route::get('/device-key-templates/data', [DeviceKeyTemplateController::class, 'getData'])->name('device-key-templates.data');
+    Route::post('/device-key-templates', [DeviceKeyTemplateController::class, 'store'])->name('device-key-templates.store');
+    Route::put('/device-key-templates/{device_key_template}', [DeviceKeyTemplateController::class, 'update'])->name('device-key-templates.update');
+    Route::post('/device-key-templates/item-options', [DeviceKeyTemplateController::class, 'getItemOptions'])->name('device-key-templates.item.options');
+    Route::post('/device-key-templates/select-all', [DeviceKeyTemplateController::class, 'selectAll'])->name('device-key-templates.select.all');
+    Route::post('/device-key-templates/bulk-delete', [DeviceKeyTemplateController::class, 'bulkDelete'])->name('device-key-templates.bulk.delete');
+    Route::post('/devices/{device}/key-templates', [DeviceKeyTemplateController::class, 'storeFromDevice'])->name('devices.key-templates.store-from-device');
 
     // Gateways
     Route::post('gateways', [GatewayController::class, 'store'])->name('gateways.store');

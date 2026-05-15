@@ -55,6 +55,7 @@
                                         ?? options.item?.device_template
                                         ?? null,
                                     device_profile_uuid: options.item?.device_profile_uuid,
+                                    device_key_template_uuid: options.item?.device_key_template_uuid,
                                     domain_uuid: options.item?.domain_uuid,
                                     device_lines: options.lines,
                                     device_description: options.item?.device_description ?? null,
@@ -69,6 +70,7 @@
                                                     'h4',
                                                     'device_address',
                                                     'device_template',
+                                                    'device_key_template_uuid',
                                                     'device_profile_uuid',
                                                     'domain_uuid',
                                                     'device_description',
@@ -126,8 +128,15 @@
                                                     value-prop="value" :floating="false"
                                                     placeholder="Select Template" />
 
+                                                <SelectElement name="device_key_template_uuid"
+                                                    :items="options.key_templates" :search="true" :native="false"
+                                                    label="Key Template" input-type="search" autocomplete="off"
+                                                    label-prop="name" value-prop="value"
+                                                    placeholder="Select Key Template (Optional)" :floating="false"
+                                                    :conditions="[() => options?.permissions?.device_key_template_assign]" />
+
                                                 <SelectElement name="device_profile_uuid" :items="options.profiles"
-                                                    :search="true" :native="false" label="Device Profile"
+                                                    :search="true" :native="false" label="Device Profile (Depreciated)"
                                                     input-type="search" autocomplete="off" label-prop="name"
                                                     value-prop="value" placeholder="Select Profile (Optional)"
                                                     :floating="false" />

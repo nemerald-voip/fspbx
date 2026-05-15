@@ -20,6 +20,7 @@ class DeviceService
             $inputs['device_enabled'] = $inputs['device_enabled'] ?? 'true';
             $inputs['device_enabled'] = $this->normalizeEnabledValue($inputs['device_enabled']);
             $inputs['device_address'] = $inputs['device_address_modified'];
+            $this->normalizeKeyTemplateValue($inputs);
 
             $domainUuid = (string) ($inputs['domain_uuid'] ?? '');
             $domainName = $this->resolveDomainName($domainUuid);
@@ -51,6 +52,8 @@ class DeviceService
             if (array_key_exists('device_address_modified', $inputs)) {
                 $inputs['device_address'] = $inputs['device_address_modified'];
             }
+
+            $this->normalizeKeyTemplateValue($inputs);
 
             $domainUuid = (string) ($inputs['domain_uuid'] ?? $device->domain_uuid);
 
@@ -124,6 +127,13 @@ class DeviceService
         return Domain::query()
             ->where('domain_uuid', $domainUuid)
             ->value('domain_name') ?? session('domain_name');
+    }
+
+    private function normalizeKeyTemplateValue(array &$inputs): void
+    {
+        if (array_key_exists('device_key_template_uuid', $inputs) && $inputs['device_key_template_uuid'] === 'NULL') {
+            $inputs['device_key_template_uuid'] = null;
+        }
     }
 
     private function loadDeleteSnapshot(Devices $device): Devices
