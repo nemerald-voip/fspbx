@@ -3,7 +3,7 @@
 
 ## Overview
 
-This project started as a fork of the FusionPBX system but has been extensively redesigned. The front end has been redeveloped using Laravel for the backend and Vue.js for the front end. This new implementation aims to enhance user experience, improve performance, and provide a more modern and maintainable codebase.
+This project started as a fork of the FusionPBX system but has been extensively redesigned. The backend has been redeveloped using Laravel and Vue.js for the frontend. This new implementation aims to enhance user experience, improve performance, and provide a more modern and maintainable codebase.
 
 ## Features
 
