@@ -1,0 +1,1 @@
+/var/www/fspbx/Modules/StirShaken/scripts/stir_shaken.lua
