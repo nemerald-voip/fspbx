@@ -233,6 +233,7 @@ class ProcessFaxWebhookEventJob implements ShouldQueue
         $isPdf = $pdfPath && is_file($pdfPath);
 
         $attributes = [
+            'domain_uuid' => $fax->domain_uuid,
             'domain_name' => $this->stringOrNull($this->data['domain_name'] ?? null),
             'fax_destination' => $this->stringOrNull($this->data['fax_destination'] ?? null)
                 ?? $this->stringOrNull($this->data['caller_destination'] ?? null)

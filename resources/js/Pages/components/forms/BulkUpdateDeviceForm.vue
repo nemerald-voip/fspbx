@@ -68,6 +68,8 @@
                                                     'h4',
                                                     'device_template_checkbox',
                                                     'device_template',
+                                                    'device_key_template_uuid_checkbox',
+                                                    'device_key_template_uuid',
                                                     'device_profile_uuid_checkbox',
                                                     'device_profile_uuid',
                                                     'domain_uuid_checkbox',
@@ -118,6 +120,35 @@
                                                         container: 11,
                                                     }" />
 
+                                                <CheckboxElement name="device_key_template_uuid_checkbox"
+                                                    :submit="false" label="&nbsp;" :columns="{
+                                                        container: 1,
+                                                    }"
+                                                    :conditions="[() => options?.permissions?.device_key_template_assign]" />
+
+                                                <SelectElement name="device_key_template_uuid"
+                                                    :items="options.key_templates" :search="true" :native="false"
+                                                    label="Key Template" input-type="search" autocomplete="off"
+                                                    label-prop="name" value-prop="value"
+                                                    placeholder="Select Key Template" :floating="false"
+                                                    :disabled="[[
+                                                        ['device_key_template_uuid_checkbox', false],
+                                                        [
+                                                            ['device_profile_uuid_checkbox', true],
+                                                            ['device_profile_uuid', 'not_in', [null, '', 'NULL']],
+                                                        ],
+                                                    ]]"
+                                                    :conditions="[() => options?.permissions?.device_key_template_assign]"
+                                                    :columns="{
+                                                        container: 11,
+                                                    }"
+                                                    @change="(newValue, oldValue, el$) => {
+                                                        if (newValue && newValue !== 'NULL') {
+                                                            el$.form$.el$('device_profile_uuid')?.update(null)
+                                                            el$.form$.el$('device_profile_uuid_checkbox')?.update(false)
+                                                        }
+                                                    }" />
+
                                                 <CheckboxElement name="device_profile_uuid_checkbox" :submit="false"
                                                     label="&nbsp;" :columns="{
                                                         container: 1,
@@ -127,8 +158,21 @@
                                                     :search="true" :native="false" label="Device Profile"
                                                     input-type="search" autocomplete="off" label-prop="name"
                                                     value-prop="value" placeholder="Select Profile" :floating="false"
-                                                    :disabled="[['device_profile_uuid_checkbox', false]]" :columns="{
+                                                    :disabled="[[
+                                                        ['device_profile_uuid_checkbox', false],
+                                                        [
+                                                            ['device_key_template_uuid_checkbox', true],
+                                                            ['device_key_template_uuid', 'not_in', [null, '', 'NULL']],
+                                                        ],
+                                                    ]]"
+                                                    :columns="{
                                                         container: 11,
+                                                    }"
+                                                    @change="(newValue, oldValue, el$) => {
+                                                        if (newValue && newValue !== 'NULL') {
+                                                            el$.form$.el$('device_key_template_uuid')?.update(null)
+                                                            el$.form$.el$('device_key_template_uuid_checkbox')?.update(false)
+                                                        }
                                                     }" />
 
                                                 <CheckboxElement name="device_description_checkbox" :submit="false"

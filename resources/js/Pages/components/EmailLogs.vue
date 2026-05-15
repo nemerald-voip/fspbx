@@ -273,6 +273,10 @@ const domainFilterOptions = computed(() => [
 const emailColumnCount = computed(() => showDomainColumn.value ? 6 : 5);
 
 const domainLabel = (row) => {
+    if (!row.domain_uuid) {
+        return 'System';
+    }
+
     return row.domain?.domain_description || row.domain?.domain_name || '';
 };
 

@@ -367,6 +367,25 @@ class ProvisioningController extends Controller
                     },
                 ]);
             },
+            'keyTemplate' => function ($q) {
+                $q->select([
+                    'device_key_template_uuid',
+                    'name',
+                    'enabled',
+                ])->where('enabled', 'true')->with([
+                    'keys' => function ($k) {
+                        $k->select([
+                            'device_key_template_key_uuid',
+                            'device_key_template_uuid',
+                            'key_area',
+                            'key_index',
+                            'key_type',
+                            'key_value',
+                            'key_label',
+                        ])->orderBy('key_area')->orderBy('key_index');
+                    },
+                ]);
+            },
             'legacy_keys' => function ($k) {
                 $k->select([
                     'device_key_uuid',
@@ -816,6 +835,7 @@ class ProvisioningController extends Controller
     private function getEffectiveDeviceKeysByArea(Devices $device, array $settings = []): array
     {
         $profileKeys = collect($device->profile?->keys ?? []);
+        $templateKeys = collect($device->keyTemplate?->keys ?? []);
         $legacyKeys  = collect($device->legacy_keys ?? []);
         $newKeys     = collect($device->keys ?? []);
 
@@ -823,6 +843,7 @@ class ProvisioningController extends Controller
             'device_uuid' => (string) $device->device_uuid,
             'vendor' => $device->device_vendor,
             'profile_key_count' => $profileKeys->count(),
+            'key_template_key_count' => $templateKeys->count(),
             'legacy_key_count' => $legacyKeys->count(),
             'device_key_count' => $newKeys->count(),
         ]);
@@ -932,6 +953,35 @@ class ProvisioningController extends Controller
 
             $profileKeysApplied++;
         }
+
+        // Overlay with modern template keys
+        $templateKeysApplied = 0;
+        foreach ($templateKeys as $tk) {
+            $id = (int) ($tk->key_index ?? 0);
+            if ($id <= 0) {
+                continue;
+            }
+
+            $area = (string) ($tk->key_area ?? 'main');
+
+            if (!array_key_exists($area, $maps)) {
+                $maps[$area] = [];
+            }
+
+            $mapped = $this->mapNewDeviceKeyToLegacyShape($device, $tk);
+            $mapped['area'] = $area;
+            $mapped['source'] = 'key_template';
+
+            $maps[$area][$id] = $mapped;
+            $templateKeysApplied++;
+        }
+
+        provisioning_debug('ProvisioningController: applied device key template keys', [
+            'device_uuid' => (string) $device->device_uuid,
+            'device_key_template_uuid' => (string) ($device->device_key_template_uuid ?? ''),
+            'template_keys_applied' => $templateKeysApplied,
+            'raw_area_counts' => collect($maps)->map(fn($map) => count($map))->all(),
+        ]);
 
         // Overlay with legacy device keys
         $legacyKeysApplied = 0;

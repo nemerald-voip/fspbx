@@ -43,10 +43,18 @@ class StoreDeviceRequest extends FormRequest
                 Rule::when(
                     function ($input) {
                         // Check if the value is not the literal string "NULL"
-                        return $input['device_profile_uuid'] !== 'NULL';
+                        return ($input['device_profile_uuid'] ?? null) !== 'NULL';
                     },
                     Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid'),
                 )
+            ],
+            'device_key_template_uuid' => [
+                'nullable',
+                Rule::when(
+                    fn ($input) => ($input['device_key_template_uuid'] ?? null) !== 'NULL',
+                    Rule::exists('device_key_templates', 'device_key_template_uuid')
+                        ->where('domain_uuid', session('domain_uuid')),
+                ),
             ],
 
             // LEGACY template path (kept only when not a UUID)
@@ -130,11 +138,36 @@ class StoreDeviceRequest extends FormRequest
             'device_address.required' => 'MAC address is required',
             'device_address.mac_address' => 'MAC address is invalid',
             'device_profile_uuid.required' => 'Profile is required',
+            'device_key_template_uuid.exists' => 'Selected key template was not found.',
             'device_template.required' => 'Template is required',
             'device_address_modified.unique' => 'Duplicate MAC address has been found',
             'device_template_uuid.uuid'   => 'Selected template is invalid.',
             'device_template_uuid.exists' => 'Selected template was not found.',
         ];
+    }
+
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            if (
+                $this->assignmentSelected($this->input('device_profile_uuid'))
+                && $this->assignmentSelected($this->input('device_key_template_uuid'))
+            ) {
+                $validator->errors()->add(
+                    'device_key_template_uuid',
+                    'Choose either a key template or a device profile, not both.'
+                );
+            }
+        });
+    }
+
+    private function assignmentSelected(mixed $value): bool
+    {
+        if ($value === null) {
+            return false;
+        }
+
+        return !in_array((string) $value, ['', 'NULL'], true);
     }
 
     public function prepareForValidation(): void

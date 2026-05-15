@@ -31,6 +31,7 @@ class Devices extends Model
     protected $fillable = [
         'domain_uuid',
         'device_profile_uuid',
+        'device_key_template_uuid',
         'device_address',
         'serial_number',
         'device_label',
@@ -105,6 +106,11 @@ class Devices extends Model
     {
         // Device has FK device_profile_uuid → it *belongsTo* a DeviceProfile
         return $this->belongsTo(DeviceProfile::class, 'device_profile_uuid', 'device_profile_uuid');
+    }
+
+    public function keyTemplate(): BelongsTo
+    {
+        return $this->belongsTo(DeviceKeyTemplate::class, 'device_key_template_uuid', 'device_key_template_uuid');
     }
 
     public function cloudProvisioning()
