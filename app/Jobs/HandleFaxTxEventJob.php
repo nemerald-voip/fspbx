@@ -10,6 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 
 /**
@@ -181,8 +182,9 @@ class HandleFaxTxEventJob implements ShouldQueue
         $log->fax_transfer_rate              = $this->numericOrNull($this->data['fax_transfer_rate'] ?? null);
         $log->fax_uri                        = $this->stringOrNull($this->data['fax_uri'] ?? null);
         $log->fax_duration                   = $this->numericOrNull($this->data['billsec'] ?? $this->data['duration'] ?? null);
-        $log->fax_date                       = now();
-        $log->fax_epoch                      = $this->numericOrNull($this->data['end_epoch'] ?? null) ?? time();
+        $faxEpoch                            = $this->numericOrNull($this->data['end_epoch'] ?? null) ?? time();
+        $log->fax_date                       = Carbon::createFromTimestamp($faxEpoch, 'UTC');
+        $log->fax_epoch                      = $faxEpoch;
         $log->save();
 
         fax_webhook_debug('HandleFaxTxEventJob: wrote new fax log', [
