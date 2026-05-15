@@ -164,7 +164,7 @@
             <template #footer>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    :page-size="pagination.per_page" :page-size-options="pagination.per_page_options"
+                    :page-size="perPage" :page-size-options="props.pagination?.per_page_options ?? []"
                     :show-page-size-selector="true"
                     @pagination-change-page="renderRequestedPage" @page-size-change="handlePageSizeChange" />
             </template>
@@ -290,10 +290,7 @@ const props = defineProps({
     pagination: Object,
 });
 
-const pagination = ref({
-    per_page: props.pagination?.per_page ?? 50,
-    per_page_options: props.pagination?.per_page_options ?? [50, 100, 200, 500, 1000],
-});
+const perPage = ref(props.pagination?.per_page);
 
 
 const filterData = ref({
@@ -515,8 +512,8 @@ const handleSearchButtonClick = () => {
         data: {
             filterData: filterData._rawValue,
             sortField: sortData.value.name,
-            per_page: pagination.value.per_page,
             sortOrder: sortData.value.order,
+            per_page: perPage.value,
         },
         preserveScroll: true,
         preserveState: true,
@@ -537,14 +534,19 @@ const handleFiltersReset = () => {
 }
 
 
+const handlePageSizeChange = (newPerPage) => {
+    perPage.value = newPerPage;
+    handleSearchButtonClick();
+};
+
 const renderRequestedPage = (url) => {
     loading.value = true;
     router.visit(url, {
         data: {
             filterData: filterData._rawValue,
             sortField: sortData.value.name,
-            per_page: pagination.value.per_page,
             sortOrder: sortData.value.order,
+            per_page: perPage.value,
         },
         preserveScroll: true,
         preserveState: true,
@@ -554,17 +556,6 @@ const renderRequestedPage = (url) => {
         }
     });
 };
-
-const handlePageSizeChange = (perPage) => {
-    pagination.value.per_page = perPage;
-
-    if (typeof handleClearSelection === 'function') {
-        handleClearSelection();
-    }
-
-    handleSearchButtonClick();
-};
-
 
 
 const getItemOptions = (itemUuid = null) => {

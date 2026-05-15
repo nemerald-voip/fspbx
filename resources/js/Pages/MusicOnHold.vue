@@ -264,8 +264,8 @@
                     :currentPage="data.current_page"
                     :lastPage="data.last_page"
                     :links="data.links"
-                    :page-size="pagination.per_page"
-                    :page-size-options="pagination.per_page_options"
+                    :page-size="perPage"
+                    :page-size-options="props.pagination?.per_page_options ?? []"
                     :show-page-size-selector="true"
                     @pagination-change-page="changePage"
                     @page-size-change="handlePageSizeChange"
@@ -529,8 +529,8 @@
                     :currentPage="data.current_page"
                     :lastPage="data.last_page"
                     :links="data.links"
-                    :page-size="pagination.per_page"
-                    :page-size-options="pagination.per_page_options"
+                    :page-size="perPage"
+                    :page-size-options="props.pagination?.per_page_options ?? []"
                     :show-page-size-selector="true"
                     @pagination-change-page="changePage"
                     @page-size-change="handlePageSizeChange"
@@ -704,10 +704,7 @@ const props = defineProps({
 
 const routes = props.routes;
 const permissions = props.permissions;
-const pagination = ref({
-    per_page: props.pagination?.per_page ?? 50,
-    per_page_options: props.pagination?.per_page_options ?? [50, 100, 200, 500, 1000],
-});
+const perPage = ref(props.pagination?.per_page);
 
 const VIEW_MODE_KEY = "moh:viewMode";
 
@@ -853,7 +850,7 @@ const fetchData = (page = 1) => {
         params: {
             filter: filterData.value,
             sort: sortParam.value,
-            per_page: pagination.value.per_page,
+            per_page: perPage.value,
             page,
         },
     })
@@ -887,15 +884,15 @@ const setSort = (column) => {
 
 const toggleNameSort = () => setSort("music_on_hold_name");
 
+const handlePageSizeChange = (newPerPage) => {
+    perPage.value = newPerPage;
+    clearSelection();
+    fetchData(1);
+};
+
 const changePage = (url) => {
     if (!url) return;
     fetchData(Number(new URL(url, window.location.origin).searchParams.get("page") || 1));
-};
-
-const handlePageSizeChange = (perPage) => {
-    pagination.value.per_page = perPage;
-    clearSelection();
-    fetchData(1);
 };
 
 const showAll = () => {

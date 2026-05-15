@@ -146,7 +146,7 @@
             <template #footer>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    :page-size="pagination.per_page" :page-size-options="pagination.per_page_options"
+                    :page-size="perPage" :page-size-options="props.pagination?.per_page_options ?? []"
                     :show-page-size-selector="true"
                     @pagination-change-page="renderRequestedPage" @page-size-change="handlePageSizeChange" />
             </template>
@@ -186,6 +186,8 @@ const props = defineProps({
     pagination: Object,
 });
 
+const perPage = ref(props.pagination?.per_page);
+
 const loading = ref(false);
 const currentPage = ref(1);
 const selectAll = ref(false);
@@ -206,10 +208,6 @@ const itemOptions = ref({ item: {}, extension_scope_options: [], action_options:
 
 const routes = props.routes;
 const permissions = props.permissions;
-const pagination = ref({
-    per_page: props.pagination?.per_page ?? 50,
-    per_page_options: props.pagination?.per_page_options ?? [50, 100, 200, 500, 1000],
-});
 
 const data = ref({
     data: [],
@@ -254,14 +252,7 @@ const getData = (page = 1) => {
     currentPage.value = Number(page) || 1;
     const sort = sortData.value.order === "desc" ? `-${sortData.value.name}` : sortData.value.name;
 
-    axios.get(routes.data_route, {
-        params: {
-            filter: filterData.value,
-            page: currentPage.value,
-            per_page: pagination.value.per_page,
-            sort,
-        },
-    })
+    axios.get(routes.data_route, { params: { filter: filterData.value, page: currentPage.value, per_page: perPage.value, sort } })
         .then((response) => {
             data.value = response.data;
             currentPage.value = response.data.current_page ?? currentPage.value;
@@ -279,9 +270,8 @@ const handleFiltersReset = () => {
     getData(1);
 };
 
-const handlePageSizeChange = (perPage) => {
-    pagination.value.per_page = perPage;
-    handleClearSelection();
+const handlePageSizeChange = (newPerPage) => {
+    perPage.value = newPerPage;
     getData(1);
 };
 
