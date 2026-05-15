@@ -10,8 +10,11 @@
                 <p class="mt-1 text-sm text-gray-500">Override global defaults for this domain, or revert customizations back to the system default.</p>
             </div>
             <div class="flex flex-wrap gap-2">
+                <a :href="routes.domains" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    <BuildingOffice2Icon class="h-4 w-4" /> Domains
+                </a>
                 <a :href="routes.default_settings" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                    <ArrowUturnLeftIcon class="h-4 w-4" /> Defaults
+                    <ArrowUturnLeftIcon class="h-4 w-4" /> Default Settings
                 </a>
                 <button type="button" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="reloadSettings">
                     <ArrowPathIcon class="h-4 w-4" /> Reload
@@ -96,17 +99,19 @@
                     </header>
 
                     <div v-if="loading" class="px-4 py-12">
-                        <Loading :show="true" />
+                        <Loading :show="true" :absolute="false" />
                     </div>
 
                     <ul v-else-if="displayedRows.length" class="divide-y divide-gray-100">
-                        <li v-for="row in displayedRows" :key="row.id" :class="['relative flex items-start gap-3 px-4 py-3 transition hover:bg-gray-50', rowAccentClass(row)]">
+                        <li v-for="row in displayedRows" :key="row.id" class="relative flex items-start gap-3 px-4 py-3 transition hover:bg-gray-50">
+                            <span v-if="rowAccentColor(row)" :class="['pointer-events-none absolute inset-y-0 left-0 w-1', rowAccentColor(row)]" aria-hidden="true" />
                             <input v-if="row.domain_setting_uuid" v-model="selectedItems" type="checkbox" :value="row.domain_setting_uuid" class="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600" />
                             <span v-else class="mt-1 inline-block h-4 w-4 shrink-0" />
 
                             <div class="min-w-0 flex-1">
-                                <div class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                                <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
                                     <h3 class="text-sm font-semibold text-gray-900">{{ formatLabel(row.subcategory) }}</h3>
+                                    <button type="button" class="inline-flex items-center rounded-md bg-indigo-50 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-indigo-700 ring-1 ring-inset ring-indigo-600/20 hover:bg-indigo-100" :title="`Filter by ${row.category_label}`" @click="selectedCategory = row.category">{{ row.category_label }}</button>
                                     <span class="font-mono text-xs text-gray-400">{{ row.subcategory }}</span>
                                     <span class="text-xs text-gray-300">·</span>
                                     <span class="text-xs text-gray-500">{{ row.type_label }}</span>
@@ -114,30 +119,30 @@
                                 <p v-if="row.description" class="mt-1 text-xs text-gray-500">{{ row.description }}</p>
 
                                 <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-                                    <div class="inline-flex items-center gap-1.5">
-                                        <span class="text-xs text-gray-400">Value</span>
-                                        <code class="rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-800">{{ displayValue(row.effective_value, row.is_secret) }}</code>
+                                    <div class="inline-flex min-w-0 max-w-full items-center gap-1.5">
+                                        <span class="shrink-0 text-xs text-gray-400">Value</span>
+                                        <code class="block max-w-full truncate rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-800" :title="fullValue(row.effective_value, row.is_secret)">{{ truncatedValue(row.effective_value, row.is_secret) }}</code>
                                     </div>
-                                    <div v-if="row.source === 'override'" class="inline-flex items-center gap-1.5 text-xs text-gray-400">
-                                        <span>default</span>
-                                        <code class="rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-500 line-through">{{ displayValue(row.default_value, row.is_secret) }}</code>
+                                    <div v-if="row.source === 'override'" class="inline-flex min-w-0 max-w-full items-center gap-1.5 text-xs text-gray-400">
+                                        <span class="shrink-0">default</span>
+                                        <code class="block max-w-full truncate rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-500 line-through" :title="fullValue(row.default_value, row.is_secret)">{{ truncatedValue(row.default_value, row.is_secret) }}</code>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="flex shrink-0 flex-col items-end gap-1.5">
-                                <div class="flex items-center gap-1.5">
-                                    <span :class="['inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset', sourceClass(row.source)]">{{ row.source_label }}</span>
-                                    <span :class="['inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset', row.enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-rose-50 text-rose-700 ring-rose-600/20']">
-                                        <span :class="['mr-1 inline-block h-1.5 w-1.5 rounded-full', row.enabled ? 'bg-green-500' : 'bg-rose-500']" />
-                                        {{ row.enabled ? 'On' : 'Off' }}
-                                    </span>
-                                </div>
-                                <div class="flex items-center gap-1">
-                                    <button v-if="permissions.create && !row.domain_setting_uuid" type="button" class="rounded-md px-2 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50" @click="openEditor(row)">Override</button>
-                                    <button v-if="permissions.update && row.domain_setting_uuid" type="button" class="rounded-md px-2 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50" @click="openEditor(row)">Edit</button>
-                                    <button v-if="permissions.destroy && row.domain_setting_uuid" type="button" class="rounded-md px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50" @click="confirmRevert([row.domain_setting_uuid])">Revert</button>
-                                </div>
+                            <div class="flex shrink-0 items-center gap-2">
+                                <span :class="['inline-flex rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset', sourceClass(row.source)]">{{ row.source_label }}</span>
+                                <button v-if="canToggleStatus(row)" type="button" :class="statusClass(row)" :title="row.enabled ? 'Turn off for this domain' : 'Turn on for this domain'" @click="toggleStatus(row)">
+                                    <span :class="['mr-1 inline-block h-1.5 w-1.5 rounded-full', row.enabled ? 'bg-green-500' : 'bg-rose-500']" />
+                                    {{ row.enabled ? 'On' : 'Off' }}
+                                </button>
+                                <span v-else :class="statusClass(row)">
+                                    <span :class="['mr-1 inline-block h-1.5 w-1.5 rounded-full', row.enabled ? 'bg-green-500' : 'bg-rose-500']" />
+                                    {{ row.enabled ? 'On' : 'Off' }}
+                                </span>
+                                <button v-if="permissions.create && !row.domain_setting_uuid" type="button" class="rounded-md px-2 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50" @click="openEditor(row)">Override</button>
+                                <button v-if="permissions.update && row.domain_setting_uuid" type="button" class="rounded-md px-2 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50" @click="openEditor(row)">Edit</button>
+                                <button v-if="permissions.destroy && row.domain_setting_uuid" type="button" class="rounded-md px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50" @click="confirmRevert([row.domain_setting_uuid])">Revert</button>
                             </div>
                         </li>
                     </ul>
@@ -152,20 +157,21 @@
         </div>
     </div>
 
-    <SettingsEditModal :show="showEditor" mode="domain" :item="editorItem" :types="options.types" :route="editorRoute"
+    <SettingsEditModal :show="showEditor" mode="domain" :item="editorItem" :types="options.types" :categories="options.categories" :route="editorRoute"
         :loading="editorLoading" @close="showEditor = false" @success="handleModalSuccess" @error="handleErrorResponse" />
 
     <AddEditItemModal :show="showCopyModal" header="Copy Domain Settings" @close="showCopyModal = false">
         <template #modal-body>
-            <label class="block text-sm font-medium text-gray-700">Target</label>
-            <select v-model="copyTarget" class="mt-2 block w-full rounded-md border-0 py-2 pl-3 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300">
-                <option value="" disabled>Select target</option>
-                <option v-for="target in options.domains" :key="target.value" :value="target.value">{{ target.label }}</option>
-            </select>
-            <div class="mt-5 flex justify-end gap-2">
-                <button type="button" class="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300" @click="showCopyModal = false">Cancel</button>
-                <button type="button" class="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white" @click="executeCopy">Copy</button>
-            </div>
+            <Vueform :endpoint="submitCopyForm" @success="handleCopySuccess" @error="handleErrorResponse" :display-errors="false">
+                <template #empty>
+                    <FormElements>
+                        <SelectElement name="target_domain_uuid" label="Target" :items="options.domains"
+                            :native="false" input-type="search" autocomplete="off" placeholder="Select target"
+                            :strict="false" :floating="false" />
+                        <ButtonElement name="submit" button-label="Copy" :submits="true" align="right" />
+                    </FormElements>
+                </template>
+            </Vueform>
         </template>
     </AddEditItemModal>
 
@@ -183,7 +189,7 @@ import Notification from './components/notifications/Notification.vue'
 import ConfirmationModal from './components/modal/ConfirmationModal.vue'
 import AddEditItemModal from './components/modal/AddEditItemModal.vue'
 import SettingsEditModal from './components/modal/SettingsEditModal.vue'
-import { MagnifyingGlassIcon, ArrowPathIcon, ArrowUturnLeftIcon, PlusIcon } from '@heroicons/vue/24/outline'
+import { MagnifyingGlassIcon, ArrowPathIcon, ArrowUturnLeftIcon, PlusIcon, BuildingOffice2Icon } from '@heroicons/vue/24/outline'
 
 const StatTile = (props) => {
     const toneMap = {
@@ -216,12 +222,12 @@ const editorRoute = ref(props.routes.store)
 const showConfirmModal = ref(false)
 const confirmedAction = ref(null)
 const showCopyModal = ref(false)
-const copyTarget = ref('')
 const notificationShow = ref(false)
 const notificationType = ref(null)
 const notificationMessages = ref(null)
 
-const filterData = ref({ search: '', source: 'all', enabled: 'all' })
+const defaultFilters = () => ({ search: '', source: 'overrides', enabled: 'all' })
+const filterData = ref(defaultFilters())
 const selectedCategory = ref('')
 
 const categoryLabelMap = computed(() => {
@@ -274,8 +280,17 @@ const categoriesWithCounts = computed(() => {
 })
 
 const displayedRows = computed(() => {
-    if (!selectedCategory.value) return filteredRows.value
-    return filteredRows.value.filter(row => row.category === selectedCategory.value)
+    const rows = selectedCategory.value
+        ? filteredRows.value.filter(row => row.category === selectedCategory.value)
+        : filteredRows.value
+    return [...rows].sort((a, b) => {
+        const ca = String(a.category || '').toLowerCase()
+        const cb = String(b.category || '').toLowerCase()
+        if (ca !== cb) return ca.localeCompare(cb)
+        const sa = String(a.subcategory || '').toLowerCase()
+        const sb = String(b.subcategory || '').toLowerCase()
+        return sa.localeCompare(sb)
+    })
 })
 
 const selectedCategoryLabel = computed(() => {
@@ -302,19 +317,21 @@ watch(categoriesWithCounts, (cats) => {
 
 onMounted(() => getData())
 
-const getData = () => {
-    loading.value = true
+const getData = (silent = false) => {
+    if (!silent) loading.value = true
     axios.get(props.routes.data_route, { params: { per_page: 5000, page: 1 } })
         .then(response => {
             allRows.value = response.data?.data || []
-            selectedItems.value = []
+            if (!silent) selectedItems.value = []
         })
         .catch(handleErrorResponse)
-        .finally(() => loading.value = false)
+        .finally(() => {
+            if (!silent) loading.value = false
+        })
 }
 
 const handleFiltersReset = () => {
-    filterData.value = { search: '', source: 'all', enabled: 'all' }
+    filterData.value = defaultFilters()
     selectedCategory.value = ''
 }
 
@@ -374,18 +391,52 @@ const handleBulkActionRequest = (action) => {
             .catch(handleErrorResponse)
     }
     if (action === 'bulk_copy') {
-        copyTarget.value = ''
         showCopyModal.value = true
     }
 }
 
-const executeCopy = () => {
-    axios.post(props.routes.copy, { items: selectedItems.value, target_domain_uuid: copyTarget.value })
-        .then(response => {
-            showCopyModal.value = false
-            showNotification('success', response.data.messages)
+const canToggleStatus = (row) => {
+    if (row.domain_setting_uuid) return props.permissions?.update
+    return props.permissions?.create
+}
+
+const toggleStatus = (row) => {
+    const wasEnabled = row.enabled
+    row.enabled = !row.enabled
+
+    const request = row.domain_setting_uuid
+        ? axios.post(props.routes.bulk_toggle, { items: [row.domain_setting_uuid] })
+        : axios.post(props.routes.store, {
+            domain_setting_category: row.category,
+            domain_setting_subcategory: row.subcategory,
+            domain_setting_name: row.type,
+            domain_setting_value: row.effective_value,
+            domain_setting_order: row.order,
+            domain_setting_enabled: !row.enabled,
+            domain_setting_description: row.description,
         })
-        .catch(handleErrorResponse)
+
+    request
+        .then(response => {
+            showNotification('success', response.data.messages)
+            getData(true)
+        })
+        .catch(error => {
+            row.enabled = wasEnabled
+            handleErrorResponse(error)
+        })
+}
+
+const submitCopyForm = async (FormData, form) => {
+    return await form.$vueform.services.axios.post(props.routes.copy, {
+        ...form.requestData,
+        items: selectedItems.value,
+    })
+}
+
+const handleCopySuccess = (response) => {
+    showCopyModal.value = false
+    showNotification('success', response.data.messages)
 }
 
 const reloadSettings = () => {
@@ -412,9 +463,23 @@ const handleErrorResponse = (error) => {
     showNotification('error', error?.response?.data?.messages || error?.response?.data?.errors || { error: ['Request failed.'] })
 }
 
+const VALUE_TRUNCATE_AT = 160
+
 const displayValue = (value, secret = false) => {
     if (value === null || value === undefined || value === '') return '—'
     return secret ? '••••••••' : String(value)
+}
+
+const fullValue = (value, secret = false) => {
+    if (secret) return '••••••••'
+    if (value === null || value === undefined || value === '') return ''
+    return String(value)
+}
+
+const truncatedValue = (value, secret = false) => {
+    const text = displayValue(value, secret)
+    if (text.length > VALUE_TRUNCATE_AT) return text.slice(0, VALUE_TRUNCATE_AT) + '…'
+    return text
 }
 
 const formatLabel = (value) => {
@@ -428,10 +493,10 @@ const sourceClass = (source) => {
     return 'bg-slate-50 text-slate-600 ring-slate-500/20'
 }
 
-const rowAccentClass = (row) => {
-    if (row.source === 'override') return 'border-l-4 border-amber-400'
-    if (row.source === 'custom') return 'border-l-4 border-purple-400'
-    return 'border-l-4 border-transparent'
+const rowAccentColor = (row) => {
+    if (row.source === 'override') return 'bg-amber-400'
+    if (row.source === 'custom') return 'bg-purple-400'
+    return ''
 }
 
 const categoryButtonClass = (value) => {
@@ -449,4 +514,10 @@ const categoryBadgeClass = (value) => {
         active ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600',
     ]
 }
+
+const statusClass = (row) => [
+    'inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ring-1 ring-inset transition',
+    canToggleStatus(row) ? 'hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-1' : '',
+    row.enabled ? 'bg-green-50 text-green-700 ring-green-600/20' : 'bg-rose-50 text-rose-700 ring-rose-600/20',
+]
 </script>

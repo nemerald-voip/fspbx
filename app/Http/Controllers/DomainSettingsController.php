@@ -213,7 +213,7 @@ class DomainSettingsController extends Controller
         $domains = collect(session('domains', []))
             ->map(fn ($domain) => [
                 'value' => data_get($domain, 'domain_uuid'),
-                'label' => data_get($domain, 'domain_name') ?? data_get($domain, 'domain_description'),
+                'label' => $this->domainOptionLabel($domain),
             ])
             ->filter(fn ($domain) => $domain['value'] && $domain['label'] && $domain['value'] !== $currentDomainUuid)
             ->values();
@@ -223,6 +223,14 @@ class DomainSettingsController extends Controller
         }
 
         return $domains->all();
+    }
+
+    private function domainOptionLabel(mixed $domain): string
+    {
+        $name = (string) data_get($domain, 'domain_name', '');
+        $description = (string) data_get($domain, 'domain_description', '');
+
+        return $description ?: $name;
     }
 
     private function canAccessDomain(string $domainUuid): bool

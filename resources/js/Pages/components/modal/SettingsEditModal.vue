@@ -4,13 +4,35 @@
             <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError" :display-errors="false">
                 <template #empty>
                     <FormElements>
-                        <TextElement :name="field('category')" label="Category" :readonly="isDomainInherited" :columns="{ sm: { container: 6 } }" />
-                        <TextElement :name="field('subcategory')" label="Subcategory" :readonly="isDomainInherited" :columns="{ sm: { container: 6 } }" />
-                        <SelectElement :name="field('name')" label="Type" :items="typeOptions" :native="false" :readonly="isDomainInherited" :columns="{ sm: { container: 6 } }" />
-                        <TextElement :name="field('order')" label="Order" input-type="number" :readonly="isDomainInherited" :columns="{ sm: { container: 6 } }" />
-                        <TextareaElement :name="field('value')" label="Value" :rows="5" />
+                        <HiddenElement v-if="recordUuid" :name="recordUuidField" :meta="true" />
+                        <StaticElement v-if="recordUuid" name="setting_uuid_clean">
+                            <div class="mb-1">
+                                <div class="text-sm font-medium text-gray-600 mb-1">
+                                    Unique ID
+                                </div>
+
+                                <div class="flex items-center group">
+                                    <span class="text-sm text-gray-900 select-all font-normal">
+                                        {{ recordUuid }}
+                                    </span>
+
+                                    <button type="button"
+                                        @click="handleCopyToClipboard(recordUuid)"
+                                        class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                        title="Copy to clipboard">
+                                        <ClipboardDocumentIcon
+                                            class="h-4 w-4 text-gray-500 hover:text-gray-900 cursor-pointer" />
+                                    </button>
+                                </div>
+                            </div>
+                        </StaticElement>
+                        <SelectElement :name="field('category')" label="Category" :items="categoryOptions" :create="true" allow-absent :native="false" input-type="search" autocomplete="off" :strict="false" :floating="false" :readonly="isDomainInherited" :columns="{ sm: { container: 6 } }" />
+                        <TextElement :name="field('subcategory')" label="Setting Name" :floating="false" :readonly="isDomainInherited" :columns="{ sm: { container: 6 } }" />
+                        <SelectElement :name="field('name')" label="Type" :items="typeOptions" :native="false" :floating="false" :readonly="isDomainInherited" :columns="{ sm: { container: 6 } }" />
+                        <TextElement :name="field('order')" label="Order" input-type="number" :floating="false" :readonly="isDomainInherited" :columns="{ sm: { container: 6 } }" />
+                        <TextareaElement :name="field('value')" label="Value" :rows="2" :autogrow="false" :floating="false" />
                         <ToggleElement :name="field('enabled')" text="Enabled" />
-                        <TextareaElement :name="field('description')" label="Description" :rows="2" :readonly="isDomainInherited" />
+                        <TextareaElement :name="field('description')" label="Description" :rows="2" :floating="false" :readonly="isDomainInherited" />
                         <ButtonElement name="submit" button-label="Save" :submits="true" align="right" />
                     </FormElements>
                 </template>
@@ -21,6 +43,7 @@
 
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
+import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import AddEditItemModal from './AddEditItemModal.vue'
 
 const emit = defineEmits(['close', 'success', 'error'])
@@ -40,12 +63,21 @@ const props = defineProps({
     types: {
         type: Object,
         default: () => ({})
+    },
+    categories: {
+        type: Array,
+        default: () => []
     }
 })
 
 const form$ = ref(null)
 
 const typeOptions = computed(() => Object.entries(props.types || {}).map(([value, label]) => ({ value, label })))
+
+const categoryOptions = computed(() => (props.categories || []).map((category) => ({
+    value: category.value,
+    label: category.label,
+})))
 
 const header = computed(() => {
     if (props.mode === 'default') {
@@ -59,14 +91,32 @@ const isDomainInherited = computed(() => props.mode === 'domain' && !props.item?
 
 const prefix = computed(() => props.mode === 'default' ? 'default_setting' : 'domain_setting')
 
+const recordUuid = computed(() => props.item?.[`${prefix.value}_uuid`] || props.item?.default_setting_uuid || '')
+
+const recordUuidField = computed(() => props.item?.[`${prefix.value}_uuid`] ? `${prefix.value}_uuid` : 'default_setting_uuid')
+
 const field = (name) => `${prefix.value}_${name}`
 
-watch(() => props.show, async (show) => {
-    if (!show) return
+const hydrateForm = async () => {
+    if (!props.show || props.loading) return
     await nextTick()
+    if (!form$.value) return
+
     form$.value?.update(props.item || {})
     form$.value?.clean()
-})
+}
+
+watch(() => props.show, hydrateForm, { flush: 'post' })
+watch(() => props.item, hydrateForm, { deep: true, flush: 'post' })
+watch(() => props.loading, hydrateForm, { flush: 'post' })
+
+const handleCopyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        emit('success', { success: ['Copied to clipboard.'] })
+    }).catch(() => {
+        emit('error', { response: { data: { errors: { request: ['Failed to copy to clipboard.'] } } } })
+    })
+}
 
 const submitForm = async (FormData, form) => {
     const method = props.item?.[`${prefix.value}_uuid`] ? 'put' : 'post'

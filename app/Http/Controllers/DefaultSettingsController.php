@@ -174,8 +174,9 @@ class DefaultSettingsController extends Controller
 
         $targetDomain = Domain::query()->findOrFail($targetDomainUuid);
         $count = $this->settings->copyDefaultsToDomain($request->validated('items'), $targetDomain);
+        $targetDomainLabel = $targetDomain->domain_description ?: $targetDomain->domain_name;
 
-        return response()->json(['messages' => ['success' => ["Copied {$count} setting(s) to {$targetDomain->domain_name}."]]]);
+        return response()->json(['messages' => ['success' => ["Copied {$count} setting(s) to {$targetDomainLabel}."]]]);
     }
 
     public function affectedDomains(DefaultSettings $defaultSetting): JsonResponse
@@ -215,11 +216,19 @@ class DefaultSettingsController extends Controller
         return collect(session('domains', []))
             ->map(fn ($domain) => [
                 'value' => data_get($domain, 'domain_uuid'),
-                'label' => data_get($domain, 'domain_name') ?? data_get($domain, 'domain_description'),
+                'label' => $this->domainOptionLabel($domain),
             ])
             ->filter(fn ($domain) => $domain['value'] && $domain['label'])
             ->values()
             ->all();
+    }
+
+    private function domainOptionLabel(mixed $domain): string
+    {
+        $name = (string) data_get($domain, 'domain_name', '');
+        $description = (string) data_get($domain, 'domain_description', '');
+
+        return $description ?: $name;
     }
 
     private function canAccessDomain(string $domainUuid): bool
