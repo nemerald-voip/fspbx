@@ -74,32 +74,6 @@ class Update181
             ? "No Default Settings menu items required updating.\n"
             : "Updated {$updated} Default Settings menu item(s).\n";
 
-        $this->writeRedirect(base_path('public/core/default_settings/default_settings.php'), '/default-settings');
-        $this->writeDomainSettingsRedirect(base_path('public/core/domain_settings/domain_settings.php'));
     }
 
-    private function writeRedirect(string $path, string $target): void
-    {
-        File::ensureDirectoryExists(dirname($path));
-        File::put($path, "<?php\nheader('Location: {$target}', true, 302);\nexit;\n");
-        echo "Wrote legacy redirect for {$target}.\n";
-    }
-
-    private function writeDomainSettingsRedirect(string $path): void
-    {
-        File::ensureDirectoryExists(dirname($path));
-        File::put($path, <<<'PHP'
-<?php
-$domainUuid = $_GET['id'] ?? '';
-
-if (preg_match('/^[0-9a-fA-F-]{36}$/', $domainUuid)) {
-    header('Location: /domains/' . rawurlencode($domainUuid) . '/settings', true, 302);
-    exit;
-}
-
-header('Location: /domains', true, 302);
-exit;
-PHP);
-        echo "Wrote legacy redirect for Domain Settings.\n";
-    }
 }
