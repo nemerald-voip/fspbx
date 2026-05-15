@@ -1,784 +1,777 @@
 <template>
-    <TransitionRoot as="div" :show="show">
-        <Dialog as="div" class="relative z-10">
-            <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
-                leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
-            </TransitionChild>
+    <MainLayout />
 
-            <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
-                <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                    <TransitionChild as="template" enter="ease-out duration-300"
-                        enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                        enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200"
-                        leave-from="opacity-100 translate-y-0 sm:scale-100"
-                        leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
-                        <DialogPanel
-                            class="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-7xl sm:p-6">
-                            <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
-                                {{ header }}
-                            </DialogTitle>
+    <div class="m-3">
+        <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
+            <template #title>Phone Numbers</template>
 
-                            <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
-                                <button type="button"
-                                    class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                                    @click="emit('close')">
-                                    <span class="sr-only">Close</span>
-                                    <XMarkIcon class="h-6 w-6" aria-hidden="true" />
-                                </button>
-                            </div>
-
-                            <div v-if="loading" class="w-full py-10">
-                                <div class="flex items-center justify-center space-x-3">
-                                    <svg class="h-10 w-10 animate-spin text-blue-600" xmlns="http://www.w3.org/2000/svg"
-                                        fill="none" viewBox="0 0 24 24">
-                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
-                                            stroke-width="4" />
-                                        <path class="opacity-75" fill="currentColor"
-                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                    </svg>
-                                    <div class="text-lg text-blue-600">Loading...</div>
-                                </div>
-                            </div>
-
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
-                                @error="handleError" @response="handleResponse" :display-errors="false"
-                                :default="defaultValues">
-                                <template #empty>
-                                    <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
-                                        <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
-                                            <FormTabs view="vertical" @select="handleTabSelected">
-                                                <FormTab name="settings" label="Settings" :elements="[
-                                                    'dialplan_uuid',
-                                                    'dialplan_uuid_clean',
-                                                    'settings_header',
-                                                    'dialplan_name',
-                                                    'dialplan_enabled',
-                                                    'dialplan_number',
-                                                    'domain_uuid',
-                                                    'dialplan_context',
-                                                    'hostname',
-                                                    'dialplan_order',
-                                                    'dialplan_continue',
-                                                    'dialplan_destination',
-                                                    'description_container',
-                                                    'dialplan_description',
-                                                    'settings_button_container',
-                                                    'settings_submit',
-                                                ]" />
-                                                <FormTab name="rules" label="Rules" :elements="[
-                                                    'rules_header',
-                                                    'dialplan_rule_groups',
-                                                    'rules_button_container',
-                                                    'rules_submit',
-                                                ]" />
-                                                <FormTab name="xml" label="XML Editor" :elements="[
-                                                    'advanced_header',
-                                                    'xml_editor',
-                                                    'advanced_button_container',
-                                                    'advanced_submit',
-                                                ]" />
-                                            </FormTabs>
-                                        </div>
-
-                                        <div
-                                            class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
-                                            <FormElements>
-                                                <HiddenElement name="dialplan_uuid" :meta="true" />
-
-                                                <StaticElement name="settings_header" tag="h4"
-                                                    content="Dialplan Settings"
-                                                    description="Configure the extension metadata FreeSWITCH uses to order and match this dialplan." />
-
-                                                <StaticElement name="dialplan_uuid_clean"
-                                                    :conditions="[() => props.options?.item?.dialplan_uuid]">
-                                                    <div class="mb-1">
-                                                        <div class="mb-1 text-sm font-medium text-gray-600">Unique ID
-                                                        </div>
-                                                        <div class="flex items-center group">
-                                                            <span class="select-all text-sm font-normal text-gray-900">
-                                                                {{ props.options?.item?.dialplan_uuid }}
-                                                            </span>
-                                                            <button type="button"
-                                                                @click="handleCopyToClipboard(props.options?.item?.dialplan_uuid)"
-                                                                class="ml-2 rounded-full p-1 text-gray-400 transition-colors hover:bg-blue-50 hover:text-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2"
-                                                                title="Copy to clipboard">
-                                                                <ClipboardDocumentIcon
-                                                                    class="h-4 w-4 cursor-pointer text-gray-500 hover:text-gray-900" />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </StaticElement>
-
-                                                <TextElement name="dialplan_name" label="Name"
-                                                    placeholder="example_route" :floating="false"
-                                                    :columns="{ sm: { container: 6 } }" />
-
-                                                <ToggleElement name="dialplan_enabled" text="Dialplan Enabled"
-                                                    true-value="true" false-value="false"
-                                                    :labels="{ on: 'On', off: 'Off' }"
-                                                    :columns="{ sm: { container: 6 } }" label="&nbsp;" />
-
-                                                <TextElement name="dialplan_number" label="Number"
-                                                    placeholder="Extension or pattern label" :floating="false"
-                                                    :columns="{ sm: { container: 6 } }" />
-
-                                                <SelectElement name="domain_uuid" :items="domainOptions" :search="true"
-                                                    :native="false" label="Domain" input-type="search"
-                                                    autocomplete="off" placeholder="Select domain" :floating="false"
-                                                    :strict="false" :columns="{ sm: { container: 6 } }"
-                                                    :conditions="[() => domainOptions.length > 0]" />
-
-                                                <SelectElement name="dialplan_context" :items="contextOptions"
-                                                    :search="true" :native="false" label="Context" input-type="search"
-                                                    allow-absent autocomplete="off" :strict="false"
-                                                    placeholder="Select or enter context" :floating="false"
-                                                    :columns="{ sm: { container: 6 } }" />
-
-                                                <TextElement name="hostname" label="Hostname" :floating="false"
-                                                    :columns="{ sm: { container: 6 } }" />
-
-                                                <TextElement name="dialplan_order" input-type="number" label="Order"
-                                                    :floating="false" :columns="{ sm: { container: 4 } }" />
-
-                                                <SelectElement name="dialplan_continue" :items="booleanOptions"
-                                                    :native="false" label="Continue" :floating="false" :strict="true"
-                                                    :columns="{ sm: { container: 4 } }" />
-
-                                                <SelectElement name="dialplan_destination" :items="booleanOptions"
-                                                    :native="false" label="Destination" :floating="false" :strict="true"
-                                                    :columns="{ sm: { container: 4 } }" />
-
-                                                <GroupElement name="description_container" />
-
-                                                <TextareaElement name="dialplan_description" label="Description"
-                                                    :rows="2" />
-
-                                                <GroupElement name="settings_button_container" />
-
-                                                <ButtonElement name="settings_submit" button-label="Save"
-                                                    :submits="true" align="right" @click="submitMode = 'builder'" />
-
-                                                <StaticElement name="rules_header" tag="h4" content="Rules"
-                                                    description="Build this dialplan as rule cards with conditions, actions, and optional otherwise actions." />
-
-                                                <ListElement name="dialplan_rule_groups" :sort="true" size="sm"
-                                                    :initial="0" :controls="{ add: true, remove: true, sort: true }"
-                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-5 mb-6 rounded-lg shadow-sm border-l-4 border-l-blue-500 border border-gray-200' } }">
-                                                    <template #default="{ index }">
-                                                        <ObjectElement :name="index">
-                                                            <StaticElement name="rule_card_header"
-                                                                :columns="{ sm: { container: 12 } }">
-                                                                <div>
-                                                                    <div class="text-lg font-semibold text-gray-900">
-                                                                        Rule {{ index + 1 }}
-                                                                    </div>
-                                                                </div>
-                                                            </StaticElement>
-
-                                                            <StaticElement name="rule_card_divider"
-                                                                :columns="{ container: 12 }">
-                                                                <div class="mb-5 border-b border-gray-200"></div>
-                                                            </StaticElement>
-
-                                                            <StaticElement name="conditions_header">
-                                                                <div class="mb-4 mt-4">
-                                                                    <div class="text-lg font-semibold text-gray-900">
-                                                                        When
-                                                                    </div>
-                                                                    <div class="mt-1 text-sm text-gray-500">
-                                                                        All listed conditions must match before actions run.
-                                                                    </div>
-                                                                </div>
-                                                            </StaticElement>
-
-                                                            <ListElement name="conditions" :sort="true" size="sm"
-                                                                :initial="0"
-                                                                :controls="{ add: true, remove: true, sort: true }"
-                                                                :add-classes="{ ListElement: { listItem: 'bg-blue-100/40 p-2 mb-2 rounded-md border border-blue-150' } }">
-                                                                <template #default="{ index: conditionIndex }">
-                                                                    <ObjectElement :name="conditionIndex">
-                                                                        <SelectElement name="tag"
-                                                                            :items="conditionTagOptions" :native="false"
-                                                                            label="Type" :floating="false"
-                                                                            :strict="true"
-                                                                            :columns="{ default: { container: 12 }, sm: { wrapper:4, container: 12 }, xl: { wrapper:12, container: 2 } }" />
-
-                                                                        <SelectElement name="field"
-                                                                            :items="conditionOptions" :search="true"
-                                                                            :create="true" :native="false" label="Field"
-                                                                            input-type="search" allow-absent
-                                                                            autocomplete="off" :strict="false"
-                                                                            :floating="false"
-                                                                            :columns="{ default: { container: 12 }, sm: { container: 4 }, xl: { container: 3 } }" />
-
-                                                                        <TextElement name="expression"
-                                                                            label="Pattern"
-                                                                            placeholder="Regular expression or value"
-                                                                            :floating="false"
-                                                                            :columns="{ default: { container: 12 }, sm: { container: 8 }, xl: { container: 4 } }" />
-
-                                                                        <SelectElement name="break"
-                                                                            :items="breakOptions" :native="false"
-                                                                            label="Break" :floating="false"
-                                                                            :strict="false"
-                                                                            :columns="{ default: { container: 12 }, sm: { container: 4 }, xl: { container: 2 } }" />
-
-                                                                        <ToggleElement name="enabled" label="On"
-                                                                            true-value="true" false-value="false"
-                                                                            default="true"
-                                                                            :columns="{ default: { container: 12 }, sm: { container: 6 }, xl: { container: 1 } }"
-                                                                            :add-class="{ wrapper: 'pt-1' }" />
-                                                                    </ObjectElement>
-                                                                </template>
-                                                            </ListElement>
-
-                                                            <StaticElement name="actions_header">
-                                                                <div class="mb-4 mt-8 border-t border-gray-200 pt-6">
-                                                                    <div class="text-lg font-semibold text-gray-900">
-                                                                        Then
-                                                                    </div>
-                                                                    <div class="mt-1 text-sm text-gray-500">
-                                                                        Run these actions when the conditions match.
-                                                                    </div>
-                                                                </div>
-                                                            </StaticElement>
-
-                                                            <ListElement name="actions" :sort="true" size="sm"
-                                                                :initial="0"
-                                                                :controls="{ add: true, remove: true, sort: true }"
-                                                                :add-classes="{ ListElement: { listItem: 'bg-emerald-100/40 p-2 mb-2 rounded-md border border-emerald-150' } }">
-
-                                                                <template #default="{ index: actionIndex }">
-                                                                    <ObjectElement :name="actionIndex">
-                                                                        <SelectElement name="application"
-                                                                            :items="applicationOptions" :search="true"
-                                                                            :native="false" label="Do"
-                                                                            input-type="search" allow-absent
-                                                                            autocomplete="off" :strict="false"
-                                                                            :floating="false"
-                                                                            :columns="{ default: { container: 12 }, sm: { container: 3 }, xl: { container: 3 } }" />
-
-                                                                        <TextElement name="data" label="Arguments"
-                                                                            placeholder="Application data"
-                                                                            :floating="false"
-                                                                            :columns="{ default: { container: 12 }, sm: { container: 9 }, xl: { container: 7 } }" />
-
-                                                                        <ToggleElement name="inline" label="Inline"
-                                                                            :columns="{ default: { container: 6 }, sm: { container: 2 }, xl: { container: 1 } }"
-                                                                            :add-class="{ wrapper: 'pt-1' }" />
-
-                                                                        <ToggleElement name="enabled" label="On"
-                                                                            true-value="true" false-value="false"
-                                                                            default="true"
-                                                                            :columns="{ default: { container: 6 }, sm: { container: 2 }, xl: { container: 1 } }"
-                                                                            :add-class="{ wrapper: 'pt-1' }" />
-                                                                    </ObjectElement>
-                                                                </template>
-                                                            </ListElement>
-
-                                                            <StaticElement name="anti_actions_header">
-                                                                <div class="mb-4 mt-8 border-t border-gray-200 pt-6">
-                                                                    <div class="text-lg font-semibold text-gray-900">
-                                                                        Otherwise
-                                                                    </div>
-                                                                    <div class="mt-1 text-sm text-gray-500">
-                                                                        Run these actions when the conditions do not match.
-                                                                    </div>
-                                                                </div>
-                                                            </StaticElement>
-
-                                                            <ListElement name="anti_actions" :sort="true" size="sm"
-                                                                :initial="0"
-                                                                :controls="{ add: true, remove: true, sort: true }"
-                                                                :add-classes="{ ListElement: { listItem: 'bg-amber-100/40 p-2 mb-2 rounded-md border border-amber-150' } }">
-
-                                                                <template #default="{ index: antiActionIndex }">
-                                                                    <ObjectElement :name="antiActionIndex">
-                                                                        <SelectElement name="application"
-                                                                            :items="applicationOptions" :search="true"
-                                                                            :native="false" label="Do"
-                                                                            input-type="search" allow-absent
-                                                                            autocomplete="off" :strict="false"
-                                                                            :floating="false"
-                                                                            :columns="{ default: { container: 12 }, sm: { container: 3 }, xl: { container: 3 } }" />
-
-                                                                        <TextElement name="data" label="Arguments"
-                                                                            placeholder="Application data"
-                                                                            :floating="false"
-                                                                            :columns="{ default: { container: 12 }, sm: { container: 9 }, xl: { container: 7 } }" />
-
-                                                                        <ToggleElement name="inline" label="Inline"
-                                                                            :columns="{ default: { container: 12 }, sm: { container: 6 }, xl: { container: 1 } }"
-                                                                            :add-class="{ wrapper: 'pt-1' }" />
-
-                                                                        <ToggleElement name="enabled" label="On"
-                                                                            true-value="true" false-value="false"
-                                                                            default="true"
-                                                                            :columns="{ default: { container: 12 }, sm: { container: 6 }, xl: { container: 1 } }"
-                                                                            :add-class="{ wrapper: 'pt-1' }" />
-                                                                    </ObjectElement>
-                                                                </template>
-                                                            </ListElement>
-                                                        </ObjectElement>
-                                                    </template>
-                                                </ListElement>
-
-                                                <GroupElement name="rules_button_container" />
-
-                                                <ButtonElement name="rules_submit" button-label="Save" :submits="true"
-                                                    align="right" @click="submitMode = 'builder'" />
-
-                                                <StaticElement name="advanced_header" tag="h4" content="XML Editor"
-                                                    description="Edit the raw FreeSWITCH XML for this dialplan. Saving here updates the XML directly." />
-
-                                                <StaticElement name="xml_editor">
-                                                    <div>
-                                                        <div class="mb-2 flex items-center justify-between gap-3">
-                                                            <div class="text-sm font-medium text-gray-700">Dialplan XML
-                                                            </div>
-                                                            <select v-model="xmlEditorTheme"
-                                                                class="rounded-md border-gray-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                                                                <option value="chrome">Light</option>
-                                                                <option value="one_dark">Dark</option>
-                                                            </select>
-                                                        </div>
-
-                                                        <div
-                                                            class="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
-                                                            <AceEditor v-model="xmlEditorContent" lang="xml"
-                                                                :theme="xmlEditorTheme"
-                                                                :options="{ fontSize: 12, tabSize: 4, showPrintMargin: false }"
-                                                                height="60vh" />
-                                                        </div>
-
-                                                        <div v-if="xmlEditorError" class="mt-2 text-sm text-red-600">
-                                                            {{ xmlEditorError }}
-                                                        </div>
-                                                    </div>
-                                                </StaticElement>
-
-                                                <GroupElement name="advanced_button_container" />
-
-                                                <ButtonElement name="advanced_submit" button-label="Save"
-                                                    :submits="true" align="right" @click="submitMode = 'xml'" />
-                                            </FormElements>
-                                        </div>
-                                    </div>
-                                </template>
-                            </Vueform>
-                        </DialogPanel>
-                    </TransitionChild>
+            <template #filters>
+                <div class="relative min-w-64 focus-within:z-10 mb-2 sm:mr-4">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                        <MagnifyingGlassIcon class="h-5 w-5 text-gray-400" aria-hidden="true" />
+                    </div>
+                    <input type="text" v-model="filterData.search" name="mobile-search-candidate"
+                        id="mobile-search-candidate"
+                        class="block w-full rounded-md border-0 py-1.5 pl-10 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:hidden"
+                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
+                    <input type="text" v-model="filterData.search" name="desktop-search-candidate"
+                        id="desktop-search-candidate"
+                        class="hidden w-full rounded-md border-0 py-1.5 pl-10 text-sm leading-6 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-600 sm:block"
+                        placeholder="Search" @keydown.enter="handleSearchButtonClick" />
                 </div>
-            </div>
-        </Dialog>
-    </TransitionRoot>
+            </template>
+
+            <template #action>
+                <button type="button" v-if="permissions.create" @click.prevent="handleCreateButtonClick()"
+                    class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                    Create
+                </button>
+                <button v-if="permissions.upload" type="button" @click.prevent="handleImportButtonClick()"
+                    class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    <DocumentArrowUpIcon class="h-5 w-5" aria-hidden="true" />
+                    Import CSV
+                </button>
+                <button type="button" @click.prevent="exportPhoneNumbersCsv()"
+                    class="inline-flex items-center gap-x-1.5 rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    <DocumentArrowDownIcon class="h-5 w-5" aria-hidden="true" />
+                    Export CSV
+                </button>
+                <button v-if="permissions.view_global && !filterData.showGlobal" type="button"
+                    @click.prevent="handleShowGlobal()"
+                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    Show global
+                </button>
+                <button v-if="permissions.view_global && filterData.showGlobal" type="button"
+                    @click.prevent="handleShowLocal()"
+                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    Show local
+                </button>
+            </template>
+
+            <template #navigation>
+                <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
+                    :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
+                    @pagination-change-page="renderRequestedPage" :bulk-actions="bulkActions"
+                    @bulk-action="handleBulkActionRequest" :has-selected-items="selectedItems.length > 0" />
+            </template>
+            <template #table-header>
+                <TableColumnHeader header=""
+                    class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start">
+                    <input type="checkbox" v-model="selectPageItems" @change="handleSelectPageItems" @click.stop
+                        class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+
+                    <div class="pl-4 flex items-center cursor-pointer select-none" @click="handleSortRequest('destination_number')">
+                        <span class="mr-2">Phone Number</span>
+                        <ChevronUpIcon v-if="sortData.name === 'destination_number' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'destination_number' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader v-if="filterData.showGlobal" header="Domain"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader v-if="!filterData.showGlobal" header="Call Routing"
+                    class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('destination_actions')">
+                        <span class="mr-2">Call Routing</span>
+                        <ChevronUpIcon v-if="sortData.name === 'destination_actions' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'destination_actions' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('destination_description')">
+                        <span class="mr-2">Description</span>
+                        <ChevronUpIcon v-if="sortData.name === 'destination_description' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'destination_description' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    <div class="flex items-center cursor-pointer select-none" @click="handleSortRequest('destination_enabled')">
+                        <span class="mr-2">Status</span>
+                        <ChevronUpIcon v-if="sortData.name === 'destination_enabled' && sortData.order === 'asc'" class="h-4 w-4 text-gray-500" />
+                        <ChevronDownIcon v-else-if="sortData.name === 'destination_enabled' && sortData.order === 'desc'" class="h-4 w-4 text-gray-500" />
+                    </div>
+                </TableColumnHeader>
+                <TableColumnHeader header="Action" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+            </template>
+
+            <template v-if="selectPageItems" v-slot:current-selection>
+                <td colspan="6">
+                    <div class="text-sm text-center m-2">
+                        <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
+                        <button v-if="!selectAll && selectedItems.length !== data.total"
+                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            @click="handleSelectAll">
+                            Select all {{ data.total }} items
+                        </button>
+                        <button v-if="selectAll"
+                            class="text-blue-500 rounded py-2 px-2 hover:bg-blue-200  hover:text-blue-500 focus:outline-none focus:ring-1 focus:bg-blue-200 focus:ring-blue-300 transition duration-500 ease-in-out"
+                            @click="handleClearSelection">
+                            Clear selection
+                        </button>
+                    </div>
+                </td>
+            </template>
+
+            <template #table-body>
+                <tr v-for="row in data.data" :key="row.destination_uuid">
+                    <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500 flex"
+                        :text="row.destination_number_formatted">
+                        <div class="flex items-center">
+                            <input v-if="row.destination_uuid" v-model="selectedItems" type="checkbox"
+                                name="action_box[]" :value="row.destination_uuid"
+                                class="h-4 w-4 rounded border-gray-300 text-indigo-600">
+                            <div class="ml-4" :class="{ 'cursor-pointer hover:text-gray-900': permissions.update, }"
+                                @click="permissions.update && handleEditRequest(row.destination_uuid)">
+                                {{ row.destination_number_formatted }}
+                            </div>
+
+                            <ejs-tooltip :content="tooltipCopyContent" position='TopLeft' class="ml-2"
+                                @click="handleCopyToClipboard(row.destination_number)" target="#copy_tooltip_target">
+                                <div id="copy_tooltip_target">
+                                    <ClipboardDocumentIcon
+                                        class="h-5 w-5 text-gray-500 hover:text-gray-900 pt-1 cursor-pointer" />
+                                </div>
+                            </ejs-tooltip>
+                        </div>
+                    </TableField>
+
+                    <TableField v-if="filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        :text="row.domain?.domain_description || row.domain?.domain_name">
+                        <ejs-tooltip :content="row.domain?.domain_name" position='TopLeft'
+                            target="#domain_tooltip_target">
+                            <div id="domain_tooltip_target">
+                                {{ row.domain?.domain_description || row.domain?.domain_name }}
+                            </div>
+                        </ejs-tooltip>
+                    </TableField>
+
+                    <TableField v-if="!filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <ul v-if="row.routing_options">
+                            <li v-for="(action, index) in row.routing_options" :key="index">
+                                <span v-if="action && action.type && action.extension">
+                                    Type: {{ action.type }}, Extension: {{ action.extension }}
+                                </span>
+                                <span v-else-if="action && action.type === 'hangup'">
+                                    Type: {{ action.type }}
+                                </span>
+                                <span v-else>
+                                    Invalid action data
+                                </span>
+                            </li>
+                        </ul>
+                    </TableField>
+
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+                        :text="row.destination_description" />
+
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+
+                        <Badge v-if="row.destination_enabled == 'true'" :text="'Enabled'" backgroundColor="bg-green-100"
+                            textColor="text-green-700" ringColor="ring-green-400/20" class="px-2 py-1 text-xs" />
+
+                        <Badge v-if="row.destination_enabled == 'false'" :text="'Disabled'"
+                            backgroundColor="bg-rose-100" textColor="text-rose-700" ringColor="ring-rose-400/20"
+                            class="px-2 py-1 text-xs" />
+
+                    </TableField>
+                    <TableField class="w-4 whitespace-nowrap px-2 py-1 text-sm text-gray-500">
+                        <template #action-buttons>
+                            <div class="flex items-center space-x-2 whitespace-nowrap">
+                                <ejs-tooltip v-if="permissions.update" :content="'Edit phone number'" position='TopLeft'
+                                    target="#edit_tooltip_target">
+                                    <div id="edit_tooltip_target">
+                                        <PencilSquareIcon @click="handleEditRequest(row.destination_uuid)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                    </div>
+                                </ejs-tooltip>
+                                <ejs-tooltip v-if="permissions.destroy" :content="'Remove phone number'"
+                                    position='TopLeft' target="#delete_tooltip_target">
+                                    <div id="delete_tooltip_target">
+                                        <TrashIcon @click="handleSingleItemDeleteRequest(row.destination_uuid)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                    </div>
+                                </ejs-tooltip>
+                            </div>
+                        </template>
+                    </TableField>
+                </tr>
+            </template>
+            <template #empty>
+                <!-- Conditional rendering for 'no records' message -->
+                <div v-if="data.data.length === 0" class="text-center my-5 ">
+                    <MagnifyingGlassIcon class="mx-auto h-12 w-12 text-gray-400" />
+                    <h3 class="mt-2 text-sm font-semibold text-gray-900">No results found</h3>
+                    <p class="mt-1 text-sm text-gray-500">
+                        Adjust your search and try again.
+                    </p>
+                </div>
+            </template>
+
+            <template #loading>
+                <Loading :show="loading" />
+            </template>
+
+            <template #footer>
+                <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
+                    :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
+                    :page-size="perPage" :page-size-options="props.pagination?.per_page_options ?? []"
+                    :show-page-size-selector="true"
+                    @pagination-change-page="renderRequestedPage" @page-size-change="handlePageSizeChange" />
+            </template>
+        </DataTable>
+        <div class="px-4 sm:px-6 lg:px-8"></div>
+    </div>
+
+
+    <CreatePhoneNumberForm :show="showCreateModal" :header="'Add New Phone Number'" :loading="loadingModal"
+        :options="itemOptions" @close="showCreateModal = false" @success="showNotification" @error="handleErrorResponse"
+        @refresh-data="refreshCurrentPage" />
+
+    <UpdatePhoneNumberForm :show="showUpdateModal"
+        :header="'Update Phone Number Settings - ' + itemOptions?.item?.destination_number_formatted ?? 'loading'"
+        :loading="loadingModal" @close="showUpdateModal = false" :options="itemOptions" @success="showNotification"
+        @error="handleErrorResponse" @refresh-data="refreshCurrentPage" />
+
+    <BulkUpdatePhoneNumberForm :show="showBulkUpdateModal" :header="'Bulk Update'" :loading="loadingModal"
+        @close="showBulkUpdateModal = false" :items="selectedItems" :options="itemOptions" @success="showNotification"
+        @error="handleErrorResponse" @refresh-data="refreshCurrentPage" />
+
+    <DeleteConfirmationModal :show="confirmationModalTrigger" @close="confirmationModalTrigger = false"
+        @confirm="confirmDeleteAction" />
+
+    <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
+        @update:show="hideNotification" />
+
+<UploadModal 
+    v-if="showUploadModal" 
+    :show="showUploadModal" 
+    @close="showUploadModal = false" 
+    :header="'Upload File'" 
+    @upload="uploadFile"
+    @download-template="downloadTemplateFile" 
+    :is-submitting="isUploadingFile" 
+    :errors="uploadErrors" 
+/>
+
+<ImportPhoneNumbersModal 
+    v-if="showImportPreviewModal"
+    :show="showImportPreviewModal" 
+    :options="itemOptions"
+    :import-data="importPreviewData"
+    :loading="isCommittingImport"
+    @close="showImportPreviewModal = false"
+    @success="handleImportSuccess" 
+/>
+
 </template>
 
 <script setup>
-import { computed, nextTick, ref, watch } from "vue";
-import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
+import { computed, onMounted, ref } from "vue";
+import axios from 'axios';
+import { router, usePage } from "@inertiajs/vue3";
+import DataTable from "./components/general/DataTable.vue";
+import TableColumnHeader from "./components/general/TableColumnHeader.vue";
+import TableField from "./components/general/TableField.vue";
+import Paginator from "./components/general/Paginator.vue";
+import DeleteConfirmationModal from "./components/modal/DeleteConfirmationModal.vue";
+import CreatePhoneNumberForm from "./components/forms/CreatePhoneNumberForm.vue";
+import UpdatePhoneNumberForm from "./components/forms/UpdatePhoneNumberForm.vue";
+import Loading from "./components/general/Loading.vue";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
-import { XMarkIcon } from "@heroicons/vue/24/solid";
-import AceEditor from "@generalComponents/AceEditor.vue";
+import { registerLicense } from '@syncfusion/ej2-base';
+import { ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon, TrashIcon } from "@heroicons/vue/24/solid";
+import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
+import MainLayout from "../Layouts/MainLayout.vue";
+import Notification from "./components/notifications/Notification.vue";
+import { PencilSquareIcon } from "@heroicons/vue/24/solid/index.js";
+import BulkUpdatePhoneNumberForm from "./components/forms/BulkUpdatePhoneNumberForm.vue";
+import Badge from "@generalComponents/Badge.vue";
+import { DocumentArrowUpIcon, DocumentArrowDownIcon } from "@heroicons/vue/24/outline";
+import UploadModal from "./components/modal/UploadModal.vue";
+import ImportPhoneNumbersModal from "./components/modal/ImportPhoneNumbersModal.vue";
+
+const page = usePage()
+const loading = ref(false)
+const loadingModal = ref(false)
+const currentPage = ref(1)
+const selectAll = ref(false);
+const selectedItems = ref([]);
+const selectPageItems = ref(false);
+const showCreateModal = ref(false);
+const showUpdateModal = ref(false);
+const showBulkUpdateModal = ref(false);
+const confirmationModalTrigger = ref(false);
+const confirmDeleteAction = ref(null);
+const formErrors = ref(null);
+const notificationType = ref(null);
+const notificationMessages = ref(null);
+const notificationShow = ref(null);
+const uploadErrors = ref(null);
+const showUploadModal = ref(false);
+const isUploadingFile = ref(null);
+let tooltipCopyContent = ref('Copy to Clipboard');
+
+const showImportPreviewModal = ref(false);
+const importPreviewData = ref([]);
+const isCommittingImport = ref(false);
+
+const data = ref({
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: 0,
+    to: 0,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
+});
 
 const props = defineProps({
-    show: Boolean,
-    options: Object,
-    loading: Boolean,
-    header: {
-        type: String,
-        default: "Dialplan",
-    },
-    mode: {
-        type: String,
-        default: "create",
-    },
+    routes: Object,
+    permissions: Object,
+    pagination: Object,
 });
 
-const emit = defineEmits(["close", "error", "success", "refresh-data", "saved"]);
+const perPage = ref(props.pagination?.per_page);
 
-const form$ = ref(null);
-const submitMode = ref("builder");
-const activeTabName = ref("settings");
-const xmlEditorTheme = ref("chrome");
-const xmlEditorContent = ref("");
-const xmlEditorError = ref(null);
+onMounted(() => {
+    handleSearchButtonClick();
+})
 
-const fields = [
-    "dialplan_uuid",
-    "domain_uuid",
-    "hostname",
-    "dialplan_name",
-    "dialplan_number",
-    "dialplan_destination",
-    "dialplan_context",
-    "dialplan_continue",
-    "dialplan_order",
-    "dialplan_enabled",
-    "dialplan_description",
-    "dialplan_xml",
-    "dialplan_rule_groups",
-];
-
-const defaultValues = computed(() => {
-    const item = props.options?.item ?? {};
-    const defaults = {};
-
-    fields.forEach((field) => {
-        defaults[field] = item[field] ?? null;
-    });
-
-    defaults.domain_uuid = item.domain_uuid ?? "";
-    defaults.dialplan_destination = item.dialplan_destination ?? "false";
-    defaults.dialplan_continue = item.dialplan_continue ?? "false";
-    defaults.dialplan_order = item.dialplan_order ?? "200";
-    defaults.dialplan_enabled = item.dialplan_enabled ?? "true";
-    defaults.dialplan_context = item.dialplan_context ?? null;
-    defaults.dialplan_rule_groups = detailsToRuleGroups(item.dialplan_details);
-
-    return defaults;
-});
-
-const normalizeDetails = (details) => {
-    if (!Array.isArray(details)) {
-        return [];
-    }
-
-    return details.map((detail, index) => ({
-        dialplan_detail_uuid: detail.dialplan_detail_uuid ?? null,
-        dialplan_detail_tag: detail.dialplan_detail_tag ?? "action",
-        dialplan_detail_type: detail.dialplan_detail_type ?? null,
-        dialplan_detail_data: detail.dialplan_detail_data ?? null,
-        dialplan_detail_break: detail.dialplan_detail_break ?? null,
-        dialplan_detail_inline: detail.dialplan_detail_inline ?? null,
-        dialplan_detail_group: detail.dialplan_detail_group ?? 0,
-        dialplan_detail_order: detail.dialplan_detail_order ?? ((index + 1) * 10),
-        dialplan_detail_enabled: detail.dialplan_detail_enabled ?? "true",
-    }));
+const handleSearchButtonClick = () => {
+    getData(1)
 };
 
-const domainOptions = computed(() => props.options?.domain_options ?? []);
-const contextOptions = computed(() => props.options?.context_options ?? []);
-const conditionOptions = computed(() => props.options?.condition_options ?? []);
-const applicationOptions = computed(() => props.options?.application_options ?? []);
-
-const booleanOptions = [
-    { value: "true", label: "True" },
-    { value: "false", label: "False" },
-];
-
-const conditionTagOptions = [
-    { value: "condition", label: "Condition" },
-    { value: "regex", label: "Regex" },
-];
-
-const breakOptions = [
-    { value: null, label: "" },
-    { value: "on-true", label: "On True" },
-    { value: "on-false", label: "On False" },
-    { value: "always", label: "Always" },
-    { value: "never", label: "Never" },
-];
-
-const defaultXmlTemplate = (item = {}) => {
-    const name = item.dialplan_name ?? "";
-    const continueValue = item.dialplan_continue ?? "false";
-    const uuid = item.dialplan_uuid ?? "";
-
-    return `<extension name="${name}" continue="${continueValue}" uuid="${uuid}">\n</extension>`;
+const refreshCurrentPage = () => {
+    getData(currentPage.value)
 };
 
-watch(() => props.options?.item, (item) => {
-    xmlEditorContent.value = item?.dialplan_xml || defaultXmlTemplate(item);
-    restoreActiveTab();
-}, { immediate: true });
+const getData = (page = 1) => {
+    loading.value = true;
+    currentPage.value = Number(page) || 1;
 
-watch(() => props.show, (show) => {
-    if (show) {
-        restoreActiveTab();
-        return;
+    let sort = sortData.value.name;
+    if (sortData.value.order === 'desc') {
+        sort = `-${sort}`;
     }
 
-    activeTabName.value = "settings";
-    submitMode.value = "builder";
-    xmlEditorError.value = null;
+    axios.get(props.routes.data_route, {
+        params: {
+            filter: filterData.value,
+            page: currentPage.value,
+            per_page: perPage.value,
+            sort,
+        }
+    })
+        .then((response) => {
+            data.value = response.data;
+            currentPage.value = response.data.current_page ?? currentPage.value;
+            // console.log(data.value);
+
+        }).catch((error) => {
+
+            handleErrorResponse(error);
+        }).finally(() => {
+            loading.value = false
+        })
+}
+
+const filterData = ref({
+    search: null,
+    showGlobal: false,
 });
 
-watch(() => props.loading, (loading) => {
-    if (!loading) {
-        restoreActiveTab();
-    }
+const sortData = ref({
+    name: 'destination_number',
+    order: 'asc',
 });
 
-const toggleIsEnabled = (value) => value === true || value === "true" || value === 1 || value === "1";
-
-const detailsToRuleGroups = (details) => {
-    const normalized = normalizeDetails(details);
-
-    if (!normalized.length) {
-        return [
-            {
-                conditions: [
-                    {
-                        tag: "condition",
-                        field: "destination_number",
-                        expression: null,
-                        break: null,
-                        enabled: "true",
-                    },
-                ],
-                actions: [
-                    {
-                        application: "transfer",
-                        data: null,
-                        inline: false,
-                        enabled: "true",
-                    },
-                ],
-                anti_actions: [],
-            },
-        ];
-    }
-
-    const groups = new Map();
-
-    normalized.forEach((detail) => {
-        const groupKey = Number(detail.dialplan_detail_group ?? 0);
-
-        if (!groups.has(groupKey)) {
-            groups.set(groupKey, {
-                sort_order: groupKey,
-                conditions: [],
-                actions: [],
-                anti_actions: [],
-            });
-        }
-
-        const group = groups.get(groupKey);
-
-        if (["condition", "regex"].includes(detail.dialplan_detail_tag)) {
-            group.conditions.push({
-                tag: detail.dialplan_detail_tag,
-                field: detail.dialplan_detail_type,
-                expression: detail.dialplan_detail_data,
-                break: detail.dialplan_detail_break,
-                enabled: toggleIsEnabled(detail.dialplan_detail_enabled) ? "true" : "false",
-            });
-        }
-
-        if (detail.dialplan_detail_tag === "action") {
-            group.actions.push({
-                application: detail.dialplan_detail_type,
-                data: detail.dialplan_detail_data,
-                inline: detail.dialplan_detail_inline === "true",
-                enabled: toggleIsEnabled(detail.dialplan_detail_enabled) ? "true" : "false",
-            });
-        }
-
-        if (detail.dialplan_detail_tag === "anti-action") {
-            group.anti_actions.push({
-                application: detail.dialplan_detail_type,
-                data: detail.dialplan_detail_data,
-                inline: detail.dialplan_detail_inline === "true",
-                enabled: toggleIsEnabled(detail.dialplan_detail_enabled) ? "true" : "false",
-            });
-        }
-    });
-
-    return Array.from(groups.values())
-        .sort((a, b) => Number(a.sort_order) - Number(b.sort_order))
-        .map((group) => ({
-            ...group,
-            conditions: group.conditions.length ? group.conditions : [],
-            actions: group.actions.length ? group.actions : [],
-            anti_actions: group.anti_actions.length ? group.anti_actions : [],
-        }));
+const handlePageSizeChange = (newPerPage) => {
+    perPage.value = newPerPage;
+    getData(1);
 };
 
-const ruleGroupsToDetails = (ruleGroups) => {
-    if (!Array.isArray(ruleGroups)) {
-        return [];
+const renderRequestedPage = (url) => {
+    loading.value = true;
+    // Extract the page number from the url, e.g. "?page=3"
+    const urlObj = new URL(url, window.location.origin);
+    const pageParam = urlObj.searchParams.get("page") ?? 1;
+
+    // Now call getData with the page number
+    getData(pageParam);
+};
+
+
+const itemOptions = ref({
+    routing_types: [],
+    routes: {},
+    faxes: [],
+    domains: [],
+    music_on_hold_options: []
+});
+
+const exportPhoneNumbersCsv = () => {
+    let sort = sortData.value.name;
+    if (sortData.value.order === 'desc') {
+        sort = `-${sort}`;
     }
 
-    const details = [];
+    axios.get(props.routes.export, {
+        params: {
+            filter: filterData.value,
+            sort,
+        },
+        responseType: 'blob',
+    })
+        .then((response) => {
+            const blob = new Blob([response.data], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'phone_numbers.csv';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        })
+        .catch(handleErrorResponse);
+};
 
-    ruleGroups.forEach((group, groupIndex) => {
-        const groupNumber = groupIndex * 10;
-        let order = 10;
-        let conditionsCount = 0;
-        const actions = group?.actions ?? [];
-        const antiActions = group?.anti_actions ?? [];
+const handleSortRequest = (column) => {
+    if (sortData.value.name === column) {
+        sortData.value.order = sortData.value.order === 'asc' ? 'desc' : 'asc';
+    } else {
+        sortData.value.name = column;
+        sortData.value.order = 'asc';
+    }
 
-        (group?.conditions ?? []).forEach((condition) => {
-            if (!condition?.field && !condition?.expression) {
-                return;
-            }
+    getData(1);
+};
 
-            details.push({
-                dialplan_detail_tag: condition.tag || "condition",
-                dialplan_detail_type: condition.field,
-                dialplan_detail_data: condition.expression,
-                dialplan_detail_break: condition.break,
-                dialplan_detail_inline: null,
-                dialplan_detail_group: groupNumber,
-                dialplan_detail_order: order,
-                dialplan_detail_enabled: toggleIsEnabled(condition.enabled ?? true) ? "true" : "false",
-            });
-            conditionsCount += 1;
-            order += 10;
+// Computed property for bulk actions based on permissions
+const bulkActions = computed(() => {
+    const actions = [];
+    if (props.permissions.update) {
+        actions.push({
+            id: 'bulk_update',
+            label: 'Edit',
+            icon: 'PencilSquareIcon'
         });
-
-        if (conditionsCount === 0 && [...actions, ...antiActions].some((action) => action?.application || action?.data)) {
-            details.push({
-                dialplan_detail_tag: "condition",
-                dialplan_detail_type: null,
-                dialplan_detail_data: null,
-                dialplan_detail_break: null,
-                dialplan_detail_inline: null,
-                dialplan_detail_group: groupNumber,
-                dialplan_detail_order: order,
-                dialplan_detail_enabled: "true",
-            });
-            order += 10;
-        }
-
-        actions.forEach((action) => {
-            if (!action?.application && !action?.data) {
-                return;
-            }
-
-            details.push({
-                dialplan_detail_tag: "action",
-                dialplan_detail_type: action.application,
-                dialplan_detail_data: action.data,
-                dialplan_detail_break: null,
-                dialplan_detail_inline: toggleIsEnabled(action.inline) ? "true" : null,
-                dialplan_detail_group: groupNumber,
-                dialplan_detail_order: order,
-                dialplan_detail_enabled: toggleIsEnabled(action.enabled ?? true) ? "true" : "false",
-            });
-            order += 10;
+    }
+    if (props.permissions.destroy) {
+        actions.push({
+            id: 'bulk_delete',
+            label: 'Delete',
+            icon: 'TrashIcon'
         });
+    }
 
-        antiActions.forEach((action) => {
-            if (!action?.application && !action?.data) {
-                return;
+    return actions;
+});
+
+
+const handleEditRequest = (itemUuid) => {
+    showUpdateModal.value = true
+    formErrors.value = null;
+    loadingModal.value = true;
+    getItemOptions(itemUuid, { mode: 'update' });
+}
+
+const handleImportSuccess = (messages) => {
+    showNotification('success', messages);
+    showImportPreviewModal.value = false;
+    importPreviewData.value = [];
+    refreshCurrentPage();
+};
+
+const handleImportButtonClick = () => {
+    uploadErrors.value = null;
+    showUploadModal.value = true;
+    getItemOptions(null, { mode: 'create' });
+};
+
+const uploadFile = (file) => {
+    isUploadingFile.value = true;
+    uploadErrors.value = null;
+    const formData = new FormData();
+    formData.append('file', file);
+
+    axios.post(props.routes.import, formData)
+        .then((response) => {
+            handleModalClose(); 
+            // Delay opening the new modal so the old one is fully destroyed
+            setTimeout(() => {
+                importPreviewData.value = response.data.data;
+                showImportPreviewModal.value = true;
+            }, 300);
+        })
+        .catch((error) => {
+            handleErrorResponse(error);
+            if (error.response) {
+                uploadErrors.value = error.response.data.errors;
             }
-
-            details.push({
-                dialplan_detail_tag: "anti-action",
-                dialplan_detail_type: action.application,
-                dialplan_detail_data: action.data,
-                dialplan_detail_break: null,
-                dialplan_detail_inline: toggleIsEnabled(action.inline) ? "true" : null,
-                dialplan_detail_group: groupNumber,
-                dialplan_detail_order: order,
-                dialplan_detail_enabled: toggleIsEnabled(action.enabled ?? true) ? "true" : "false",
-            });
-            order += 10;
+        })
+        .finally(() => {
+            isUploadingFile.value = false;
         });
+}
+
+const handleImportCommit = (items) => {
+    isCommittingImport.value = true;
+    
+    axios.post(route('phone-numbers.import.commit'), { items: items })
+        .then((response) => {
+            showNotification('success', response.data.messages);
+            showImportPreviewModal.value = false;
+            importPreviewData.value = [];
+            refreshCurrentPage();
+        })
+        .catch((error) => {
+            handleErrorResponse(error);
+        })
+        .finally(() => {
+            isCommittingImport.value = false;
+        });
+};
+
+function normalizeSearchQuery(query) {
+    if (!query) return query;
+
+    const hasLetters = /[a-zA-Z]/.test(query);
+    if (hasLetters) {
+        // If letters exist, do not reformat
+        return query;
+    }
+
+    // Strip everything except digits
+    let digits = query.replace(/\D+/g, '');
+
+    // Strip leading 1 ONLY if NANPA 11-digit format
+    if (digits.length === 11 && digits.startsWith('1')) {
+        digits = digits.substring(1);
+    }
+
+    return digits;
+}
+
+function downloadTemplateFile() {
+    // Make a GET request to your Laravel route
+    axios.get(props.routes.download_template, {
+        responseType: 'blob' // Important: so we get back a Blob object
+    })
+        .then((response) => {
+            // Create a Blob from the response data
+            const fileBlob = new Blob([response.data], { type: 'text/csv' })
+            // Create a URL for the blob
+            const fileURL = window.URL.createObjectURL(fileBlob)
+
+            // Create a hidden link element, set it to the blob URL, and trigger a download
+            const link = document.createElement('a')
+            link.href = fileURL
+            link.setAttribute('download', 'template.csv') // The filename you want
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+        })
+        .catch((error) => {
+            console.error('Error downloading template:', error)
+        })
+}
+
+
+const handleSingleItemDeleteRequest = (uuid) => {
+    confirmationModalTrigger.value = true;
+    confirmDeleteAction.value = () => executeBulkDelete([uuid]);
+}
+
+const handleBulkActionRequest = (action) => {
+    if (action === 'bulk_update') {
+        getItemOptions(null, { mode: 'bulk_update' });
+        loadingModal.value = true
+        showBulkUpdateModal.value = true;
+    }
+    if (action === 'bulk_delete') {
+        confirmationModalTrigger.value = true;
+        confirmDeleteAction.value = () => executeBulkDelete();
+    }
+}
+
+const executeBulkDelete = (items = selectedItems.value) => {
+    axios.post(props.routes.bulk_delete, { items })
+        .then((response) => {
+            handleModalClose();
+            showNotification('success', response.data.messages);
+            refreshCurrentPage();
+        })
+        .catch((error) => {
+            handleClearSelection();
+            handleModalClose();
+            handleErrorResponse(error);
+        });
+}
+
+const handleCreateButtonClick = () => {
+    formErrors.value = null;
+    loadingModal.value = true
+    getItemOptions(null, { mode: 'create' }, () => {
+        showCreateModal.value = true
     });
+}
 
-    return details;
+const handleSelectAll = () => {
+    axios.post(props.routes.select_all, {
+        filter: filterData.value,
+    })
+        .then((response) => {
+            selectedItems.value = response.data.items;
+            selectAll.value = true;
+            showNotification('success', response.data.messages);
+
+        }).catch((error) => {
+            handleClearSelection();
+            handleErrorResponse(error);
+        });
+
 };
 
 const handleCopyToClipboard = (text) => {
     navigator.clipboard.writeText(text).then(() => {
-        emit("success", "success", { message: ["Copied to clipboard."] });
-    }).catch(() => {
-        emit("error", { response: { data: { errors: { request: ["Failed to copy to clipboard."] } } } });
-    });
-};
-
-const handleTabSelected = (activeTab) => {
-    activeTabName.value = activeTab?.name || "settings";
-};
-
-function restoreActiveTab() {
-    if (!props.show || props.loading) {
-        return;
-    }
-
-    nextTick(() => {
-        form$.value?.tabs$?.goTo(activeTabName.value);
+        tooltipCopyContent.value = 'Copied'
+        setTimeout(() => {
+            tooltipCopyContent.value = 'Copy to Clipboard'
+        }, 500);
+    }).catch((error) => {
+        // Handle the error case
+        console.error('Failed to copy to clipboard:', error);
     });
 }
 
-const submitForm = async (FormData, form$) => {
-    const requestData = { ...form$.requestData };
-    xmlEditorError.value = null;
+const handleShowGlobal = () => {
+    filterData.value.showGlobal = true;
+    getData(1);
+}
 
-    requestData.editor_mode = submitMode.value;
-    requestData.dialplan_xml = xmlEditorContent.value;
+const handleShowLocal = () => {
+    filterData.value.showGlobal = false;
+    getData(1);
+}
 
-    if (submitMode.value === "xml") {
-        delete requestData.dialplan_rule_groups;
-        delete requestData.dialplan_details;
+
+const handleFiltersReset = () => {
+    filterData.value.search = null;
+    getData(1);
+}
+
+
+const getItemOptions = (itemUuid = null, extraPayload = {}, onSuccess = null) => {
+    const payload = {
+        ...extraPayload,
+        ...(itemUuid ? { item_uuid: itemUuid } : {}),
+    }; // Conditionally add itemUuid to payload
+
+    axios.post(props.routes.item_options, payload)
+        .then((response) => {
+            loadingModal.value = false;
+            itemOptions.value = response.data;
+            if (typeof onSuccess === 'function') {
+                onSuccess();
+            }
+            // console.log(itemOptions.value);
+
+        }).catch((error) => {
+            handleModalClose();
+            handleErrorResponse(error);
+        });
+}
+
+
+const handleFormErrorResponse = (error) => {
+    if (error.request?.status === 419) {
+        showNotification('error', { request: ["Session expired. Reload the page"] });
+    } else if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        // console.log(error.response.data);
+        showNotification('error', error.response.data.errors || { request: [error.message] });
+        formErrors.value = error.response.data.errors;
+    } else if (error.request) {
+        // The request was made but no response was received
+        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+        // http.ClientRequest in node.js
+        showNotification('error', { request: [error.request] });
+        console.log(error.request);
     } else {
-        requestData.dialplan_details = ruleGroupsToDetails(requestData.dialplan_rule_groups);
-        delete requestData.dialplan_xml;
+        // Something happened in setting up the request that triggered an Error
+        showNotification('error', { request: [error.message] });
+        console.log(error.message);
     }
 
-    delete requestData.dialplan_rule_groups;
+}
 
-    const route = props.mode === "create"
-        ? props.options.routes.store_route
-        : props.options.routes.update_route;
 
-    if (props.mode === "create") {
-        return await form$.$vueform.services.axios.post(route, requestData);
-    }
-
-    return await form$.$vueform.services.axios.put(route, requestData);
-};
-
-function clearErrorsRecursive(el$) {
-    el$.messageBag?.clear();
-
-    if (el$.children$) {
-        Object.values(el$.children$).forEach((childEl$) => {
-            clearErrorsRecursive(childEl$);
-        });
+const handleErrorResponse = (error) => {
+    if (error.response) {
+        // The request was made and the server responded with a status code
+        // that falls out of the range of 2xx
+        // console.log(error.response.data);
+        showNotification('error', error.response.data.errors || { request: [error.message] });
+    } else if (error.request) {
+        // The request was made but no response was received
+        // `error.request` is an instance of XMLHttpRequest in the browser and an instance of
+        // http.ClientRequest in node.js
+        showNotification('error', { request: [error.request] });
+        console.log(error.request);
+    } else {
+        // Something happened in setting up the request that triggered an Error
+        showNotification('error', { request: [error.message] });
+        console.log(error.message);
     }
 }
 
-const handleResponse = (response, form$) => {
-    xmlEditorError.value = null;
-
-    Object.values(form$.elements$).forEach((el$) => {
-        clearErrorsRecursive(el$);
-    });
-
-    if (response.data.errors) {
-        Object.keys(response.data.errors).forEach((elName) => {
-            const el$ = form$.el$(elName) || (elName === "dialplan_xml" ? form$.el$("xml_editor") : null);
-
-            if (elName === "dialplan_xml") {
-                xmlEditorError.value = response.data.errors[elName][0];
-            }
-
-            if (el$) {
-                el$.messageBag.append(response.data.errors[elName][0]);
-            }
-        });
+const handleSelectPageItems = () => {
+    if (selectPageItems.value) {
+        selectedItems.value = props.data.data.map(item => item.destination_uuid);
+    } else {
+        selectedItems.value = [];
     }
 };
 
-const handleSuccess = (response) => {
-    emit("success", "success", response.data.messages);
-    emit("saved", response.data);
-    emit("refresh-data");
-};
+const handleClearSelection = () => {
+    selectedItems.value = [];
+    selectPageItems.value = false;
+    selectAll.value = false;
+}
 
-const handleError = (error, details, form$) => {
-    form$.messageBag.clear();
+const handleModalClose = () => {
+    showCreateModal.value = false;
+    showUpdateModal.value = false;
+    confirmationModalTrigger.value = false;
+    showBulkUpdateModal.value = false;
+    showUploadModal.value = false;
+}
 
-    if (details.type === "submit") {
-        emit("error", error);
-        return;
-    }
+const hideNotification = () => {
+    notificationShow.value = false;
+    notificationType.value = null;
+    notificationMessages.value = null;
+}
 
-    form$.messageBag.append("Could not submit form");
-};
+const showNotification = (type, messages = null) => {
+    notificationType.value = type;
+    notificationMessages.value = messages;
+    notificationShow.value = true;
+}
+
+/*
+const getDestinationActionName = ((action) => {
+    return action;
+})*/
+
+registerLicense('Ngo9BigBOggjHTQxAR8/V1NAaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdnWX5eeHVSQ2hYUkB3WEI=');
+
 </script>
+
+<style>
+@import "@syncfusion/ej2-base/styles/tailwind.css";
+@import "@syncfusion/ej2-vue-popups/styles/tailwind.css";
+</style>
