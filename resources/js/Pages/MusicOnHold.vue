@@ -1026,8 +1026,8 @@ const confirmFileDelete = (stream, file) => {
 
 const confirmReload = () => {
     showConfirmationModal.value = true;
-    confirmationHeader.value = "Reload mod_local_stream";
-    confirmationText.value = "Only continue if there are no current calls on hold being played. FreeSWITCH will not reload mod_local_stream while it is in use.";
+    confirmationHeader.value = "Reload Hold Music";
+    confirmationText.value = "Reload hold music after making changes so the latest updates take effect. Avoid reloading while callers are actively listening to hold music.";
     confirmationButtonLabel.value = "Reload";
     confirmAction.value = executeReload;
 };

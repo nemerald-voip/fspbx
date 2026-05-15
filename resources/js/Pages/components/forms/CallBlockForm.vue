@@ -66,6 +66,7 @@
                                             description="Use Caller ID Name, Caller ID Number, or both." />
 
                                         <TextElement name="call_block_name" label="Caller ID Name"
+                                            description="Regular expressions (Regex) are supported. Example: ^\?SPAM"
                                             :floating="false" :columns="{ sm: { container: 12 } }" />
 
                                         <TextElement name="call_block_country_code" label="Country Code"
