@@ -285,9 +285,7 @@
                 <template #footer>
                     <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                         :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page"
-                        :links="data.links"
-                    :page-size="perPage" :page-size-options="props.pagination?.per_page_options ?? []"
-                    :show-page-size-selector="true" @pagination-change-page="renderRequestedPage" @page-size-change="handlePageSizeChange" />
+                        :links="data.links" @pagination-change-page="renderRequestedPage" />
                 </template>
 
 
@@ -387,10 +385,7 @@ const props = defineProps({
     csvUrl: Object,
     routes: Object,
     permissions: Object,
-    pagination: Object,
 });
-
-const perPage = ref(props.pagination?.per_page);
 
 
 onMounted(() => {
@@ -552,7 +547,6 @@ const getData = (page = 1) => {
         params: {
             filter: filterData.value,
             page,
-            per_page: perPage.value,
             sort,
         }
     })
@@ -640,11 +634,6 @@ const handleFiltersReset = () => {
     // After resetting the filters, call handleSearchButtonClick to perform the search with the updated filters
     handleSearchButtonClick();
 }
-
-const handlePageSizeChange = (newPerPage) => {
-    perPage.value = newPerPage;
-    getData(1);
-};
 
 const renderRequestedPage = (url) => {
     loading.value = true;
