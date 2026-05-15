@@ -22,7 +22,7 @@
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
                                     class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                                    @click="emit('close')">
+                                    @click="handleClose">
                                     <span class="sr-only">Close</span>
                                     <XMarkIcon class="h-6 w-6" aria-hidden="true" />
                                 </button>
@@ -41,9 +41,9 @@
                                 </div>
                             </div>
 
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
-                                @error="handleError" @response="handleResponse" :display-errors="false"
-                                :default="defaultValues">
+                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @vue:mounted="handleFormMounted"
+                                @success="handleSuccess" @error="handleError" @response="handleResponse"
+                                :display-errors="false" :default="defaultValues">
                                 <template #empty>
                                     <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
@@ -157,7 +157,8 @@
                                                 <GroupElement name="settings_button_container" />
 
                                                 <ButtonElement name="settings_submit" button-label="Save"
-                                                    :submits="true" align="right" @click="submitMode = 'builder'" />
+                                                    :submits="true" align="right"
+                                                    @click="prepareSubmit('builder', 'settings')" />
 
                                                 <StaticElement name="rules_header" tag="h4" content="Rules"
                                                     description="Build this dialplan as rule cards with conditions, actions, and optional otherwise actions." />
@@ -327,7 +328,7 @@
                                                 <GroupElement name="rules_button_container" />
 
                                                 <ButtonElement name="rules_submit" button-label="Save" :submits="true"
-                                                    align="right" @click="submitMode = 'builder'" />
+                                                    align="right" @click="prepareSubmit('builder', 'rules')" />
 
                                                 <StaticElement name="advanced_header" tag="h4" content="XML Editor"
                                                     description="Edit the raw FreeSWITCH XML for this dialplan. Saving here updates the XML directly." />
@@ -361,7 +362,7 @@
                                                 <GroupElement name="advanced_button_container" />
 
                                                 <ButtonElement name="advanced_submit" button-label="Save"
-                                                    :submits="true" align="right" @click="submitMode = 'xml'" />
+                                                    :submits="true" align="right" @click="prepareSubmit('xml', 'xml')" />
                                             </FormElements>
                                         </div>
                                     </div>
@@ -376,7 +377,7 @@
 </template>
 
 <script setup>
-import { computed, ref, watch } from "vue";
+import { computed, ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
@@ -400,6 +401,7 @@ const emit = defineEmits(["close", "error", "success", "refresh-data", "saved"])
 
 const form$ = ref(null);
 const submitMode = ref("builder");
+const pendingTabName = ref(null);
 const xmlEditorTheme = ref("chrome");
 const xmlEditorContent = ref("");
 const xmlEditorError = ref(null);
@@ -488,9 +490,26 @@ const defaultXmlTemplate = (item = {}) => {
     return `<extension name="${name}" continue="${continueValue}" uuid="${uuid}">\n</extension>`;
 };
 
-watch(() => props.options?.item, (item) => {
-    xmlEditorContent.value = item?.dialplan_xml || defaultXmlTemplate(item);
-}, { immediate: true });
+const prepareSubmit = (mode, tabName) => {
+    submitMode.value = mode;
+    pendingTabName.value = tabName;
+};
+
+const handleFormMounted = () => {
+    xmlEditorContent.value = props.options?.item?.dialplan_xml || defaultXmlTemplate(props.options?.item);
+
+    if (!pendingTabName.value) {
+        return;
+    }
+
+    form$.value?.tabs$?.goTo(pendingTabName.value);
+    pendingTabName.value = null;
+};
+
+const handleClose = () => {
+    pendingTabName.value = null;
+    emit("close");
+};
 
 const toggleIsEnabled = (value) => value === true || value === "true" || value === 1 || value === "1";
 
