@@ -108,9 +108,6 @@
                                                     'keys_title',
                                                     'add_key',
                                                     'device_keys',
-                                                    'new_key_template_name',
-                                                    'new_key_template_description',
-                                                    'save_key_template',
                                                     'advanced',
                                                     'keys_container2',
                                                     'submit_keys',
@@ -497,8 +494,26 @@
 
 
                                                 <!-- Function Keys -->
-                                                <StaticElement name="keys_title" tag="h4" content="Device Function Keys"
-                                                    description="Assign function keys to this device." />
+                                                <StaticElement name="keys_title">
+                                                    <div class="flex items-start justify-between gap-3">
+                                                        <div>
+                                                            <h4 class="text-base font-semibold text-gray-900">Device
+                                                                Function Keys</h4>
+                                                            <p class="mt-1 text-sm text-gray-500">Assign function keys to
+                                                                this device.</p>
+                                                        </div>
+                                                        <button type="button"
+                                                            v-if="options?.permissions?.device_key_template_create && options?.routes?.save_key_template_from_device && options?.item?.keys?.length > 0"
+                                                            @click="openSaveTemplateModal"
+                                                            aria-label="Save Keys as Template"
+                                                            title="Save Keys as Template"
+                                                            class="shrink-0 inline-flex items-center gap-x-1.5 rounded-md bg-white p-2 sm:px-3 sm:py-2 text-sm font-medium text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                                                            <DocumentDuplicateIcon class="h-4 w-4 text-gray-500"
+                                                                aria-hidden="true" />
+                                                            <span class="hidden sm:inline">Save Keys as Template</span>
+                                                        </button>
+                                                    </div>
+                                                </StaticElement>
 
                                                 <GroupElement name="keys_container" />
                                                 <ListElement name="device_keys" :sort="true" size="sm"
@@ -615,21 +630,6 @@
                                                 </ListElement>
 
                                                 <GroupElement name="keys_container2" />
-
-                                                <TextElement name="new_key_template_name" label="New Template Name"
-                                                    placeholder="Save these keys as a template" :floating="false"
-                                                    :conditions="[() => options?.permissions?.device_key_template_create && options?.routes?.save_key_template_from_device]"
-                                                    :columns="{ sm: { container: 6 } }" />
-
-                                                <TextareaElement name="new_key_template_description"
-                                                    label="New Template Description" :rows="2" :floating="false"
-                                                    :conditions="[() => options?.permissions?.device_key_template_create && options?.routes?.save_key_template_from_device]"
-                                                    :columns="{ sm: { container: 6 } }" />
-
-                                                <ButtonElement name="save_key_template" button-label="Save as Template"
-                                                    :submits="false" align="left" :loading="savingKeyTemplate"
-                                                    @click="handleSaveKeyTemplate"
-                                                    :conditions="[() => options?.permissions?.device_key_template_create && options?.routes?.save_key_template_from_device]" />
 
                                                 <ButtonElement name="submit_keys" button-label="Save" :submits="true"
                                                     align="right" />
@@ -1223,6 +1223,99 @@
                                     </div>
                                 </template>
                             </Vueform>
+
+                            <!-- Save Keys as Template modal -->
+                            <TransitionRoot as="div" :show="showSaveTemplateModal">
+                                <Dialog as="div" class="relative z-20"
+                                    @close="savingKeyTemplate ? null : closeSaveTemplateModal()">
+                                    <TransitionChild as="div" enter="ease-out duration-200"
+                                        enter-from="opacity-0" enter-to="opacity-100" leave="ease-in duration-150"
+                                        leave-from="opacity-100" leave-to="opacity-0">
+                                        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                                    </TransitionChild>
+                                    <div class="fixed inset-0 z-20 w-screen overflow-y-auto">
+                                        <div
+                                            class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                                            <TransitionChild as="template" enter="ease-out duration-200"
+                                                enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                                                enter-to="opacity-100 translate-y-0 sm:scale-100"
+                                                leave="ease-in duration-150"
+                                                leave-from="opacity-100 translate-y-0 sm:scale-100"
+                                                leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+                                                <DialogPanel
+                                                    class="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+                                                    <DialogTitle as="h3"
+                                                        class="mb-1 pr-8 text-base font-semibold leading-6 text-gray-900">
+                                                        Save Keys as Template
+                                                    </DialogTitle>
+                                                    <p class="text-sm text-gray-500">
+                                                        Create a reusable Key Template from this device's current
+                                                        function keys.
+                                                    </p>
+
+                                                    <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
+                                                        <button type="button"
+                                                            class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                                            :disabled="savingKeyTemplate"
+                                                            @click="closeSaveTemplateModal">
+                                                            <span class="sr-only">Close</span>
+                                                            <XMarkIcon class="h-6 w-6" aria-hidden="true" />
+                                                        </button>
+                                                    </div>
+
+                                                    <div class="mt-4 space-y-4">
+                                                        <div>
+                                                            <label for="key_template_name"
+                                                                class="block text-sm font-medium text-gray-700">
+                                                                Template Name <span class="text-red-500">*</span>
+                                                            </label>
+                                                            <input id="key_template_name" type="text"
+                                                                v-model="templateName"
+                                                                :class="['mt-1 block w-full rounded-md shadow-sm sm:text-sm focus:ring-indigo-500 focus:border-indigo-500',
+                                                                    templateNameError ? 'border-red-400' : 'border-gray-300']"
+                                                                placeholder="e.g. Sales team standard keys"
+                                                                :disabled="savingKeyTemplate"
+                                                                @keyup.enter="handleSaveKeyTemplate" />
+                                                            <p v-if="templateNameError"
+                                                                class="mt-1 text-sm text-red-600">
+                                                                {{ templateNameError }}
+                                                            </p>
+                                                        </div>
+
+                                                        <div>
+                                                            <label for="key_template_description"
+                                                                class="block text-sm font-medium text-gray-700">
+                                                                Description
+                                                            </label>
+                                                            <textarea id="key_template_description" rows="3"
+                                                                v-model="templateDescription"
+                                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                                                placeholder="Optional — what this template is for"
+                                                                :disabled="savingKeyTemplate"></textarea>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mt-6 flex items-center justify-end gap-2">
+                                                        <button type="button"
+                                                            class="inline-flex justify-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                                                            :disabled="savingKeyTemplate"
+                                                            @click="closeSaveTemplateModal">
+                                                            Cancel
+                                                        </button>
+                                                        <button type="button"
+                                                            class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
+                                                            :disabled="savingKeyTemplate"
+                                                            @click="handleSaveKeyTemplate">
+                                                            <span v-if="savingKeyTemplate">Saving…</span>
+                                                            <span v-else>Save Template</span>
+                                                        </button>
+                                                    </div>
+                                                </DialogPanel>
+                                            </TransitionChild>
+                                        </div>
+                                    </div>
+                                </Dialog>
+                            </TransitionRoot>
                         </DialogPanel>
 
 
@@ -1240,7 +1333,7 @@ import { ref, reactive, computed } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import FormChildModal from "../FormChildModal.vue"
-import { Cog8ToothIcon } from "@heroicons/vue/24/outline";
+import { Cog8ToothIcon, DocumentDuplicateIcon } from "@heroicons/vue/24/outline";
 import Badge from "@generalComponents/Badge.vue";
 import { XCircleIcon } from '@heroicons/vue/20/solid'
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
@@ -1256,6 +1349,10 @@ const props = defineProps({
 const form$ = ref(null)
 const advModalIndex = ref(null)
 const savingKeyTemplate = ref(false)
+const showSaveTemplateModal = ref(false)
+const templateName = ref('')
+const templateDescription = ref('')
+const templateNameError = ref('')
 const isCloudProvisioningLoading = reactive({
     register: false,
     deregister: false,
@@ -1655,22 +1752,32 @@ const submitForm = async (FormData, form$) => {
 
     delete data.multi_purpose_keys
     delete data.expansion_keys
-    delete data.new_key_template_name
-    delete data.new_key_template_description
 
     return await form$.$vueform.services.axios.put(props.options.routes.update_route, data)
 };
 
+const openSaveTemplateModal = () => {
+    templateName.value = ''
+    templateDescription.value = ''
+    templateNameError.value = ''
+    showSaveTemplateModal.value = true
+}
+
+const closeSaveTemplateModal = () => {
+    if (savingKeyTemplate.value) return
+    showSaveTemplateModal.value = false
+}
+
 const handleSaveKeyTemplate = async () => {
-    const name = form$?.value?.el$('new_key_template_name')?.value
-    const description = form$?.value?.el$('new_key_template_description')?.value
+    const name = templateName.value
+    const description = templateDescription.value
 
     if (!name || String(name).trim() === '') {
-        form$?.value?.el$('new_key_template_name')?.messageBag?.clear()
-        form$?.value?.el$('new_key_template_name')?.messageBag?.append('Template name is required.')
+        templateNameError.value = 'Template name is required.'
         return
     }
 
+    templateNameError.value = ''
     savingKeyTemplate.value = true
 
     try {
@@ -1680,8 +1787,21 @@ const handleSaveKeyTemplate = async () => {
         })
 
         emit('success', 'success', response.data.messages)
+        showSaveTemplateModal.value = false
     } catch (error) {
-        emit('error', error)
+        const data = error?.response?.data
+        const fieldErrors = data?.errors
+
+        if (fieldErrors?.name?.length) {
+            templateNameError.value = fieldErrors.name[0]
+        } else if (fieldErrors?.description?.length) {
+            templateNameError.value = fieldErrors.description[0]
+        } else if (data?.messages?.error?.length) {
+            templateNameError.value = data.messages.error[0]
+            emit('error', { response: { data: { errors: { request: data.messages.error } } } })
+        } else {
+            emit('error', error)
+        }
     } finally {
         savingKeyTemplate.value = false
     }
