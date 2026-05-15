@@ -7,13 +7,24 @@
        
 
         <div class="flex flex-1 items-center justify-end sm:hidden">
-            <select v-if="showPageSizeSelector && pageSizeOptions.length" :value="pageSize" aria-label="Rows per page"
-                @change="$emit('page-size-change', Number($event.target.value))"
-                class="block rounded-md border-0 py-1.5 pl-2 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600">
-                <option v-for="option in pageSizeOptions" :key="option" :value="option">
-                    {{ option }}
-                </option>
-            </select>
+            <div v-if="showPageSizeSelector && pageSizeOptions.length" class="relative">
+                <button type="button" aria-haspopup="listbox" :aria-expanded="pageSizeMenuOpen"
+                    class="inline-flex min-w-20 items-center justify-between rounded-md bg-white py-1.5 pl-2 pr-2 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                    @click.stop="togglePageSizeMenu">
+                    <span>{{ pageSize }}</span>
+                    <ChevronDownIcon class="ml-2 h-4 w-4 text-gray-500" aria-hidden="true" />
+                </button>
+                <div v-if="pageSizeMenuOpen"
+                    class="absolute bottom-full right-0 z-50 mb-1 w-24 overflow-hidden rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                    role="listbox" @click.stop>
+                    <button v-for="option in pageSizeOptions" :key="option" type="button" role="option"
+                        :aria-selected="Number(option) === Number(pageSize)"
+                        :class="pageSizeOptionClass(option)"
+                        @click="selectPageSize(option)">
+                        {{ option }}
+                    </button>
+                </div>
+            </div>
             <button type="button" @click="$emit('pagination-change-page', previous)"
                 class="relative inline-flex items-center rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                 Previous
@@ -40,13 +51,24 @@
                     {{ ' ' }}
                     results
                 </p>
-                <select v-if="showPageSizeSelector && pageSizeOptions.length" :value="pageSize" aria-label="Rows per page"
-                    @change="$emit('page-size-change', Number($event.target.value))"
-                    class="block rounded-md border-0 py-1.5 pl-2 pr-8 text-sm text-gray-900 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-blue-600">
-                    <option v-for="option in pageSizeOptions" :key="option" :value="option">
-                        {{ option }}
-                    </option>
-                </select>
+                <div v-if="showPageSizeSelector && pageSizeOptions.length" class="relative">
+                    <button type="button" aria-haspopup="listbox" :aria-expanded="pageSizeMenuOpen"
+                        class="inline-flex min-w-20 items-center justify-between rounded-md bg-white py-1.5 pl-2 pr-2 text-sm text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-600"
+                        @click.stop="togglePageSizeMenu">
+                        <span>{{ pageSize }}</span>
+                        <ChevronDownIcon class="ml-2 h-4 w-4 text-gray-500" aria-hidden="true" />
+                    </button>
+                    <div v-if="pageSizeMenuOpen"
+                        class="absolute bottom-full left-0 z-50 mb-1 w-24 overflow-hidden rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                        role="listbox" @click.stop>
+                        <button v-for="option in pageSizeOptions" :key="option" type="button" role="option"
+                            :aria-selected="Number(option) === Number(pageSize)"
+                            :class="pageSizeOptionClass(option)"
+                            @click="selectPageSize(option)">
+                            {{ option }}
+                        </button>
+                    </div>
+                </div>
             </div>
             <div>
                 <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
@@ -64,8 +86,8 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/20/solid';
+import { computed, onBeforeUnmount, onMounted, ref } from "vue";
+import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/20/solid';
 import BulkActions from "./BulkActions.vue";
 
 const props = defineProps({
@@ -93,8 +115,38 @@ const props = defineProps({
         default: false,
     },
 });
+const emit = defineEmits(["pagination-change-page", "bulk-action", "page-size-change"]);
 
 const hasBulkActions = computed(() => props.bulkActions && props.bulkActions.length > 0);
+const pageSizeMenuOpen = ref(false);
+
+const closePageSizeMenu = () => {
+    pageSizeMenuOpen.value = false;
+};
+
+const togglePageSizeMenu = () => {
+    pageSizeMenuOpen.value = !pageSizeMenuOpen.value;
+};
+
+const selectPageSize = (option) => {
+    pageSizeMenuOpen.value = false;
+    emit("page-size-change", Number(option));
+};
+
+const pageSizeOptionClass = (option) => [
+    "block w-full px-3 py-1.5 text-left text-sm",
+    Number(option) === Number(props.pageSize)
+        ? "bg-blue-600 text-white"
+        : "text-gray-900 hover:bg-gray-100",
+];
+
+onMounted(() => {
+    document.addEventListener("click", closePageSizeMenu);
+});
+
+onBeforeUnmount(() => {
+    document.removeEventListener("click", closePageSizeMenu);
+});
 
 const getVisibleLinks = (links) => {
     const visiblePages = 5;
