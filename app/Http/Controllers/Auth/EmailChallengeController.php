@@ -27,6 +27,7 @@ class EmailChallengeController extends Controller
         Session::put('code_expiration', now()->addMinutes(10));
         logger('Your 2FA code is ' . $code);
         $attributes = [
+            'domain_uuid' => $user->domain_uuid,
             'name' => optional($user->user_adv_fields)->first_name ?? '',
             'email' => $user->user_email,
             'code' => $code,

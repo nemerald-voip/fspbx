@@ -21,6 +21,7 @@ class EmailLogsController extends Controller
         $params = request()->all();
         $params['paginate'] = 50;
         $domainUuid = $this->requestedDomainUuid();
+        $includeSystemLogs = request('filter.domain_uuid') === 'all';
 
         if (!empty(request('filter.dateRange'))) {
             $startPeriod = Carbon::parse(request('filter.dateRange')[0])->setTimeZone('UTC');
@@ -56,7 +57,13 @@ class EmailLogsController extends Controller
             ->when(
                 $domainUuid,
                 fn ($query) => $query->where('domain_uuid', $domainUuid),
-                fn ($query) => $query->whereIn('domain_uuid', $this->allowedDomainUuids())
+                fn ($query) => $query->where(function ($query) use ($includeSystemLogs) {
+                    $query->whereIn('domain_uuid', $this->allowedDomainUuids());
+
+                    if ($includeSystemLogs) {
+                        $query->orWhereNull('domain_uuid');
+                    }
+                })
             )
             ->allowedFilters([
                 AllowedFilter::callback('domain_uuid', function ($query, $value) {
