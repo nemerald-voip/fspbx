@@ -178,6 +178,16 @@ class UpdateDeviceRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
+            if (
+                $this->assignmentSelected($this->input('device_profile_uuid'))
+                && $this->assignmentSelected($this->input('device_key_template_uuid'))
+            ) {
+                $validator->errors()->add(
+                    'device_key_template_uuid',
+                    'Choose either a key template or a device profile, not both.'
+                );
+            }
+
             $keys = $this->input('device_keys');
 
             if (!is_array($keys)) return;
@@ -220,6 +230,15 @@ class UpdateDeviceRequest extends FormRequest
             'device_keys.*.key_value.max'      => 'Key value is too long.',
             'device_keys.*.key_label.max'      => 'Key label is too long.',
         ];
+    }
+
+    private function assignmentSelected(mixed $value): bool
+    {
+        if ($value === null) {
+            return false;
+        }
+
+        return !in_array((string) $value, ['', 'NULL'], true);
     }
 
     public function prepareForValidation(): void

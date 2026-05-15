@@ -54,7 +54,9 @@
                                     device_template: options.item?.device_template_uuid
                                         ?? options.item?.device_template
                                         ?? null,
-                                    device_profile_uuid: options.item?.device_profile_uuid,
+                                    device_profile_uuid: options.item?.device_key_template_uuid
+                                        ? null
+                                        : options.item?.device_profile_uuid,
                                     device_key_template_uuid: options.item?.device_key_template_uuid,
                                     domain_uuid: options.item?.domain_uuid,
                                     device_lines: options.lines,
@@ -231,13 +233,25 @@
                                                     label="Key Template" input-type="search" autocomplete="off"
                                                     label-prop="name" value-prop="value"
                                                     placeholder="Select Key Template (Optional)" :floating="false"
-                                                    :conditions="[() => options?.permissions?.device_key_template_assign]" />
+                                                    :disabled="[['device_profile_uuid', 'not_in', [null, '', 'NULL']]]"
+                                                    :conditions="[() => options?.permissions?.device_key_template_assign]"
+                                                    @change="(newValue, oldValue, el$) => {
+                                                        if (newValue && newValue !== 'NULL') {
+                                                            el$.form$.el$('device_profile_uuid')?.update(null)
+                                                        }
+                                                    }" />
 
                                                 <SelectElement name="device_profile_uuid" :items="options.profiles"
                                                     :search="true" :native="false" label="Device Profile (Depreciated)"
                                                     input-type="search" autocomplete="off" label-prop="name"
                                                     value-prop="value" placeholder="Select Profile (Optional)"
-                                                    :floating="false" />
+                                                    :floating="false"
+                                                    :disabled="[['device_key_template_uuid', 'not_in', [null, '', 'NULL']]]"
+                                                    @change="(newValue, oldValue, el$) => {
+                                                        if (newValue && newValue !== 'NULL') {
+                                                            el$.form$.el$('device_key_template_uuid')?.update(null)
+                                                        }
+                                                    }" />
 
                                                 <TextElement name="device_description" label="Description"
                                                     placeholder="Enter description" :floating="false" />

@@ -146,6 +146,30 @@ class StoreDeviceRequest extends FormRequest
         ];
     }
 
+    public function withValidator($validator): void
+    {
+        $validator->after(function ($validator) {
+            if (
+                $this->assignmentSelected($this->input('device_profile_uuid'))
+                && $this->assignmentSelected($this->input('device_key_template_uuid'))
+            ) {
+                $validator->errors()->add(
+                    'device_key_template_uuid',
+                    'Choose either a key template or a device profile, not both.'
+                );
+            }
+        });
+    }
+
+    private function assignmentSelected(mixed $value): bool
+    {
+        if ($value === null) {
+            return false;
+        }
+
+        return !in_array((string) $value, ['', 'NULL'], true);
+    }
+
     public function prepareForValidation(): void
     {
         // Normalize MAC
