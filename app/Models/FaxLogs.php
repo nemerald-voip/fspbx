@@ -25,6 +25,8 @@ class FaxLogs extends Model
         'fax_date_formatted',
         'source_formatted',
         'destination_formatted',
+        'direction',
+        'direction_label',
     ];
 
     protected $casts = [
@@ -74,6 +76,50 @@ class FaxLogs extends Model
         return $countryCode
             ? formatPhoneNumber($this->destination, $countryCode, PhoneNumberFormat::NATIONAL)
             : $this->destination;
+    }
+
+    public function getDirectionAttribute(): ?string
+    {
+        if (!empty($this->outbound_fax_uuid)) {
+            return 'outbound';
+        }
+
+        $faxMode = $this->relationLoaded('faxFile')
+            ? $this->faxFile?->fax_mode
+            : null;
+
+        if ($faxMode === 'tx') {
+            return 'outbound';
+        }
+
+        if ($faxMode === 'rx') {
+            return 'inbound';
+        }
+
+        $faxFile = strtolower((string) $this->fax_file);
+
+        if (str_contains($faxFile, '/sent/')) {
+            return 'outbound';
+        }
+
+        if (str_contains($faxFile, '/inbox/')) {
+            return 'inbound';
+        }
+
+        if (!empty($this->fax_uri)) {
+            return 'outbound';
+        }
+
+        return null;
+    }
+
+    public function getDirectionLabelAttribute(): ?string
+    {
+        return match ($this->direction) {
+            'outbound' => 'Outbound',
+            'inbound' => 'Inbound',
+            default => null,
+        };
     }
 
     private function phoneCountryCode(): ?string

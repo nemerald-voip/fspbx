@@ -71,7 +71,8 @@
 
         <template #table-header>
           <TableColumnHeader
-            class="flex whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900 items-center justify-start"
+            class="w-12 py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+            :sortable="false"
           >
             <input
               v-if="permissions.delete"
@@ -80,8 +81,15 @@
               @change="handleSelectPageItems"
               class="h-4 w-4 rounded border-gray-300 text-indigo-600"
             />
-            <span class="pl-4">Date</span>
           </TableColumnHeader>
+
+          <TableColumnHeader
+            header=" "
+            class="w-12 px-2 py-3.5 text-left text-sm font-semibold text-gray-900"
+            :sortable="false"
+          />
+
+          <TableColumnHeader header="Date" class="whitespace-nowrap px-4 py-3.5 text-left text-sm font-semibold text-gray-900" />
 
           <TableColumnHeader header="From" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
           <TableColumnHeader header="To" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
@@ -100,7 +108,7 @@
         </template>
 
         <template v-if="permissions.delete && (selectPageItems || selectAll)" v-slot:current-selection>
-          <td colspan="12">
+          <td colspan="14">
             <div class="text-sm text-center m-2">
               <span class="font-semibold">{{ selectedItems.length }}</span> items are selected.
               <button
@@ -123,20 +131,32 @@
 
         <template #table-body>
           <tr v-for="row in data.data" :key="row.fax_log_uuid">
-            <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500">
-              <div class="flex items-center">
-                <input
-                  v-if="permissions.delete"
-                  v-model="selectedItems"
-                  type="checkbox"
-                  name="action_box[]"
-                  :value="row.fax_log_uuid"
-                  class="h-4 w-4 rounded border-gray-300 text-indigo-600"
-                />
-                <div class="ml-4">
-                  <div class="text-gray-500 ">{{ row.fax_date_formatted }}</div>
+            <TableField class="w-12 whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-6">
+              <input
+                v-if="permissions.delete"
+                v-model="selectedItems"
+                type="checkbox"
+                name="action_box[]"
+                :value="row.fax_log_uuid"
+                class="h-4 w-4 rounded border-gray-300 text-indigo-600"
+              />
+            </TableField>
+
+            <TableField
+              :text="directionText(row)"
+              class="w-12 whitespace-nowrap px-2 py-2 text-sm text-gray-500"
+            >
+              <ejs-tooltip :content="directionTooltip(row)" position="TopLeft" target="#direction_tooltip_target">
+                <div id="direction_tooltip_target">
+                  <PhoneOutgoingIcon class="w-5 h-5 text-blue-600" v-if="row.direction === 'outbound'" />
+                  <PhoneIncomingIcon class="w-5 h-5 text-green-600" v-if="row.direction === 'inbound'" />
+                  <span v-if="!row.direction">{{ directionText(row) }}</span>
                 </div>
-              </div>
+              </ejs-tooltip>
+            </TableField>
+
+            <TableField class="whitespace-nowrap px-4 py-2 text-sm text-gray-500">
+              <div class="text-gray-500">{{ row.fax_date_formatted }}</div>
             </TableField>
 
             <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500" :text="faxSource(row)" />
@@ -249,6 +269,8 @@ import DatePicker from "./components/general/DatePicker.vue";
 import Loading from "./components/general/Loading.vue";
 import Notification from "./components/notifications/Notification.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
+import PhoneOutgoingIcon from "./components/icons/PhoneOutgoingIcon.vue";
+import PhoneIncomingIcon from "./components/icons/PhoneIncomingIcon.vue";
 
 import { ArrowPathIcon, MagnifyingGlassIcon, TrashIcon } from "@heroicons/vue/24/solid";
 import { TooltipComponent as EjsTooltip } from "@syncfusion/ej2-vue-popups";
@@ -456,6 +478,14 @@ const handleErrorResponse = (error) => {
 
 const faxSource = (row) => {
   return row.source_formatted ?? row.source ?? row.fax_file?.fax_caller_id_number_formatted ?? "";
+};
+
+const directionText = (row) => {
+  return row.direction_label ?? "";
+};
+
+const directionTooltip = (row) => {
+  return row.direction ? `${row.direction} fax` : "Unknown direction";
 };
 
 const faxDestination = (row) => {

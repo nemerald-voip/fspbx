@@ -91,7 +91,7 @@
                     <table class="min-w-full divide-y divide-gray-200 mb-4">
                         <thead class="bg-gray-100">
                             <tr>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">
+                                <th class="w-12 py-3 pl-6 pr-3 text-left text-sm font-semibold text-gray-900">
                                     <div class="flex items-center">
                                         <input
                                             v-if="canDelete"
@@ -100,9 +100,12 @@
                                             @change="handleSelectPageItems"
                                             class="h-4 w-4 rounded border-gray-300 text-indigo-600"
                                         />
-                                        <span :class="canDelete ? 'pl-4' : ''">Date</span>
                                     </div>
                                 </th>
+                                <th class="w-12 py-3 pl-6 pr-3 text-left text-sm font-semibold text-gray-900">
+                                    <span class="sr-only">Direction</span>
+                                </th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Date</th>
                                 <th v-if="showDomainColumn" class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Domain</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">From</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">To</th>
@@ -146,18 +149,29 @@
 
                             <template v-for="row in data.data" :key="row.fax_log_uuid">
                                 <tr @click="toggleExpand(row.fax_log_uuid)" class="hover:bg-gray-50 cursor-pointer">
-                                    <td class="whitespace-nowrap px-6 py-2 text-sm font-medium text-gray-500">
-                                        <div class="flex items-center">
-                                            <input
-                                                v-if="canDelete"
-                                                v-model="selectedItems"
-                                                type="checkbox"
-                                                :value="row.fax_log_uuid"
-                                                class="h-4 w-4 rounded border-gray-300 text-indigo-600"
-                                                @click.stop
-                                            />
-                                            <span :class="canDelete ? 'ml-4' : ''">{{ row.fax_date_formatted }}</span>
+                                    <td class="w-12 whitespace-nowrap px-6 py-2 text-sm font-medium text-gray-500">
+                                        <input
+                                            v-if="canDelete"
+                                            v-model="selectedItems"
+                                            type="checkbox"
+                                            :value="row.fax_log_uuid"
+                                            class="h-4 w-4 rounded border-gray-300 text-indigo-600"
+                                            @click.stop
+                                        />
+                                    </td>
+                                    <td class="w-12 whitespace-nowrap py-2 pl-6 pr-3 text-sm text-gray-500">
+                                        <div class="relative group inline-flex items-center">
+                                            <PhoneOutgoingIcon class="w-5 h-5 text-blue-600" v-if="row.direction === 'outbound'" />
+                                            <PhoneIncomingIcon class="w-5 h-5 text-green-600" v-if="row.direction === 'inbound'" />
+                                            <span v-if="!row.direction">{{ directionText(row) }}</span>
+                                            <div class="absolute bottom-full left-1/2 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded bg-gray-800 px-2 py-1 text-xs text-white shadow-lg group-hover:block">
+                                                {{ directionTooltip(row) }}
+                                                <div class="absolute -bottom-1 left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-gray-800"></div>
+                                            </div>
                                         </div>
+                                    </td>
+                                    <td class="whitespace-nowrap px-6 py-2 text-sm font-medium text-gray-500">
+                                        {{ row.fax_date_formatted }}
                                     </td>
                                     <td v-if="showDomainColumn" class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
                                         {{ domainLabel(row) }}
@@ -223,6 +237,7 @@
                                                     <div><span class="font-medium text-gray-700">Log ID:</span> {{ displayValue(row.fax_log_uuid) }}</div>
                                                     <div><span class="font-medium text-gray-700">Fax ID:</span> {{ displayValue(row.fax_uuid) }}</div>
                                                     <div><span class="font-medium text-gray-700">Mode:</span> {{ displayValue(row.fax_file?.fax_mode) }}</div>
+                                                    <div><span class="font-medium text-gray-700">Direction:</span> {{ displayValue(directionText(row)) }}</div>
                                                     <div><span class="font-medium text-gray-700">Date:</span> {{ displayValue(row.fax_date_formatted) }}</div>
                                                     <div><span class="font-medium text-gray-700">Duration:</span> {{ displayValue(row.fax_duration) }}</div>
                                                 </div>
@@ -311,6 +326,8 @@ import Paginator from "@generalComponents/Paginator.vue";
 import Badge from "@generalComponents/Badge.vue";
 import Notification from "./notifications/Notification.vue";
 import ConfirmationModal from "./modal/ConfirmationModal.vue";
+import PhoneOutgoingIcon from "./icons/PhoneOutgoingIcon.vue";
+import PhoneIncomingIcon from "./icons/PhoneIncomingIcon.vue";
 import { ArrowPathIcon, MagnifyingGlassIcon, TrashIcon } from "@heroicons/vue/24/solid";
 
 const props = defineProps({
@@ -372,7 +389,7 @@ const domainFilterOptions = computed(() => [
     { value: "all", label: "All domains" },
     ...props.domainOptions,
 ]);
-const faxColumnCount = computed(() => 8 + (showDomainColumn.value ? 1 : 0) + (hasActions.value ? 1 : 0));
+const faxColumnCount = computed(() => 10 + (showDomainColumn.value ? 1 : 0) + (hasActions.value ? 1 : 0));
 
 const fetchData = (page = 1) => {
     isDataLoading.value = true;
@@ -501,6 +518,14 @@ const executeBulkDelete = (items = selectedItems.value) => {
 
 const faxSource = (row) => {
     return row.source_formatted ?? row.source ?? row.fax_file?.fax_caller_id_number_formatted ?? "";
+};
+
+const directionText = (row) => {
+    return row.direction_label ?? "";
+};
+
+const directionTooltip = (row) => {
+    return row.direction ? `${row.direction} fax` : "Unknown direction";
 };
 
 const domainLabel = (row) => {
