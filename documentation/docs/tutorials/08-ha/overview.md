@@ -52,8 +52,8 @@ You can update the floating record using:
 ## Implementation Sequence
 
 1. **Prepare DNS** records for `server1`, `server2`, and `pbx`.
-2. Set up **Postgres replication** (bi-directional). See: [Bi-Directional PostgreSQL Setup](tutorials/07-ha/postgres-replication.md).
-3. Set up **Syncthing** with the FS PBX folders. See: [Syncthing File Replication](tutorials/07-ha/syncthing.md).
+2. Set up **Postgres replication** (bi-directional). See: [Bi-Directional PostgreSQL Setup](postgres-replication.md).
+3. Set up **Syncthing** with the FS PBX folders. See: [Syncthing File Replication](syncthing.md).
 4. Point your **floating DNS** (`pbx.example.com`) at the active node.
 5. (Optional) Automate failover with a health probe + provider API.
 
