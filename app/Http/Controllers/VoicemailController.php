@@ -55,6 +55,10 @@ class VoicemailController extends Controller
         return Inertia::render(
             $this->viewName,
             [
+                'pagination' => [
+                    'per_page' => fspbx_pagination_per_page(),
+                    'per_page_options' => fspbx_pagination_options(),
+                ],
                 'routes' => [
                     'current_page' => route('voicemails.index'),
                     'data_route' => route('voicemails.data'),
@@ -72,7 +76,7 @@ class VoicemailController extends Controller
      */
     public function getData()
     {
-        $perPage = 50;
+        $perPage = fspbx_pagination_per_page();
         $currentDomain = session('domain_uuid');
 
         $items = QueryBuilder::for(Voicemails::class)

@@ -146,7 +146,9 @@
             <template #footer>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    :page-size="perPage" :page-size-options="props.pagination?.per_page_options ?? []"
+                    :show-page-size-selector="true"
+                    @pagination-change-page="renderRequestedPage" @page-size-change="handlePageSizeChange" />
             </template>
         </DataTable>
     </div>
@@ -181,7 +183,10 @@ import { ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon, PencilSquareIcon, 
 const props = defineProps({
     routes: Object,
     permissions: Object,
+    pagination: Object,
 });
+
+const perPage = ref(props.pagination?.per_page);
 
 const loading = ref(false);
 const currentPage = ref(1);
@@ -247,7 +252,7 @@ const getData = (page = 1) => {
     currentPage.value = Number(page) || 1;
     const sort = sortData.value.order === "desc" ? `-${sortData.value.name}` : sortData.value.name;
 
-    axios.get(routes.data_route, { params: { filter: filterData.value, page: currentPage.value, sort } })
+    axios.get(routes.data_route, { params: { filter: filterData.value, page: currentPage.value, per_page: perPage.value, sort } })
         .then((response) => {
             data.value = response.data;
             currentPage.value = response.data.current_page ?? currentPage.value;
@@ -262,6 +267,11 @@ const handleSearchButtonClick = () => getData(1);
 const refreshCurrentPage = () => getData(currentPage.value);
 const handleFiltersReset = () => {
     filterData.value.search = null;
+    getData(1);
+};
+
+const handlePageSizeChange = (newPerPage) => {
+    perPage.value = newPerPage;
     getData(1);
 };
 

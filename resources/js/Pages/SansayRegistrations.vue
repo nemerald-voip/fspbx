@@ -187,7 +187,11 @@
             <template #footer>
                 <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                     :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                    @pagination-change-page="renderRequestedPage" />
+                    :page-size="perPage"
+                    :page-size-options="props.pagination?.per_page_options ?? []"
+                    :show-page-size-selector="true"
+                    @pagination-change-page="renderRequestedPage"
+                    @page-size-change="handlePageSizeChange" />
             </template>
         </DataTable>
         <div class="px-4 sm:px-6 lg:px-8"></div>
@@ -234,7 +238,10 @@ const notificationShow = ref(null);
 const props = defineProps({
     data: Object,
     routes: Object,
+    pagination: Object,
 });
+
+const perPage = ref(props.pagination?.per_page);
 
 
 const filterData = ref({
@@ -386,6 +393,7 @@ const handleSearchButtonClick = () => {
     router.visit(props.routes.current_page, {
         data: {
             filterData: filterData._rawValue,
+            per_page: perPage.value,
         },
         preserveScroll: true,
         preserveState: true,
@@ -422,6 +430,7 @@ const renderRequestedPage = (url) => {
     router.visit(url, {
         data: {
             filterData: filterData._rawValue,
+            per_page: perPage.value,
         },
         preserveScroll: true,
         preserveState: true,
@@ -430,6 +439,12 @@ const renderRequestedPage = (url) => {
             loading.value = false;
         }
     });
+};
+
+const handlePageSizeChange = (newPerPage) => {
+    perPage.value = newPerPage;
+    handleClearSelection();
+    handleSearchButtonClick();
 };
 
 

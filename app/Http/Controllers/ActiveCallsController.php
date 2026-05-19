@@ -4,10 +4,7 @@ namespace App\Http\Controllers;
 
 use Inertia\Inertia;
 use App\Models\Gateways;
-use Illuminate\Support\Collection;
-use Illuminate\Pagination\Paginator;
 use App\Services\FreeswitchEslService;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Carbon\Carbon;
 
 class ActiveCallsController extends Controller
@@ -50,6 +47,10 @@ class ActiveCallsController extends Controller
                 'showGlobal' => function () {
                     return userCheckPermission('call_active_all') && $this->requestWantsGlobal('filterData.showGlobal');
                 },
+                'pagination' => [
+                    'per_page' => fspbx_pagination_per_page(),
+                    'per_page_options' => fspbx_pagination_options(),
+                ],
                 'permissions' => $this->permissions(),
 
                 'routes' => [
@@ -67,8 +68,9 @@ class ActiveCallsController extends Controller
     /**
      *  Get data
      */
-    public function getData(FreeswitchEslService $eslService, $paginate = 50)
+    public function getData(FreeswitchEslService $eslService, $paginate = null)
     {
+        $paginate ??= fspbx_pagination_per_page();
 
         // Check if search parameter is present and not empty
         if (!empty(request('filterData.search'))) {
@@ -148,7 +150,7 @@ class ActiveCallsController extends Controller
 
         // Apply pagination manually
         if ($paginate) {
-            $data = $this->paginateCollection($data, $paginate);
+            $data = fspbx_paginate_collection($data, $paginate);
         }
 
         // logger($data);
@@ -203,34 +205,6 @@ class ActiveCallsController extends Controller
         // logger($data);
 
         return $data->values(); // Ensure re-indexing of the collection
-    }
-
-    /**
-     * Paginate a given collection.
-     *
-     * @param \Illuminate\Support\Collection $items
-     * @param int $perPage
-     * @param int|null $page
-     * @param array $options
-     * @return \Illuminate\Pagination\LengthAwarePaginator
-     */
-    public function paginateCollection($items, $perPage = 50, $page = null, $options = [])
-    {
-        $page = $page ?: (Paginator::resolveCurrentPage() ?: 1);
-        $items = $items instanceof Collection ? $items : Collection::make($items);
-
-        $paginator = new LengthAwarePaginator(
-            $items->forPage($page, $perPage),
-            $items->count(),
-            $perPage,
-            $page,
-            $options
-        );
-
-        // Manually set the path to the current route with proper parameters
-        $paginator->setPath(url()->current());
-
-        return $paginator;
     }
 
     /**
