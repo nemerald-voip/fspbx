@@ -94,12 +94,6 @@ class FSPBXInitialDBSeed extends Command
         // Ensure default user settings are present
         $this->createUserSettings($user, $domain->domain_uuid);
 
-        // Create symlink if it doesn't exist
-        $this->createSymlink('/var/www/fspbx/resources/lua', '/usr/share/freeswitch/scripts/lua');
-
-        // Set proper ownership and permissions
-        $this->setOwnershipAndPermissions('/var/www/fspbx/resources/lua');
-
         // Step 6: Run Upgrade Defaults
         $this->runUpgradeDefaults();
         $this->info("Ensuring FS PBX install metadata...");
@@ -108,6 +102,9 @@ class FSPBXInitialDBSeed extends Command
 
         // Step 6a: configure Reverb
         $this->configureReverb();
+
+        // Create FreeSWITCH scripts symlink
+        $this->createFreeSwitchScriptsSymlink();
 
         // Step 7: Run Additional Laravel Commands
         $this->info("Caching configuration...");
@@ -180,6 +177,39 @@ class FSPBXInitialDBSeed extends Command
 
         return 0;
     }
+
+        // Freeswitch Scripts Directory
+        protected function createFreeSwitchScriptsSymlink(): void
+        {
+            $target = '/var/www/fspbx/resources/freeswitch_scripts';
+            $link = '/usr/share/freeswitch/scripts';
+
+            $this->info('Creating FreeSWITCH scripts symlink...');
+
+            if (!is_dir($target)) {
+                throw new \RuntimeException("FreeSWITCH scripts target directory does not exist: {$target}");
+            }
+
+            if (file_exists($link) || is_link($link)) {
+                $removeProcess = new Process(['rm', '-rf', $link]);
+                $removeProcess->run();
+
+                if (!$removeProcess->isSuccessful()) {
+                    throw new ProcessFailedException($removeProcess);
+                }
+            }
+
+            $linkProcess = new Process(['ln', '-s', $target, $link]);
+            $linkProcess->run();
+
+            if (!$linkProcess->isSuccessful()) {
+                $this->error('Error occurred while creating FreeSWITCH scripts symlink.');
+                throw new ProcessFailedException($linkProcess);
+            }
+
+            $this->info('FreeSWITCH scripts symlink created successfully.');
+
+        }
 
     private function configureReverb()
     {
