@@ -92,8 +92,6 @@ class HandleInertiaRequests extends Middleware
 
         $permissions['registrations_view_global'] = userCheckPermission('registration_all');
 
-        $permissions['active_calls_view_global'] = userCheckPermission('call_active_all');
-
         $permissions['wakeup_calls_list_view'] = userCheckPermission('wakeup_calls_list_view');
         $permissions['wakeup_calls_create'] = userCheckPermission('wakeup_calls_create');
         $permissions['wakeup_calls_edit'] = userCheckPermission('wakeup_calls_edit');

@@ -18,7 +18,8 @@
                     </div>
                     <div class="hidden lg:ml-6 lg:flex lg:space-x-4">
 
-                        <div v-for="item in page.props.menus" :key="page.props.menus.menu_item_id" class="inline-flex items-center">
+                        <div v-for="item in page.props.menus" :key="page.props.menus.menu_item_id"
+                            class="inline-flex items-center">
                             <Menu as="div" class="">
                                 <MenuButton
                                     class="inline-flex  border-none text-sm font-medium text-gray-500 hover:text-gray-700 cursor-pointer">
@@ -37,10 +38,10 @@
                                         class="absolute mt-1 shadow-xl bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-20">
                                         <div v-for="child in item.child_menu" :key="child.menu_item_uuid">
                                             <MenuItem v-slot="{ active }">
-                                            <a :href="child.menu_item_link"
-                                                :class="[active ? 'bg-gray-100' : '', 'block px-5 py-2 text-sm text-gray-600 whitespace-nowrap cursor-pointer no-underline']">
-                                                {{ child.menu_item_title }}
-                                            </a>
+                                                <a :href="child.menu_item_link"
+                                                    :class="[active ? 'bg-gray-100' : '', 'block px-5 py-2 text-sm text-gray-600 whitespace-nowrap cursor-pointer no-underline']">
+                                                    {{ child.menu_item_title }}
+                                                </a>
                                             </MenuItem>
                                         </div>
                                     </MenuItems>
@@ -80,7 +81,7 @@
                             <li v-for="item in page.props.menus" :key="page.props.menus.menu_item_id">
                                 <a v-if="!item.child_menu" :href="item.href"
                                     :class="[item.current ? 'bg-gray-50' : 'hover:bg-gray-50', 'block rounded-md py-2 pr-2 pl-10 text-sm leading-6 font-semibold text-gray-700']">{{
-        item.menu_item_title }}</a>
+                                    item.menu_item_title }}</a>
                                 <Disclosure as="div" v-else v-slot="{ open }">
                                     <DisclosureButton
                                         :class="'hover:bg-gray-50 flex items-center w-full text-left rounded-md p-2 gap-x-3 text-sm leading-6 font-semibold text-gray-700'">
@@ -123,7 +124,7 @@
                                     <div class="px-4 sm:px-6">
                                         <div class="flex items-start justify-between">
                                             <DialogTitle class="text-base font-semibold leading-6 text-gray-900">Select
-                                                company
+                                                account
                                             </DialogTitle>
                                             <div class="ml-3 flex h-7 items-center">
                                                 <button type="button"
@@ -154,7 +155,7 @@
                                                     <div class="flex flex-col p-2 border-b border-gray-200 "
                                                         :class="page.props.selectedDomainUuid === domain.domain_uuid ? 'bg-blue-500 text-white' : 'bg-white text-gray-700 hover:bg-gray-300'">
                                                         <div class="text-base font-semibold mb-0">{{
-        domain.domain_description }}</div>
+                                                            domain.domain_description }}</div>
                                                         <div class="text-xs text-muted">{{ domain.domain_name }}</div>
                                                     </div>
                                                 </a>

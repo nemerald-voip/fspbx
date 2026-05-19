@@ -101,8 +101,8 @@
 
                     <TableField class="px-2 py-2 text-sm flex-col sm:flex-row gap-2">
 
-                        <template v-if="page.props.auth.can.fax_sent_view">
-                            <a :href="`/core/domain_settings/domain_settings.php?id=${row.domain_uuid}`"
+                        <template v-if="permissions.domain_settings_view">
+                            <a :href="routes.domain_settings.replace('__DOMAIN__', row.domain_uuid)"
                                 class="inline-flex items-center px-2 py-1 rounded text-gray-700 hover:bg-gray-100 transition text-xs font-medium"
                                 title="Settings">
                                 <SettingsApplications class="w-4 h-4 mr-1" />

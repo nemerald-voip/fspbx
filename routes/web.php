@@ -25,6 +25,7 @@ use App\Http\Controllers\CsrfTokenController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\DeviceController;
+use App\Http\Controllers\DeviceKeyTemplateController;
 use App\Http\Controllers\DialplanController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\DomainGroupsController;
@@ -262,6 +263,12 @@ Route::group(['middleware' => 'auth'], function () {
     // Account settings
     Route::get('account-settings', [AccountSettingsController::class, 'index'])->name('account-settings.index');
 
+    // Default settings
+    Route::get('default-settings', [\App\Http\Controllers\DefaultSettingsController::class, 'index'])->name('default-settings.index');
+
+    // Domain settings
+    Route::get('domains/{domain}/settings', [\App\Http\Controllers\DomainSettingsController::class, 'index'])->name('domains.settings.index');
+
     // Logs
     Route::get('logs', [LogsController::class, 'index'])->name('logs.index');
 
@@ -278,6 +285,7 @@ Route::group(['middleware' => 'auth'], function () {
     //Devices
     Route::get('devices', [DeviceController::class, 'index'])->name('devices.index');
     Route::post('devices/duplicate', [DeviceController::class, 'duplicate'])->name('devices.duplicate');
+    Route::get('device-key-templates', [DeviceKeyTemplateController::class, 'index'])->name('device-key-templates.index');
 
     //Phone Numbers
     Route::get('phone-numbers', [PhoneNumbersController::class, 'index'])->name('phone-numbers.index');

@@ -41,7 +41,7 @@ If you’re installing on **Debian 13**, a **SignalWire Personal Access Token** 
 
 3. **Troubleshooting Error 419 (Page Expired)**
 
-    Read [this article](08-troubleshooting/02-error-419.md) to learn how CSRF tokens protect your app and how to configure your server to prevent 419 responses.
+    Read [this article](09-troubleshooting/02-error-419.md) to learn how CSRF tokens protect your app and how to configure your server to prevent 419 responses.
    
 ### Usage
 After completing the installation steps, you can access the application at your domain.

@@ -15,6 +15,7 @@ class CdrData extends Data
         public string|Optional|null $sip_call_id = new Optional(),
         public string|Optional|null $extension_uuid = new Optional(),
         public string|Optional|null $call_center_queue_uuid = new Optional(),
+        public string|Optional|null $recording_uuid = new Optional(),
 
         public string|Optional|null $direction = new Optional(),
 

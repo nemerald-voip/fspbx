@@ -49,7 +49,10 @@
 
                             <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @success="handleSuccess"
                                 @error="handleError" @response="handleResponse" :display-errors="false" :default="{
-                                    device_profile_uuid: options.item.device_profile_uuid,
+                                    device_profile_uuid: options.item?.device_key_template_uuid
+                                        ? null
+                                        : options.item.device_profile_uuid,
+                                    device_key_template_uuid: options.item?.device_key_template_uuid,
                                     device_template: options.item?.device_template_uuid
                                         ?? options.item?.device_template
                                         ?? null,
@@ -66,6 +69,7 @@
                                                 <FormTab name="page0" label="Settings" :elements="[
                                                     'h4',
                                                     'device_template',
+                                                    'device_key_template_uuid',
                                                     'device_profile_uuid',
                                                     'cancel_button',
                                                     'save_button',
@@ -88,9 +92,30 @@
                                                 <SelectElement name="device_template" :items="options.templates" label-prop="name" :search="true" :native="false" label="Template" input-type="search"
                                                     autocomplete="off" :strict="false" placeholder="Select Template"
                                                     :floating="false" />
+
+                                                <SelectElement name="device_key_template_uuid"
+                                                    :items="options.key_templates" label-prop="name" :search="true"
+                                                    :native="false" label="Key Template" input-type="search"
+                                                    autocomplete="off"
+                                                    placeholder="Select Key Template" :floating="false"
+                                                    :strict="false"
+                                                    :disabled="[['device_profile_uuid', 'not_in', [null, '', 'NULL']]]"
+                                                    :conditions="[() => options?.permissions?.device_key_template_assign]"
+                                                    @change="(newValue, oldValue, el$) => {
+                                                        if (newValue && newValue !== 'NULL') {
+                                                            el$.form$.el$('device_profile_uuid')?.update(null)
+                                                        }
+                                                    }" />
+
                                                 <SelectElement name="device_profile_uuid" :items="options.profiles" label-prop="name" :search="true" :native="false" label="Profile" input-type="search"
                                                     autocomplete="off" placeholder="Select Profile" :floating="false"
-                                                    :strict="false" />
+                                                    :strict="false"
+                                                    :disabled="[['device_key_template_uuid', 'not_in', [null, '', 'NULL']]]"
+                                                    @change="(newValue, oldValue, el$) => {
+                                                        if (newValue && newValue !== 'NULL') {
+                                                            el$.form$.el$('device_key_template_uuid')?.update(null)
+                                                        }
+                                                    }" />
 
                                                 <ButtonElement name="cancel_button" button-label="Cancel" :secondary="true" @click="emit('close')"
                                                     :columns="{

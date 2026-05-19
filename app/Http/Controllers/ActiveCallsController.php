@@ -34,6 +34,9 @@ class ActiveCallsController extends Controller
      */
     public function index(FreeswitchEslService $eslService)
     {
+        if (! userCheckPermission('call_active_view')) {
+            abort(403);
+        }
 
         return Inertia::render(
             $this->viewName,
@@ -42,12 +45,13 @@ class ActiveCallsController extends Controller
                     return $this->getData($eslService);
                 },
                 'showGlobal' => function () {
-                    return request('filterData.showGlobal') === 'true';
+                    return userCheckPermission('call_active_all') && $this->requestWantsGlobal('filterData.showGlobal');
                 },
                 'pagination' => [
                     'per_page' => fspbx_pagination_per_page(),
                     'per_page_options' => fspbx_pagination_options(),
                 ],
+                'permissions' => $this->permissions(),
 
                 'routes' => [
                     'current_page' => route('active-calls.index'),
@@ -75,7 +79,7 @@ class ActiveCallsController extends Controller
 
         // Check if showGlobal parameter is present and not empty
         if (!empty(request('filterData.showGlobal'))) {
-            $this->filters['showGlobal'] = request('filterData.showGlobal') === 'true';
+            $this->filters['showGlobal'] = userCheckPermission('call_active_all') && $this->requestWantsGlobal('filterData.showGlobal');
         } else {
             $this->filters['showGlobal'] = null;
         }
@@ -228,6 +232,12 @@ class ActiveCallsController extends Controller
 
     public function handleAction(FreeswitchEslService $eslService)
     {
+        if (! userCheckPermission('call_active_hangup')) {
+            return response()->json([
+                'errors' => ['permission' => ['You do not have permission to end active calls.']],
+            ], 403);
+        }
+
         try {
             foreach (request('ids') as $uuid) {
                 if (request('action') == 'end_call') {
@@ -255,7 +265,15 @@ class ActiveCallsController extends Controller
      */
     public function selectAll(FreeswitchEslService $eslService)
     {
+        if (! userCheckPermission('call_active_view')) {
+            return response()->json([
+                'errors' => ['permission' => ['You do not have permission to view active calls.']],
+            ], 403);
+        }
+
         try {
+            $this->filters['showGlobal'] = userCheckPermission('call_active_all') && $this->requestWantsGlobal('showGlobal');
+
             $allCalls = $this->builder($this->filters, $eslService);
 
             $uuids = $allCalls->pluck('uuid');
@@ -272,6 +290,20 @@ class ActiveCallsController extends Controller
                 'errors' => ['server' => ['Failed to select all items']]
             ], 500);
         }
+    }
+
+    private function permissions(): array
+    {
+        return [
+            'view' => userCheckPermission('call_active_view'),
+            'hangup' => userCheckPermission('call_active_hangup'),
+            'view_global' => userCheckPermission('call_active_all'),
+        ];
+    }
+
+    private function requestWantsGlobal(string $key): bool
+    {
+        return filter_var(request($key), FILTER_VALIDATE_BOOLEAN);
     }
 
 }

@@ -54,7 +54,10 @@
                                     device_template: options.item?.device_template_uuid
                                         ?? options.item?.device_template
                                         ?? null,
-                                    device_profile_uuid: options.item?.device_profile_uuid,
+                                    device_profile_uuid: options.item?.device_key_template_uuid
+                                        ? null
+                                        : options.item?.device_profile_uuid,
+                                    device_key_template_uuid: options.item?.device_key_template_uuid,
                                     domain_uuid: options.item?.domain_uuid,
                                     device_lines: options.lines,
                                     device_keys: normalizeDeviceKeysForForm(
@@ -80,6 +83,7 @@
                                                     'device_address',
                                                     'uuid_clean',
                                                     'device_template',
+                                                    'device_key_template_uuid',
                                                     'device_profile_uuid',
                                                     'domain_uuid',
                                                     'device_description',
@@ -221,11 +225,30 @@
                                                     value-prop="value" :floating="false" placeholder="Select Template"
                                                     :conditions="[() => options?.permissions?.device_template_update]" />
 
+                                                <SelectElement name="device_key_template_uuid"
+                                                    :items="options.key_templates" :search="true" :native="false"
+                                                    label="Key Template" input-type="search" autocomplete="off"
+                                                    label-prop="name" value-prop="value"
+                                                    placeholder="Select Key Template (Optional)" :floating="false"
+                                                    :disabled="[['device_profile_uuid', 'not_in', [null, '', 'NULL']]]"
+                                                    :conditions="[() => options?.permissions?.device_key_template_assign]"
+                                                    @change="(newValue, oldValue, el$) => {
+                                                        if (newValue && newValue !== 'NULL') {
+                                                            el$.form$.el$('device_profile_uuid')?.update(null)
+                                                        }
+                                                    }" />
+
                                                 <SelectElement name="device_profile_uuid" :items="options.profiles"
-                                                    :search="true" :native="false" label="Device Profile"
+                                                    :search="true" :native="false" label="Device Profile (Depreciated)"
                                                     input-type="search" autocomplete="off" label-prop="name"
                                                     value-prop="value" placeholder="Select Profile (Optional)"
-                                                    :floating="false" />
+                                                    :floating="false"
+                                                    :disabled="[['device_key_template_uuid', 'not_in', [null, '', 'NULL']]]"
+                                                    @change="(newValue, oldValue, el$) => {
+                                                        if (newValue && newValue !== 'NULL') {
+                                                            el$.form$.el$('device_key_template_uuid')?.update(null)
+                                                        }
+                                                    }" />
 
                                                 <TextElement name="device_description" label="Description"
                                                     placeholder="Enter description" :floating="false" />
@@ -471,8 +494,26 @@
 
 
                                                 <!-- Function Keys -->
-                                                <StaticElement name="keys_title" tag="h4" content="Device Function Keys"
-                                                    description="Assign function keys to this device." />
+                                                <StaticElement name="keys_title">
+                                                    <div class="flex items-start justify-between gap-3">
+                                                        <div>
+                                                            <h4 class="text-base font-semibold text-gray-900">Device
+                                                                Function Keys</h4>
+                                                            <p class="mt-1 text-sm text-gray-500">Assign function keys to
+                                                                this device.</p>
+                                                        </div>
+                                                        <button type="button"
+                                                            v-if="options?.permissions?.device_key_template_create && options?.routes?.save_key_template_from_device && options?.item?.keys?.length > 0"
+                                                            @click="openSaveTemplateModal"
+                                                            aria-label="Save Keys as Template"
+                                                            title="Save Keys as Template"
+                                                            class="shrink-0 inline-flex items-center gap-x-1.5 rounded-md bg-white p-2 sm:px-3 sm:py-2 text-sm font-medium text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                                                            <DocumentDuplicateIcon class="h-4 w-4 text-gray-500"
+                                                                aria-hidden="true" />
+                                                            <span class="hidden sm:inline">Save Keys as Template</span>
+                                                        </button>
+                                                    </div>
+                                                </StaticElement>
 
                                                 <GroupElement name="keys_container" />
                                                 <ListElement name="device_keys" :sort="true" size="sm"
@@ -1182,6 +1223,99 @@
                                     </div>
                                 </template>
                             </Vueform>
+
+                            <!-- Save Keys as Template modal -->
+                            <TransitionRoot as="div" :show="showSaveTemplateModal">
+                                <Dialog as="div" class="relative z-20"
+                                    @close="savingKeyTemplate ? null : closeSaveTemplateModal()">
+                                    <TransitionChild as="div" enter="ease-out duration-200"
+                                        enter-from="opacity-0" enter-to="opacity-100" leave="ease-in duration-150"
+                                        leave-from="opacity-100" leave-to="opacity-0">
+                                        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+                                    </TransitionChild>
+                                    <div class="fixed inset-0 z-20 w-screen overflow-y-auto">
+                                        <div
+                                            class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                                            <TransitionChild as="template" enter="ease-out duration-200"
+                                                enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                                                enter-to="opacity-100 translate-y-0 sm:scale-100"
+                                                leave="ease-in duration-150"
+                                                leave-from="opacity-100 translate-y-0 sm:scale-100"
+                                                leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+                                                <DialogPanel
+                                                    class="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
+                                                    <DialogTitle as="h3"
+                                                        class="mb-1 pr-8 text-base font-semibold leading-6 text-gray-900">
+                                                        Save Keys as Template
+                                                    </DialogTitle>
+                                                    <p class="text-sm text-gray-500">
+                                                        Create a reusable Key Template from this device's current
+                                                        function keys.
+                                                    </p>
+
+                                                    <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
+                                                        <button type="button"
+                                                            class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                                            :disabled="savingKeyTemplate"
+                                                            @click="closeSaveTemplateModal">
+                                                            <span class="sr-only">Close</span>
+                                                            <XMarkIcon class="h-6 w-6" aria-hidden="true" />
+                                                        </button>
+                                                    </div>
+
+                                                    <div class="mt-4 space-y-4">
+                                                        <div>
+                                                            <label for="key_template_name"
+                                                                class="block text-sm font-medium text-gray-700">
+                                                                Template Name <span class="text-red-500">*</span>
+                                                            </label>
+                                                            <input id="key_template_name" type="text"
+                                                                v-model="templateName"
+                                                                :class="['mt-1 block w-full rounded-md shadow-sm sm:text-sm focus:ring-indigo-500 focus:border-indigo-500',
+                                                                    templateNameError ? 'border-red-400' : 'border-gray-300']"
+                                                                placeholder="e.g. Sales team standard keys"
+                                                                :disabled="savingKeyTemplate"
+                                                                @keyup.enter="handleSaveKeyTemplate" />
+                                                            <p v-if="templateNameError"
+                                                                class="mt-1 text-sm text-red-600">
+                                                                {{ templateNameError }}
+                                                            </p>
+                                                        </div>
+
+                                                        <div>
+                                                            <label for="key_template_description"
+                                                                class="block text-sm font-medium text-gray-700">
+                                                                Description
+                                                            </label>
+                                                            <textarea id="key_template_description" rows="3"
+                                                                v-model="templateDescription"
+                                                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm sm:text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                                                                placeholder="Optional — what this template is for"
+                                                                :disabled="savingKeyTemplate"></textarea>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="mt-6 flex items-center justify-end gap-2">
+                                                        <button type="button"
+                                                            class="inline-flex justify-center rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:opacity-50"
+                                                            :disabled="savingKeyTemplate"
+                                                            @click="closeSaveTemplateModal">
+                                                            Cancel
+                                                        </button>
+                                                        <button type="button"
+                                                            class="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
+                                                            :disabled="savingKeyTemplate"
+                                                            @click="handleSaveKeyTemplate">
+                                                            <span v-if="savingKeyTemplate">Saving…</span>
+                                                            <span v-else>Save Template</span>
+                                                        </button>
+                                                    </div>
+                                                </DialogPanel>
+                                            </TransitionChild>
+                                        </div>
+                                    </div>
+                                </Dialog>
+                            </TransitionRoot>
                         </DialogPanel>
 
 
@@ -1199,7 +1333,7 @@ import { ref, reactive, computed } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { XMarkIcon } from "@heroicons/vue/24/solid";
 import FormChildModal from "../FormChildModal.vue"
-import { Cog8ToothIcon } from "@heroicons/vue/24/outline";
+import { Cog8ToothIcon, DocumentDuplicateIcon } from "@heroicons/vue/24/outline";
 import Badge from "@generalComponents/Badge.vue";
 import { XCircleIcon } from '@heroicons/vue/20/solid'
 import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
@@ -1214,6 +1348,11 @@ const props = defineProps({
 
 const form$ = ref(null)
 const advModalIndex = ref(null)
+const savingKeyTemplate = ref(false)
+const showSaveTemplateModal = ref(false)
+const templateName = ref('')
+const templateDescription = ref('')
+const templateNameError = ref('')
 const isCloudProvisioningLoading = reactive({
     register: false,
     deregister: false,
@@ -1616,6 +1755,57 @@ const submitForm = async (FormData, form$) => {
 
     return await form$.$vueform.services.axios.put(props.options.routes.update_route, data)
 };
+
+const openSaveTemplateModal = () => {
+    templateName.value = ''
+    templateDescription.value = ''
+    templateNameError.value = ''
+    showSaveTemplateModal.value = true
+}
+
+const closeSaveTemplateModal = () => {
+    if (savingKeyTemplate.value) return
+    showSaveTemplateModal.value = false
+}
+
+const handleSaveKeyTemplate = async () => {
+    const name = templateName.value
+    const description = templateDescription.value
+
+    if (!name || String(name).trim() === '') {
+        templateNameError.value = 'Template name is required.'
+        return
+    }
+
+    templateNameError.value = ''
+    savingKeyTemplate.value = true
+
+    try {
+        const response = await axios.post(props.options.routes.save_key_template_from_device, {
+            name,
+            description,
+        })
+
+        emit('success', 'success', response.data.messages)
+        showSaveTemplateModal.value = false
+    } catch (error) {
+        const data = error?.response?.data
+        const fieldErrors = data?.errors
+
+        if (fieldErrors?.name?.length) {
+            templateNameError.value = fieldErrors.name[0]
+        } else if (fieldErrors?.description?.length) {
+            templateNameError.value = fieldErrors.description[0]
+        } else if (data?.messages?.error?.length) {
+            templateNameError.value = data.messages.error[0]
+            emit('error', { response: { data: { errors: { request: data.messages.error } } } })
+        } else {
+            emit('error', error)
+        }
+    } finally {
+        savingKeyTemplate.value = false
+    }
+}
 
 
 function clearErrorsRecursive(el$) {

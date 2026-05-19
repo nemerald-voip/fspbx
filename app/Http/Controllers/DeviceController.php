@@ -70,12 +70,16 @@ class DeviceController extends Controller
                     'bulk_update' => route('devices.bulk.update'),
                     'item_options' => route('devices.item.options'),
                     'restart' => route('devices.restart'),
+                    'key_templates' => route('device-key-templates.index'),
                     'cloud_provisioning_item_options' => route('cloud-provisioning.item.options'),
                     'cloud_provisioning_get_token' => route('cloud-provisioning.token.get'),
                     'cloud_provisioning_update_api_token' => route('cloud-provisioning.token.update'),
                     'duplicate' => route('devices.duplicate'),
 
-                ]
+                ],
+                'permissions' => [
+                    'device_key_template_view' => userCheckPermission('device_key_template_view'),
+                ],
             ]
         );
     }
@@ -182,6 +186,7 @@ class DeviceController extends Controller
                 'device_template_uuid',
                 'device_label',
                 'device_profile_uuid',
+                'device_key_template_uuid',
                 'device_address',
                 'device_description',
                 'device_provisioned_method',
@@ -218,6 +223,9 @@ class DeviceController extends Controller
                             ->orWhereHas('profile', function ($q2) use ($needle) {
                                 $q2->where('device_profile_name', 'ilike', "%{$needle}%");
                             })
+                            ->orWhereHas('keyTemplate', function ($q2) use ($needle) {
+                                $q2->where('name', 'ilike', "%{$needle}%");
+                            })
                             ->orWhereHas('lines.extension', function ($q3) use ($needle) {
                                 $q3->where('extension', 'ilike', "%{$needle}%")
                                     ->orWhere('effective_caller_id_name', 'ilike', "%{$needle}%");
@@ -245,6 +253,9 @@ class DeviceController extends Controller
             }])
             ->with(['profile' => function ($query) {
                 $query->select('device_profile_uuid', 'device_profile_name', 'device_profile_description');
+            }])
+            ->with(['keyTemplate' => function ($query) {
+                $query->select('device_key_template_uuid', 'name', 'description');
             }])
             ->with(['cloudProvisioning' => function ($query) {
                 $query->select('uuid', 'device_uuid', 'last_action', 'status');
@@ -276,6 +287,12 @@ class DeviceController extends Controller
     public function store(StoreDeviceRequest $request)
     {
         $validated = $request->validated();
+
+        if ($this->keyTemplateAssignmentDenied($validated)) {
+            return response()->json([
+                'messages' => ['error' => ['Access denied.']],
+            ], 403);
+        }
 
         if ($resp = $this->enforceLimit(
             'devices',
@@ -313,6 +330,12 @@ class DeviceController extends Controller
 
         // logger($inputs);
 
+        if ($this->keyTemplateAssignmentDenied($inputs)) {
+            return response()->json([
+                'messages' => ['error' => ['Access denied.']],
+            ], 403);
+        }
+
         if (!$device) {
             return response()->json([
                 'success' => false,
@@ -340,6 +363,12 @@ class DeviceController extends Controller
     public function assign(UpdateDeviceRequest $request): JsonResponse
     {
         $data = $request->validated();
+
+        if ($this->keyTemplateAssignmentDenied($data)) {
+            return response()->json([
+                'messages' => ['error' => ['Access denied.']],
+            ], 403);
+        }
 
         // Find the device by address (or address_modified)
         $device = Devices::where('device_address', $data['device_address_modified'] ?? $data['device_address'])->first();
@@ -541,6 +570,7 @@ class DeviceController extends Controller
                         'device_template_uuid',
                         'device_label',
                         'device_profile_uuid',
+                        'device_key_template_uuid',
                         'device_address',
                         'serial_number',
                         'device_vendor',
@@ -561,6 +591,9 @@ class DeviceController extends Controller
                     }])
                     ->with(['profile' => function ($query) {
                         $query->select('device_profile_uuid', 'device_profile_name', 'device_profile_description');
+                    }])
+                    ->with(['keyTemplate' => function ($query) {
+                        $query->select('device_key_template_uuid', 'name', 'description');
                     }])
                     ->with(['settings' => function ($query) {
                         $query->select('device_setting_uuid', 'device_uuid', 'device_setting_subcategory', 'device_setting_value', 'device_setting_enabled', 'device_setting_description');
@@ -622,6 +655,7 @@ class DeviceController extends Controller
                 'cloud_provisioning_deregister_route' => route('cloud-provisioning.deregister'),
                 'bulk_update_route' => route('devices.bulk.update'),
                 'get_routing_options' => route('routing.options'),
+                'save_key_template_from_device' => $itemUuid ? route('devices.key-templates.store-from-device', ['device' => $itemUuid]) : null,
             ]);
 
 
@@ -704,6 +738,7 @@ class DeviceController extends Controller
                 'item' => $deviceDto ?? null,
                 'templates' => $this->getDeviceTemplateDropdownOptions(),
                 'profiles' => getProfileCollection($domain_uuid),
+                'key_templates' => $this->getDeviceKeyTemplateDropdownOptions($domain_uuid),
                 'extensions' => $extensionOptions,
                 'domains' => $domainOptions,
                 'lines' => $lines,
@@ -743,6 +778,16 @@ class DeviceController extends Controller
 
         // Remove "items" from the update data, only use the rest as updates
         unset($data['items']);
+
+        if ($this->keyTemplateAssignmentDenied($data)) {
+            return response()->json([
+                'messages' => ['error' => ['Access denied.']],
+            ], 403);
+        }
+
+        if (array_key_exists('device_key_template_uuid', $data) && $data['device_key_template_uuid'] === 'NULL') {
+            $data['device_key_template_uuid'] = null;
+        }
 
         // Only continue if there are actually fields to update
         if (empty($ids) || empty($data)) {
@@ -927,6 +972,9 @@ class DeviceController extends Controller
         $permissions['device_key_update'] = userCheckPermission('device_key_edit');
         $permissions['device_key_destroy'] = userCheckPermission('device_key_delete');
         $permissions['device_key_advanced'] = userCheckPermission('device_key_advanced');
+        $permissions['device_key_template_view'] = userCheckPermission('device_key_template_view');
+        $permissions['device_key_template_create'] = userCheckPermission('device_key_template_create');
+        $permissions['device_key_template_assign'] = userCheckPermission('device_key_template_assign');
         $permissions['device_address_update'] = userCheckPermission('device_address');
         $permissions['device_template_update'] = userCheckPermission('device_template');
         $permissions['device_template_view_all'] = userCheckPermission('device_template_view_all');
@@ -951,6 +999,35 @@ class DeviceController extends Controller
 
         return $permissions;
     }
+
+    private function keyTemplateAssignmentDenied(array $inputs): bool
+    {
+        return array_key_exists('device_key_template_uuid', $inputs)
+            && ! userCheckPermission('device_key_template_assign');
+    }
+
+    private function getDeviceKeyTemplateDropdownOptions(?string $domainUuid = null): array
+    {
+        if (! userCheckPermission('device_key_template_assign')) {
+            return [];
+        }
+
+        $templates = \App\Models\DeviceKeyTemplate::query()
+            ->where('domain_uuid', $domainUuid ?: session('domain_uuid'))
+            ->where('enabled', 'true')
+            ->orderBy('name')
+            ->get(['device_key_template_uuid', 'name'])
+            ->map(fn ($template) => [
+                'value' => $template->device_key_template_uuid,
+                'name' => $template->name,
+            ])
+            ->all();
+
+        return array_merge([
+            ['value' => 'NULL', 'name' => 'None'],
+        ], $templates);
+    }
+
     private function getDeviceTemplateDropdownOptions(): array
     {
         if (userCheckPermission('device_template_view_all')) {

@@ -15,7 +15,7 @@
                                 </th>
                                 <th
                                     class="hidden px-6 py-3 text-left text-sm font-semibold text-gray-900 sm:table-cell">
-                                    Profile Name
+                                    Profile / Key Template
                                 </th>
                                 <th class="relative px-4 py-3 text-left text-sm font-medium text-gray-500 sm:px-6">
                                     <span class="sr-only">Actions</span>
@@ -40,12 +40,19 @@
                                         </span>
                                     </div>
 
-                                    <!-- Device Profile Name: show in mobile view -->
+                                    <!-- Device Profile / Key Template: show in mobile view -->
                                     <div class="px-6 py-2 text-sm text-gray-500 sm:hidden">
-                                        <span v-if="device.profile && device.profile.device_profile_name">
-                                            {{ device.profile.device_profile_name }}
-                                        </span>
-
+                                        <template v-if="device.profile?.device_profile_name || device.key_template?.name">
+                                            <div v-if="device.profile?.device_profile_name">
+                                                <span class="font-semibold">Profile:</span>
+                                                <span> {{ device.profile.device_profile_name }}</span>
+                                            </div>
+                                            <div v-if="device.key_template?.name">
+                                                <span class="font-semibold">Key Template:</span>
+                                                <span> {{ device.key_template.name }}</span>
+                                            </div>
+                                        </template>
+                                        <span v-else>—</span>
                                     </div>
                                 </td>
 
@@ -59,12 +66,19 @@
                                         {{ device.device_template || '—' }}
                                     </span>
                                 </td>
-                                <!-- Device Profile Name: show in desktop view -->
+                                <!-- Device Profile / Key Template: show in desktop view -->
                                 <td class="hidden px-6 py-2 text-sm text-gray-500 sm:table-cell">
-                                    <span v-if="device.profile && device.profile.device_profile_name">
-                                        {{ device.profile.device_profile_name }}
-                                    </span>
-
+                                    <template v-if="device.profile?.device_profile_name || device.key_template?.name">
+                                        <div v-if="device.profile?.device_profile_name">
+                                            <span class="font-semibold">Profile:</span>
+                                            <span> {{ device.profile.device_profile_name }}</span>
+                                        </div>
+                                        <div v-if="device.key_template?.name">
+                                            <span class="font-semibold">Key Template:</span>
+                                            <span> {{ device.key_template.name }}</span>
+                                        </div>
+                                    </template>
+                                    <span v-else>—</span>
                                 </td>
 
                                 <!-- Actions -->

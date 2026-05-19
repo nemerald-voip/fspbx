@@ -49,6 +49,7 @@ class DomainController extends Controller
                     // 'store' => route('devices.store'),
                     // 'select_all' => route('devices.select.all'),
                     'bulk_delete' => route('domains.bulk.delete'),
+                    'domain_settings' => route('domains.settings.index', ['domain' => '__DOMAIN__']),
                     // 'bulk_update' => route('devices.bulk.update'),
                     'item_options' => route('domains.item.options'),
                     // 'restart' => route('devices.restart'),
@@ -469,6 +470,7 @@ class DomainController extends Controller
         $permissions['domain_create'] = userCheckPermission('domain_add');
         $permissions['domain_update'] = userCheckPermission('domain_edit');
         $permissions['domain_destroy'] = userCheckPermission('domain_delete');
+        $permissions['domain_settings_view'] = userCheckPermission('domain_setting_view');
 
         return $permissions;
     }

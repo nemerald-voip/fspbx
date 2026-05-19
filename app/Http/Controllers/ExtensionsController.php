@@ -1175,9 +1175,12 @@ public function store(StoreExtensionRequest $request)
                         $q->where('domain_uuid', $currentDomain)
                             ->select('device_line_uuid', 'device_uuid', 'auth_id', 'domain_uuid')
                             ->with(['device' => function ($query) {
-                                $query->select('device_uuid', 'device_profile_uuid', 'device_address', 'device_template', 'device_template_uuid')
+                                $query->select('device_uuid', 'device_profile_uuid', 'device_key_template_uuid', 'device_address', 'device_template', 'device_template_uuid')
                                     ->with(['profile' => function ($profileQuery) {
                                         $profileQuery->select('device_profile_uuid', 'device_profile_name'); // Add fields as needed
+                                    }])
+                                    ->with(['keyTemplate' => function ($query) {
+                                        $query->select('device_key_template_uuid', 'name');
                                     }])
                                     ->with(['template' => function ($query) {
                                         $query->select('template_uuid', 'domain_uuid', 'vendor', 'name');

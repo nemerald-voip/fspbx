@@ -34,6 +34,11 @@
                     Cloud
                 </button>
 
+                <a v-if="permissions.device_key_template_view" type="button" :href="routes.key_templates"
+                    class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    Key Templates
+                </a>
+
                 <a v-if="page.props.auth.can.device_profile_index" type="button" href="app/devices/device_profiles.php"
                     class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                     Profiles
@@ -77,7 +82,7 @@
 
                 <TableColumnHeader header="Template"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
-                <TableColumnHeader header="Profile" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
+                <TableColumnHeader header="Profile / Key Template" class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader v-if="!filterData.showGlobal" header="Assigned extension"
                     class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900" />
                 <TableColumnHeader class="px-2 py-3.5 text-left text-sm font-semibold text-gray-900">
@@ -99,7 +104,7 @@
             </template>
 
             <template v-if="selectPageItems" v-slot:current-selection>
-                <td colspan="10">
+                <td colspan="9">
                     <div class="text-sm text-center m-2">
                         <span class="font-semibold ">{{ selectedItems.length }} </span> items are selected.
                         <button v-if="!selectAll && selectedItems.length !== data.total"
@@ -164,8 +169,21 @@
                         })()
                         : (row.device_template || '—')" />
 
-                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500"
-                        :text="row.profile?.device_profile_name" />
+                    <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
+                        <template #default>
+                            <div v-if="row.profile?.device_profile_name || row.key_template?.name">
+                                <div v-if="row.profile?.device_profile_name">
+                                    <span class="font-semibold">Profile:</span>
+                                    <span> {{ row.profile.device_profile_name }}</span>
+                                </div>
+                                <div v-if="row.key_template?.name">
+                                    <span class="font-semibold">Key Template:</span>
+                                    <span> {{ row.key_template.name }}</span>
+                                </div>
+                            </div>
+                            <div v-else>—</div>
+                        </template>
+                    </TableField>
                     <TableField v-if="!filterData.showGlobal" class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
                         <template #default>
                             <div v-if="row.lines?.length === 0">—</div>
@@ -386,6 +404,15 @@ import AdvancedActionButton from "./components/general/AdvancedActionButton.vue"
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
 
 const page = usePage()
+const props = defineProps({
+    routes: Object,
+    permissions: {
+        type: Object,
+        default: () => ({}),
+    },
+})
+const routes = props.routes
+const permissions = props.permissions
 const itemOptions = ref({})
 const loading = ref(false)
 const isModalLoading = ref(false)

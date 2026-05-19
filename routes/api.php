@@ -25,9 +25,12 @@ use App\Http\Controllers\ContactController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DeviceCloudProvisioningController;
 use App\Http\Controllers\DeviceController;
+use App\Http\Controllers\DeviceKeyTemplateController;
 use App\Http\Controllers\DialplanController;
+use App\Http\Controllers\DefaultSettingsController;
 use App\Http\Controllers\DomainController;
 use App\Http\Controllers\DomainGroupsController;
+use App\Http\Controllers\DomainSettingsController;
 use App\Http\Controllers\EmailLogsController;
 use App\Http\Controllers\EmailQueueController;
 use App\Http\Controllers\ExtensionsController;
@@ -307,6 +310,15 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('devices/assign', [DeviceController::class, 'assign'])->name('devices.assign');
     Route::post('devices/bulk-unassign', [DeviceController::class, 'bulkUnassign'])->name('devices.bulk.unassign');
 
+    // Device Key Templates
+    Route::get('/device-key-templates/data', [DeviceKeyTemplateController::class, 'getData'])->name('device-key-templates.data');
+    Route::post('/device-key-templates', [DeviceKeyTemplateController::class, 'store'])->name('device-key-templates.store');
+    Route::put('/device-key-templates/{device_key_template}', [DeviceKeyTemplateController::class, 'update'])->name('device-key-templates.update');
+    Route::post('/device-key-templates/item-options', [DeviceKeyTemplateController::class, 'getItemOptions'])->name('device-key-templates.item.options');
+    Route::post('/device-key-templates/select-all', [DeviceKeyTemplateController::class, 'selectAll'])->name('device-key-templates.select.all');
+    Route::post('/device-key-templates/bulk-delete', [DeviceKeyTemplateController::class, 'bulkDelete'])->name('device-key-templates.bulk.delete');
+    Route::post('/devices/{device}/key-templates', [DeviceKeyTemplateController::class, 'storeFromDevice'])->name('devices.key-templates.store-from-device');
+
     // Gateways
     Route::post('gateways', [GatewayController::class, 'store'])->name('gateways.store');
     Route::put('gateways/{gateway}', [GatewayController::class, 'update'])->name('gateways.update');
@@ -527,6 +539,30 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
 
     // Account Settings
     Route::put('account-settings/update', [AccountSettingsController::class, 'update'])->name('account-settings.update');
+
+    // Default Settings
+    Route::get('default-settings/data', [DefaultSettingsController::class, 'data'])->name('default-settings.data');
+    Route::post('default-settings/item-options', [DefaultSettingsController::class, 'itemOptions'])->name('default-settings.item.options');
+    Route::post('default-settings', [DefaultSettingsController::class, 'store'])->name('default-settings.store');
+    Route::put('default-settings/{default_setting}', [DefaultSettingsController::class, 'update'])->name('default-settings.update');
+    Route::delete('default-settings/{default_setting}', [DefaultSettingsController::class, 'destroy'])->name('default-settings.destroy');
+    Route::post('default-settings/select-all', [DefaultSettingsController::class, 'selectAll'])->name('default-settings.select.all');
+    Route::post('default-settings/bulk-toggle', [DefaultSettingsController::class, 'bulkToggle'])->name('default-settings.bulk.toggle');
+    Route::post('default-settings/bulk-delete', [DefaultSettingsController::class, 'bulkDelete'])->name('default-settings.bulk.delete');
+    Route::post('default-settings/copy-to-domain', [DefaultSettingsController::class, 'copyToDomain'])->name('default-settings.copy-to-domain');
+    Route::post('default-settings/reload', [DefaultSettingsController::class, 'reload'])->name('default-settings.reload');
+    Route::get('default-settings/{default_setting}/affected-domains', [DefaultSettingsController::class, 'affectedDomains'])->name('default-settings.affected-domains');
+
+    // Domain Settings
+    Route::get('domains/{domain}/settings/data', [DomainSettingsController::class, 'data'])->name('domains.settings.data');
+    Route::post('domains/{domain}/settings/item-options', [DomainSettingsController::class, 'itemOptions'])->name('domains.settings.item.options');
+    Route::post('domains/{domain}/settings', [DomainSettingsController::class, 'store'])->name('domains.settings.store');
+    Route::put('domains/{domain}/settings/{setting}', [DomainSettingsController::class, 'update'])->name('domains.settings.update');
+    Route::post('domains/{domain}/settings/select-all', [DomainSettingsController::class, 'selectAll'])->name('domains.settings.select.all');
+    Route::post('domains/{domain}/settings/bulk-revert', [DomainSettingsController::class, 'bulkRevert'])->name('domains.settings.bulk.revert');
+    Route::post('domains/{domain}/settings/bulk-toggle', [DomainSettingsController::class, 'bulkToggle'])->name('domains.settings.bulk.toggle');
+    Route::post('domains/{domain}/settings/copy', [DomainSettingsController::class, 'copy'])->name('domains.settings.copy');
+    Route::post('domains/{domain}/settings/reload', [DomainSettingsController::class, 'reload'])->name('domains.settings.reload');
 
     // Contacts
     Route::post('contacts', [ContactController::class, 'store'])->name('contacts.store');

@@ -45,13 +45,31 @@ if (!function_exists('userCheckPermission')) {
 
 // Check if currenlty signed in user a superadmin
 if (!function_exists('isSuperAdmin')) {
-    function isSuperAdmin()
+    function isSuperAdmin($user = null)
     {
-        foreach (Session::get('user.groups') as $group) {
+        foreach (Session::get('user.groups') ?: [] as $group) {
             if ($group->group_name == "superadmin" && $group->group_level >= 80) {
                 return true;
             }
         }
+
+        $user = $user ?: auth()->user();
+        if (!$user) {
+            return false;
+        }
+
+        $userGroups = $user->user_groups()
+            ->with('group')
+            ->where('domain_uuid', $user->domain_uuid)
+            ->get();
+
+        foreach ($userGroups as $userGroup) {
+            $group = $userGroup->group;
+            if ($group && $group->group_name == "superadmin" && $group->group_level >= 80) {
+                return true;
+            }
+        }
+
         return false;
     }
 }
@@ -1833,7 +1851,12 @@ if (!function_exists('buildDestinationAction')) {
 
             $rawType = strtolower(trim((string)($nk['key_type'] ?? '')));
 
-            $category = 'line';
+            $keyArea = strtolower(trim((string)($nk['key_area'] ?? 'main')));
+            $category = match ($keyArea) {
+                'multi_purpose' => 'programmable',
+                'expansion' => 'expansion',
+                default => 'line',
+            };
 
             // Vendor-coded type 
             $device_key_type = fspbx_vendor_key_type_code($vendor, $rawType, $category);
@@ -1946,6 +1969,65 @@ if (!function_exists('buildDestinationAction')) {
             if ($device_lines === null) {
                 $device_lines = [];
             }
+
+            if ($domain_uuid !== '') {
+                $templateRows = fspbx_get_assigned_device_key_template_rows(
+                    $device_uuid,
+                    $domain_uuid,
+                    $device_lines['1']['user_id'] ?? null
+                );
+
+                if (is_array($templateRows) && sizeof($templateRows) !== 0) {
+                    fspbx_apply_simple_key_rows_override(
+                        $device_keys,
+                        $templateRows,
+                        $device_uuid,
+                        $vendor,
+                        $device_lines,
+                        $domain_uuid
+                    );
+
+                    // The old provisioning class applies v_device_keys before it
+                    // calls this helper. Reapply them here so the effective order
+                    // stays profile -> key template -> legacy device keys -> device_keys.
+                    fspbx_reapply_legacy_device_keys_override(
+                        $device_keys,
+                        $device_uuid,
+                        $vendor,
+                        $domain_uuid,
+                        $device_lines
+                    );
+                }
+            }
+
+            fspbx_apply_simple_key_rows_override(
+                $device_keys,
+                $new_keys_rows,
+                $device_uuid,
+                $vendor,
+                $device_lines,
+                $domain_uuid
+            );
+        }
+    }
+
+    if (!function_exists('fspbx_apply_simple_key_rows_override')) {
+        function fspbx_apply_simple_key_rows_override(
+            ?array &$device_keys,
+            array $new_keys_rows,
+            string $device_uuid,
+            string $vendor,
+            array $device_lines = [],
+            string $domain_uuid = ''
+        ): void {
+            if ($device_keys === null) {
+                $device_keys = [];
+            }
+
+            if ($device_lines === null) {
+                $device_lines = [];
+            }
+
             $blfLabelMap = fspbx_prefetch_extension_labels($domain_uuid, $new_keys_rows);
 
             $polycomLineCounts = [];
@@ -2053,10 +2135,146 @@ if (!function_exists('buildDestinationAction')) {
 
                 $cat = $row['device_key_category'] ?: 'line';
                 $device_keys[$cat][$id] = $row;
+                $device_keys[$cat][$id]['device_key_owner'] = 'device';
 
                 // This line ensures backwards compatibility with older templates
                 $device_keys[$id] = $row;
                 $device_keys[$id]['device_key_owner'] = 'device';
+            }
+        }
+    }
+
+    if (!function_exists('fspbx_get_assigned_device_key_template_rows')) {
+        function fspbx_get_assigned_device_key_template_rows(
+            string $device_uuid,
+            string $domain_uuid,
+            ?string $user_id = null
+        ): array {
+            $sql = "select ";
+            $sql .= "k.device_key_template_key_uuid as device_key_uuid, ";
+            $sql .= "k.key_area, ";
+            $sql .= "k.key_index, ";
+            $sql .= "k.key_type, ";
+            $sql .= "k.key_value, ";
+            $sql .= "k.key_label ";
+            $sql .= "from v_devices as d ";
+            $sql .= "inner join device_key_templates as t on t.device_key_template_uuid = d.device_key_template_uuid ";
+            $sql .= "inner join device_key_template_keys as k on k.device_key_template_uuid = t.device_key_template_uuid ";
+            $sql .= "where d.device_uuid = :device_uuid ";
+            $sql .= "and t.domain_uuid = :domain_uuid ";
+            $sql .= "and t.enabled = 'true' ";
+            $sql .= "and (k.key_value != :user_id or k.key_value is null) ";
+            $sql .= "order by k.key_area asc, k.key_index asc ";
+
+            $parameters = [
+                'device_uuid' => $device_uuid,
+                'domain_uuid' => $domain_uuid,
+                'user_id' => $user_id,
+            ];
+
+            $database = new database;
+            $rows = $database->select($sql, $parameters, 'all');
+
+            return is_array($rows) ? $rows : [];
+        }
+    }
+
+    if (!function_exists('fspbx_has_assigned_device_key_template_rows')) {
+        function fspbx_has_assigned_device_key_template_rows(
+            string $device_uuid,
+            string $domain_uuid,
+            ?string $user_id = null
+        ): bool {
+            $sql = "select count(*) ";
+            $sql .= "from v_devices as d ";
+            $sql .= "inner join device_key_templates as t on t.device_key_template_uuid = d.device_key_template_uuid ";
+            $sql .= "inner join device_key_template_keys as k on k.device_key_template_uuid = t.device_key_template_uuid ";
+            $sql .= "where d.device_uuid = :device_uuid ";
+            $sql .= "and t.domain_uuid = :domain_uuid ";
+            $sql .= "and t.enabled = 'true' ";
+            $sql .= "and (k.key_value != :user_id or k.key_value is null) ";
+
+            $parameters = [
+                'device_uuid' => $device_uuid,
+                'domain_uuid' => $domain_uuid,
+                'user_id' => $user_id,
+            ];
+
+            $database = new database;
+            $count = $database->select($sql, $parameters, 'column');
+
+            return (int) $count > 0;
+        }
+    }
+
+    if (!function_exists('fspbx_reapply_legacy_device_keys_override')) {
+        function fspbx_reapply_legacy_device_keys_override(
+            ?array &$device_keys,
+            string $device_uuid,
+            string $vendor,
+            string $domain_uuid,
+            array $device_lines = []
+        ): void {
+            $sql = "select * from v_device_keys ";
+            $sql .= "where device_uuid = :device_uuid ";
+
+            $parameters = [
+                'device_uuid' => $device_uuid,
+            ];
+
+            if (strtolower($vendor) === 'escene') {
+                $sql .= "and (lower(device_key_vendor) = 'escene' or lower(device_key_vendor) = 'escene programmable' or device_key_vendor is null) ";
+            } else {
+                $sql .= "and (lower(device_key_vendor) = :device_vendor or device_key_vendor is null) ";
+                $parameters['device_vendor'] = $vendor;
+            }
+
+            $sql .= "order by ";
+            $sql .= "device_key_vendor asc, ";
+            $sql .= "case device_key_category ";
+            $sql .= "when 'line' then 1 ";
+            $sql .= "when 'memory' then 2 ";
+            $sql .= "when 'programmable' then 3 ";
+            $sql .= "when 'expansion' then 4 ";
+            $sql .= "else 100 end, ";
+
+            if (($GLOBALS['db_type'] ?? null) === "mysql") {
+                $sql .= "device_key_id asc ";
+            } else {
+                $sql .= "cast(device_key_id as numeric) asc ";
+            }
+
+            $database = new database;
+            $keys = $database->select($sql, $parameters, 'all');
+
+            if (!is_array($keys)) {
+                return;
+            }
+
+            $blfLabelMap = fspbx_prefetch_blf_labels($domain_uuid, $keys);
+
+            foreach ($keys as $row) {
+                $id = $row['device_key_id'];
+                $category = $row['device_key_category'];
+                $deviceKeyLine = $row['device_key_line'];
+
+                if ($row['device_key_vendor'] == 'polycom' && $row['device_key_type'] == 'line') {
+                    $device_lines[$deviceKeyLine]['line_keys'] = $row['device_key_value'];
+                }
+
+                if (empty($row['device_key_label'])) {
+                    $val = (string)($row['device_key_value'] ?? '');
+                    if ($val !== '' && isset($blfLabelMap[$val])) {
+                        $row['device_key_label'] = $blfLabelMap[$val];
+                    }
+                }
+
+                $device_keys[$category][$id] = $row;
+                $device_keys[$category][$id]['device_key_id'] = $id;
+                $device_keys[$category][$id]['device_key_owner'] = "device";
+
+                $device_keys[$id] = $row;
+                $device_keys[$id]['device_key_owner'] = "device";
             }
         }
     }

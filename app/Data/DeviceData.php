@@ -9,6 +9,7 @@ class DeviceData extends Data
     public function __construct(
         public string $device_uuid,
         public ?string $device_profile_uuid = null,
+        public ?string $device_key_template_uuid = null,
         public ?string $device_address = null,
         public ?string $serial_number = null,
         public ?string $device_template = null,
@@ -27,6 +28,7 @@ class DeviceData extends Data
         /** @var DeviceKeyData[]|null */
         public ?array $keys = null,
         public ?DeviceProfileData $profile = null,
+        public ?DeviceKeyTemplateData $key_template = null,
         /** @var DeviceSettingData[]|null */
         public ?array $settings = null,
         /** @var CloudProvisioningData|null */

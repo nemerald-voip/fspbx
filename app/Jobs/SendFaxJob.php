@@ -11,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Str;
@@ -405,8 +406,9 @@ class SendFaxJob implements ShouldQueue
         $log->fax_retry_attempts             = $fax->retry_count;
         $log->fax_retry_limit                = $fax->retry_limit;
         $log->fax_duration                   = 0;
-        $log->fax_date                       = now();
-        $log->fax_epoch                      = time();
+        $faxEpoch                            = time();
+        $log->fax_date                       = Carbon::createFromTimestamp($faxEpoch, 'UTC');
+        $log->fax_epoch                      = $faxEpoch;
         $log->save();
 
         fax_webhook_debug('SendFaxJob: wrote synthetic v_fax_logs row', [

@@ -44,10 +44,18 @@ class UpdateDeviceRequest extends FormRequest
                 Rule::when(
                     function ($input) {
                         // Check if the value is not the literal string "NULL"
-                        return $input['device_profile_uuid'] !== 'NULL';
+                        return ($input['device_profile_uuid'] ?? null) !== 'NULL';
                     },
                     Rule::exists('App\Models\DeviceProfile', 'device_profile_uuid'),
                 )
+            ],
+            'device_key_template_uuid' => [
+                'nullable',
+                Rule::when(
+                    fn ($input) => ($input['device_key_template_uuid'] ?? null) !== 'NULL',
+                    Rule::exists('device_key_templates', 'device_key_template_uuid')
+                        ->where('domain_uuid', session('domain_uuid')),
+                ),
             ],
 
             // LEGACY template path (kept only when not a UUID)
@@ -170,6 +178,16 @@ class UpdateDeviceRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
+            if (
+                $this->assignmentSelected($this->input('device_profile_uuid'))
+                && $this->assignmentSelected($this->input('device_key_template_uuid'))
+            ) {
+                $validator->errors()->add(
+                    'device_key_template_uuid',
+                    'Choose either a key template or a device profile, not both.'
+                );
+            }
+
             $keys = $this->input('device_keys');
 
             if (!is_array($keys)) return;
@@ -205,12 +223,22 @@ class UpdateDeviceRequest extends FormRequest
             'device_lines.*.line_number.required' => 'Key is required.',
             'device_template_uuid.uuid'   => 'Selected template is invalid.',
             'device_template_uuid.exists' => 'Selected template was not found.',
+            'device_key_template_uuid.exists' => 'Selected key template was not found.',
             'device_keys.*.key_index.required' => 'Key index is required for each device key.',
             'device_keys.*.key_index.integer'  => 'Key index must be a number.',
             'device_keys.*.key_type.max'       => 'Key type is too long.',
             'device_keys.*.key_value.max'      => 'Key value is too long.',
             'device_keys.*.key_label.max'      => 'Key label is too long.',
         ];
+    }
+
+    private function assignmentSelected(mixed $value): bool
+    {
+        if ($value === null) {
+            return false;
+        }
+
+        return !in_array((string) $value, ['', 'NULL'], true);
     }
 
     public function prepareForValidation(): void
