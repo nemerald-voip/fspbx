@@ -452,11 +452,6 @@ const data = ref({
     links: [],
 });
 
-const props = defineProps({
-    routes: Object,
-    pagination: Object,
-});
-
 const perPage = ref(props.pagination?.per_page);
 
 
