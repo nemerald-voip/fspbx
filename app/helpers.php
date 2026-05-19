@@ -45,13 +45,31 @@ if (!function_exists('userCheckPermission')) {
 
 // Check if currenlty signed in user a superadmin
 if (!function_exists('isSuperAdmin')) {
-    function isSuperAdmin()
+    function isSuperAdmin($user = null)
     {
-        foreach (Session::get('user.groups') as $group) {
+        foreach (Session::get('user.groups') ?: [] as $group) {
             if ($group->group_name == "superadmin" && $group->group_level >= 80) {
                 return true;
             }
         }
+
+        $user = $user ?: auth()->user();
+        if (!$user) {
+            return false;
+        }
+
+        $userGroups = $user->user_groups()
+            ->with('group')
+            ->where('domain_uuid', $user->domain_uuid)
+            ->get();
+
+        foreach ($userGroups as $userGroup) {
+            $group = $userGroup->group;
+            if ($group && $group->group_name == "superadmin" && $group->group_level >= 80) {
+                return true;
+            }
+        }
+
         return false;
     }
 }
