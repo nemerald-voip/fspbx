@@ -393,8 +393,21 @@ class FSPBXInitialDBSeed extends Command
     private function updatePermissions()
     {
         $directory = base_path();
+        $scriptsTarget = '/var/www/fspbx/resources/freeswitch_scripts';
+        $scriptsLink = '/usr/share/freeswitch/scripts';
+
         $this->info("Updating ownership for $directory...");
-        shell_exec("chown -R www-data:www-data $directory");
+
+        shell_exec("chown -R www-data:www-data " . escapeshellarg($directory));
+
+        if (is_dir($scriptsTarget)) {
+            shell_exec("chown -R www-data:www-data " . escapeshellarg($scriptsTarget));
+        }
+
+        if (is_link($scriptsLink)) {
+            shell_exec("chown -h www-data:www-data " . escapeshellarg($scriptsLink));
+        }
+
         $this->info("Permissions updated successfully.");
     }
 
