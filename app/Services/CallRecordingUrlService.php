@@ -26,32 +26,28 @@ class CallRecordingUrlService
             ->first();
 
         if (!$rec) {
-            return [
-                'audio_url' => null,
-                'download_url' => null,
-                'filename' => null,
-            ];
+            return $this->emptyResponse();
         }
 
         if ($rec->record_path === 'S3') {
             $objectKey = $this->resolveS3ObjectKey($rec);
 
             if (!$objectKey) {
-                return [
-                    'audio_url' => null,
-                    'download_url' => null,
-                    'filename' => null,
-                ];
+                return $this->emptyResponse();
             }
 
             $disk = $this->s3StorageConfigService->buildDiskForDomain($rec->domain_uuid);
 
             if (!$disk) {
-                return [
-                    'audio_url' => null,
-                    'download_url' => null,
-                    'filename' => null,
-                ];
+                return $this->emptyResponse();
+            }
+
+            try {
+                if (!$disk->exists($objectKey)) {
+                    return $this->emptyResponse();
+                }
+            } catch (\Throwable $e) {
+                return $this->emptyResponse();
             }
 
             $filename = basename($objectKey);
@@ -80,7 +76,15 @@ class CallRecordingUrlService
             ];
         }
 
-        $filename = basename($rec->record_name ?: ($rec->archive_recording->object_key ?? 'recording'));
+        $absDir = rtrim((string) $rec->record_path, '/');
+        $file = (string) $rec->record_name;
+        $absPath = $absDir !== '' && $file !== '' ? ($absDir . '/' . $file) : null;
+
+        if (!$absPath || !is_file($absPath)) {
+            return $this->emptyResponse();
+        }
+
+        $filename = basename($file);
 
         return [
             'audio_url' => URL::temporarySignedRoute(
@@ -108,5 +112,14 @@ class CallRecordingUrlService
         }
 
         return null;
+    }
+
+    private function emptyResponse(): array
+    {
+        return [
+            'audio_url' => null,
+            'download_url' => null,
+            'filename' => null,
+        ];
     }
 }
