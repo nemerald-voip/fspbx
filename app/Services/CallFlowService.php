@@ -106,6 +106,10 @@ class CallFlowService
                 'app' => 'transfer',
                 'data' => "*99{$target} XML {$domainName}",
             ],
+            'ai_receptionists' => [
+                'app' => 'transfer',
+                'data' => "{$target} XML {$domainName}",
+            ],
             default => [
                 'app' => 'transfer',
                 'data' => "{$target} XML {$domainName}",

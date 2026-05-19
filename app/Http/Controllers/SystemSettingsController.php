@@ -58,6 +58,10 @@ class SystemSettingsController extends Controller
                     'transcription_policy_destroy_route' => route('call-transcription.policy.destroy'),
                     'assemblyai_route' => route('call-transcription.assemblyai'),
                     'assemblyai_store_route' => route('call-transcription.assemblyai.store'),
+                    'ai_receptionist_settings_route' => route('ai-receptionist-settings.show'),
+                    'ai_receptionist_settings_store_route' => route('ai-receptionist-settings.store'),
+                    'ai_receptionist_service_status_route' => route('ai-receptionist-settings.service.status'),
+                    'ai_receptionist_service_control_route' => route('ai-receptionist-settings.service.control'),
                 ],
                 'permissions' => function () {
                     return $this->getUserPermissions();
@@ -216,6 +220,7 @@ class SystemSettingsController extends Controller
         $permissions = [];
         $permissions['payment_gateways_view'] = userCheckPermission('payment_gateways_view');
         $permissions['call_transcription_settings_view'] = userCheckPermission('call_transcription_settings_view');
+        $permissions['ai_receptionist_settings_view'] = userCheckPermission('ai_receptionist_settings');
 
         return $permissions;
     }

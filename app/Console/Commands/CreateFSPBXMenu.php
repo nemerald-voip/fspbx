@@ -120,6 +120,7 @@ class CreateFSPBXMenu extends Command
                     ['title' => 'Conference Centers', 'link' => '/conference-centers', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Conferences', 'link' => '/conferences', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Faxes', 'link' => '/faxes', 'groups' => ['superadmin', 'admin', 'fax', 'user']],
+                    ['title' => 'AI Receptionists', 'link' => '/ai-receptionists', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Virtual Receptionists', 'link' => '/virtual-receptionists', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Messages', 'link' => '/messages', 'groups' => ['superadmin']],
                     ['title' => 'Music on Hold', 'link' => '/music-on-hold','groups' => ['superadmin']],

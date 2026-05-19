@@ -50,6 +50,7 @@ class UpdatePhoneNumberRequest extends FormRequest
                     'ring_groups',
                     'ivrs',
                     'business_hours',
+                    'ai_receptionists',
                     'contact_centers',
                     'bridges',
                     'faxes',

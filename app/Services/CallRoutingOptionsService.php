@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\{Bridge, BusinessHour, CallCenterQueues, CallFlows, Conferences, Dialplans, Domain, Extensions, Faxes, IvrMenus, Recordings, RingGroups, Voicemails};
+use App\Models\{AiReceptionist, Bridge, BusinessHour, CallCenterQueues, CallFlows, Conferences, Dialplans, Domain, Extensions, Faxes, IvrMenus, Recordings, RingGroups, Voicemails};
 use App\Models\ConferenceCenter;
 
 class CallRoutingOptionsService
@@ -16,6 +16,7 @@ class CallRoutingOptionsService
         ['value' => 'ring_groups', 'name' => 'Ring Group'],
         ['value' => 'ivrs', 'name' => 'Virtual Receptionist'],
         ['value' => 'business_hours', 'name' => 'Business Hours'],
+        ['value' => 'ai_receptionists', 'name' => 'AI Receptionist'],
         ['value' => 'time_conditions', 'name' => 'Schedule'],
         ['value' => 'contact_centers', 'name' => 'Contact Center'],
         ['value' => 'bridges', 'name' => 'Bridge'],
@@ -53,6 +54,7 @@ class CallRoutingOptionsService
         'voicemails'       => \App\Models\Voicemails::class,
         'ring_groups'      => \App\Models\RingGroups::class,
         'business_hours'   => \App\Models\BusinessHour::class,
+        'ai_receptionists' => \App\Models\AiReceptionist::class,
         'time_conditions'  => \App\Models\Dialplans::class,
         'contact_centers'  => \App\Models\CallCenterQueues::class,
         'bridges'          => \App\Models\Bridge::class,
@@ -95,6 +97,8 @@ class CallRoutingOptionsService
                 return $this->buildOptions(RingGroups::class, 'ring_group_extension', 'ring_group_name');
             case 'business_hours':
                 return $this->buildOptions(BusinessHour::class, 'extension', 'name');
+            case 'ai_receptionists':
+                return $this->buildOptions(AiReceptionist::class, 'extension', 'name');
             case 'time_conditions':
                 return $this->buildOptions(Dialplans::class, 'dialplan_number', 'dialplan_name');
             case 'conferences':
@@ -513,6 +517,7 @@ class CallRoutingOptionsService
             'ivrs' => '/ivr_menu_uuid=([0-9a-fA-F-]+)/',
             'contact_centers' => '/call_center_queue_uuid=([0-9a-fA-F-]+)/',
             'business_hours' => '/business_hours=([0-9a-fA-F-]+)/',
+            'ai_receptionists' => '/ai_receptionist_uuid=([0-9a-fA-F-]+)/',
             'call_flows' => '/call_flow_uuid=([0-9a-fA-F-]+)/',
             'time_conditions' => '/\b(year|yday|mon|mday|week|mweek|wday|hour|minute|minute-of-day|time-of-day|date-time)=("[^"]+"|\'[^\']+\'|\S+)/',
             'faxes' => '/fax_uuid=([0-9a-fA-F-]+)/',
@@ -678,6 +683,7 @@ class CallRoutingOptionsService
             'contact_centers' => 'Contact Center',
             'faxes' => "Fax",
             'business_hours' => 'Business Hours',
+            'ai_receptionists' => 'AI Receptionist',
             'time_conditions' => 'Schedules',
             'bridges' => 'Bridge',
             'call_flows' => 'Call Flow',

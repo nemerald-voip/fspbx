@@ -23,3 +23,8 @@ modules_statuses.json
 #codex
 .codex/
 .agents/
+
+# AI Receptionist generated runtime files
+/resources/ai-receptionist-agent/.venv/
+/resources/ai-receptionist-agent/**/__pycache__/
+/resources/ai-receptionist-agent/**/*.pyc

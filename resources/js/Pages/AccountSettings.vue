@@ -92,6 +92,11 @@
 
             </section>
 
+            <section v-if="selectedMenuOption === 'ai_receptionist_settings'">
+                <AIReceptionistSettingsForm :routes="routes" :domain_uuid="data.domain_uuid"
+                    @error="handleErrorResponse" @success="showNotification" />
+            </section>
+
             <!-- ROOM MANAGEMENT -->
             <section v-show="selectedMenuOption === 'room_management'">
                 <Vueform>
@@ -177,6 +182,7 @@ import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 import GraphicEqIcon from "@icons/GraphicEqIcon.vue"
 import CallTranscriptionOptionsForm from "./components/forms/CallTranscriptionOptionsForm.vue"
 import AssemblyAiForm from "./components/forms/AssemblyAiForm.vue"
+import AIReceptionistSettingsForm from "./components/forms/AIReceptionistSettingsForm.vue"
 import {
     Cog6ToothIcon,
     MapPinIcon,
@@ -241,6 +247,11 @@ const navigation = [
             { key: 'transcription_options', name: 'Options', icon: markRaw(AdjustmentsVerticalIcon) },
             { key: 'assemblyai', name: 'AssemblyAI', icon: markRaw(GraphicEqIcon) }
         ],
+    },
+    {
+        key: 'ai_receptionist_settings',
+        name: 'AI Receptionists',
+        icon: markRaw(GraphicEqIcon),
     },
     {
         key: 'hotel',

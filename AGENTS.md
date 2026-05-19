@@ -33,6 +33,7 @@ This repo is a Laravel, Vue/Inertia, VueForm, and FreeSWITCH application. Before
 - Domain option labels should prefer `domain_description` and only fall back to `domain_name` when no human label exists.
 - The native Domain Settings route requires a domain UUID (`/domains/{domain}/settings`). Generic navigation should go to `/domains`, where each domain row links to its settings.
 - Preserve legacy settings semantics: non-array domain overrides match defaults by category/subcategory/type, while `array` settings remain distinct rows.
+- Native settings code must not include or bootstrap files from `public/`; those legacy files are deprecated. Recreate needed behavior in Laravel services/controllers instead.
 
 ## Devices And Provisioning
 

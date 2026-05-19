@@ -675,6 +675,7 @@ class VirtualReceptionistController extends Controller
             case 'ring_groups':
             case 'ivrs':
             case 'business_hours':
+            case 'ai_receptionists':
             case 'time_conditions':
             case 'contact_centers':
             case 'conferences':
@@ -707,6 +708,7 @@ class VirtualReceptionistController extends Controller
             case 'ring_groups':
             case 'ivrs':
             case 'business_hours':
+            case 'ai_receptionists':
             case 'time_conditions':
             case 'contact_centers':
             case 'conferences':

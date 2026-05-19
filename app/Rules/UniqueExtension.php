@@ -3,6 +3,7 @@
 namespace App\Rules;
 
 use App\Models\BusinessHour;
+use App\Models\AiReceptionist;
 use Closure;
 use App\Models\Faxes;
 use App\Models\IvrMenus;
@@ -127,6 +128,13 @@ class UniqueExtension implements ValidationRule
             ->where('domain_uuid', $this->domainUuid)
             ->when($this->currentUuid, function ($query) {
                 return $query->where('uuid', '!=', $this->currentUuid);
+            });
+
+        $subqueries[] = AiReceptionist::select('extension') // Aliasing column to match others
+            ->where('extension', $value)
+            ->where('domain_uuid', $this->domainUuid)
+            ->when($this->currentUuid, function ($query) {
+                return $query->where('ai_receptionist_uuid', '!=', $this->currentUuid);
             });
 
         // Combine all subqueries using UNION

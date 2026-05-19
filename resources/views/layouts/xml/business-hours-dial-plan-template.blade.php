@@ -16,6 +16,7 @@
         'ivrs' => 'ivr_menu_extension',
         'time_conditions' => 'dialplan_number',
         'business_hours' => 'extension',
+        'ai_receptionists' => 'extension',
         'contact_centers' => 'queue_extension',
         'bridges' => 'bridge_destination',
         'faxes' => 'fax_extension',

@@ -65,6 +65,10 @@
                 <AssemblyAiForm :routes="routes" @error="handleErrorResponse" @success="showNotification"/>
 
             </section>
+
+            <section v-if="selectedMenuOption === 'ai_receptionist_settings'">
+                <AIReceptionistSettingsForm :routes="routes" @error="handleErrorResponse" @success="showNotification" />
+            </section>
         </template>
 
         <template #overlays>
@@ -91,6 +95,7 @@ import Badge from "@generalComponents/Badge.vue";
 import { CreditCardIcon, Cog6ToothIcon } from '@heroicons/vue/24/outline'
 import GraphicEqIcon from "@icons/GraphicEqIcon.vue"
 import AssemblyAiForm from "./components/forms/AssemblyAiForm.vue"
+import AIReceptionistSettingsForm from "./components/forms/AIReceptionistSettingsForm.vue"
 import CallTranscriptionOptionsForm from "./components/forms/CallTranscriptionOptionsForm.vue"
 import { AdjustmentsVerticalIcon } from "@heroicons/vue/24/outline";
 
@@ -138,6 +143,10 @@ onMounted(() => {
                 { key: 'assemblyai', name: 'AssemblyAI', icon: markRaw(GraphicEqIcon) }
             ],
         })
+    }
+
+    if (props.permissions?.ai_receptionist_settings_view) {
+        navigation.value.push({ key: 'ai_receptionist_settings', name: 'AI Receptionists', icon: markRaw(GraphicEqIcon) })
     }
 
     if (navigation.value.length) {

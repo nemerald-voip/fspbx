@@ -1,0 +1,44 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+
+def load_environment() -> None:
+    project_root = Path(__file__).resolve().parents[3]
+    agent_root = Path(__file__).resolve().parents[1]
+
+    load_dotenv(project_root / ".env")
+    load_dotenv(agent_root / ".env")
+
+
+@dataclass(frozen=True)
+class Settings:
+    fspbx_base_url: str
+    fspbx_agent_token: str
+    agent_name: str
+    health_host: str
+    health_port: int
+
+    @classmethod
+    def from_env(cls) -> "Settings":
+        load_environment()
+        base_url = os.getenv("FSPBX_BASE_URL") or os.getenv("APP_URL")
+        token = os.getenv("FSPBX_AGENT_TOKEN") or os.getenv("AI_RECEPTIONIST_AGENT_TOKEN")
+
+        if not base_url:
+            raise RuntimeError("APP_URL or FSPBX_BASE_URL must be set for the AI Receptionist worker.")
+
+        if not token:
+            raise RuntimeError("AI_RECEPTIONIST_AGENT_TOKEN must be set for the AI Receptionist worker.")
+
+        return cls(
+            fspbx_base_url=base_url.rstrip("/"),
+            fspbx_agent_token=token,
+            agent_name=os.getenv("AI_RECEPTIONIST_AGENT_NAME", "ai-receptionist"),
+            health_host=os.getenv("AI_RECEPTIONIST_HEALTH_HOST", "127.0.0.1"),
+            health_port=int(os.getenv("AI_RECEPTIONIST_HEALTH_PORT", "8097")),
+        )

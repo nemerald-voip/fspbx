@@ -36,6 +36,10 @@ return [
         'speech_max_attempts' => env('OPENAI_SPEECH_MAX_ATTEMPTS', 2),
     ],
 
+    'ai_receptionist' => [
+        'agent_token' => env('AI_RECEPTIONIST_AGENT_TOKEN'),
+    ],
+
     'google' => [
         'project_id'   => env('GOOGLE_PROJECT_ID'),
         'region'       => env('GOOGLE_SPEECH_REGION', 'us-central1'),

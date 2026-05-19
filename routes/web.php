@@ -5,6 +5,7 @@ use App\Http\Controllers\AccessControlController;
 use App\Http\Controllers\ActiveConferenceController;
 use App\Http\Controllers\ActiveCallsController;
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\AiReceptionistController;
 use App\Http\Controllers\AppsController;
 use App\Http\Controllers\AppsCredentialsController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
@@ -243,6 +244,9 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('basic-queues', [BasicQueueController::class, 'index'])->name('basic-queues.index');
     Route::get('basic-queues/agent-status', [BasicQueueController::class, 'agentStatus'])->name('basic-queues.agents.status');
     Route::get('active-basic-queues', [BasicQueueController::class, 'activeBasicQueues'])->name('active-basic-queues.index');
+
+    // AI Receptionists
+    Route::get('ai-receptionists', [AiReceptionistController::class, 'index'])->name('ai-receptionists.index');
 
     // Conference Centers
     Route::get('conference-centers', [ConferenceCenterController::class, 'index'])->name('conference-centers.index');

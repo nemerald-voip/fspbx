@@ -266,6 +266,7 @@ class BasicQueueService
             'ring_groups',
             'ivrs',
             'business_hours',
+            'ai_receptionists',
             'time_conditions',
             'contact_centers',
             'faxes',

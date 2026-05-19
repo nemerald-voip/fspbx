@@ -36,7 +36,7 @@ class StoreRingGroupRequest extends FormRequest
 
             'timeout_action' => [
                 'sometimes',
-                Rule::in(['extensions', 'ring_groups', 'ivrs', 'business_hours', 'contact_centers', 'bridges', 'faxes', 'conferences', 'call_flows', 'voicemails', 'recordings', 'check_voicemail', 'company_directory', 'hangup']),
+                Rule::in(['extensions', 'ring_groups', 'ivrs', 'business_hours', 'ai_receptionists', 'contact_centers', 'bridges', 'faxes', 'conferences', 'call_flows', 'voicemails', 'recordings', 'check_voicemail', 'company_directory', 'hangup']),
             ],
 
             'timeout_target' => [
@@ -65,7 +65,7 @@ class StoreRingGroupRequest extends FormRequest
             'ring_group_forward_enabled' => ['sometimes', 'boolean'],
             'forward_action' => [
                 'required_if:ring_group_forward_enabled,true',
-                Rule::in(['extensions', 'ring_groups', 'ivrs', 'business_hours', 'contact_centers', 'faxes', 'conferences', 'call_flows', 'voicemails', 'external']),
+                Rule::in(['extensions', 'ring_groups', 'ivrs', 'business_hours', 'ai_receptionists', 'contact_centers', 'faxes', 'conferences', 'call_flows', 'voicemails', 'external']),
             ],
             'forward_target' => [
                 'sometimes',

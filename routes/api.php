@@ -4,6 +4,9 @@ use App\Http\Controllers\AccountSettingsController;
 use App\Http\Controllers\AppsController;
 use App\Http\Controllers\AccessControlController;
 use App\Http\Controllers\ActiveConferenceController;
+use App\Http\Controllers\AiReceptionistAgentController;
+use App\Http\Controllers\AiReceptionistController;
+use App\Http\Controllers\AiReceptionistSettingsController;
 use App\Http\Controllers\Api\EmergencyCallController;
 use App\Http\Controllers\Api\HolidayHoursController;
 use App\Http\Controllers\Api\LocationsController;
@@ -119,6 +122,20 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::get('/basic-queues/agents/status/data', [BasicQueueController::class, 'getAgentStatusData'])->name('basic-queues.agents.status.data');
     Route::post('/basic-queues/agents/status', [BasicQueueController::class, 'updateAgentStatus'])->name('basic-queues.agents.status.update');
     Route::get('/active-basic-queues/data', [BasicQueueController::class, 'getActiveBasicQueueData'])->name('active-basic-queues.data');
+
+    // AI Receptionists
+    Route::get('/ai-receptionists/data', [AiReceptionistController::class, 'getData'])->name('ai-receptionists.data');
+    Route::post('/ai-receptionists', [AiReceptionistController::class, 'store'])->name('ai-receptionists.store');
+    Route::put('/ai-receptionists/{ai_receptionist}', [AiReceptionistController::class, 'update'])->name('ai-receptionists.update');
+    Route::post('/ai-receptionists/item-options', [AiReceptionistController::class, 'getItemOptions'])->name('ai-receptionists.item.options');
+    Route::post('/ai-receptionists/select-all', [AiReceptionistController::class, 'selectAll'])->name('ai-receptionists.select.all');
+    Route::post('/ai-receptionists/bulk-delete', [AiReceptionistController::class, 'bulkDelete'])->name('ai-receptionists.bulk.delete');
+    Route::post('/ai-receptionists/tools', [AiReceptionistController::class, 'storeTool'])->name('ai-receptionists.tools.store');
+    Route::get('/ai-receptionist-settings', [AiReceptionistSettingsController::class, 'show'])->name('ai-receptionist-settings.show');
+    Route::post('/ai-receptionist-settings', [AiReceptionistSettingsController::class, 'store'])->name('ai-receptionist-settings.store');
+    Route::delete('/ai-receptionist-settings', [AiReceptionistSettingsController::class, 'destroy'])->name('ai-receptionist-settings.destroy');
+    Route::get('/ai-receptionist-settings/service/status', [AiReceptionistSettingsController::class, 'serviceStatus'])->name('ai-receptionist-settings.service.status');
+    Route::post('/ai-receptionist-settings/service/control', [AiReceptionistSettingsController::class, 'serviceControl'])->name('ai-receptionist-settings.service.control');
 
     // Inbound Webhooks
     Route::resource('/inbound-webhooks', InboundWebhooksController::class);
@@ -646,6 +663,18 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('domains/item-options', [DomainController::class, 'getItemOptions'])->name('domains.item.options');
     Route::post('domains/bulk-delete', [DomainController::class, 'bulkDelete'])->name('domains.bulk.delete');
 });
+
+Route::prefix('ai-receptionist-agent')
+    ->middleware('api.token.auth')
+    ->group(function () {
+        Route::get('/bootstrap', [AiReceptionistAgentController::class, 'bootstrap'])->name('ai-receptionist-agent.bootstrap');
+        Route::get('/receptionists/{ai_receptionist}/config', [AiReceptionistAgentController::class, 'config'])->name('ai-receptionist-agent.config');
+        Route::post('/receptionists/{ai_receptionist}/sessions', [AiReceptionistAgentController::class, 'startSession'])->name('ai-receptionist-agent.sessions.start');
+        Route::post('/sessions/{session}/resolve-destination', [AiReceptionistAgentController::class, 'resolveDestination'])->name('ai-receptionist-agent.sessions.resolve-destination');
+        Route::post('/sessions/{session}/transfer', [AiReceptionistAgentController::class, 'transfer'])->name('ai-receptionist-agent.sessions.transfer');
+        Route::post('/sessions/{session}/tools', [AiReceptionistAgentController::class, 'runTool'])->name('ai-receptionist-agent.sessions.tools');
+        Route::post('/sessions/{session}/end', [AiReceptionistAgentController::class, 'endSession'])->name('ai-receptionist-agent.sessions.end');
+    });
 
 Route::group(['middleware' => ['auth:sanctum']], function () {
     // CHAR PMS
