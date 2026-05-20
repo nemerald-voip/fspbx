@@ -410,6 +410,7 @@ const props = defineProps({
         type: Object,
         default: () => ({}),
     },
+    pagination: Object,
 })
 const routes = props.routes
 const permissions = props.permissions
