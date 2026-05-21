@@ -14,6 +14,7 @@ return new class extends Migration
                 $table->uuid('setting_uuid')->primary()->default(DB::raw('uuid_generate_v4()'));
                 $table->uuid('domain_uuid')->nullable()->index();
                 $table->string('default_engine')->nullable();
+                $table->string('agent_runtime')->nullable()->index();
                 $table->text('livekit_url')->nullable();
                 $table->text('livekit_api_key')->nullable();
                 $table->text('livekit_api_secret')->nullable();

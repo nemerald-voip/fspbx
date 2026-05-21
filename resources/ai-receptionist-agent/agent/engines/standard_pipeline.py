@@ -26,7 +26,7 @@ class StandardPipelineAdapter(EngineAdapter):
             raise RuntimeError("ElevenLabs Voice ID is required for the selected AI Receptionist pipeline.")
 
         openai_model = inference_model_id(
-            provider_config.get("openai_model", "openai/gpt-4o-mini"),
+            provider_config.get("openai_model", "openai/gpt-4.1-mini"),
             "openai",
         )
 

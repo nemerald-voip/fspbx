@@ -21,15 +21,56 @@
                                 :conditions="[showEnabledSystemFields]" />
 
                             <TextElement name="livekit_url" label="LiveKit URL" :floating="false" :disabled="canEdit"
-                                :conditions="[showEnabledSystemFields]" :columns="{ lg: { wrapper: 6 } }" />
+                                :conditions="[showEnabledSystemFields]" @change="handleLiveKitUrlChange"
+                                :columns="{ lg: { wrapper: 6 } }" />
+
+                            <StaticElement name="livekit_hosting_status" tag="div" :add-classes="{
+                                ElementLayout: { outerWrapper: 'col-span-12' },
+                                StaticElement: { container: 'rounded-md border border-gray-200 bg-white p-3 text-sm text-gray-600' }
+                            }" :conditions="[showEnabledSystemFields]">
+                                <template #default>
+                                    <div class="space-y-1">
+                                        <div class="font-medium text-gray-800">
+                                            LiveKit hosting: {{ selectedLiveKitHosting.label }}
+                                        </div>
+                                        <div>{{ selectedLiveKitHosting.description }}</div>
+                                    </div>
+                                </template>
+                            </StaticElement>
 
                             <TextElement name="livekit_api_key" label="LiveKit API Key" :floating="false"
                                 :disabled="canEdit" :conditions="[showEnabledSystemFields]"
+                                description="Required when FS PBX provides LiveKit credentials to a local or external worker."
                                 :columns="{ lg: { wrapper: 6 } }" />
 
                             <TextElement name="livekit_api_secret" label="LiveKit API Secret" input-type="password"
                                 :floating="false" :disabled="canEdit" :conditions="[showEnabledSystemFields]"
+                                description="Required for local and external workers. Hosted LiveKit/Telnyx agents may receive this from their host."
                                 :columns="{ lg: { wrapper: 6 } }" />
+
+                            <StaticElement name="runtime_header" tag="h4" content="Agent Runtime"
+                                description="Choose where the AI worker runs. This is separate from where LiveKit media is hosted."
+                                :conditions="[showEnabledSystemFields]" />
+
+                            <SelectElement name="agent_runtime" label="Agent Runtime" :native="false"
+                                :items="agentRuntimeOptions" label-prop="label" value-prop="value" :search="true"
+                                :disabled="canEdit" :strict="false" placeholder="Select agent runtime"
+                                @change="handleAgentRuntimeChange" :conditions="[showEnabledSystemFields]"
+                                :columns="{ lg: { wrapper: 6 } }" />
+
+                            <StaticElement name="agent_runtime_help" tag="div" :add-classes="{
+                                ElementLayout: { outerWrapper: 'col-span-12' },
+                                StaticElement: { container: 'rounded-md border border-gray-200 bg-white p-3 text-sm text-gray-600' }
+                            }" :conditions="[showEnabledSystemFields]">
+                                <template #default>
+                                    <div class="space-y-2">
+                                        <div v-for="option in agentRuntimeOptions" :key="option.value">
+                                            <div class="font-medium text-gray-800">{{ option.label }}</div>
+                                            <div>{{ option.description }}</div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </StaticElement>
 
                             <StaticElement v-if="isInheriting && selectedEnabled" name="inherited_notice" tag="div" :add-classes="{
                                 StaticElement: { container: 'rounded-md border border-yellow-200 bg-yellow-50 p-3' }
@@ -129,7 +170,23 @@
                                 :disabled="canEdit" :conditions="[showOpenAIRealtimeFields]"
                                 :columns="{ lg: { wrapper: 6 } }" />
 
-                            <StaticElement v-if="!props.domain_uuid" name="agent_service" tag="div" :add-classes="{
+                            <StaticElement v-if="showExternalAgentNotice" name="external_agent_service" tag="div" :add-classes="{
+                                ElementLayout: { outerWrapper: 'col-span-12' },
+                                StaticElement: { container: 'rounded-md border border-indigo-100 bg-indigo-50 p-4' }
+                            }">
+                                <template #default>
+                                    <div class="space-y-2 text-sm text-indigo-900">
+                                        <h4 class="font-semibold">Agent Service Managed Outside This Server</h4>
+                                        <p>
+                                            Selected runtime: {{ selectedAgentRuntimeLabel }}. FS PBX will keep the
+                                            PBX API, routing policy, tools, and transfer control, but this page will not
+                                            start or stop a local Supervisor service.
+                                        </p>
+                                    </div>
+                                </template>
+                            </StaticElement>
+
+                            <StaticElement v-if="showLocalAgentControls" name="agent_service" tag="div" :add-classes="{
                                 ElementLayout: { outerWrapper: 'col-span-12' },
                                 StaticElement: { container: 'rounded-md border border-gray-200 bg-white p-4' }
                             }">
@@ -163,22 +220,25 @@
                                         </div>
                                         <div class="flex shrink-0 flex-wrap gap-2">
                                             <button type="button"
-                                                class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
+                                                class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50"
                                                 :disabled="serviceLoading || !agentServiceStatus?.ready"
                                                 @click="submitAgentServiceAction('start')">
-                                                Start
+                                                <Spinner :show="isServiceActionLoading('start')" class="h-4 w-4" />
+                                                <span>Start</span>
                                             </button>
                                             <button type="button"
-                                                class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                                class="inline-flex items-center justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                                                 :disabled="serviceLoading || !agentServiceStatus?.ready"
                                                 @click="submitAgentServiceAction('restart')">
-                                                Restart
+                                                <Spinner :show="isServiceActionLoading('restart')" class="h-4 w-4 text-gray-700" />
+                                                <span>Restart</span>
                                             </button>
                                             <button type="button"
-                                                class="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                                class="inline-flex items-center justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
                                                 :disabled="serviceLoading"
                                                 @click="submitAgentServiceAction('stop')">
-                                                Stop
+                                                <Spinner :show="isServiceActionLoading('stop')" class="h-4 w-4 text-gray-700" />
+                                                <span>Stop</span>
                                             </button>
                                         </div>
                                     </div>
@@ -216,6 +276,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import Skeleton from "@generalComponents/Skeleton.vue";
+import Spinner from "@generalComponents/Spinner.vue";
 import { ExclamationTriangleIcon } from "@heroicons/vue/20/solid";
 
 const props = defineProps({
@@ -231,9 +292,12 @@ const isFormLoading = ref(false);
 const isOverride = ref(false);
 const selectedEnabled = ref(false);
 const selectedEngine = ref("standard_pipeline");
+const selectedAgentRuntime = ref("local_worker");
+const selectedLiveKitUrl = ref("");
 const extraProviderConfig = ref({});
 const agentServiceStatus = ref(null);
 const serviceLoading = ref(false);
+const serviceActionLoading = ref(null);
 
 const engineOptions = [
     {
@@ -253,6 +317,29 @@ const engineOptions = [
     },
 ];
 
+const agentRuntimeOptions = [
+    {
+        value: "local_worker",
+        label: "Local FS PBX Worker",
+        description: "Run the Python LiveKit worker on this FS PBX server. This page can start, stop, and check the local Supervisor service.",
+    },
+    {
+        value: "external_worker",
+        label: "External Self-Hosted Worker",
+        description: "Run the same Python worker on another VM or container. It connects back to this FS PBX API for PBX tools and transfers.",
+    },
+    {
+        value: "livekit_cloud_agent",
+        label: "LiveKit Cloud Hosted Agent",
+        description: "Deploy the worker as a managed LiveKit Cloud agent. LiveKit hosts the worker and FS PBX remains the PBX policy boundary.",
+    },
+    {
+        value: "telnyx_hosted_agent",
+        label: "Telnyx Hosted Agent",
+        description: "Deploy the worker on LiveKit on Telnyx. Telnyx hosts the worker and FS PBX remains the PBX policy boundary.",
+    },
+];
+
 const deepgramModelOptions = [
     { value: "deepgram/flux-general", label: "Flux General (Recommended)" },
     { value: "deepgram/nova-3", label: "Nova 3" },
@@ -264,9 +351,9 @@ const deepgramModelOptions = [
 ];
 
 const openaiLlmModelOptions = [
-    { value: "openai/gpt-4o-mini", label: "GPT-4o mini (Recommended)" },
+    { value: "openai/gpt-4.1-mini", label: "GPT-4.1 mini (Recommended)" },
+    { value: "openai/gpt-4o-mini", label: "GPT-4o mini" },
     { value: "openai/gpt-4.1-nano", label: "GPT-4.1 nano" },
-    { value: "openai/gpt-4.1-mini", label: "GPT-4.1 mini" },
     { value: "openai/gpt-4.1", label: "GPT-4.1" },
     { value: "openai/gpt-4o", label: "GPT-4o" },
     { value: "openai/gpt-5-nano", label: "GPT-5 nano" },
@@ -368,10 +455,19 @@ const serviceStatusBadgeClass = computed(() => {
     }
     return `${base} bg-amber-50 text-amber-700 ring-amber-600/20`;
 });
+const selectedAgentRuntimeLabel = computed(() => (
+    agentRuntimeOptions.find((option) => option.value === selectedAgentRuntime.value)?.label ?? "External agent"
+));
+const showLocalAgentControls = computed(() => (
+    !props.domain_uuid && selectedEnabled.value && selectedAgentRuntime.value === "local_worker"
+));
+const showExternalAgentNotice = computed(() => (
+    !props.domain_uuid && selectedEnabled.value && selectedAgentRuntime.value !== "local_worker"
+));
+const selectedLiveKitHosting = computed(() => detectLiveKitHosting(selectedLiveKitUrl.value));
 
 onMounted(() => {
     getSettings();
-    if (!props.domain_uuid) getAgentServiceStatus();
 });
 
 function startOverride() {
@@ -396,6 +492,20 @@ function cancelOverride() {
 
 function handleEngineChange(value) {
     selectedEngine.value = value || "standard_pipeline";
+}
+
+function handleAgentRuntimeChange(value) {
+    selectedAgentRuntime.value = value || "local_worker";
+
+    if (selectedAgentRuntime.value === "local_worker") {
+        getAgentServiceStatus();
+    } else {
+        agentServiceStatus.value = null;
+    }
+}
+
+function handleLiveKitUrlChange(value) {
+    selectedLiveKitUrl.value = value ?? "";
 }
 
 function handleEnabledChange(value) {
@@ -450,18 +560,21 @@ function updateForm(data) {
     const providerConfig = data.provider_config ?? {};
     selectedEnabled.value = data.enabled ?? false;
     selectedEngine.value = data.default_engine ?? "standard_pipeline";
+    selectedAgentRuntime.value = data.agent_runtime ?? "local_worker";
+    selectedLiveKitUrl.value = data.livekit_url ?? "";
     extraProviderConfig.value = stripKnownKeys(providerConfig, knownProviderConfigKeys);
 
     form$.value?.update({
         domain_uuid: props.domain_uuid ?? null,
         enabled: data.enabled ?? false,
         default_engine: data.default_engine ?? "standard_pipeline",
+        agent_runtime: data.agent_runtime ?? "local_worker",
         livekit_url: data.livekit_url ?? null,
         livekit_api_key: data.livekit_api_key ?? null,
         livekit_api_secret: data.livekit_api_secret ?? null,
         deepgram_model: normalizeInferenceModel(providerConfig.deepgram_model, "deepgram", "deepgram/flux-general"),
         deepgram_language: providerConfig.deepgram_language ?? "en",
-        openai_model: normalizeInferenceModel(providerConfig.openai_model, "openai", "openai/gpt-4o-mini"),
+        openai_model: normalizeInferenceModel(providerConfig.openai_model, "openai", "openai/gpt-4.1-mini"),
         elevenlabs_model: normalizeInferenceModel(providerConfig.elevenlabs_model, "elevenlabs", "elevenlabs/eleven_flash_v2_5"),
         elevenlabs_voice_id: providerConfig.elevenlabs_voice_id ?? "XrExE9yKIg1WjnnlVkGX",
         elevenlabs_language: providerConfig.elevenlabs_language ?? "en",
@@ -470,6 +583,12 @@ function updateForm(data) {
         assemblyai_model: normalizeInferenceModel(providerConfig.assemblyai_model, "assemblyai", "assemblyai/u3-rt-pro"),
         assemblyai_language: providerConfig.assemblyai_language ?? "en",
     });
+
+    if (!props.domain_uuid && selectedEnabled.value && selectedAgentRuntime.value === "local_worker") {
+        getAgentServiceStatus();
+    } else {
+        agentServiceStatus.value = null;
+    }
 }
 
 const knownProviderConfigKeys = [
@@ -524,7 +643,6 @@ const handleSuccess = (response) => {
     emit("success", "success", response.data.messages);
     isOverride.value = false;
     getSettings();
-    if (!props.domain_uuid) getAgentServiceStatus();
 };
 
 const handleError = (error) => {
@@ -532,7 +650,7 @@ const handleError = (error) => {
 };
 
 async function getAgentServiceStatus() {
-    if (props.domain_uuid || !props.routes.ai_receptionist_service_status_route) return;
+    if (props.domain_uuid || selectedAgentRuntime.value !== "local_worker" || !props.routes.ai_receptionist_service_status_route) return;
 
     serviceLoading.value = true;
     try {
@@ -546,9 +664,10 @@ async function getAgentServiceStatus() {
 }
 
 async function submitAgentServiceAction(action) {
-    if (props.domain_uuid || !props.routes.ai_receptionist_service_control_route) return;
+    if (props.domain_uuid || selectedAgentRuntime.value !== "local_worker" || !props.routes.ai_receptionist_service_control_route) return;
 
     serviceLoading.value = true;
+    serviceActionLoading.value = action;
     try {
         const { data } = await axios.post(props.routes.ai_receptionist_service_control_route, { action });
         agentServiceStatus.value = data.service ?? agentServiceStatus.value;
@@ -560,6 +679,60 @@ async function submitAgentServiceAction(action) {
         emit("error", error);
     } finally {
         serviceLoading.value = false;
+        if (serviceActionLoading.value === action) {
+            serviceActionLoading.value = null;
+        }
     }
+}
+
+function isServiceActionLoading(action) {
+    return serviceActionLoading.value === action;
+}
+
+function detectLiveKitHosting(value) {
+    if (!value) {
+        return {
+            label: "Not configured",
+            description: "Enter a LiveKit URL to identify where the media server is hosted.",
+        };
+    }
+
+    let host = "";
+    try {
+        host = new URL(value).hostname.toLowerCase();
+    } catch {
+        host = String(value)
+            .replace(/^wss?:\/\//, "")
+            .replace(/^https?:\/\//, "")
+            .split("/")[0]
+            .split(":")[0]
+            .toLowerCase();
+    }
+
+    if (host.endsWith("livekit.cloud")) {
+        return {
+            label: "LiveKit Cloud",
+            description: "Media, SIP, and rooms are hosted by LiveKit Cloud.",
+        };
+    }
+
+    if (host.endsWith("livekit-telnyx.com")) {
+        return {
+            label: "LiveKit on Telnyx",
+            description: "Media, SIP, and rooms are hosted on Telnyx infrastructure.",
+        };
+    }
+
+    if (["localhost", "127.0.0.1", "::1"].includes(host)) {
+        return {
+            label: "Local LiveKit",
+            description: "The LiveKit media server appears to be running locally.",
+        };
+    }
+
+    return {
+        label: "Custom or self-hosted LiveKit",
+        description: "The LiveKit media server appears to use a custom host.",
+    };
 }
 </script>

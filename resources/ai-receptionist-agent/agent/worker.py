@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import os
+import sys
 import threading
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -39,7 +40,6 @@ def start_health_server() -> None:
 
 def prewarm(proc: JobProcess) -> None:
     proc.userdata["vad"] = silero.VAD.load()
-    start_health_server()
 
 
 server.setup_fnc = prewarm
@@ -50,6 +50,7 @@ ADAPTERS = {
     OpenAIRealtimeAdapter.engine: OpenAIRealtimeAdapter(),
     AssemblyAIAgentAdapter.engine: AssemblyAIAgentAdapter(),
 }
+FSPBX_CLIENTS: dict[asyncio.AbstractEventLoop, FspbxClient] = {}
 
 HEADER_MAP = {
     "x-fspbx-domain-uuid": "domain_uuid",
@@ -61,10 +62,10 @@ HEADER_MAP = {
 }
 
 
-def bootstrap_livekit_environment() -> None:
+def bootstrap_livekit_environment() -> bool:
     required = ("LIVEKIT_URL", "LIVEKIT_API_KEY", "LIVEKIT_API_SECRET")
     if all(os.getenv(key) for key in required):
-        return
+        return True
 
     settings = Settings.from_env()
     request = Request(
@@ -84,6 +85,10 @@ def bootstrap_livekit_environment() -> None:
     except URLError as exc:
         raise RuntimeError(f"FS PBX AI Receptionist bootstrap failed: {exc.reason}") from exc
 
+    if not payload.get("enabled"):
+        logger.info("AI Receptionists are disabled in FS PBX settings; worker will not start.")
+        return False
+
     mappings = {
         "LIVEKIT_URL": payload.get("livekit_url"),
         "LIVEKIT_API_KEY": payload.get("livekit_api_key"),
@@ -99,6 +104,36 @@ def bootstrap_livekit_environment() -> None:
         raise RuntimeError(
             "AI Receptionist LiveKit settings are incomplete. Missing: " + ", ".join(missing)
         )
+
+    return True
+
+
+def _non_negative_int_env(key: str, default: int) -> int:
+    try:
+        value = int(os.getenv(key, str(default)))
+    except ValueError:
+        return default
+
+    return max(0, value)
+
+
+def configure_livekit_server() -> None:
+    server.update_options(
+        ws_url=os.environ["LIVEKIT_URL"],
+        api_key=os.environ["LIVEKIT_API_KEY"],
+        api_secret=os.environ["LIVEKIT_API_SECRET"],
+        num_idle_processes=_non_negative_int_env("AI_RECEPTIONIST_IDLE_PROCESSES", 1),
+    )
+
+
+def get_fspbx_client(settings: Settings) -> FspbxClient:
+    loop = asyncio.get_running_loop()
+    client = FSPBX_CLIENTS.get(loop)
+    if client is None or client.closed:
+        client = FspbxClient(settings.fspbx_base_url, settings.fspbx_agent_token)
+        FSPBX_CLIENTS[loop] = client
+
+    return client
 
 
 def job_metadata(ctx: JobContext) -> dict[str, Any]:
@@ -221,7 +256,7 @@ async def entrypoint(ctx: JobContext) -> None:
     if not receptionist_uuid:
         raise RuntimeError("LiveKit metadata or SIP headers must include ai_receptionist_uuid.")
 
-    client = FspbxClient(settings.fspbx_base_url, settings.fspbx_agent_token)
+    client = get_fspbx_client(settings)
     config = await client.get_config(receptionist_uuid)
     session_response = await client.start_session(receptionist_uuid, {
         "freeswitch_uuid": metadata.get("ai_receptionist_freeswitch_uuid") or metadata.get("freeswitch_uuid"),
@@ -268,5 +303,8 @@ async def entrypoint(ctx: JobContext) -> None:
 
 
 if __name__ == "__main__":
-    bootstrap_livekit_environment()
+    if not bootstrap_livekit_environment():
+        sys.exit(0)
+    configure_livekit_server()
+    start_health_server()
     cli.run_app(server)

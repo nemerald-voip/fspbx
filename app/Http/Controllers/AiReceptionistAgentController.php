@@ -20,6 +20,7 @@ class AiReceptionistAgentController extends Controller
 
         return response()->json([
             'enabled' => (bool) ($settings['enabled'] ?? false),
+            'agent_runtime' => $settings['agent_runtime'] ?? 'local_worker',
             'livekit_url' => $settings['livekit_url'] ?? null,
             'livekit_api_key' => $settings['livekit_api_key'] ?? null,
             'livekit_api_secret' => $settings['livekit_api_secret'] ?? null,

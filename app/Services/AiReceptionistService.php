@@ -54,6 +54,36 @@ class AiReceptionistService
         'assemblyai_agent' => self::ENGINE_DEFINITIONS['assemblyai_agent']['label'],
     ];
 
+    public const AGENT_RUNTIME_DEFINITIONS = [
+        'local_worker' => [
+            'label' => 'Local FS PBX Worker',
+            'description' => 'Run the Python LiveKit worker on this FS PBX server with Supervisor.',
+            'uses_local_service' => true,
+        ],
+        'external_worker' => [
+            'label' => 'External Self-Hosted Worker',
+            'description' => 'Run the Python worker on another VM or container and point it back to this FS PBX API.',
+            'uses_local_service' => false,
+        ],
+        'livekit_cloud_agent' => [
+            'label' => 'LiveKit Cloud Hosted Agent',
+            'description' => 'Deploy the worker as a managed LiveKit Cloud agent. FS PBX only supplies PBX tools and policy.',
+            'uses_local_service' => false,
+        ],
+        'telnyx_hosted_agent' => [
+            'label' => 'Telnyx Hosted Agent',
+            'description' => 'Deploy the worker on LiveKit on Telnyx. FS PBX only supplies PBX tools and policy.',
+            'uses_local_service' => false,
+        ],
+    ];
+
+    public const AGENT_RUNTIMES = [
+        'local_worker' => self::AGENT_RUNTIME_DEFINITIONS['local_worker']['label'],
+        'external_worker' => self::AGENT_RUNTIME_DEFINITIONS['external_worker']['label'],
+        'livekit_cloud_agent' => self::AGENT_RUNTIME_DEFINITIONS['livekit_cloud_agent']['label'],
+        'telnyx_hosted_agent' => self::AGENT_RUNTIME_DEFINITIONS['telnyx_hosted_agent']['label'],
+    ];
+
     public function saveReceptionist(array $validated, ?AiReceptionist $receptionist = null): AiReceptionist
     {
         return DB::transaction(function () use ($validated, $receptionist) {
@@ -323,6 +353,28 @@ class AiReceptionistService
             ->all();
     }
 
+    public function agentRuntimeOptions(): array
+    {
+        return collect(self::AGENT_RUNTIME_DEFINITIONS)
+            ->map(fn ($definition, $value) => [
+                'value' => $value,
+                'label' => $definition['label'],
+                'description' => $definition['description'],
+                'uses_local_service' => $definition['uses_local_service'],
+            ])
+            ->values()
+            ->all();
+    }
+
+    public function usesLocalAgentRuntime(array|string|null $settingsOrRuntime): bool
+    {
+        $runtime = is_array($settingsOrRuntime)
+            ? ($settingsOrRuntime['agent_runtime'] ?? 'local_worker')
+            : ($settingsOrRuntime ?: 'local_worker');
+
+        return (self::AGENT_RUNTIME_DEFINITIONS[$runtime]['uses_local_service'] ?? false) === true;
+    }
+
     public function resolvedSettings(?string $domainUuid = null, bool $includeSecrets = false): array
     {
         $settings = Cache::tags(self::SETTINGS_CACHE_TAG)
@@ -331,6 +383,17 @@ class AiReceptionistService
                 now()->addHours(self::SETTINGS_CACHE_TTL_HOURS),
                 fn () => $this->buildResolvedSettings($domainUuid)
             );
+
+        if (! $includeSecrets) {
+            unset($settings['livekit_api_key'], $settings['livekit_api_secret']);
+        }
+
+        return $settings;
+    }
+
+    public function freshResolvedSettings(?string $domainUuid = null, bool $includeSecrets = false): array
+    {
+        $settings = $this->buildResolvedSettings($domainUuid);
 
         if (! $includeSecrets) {
             unset($settings['livekit_api_key'], $settings['livekit_api_secret']);
@@ -360,9 +423,11 @@ class AiReceptionistService
             'domain_uuid' => $domainUuid,
             'enabled' => (bool) ($domain?->enabled ?? $system?->enabled ?? false),
             'default_engine' => $domain?->default_engine ?: ($system?->default_engine ?: 'standard_pipeline'),
+            'agent_runtime' => $system?->agent_runtime ?: 'local_worker',
             'livekit_url' => $system?->livekit_url,
             'livekit_api_key' => $system?->livekit_api_key,
             'livekit_api_secret' => $system?->livekit_api_secret,
+            'livekit_hosting' => $this->detectLiveKitHosting($system?->livekit_url),
             'provider_config' => array_replace_recursive($systemProviderConfig, $domainProviderConfig),
         ];
     }
@@ -390,6 +455,7 @@ class AiReceptionistService
 
         if (! $isDomainOverride) {
             $values += [
+                'agent_runtime' => $validated['agent_runtime'] ?? 'local_worker',
                 'livekit_url' => $this->blankToNull($validated['livekit_url'] ?? null),
                 'livekit_api_key' => $this->blankToNull($validated['livekit_api_key'] ?? null),
                 'livekit_api_secret' => $this->blankToNull($validated['livekit_api_secret'] ?? null),
@@ -420,6 +486,40 @@ class AiReceptionistService
     private function settingsCacheKey(?string $domainUuid): string
     {
         return self::SETTINGS_CACHE_PREFIX . ($domainUuid ?: 'system');
+    }
+
+    public function detectLiveKitHosting(?string $url): array
+    {
+        $host = parse_url((string) $url, PHP_URL_HOST) ?: '';
+        $host = strtolower($host);
+
+        return match (true) {
+            $host === '' => [
+                'value' => 'unknown',
+                'label' => 'Not configured',
+                'description' => 'Enter a LiveKit URL to identify where the media server is hosted.',
+            ],
+            str_ends_with($host, 'livekit.cloud') => [
+                'value' => 'livekit_cloud',
+                'label' => 'LiveKit Cloud',
+                'description' => 'Media, SIP, and rooms are hosted by LiveKit Cloud.',
+            ],
+            str_ends_with($host, 'livekit-telnyx.com') => [
+                'value' => 'telnyx',
+                'label' => 'LiveKit on Telnyx',
+                'description' => 'Media, SIP, and rooms are hosted on Telnyx infrastructure.',
+            ],
+            in_array($host, ['localhost', '127.0.0.1', '::1'], true) => [
+                'value' => 'local',
+                'label' => 'Local LiveKit',
+                'description' => 'The LiveKit media server appears to be running locally.',
+            ],
+            default => [
+                'value' => 'custom',
+                'label' => 'Custom or self-hosted LiveKit',
+                'description' => 'The LiveKit media server appears to use a custom host.',
+            ],
+        };
     }
 
     public function saveTool(array $validated, ?AiReceptionistTool $tool = null): AiReceptionistTool

@@ -13,24 +13,31 @@ use Illuminate\Support\Str;
 use Symfony\Component\Process\Process;
 use Throwable;
 
-class Update183
+class Update190
 {
     private const SUPERVISOR_SOURCE = 'install/ai-receptionist-agent.conf';
     private const SUPERVISOR_TARGET = '/etc/supervisor/conf.d/ai-receptionist-agent.conf';
     private const AGENT_DIR = 'resources/ai-receptionist-agent';
     private const AGENT_VENV_DIR = '/opt/fspbx/ai-receptionist-agent/.venv';
     private const AGENT_TOKEN_KEY = 'AI_RECEPTIONIST_AGENT_TOKEN';
+    private const AGENT_ENV_DEFAULTS = [
+        'AI_RECEPTIONIST_AGENT_NAME' => 'ai-receptionist',
+        'AI_RECEPTIONIST_HEALTH_HOST' => '127.0.0.1',
+        'AI_RECEPTIONIST_HEALTH_PORT' => '8097',
+        'AI_RECEPTIONIST_IDLE_PROCESSES' => '1',
+    ];
 
     public function apply(): bool
     {
         $this->ensureAgentToken();
+        $this->ensureAgentEnvDefaults();
         $this->runSeeder();
         $this->ensureAIReceptionistsMenuItem();
         $this->removeSourceRuntimeArtifacts();
         $this->ensurePythonEnvironment();
         $this->installSupervisorConfig();
 
-        echo "Update 1.8.3 completed successfully.\n";
+        echo "Update 1.9.0 completed successfully.\n";
         return true;
     }
 
@@ -318,6 +325,43 @@ class Update183
 
         if ($exitCode !== 0) {
             echo "Config cache returned exit code {$exitCode}; cache Laravel config manually if the agent token is not detected.\n";
+        }
+    }
+
+    private function ensureAgentEnvDefaults(): void
+    {
+        $envPath = base_path('.env');
+
+        if (! File::exists($envPath)) {
+            echo "WARNING: .env not found at {$envPath}. Skipping AI Receptionist environment defaults.\n";
+            return;
+        }
+
+        $env = File::get($envPath);
+        $changed = false;
+
+        foreach (self::AGENT_ENV_DEFAULTS as $key => $value) {
+            if (filled($this->getEnvValue($env, $key))) {
+                continue;
+            }
+
+            $env = $this->setEnvValue($env, $key, $value, "\n\n### FS PBX - AI Receptionist\n");
+            $changed = true;
+        }
+
+        if (! $changed) {
+            echo "AI Receptionist environment defaults are already configured.\n";
+            return;
+        }
+
+        File::put($envPath, $env);
+        echo "Added AI Receptionist environment defaults to .env.\n";
+
+        $exitCode = Artisan::call('config:cache');
+        echo Artisan::output();
+
+        if ($exitCode !== 0) {
+            echo "Config cache returned exit code {$exitCode}; cache Laravel config manually if AI Receptionist environment defaults are not detected.\n";
         }
     }
 

@@ -15,6 +15,7 @@ AI_RECEPTIONIST_AGENT_TOKEN=
 AI_RECEPTIONIST_AGENT_NAME=ai-receptionist
 AI_RECEPTIONIST_HEALTH_HOST=127.0.0.1
 AI_RECEPTIONIST_HEALTH_PORT=8097
+AI_RECEPTIONIST_IDLE_PROCESSES=1
 ```
 
 `APP_URL` is used as the FS PBX API base URL. `FSPBX_BASE_URL` and
@@ -25,6 +26,12 @@ managed in FS PBX System Settings. The worker fetches those values from Laravel
 on startup. The modular pipelines use LiveKit Inference for Deepgram STT,
 AssemblyAI STT, OpenAI LLM, and ElevenLabs TTS, so no separate provider keys are
 needed for those services in v1.
+
+System Settings also stores the agent runtime. When runtime is `Local FS PBX
+Worker`, the dashboard controls the Supervisor service on this server. For
+external, LiveKit Cloud hosted, or Telnyx hosted workers, deploy the worker in
+that environment and set `FSPBX_BASE_URL` plus `FSPBX_AGENT_TOKEN` there so it
+can call back to Laravel for PBX tools and transfers.
 
 The OpenAI Realtime Speech-to-Speech engine uses the OpenAI Realtime plugin.
 Only that engine needs the existing system OpenAI key in the main FS PBX `.env`:
@@ -54,3 +61,6 @@ curl http://127.0.0.1:8097/
 ```
 
 The supervisor template is stored at `install/ai-receptionist-agent.conf`.
+After it is installed, Supervisor starts the local worker automatically on boot.
+If AI Receptionists are disabled in FS PBX settings, the worker exits cleanly
+instead of entering a restart loop.
