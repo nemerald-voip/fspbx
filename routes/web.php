@@ -10,6 +10,7 @@ use App\Http\Controllers\AppsCredentialsController;
 use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\BusinessHoursController;
 use App\Http\Controllers\BridgeController;
+use App\Http\Controllers\BasicDialerController;
 use App\Http\Controllers\BasicQueueController;
 use App\Http\Controllers\CallBlockController;
 use App\Http\Controllers\CallRecordingController;
@@ -243,6 +244,9 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('basic-queues', [BasicQueueController::class, 'index'])->name('basic-queues.index');
     Route::get('basic-queues/agent-status', [BasicQueueController::class, 'agentStatus'])->name('basic-queues.agents.status');
     Route::get('active-basic-queues', [BasicQueueController::class, 'activeBasicQueues'])->name('active-basic-queues.index');
+
+    // Basic Dialer
+    Route::get('basic-dialer', [BasicDialerController::class, 'index'])->name('basic-dialer.index');
 
     // Conference Centers
     Route::get('conference-centers', [ConferenceCenterController::class, 'index'])->name('conference-centers.index');

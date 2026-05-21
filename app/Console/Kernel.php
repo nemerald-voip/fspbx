@@ -96,7 +96,6 @@ class Kernel extends ConsoleKernel
             $schedule->job(new \App\Jobs\AuditStaleRingotelUsers())->monthlyOn(1, '00:00');
         }
 
-        // Process scheduled jobs
         if (isset($jobSettings['wake_up_calls']) && $jobSettings['wake_up_calls'] === "true") {
             $schedule->job(new ProcessWakeupCalls())->everyMinute();
         }
