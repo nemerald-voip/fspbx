@@ -143,6 +143,10 @@
                         <TableField class="whitespace-nowrap px-2 py-1 text-sm text-gray-500">
                             <template #action-buttons>
                                 <div class="flex items-center whitespace-nowrap justify-end">
+                                    <EyeIcon v-if="activeTab === 'campaigns'"
+                                        @click="handleStatusButtonClick(row.basic_dialer_campaign_uuid)"
+                                        class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
+                                        title="Status" />
                                     <PlayIcon v-if="permissions.start && ['draft', 'paused', 'stopped'].includes(row.status)"
                                         @click="executeCampaignAction('start', row.basic_dialer_campaign_uuid)"
                                         class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer"
@@ -240,6 +244,9 @@
         :mode="formMode" :loading="loadingForm" :header="formHeader" @close="handleFormClose"
         @error="handleErrorResponse" @success="showNotification" @refresh-data="refreshCurrentPage" />
 
+    <BasicDialerCampaignStatusModal :show="showStatusModal" :route="statusRoute" @close="handleStatusModalClose"
+        @error="handleErrorResponse" />
+
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 </template>
@@ -256,9 +263,10 @@ import Loading from "./components/general/Loading.vue";
 import Notification from "./components/notifications/Notification.vue";
 import BasicDialerCampaignForm from "./components/forms/BasicDialerCampaignForm.vue";
 import BasicDialerContactListForm from "./components/forms/BasicDialerContactListForm.vue";
+import BasicDialerCampaignStatusModal from "./components/modal/BasicDialerCampaignStatusModal.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import Badge from "@generalComponents/Badge.vue";
-import { ChevronDownIcon, ChevronUpIcon, MagnifyingGlassIcon, PauseCircleIcon, PencilSquareIcon, PlayIcon, StopIcon, TrashIcon } from "@heroicons/vue/24/solid";
+import { ChevronDownIcon, ChevronUpIcon, EyeIcon, MagnifyingGlassIcon, PauseCircleIcon, PencilSquareIcon, PlayIcon, StopIcon, TrashIcon } from "@heroicons/vue/24/solid";
 
 const props = defineProps({
     routes: Object,
@@ -287,6 +295,8 @@ const showForm = ref(false);
 const formMode = ref("create");
 const loadingForm = ref(false);
 const itemOptions = ref({ item: {}, routes: {} });
+const showStatusModal = ref(false);
+const statusCampaignUuid = ref(null);
 
 const data = ref({
     data: [],
@@ -342,6 +352,10 @@ const formHeader = computed(() => {
     return activeForm.value === "campaigns" ? `Update Campaign - ${name}` : `Update Contact List - ${name}`;
 });
 
+const statusRoute = computed(() => statusCampaignUuid.value
+    ? routes.campaign_status?.replace(":campaign", statusCampaignUuid.value)
+    : null);
+
 onMounted(() => {
     getData();
 });
@@ -349,6 +363,7 @@ onMounted(() => {
 const switchTab = (tab) => {
     if (activeTab.value === tab) return;
 
+    handleStatusModalClose();
     activeTab.value = tab;
     sortData.value = { name: "name", order: "asc" };
     filterData.value.search = null;
@@ -426,6 +441,16 @@ const handleEditButtonClick = (uuid) => {
     showForm.value = true;
     formMode.value = "update";
     getItemOptions(uuid);
+};
+
+const handleStatusButtonClick = (uuid) => {
+    statusCampaignUuid.value = uuid;
+    showStatusModal.value = true;
+};
+
+const handleStatusModalClose = () => {
+    showStatusModal.value = false;
+    statusCampaignUuid.value = null;
 };
 
 const getItemOptions = (itemUuid = null) => {

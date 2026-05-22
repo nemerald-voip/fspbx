@@ -39,6 +39,7 @@ class BasicDialerController extends Controller
                 'campaign_start' => route('basic-dialer.campaigns.start', ['campaign' => ':campaign']),
                 'campaign_pause' => route('basic-dialer.campaigns.pause', ['campaign' => ':campaign']),
                 'campaign_stop' => route('basic-dialer.campaigns.stop', ['campaign' => ':campaign']),
+                'campaign_status' => route('basic-dialer.campaigns.status', ['campaign' => ':campaign']),
                 'contact_list_data' => route('basic-dialer.contact-lists.data'),
                 'contact_list_store' => route('basic-dialer.contact-lists.store'),
                 'contact_list_item_options' => route('basic-dialer.contact-lists.item.options'),
@@ -104,6 +105,92 @@ class BasicDialerController extends Controller
 
         return response()->json([
             'messages' => ['success' => ['Campaign stopped.']],
+        ]);
+    }
+
+    public function getCampaignStatus(BasicDialerCampaign $campaign): JsonResponse
+    {
+        if (! userCheckPermission('basic_dialer_view') || $campaign->domain_uuid !== session('domain_uuid')) {
+            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+        }
+
+        $campaign->load(['contactList:basic_dialer_contact_list_uuid,name']);
+
+        $recipientStatusCounts = $campaign->recipients()
+            ->selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        $attemptStatusCounts = $campaign->attempts()
+            ->selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        $recipients = $campaign->recipients()
+            ->select([
+                'basic_dialer_campaign_recipient_uuid',
+                'phone_number',
+                'contact_name',
+                'status',
+                'attempts_count',
+                'last_attempt_at',
+                'next_attempt_at',
+                'completed_at',
+                'last_outcome',
+                'last_error',
+            ])
+            ->orderByRaw("CASE status WHEN 'dialing' THEN 0 WHEN 'retry_wait' THEN 1 WHEN 'pending' THEN 2 WHEN 'failed' THEN 3 WHEN 'answered' THEN 4 ELSE 5 END")
+            ->orderByDesc('last_attempt_at')
+            ->orderBy('phone_number')
+            ->limit(500)
+            ->get();
+
+        $attempts = $campaign->attempts()
+            ->with(['recipient:basic_dialer_campaign_recipient_uuid,phone_number,contact_name'])
+            ->select([
+                'basic_dialer_campaign_attempt_uuid',
+                'basic_dialer_campaign_recipient_uuid',
+                'call_uuid',
+                'attempt_number',
+                'status',
+                'outcome',
+                'hangup_cause',
+                'duration',
+                'queued_at',
+                'started_at',
+                'answered_at',
+                'ended_at',
+                'response',
+            ])
+            ->orderByDesc('created_at')
+            ->limit(250)
+            ->get();
+
+        return response()->json([
+            'campaign' => [
+                'basic_dialer_campaign_uuid' => $campaign->basic_dialer_campaign_uuid,
+                'name' => $campaign->name,
+                'status' => $campaign->status,
+                'contact_list_name' => $campaign->contactList?->name,
+                'destination_label' => $campaign->destination_label,
+                'destination_type' => $campaign->destination_type,
+                'caller_id_number' => $campaign->caller_id_number,
+                'started_at' => $campaign->started_at,
+                'completed_at' => $campaign->completed_at,
+                'last_run_at' => $campaign->last_run_at,
+            ],
+            'summary' => [
+                'recipients' => $recipientStatusCounts,
+                'attempts' => $attemptStatusCounts,
+                'total_recipients' => $recipients->count() >= 500
+                    ? $campaign->recipients()->count()
+                    : $recipients->count(),
+                'total_attempts' => $attempts->count() >= 250
+                    ? $campaign->attempts()->count()
+                    : $attempts->count(),
+            ],
+            'recipients' => $recipients,
+            'attempts' => $attempts,
         ]);
     }
 
@@ -454,7 +541,7 @@ class BasicDialerController extends Controller
             'enabled' => ['nullable', 'boolean'],
             'caller_id_name' => ['nullable', 'string', 'max:255'],
             'caller_id_number' => ['required', 'string', 'max:64', Rule::in($phoneNumberValues)],
-            'destination_type' => ['nullable', 'string', 'max:64'],
+            'destination_type' => ['required', 'string', 'max:64'],
             'destination_target' => ['nullable'],
             'max_concurrent_calls' => ['required', 'integer', 'min:1', 'max:100'],
             'seconds_between_calls' => ['required', 'integer', 'min:0', 'max:3600'],
@@ -471,6 +558,22 @@ class BasicDialerController extends Controller
         }
 
         $validated = $validator->validated();
+        $destinationType = $validated['destination_type'] ?? null;
+        $destinationTarget = $validated['destination_target'] ?? null;
+        $destinationValue = is_array($destinationTarget)
+            ? ($destinationTarget['extension'] ?? $destinationTarget['value'] ?? $destinationTarget['option'] ?? null)
+            : $destinationTarget;
+
+        if (
+            ! in_array($destinationType, ['check_voicemail', 'company_directory', 'hangup'], true)
+            && blank($destinationValue)
+        ) {
+            return response()->json([
+                'errors' => ['destination_target' => ['Choose a target.']],
+                'messages' => ['error' => ['Invalid campaign details.']],
+            ], 422);
+        }
+
         $contactListUuid = $validated['basic_dialer_contact_list_uuid'] ?? null;
 
         if ($contactListUuid && ! BasicDialerContactList::query()

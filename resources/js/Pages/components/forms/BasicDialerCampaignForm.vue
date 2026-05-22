@@ -62,7 +62,8 @@
                                         <SelectElement name="destination_type" :items="routingTypes" label-prop="name"
                                             label="Destination Action" :search="true" :native="false"
                                             input-type="search" autocomplete="off" placeholder="Choose Action"
-                                            :floating="false" :strict="false" :columns="{ sm: { container: 6 } }"
+                                            :floating="false" :strict="false" :rules="['required']"
+                                            :columns="{ sm: { container: 6 } }"
                                             @change="(newValue, oldValue, el$) => {
                                                 const target = el$.form$.el$('destination_target');
 
@@ -90,7 +91,7 @@
                                         }" :search="true" label-prop="name" :native="false" label="Target"
                                             input-type="search" allow-absent :object="true" autocomplete="off"
                                             placeholder="Choose Target" :floating="false" :strict="false"
-                                            :columns="{ sm: { container: 6 } }" :conditions="[
+                                            :rules="['required']" :columns="{ sm: { container: 6 } }" :conditions="[
                                                 ['destination_type', 'not_empty'],
                                                 ['destination_type', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
                                             ]" />

@@ -128,6 +128,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/basic-dialer/campaigns/{campaign}/start', [BasicDialerController::class, 'startCampaign'])->name('basic-dialer.campaigns.start');
     Route::post('/basic-dialer/campaigns/{campaign}/pause', [BasicDialerController::class, 'pauseCampaign'])->name('basic-dialer.campaigns.pause');
     Route::post('/basic-dialer/campaigns/{campaign}/stop', [BasicDialerController::class, 'stopCampaign'])->name('basic-dialer.campaigns.stop');
+    Route::get('/basic-dialer/campaigns/{campaign}/status', [BasicDialerController::class, 'getCampaignStatus'])->name('basic-dialer.campaigns.status');
     Route::post('/basic-dialer/campaigns/item-options', [BasicDialerController::class, 'getCampaignItemOptions'])->name('basic-dialer.campaigns.item.options');
     Route::post('/basic-dialer/campaigns/select-all', [BasicDialerController::class, 'selectAllCampaigns'])->name('basic-dialer.campaigns.select.all');
     Route::post('/basic-dialer/campaigns/bulk-delete', [BasicDialerController::class, 'bulkDeleteCampaigns'])->name('basic-dialer.campaigns.bulk.delete');
