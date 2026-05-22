@@ -121,11 +121,15 @@
                                 <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
                                     <div class="inline-flex min-w-0 max-w-full items-center gap-1.5">
                                         <span class="shrink-0 text-xs text-gray-400">Value</span>
-                                        <code class="block max-w-full truncate rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-800" :title="fullValue(row.effective_value, row.is_secret)">{{ truncatedValue(row.effective_value, row.is_secret) }}</code>
+                                        <button type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(row.effective_value, row.is_secret)" aria-label="Copy value" @click.stop="copyValue(row.effective_value)">
+                                            <code class="block max-w-full truncate rounded bg-gray-100 px-2 py-0.5 font-mono text-xs text-gray-800 ring-1 ring-transparent transition hover:bg-gray-200 hover:ring-gray-300">{{ truncatedValue(row.effective_value, row.is_secret) }}</code>
+                                        </button>
                                     </div>
                                     <div v-if="row.source === 'override'" class="inline-flex min-w-0 max-w-full items-center gap-1.5 text-xs text-gray-400">
                                         <span class="shrink-0">default</span>
-                                        <code class="block max-w-full truncate rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-500 line-through" :title="fullValue(row.default_value, row.is_secret)">{{ truncatedValue(row.default_value, row.is_secret) }}</code>
+                                        <button type="button" class="min-w-0 max-w-full text-left" :title="valueTitle(row.default_value, row.is_secret)" aria-label="Copy default value" @click.stop="copyValue(row.default_value)">
+                                            <code class="block max-w-full truncate rounded bg-gray-50 px-1.5 py-0.5 font-mono text-xs text-gray-500 line-through ring-1 ring-transparent transition hover:bg-gray-100 hover:ring-gray-300">{{ truncatedValue(row.default_value, row.is_secret) }}</code>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -463,6 +467,35 @@ const handleErrorResponse = (error) => {
     showNotification('error', error?.response?.data?.messages || error?.response?.data?.errors || { error: ['Request failed.'] })
 }
 
+const copyValue = async (value) => {
+    try {
+        await writeClipboardText(value === null || value === undefined ? '' : String(value))
+        showNotification('success', { success: ['Value copied.'] })
+    } catch (error) {
+        showNotification('error', { error: ['Unable to copy value.'] })
+    }
+}
+
+const writeClipboardText = async (text) => {
+    if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text)
+        return
+    }
+
+    const textarea = document.createElement('textarea')
+    textarea.value = text
+    textarea.setAttribute('readonly', '')
+    textarea.style.position = 'fixed'
+    textarea.style.left = '-9999px'
+    document.body.appendChild(textarea)
+    textarea.select()
+
+    const copied = document.execCommand('copy')
+    document.body.removeChild(textarea)
+
+    if (!copied) throw new Error('Copy failed')
+}
+
 const VALUE_TRUNCATE_AT = 160
 
 const displayValue = (value, secret = false) => {
@@ -480,6 +513,11 @@ const truncatedValue = (value, secret = false) => {
     const text = displayValue(value, secret)
     if (text.length > VALUE_TRUNCATE_AT) return text.slice(0, VALUE_TRUNCATE_AT) + '…'
     return text
+}
+
+const valueTitle = (value, secret = false) => {
+    if (secret) return 'Copy value'
+    return fullValue(value, secret) || 'Copy value'
 }
 
 const formatLabel = (value) => {
