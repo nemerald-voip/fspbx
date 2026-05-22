@@ -510,11 +510,70 @@ class BasicDialerController extends Controller
 
         return response()->json([
             'item' => $item,
-            'contacts' => $itemUuid ? $this->contactsForList($item) : [],
+            'contacts_total' => $itemUuid
+                ? (int) BasicDialerContact::query()
+                    ->where('domain_uuid', session('domain_uuid'))
+                    ->where('basic_dialer_contact_list_uuid', $item->basic_dialer_contact_list_uuid)
+                    ->count()
+                : 0,
             'routes' => [
                 'store_route' => route('basic-dialer.contact-lists.store'),
                 'update_route' => $itemUuid ? route('basic-dialer.contact-lists.update', ['contactList' => $item->basic_dialer_contact_list_uuid]) : null,
+                'contacts_route' => $itemUuid ? route('basic-dialer.contact-lists.contacts', ['contactList' => $item->basic_dialer_contact_list_uuid]) : null,
+                'contact_delete_route' => $itemUuid ? route('basic-dialer.contact-lists.contacts.destroy', ['contactList' => $item->basic_dialer_contact_list_uuid, 'contact' => ':contact']) : null,
             ],
+        ]);
+    }
+
+    public function getContactsForList(Request $request, BasicDialerContactList $contactList): JsonResponse
+    {
+        if (! userCheckPermission('basic_dialer_view') || $contactList->domain_uuid !== session('domain_uuid')) {
+            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+        }
+
+        $perPage = max(5, min(100, (int) $request->input('per_page', 20)));
+
+        return response()->json(
+            QueryBuilder::for(BasicDialerContact::class)
+                ->where('domain_uuid', session('domain_uuid'))
+                ->where('basic_dialer_contact_list_uuid', $contactList->basic_dialer_contact_list_uuid)
+                ->allowedFilters([
+                    AllowedFilter::callback('search', function ($query, $value) {
+                        $needle = trim((string) $value);
+
+                        if ($needle === '') {
+                            return;
+                        }
+
+                        $query->where(function ($q) use ($needle) {
+                            $q->where('phone_number', 'ilike', "%{$needle}%")
+                                ->orWhere('contact_name', 'ilike', "%{$needle}%")
+                                ->orWhere('company', 'ilike', "%{$needle}%");
+                        });
+                    }),
+                ])
+                ->allowedSorts(['phone_number', 'contact_name', 'company', 'created_at'])
+                ->defaultSort('contact_name')
+                ->select(['basic_dialer_contact_uuid', 'phone_number', 'contact_name', 'company', 'enabled', 'created_at'])
+                ->paginate($perPage)
+        );
+    }
+
+    public function deleteContact(BasicDialerContactList $contactList, BasicDialerContact $contact): JsonResponse
+    {
+        if (! userCheckPermission('basic_dialer_update') || $contactList->domain_uuid !== session('domain_uuid')) {
+            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+        }
+
+        if ($contact->basic_dialer_contact_list_uuid !== $contactList->basic_dialer_contact_list_uuid
+            || $contact->domain_uuid !== session('domain_uuid')) {
+            return response()->json(['messages' => ['error' => ['Contact not found.']]], 404);
+        }
+
+        $contact->delete();
+
+        return response()->json([
+            'messages' => ['success' => ['Contact deleted.']],
         ]);
     }
 
@@ -829,17 +888,6 @@ class BasicDialerController extends Controller
                 'label' => $destination->label,
             ])
             ->values()
-            ->toArray();
-    }
-
-    private function contactsForList(BasicDialerContactList $contactList): array
-    {
-        return BasicDialerContact::query()
-            ->where('domain_uuid', session('domain_uuid'))
-            ->where('basic_dialer_contact_list_uuid', $contactList->basic_dialer_contact_list_uuid)
-            ->orderBy('contact_name')
-            ->limit(250)
-            ->get(['basic_dialer_contact_uuid', 'phone_number', 'contact_name', 'company', 'enabled'])
             ->toArray();
     }
 

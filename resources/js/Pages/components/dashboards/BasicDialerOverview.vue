@@ -46,11 +46,11 @@
                             <Doughnut :data="outcomeChartData" :options="doughnutOptions" />
                         </div>
                         <div class="w-full space-y-1">
-                            <div v-for="(item, idx) in outcomeBreakdown" :key="item.label"
+                            <div v-for="item in outcomeBreakdown" :key="item.label"
                                 class="flex items-center justify-between text-xs">
                                 <div class="flex items-center gap-2">
                                     <span class="inline-block h-2.5 w-2.5 rounded-full"
-                                        :style="{ backgroundColor: chartPalette[idx % chartPalette.length] }"></span>
+                                        :style="{ backgroundColor: outcomeColor(item.label) }"></span>
                                     <span class="capitalize text-gray-700">{{ formatLabel(item.label) }}</span>
                                 </div>
                                 <div class="font-medium text-gray-900">
@@ -219,10 +219,23 @@ const hangupBreakdown = ref([]);
 const recentActivity = ref([]);
 const activeCampaigns = ref([]);
 
-const chartPalette = [
-    "#6366f1", "#10b981", "#f59e0b", "#ef4444", "#0ea5e9",
-    "#a855f7", "#ec4899", "#14b8a6", "#f97316", "#64748b",
-];
+const OUTCOME_GREEN = "#10b981";
+const OUTCOME_RED = "#ef4444";
+const OUTCOME_GRAY = "#9ca3af";
+
+function outcomeColor(label) {
+    const norm = String(label ?? "").toLowerCase().replace(/[^a-z]/g, "_");
+    if (norm === "answered") return OUTCOME_GREEN;
+    if (norm === "" || norm === "unknown") return OUTCOME_GRAY;
+    return OUTCOME_RED;
+}
+
+function hangupCauseColor(label) {
+    const norm = String(label ?? "").toUpperCase().replace(/[^A-Z_]/g, "");
+    if (norm === "NORMAL_CLEARING") return OUTCOME_GREEN;
+    if (norm === "" || norm === "NONE" || norm === "UNKNOWN" || norm === "ORIGINATOR_CANCEL") return OUTCOME_GRAY;
+    return OUTCOME_RED;
+}
 
 const outcomeTotal = computed(() =>
     outcomeBreakdown.value.reduce((sum, item) => sum + (item.count || 0), 0)
@@ -232,7 +245,7 @@ const outcomeChartData = computed(() => ({
     labels: outcomeBreakdown.value.map((item) => formatLabel(item.label)),
     datasets: [{
         data: outcomeBreakdown.value.map((item) => item.count),
-        backgroundColor: outcomeBreakdown.value.map((_, idx) => chartPalette[idx % chartPalette.length]),
+        backgroundColor: outcomeBreakdown.value.map((item) => outcomeColor(item.label)),
         borderWidth: 0,
     }],
 }));

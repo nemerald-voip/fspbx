@@ -14,10 +14,13 @@
                         leave-from="opacity-100 translate-y-0 sm:scale-100"
                         leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
                         <DialogPanel
-                            class="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-4xl sm:p-6">
-                            <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
+                            class="relative w-full max-w-3xl transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:p-6">
+                            <DialogTitle as="h3" class="mb-1 pr-10 text-base font-semibold leading-6 text-gray-900">
                                 {{ header }}
                             </DialogTitle>
+                            <p class="mb-5 pr-10 text-sm text-gray-500">
+                                Configure the outbound dial-out, how fast it runs, and what happens when a contact answers.
+                            </p>
 
                             <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
                                 <button type="button"
@@ -48,19 +51,34 @@
                                     <FormElements>
                                         <HiddenElement name="basic_dialer_campaign_uuid" :meta="true" />
 
+                                        <StaticElement name="campaign_header" tag="h4" content="Campaign" />
+
                                         <TextElement name="name" label="Name" :floating="false"
-                                            :columns="{ sm: { container: 8 } }" />
+                                            :rules="['required']" :columns="{ sm: { container: 9 } }" />
 
                                         <ToggleElement name="enabled" text="Enabled" :labels="{ on: 'On', off: 'Off' }"
-                                            :columns="{ sm: { container: 4 } }" label="&nbsp;" />
+                                            :columns="{ sm: { container: 3 } }" label="&nbsp;" />
 
                                         <SelectElement name="basic_dialer_contact_list_uuid" label="Contact List"
                                             :items="contactLists" :search="true" :native="false" input-type="search"
                                             allow-absent :strict="false" :floating="false"
+                                            :columns="{ sm: { container: 12 } }" />
+
+                                        <StaticElement name="caller_id_header" tag="h4" content="Caller ID" />
+
+                                        <TextElement name="caller_id_name" label="Caller ID Name" :floating="false"
                                             :columns="{ sm: { container: 6 } }" />
 
+                                        <SelectElement name="caller_id_number" label="Caller ID Number"
+                                            :items="phoneNumbers" :search="true" :native="false" input-type="search"
+                                            autocomplete="off" allow-absent :strict="false" :floating="false"
+                                            :rules="['required']" :columns="{ sm: { container: 6 } }" />
+
+                                        <StaticElement name="destination_header" tag="h4" content="Destination"
+                                            description="Where to forward the call after the contact answers." />
+
                                         <SelectElement name="destination_type" :items="routingTypes" label-prop="name"
-                                            label="Destination Action" :search="true" :native="false"
+                                            label="Action" :search="true" :native="false"
                                             input-type="search" autocomplete="off" placeholder="Choose Action"
                                             :floating="false" :strict="false" :rules="['required']"
                                             :columns="{ sm: { container: 6 } }"
@@ -96,13 +114,8 @@
                                                 ['destination_type', 'not_in', ['check_voicemail', 'company_directory', 'hangup']]
                                             ]" />
 
-                                        <TextElement name="caller_id_name" label="Caller ID Name" :floating="false"
-                                            :columns="{ sm: { container: 6 } }" />
-
-                                        <SelectElement name="caller_id_number" label="Caller ID Number"
-                                            :items="phoneNumbers" :search="true" :native="false" input-type="search"
-                                            autocomplete="off" allow-absent :strict="false" :floating="false"
-                                            :rules="['required']" :columns="{ sm: { container: 6 } }" />
+                                        <StaticElement name="pacing_header" tag="h4" content="Pacing &amp; Retries"
+                                            description="How fast the dialer runs and what to do when a call doesn't connect." />
 
                                         <TextElement name="max_concurrent_calls" label="Concurrent Calls"
                                             input-type="number" :floating="false"
@@ -112,21 +125,21 @@
                                             input-type="number" :floating="false"
                                             :columns="{ sm: { container: 4 } }" />
 
-                                        <TextElement name="originate_timeout" label="Originate Timeout"
+                                        <TextElement name="originate_timeout" label="Originate Timeout (s)"
                                             input-type="number" :floating="false"
                                             :columns="{ sm: { container: 4 } }" />
 
                                         <TextElement name="retry_limit" label="Retry Limit" input-type="number"
                                             :floating="false" :columns="{ sm: { container: 6 } }" />
 
-                                        <TextElement name="retry_delay_minutes" label="Retry Delay Minutes"
+                                        <TextElement name="retry_delay_minutes" label="Retry Delay (minutes)"
                                             input-type="number" :floating="false"
                                             :columns="{ sm: { container: 6 } }" />
 
                                         <TextareaElement name="description" label="Description" :rows="2"
                                             :floating="false" />
 
-                                        <ButtonElement name="submit" button-label="Save" :submits="true"
+                                        <ButtonElement name="submit" button-label="Save Campaign" :submits="true"
                                             align="right" />
                                     </FormElements>
                                 </template>

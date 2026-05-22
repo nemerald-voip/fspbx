@@ -139,6 +139,8 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/basic-dialer/contact-lists/item-options', [BasicDialerController::class, 'getContactListItemOptions'])->name('basic-dialer.contact-lists.item.options');
     Route::post('/basic-dialer/contact-lists/select-all', [BasicDialerController::class, 'selectAllContactLists'])->name('basic-dialer.contact-lists.select.all');
     Route::post('/basic-dialer/contact-lists/bulk-delete', [BasicDialerController::class, 'bulkDeleteContactLists'])->name('basic-dialer.contact-lists.bulk.delete');
+    Route::get('/basic-dialer/contact-lists/{contactList}/contacts', [BasicDialerController::class, 'getContactsForList'])->name('basic-dialer.contact-lists.contacts');
+    Route::delete('/basic-dialer/contact-lists/{contactList}/contacts/{contact}', [BasicDialerController::class, 'deleteContact'])->name('basic-dialer.contact-lists.contacts.destroy');
 
     // Inbound Webhooks
     Route::resource('/inbound-webhooks', InboundWebhooksController::class);

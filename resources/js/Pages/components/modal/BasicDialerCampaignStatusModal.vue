@@ -89,11 +89,11 @@
                                                 <Doughnut :data="outcomeChartData" :options="doughnutOptions" />
                                             </div>
                                             <div class="w-full min-w-0 flex-1 space-y-1">
-                                                <div v-for="(item, idx) in outcomeBreakdown" :key="item.label"
+                                                <div v-for="item in outcomeBreakdown" :key="item.label"
                                                     class="flex items-center justify-between gap-3 text-xs">
                                                     <div class="flex min-w-0 items-center gap-2">
                                                         <span class="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
-                                                            :style="{ backgroundColor: chartPalette[idx % chartPalette.length] }"></span>
+                                                            :style="{ backgroundColor: outcomeColor(item.label) }"></span>
                                                         <span class="truncate capitalize text-gray-700">{{ formatLabel(item.label) }}</span>
                                                     </div>
                                                     <div class="shrink-0 font-medium text-gray-900">
@@ -254,10 +254,16 @@ const attempts = ref([]);
 const outcomeBreakdown = ref([]);
 const hangupBreakdown = ref([]);
 
-const chartPalette = [
-    "#6366f1", "#10b981", "#f59e0b", "#ef4444", "#0ea5e9",
-    "#a855f7", "#ec4899", "#14b8a6", "#f97316", "#64748b",
-];
+const OUTCOME_GREEN = "#10b981";
+const OUTCOME_RED = "#ef4444";
+const OUTCOME_GRAY = "#9ca3af";
+
+function outcomeColor(label) {
+    const norm = String(label ?? "").toLowerCase().replace(/[^a-z]/g, "_");
+    if (norm === "answered") return OUTCOME_GREEN;
+    if (norm === "" || norm === "unknown") return OUTCOME_GRAY;
+    return OUTCOME_RED;
+}
 
 const summaryItems = computed(() => {
     const recipientCounts = summary.value.recipients || {};
@@ -293,7 +299,7 @@ const outcomeChartData = computed(() => ({
     labels: outcomeBreakdown.value.map((item) => formatLabel(item.label)),
     datasets: [{
         data: outcomeBreakdown.value.map((item) => item.count),
-        backgroundColor: outcomeBreakdown.value.map((_, idx) => chartPalette[idx % chartPalette.length]),
+        backgroundColor: outcomeBreakdown.value.map((item) => outcomeColor(item.label)),
         borderWidth: 0,
     }],
 }));
