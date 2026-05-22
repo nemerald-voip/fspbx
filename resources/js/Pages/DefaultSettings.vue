@@ -171,7 +171,7 @@
                 <div v-for="domain in affectedDomains" :key="domain.domain_setting_uuid" class="flex items-center justify-between py-3 text-sm">
                     <div>
                         <div class="font-medium text-gray-900">{{ domain.domain_description || domain.domain_name }}</div>
-                        <div class="font-mono text-xs text-gray-500">{{ displayValue(domain.value) }}</div>
+                        <div class="font-mono text-xs text-gray-500">{{ displayValue(domain.value, affectedDomainsSecret) }}</div>
                     </div>
                     <a :href="routes.domain_settings.replace('__DOMAIN__', domain.domain_uuid)" class="rounded-md px-2 py-1 text-indigo-600 hover:bg-indigo-50">Open</a>
                 </div>
@@ -228,6 +228,7 @@ const confirmedAction = ref(null)
 const showCopyModal = ref(false)
 const showAffectedModal = ref(false)
 const affectedDomains = ref([])
+const affectedDomainsSecret = ref(false)
 const notificationShow = ref(false)
 const notificationType = ref(null)
 const notificationMessages = ref(null)
@@ -421,6 +422,7 @@ const reloadSettings = () => {
 }
 
 const showAffectedDomains = (row) => {
+    affectedDomainsSecret.value = Boolean(row.is_secret)
     axios.get(props.routes.affected_domains.replace('__SETTING__', row.default_setting_uuid))
         .then(response => {
             affectedDomains.value = response.data.domains
