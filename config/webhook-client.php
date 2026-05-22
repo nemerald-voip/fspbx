@@ -733,6 +733,16 @@ return [
             'process_webhook_job'   => App\Http\Webhooks\Jobs\ProcessAssemblyAiWebhookJob::class,
         ],
 
+        [
+            'name' => 'openai_realtime',
+            'signature_header_name' => 'webhook-signature',
+            'signature_validator' => \App\Http\Webhooks\SignatureValidators\OpenAiSignatureValidator::class,
+            'webhook_profile' => \Spatie\WebhookClient\WebhookProfile\ProcessEverythingWebhookProfile::class,
+            'webhook_model' => \App\Models\WhCall::class,
+            'store_headers' => '*',
+            'process_webhook_job' => \App\Http\Webhooks\Jobs\ProcessOpenAiRealtimeWebhookJob::class,
+        ],
+
 
     ],
 

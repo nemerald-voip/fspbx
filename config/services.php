@@ -32,12 +32,14 @@ return [
 
     'openai' => [
         'api_key' => env('OPENAI_API_KEY'),
+        'webhook_secret' => env('OPENAI_WEBHOOK_SECRET'),
         'speech_timeout' => env('OPENAI_SPEECH_TIMEOUT', 60),
         'speech_max_attempts' => env('OPENAI_SPEECH_MAX_ATTEMPTS', 2),
     ],
 
     'ai_receptionist' => [
         'agent_token' => env('AI_RECEPTIONIST_AGENT_TOKEN'),
+        'controller_url' => env('AI_RECEPTIONIST_CONTROLLER_URL', 'http://127.0.0.1:8097/calls'),
     ],
 
     'google' => [

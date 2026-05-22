@@ -34,54 +34,14 @@ class AiReceptionistService
     private const SETTINGS_CACHE_TTL_HOURS = 24;
 
     public const ENGINE_DEFINITIONS = [
-        'standard_pipeline' => [
-            'label' => 'Deepgram STT + OpenAI LLM + ElevenLabs TTS',
-            'description' => 'Recommended modular pipeline. Deepgram STT, OpenAI LLM, and ElevenLabs TTS are provided by LiveKit Inference.',
-        ],
         'openai_realtime' => [
-            'label' => 'OpenAI Realtime Speech-to-Speech',
-            'description' => 'Premium low-latency speech-to-speech path using OpenAI Realtime through the system OPENAI_API_KEY.',
-        ],
-        'assemblyai_agent' => [
-            'label' => 'AssemblyAI Realtime Agent',
-            'description' => 'AssemblyAI STT, OpenAI LLM, and ElevenLabs TTS are provided by LiveKit Inference.',
+            'label' => 'OpenAI Realtime SIP',
+            'description' => 'Low-latency speech-to-speech calls over OpenAI Realtime SIP using the system OPENAI_API_KEY.',
         ],
     ];
 
     public const ENGINES = [
-        'standard_pipeline' => self::ENGINE_DEFINITIONS['standard_pipeline']['label'],
         'openai_realtime' => self::ENGINE_DEFINITIONS['openai_realtime']['label'],
-        'assemblyai_agent' => self::ENGINE_DEFINITIONS['assemblyai_agent']['label'],
-    ];
-
-    public const AGENT_RUNTIME_DEFINITIONS = [
-        'local_worker' => [
-            'label' => 'Local FS PBX Worker',
-            'description' => 'Run the Python LiveKit worker on this FS PBX server with Supervisor.',
-            'uses_local_service' => true,
-        ],
-        'external_worker' => [
-            'label' => 'External Self-Hosted Worker',
-            'description' => 'Run the Python worker on another VM or container and point it back to this FS PBX API.',
-            'uses_local_service' => false,
-        ],
-        'livekit_cloud_agent' => [
-            'label' => 'LiveKit Cloud Hosted Agent',
-            'description' => 'Deploy the worker as a managed LiveKit Cloud agent. FS PBX only supplies PBX tools and policy.',
-            'uses_local_service' => false,
-        ],
-        'telnyx_hosted_agent' => [
-            'label' => 'Telnyx Hosted Agent',
-            'description' => 'Deploy the worker on LiveKit on Telnyx. FS PBX only supplies PBX tools and policy.',
-            'uses_local_service' => false,
-        ],
-    ];
-
-    public const AGENT_RUNTIMES = [
-        'local_worker' => self::AGENT_RUNTIME_DEFINITIONS['local_worker']['label'],
-        'external_worker' => self::AGENT_RUNTIME_DEFINITIONS['external_worker']['label'],
-        'livekit_cloud_agent' => self::AGENT_RUNTIME_DEFINITIONS['livekit_cloud_agent']['label'],
-        'telnyx_hosted_agent' => self::AGENT_RUNTIME_DEFINITIONS['telnyx_hosted_agent']['label'],
     ];
 
     public function saveReceptionist(array $validated, ?AiReceptionist $receptionist = null): AiReceptionist
@@ -148,7 +108,11 @@ class AiReceptionistService
     public function configForReceptionist(AiReceptionist $receptionist): array
     {
         $settings = $this->resolvedSettings($receptionist->domain_uuid);
-        $engine = $settings['default_engine'] ?? 'standard_pipeline';
+        $engine = $settings['default_engine'] ?? 'openai_realtime';
+
+        if (! array_key_exists($engine, self::ENGINES)) {
+            $engine = 'openai_realtime';
+        }
 
         return [
             'ai_receptionist_uuid' => $receptionist->ai_receptionist_uuid,
@@ -188,7 +152,7 @@ class AiReceptionistService
     public function startSession(AiReceptionist $receptionist, array $payload): AiReceptionistSession
     {
         $settings = $this->resolvedSettings($receptionist->domain_uuid);
-        $engine = $settings['default_engine'] ?? 'standard_pipeline';
+        $engine = $settings['default_engine'] ?? 'openai_realtime';
 
         return AiReceptionistSession::query()->create([
             'session_uuid' => (string) Str::uuid(),
@@ -198,8 +162,8 @@ class AiReceptionistService
             'engine' => $engine,
             'status' => 'started',
             'freeswitch_uuid' => $this->blankToNull($payload['freeswitch_uuid'] ?? null),
-            'livekit_room' => $this->blankToNull($payload['livekit_room'] ?? null),
-            'livekit_participant' => $this->blankToNull($payload['livekit_participant'] ?? null),
+            'openai_call_id' => $this->blankToNull($payload['realtime_call_id'] ?? $payload['openai_call_id'] ?? null),
+            'sip_call_id' => $this->blankToNull($payload['sip_call_id'] ?? null),
             'caller_id_name' => $this->blankToNull($payload['caller_id_name'] ?? null),
             'caller_id_number' => $this->blankToNull($payload['caller_id_number'] ?? null),
             'destination_number' => $this->blankToNull($payload['destination_number'] ?? null),
@@ -328,6 +292,38 @@ class AiReceptionistService
         }
     }
 
+    public function recordBuiltInToolRun(AiReceptionistSession $session, string $toolName, array $requestPayload, callable $callback): array
+    {
+        $run = AiReceptionistToolRun::query()->create([
+            'tool_run_uuid' => (string) Str::uuid(),
+            'session_uuid' => $session->session_uuid,
+            'tool_name' => $toolName,
+            'status' => 'started',
+            'request_payload' => $requestPayload,
+            'started_at' => now(),
+        ]);
+
+        try {
+            $responsePayload = $callback();
+
+            $run->forceFill([
+                'status' => 'completed',
+                'response_payload' => $responsePayload,
+                'ended_at' => now(),
+            ])->save();
+
+            return $responsePayload;
+        } catch (\Throwable $exception) {
+            $run->forceFill([
+                'status' => 'failed',
+                'error_message' => $exception->getMessage(),
+                'ended_at' => now(),
+            ])->save();
+
+            throw $exception;
+        }
+    }
+
     public function endSession(AiReceptionistSession $session, array $payload): AiReceptionistSession
     {
         $session->forceFill([
@@ -341,40 +337,6 @@ class AiReceptionistService
         return $session;
     }
 
-    public function engineOptions(): array
-    {
-        return collect(self::ENGINE_DEFINITIONS)
-            ->map(fn ($definition, $value) => [
-                'value' => $value,
-                'label' => $definition['label'],
-                'description' => $definition['description'],
-            ])
-            ->values()
-            ->all();
-    }
-
-    public function agentRuntimeOptions(): array
-    {
-        return collect(self::AGENT_RUNTIME_DEFINITIONS)
-            ->map(fn ($definition, $value) => [
-                'value' => $value,
-                'label' => $definition['label'],
-                'description' => $definition['description'],
-                'uses_local_service' => $definition['uses_local_service'],
-            ])
-            ->values()
-            ->all();
-    }
-
-    public function usesLocalAgentRuntime(array|string|null $settingsOrRuntime): bool
-    {
-        $runtime = is_array($settingsOrRuntime)
-            ? ($settingsOrRuntime['agent_runtime'] ?? 'local_worker')
-            : ($settingsOrRuntime ?: 'local_worker');
-
-        return (self::AGENT_RUNTIME_DEFINITIONS[$runtime]['uses_local_service'] ?? false) === true;
-    }
-
     public function resolvedSettings(?string $domainUuid = null, bool $includeSecrets = false): array
     {
         $settings = Cache::tags(self::SETTINGS_CACHE_TAG)
@@ -384,20 +346,12 @@ class AiReceptionistService
                 fn () => $this->buildResolvedSettings($domainUuid)
             );
 
-        if (! $includeSecrets) {
-            unset($settings['livekit_api_key'], $settings['livekit_api_secret']);
-        }
-
         return $settings;
     }
 
     public function freshResolvedSettings(?string $domainUuid = null, bool $includeSecrets = false): array
     {
         $settings = $this->buildResolvedSettings($domainUuid);
-
-        if (! $includeSecrets) {
-            unset($settings['livekit_api_key'], $settings['livekit_api_secret']);
-        }
 
         return $settings;
     }
@@ -416,18 +370,18 @@ class AiReceptionistService
 
         $systemProviderConfig = $system?->provider_config ?? [];
         $domainProviderConfig = $domain?->provider_config ?? [];
+        $engine = $domain?->default_engine ?: ($system?->default_engine ?: 'openai_realtime');
+
+        if (! array_key_exists($engine, self::ENGINES)) {
+            $engine = 'openai_realtime';
+        }
 
         return [
             'setting_uuid' => $effective?->setting_uuid,
             'scope' => $domain ? 'domain' : 'system',
             'domain_uuid' => $domainUuid,
             'enabled' => (bool) ($domain?->enabled ?? $system?->enabled ?? false),
-            'default_engine' => $domain?->default_engine ?: ($system?->default_engine ?: 'standard_pipeline'),
-            'agent_runtime' => $system?->agent_runtime ?: 'local_worker',
-            'livekit_url' => $system?->livekit_url,
-            'livekit_api_key' => $system?->livekit_api_key,
-            'livekit_api_secret' => $system?->livekit_api_secret,
-            'livekit_hosting' => $this->detectLiveKitHosting($system?->livekit_url),
+            'default_engine' => $engine,
             'provider_config' => array_replace_recursive($systemProviderConfig, $domainProviderConfig),
         ];
     }
@@ -448,19 +402,10 @@ class AiReceptionistService
 
         $values = [
             'domain_uuid' => $domainUuid,
-            'default_engine' => $this->blankToNull($validated['default_engine'] ?? null),
+            'default_engine' => 'openai_realtime',
             'provider_config' => $validated['provider_config'] ?? [],
             'enabled' => $this->toBoolean($validated['enabled'] ?? false),
         ];
-
-        if (! $isDomainOverride) {
-            $values += [
-                'agent_runtime' => $validated['agent_runtime'] ?? 'local_worker',
-                'livekit_url' => $this->blankToNull($validated['livekit_url'] ?? null),
-                'livekit_api_key' => $this->blankToNull($validated['livekit_api_key'] ?? null),
-                'livekit_api_secret' => $this->blankToNull($validated['livekit_api_secret'] ?? null),
-            ];
-        }
 
         $setting = AiReceptionistSetting::query()->updateOrCreate(
             ['domain_uuid' => $domainUuid],
@@ -468,6 +413,7 @@ class AiReceptionistService
         );
 
         $this->invalidateSettingsCache($domainUuid);
+        $this->refreshReceptionistDialplans($domainUuid);
 
         return $setting;
     }
@@ -486,40 +432,6 @@ class AiReceptionistService
     private function settingsCacheKey(?string $domainUuid): string
     {
         return self::SETTINGS_CACHE_PREFIX . ($domainUuid ?: 'system');
-    }
-
-    public function detectLiveKitHosting(?string $url): array
-    {
-        $host = parse_url((string) $url, PHP_URL_HOST) ?: '';
-        $host = strtolower($host);
-
-        return match (true) {
-            $host === '' => [
-                'value' => 'unknown',
-                'label' => 'Not configured',
-                'description' => 'Enter a LiveKit URL to identify where the media server is hosted.',
-            ],
-            str_ends_with($host, 'livekit.cloud') => [
-                'value' => 'livekit_cloud',
-                'label' => 'LiveKit Cloud',
-                'description' => 'Media, SIP, and rooms are hosted by LiveKit Cloud.',
-            ],
-            str_ends_with($host, 'livekit-telnyx.com') => [
-                'value' => 'telnyx',
-                'label' => 'LiveKit on Telnyx',
-                'description' => 'Media, SIP, and rooms are hosted on Telnyx infrastructure.',
-            ],
-            in_array($host, ['localhost', '127.0.0.1', '::1'], true) => [
-                'value' => 'local',
-                'label' => 'Local LiveKit',
-                'description' => 'The LiveKit media server appears to be running locally.',
-            ],
-            default => [
-                'value' => 'custom',
-                'label' => 'Custom or self-hosted LiveKit',
-                'description' => 'The LiveKit media server appears to use a custom host.',
-            ],
-        };
     }
 
     public function saveTool(array $validated, ?AiReceptionistTool $tool = null): AiReceptionistTool
@@ -547,14 +459,15 @@ class AiReceptionistService
         $dialplan = Dialplans::query()
             ->where('dialplan_uuid', $receptionist->dialplan_uuid)
             ->first() ?? new Dialplans();
+        $domainName = optional($receptionist->domain)->domain_name ?: session('domain_name');
 
         $dialplan->forceFill([
-            'domain_uuid' => session('domain_uuid'),
+            'domain_uuid' => $receptionist->domain_uuid ?: session('domain_uuid'),
             'dialplan_uuid' => $receptionist->dialplan_uuid,
             'app_uuid' => self::APP_UUID,
             'dialplan_name' => $receptionist->name,
             'dialplan_number' => $receptionist->extension,
-            'dialplan_context' => session('domain_name'),
+            'dialplan_context' => $domainName,
             'dialplan_continue' => 'false',
             'dialplan_xml' => $this->dialplanXml($receptionist),
             'dialplan_order' => '235',
@@ -565,9 +478,29 @@ class AiReceptionistService
         ])->save();
     }
 
+    private function refreshReceptionistDialplans(?string $domainUuid): void
+    {
+        $query = AiReceptionist::query()->with('domain');
+
+        if (filled($domainUuid)) {
+            $query->where('domain_uuid', $domainUuid);
+        } else {
+            $query->where('domain_uuid', session('domain_uuid'));
+        }
+
+        $query->each(function (AiReceptionist $receptionist) {
+            if (blank($receptionist->dialplan_uuid)) {
+                return;
+            }
+
+            $this->saveDialplan($receptionist, false);
+            $this->clearDialplanCache($receptionist);
+        });
+    }
+
     private function dialplanXml(AiReceptionist $receptionist): string
     {
-        $bridgeTarget = '${ai_receptionist_livekit_sip_uri}';
+        $bridgeTarget = $this->openAiSipBridgeTarget($receptionist);
         $metadata = [
             'domain_uuid' => $receptionist->domain_uuid,
             'ai_receptionist_uuid' => $receptionist->ai_receptionist_uuid,
@@ -600,6 +533,25 @@ class AiReceptionistService
         $lines[] = '</extension>';
 
         return implode("\n", $lines);
+    }
+
+    private function openAiSipBridgeTarget(AiReceptionist $receptionist): string
+    {
+        $settings = $this->resolvedSettings($receptionist->domain_uuid);
+        $providerConfig = $settings['provider_config'] ?? [];
+        $configuredTarget = trim((string) ($providerConfig['openai_sip_bridge_target'] ?? ''));
+
+        if ($configuredTarget !== '') {
+            return $configuredTarget;
+        }
+
+        $projectId = trim((string) ($providerConfig['openai_project_id'] ?? ''));
+
+        if ($projectId !== '') {
+            return '{absolute_codec_string=PCMU}sofia/external/sip:' . $projectId . '@sip.api.openai.com;transport=tls';
+        }
+
+        return '{absolute_codec_string=PCMU}${ai_receptionist_openai_sip_uri}';
     }
 
     private function clearDialplanCache(AiReceptionist $receptionist): void

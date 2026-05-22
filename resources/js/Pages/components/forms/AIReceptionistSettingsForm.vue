@@ -11,66 +11,24 @@
                             <HiddenElement name="domain_uuid" :meta="true" />
 
                             <StaticElement name="header" tag="h4" content="AI Receptionist Settings"
-                                description="Configure LiveKit, the default voice engine, and model choices used by AI Receptionists." />
+                                description="Configure OpenAI Realtime SIP, model choices, and the local call controller used by AI Receptionists." />
 
                             <ToggleElement name="enabled" text="Enable AI Receptionists" :true-value="true"
                                 :false-value="false" :disabled="canEdit" @change="handleEnabledChange" />
 
-                            <StaticElement name="global_header" tag="h4" content="LiveKit Connection"
-                                description="LiveKit carries call media and provides bundled inference for the modular pipelines. OpenAI Realtime uses the system OPENAI_API_KEY."
+                            <StaticElement name="global_header" tag="h4" content="OpenAI SIP Connection"
+                                description="FreeSWITCH bridges calls to OpenAI Realtime SIP. The controller accepts OpenAI webhooks and keeps the Realtime WebSocket alive for tools and transcripts."
                                 :conditions="[showEnabledSystemFields]" />
 
-                            <TextElement name="livekit_url" label="LiveKit URL" :floating="false" :disabled="canEdit"
-                                :conditions="[showEnabledSystemFields]" @change="handleLiveKitUrlChange"
-                                :columns="{ lg: { wrapper: 6 } }" />
-
-                            <StaticElement name="livekit_hosting_status" tag="div" :add-classes="{
-                                ElementLayout: { outerWrapper: 'col-span-12' },
-                                StaticElement: { container: 'rounded-md border border-gray-200 bg-white p-3 text-sm text-gray-600' }
-                            }" :conditions="[showEnabledSystemFields]">
-                                <template #default>
-                                    <div class="space-y-1">
-                                        <div class="font-medium text-gray-800">
-                                            LiveKit hosting: {{ selectedLiveKitHosting.label }}
-                                        </div>
-                                        <div>{{ selectedLiveKitHosting.description }}</div>
-                                    </div>
-                                </template>
-                            </StaticElement>
-
-                            <TextElement name="livekit_api_key" label="LiveKit API Key" :floating="false"
+                            <TextElement name="openai_project_id" label="OpenAI Project ID" :floating="false"
                                 :disabled="canEdit" :conditions="[showEnabledSystemFields]"
-                                description="Required when FS PBX provides LiveKit credentials to a local or external worker."
+                                description="Used to build sip:PROJECT_ID@sip.api.openai.com;transport=tls when a custom bridge target is not provided."
                                 :columns="{ lg: { wrapper: 6 } }" />
 
-                            <TextElement name="livekit_api_secret" label="LiveKit API Secret" input-type="password"
+                            <TextElement name="openai_sip_bridge_target" label="FreeSWITCH SIP Bridge Target" placeholder="Optional"
                                 :floating="false" :disabled="canEdit" :conditions="[showEnabledSystemFields]"
-                                description="Required for local and external workers. Hosted LiveKit/Telnyx agents may receive this from their host."
+                                description="Optional full bridge target. Leave blank to generate sofia/external/sip:PROJECT_ID@sip.api.openai.com;transport=tls."
                                 :columns="{ lg: { wrapper: 6 } }" />
-
-                            <StaticElement name="runtime_header" tag="h4" content="Agent Runtime"
-                                description="Choose where the AI worker runs. This is separate from where LiveKit media is hosted."
-                                :conditions="[showEnabledSystemFields]" />
-
-                            <SelectElement name="agent_runtime" label="Agent Runtime" :native="false"
-                                :items="agentRuntimeOptions" label-prop="label" value-prop="value" :search="true"
-                                :disabled="canEdit" :strict="false" placeholder="Select agent runtime"
-                                @change="handleAgentRuntimeChange" :conditions="[showEnabledSystemFields]"
-                                :columns="{ lg: { wrapper: 6 } }" />
-
-                            <StaticElement name="agent_runtime_help" tag="div" :add-classes="{
-                                ElementLayout: { outerWrapper: 'col-span-12' },
-                                StaticElement: { container: 'rounded-md border border-gray-200 bg-white p-3 text-sm text-gray-600' }
-                            }" :conditions="[showEnabledSystemFields]">
-                                <template #default>
-                                    <div class="space-y-2">
-                                        <div v-for="option in agentRuntimeOptions" :key="option.value">
-                                            <div class="font-medium text-gray-800">{{ option.label }}</div>
-                                            <div>{{ option.description }}</div>
-                                        </div>
-                                    </div>
-                                </template>
-                            </StaticElement>
 
                             <StaticElement v-if="isInheriting && selectedEnabled" name="inherited_notice" tag="div" :add-classes="{
                                 StaticElement: { container: 'rounded-md border border-yellow-200 bg-yellow-50 p-3' }
@@ -105,57 +63,8 @@
                                 </template>
                             </StaticElement>
 
-                            <StaticElement name="pipeline_header" tag="h4" :content="pipelineHeader"
-                                :description="pipelineDescription" :conditions="[showPipelineModelFields]" />
-
-                            <SelectElement name="deepgram_model" label="Deepgram STT Model" :native="false"
-                                :items="deepgramModelOptions" label-prop="label" value-prop="value" :search="true"
-                                allow-absent :strict="false" placeholder="Select or enter a model" :floating="false"
-                                :disabled="canEdit" :conditions="[showStandardFields]"
-                                :columns="{ lg: { wrapper: 6 } }" />
-
-                            <TextElement name="deepgram_language" label="Deepgram Language" placeholder="en-US"
-                                :floating="false" :disabled="canEdit" :conditions="[showStandardFields]"
-                                description="Use en for English or multi where supported by the selected model."
-                                :columns="{ lg: { wrapper: 6 } }" />
-
-                            <SelectElement name="assemblyai_model" label="AssemblyAI STT Model" :native="false"
-                                :items="assemblyaiModelOptions" label-prop="label" value-prop="value" :search="true"
-                                allow-absent :strict="false" placeholder="Select or enter a model" :floating="false"
-                                :disabled="canEdit" :conditions="[showAssemblyAIFields]"
-                                :columns="{ lg: { wrapper: 6 } }" />
-
-                            <TextElement name="assemblyai_language" label="AssemblyAI Language" placeholder="en"
-                                :floating="false" :disabled="canEdit" :conditions="[showAssemblyAIFields]"
-                                description="Use en for English or multi where supported by the selected model."
-                                :columns="{ lg: { wrapper: 6 } }" />
-
-                            <SelectElement name="openai_model" label="OpenAI LLM Model" :native="false"
-                                :items="openaiLlmModelOptions" label-prop="label" value-prop="value" :search="true"
-                                allow-absent :strict="false" placeholder="Select or enter a model" :floating="false"
-                                :disabled="canEdit" :conditions="[showPipelineModelFields]"
-                                :columns="{ lg: { wrapper: 6 } }" />
-
-                            <SelectElement name="elevenlabs_model" label="ElevenLabs TTS Model" :native="false"
-                                :items="elevenlabsModelOptions" label-prop="label" value-prop="value" :search="true"
-                                allow-absent :strict="false" placeholder="Select or enter a model" :floating="false"
-                                :disabled="canEdit" :conditions="[showPipelineModelFields]"
-                                :columns="{ lg: { wrapper: 6 } }" />
-
-                            <SelectElement name="elevenlabs_voice_id" label="ElevenLabs Voice"
-                                :items="elevenlabsVoiceOptions" label-prop="label" value-prop="value"
-                                :search="true" :native="false" allow-absent :strict="false"
-                                placeholder="Select or enter a voice ID" :floating="false" :disabled="canEdit"
-                                :conditions="[showPipelineModelFields]"
-                                description="Default ElevenLabs voices supported by LiveKit Inference."
-                                :columns="{ lg: { wrapper: 6 } }" />
-
-                            <TextElement name="elevenlabs_language" label="ElevenLabs Language" placeholder="en"
-                                :floating="false" :disabled="canEdit" :conditions="[showPipelineModelFields]"
-                                :columns="{ lg: { wrapper: 6 } }" />
-
                             <StaticElement name="openai_realtime_header" tag="h4" content="OpenAI Realtime"
-                                description="Uses OpenAI Realtime directly through the system OPENAI_API_KEY. LiveKit still carries the call media."
+                                description="Uses OpenAI Realtime SIP directly through the system OPENAI_API_KEY."
                                 :conditions="[showOpenAIRealtimeFields]" />
 
                             <SelectElement name="openai_realtime_model" label="OpenAI Realtime Model" :native="false"
@@ -170,22 +79,6 @@
                                 :disabled="canEdit" :conditions="[showOpenAIRealtimeFields]"
                                 :columns="{ lg: { wrapper: 6 } }" />
 
-                            <StaticElement v-if="showExternalAgentNotice" name="external_agent_service" tag="div" :add-classes="{
-                                ElementLayout: { outerWrapper: 'col-span-12' },
-                                StaticElement: { container: 'rounded-md border border-indigo-100 bg-indigo-50 p-4' }
-                            }">
-                                <template #default>
-                                    <div class="space-y-2 text-sm text-indigo-900">
-                                        <h4 class="font-semibold">Agent Service Managed Outside This Server</h4>
-                                        <p>
-                                            Selected runtime: {{ selectedAgentRuntimeLabel }}. FS PBX will keep the
-                                            PBX API, routing policy, tools, and transfer control, but this page will not
-                                            start or stop a local Supervisor service.
-                                        </p>
-                                    </div>
-                                </template>
-                            </StaticElement>
-
                             <StaticElement v-if="showLocalAgentControls" name="agent_service" tag="div" :add-classes="{
                                 ElementLayout: { outerWrapper: 'col-span-12' },
                                 StaticElement: { container: 'rounded-md border border-gray-200 bg-white p-4' }
@@ -193,9 +86,9 @@
                                 <template #default>
                                     <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                                         <div>
-                                            <h4 class="text-sm font-semibold text-gray-900">Agent Service</h4>
+                                            <h4 class="text-sm font-semibold text-gray-900">Call Controller</h4>
                                             <p class="mt-1 text-sm text-gray-600">
-                                                Start the Python LiveKit worker after the settings above are saved.
+                                                Start the Python OpenAI Realtime controller after the settings above are saved.
                                             </p>
                                             <div class="mt-3 flex flex-wrap items-center gap-2">
                                                 <span :class="serviceStatusBadgeClass">
@@ -291,9 +184,7 @@ const settings = ref({});
 const isFormLoading = ref(false);
 const isOverride = ref(false);
 const selectedEnabled = ref(false);
-const selectedEngine = ref("standard_pipeline");
-const selectedAgentRuntime = ref("local_worker");
-const selectedLiveKitUrl = ref("");
+const selectedEngine = ref("openai_realtime");
 const extraProviderConfig = ref({});
 const agentServiceStatus = ref(null);
 const serviceLoading = ref(false);
@@ -301,106 +192,17 @@ const serviceActionLoading = ref(null);
 
 const engineOptions = [
     {
-        value: "standard_pipeline",
-        label: "Deepgram STT + OpenAI LLM + ElevenLabs TTS",
-        description: "Recommended modular path. Deepgram STT, OpenAI LLM, and ElevenLabs TTS are provided by LiveKit Inference.",
-    },
-    {
         value: "openai_realtime",
-        label: "OpenAI Realtime Speech-to-Speech",
-        description: "Premium low-latency speech-to-speech path using OpenAI Realtime through the system OPENAI_API_KEY.",
+        label: "OpenAI Realtime SIP",
+        description: "Low-latency speech-to-speech calls over OpenAI Realtime SIP using the system OPENAI_API_KEY.",
     },
-    {
-        value: "assemblyai_agent",
-        label: "AssemblyAI Realtime Agent",
-        description: "AssemblyAI STT, OpenAI LLM, and ElevenLabs TTS are provided by LiveKit Inference.",
-    },
-];
-
-const agentRuntimeOptions = [
-    {
-        value: "local_worker",
-        label: "Local FS PBX Worker",
-        description: "Run the Python LiveKit worker on this FS PBX server. This page can start, stop, and check the local Supervisor service.",
-    },
-    {
-        value: "external_worker",
-        label: "External Self-Hosted Worker",
-        description: "Run the same Python worker on another VM or container. It connects back to this FS PBX API for PBX tools and transfers.",
-    },
-    {
-        value: "livekit_cloud_agent",
-        label: "LiveKit Cloud Hosted Agent",
-        description: "Deploy the worker as a managed LiveKit Cloud agent. LiveKit hosts the worker and FS PBX remains the PBX policy boundary.",
-    },
-    {
-        value: "telnyx_hosted_agent",
-        label: "Telnyx Hosted Agent",
-        description: "Deploy the worker on LiveKit on Telnyx. Telnyx hosts the worker and FS PBX remains the PBX policy boundary.",
-    },
-];
-
-const deepgramModelOptions = [
-    { value: "deepgram/flux-general", label: "Flux General (Recommended)" },
-    { value: "deepgram/nova-3", label: "Nova 3" },
-    { value: "deepgram/nova-3-medical", label: "Nova 3 Medical" },
-    { value: "deepgram/nova-2", label: "Nova 2" },
-    { value: "deepgram/nova-2-conversationalai", label: "Nova 2 Conversational AI" },
-    { value: "deepgram/nova-2-medical", label: "Nova 2 Medical" },
-    { value: "deepgram/nova-2-phonecall", label: "Nova 2 Phone Call" },
-];
-
-const openaiLlmModelOptions = [
-    { value: "openai/gpt-4.1-mini", label: "GPT-4.1 mini (Recommended)" },
-    { value: "openai/gpt-4o-mini", label: "GPT-4o mini" },
-    { value: "openai/gpt-4.1-nano", label: "GPT-4.1 nano" },
-    { value: "openai/gpt-4.1", label: "GPT-4.1" },
-    { value: "openai/gpt-4o", label: "GPT-4o" },
-    { value: "openai/gpt-5-nano", label: "GPT-5 nano" },
-    { value: "openai/gpt-5-mini", label: "GPT-5 mini" },
-    { value: "openai/gpt-5", label: "GPT-5" },
-    { value: "openai/gpt-5.1-chat-latest", label: "GPT-5.1 Chat" },
-    { value: "openai/gpt-5.2-chat-latest", label: "GPT-5.2 Chat" },
-    { value: "openai/gpt-5.3-chat-latest", label: "GPT-5.3 Chat" },
-    { value: "openai/gpt-5.4-mini", label: "GPT-5.4 mini" },
-    { value: "openai/gpt-5.4", label: "GPT-5.4" },
-];
-
-const elevenlabsModelOptions = [
-    { value: "elevenlabs/eleven_flash_v2_5", label: "Eleven Flash v2.5 (Recommended)" },
-    { value: "elevenlabs/eleven_flash_v2", label: "Eleven Flash v2" },
-    { value: "elevenlabs/eleven_multilingual_v2", label: "Eleven Multilingual v2" },
-    { value: "elevenlabs/eleven_turbo_v2", label: "Eleven Turbo v2" },
-    { value: "elevenlabs/eleven_turbo_v2_5", label: "Eleven Turbo v2.5" },
-    { value: "elevenlabs/eleven_v3", label: "Eleven v3" },
-];
-
-const elevenlabsVoiceOptions = [
-    { value: "XrExE9yKIg1WjnnlVkGX", label: "Matilda (Recommended)" },
-    { value: "hpp4J3VqNfWAUOO0d1Us", label: "Bella" },
-    { value: "CwhRBWXzGAHq8TQ4Fs17", label: "Roger" },
-    { value: "EXAVITQu4vr4xnSDxMaL", label: "Sarah" },
-    { value: "FGY2WhTYpPnrIDTdsKH5", label: "Laura" },
-    { value: "IKne3meq5aSn9XLyUdCD", label: "Charlie" },
-    { value: "JBFqnCBsd6RMkjVDRZzb", label: "George" },
-    { value: "N2lVS1w4EtoT3dr4eOWO", label: "Callum" },
-    { value: "SAz9YHcvj6GT2YYXdXww", label: "River" },
-    { value: "SOYHLrjzK2X1ezoPC6cr", label: "Harry" },
-    { value: "TX3LPaxmHKxFdv7VOQHJ", label: "Liam" },
-    { value: "Xb7hH8MSUJpSbSDYk0k2", label: "Alice" },
-    { value: "bIHbv24MWmeRgasZH58o", label: "Will" },
-    { value: "cgSgspJ2msm6clMCkdW9", label: "Jessica" },
-    { value: "cjVigY5qzO86Huf0OWal", label: "Eric" },
-    { value: "iP95p4xoKVk53GoZ742B", label: "Chris" },
-    { value: "nPczCjzI2devNBz1zQrb", label: "Brian" },
-    { value: "onwK4e9ZLuTAKqWW03F9", label: "Daniel" },
-    { value: "pFZP5JQG7iQjIQuC4Bku", label: "Lily" },
-    { value: "pNInz6obpgDQGcFmaJgB", label: "Adam" },
-    { value: "pqHfZKP75CvOlQylNhV4", label: "Bill" },
 ];
 
 const openaiRealtimeModelOptions = [
-    { value: "gpt-realtime", label: "GPT Realtime (Recommended)" },
+    { value: "gpt-realtime-2", label: "GPT Realtime 2 (Recommended)" },
+    { value: "gpt-realtime-1.5", label: "GPT Realtime 1.5" },
+    { value: "gpt-realtime", label: "GPT Realtime" },
+    { value: "gpt-realtime-mini", label: "GPT Realtime mini" },
     { value: "gpt-4o-realtime-preview", label: "GPT-4o Realtime Preview" },
     { value: "gpt-4o-mini-realtime-preview", label: "GPT-4o mini Realtime Preview" },
 ];
@@ -417,12 +219,6 @@ const openaiVoiceOptions = [
     { value: "verse", label: "Verse" },
 ];
 
-const assemblyaiModelOptions = [
-    { value: "assemblyai/u3-rt-pro", label: "Universal 3 Realtime Pro (Recommended)" },
-    { value: "assemblyai/universal-streaming", label: "Universal Streaming English" },
-    { value: "assemblyai/universal-streaming-multilingual", label: "Universal Streaming Multilingual" },
-];
-
 const isInheriting = computed(() => settings.value?.scope === "system" && !!settings.value?.domain_uuid);
 const hasDomainOverride = computed(() => settings.value?.scope === "domain" && !!settings.value?.domain_uuid);
 const showOverrideBtn = computed(() => isInheriting.value && !isOverride.value);
@@ -430,16 +226,6 @@ const showSaveBtn = computed(() => !props.domain_uuid || hasDomainOverride.value
 const showRevertBtn = computed(() => hasDomainOverride.value);
 const showCancelBtn = computed(() => isOverride.value && isInheriting.value);
 const canEdit = computed(() => props.domain_uuid && !hasDomainOverride.value && !isOverride.value);
-const pipelineHeader = computed(() => (
-    selectedEngine.value === "assemblyai_agent"
-        ? "AssemblyAI + OpenAI + ElevenLabs"
-        : "Deepgram + OpenAI + ElevenLabs"
-));
-const pipelineDescription = computed(() => (
-    selectedEngine.value === "assemblyai_agent"
-        ? "AssemblyAI STT, OpenAI LLM, and ElevenLabs TTS are served by LiveKit Inference."
-        : "Deepgram STT, OpenAI LLM, and ElevenLabs TTS are served by LiveKit Inference."
-));
 const serviceStatusLabel = computed(() => {
     const status = agentServiceStatus.value?.status;
     if (!status) return "Status unknown";
@@ -455,16 +241,9 @@ const serviceStatusBadgeClass = computed(() => {
     }
     return `${base} bg-amber-50 text-amber-700 ring-amber-600/20`;
 });
-const selectedAgentRuntimeLabel = computed(() => (
-    agentRuntimeOptions.find((option) => option.value === selectedAgentRuntime.value)?.label ?? "External agent"
-));
 const showLocalAgentControls = computed(() => (
-    !props.domain_uuid && selectedEnabled.value && selectedAgentRuntime.value === "local_worker"
+    !props.domain_uuid && selectedEnabled.value
 ));
-const showExternalAgentNotice = computed(() => (
-    !props.domain_uuid && selectedEnabled.value && selectedAgentRuntime.value !== "local_worker"
-));
-const selectedLiveKitHosting = computed(() => detectLiveKitHosting(selectedLiveKitUrl.value));
 
 onMounted(() => {
     getSettings();
@@ -491,21 +270,7 @@ function cancelOverride() {
 }
 
 function handleEngineChange(value) {
-    selectedEngine.value = value || "standard_pipeline";
-}
-
-function handleAgentRuntimeChange(value) {
-    selectedAgentRuntime.value = value || "local_worker";
-
-    if (selectedAgentRuntime.value === "local_worker") {
-        getAgentServiceStatus();
-    } else {
-        agentServiceStatus.value = null;
-    }
-}
-
-function handleLiveKitUrlChange(value) {
-    selectedLiveKitUrl.value = value ?? "";
+    selectedEngine.value = value || "openai_realtime";
 }
 
 function handleEnabledChange(value) {
@@ -520,20 +285,8 @@ function showEnabledSystemFields() {
     return selectedEnabled.value && !props.domain_uuid;
 }
 
-function showStandardFields() {
-    return selectedEnabled.value && selectedEngine.value === "standard_pipeline";
-}
-
 function showOpenAIRealtimeFields() {
     return selectedEnabled.value && selectedEngine.value === "openai_realtime";
-}
-
-function showAssemblyAIFields() {
-    return selectedEnabled.value && selectedEngine.value === "assemblyai_agent";
-}
-
-function showPipelineModelFields() {
-    return showStandardFields() || showAssemblyAIFields();
 }
 
 const getSettings = async () => {
@@ -559,32 +312,20 @@ const getSettings = async () => {
 function updateForm(data) {
     const providerConfig = data.provider_config ?? {};
     selectedEnabled.value = data.enabled ?? false;
-    selectedEngine.value = data.default_engine ?? "standard_pipeline";
-    selectedAgentRuntime.value = data.agent_runtime ?? "local_worker";
-    selectedLiveKitUrl.value = data.livekit_url ?? "";
+    selectedEngine.value = data.default_engine ?? "openai_realtime";
     extraProviderConfig.value = stripKnownKeys(providerConfig, knownProviderConfigKeys);
 
     form$.value?.update({
         domain_uuid: props.domain_uuid ?? null,
         enabled: data.enabled ?? false,
-        default_engine: data.default_engine ?? "standard_pipeline",
-        agent_runtime: data.agent_runtime ?? "local_worker",
-        livekit_url: data.livekit_url ?? null,
-        livekit_api_key: data.livekit_api_key ?? null,
-        livekit_api_secret: data.livekit_api_secret ?? null,
-        deepgram_model: normalizeInferenceModel(providerConfig.deepgram_model, "deepgram", "deepgram/flux-general"),
-        deepgram_language: providerConfig.deepgram_language ?? "en",
-        openai_model: normalizeInferenceModel(providerConfig.openai_model, "openai", "openai/gpt-4.1-mini"),
-        elevenlabs_model: normalizeInferenceModel(providerConfig.elevenlabs_model, "elevenlabs", "elevenlabs/eleven_flash_v2_5"),
-        elevenlabs_voice_id: providerConfig.elevenlabs_voice_id ?? "XrExE9yKIg1WjnnlVkGX",
-        elevenlabs_language: providerConfig.elevenlabs_language ?? "en",
-        openai_realtime_model: providerConfig.openai_realtime_model ?? "gpt-realtime",
+        default_engine: data.default_engine ?? "openai_realtime",
+        openai_project_id: providerConfig.openai_project_id ?? null,
+        openai_sip_bridge_target: providerConfig.openai_sip_bridge_target ?? null,
+        openai_realtime_model: providerConfig.openai_realtime_model ?? "gpt-realtime-2",
         openai_voice: providerConfig.openai_voice ?? "marin",
-        assemblyai_model: normalizeInferenceModel(providerConfig.assemblyai_model, "assemblyai", "assemblyai/u3-rt-pro"),
-        assemblyai_language: providerConfig.assemblyai_language ?? "en",
     });
 
-    if (!props.domain_uuid && selectedEnabled.value && selectedAgentRuntime.value === "local_worker") {
+    if (!props.domain_uuid && selectedEnabled.value) {
         getAgentServiceStatus();
     } else {
         agentServiceStatus.value = null;
@@ -592,22 +333,11 @@ function updateForm(data) {
 }
 
 const knownProviderConfigKeys = [
-    "deepgram_model",
-    "deepgram_language",
-    "openai_model",
-    "elevenlabs_model",
-    "elevenlabs_voice_id",
-    "elevenlabs_language",
+    "openai_project_id",
+    "openai_sip_bridge_target",
     "openai_realtime_model",
     "openai_voice",
-    "assemblyai_model",
-    "assemblyai_language",
 ];
-
-function normalizeInferenceModel(value, provider, fallback) {
-    if (!value) return fallback;
-    return String(value).includes("/") ? value : `${provider}/${value}`;
-}
 
 function stripKnownKeys(config, knownKeys) {
     return Object.fromEntries(
@@ -650,7 +380,7 @@ const handleError = (error) => {
 };
 
 async function getAgentServiceStatus() {
-    if (props.domain_uuid || selectedAgentRuntime.value !== "local_worker" || !props.routes.ai_receptionist_service_status_route) return;
+    if (props.domain_uuid || !props.routes.ai_receptionist_service_status_route) return;
 
     serviceLoading.value = true;
     try {
@@ -664,7 +394,7 @@ async function getAgentServiceStatus() {
 }
 
 async function submitAgentServiceAction(action) {
-    if (props.domain_uuid || selectedAgentRuntime.value !== "local_worker" || !props.routes.ai_receptionist_service_control_route) return;
+    if (props.domain_uuid || !props.routes.ai_receptionist_service_control_route) return;
 
     serviceLoading.value = true;
     serviceActionLoading.value = action;
@@ -689,50 +419,4 @@ function isServiceActionLoading(action) {
     return serviceActionLoading.value === action;
 }
 
-function detectLiveKitHosting(value) {
-    if (!value) {
-        return {
-            label: "Not configured",
-            description: "Enter a LiveKit URL to identify where the media server is hosted.",
-        };
-    }
-
-    let host = "";
-    try {
-        host = new URL(value).hostname.toLowerCase();
-    } catch {
-        host = String(value)
-            .replace(/^wss?:\/\//, "")
-            .replace(/^https?:\/\//, "")
-            .split("/")[0]
-            .split(":")[0]
-            .toLowerCase();
-    }
-
-    if (host.endsWith("livekit.cloud")) {
-        return {
-            label: "LiveKit Cloud",
-            description: "Media, SIP, and rooms are hosted by LiveKit Cloud.",
-        };
-    }
-
-    if (host.endsWith("livekit-telnyx.com")) {
-        return {
-            label: "LiveKit on Telnyx",
-            description: "Media, SIP, and rooms are hosted on Telnyx infrastructure.",
-        };
-    }
-
-    if (["localhost", "127.0.0.1", "::1"].includes(host)) {
-        return {
-            label: "Local LiveKit",
-            description: "The LiveKit media server appears to be running locally.",
-        };
-    }
-
-    return {
-        label: "Custom or self-hosted LiveKit",
-        description: "The LiveKit media server appears to use a custom host.",
-    };
-}
 </script>

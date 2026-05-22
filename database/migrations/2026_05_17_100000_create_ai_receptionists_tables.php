@@ -14,10 +14,6 @@ return new class extends Migration
                 $table->uuid('setting_uuid')->primary()->default(DB::raw('uuid_generate_v4()'));
                 $table->uuid('domain_uuid')->nullable()->index();
                 $table->string('default_engine')->nullable();
-                $table->string('agent_runtime')->nullable()->index();
-                $table->text('livekit_url')->nullable();
-                $table->text('livekit_api_key')->nullable();
-                $table->text('livekit_api_secret')->nullable();
                 $table->json('provider_config')->nullable();
                 $table->boolean('enabled')->default(false)->index();
                 $table->timestamps();
@@ -80,8 +76,8 @@ return new class extends Migration
                 $table->string('engine');
                 $table->text('status')->default('started')->index();
                 $table->text('freeswitch_uuid')->nullable()->index();
-                $table->text('livekit_room')->nullable()->index();
-                $table->text('livekit_participant')->nullable();
+                $table->text('openai_call_id')->nullable()->index();
+                $table->text('sip_call_id')->nullable()->index();
                 $table->text('caller_id_name')->nullable();
                 $table->text('caller_id_number')->nullable();
                 $table->text('destination_number')->nullable();

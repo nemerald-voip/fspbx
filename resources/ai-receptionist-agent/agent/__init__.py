@@ -1,2 +1,1 @@
-"""FS PBX AI receptionist LiveKit worker."""
-
+"""FS PBX AI receptionist OpenAI Realtime controller."""

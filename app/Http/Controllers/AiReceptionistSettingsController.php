@@ -32,10 +32,6 @@ class AiReceptionistSettingsController extends Controller
             'domain_uuid' => ['nullable', 'uuid'],
             'enabled' => ['required', 'boolean'],
             'default_engine' => ['nullable', Rule::in(array_keys(AiReceptionistService::ENGINES))],
-            'agent_runtime' => ['nullable', Rule::in(array_keys(AiReceptionistService::AGENT_RUNTIMES))],
-            'livekit_url' => ['nullable', 'string', 'max:1024'],
-            'livekit_api_key' => ['nullable', 'string', 'max:1024'],
-            'livekit_api_secret' => ['nullable', 'string', 'max:4096'],
             'provider_config' => ['nullable', 'array'],
         ]);
 
@@ -90,14 +86,6 @@ class AiReceptionistSettingsController extends Controller
             'action' => ['required', Rule::in(['start', 'stop', 'restart'])],
         ]);
 
-        $settings = $service->freshResolvedSettings(includeSecrets: true);
-        if (! $service->usesLocalAgentRuntime($settings)) {
-            return response()->json([
-                'messages' => ['error' => ['The AI Receptionist agent is configured to run outside this server.']],
-                'service' => $this->serviceStatusPayload($service),
-            ], 409);
-        }
-
         $readinessErrors = $this->agentReadinessErrors($service);
         if ($validated['action'] !== 'stop' && $readinessErrors !== []) {
             return response()->json([
@@ -135,23 +123,6 @@ class AiReceptionistSettingsController extends Controller
 
     private function serviceStatusPayload(AiReceptionistService $service, ?array $readinessErrors = null): array
     {
-        $settings = $service->freshResolvedSettings(includeSecrets: true);
-        $runtime = $settings['agent_runtime'] ?? 'local_worker';
-
-        if (! $service->usesLocalAgentRuntime($settings)) {
-            $readinessErrors ??= $this->agentReadinessErrors($service);
-
-            return [
-                'status' => 'external',
-                'raw' => AiReceptionistService::AGENT_RUNTIMES[$runtime] ?? 'External agent runtime',
-                'ready' => $readinessErrors === [],
-                'readiness_errors' => $readinessErrors,
-                'agent_runtime' => $runtime,
-                'agent_runtime_label' => AiReceptionistService::AGENT_RUNTIMES[$runtime] ?? $runtime,
-                'livekit_hosting' => $settings['livekit_hosting'] ?? null,
-            ];
-        }
-
         $result = $this->runSupervisor(['status', self::SUPERVISOR_PROGRAM]);
         $raw = trim($result['output']);
         $readinessErrors ??= $this->agentReadinessErrors($service);
@@ -161,9 +132,6 @@ class AiReceptionistSettingsController extends Controller
             'raw' => $raw,
             'ready' => $readinessErrors === [],
             'readiness_errors' => $readinessErrors,
-            'agent_runtime' => $runtime,
-            'agent_runtime_label' => AiReceptionistService::AGENT_RUNTIMES[$runtime] ?? $runtime,
-            'livekit_hosting' => $settings['livekit_hosting'] ?? null,
         ];
     }
 
@@ -172,9 +140,9 @@ class AiReceptionistSettingsController extends Controller
         $errors = [];
         $settings = $service->freshResolvedSettings(includeSecrets: true);
 
-        if ($service->usesLocalAgentRuntime($settings) && ! is_file(self::AGENT_VENV_PYTHON)) {
+        if (! is_file(self::AGENT_VENV_PYTHON)) {
             $errors[] = 'Python virtual environment is missing at /opt/fspbx/ai-receptionist-agent/.venv.';
-        } elseif ($service->usesLocalAgentRuntime($settings) && ! $this->commandSuccessful([self::AGENT_VENV_PYTHON, '-B', '-c', 'import livekit'])) {
+        } elseif (! $this->commandSuccessful([self::AGENT_VENV_PYTHON, '-B', '-c', 'import aiohttp'])) {
             $errors[] = 'Python dependencies are not installed.';
         }
 
@@ -186,20 +154,12 @@ class AiReceptionistSettingsController extends Controller
             $errors[] = 'AI Receptionist system settings are not enabled.';
         }
 
-        $requiresStoredLiveKitCredentials = in_array(
-            $settings['agent_runtime'] ?? 'local_worker',
-            ['local_worker', 'external_worker'],
-            true
-        );
+        if (blank(config('services.openai.api_key'))) {
+            $errors[] = 'OPENAI_API_KEY is not configured.';
+        }
 
-        if ($requiresStoredLiveKitCredentials && (
-            blank($settings['livekit_url'] ?? null)
-                || blank($settings['livekit_api_key'] ?? null)
-                || blank($settings['livekit_api_secret'] ?? null)
-        )) {
-            $errors[] = 'LiveKit URL, API key, and API secret must be saved in system settings.';
-        } elseif (! $requiresStoredLiveKitCredentials && blank($settings['livekit_url'] ?? null)) {
-            $errors[] = 'LiveKit URL must be saved in system settings.';
+        if (blank(config('services.openai.webhook_secret'))) {
+            $errors[] = 'OPENAI_WEBHOOK_SECRET is not configured.';
         }
 
         return $errors;

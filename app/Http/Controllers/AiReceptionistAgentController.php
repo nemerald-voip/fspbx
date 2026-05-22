@@ -20,10 +20,6 @@ class AiReceptionistAgentController extends Controller
 
         return response()->json([
             'enabled' => (bool) ($settings['enabled'] ?? false),
-            'agent_runtime' => $settings['agent_runtime'] ?? 'local_worker',
-            'livekit_url' => $settings['livekit_url'] ?? null,
-            'livekit_api_key' => $settings['livekit_api_key'] ?? null,
-            'livekit_api_secret' => $settings['livekit_api_secret'] ?? null,
         ]);
     }
 
@@ -48,8 +44,9 @@ class AiReceptionistAgentController extends Controller
 
         $payload = $request->validate([
             'freeswitch_uuid' => ['nullable', 'string', 'max:255'],
-            'livekit_room' => ['nullable', 'string', 'max:255'],
-            'livekit_participant' => ['nullable', 'string', 'max:255'],
+            'openai_call_id' => ['nullable', 'string', 'max:255'],
+            'realtime_call_id' => ['nullable', 'string', 'max:255'],
+            'sip_call_id' => ['nullable', 'string', 'max:255'],
             'caller_id_name' => ['nullable', 'string', 'max:255'],
             'caller_id_number' => ['nullable', 'string', 'max:255'],
             'destination_number' => ['nullable', 'string', 'max:255'],
@@ -76,9 +73,14 @@ class AiReceptionistAgentController extends Controller
             'target' => ['nullable', 'string', 'max:255'],
         ]);
 
-        return response()->json([
-            'destination' => $service->resolveDestination($session, $payload),
-        ]);
+        return response()->json($service->recordBuiltInToolRun(
+            $session,
+            'resolve_destination',
+            $payload,
+            fn () => [
+                'destination' => $service->resolveDestination($session, $payload),
+            ]
+        ));
     }
 
     public function transfer(Request $request, AiReceptionistSession $session, AiReceptionistService $service): JsonResponse
@@ -94,9 +96,16 @@ class AiReceptionistAgentController extends Controller
             'destination' => ['nullable', 'array'],
         ]);
 
-        $destination = $payload['destination'] ?? $service->resolveDestination($session, $payload);
+        return response()->json($service->recordBuiltInToolRun(
+            $session,
+            'transfer_call',
+            $payload,
+            function () use ($service, $session, $payload) {
+                $destination = $payload['destination'] ?? $service->resolveDestination($session, $payload);
 
-        return response()->json($service->transfer($session, $destination));
+                return $service->transfer($session, $destination);
+            }
+        ));
     }
 
     public function runTool(Request $request, AiReceptionistSession $session, AiReceptionistService $service): JsonResponse

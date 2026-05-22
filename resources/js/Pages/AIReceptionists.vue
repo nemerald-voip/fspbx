@@ -6,7 +6,7 @@
             <template #title>AI Receptionists</template>
 
             <template #subtitle>
-                Manage AI call handlers, LiveKit routing, provider engines, and transfer policy.
+                Manage AI call handlers, OpenAI Realtime SIP routing, tools, and transfer policy.
             </template>
 
             <template #filters>

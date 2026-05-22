@@ -21,10 +21,9 @@ class Update190
     private const AGENT_VENV_DIR = '/opt/fspbx/ai-receptionist-agent/.venv';
     private const AGENT_TOKEN_KEY = 'AI_RECEPTIONIST_AGENT_TOKEN';
     private const AGENT_ENV_DEFAULTS = [
-        'AI_RECEPTIONIST_AGENT_NAME' => 'ai-receptionist',
+        'AI_RECEPTIONIST_CONTROLLER_URL' => 'http://127.0.0.1:8097/calls',
         'AI_RECEPTIONIST_HEALTH_HOST' => '127.0.0.1',
         'AI_RECEPTIONIST_HEALTH_PORT' => '8097',
-        'AI_RECEPTIONIST_IDLE_PROCESSES' => '1',
     ];
 
     public function apply(): bool
@@ -280,7 +279,6 @@ class Update190
         $paths = [
             "{$agentDir}/.venv",
             "{$agentDir}/agent/__pycache__",
-            "{$agentDir}/agent/engines/__pycache__",
         ];
 
         foreach ($paths as $path) {

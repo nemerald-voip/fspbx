@@ -29,7 +29,6 @@ def load_environment(force: bool = False) -> None:
 class Settings:
     fspbx_base_url: str
     fspbx_agent_token: str
-    agent_name: str
     health_host: str
     health_port: int
 
@@ -52,7 +51,6 @@ class Settings:
         _SETTINGS_CACHE = cls(
             fspbx_base_url=base_url.rstrip("/"),
             fspbx_agent_token=token,
-            agent_name=os.getenv("AI_RECEPTIONIST_AGENT_NAME", "ai-receptionist"),
             health_host=os.getenv("AI_RECEPTIONIST_HEALTH_HOST", "127.0.0.1"),
             health_port=int(os.getenv("AI_RECEPTIONIST_HEALTH_PORT", "8097")),
         )

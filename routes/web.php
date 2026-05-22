@@ -105,6 +105,7 @@ Route::webhooks('/sms/ringotelwebhook', 'ringotel_messaging');
 Route::webhooks('/webhook/freeswitch', 'freeswitch');
 Route::webhooks('/webhook/stripe', 'stripe');
 Route::webhooks('/webhook/assemblyai', 'assemblyai');
+Route::webhooks('/webhook/openai/realtime', 'openai_realtime');
 
 // Routes for 2FA email challenge. Used as a backup when 2FA is not enabled.
 Route::get('/email-challenge', [App\Http\Controllers\Auth\EmailChallengeController::class, 'create'])->name('email-challenge.login');
