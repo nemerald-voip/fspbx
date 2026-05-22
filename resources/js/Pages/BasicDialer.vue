@@ -2,29 +2,51 @@
     <MainLayout />
 
     <div class="m-3">
-        <div class="mb-3 flex border-b border-gray-200">
-            <button type="button" class="-mb-px px-4 py-2 text-sm font-medium"
-                :class="activeTab === 'overview' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-gray-700'"
-                @click="switchTab('overview')">
-                Overview
-            </button>
-            <button type="button" class="-mb-px px-4 py-2 text-sm font-medium"
-                :class="activeTab === 'campaigns' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-gray-700'"
-                @click="switchTab('campaigns')">
-                Campaigns
-            </button>
-            <button type="button" class="-mb-px px-4 py-2 text-sm font-medium"
-                :class="activeTab === 'contact_lists' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-gray-700'"
-                @click="switchTab('contact_lists')">
-                Contact Lists
-            </button>
+        <div class="px-4 sm:px-6 lg:px-8">
+            <div class="mb-6 mt-2 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-indigo-600">Outbound Dialer</p>
+                    <h1 class="mt-1 text-2xl font-semibold tracking-tight text-gray-900 sm:text-3xl">Basic Dialer</h1>
+                    <p class="mt-1 text-sm text-gray-500">Lightweight outbound campaigns and reusable contact lists.</p>
+                </div>
+            </div>
         </div>
 
-        <BasicDialerOverview v-if="activeTab === 'overview'" :route="routes.overview"
-            @open-campaign="handleStatusButtonClick" @error="handleErrorResponse" />
+        <div class="mb-6 border-b border-gray-200 px-4 sm:px-6 lg:px-8">
+            <nav class="-mb-px flex gap-0.5 overflow-x-auto sm:gap-2" aria-label="Tabs">
+                <button v-for="tab in tabs" :key="tab.id" type="button"
+                    :class="[
+                        'group relative -mb-px inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t-lg px-3 py-2.5 text-sm font-semibold tracking-tight transition-colors sm:gap-2.5 sm:px-6 sm:py-3.5 sm:text-base',
+                        activeTab === tab.id
+                            ? 'text-indigo-700'
+                            : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                    ]"
+                    @click="switchTab(tab.id)">
+                    <component :is="tab.icon" class="h-4 w-4 sm:h-5 sm:w-5"
+                        :class="activeTab === tab.id ? 'text-indigo-600' : 'text-gray-400 group-hover:text-gray-600'" />
+                    <span>{{ tab.label }}</span>
+                    <span v-if="tab.count !== undefined && tab.count !== null"
+                        :class="[
+                            'ml-0.5 rounded-full px-2 py-0.5 text-xs font-semibold sm:ml-1 sm:px-2.5',
+                            activeTab === tab.id
+                                ? 'bg-indigo-100 text-indigo-700'
+                                : 'bg-gray-100 text-gray-600 group-hover:bg-gray-200'
+                        ]">
+                        {{ tab.count }}
+                    </span>
+                    <span v-if="activeTab === tab.id"
+                        class="absolute inset-x-2 -bottom-px h-[3px] rounded-full bg-indigo-600 sm:inset-x-3"></span>
+                </button>
+            </nav>
+        </div>
+
+        <div v-if="activeTab === 'overview'" class="px-4 sm:px-6 lg:px-8">
+            <BasicDialerOverview :route="routes.overview"
+                @open-campaign="handleStatusButtonClick" @error="handleErrorResponse" />
+        </div>
 
         <DataTable v-else @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
-            <template #title>{{ activeTab === "campaigns" ? "Basic Dialer" : "Contact Lists" }}</template>
+            <template #title>{{ activeTab === "campaigns" ? "Campaigns" : "Contact Lists" }}</template>
 
             <template #subtitle>
                 {{ activeTab === "campaigns" ? "Manage lightweight outbound dialer campaigns." : "Manage reusable dialer contact lists." }}
@@ -276,6 +298,7 @@ import BasicDialerOverview from "./components/dashboards/BasicDialerOverview.vue
 import MainLayout from "../Layouts/MainLayout.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { ChevronDownIcon, ChevronUpIcon, EyeIcon, MagnifyingGlassIcon, PauseCircleIcon, PencilSquareIcon, PlayIcon, StopIcon, TrashIcon } from "@heroicons/vue/24/solid";
+import { ChartBarSquareIcon, MegaphoneIcon, UserGroupIcon } from "@heroicons/vue/24/outline";
 
 const props = defineProps({
     routes: Object,
@@ -327,6 +350,22 @@ const sortData = ref({
     name: "name",
     order: "asc",
 });
+
+const tabs = computed(() => [
+    { id: "overview", label: "Overview", icon: ChartBarSquareIcon, count: null },
+    {
+        id: "campaigns",
+        label: "Campaigns",
+        icon: MegaphoneIcon,
+        count: activeTab.value === "campaigns" ? data.value.total : null,
+    },
+    {
+        id: "contact_lists",
+        label: "Contact Lists",
+        icon: UserGroupIcon,
+        count: activeTab.value === "contact_lists" ? data.value.total : null,
+    },
+]);
 
 const activeRoutes = computed(() => activeTab.value === "campaigns"
     ? {

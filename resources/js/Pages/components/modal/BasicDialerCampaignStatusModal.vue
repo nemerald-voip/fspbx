@@ -14,20 +14,20 @@
                         leave-from="opacity-100 translate-y-0 sm:scale-100"
                         leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
                         <DialogPanel
-                            class="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-6xl sm:p-6">
-                            <div class="flex items-start justify-between gap-4">
-                                <div>
-                                    <DialogTitle as="h3" class="text-base font-semibold leading-6 text-gray-900">
+                            class="relative w-full max-w-6xl transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:p-6">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="min-w-0 flex-1">
+                                    <DialogTitle as="h3" class="truncate text-base font-semibold leading-6 text-gray-900">
                                         {{ campaign.name || "Campaign Status" }}
                                     </DialogTitle>
                                     <div class="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-500">
                                         <Badge :text="campaign.status || 'loading'" v-bind="statusBadgeProps(campaign.status)" />
-                                        <span>{{ campaign.contact_list_name || "No contact list" }}</span>
-                                        <span v-if="campaign.destination_label">to {{ campaign.destination_label }}</span>
+                                        <span class="truncate">{{ campaign.contact_list_name || "No contact list" }}</span>
+                                        <span v-if="campaign.destination_label" class="truncate">to {{ campaign.destination_label }}</span>
                                     </div>
                                 </div>
 
-                                <div class="flex items-center gap-1">
+                                <div class="flex shrink-0 items-center gap-1">
                                     <button type="button"
                                         class="rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                                         title="Refresh" @click="fetchStatus">
@@ -84,19 +84,19 @@
                                             class="py-8 text-center text-xs text-gray-500">
                                             No outcomes recorded yet.
                                         </div>
-                                        <div v-else class="flex items-center gap-4">
-                                            <div class="relative h-36 w-36 shrink-0">
+                                        <div v-else class="flex flex-col items-center gap-4 sm:flex-row">
+                                            <div class="relative h-32 w-32 shrink-0 sm:h-36 sm:w-36">
                                                 <Doughnut :data="outcomeChartData" :options="doughnutOptions" />
                                             </div>
-                                            <div class="flex-1 space-y-1">
+                                            <div class="w-full min-w-0 flex-1 space-y-1">
                                                 <div v-for="(item, idx) in outcomeBreakdown" :key="item.label"
-                                                    class="flex items-center justify-between text-xs">
-                                                    <div class="flex items-center gap-2">
-                                                        <span class="inline-block h-2.5 w-2.5 rounded-full"
+                                                    class="flex items-center justify-between gap-3 text-xs">
+                                                    <div class="flex min-w-0 items-center gap-2">
+                                                        <span class="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
                                                             :style="{ backgroundColor: chartPalette[idx % chartPalette.length] }"></span>
-                                                        <span class="capitalize text-gray-700">{{ formatLabel(item.label) }}</span>
+                                                        <span class="truncate capitalize text-gray-700">{{ formatLabel(item.label) }}</span>
                                                     </div>
-                                                    <div class="font-medium text-gray-900">
+                                                    <div class="shrink-0 font-medium text-gray-900">
                                                         {{ item.count }}
                                                         <span class="ml-1 text-gray-400">{{ percent(item.count, outcomeTotal) }}%</span>
                                                     </div>
@@ -325,9 +325,15 @@ const barOptions = {
         legend: { display: false },
         tooltip: { enabled: true },
     },
+    elements: {
+        bar: { borderSkipped: false },
+    },
+    datasets: {
+        bar: { maxBarThickness: 24, categoryPercentage: 0.7, barPercentage: 0.8 },
+    },
     scales: {
         x: { beginAtZero: true, ticks: { precision: 0 } },
-        y: { grid: { display: false } },
+        y: { grid: { display: false }, ticks: { autoSkip: false } },
     },
 };
 

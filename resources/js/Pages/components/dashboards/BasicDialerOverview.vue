@@ -5,19 +5,13 @@
         </div>
 
         <template v-else>
-            <div class="flex items-center justify-between">
-                <div>
-                    <h2 class="text-base font-semibold text-gray-900">Overview</h2>
-                    <p class="mt-1 text-sm text-gray-500">Activity and outcomes across all dialer campaigns.</p>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="text-xs text-gray-400">{{ lastUpdatedLabel }}</span>
-                    <button type="button" @click="fetchOverview"
-                        class="rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                        title="Refresh">
-                        <ArrowPathIcon class="h-5 w-5" :class="{ 'animate-spin': loading }" />
-                    </button>
-                </div>
+            <div class="flex items-center justify-end gap-2">
+                <span class="text-xs text-gray-400">{{ lastUpdatedLabel }}</span>
+                <button type="button" @click="fetchOverview"
+                    class="rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    title="Refresh">
+                    <ArrowPathIcon class="h-5 w-5" :class="{ 'animate-spin': loading }" />
+                </button>
             </div>
 
             <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
@@ -270,9 +264,12 @@ const barOptions = {
         legend: { display: false },
         tooltip: { enabled: true },
     },
+    datasets: {
+        bar: { maxBarThickness: 24, categoryPercentage: 0.7, barPercentage: 0.8 },
+    },
     scales: {
         x: { beginAtZero: true, ticks: { precision: 0 } },
-        y: { grid: { display: false } },
+        y: { grid: { display: false }, ticks: { autoSkip: false } },
     },
 };
 
@@ -305,9 +302,7 @@ function fetchOverview() {
             lastUpdated.value = new Date().toISOString();
             loaded.value = true;
         })
-        .catch((error) => {
-            // best-effort: just stop spinner; parent receives no error event on poll
-        })
+        .catch(() => {})
         .finally(() => {
             loading.value = false;
         });
