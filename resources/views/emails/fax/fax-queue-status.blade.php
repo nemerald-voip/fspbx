@@ -6,7 +6,7 @@
 <h1>Fax Service Alert</h1>
 
 @if(isset($attributes["pendingFaxes"]))
-    <p>{{ $attributes["pendingFaxes"] }} faxes have been pending for longer than {{ $attributes["waitTimeThreshold"] }} minutes. Check the fax queue service status.</p>
+    <p>{{ $attributes["pendingFaxes"] }} outbound faxes have been pending for longer than {{ $attributes["waitTimeThreshold"] }} minutes. Check the fax service status.</p>
 @endif
 
 @if(isset($attributes["failedFaxes"]))

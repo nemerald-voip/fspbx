@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Models\FaxQueues;
+use App\Models\OutboundFax;
 use Illuminate\Bus\Queueable;
 use App\Models\DefaultSettings;
 use Illuminate\Support\Facades\Redis;
@@ -96,9 +96,10 @@ class CheckFaxServiceStatus implements ShouldQueue
             // Calculate the time threshold
             $timeThreshold = now()->subMinutes($waitTimeThreshold)->toIso8601String();
 
-            // Get pending faxes that exceed the wait time threshold
-            $pendingFaxes = FaxQueues::where('fax_status', 'waiting')
-                ->where('fax_date', '<', $timeThreshold)
+            // Get pending outbound faxes that have not advanced recently.
+            $pendingFaxes = OutboundFax::query()
+                ->whereIn('status', ['waiting', 'trying', 'busy'])
+                ->where('updated_at', '<', $timeThreshold)
                 ->count();
 
             // logger('Threshold - ' . $threshold);
@@ -107,7 +108,7 @@ class CheckFaxServiceStatus implements ShouldQueue
             // logger('pendingFaxes - ' . $pendingFaxes);
             
             if ($pendingFaxes >= $threshold) {
-                logger("Fax service alert: {$pendingFaxes} faxes have been pending for longer than {$waitTimeThreshold} minutes. Check fax queue service status");
+                logger("Fax service alert: {$pendingFaxes} outbound faxes have been pending for longer than {$waitTimeThreshold} minutes. Check fax service status");
 
                 if ($notifyEmail) {
                     $params['notifyEmail'] = $notifyEmail;
@@ -119,10 +120,11 @@ class CheckFaxServiceStatus implements ShouldQueue
                 }
             }
 
-            // Get last $threshold faxes and check failure rate
-            $recentFaxes = FaxQueues::orderBy('fax_date', 'desc')
+            // Get last $threshold outbound faxes and check failure rate
+            $recentFaxes = OutboundFax::query()
+                ->orderBy('created_at', 'desc')
                 ->take($threshold)
-                ->pluck('fax_status');
+                ->pluck('status');
 
             if ($recentFaxes->count() > 0) {
                 $failedCount = $recentFaxes->filter(fn($status) => $status === 'failed')->count();

@@ -1,7 +1,7 @@
 Fax Service Alert
 
 @if(isset($attributes["pendingFaxes"]))
-{{ $attributes["pendingFaxes"] }} faxes have been pending for longer than {{ $attributes["waitTimeThreshold"] }} minutes. Check the fax queue service status.
+{{ $attributes["pendingFaxes"] }} outbound faxes have been pending for longer than {{ $attributes["waitTimeThreshold"] }} minutes. Check the fax service status.
 @endif
 
 @if(isset($attributes["failedFaxes"]))

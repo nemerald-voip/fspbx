@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\FaxLogs;
 use App\Models\FaxFiles;
 use App\Models\FaxQueues;
+use App\Models\OutboundFax;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Redis;
@@ -131,28 +132,64 @@ class DeleteOldFaxes implements ShouldQueue
                 }
             }
 
-            // Delete fax records from the FaxFiles model (v_fax_files table)
+            $oldOutboundFaxes = OutboundFax::query()
+                ->select('outbound_fax_uuid')
+                ->whereIn('status', ['sent', 'failed'])
+                ->where('created_at', '<', $cutoffDate);
+
+            $oldFaxFiles = FaxFiles::query()
+                ->select('fax_file_uuid')
+                ->where('fax_date', '<', $cutoffDate);
+
+            $oldFaxLogs = FaxLogs::query()
+                ->select('fax_log_uuid')
+                ->where('fax_date', '<', $cutoffDate);
+
+            $oldOutboundFaxLogs = FaxLogs::query()
+                ->select('fax_log_uuid')
+                ->whereIn('outbound_fax_uuid', clone $oldOutboundFaxes);
+
+            // Delete inbound/sent fax file records from the FaxFiles model (v_fax_files table)
+            // and files attached to outbound faxes being removed.
             try {
-                FaxFiles::where('fax_date', '<', $cutoffDate)->delete();
+                FaxFiles::query()
+                    ->where('fax_date', '<', $cutoffDate)
+                    ->orWhereIn('fax_file_uuid', clone $oldFaxLogs)
+                    ->orWhereIn('fax_file_uuid', clone $oldOutboundFaxLogs)
+                    ->delete();
                 // logger("Deleted fax records older than {$days} days from FaxFiles.");
             } catch (\Exception $e) {
                 logger("Error deleting fax records from FaxFiles: " . $e->getMessage());
             }
 
-            // Delete fax logs using the FaxLogs model (v_fax_logs table)
+            // Delete fax logs using the FaxLogs model (v_fax_logs table), including
+            // logs associated with outbound faxes being removed.
             try {
-                FaxLogs::where('fax_date', '<', $cutoffDate)->delete();
+                FaxLogs::query()
+                    ->where('fax_date', '<', $cutoffDate)
+                    ->orWhereIn('fax_log_uuid', clone $oldFaxFiles)
+                    ->orWhereIn('outbound_fax_uuid', clone $oldOutboundFaxes)
+                    ->delete();
                 // logger("Deleted fax logs older than {$days} days from FaxLogs.");
             } catch (\Exception $e) {
                 logger("Error deleting fax logs from FaxLogs: " . $e->getMessage());
             }
 
-            // Delete fax logs using the FaxLogs model (v_fax_logs table)
+            // Delete completed outbound fax records using the OutboundFax model (outbound_faxes table)
+            try {
+                OutboundFax::whereIn('status', ['sent', 'failed'])
+                    ->where('created_at', '<', $cutoffDate)
+                    ->delete();
+            } catch (\Exception $e) {
+                logger("Error deleting outbound fax records from OutboundFax: " . $e->getMessage());
+            }
+
+            // Delete leftover legacy fax queue records. The table is no longer
+            // used for active outbound faxing, but old rows may still exist.
             try {
                 FaxQueues::where('fax_date', '<', $cutoffDate)->delete();
-                // logger("Deleted fax queue items older than {$days} days from FaxLogs.");
             } catch (\Exception $e) {
-                logger("Error deleting fax queue items from FaxQueues: " . $e->getMessage());
+                logger("Error deleting legacy fax queue records from FaxQueues: " . $e->getMessage());
             }
 
             // logger("🔕 Wake-up call snoozed: {$this->uuid} until {$newAttemptTime->toDateTimeString()}");
