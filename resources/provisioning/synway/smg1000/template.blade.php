@@ -1,4 +1,4 @@
-{{-- version: 1.0.0 --}}
+{{-- version: 1.0.1 --}}
 
 @switch($flavor)
 
@@ -11,9 +11,6 @@
 
     foreach (($lines ?? []) as $line) {
         $n = (int)($line['line_number'] ?? 0);
-        if ($n <= 0) {
-            continue;
-        }
 
         if (empty($primaryLine)) {
             $primaryLine = $line;
@@ -109,15 +106,15 @@
 
 [GWGLOBAL]
 global_eth={{ $settings['synway_global_eth'] ?? 0 }}
-global_localport={{ $settings['synway_global_localport'] ?? $settings['sip_listen_port'] ?? 5060 }}
+global_localport={{ $settings['sip_port'] ?? 5060 }}
 global_register={{ $settings['synway_global_register'] ?? 1 }}
 global_username={{ $settings['synway_global_username'] ?? $primaryLine['auth_id'] ?? '' }}
 global_password={{ $settings['synway_global_password'] ?? $primaryLine['password'] ?? '' }}
 global_authusername={{ $settings['synway_global_authusername'] ?? $primaryLine['auth_id'] ?? '' }}
-global_serveraddress={{ $settings['synway_global_serveraddress'] ?? $primaryLine['server_address_primary'] ?? $primaryLine['server_address'] ?? $domain_name ?? '' }}
-global_serverport={{ $settings['synway_global_serverport'] ?? $primaryLine['sip_port'] ?? 5060 }}
+global_serveraddress={{ $primaryLine['server_address'] ?? $domain_name ?? '' }}
+global_serverport={{ $primaryLine['sip_port'] ?? 5060 }}
 global_sipims={{ $settings['synway_global_sipims'] ?? 1 }}
-global_outboundaddress={{ $settings['synway_global_outboundaddress'] ?? $primaryLine['outbound_proxy_primary'] ?? '' }}
+global_outboundaddress={{ $primaryLine['outbound_proxy_primary'] ?? '' }}
 global_outboundport={{ $settings['synway_global_outboundport'] ?? $primaryLine['sip_port'] ?? 5060 }}
 global_SipRegTimeMs={{ $settings['synway_global_sip_reg_time_ms'] ?? 10 }}
 global_regexpires={{ $settings['synway_global_regexpires'] ?? $primaryLine['register_expires'] ?? 120 }}
@@ -264,10 +261,10 @@ GWSvrV={{ $settings['synway_gwsvr_version'] ?? '' }}
 DownloadUrl={{ $settings['synway_firmware_url'] ?? '' }}
 
 [UserInfo]
-UserName={{ $settings['synway_current_admin_name'] ?? 'admin' }}
+{{--  UserName={{ $settings['synway_current_admin_name'] ?? 'admin' }}
 Pwd={{ $settings['synway_current_admin_password'] ?? '' }}
 NewAdminName={{ $settings['synway_new_admin_name'] ?? $settings['admin_name'] ?? '' }}
-NewAdminPwd={{ $settings['synway_new_admin_password'] ?? $settings['admin_password'] ?? '' }}
+NewAdminPwd={{ $settings['synway_new_admin_password'] ??  'Admin@75180' }} --}}
 
 [USER]
 UserNum={{ $settings['synway_user_num'] ?? count($synwayUsers) }}
@@ -316,7 +313,7 @@ DtmfDetector={{ $settings['synway_dtmf_detector'] ?? '5,9,23,36,838,10,50,60,-21
 DtmfPlayEnergy={{ $settings['synway_dtmf_play_energy'] ?? -145 }}
 
 [BoardId={{ $settings['synway_board_id'] ?? 0 }}]
-AudioCodecList={{ $settings['synway_audio_codec_list'] ?? '8,0,18,98,96,4' }}
+AudioCodecList={{ $settings['synway_audio_codec_list'] ?? '0,8' }}
 SizeG711A={{ $settings['synway_size_g711a'] ?? 20 }}
 SizeG711U={{ $settings['synway_size_g711u'] ?? 20 }}
 SizeG729={{ $settings['synway_size_g729'] ?? 20 }}
