@@ -4,6 +4,11 @@
     <div class="m-3">
         <div class="mb-3 flex border-b border-gray-200">
             <button type="button" class="-mb-px px-4 py-2 text-sm font-medium"
+                :class="activeTab === 'overview' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-gray-700'"
+                @click="switchTab('overview')">
+                Overview
+            </button>
+            <button type="button" class="-mb-px px-4 py-2 text-sm font-medium"
                 :class="activeTab === 'campaigns' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-gray-700'"
                 @click="switchTab('campaigns')">
                 Campaigns
@@ -15,7 +20,10 @@
             </button>
         </div>
 
-        <DataTable @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
+        <BasicDialerOverview v-if="activeTab === 'overview'" :route="routes.overview"
+            @open-campaign="handleStatusButtonClick" @error="handleErrorResponse" />
+
+        <DataTable v-else @search-action="handleSearchButtonClick" @reset-filters="handleFiltersReset">
             <template #title>{{ activeTab === "campaigns" ? "Basic Dialer" : "Contact Lists" }}</template>
 
             <template #subtitle>
@@ -264,6 +272,7 @@ import Notification from "./components/notifications/Notification.vue";
 import BasicDialerCampaignForm from "./components/forms/BasicDialerCampaignForm.vue";
 import BasicDialerContactListForm from "./components/forms/BasicDialerContactListForm.vue";
 import BasicDialerCampaignStatusModal from "./components/modal/BasicDialerCampaignStatusModal.vue";
+import BasicDialerOverview from "./components/dashboards/BasicDialerOverview.vue";
 import MainLayout from "../Layouts/MainLayout.vue";
 import Badge from "@generalComponents/Badge.vue";
 import { ChevronDownIcon, ChevronUpIcon, EyeIcon, MagnifyingGlassIcon, PauseCircleIcon, PencilSquareIcon, PlayIcon, StopIcon, TrashIcon } from "@heroicons/vue/24/solid";
@@ -276,7 +285,7 @@ const props = defineProps({
 const routes = props.routes;
 const permissions = props.permissions;
 
-const activeTab = ref("campaigns");
+const activeTab = ref("overview");
 const activeForm = ref("campaigns");
 const loading = ref(false);
 const currentPage = ref(1);
@@ -357,7 +366,9 @@ const statusRoute = computed(() => statusCampaignUuid.value
     : null);
 
 onMounted(() => {
-    getData();
+    if (activeTab.value !== "overview") {
+        getData();
+    }
 });
 
 const switchTab = (tab) => {
@@ -368,7 +379,9 @@ const switchTab = (tab) => {
     sortData.value = { name: "name", order: "asc" };
     filterData.value.search = null;
     handleClearSelection();
-    getData(1);
+    if (tab !== "overview") {
+        getData(1);
+    }
 };
 
 const handleSortRequest = (column) => {

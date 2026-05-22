@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\BasicDialerCampaign;
+use App\Models\BasicDialerCampaignAttempt;
+use App\Models\BasicDialerCampaignRecipient;
 use App\Models\BasicDialerContact;
 use App\Models\BasicDialerContactList;
 use App\Models\Destinations;
@@ -11,6 +13,7 @@ use App\Services\BasicDialerService;
 use App\Services\CallRoutingOptionsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -31,6 +34,7 @@ class BasicDialerController extends Controller
         return Inertia::render('BasicDialer', [
             'routes' => [
                 'current_page' => route('basic-dialer.index'),
+                'overview' => route('basic-dialer.overview'),
                 'campaign_data' => route('basic-dialer.campaigns.data'),
                 'campaign_store' => route('basic-dialer.campaigns.store'),
                 'campaign_item_options' => route('basic-dialer.campaigns.item.options'),
@@ -108,6 +112,150 @@ class BasicDialerController extends Controller
         ]);
     }
 
+    public function getOverview(): JsonResponse
+    {
+        if (! userCheckPermission('basic_dialer_view')) {
+            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+        }
+
+        $domainUuid = session('domain_uuid');
+        $todayStart = Carbon::now()->startOfDay();
+        $weekStart = Carbon::now()->subDays(6)->startOfDay();
+
+        $campaignStatusCounts = BasicDialerCampaign::query()
+            ->where('domain_uuid', $domainUuid)
+            ->selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        $totalCampaigns = (int) $campaignStatusCounts->sum();
+
+        $recipientStatusCounts = BasicDialerCampaignRecipient::query()
+            ->where('domain_uuid', $domainUuid)
+            ->selectRaw('status, count(*) as count')
+            ->groupBy('status')
+            ->pluck('count', 'status');
+
+        $totalRecipients = (int) $recipientStatusCounts->sum();
+
+        $attemptsQuery = BasicDialerCampaignAttempt::query()->where('domain_uuid', $domainUuid);
+        $totalAttempts = (int) (clone $attemptsQuery)->count();
+        $attemptsToday = (int) (clone $attemptsQuery)->where('created_at', '>=', $todayStart)->count();
+        $answeredToday = (int) (clone $attemptsQuery)
+            ->where('created_at', '>=', $todayStart)
+            ->whereNotNull('answered_at')
+            ->count();
+        $totalAnswered = (int) (clone $attemptsQuery)->whereNotNull('answered_at')->count();
+        $totalTalkSeconds = (int) (clone $attemptsQuery)->sum('duration');
+
+        $outcomeBreakdown = (clone $attemptsQuery)
+            ->selectRaw("COALESCE(NULLIF(outcome, ''), 'unknown') as label, count(*) as count")
+            ->groupBy('label')
+            ->orderByDesc('count')
+            ->limit(10)
+            ->get()
+            ->map(fn ($row) => ['label' => $row->label, 'count' => (int) $row->count])
+            ->values();
+
+        $hangupBreakdown = (clone $attemptsQuery)
+            ->whereNotNull('hangup_cause')
+            ->where('hangup_cause', '<>', '')
+            ->selectRaw('hangup_cause as label, count(*) as count')
+            ->groupBy('label')
+            ->orderByDesc('count')
+            ->limit(8)
+            ->get()
+            ->map(fn ($row) => ['label' => $row->label, 'count' => (int) $row->count])
+            ->values();
+
+        $dailyVolume = (clone $attemptsQuery)
+            ->where('created_at', '>=', $weekStart)
+            ->selectRaw("to_char(created_at, 'YYYY-MM-DD') as day, count(*) as total, count(answered_at) as answered")
+            ->groupBy('day')
+            ->orderBy('day')
+            ->get()
+            ->map(fn ($row) => [
+                'day' => $row->day,
+                'total' => (int) $row->total,
+                'answered' => (int) $row->answered,
+            ])
+            ->values();
+
+        $recentActivity = BasicDialerCampaignAttempt::query()
+            ->where('domain_uuid', $domainUuid)
+            ->with([
+                'recipient:basic_dialer_campaign_recipient_uuid,phone_number,contact_name',
+                'campaign:basic_dialer_campaign_uuid,name',
+            ])
+            ->select([
+                'basic_dialer_campaign_attempt_uuid',
+                'basic_dialer_campaign_uuid',
+                'basic_dialer_campaign_recipient_uuid',
+                'attempt_number',
+                'status',
+                'outcome',
+                'hangup_cause',
+                'duration',
+                'queued_at',
+                'answered_at',
+                'ended_at',
+                'created_at',
+            ])
+            ->orderByDesc('created_at')
+            ->limit(25)
+            ->get();
+
+        $activeCampaigns = BasicDialerCampaign::query()
+            ->where('domain_uuid', $domainUuid)
+            ->whereIn('status', ['running', 'paused'])
+            ->select([
+                'basic_dialer_campaign_uuid',
+                'name',
+                'status',
+                'started_at',
+                'last_run_at',
+            ])
+            ->withCount([
+                'recipients',
+                'recipients as pending_recipients_count' => fn ($q) => $q->where('status', 'pending'),
+                'recipients as answered_recipients_count' => fn ($q) => $q->where('status', 'answered'),
+                'recipients as failed_recipients_count' => fn ($q) => $q->where('status', 'failed'),
+                'attempts',
+            ])
+            ->orderByDesc('last_run_at')
+            ->limit(10)
+            ->get();
+
+        return response()->json([
+            'kpis' => [
+                'total_campaigns' => $totalCampaigns,
+                'running_campaigns' => (int) ($campaignStatusCounts['running'] ?? 0),
+                'paused_campaigns' => (int) ($campaignStatusCounts['paused'] ?? 0),
+                'draft_campaigns' => (int) ($campaignStatusCounts['draft'] ?? 0),
+                'completed_campaigns' => (int) ($campaignStatusCounts['completed'] ?? 0),
+                'stopped_campaigns' => (int) ($campaignStatusCounts['stopped'] ?? 0),
+                'total_recipients' => $totalRecipients,
+                'pending_recipients' => (int) ($recipientStatusCounts['pending'] ?? 0),
+                'answered_recipients' => (int) ($recipientStatusCounts['answered'] ?? 0),
+                'failed_recipients' => (int) ($recipientStatusCounts['failed'] ?? 0),
+                'total_attempts' => $totalAttempts,
+                'attempts_today' => $attemptsToday,
+                'answered_today' => $answeredToday,
+                'total_answered' => $totalAnswered,
+                'answer_rate' => $totalAttempts > 0 ? round(($totalAnswered / $totalAttempts) * 100, 1) : 0,
+                'answer_rate_today' => $attemptsToday > 0 ? round(($answeredToday / $attemptsToday) * 100, 1) : 0,
+                'total_talk_seconds' => $totalTalkSeconds,
+            ],
+            'campaign_status_counts' => $campaignStatusCounts,
+            'recipient_status_counts' => $recipientStatusCounts,
+            'outcome_breakdown' => $outcomeBreakdown,
+            'hangup_breakdown' => $hangupBreakdown,
+            'daily_volume' => $dailyVolume,
+            'recent_activity' => $recentActivity,
+            'active_campaigns' => $activeCampaigns,
+        ]);
+    }
+
     public function getCampaignStatus(BasicDialerCampaign $campaign): JsonResponse
     {
         if (! userCheckPermission('basic_dialer_view') || $campaign->domain_uuid !== session('domain_uuid')) {
@@ -125,6 +273,30 @@ class BasicDialerController extends Controller
             ->selectRaw('status, count(*) as count')
             ->groupBy('status')
             ->pluck('count', 'status');
+
+        $outcomeBreakdown = $campaign->attempts()
+            ->selectRaw("COALESCE(NULLIF(outcome, ''), 'unknown') as label, count(*) as count")
+            ->groupBy('label')
+            ->orderByDesc('count')
+            ->limit(10)
+            ->get()
+            ->map(fn ($row) => ['label' => $row->label, 'count' => (int) $row->count])
+            ->values();
+
+        $hangupBreakdown = $campaign->attempts()
+            ->whereNotNull('hangup_cause')
+            ->where('hangup_cause', '<>', '')
+            ->selectRaw('hangup_cause as label, count(*) as count')
+            ->groupBy('label')
+            ->orderByDesc('count')
+            ->limit(8)
+            ->get()
+            ->map(fn ($row) => ['label' => $row->label, 'count' => (int) $row->count])
+            ->values();
+
+        $totalAttemptsAll = (int) $campaign->attempts()->count();
+        $answeredAttemptsAll = (int) $campaign->attempts()->whereNotNull('answered_at')->count();
+        $talkSeconds = (int) $campaign->attempts()->sum('duration');
 
         $recipients = $campaign->recipients()
             ->select([
@@ -166,6 +338,10 @@ class BasicDialerController extends Controller
             ->limit(250)
             ->get();
 
+        $totalRecipients = $recipients->count() >= 500
+            ? (int) $campaign->recipients()->count()
+            : (int) $recipients->count();
+
         return response()->json([
             'campaign' => [
                 'basic_dialer_campaign_uuid' => $campaign->basic_dialer_campaign_uuid,
@@ -182,13 +358,17 @@ class BasicDialerController extends Controller
             'summary' => [
                 'recipients' => $recipientStatusCounts,
                 'attempts' => $attemptStatusCounts,
-                'total_recipients' => $recipients->count() >= 500
-                    ? $campaign->recipients()->count()
-                    : $recipients->count(),
-                'total_attempts' => $attempts->count() >= 250
-                    ? $campaign->attempts()->count()
-                    : $attempts->count(),
+                'total_recipients' => $totalRecipients,
+                'total_attempts' => $totalAttemptsAll,
+                'answered_attempts' => $answeredAttemptsAll,
+                'answer_rate' => $totalAttemptsAll > 0 ? round(($answeredAttemptsAll / $totalAttemptsAll) * 100, 1) : 0,
+                'talk_seconds' => $talkSeconds,
+                'completion_percent' => $totalRecipients > 0
+                    ? round((($totalRecipients - (int) ($recipientStatusCounts['pending'] ?? 0) - (int) ($recipientStatusCounts['retry_wait'] ?? 0)) / $totalRecipients) * 100, 1)
+                    : 0,
             ],
+            'outcome_breakdown' => $outcomeBreakdown,
+            'hangup_breakdown' => $hangupBreakdown,
             'recipients' => $recipients,
             'attempts' => $attempts,
         ]);

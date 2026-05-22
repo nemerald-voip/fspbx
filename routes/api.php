@@ -122,6 +122,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::get('/active-basic-queues/data', [BasicQueueController::class, 'getActiveBasicQueueData'])->name('active-basic-queues.data');
 
     // Basic Dialer
+    Route::get('/basic-dialer/overview', [BasicDialerController::class, 'getOverview'])->name('basic-dialer.overview');
     Route::get('/basic-dialer/campaigns/data', [BasicDialerController::class, 'getCampaignData'])->name('basic-dialer.campaigns.data');
     Route::post('/basic-dialer/campaigns', [BasicDialerController::class, 'storeCampaign'])->name('basic-dialer.campaigns.store');
     Route::put('/basic-dialer/campaigns/{campaign}', [BasicDialerController::class, 'updateCampaign'])->name('basic-dialer.campaigns.update');

@@ -47,11 +47,72 @@
                             </div>
 
                             <div v-else class="mt-5 space-y-5">
+                                <div class="rounded-md border border-gray-200 p-4">
+                                    <div class="flex flex-wrap items-baseline justify-between gap-2">
+                                        <div class="text-sm font-medium text-gray-700">Progress</div>
+                                        <div class="text-sm text-gray-500">
+                                            {{ completedRecipients }} / {{ summary.total_recipients ?? 0 }} contacts
+                                            <span class="ml-2 font-semibold text-gray-900">{{ summary.completion_percent ?? 0 }}%</span>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 h-2 overflow-hidden rounded-full bg-gray-100">
+                                        <div class="h-full rounded-full bg-indigo-500 transition-all duration-500"
+                                            :style="{ width: (summary.completion_percent ?? 0) + '%' }"></div>
+                                    </div>
+                                    <div class="mt-3 flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                                        <span><span class="font-semibold text-gray-900">{{ summary.answer_rate ?? 0 }}%</span> answer rate</span>
+                                        <span>{{ summary.answered_attempts ?? 0 }} answered / {{ summary.total_attempts ?? 0 }} attempts</span>
+                                        <span>{{ formatDuration(summary.talk_seconds) }} talk time</span>
+                                    </div>
+                                </div>
+
                                 <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
                                     <div v-for="item in summaryItems" :key="item.key"
                                         class="rounded-md border border-gray-200 px-3 py-2">
                                         <div class="text-xs font-medium text-gray-500">{{ item.label }}</div>
                                         <div class="mt-1 text-lg font-semibold text-gray-900">{{ item.value }}</div>
+                                    </div>
+                                </div>
+
+                                <div v-if="hasBreakdowns" class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                                    <div class="rounded-md border border-gray-200 p-4">
+                                        <div class="mb-2 flex items-baseline justify-between">
+                                            <h4 class="text-sm font-semibold text-gray-900">Outcomes</h4>
+                                            <span class="text-xs text-gray-400">{{ outcomeTotal }} attempts</span>
+                                        </div>
+                                        <div v-if="outcomeBreakdown.length === 0"
+                                            class="py-8 text-center text-xs text-gray-500">
+                                            No outcomes recorded yet.
+                                        </div>
+                                        <div v-else class="flex items-center gap-4">
+                                            <div class="relative h-36 w-36 shrink-0">
+                                                <Doughnut :data="outcomeChartData" :options="doughnutOptions" />
+                                            </div>
+                                            <div class="flex-1 space-y-1">
+                                                <div v-for="(item, idx) in outcomeBreakdown" :key="item.label"
+                                                    class="flex items-center justify-between text-xs">
+                                                    <div class="flex items-center gap-2">
+                                                        <span class="inline-block h-2.5 w-2.5 rounded-full"
+                                                            :style="{ backgroundColor: chartPalette[idx % chartPalette.length] }"></span>
+                                                        <span class="capitalize text-gray-700">{{ formatLabel(item.label) }}</span>
+                                                    </div>
+                                                    <div class="font-medium text-gray-900">
+                                                        {{ item.count }}
+                                                        <span class="ml-1 text-gray-400">{{ percent(item.count, outcomeTotal) }}%</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="rounded-md border border-gray-200 p-4">
+                                        <h4 class="mb-2 text-sm font-semibold text-gray-900">Hangup Causes</h4>
+                                        <div v-if="hangupBreakdown.length === 0"
+                                            class="py-8 text-center text-xs text-gray-500">
+                                            No hangup cause data yet.
+                                        </div>
+                                        <div v-else class="h-40">
+                                            <Bar :data="hangupChartData" :options="barOptions" />
+                                        </div>
                                     </div>
                                 </div>
 
@@ -160,7 +221,19 @@ import { computed, ref, watch } from "vue";
 import axios from "axios";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { ArrowPathIcon, XMarkIcon } from "@heroicons/vue/24/solid";
+import { Bar, Doughnut } from "vue-chartjs";
+import {
+    ArcElement,
+    BarElement,
+    CategoryScale,
+    Chart as ChartJS,
+    Legend,
+    LinearScale,
+    Tooltip,
+} from "chart.js";
 import Badge from "@generalComponents/Badge.vue";
+
+ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 const props = defineProps({
     show: Boolean,
@@ -178,6 +251,13 @@ const campaign = ref({});
 const summary = ref({ recipients: {}, attempts: {}, total_recipients: 0, total_attempts: 0 });
 const recipients = ref([]);
 const attempts = ref([]);
+const outcomeBreakdown = ref([]);
+const hangupBreakdown = ref([]);
+
+const chartPalette = [
+    "#6366f1", "#10b981", "#f59e0b", "#ef4444", "#0ea5e9",
+    "#a855f7", "#ec4899", "#14b8a6", "#f97316", "#64748b",
+];
 
 const summaryItems = computed(() => {
     const recipientCounts = summary.value.recipients || {};
@@ -192,6 +272,64 @@ const summaryItems = computed(() => {
         { key: "attempts", label: "Attempts", value: summary.value.total_attempts ?? 0 },
     ];
 });
+
+const completedRecipients = computed(() => {
+    const total = summary.value.total_recipients ?? 0;
+    const recipientCounts = summary.value.recipients || {};
+    const pending = recipientCounts.pending ?? 0;
+    const retryWait = recipientCounts.retry_wait ?? 0;
+    return Math.max(0, total - pending - retryWait);
+});
+
+const outcomeTotal = computed(() =>
+    outcomeBreakdown.value.reduce((sum, item) => sum + (item.count || 0), 0)
+);
+
+const hasBreakdowns = computed(() =>
+    outcomeBreakdown.value.length > 0 || hangupBreakdown.value.length > 0
+);
+
+const outcomeChartData = computed(() => ({
+    labels: outcomeBreakdown.value.map((item) => formatLabel(item.label)),
+    datasets: [{
+        data: outcomeBreakdown.value.map((item) => item.count),
+        backgroundColor: outcomeBreakdown.value.map((_, idx) => chartPalette[idx % chartPalette.length]),
+        borderWidth: 0,
+    }],
+}));
+
+const hangupChartData = computed(() => ({
+    labels: hangupBreakdown.value.map((item) => item.label),
+    datasets: [{
+        data: hangupBreakdown.value.map((item) => item.count),
+        backgroundColor: "#6366f1",
+        borderRadius: 4,
+    }],
+}));
+
+const doughnutOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    cutout: "65%",
+    plugins: {
+        legend: { display: false },
+        tooltip: { enabled: true },
+    },
+};
+
+const barOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    indexAxis: "y",
+    plugins: {
+        legend: { display: false },
+        tooltip: { enabled: true },
+    },
+    scales: {
+        x: { beginAtZero: true, ticks: { precision: 0 } },
+        y: { grid: { display: false } },
+    },
+};
 
 watch(() => [props.show, props.route], ([show]) => {
     if (show) {
@@ -211,11 +349,23 @@ function fetchStatus() {
             summary.value = response.data.summary || {};
             recipients.value = response.data.recipients || [];
             attempts.value = response.data.attempts || [];
+            outcomeBreakdown.value = response.data.outcome_breakdown || [];
+            hangupBreakdown.value = response.data.hangup_breakdown || [];
         })
         .catch((error) => emit("error", error))
         .finally(() => {
             loading.value = false;
         });
+}
+
+function percent(part, whole) {
+    if (!whole) return 0;
+    return Math.round((part / whole) * 100);
+}
+
+function formatLabel(value) {
+    if (!value) return "";
+    return String(value).replace(/_/g, " ");
 }
 
 function formatDate(value) {
@@ -235,7 +385,13 @@ function formatDate(value) {
 function formatDuration(value) {
     if (value === null || value === undefined || value === "") return "-";
 
-    return `${value}s`;
+    const total = Math.max(0, parseInt(value, 10) || 0);
+    if (total < 60) return `${total}s`;
+    const mins = Math.floor(total / 60);
+    const secs = total % 60;
+    if (mins < 60) return `${mins}m ${secs}s`;
+    const hours = Math.floor(mins / 60);
+    return `${hours}h ${mins % 60}m`;
 }
 
 const statusBadgeProps = (status) => {
