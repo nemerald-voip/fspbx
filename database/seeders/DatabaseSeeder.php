@@ -165,6 +165,11 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Call Block', 'permission_name' => 'call_block_view_all_records'],
             ['application_name' => 'Messages', 'permission_name' => 'messages_view'],
             ['application_name' => 'Messages', 'permission_name' => 'messages_view_as'],
+            ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_view'],
+            ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_create'],
+            ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_update'],
+            ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_delete'],
+            ['application_name' => 'Basic Dialer', 'permission_name' => 'basic_dialer_start'],
         ];
         $timestamp = date("Y-m-d H:i:s");
 
@@ -274,6 +279,11 @@ class DatabaseSeeder extends Seeder
                 'xml_cdr_view_all_records',
                 'call_block_view_all_records',
                 'ring_group_cid_name_prefix',
+                'basic_dialer_view',
+                'basic_dialer_create',
+                'basic_dialer_update',
+                'basic_dialer_delete',
+                'basic_dialer_start',
             ],
             'admin' => [
                 'wakeup_calls_list_view',
@@ -316,6 +326,11 @@ class DatabaseSeeder extends Seeder
                 'messages_view',
                 'messages_view_as',
                 'ring_group_cid_name_prefix',
+                'basic_dialer_view',
+                'basic_dialer_create',
+                'basic_dialer_update',
+                'basic_dialer_delete',
+                'basic_dialer_start',
             ],
             'Message Admin' => [
                 'message_settings_list_view',

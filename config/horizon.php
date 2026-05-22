@@ -85,6 +85,7 @@ return [
 
     'waits' => [
         'redis:default' => 60,
+        'redis:dialer' => 60,
     ],
 
     /*
@@ -167,7 +168,7 @@ return [
     'defaults' => [
         'supervisor-1' => [
             'connection' => 'redis',
-            'queue' => ['default', 'emails', 'faxes', 'slack', 'messages', 'voicemails', 'ztp', 'stripe', 'transcriptions'],
+            'queue' => ['default', 'emails', 'faxes', 'slack', 'messages', 'voicemails', 'ztp', 'stripe', 'transcriptions', 'dialer'],
             'balance' => 'auto',
             'minProcesses' => 1,
             'maxProcesses' => 100,
@@ -191,7 +192,7 @@ return [
 
         'local' => [
             'supervisor-1' => [
-                'queue' => ['default', 'emails', 'faxes', 'slack', 'messages', 'voicemails', 'ztp', 'stripe', 'transcriptions'],
+                'queue' => ['default', 'emails', 'faxes', 'slack', 'messages', 'voicemails', 'ztp', 'stripe', 'transcriptions', 'dialer'],
                 'balance' => 'auto',
                 'processes' => 8,
                 'tries' => 3,

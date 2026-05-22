@@ -50,6 +50,7 @@ use App\Http\Controllers\InboundWebhooksController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\MusicOnHoldController;
+use App\Http\Controllers\BasicDialerController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PaymentGatewayController;
 use App\Http\Controllers\PhoneNumbersController;
@@ -119,6 +120,27 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::get('/basic-queues/agents/status/data', [BasicQueueController::class, 'getAgentStatusData'])->name('basic-queues.agents.status.data');
     Route::post('/basic-queues/agents/status', [BasicQueueController::class, 'updateAgentStatus'])->name('basic-queues.agents.status.update');
     Route::get('/active-basic-queues/data', [BasicQueueController::class, 'getActiveBasicQueueData'])->name('active-basic-queues.data');
+
+    // Basic Dialer
+    Route::get('/basic-dialer/overview', [BasicDialerController::class, 'getOverview'])->name('basic-dialer.overview');
+    Route::get('/basic-dialer/campaigns/data', [BasicDialerController::class, 'getCampaignData'])->name('basic-dialer.campaigns.data');
+    Route::post('/basic-dialer/campaigns', [BasicDialerController::class, 'storeCampaign'])->name('basic-dialer.campaigns.store');
+    Route::put('/basic-dialer/campaigns/{campaign}', [BasicDialerController::class, 'updateCampaign'])->name('basic-dialer.campaigns.update');
+    Route::post('/basic-dialer/campaigns/{campaign}/start', [BasicDialerController::class, 'startCampaign'])->name('basic-dialer.campaigns.start');
+    Route::post('/basic-dialer/campaigns/{campaign}/pause', [BasicDialerController::class, 'pauseCampaign'])->name('basic-dialer.campaigns.pause');
+    Route::post('/basic-dialer/campaigns/{campaign}/stop', [BasicDialerController::class, 'stopCampaign'])->name('basic-dialer.campaigns.stop');
+    Route::get('/basic-dialer/campaigns/{campaign}/status', [BasicDialerController::class, 'getCampaignStatus'])->name('basic-dialer.campaigns.status');
+    Route::post('/basic-dialer/campaigns/item-options', [BasicDialerController::class, 'getCampaignItemOptions'])->name('basic-dialer.campaigns.item.options');
+    Route::post('/basic-dialer/campaigns/select-all', [BasicDialerController::class, 'selectAllCampaigns'])->name('basic-dialer.campaigns.select.all');
+    Route::post('/basic-dialer/campaigns/bulk-delete', [BasicDialerController::class, 'bulkDeleteCampaigns'])->name('basic-dialer.campaigns.bulk.delete');
+    Route::get('/basic-dialer/contact-lists/data', [BasicDialerController::class, 'getContactListData'])->name('basic-dialer.contact-lists.data');
+    Route::post('/basic-dialer/contact-lists', [BasicDialerController::class, 'storeContactList'])->name('basic-dialer.contact-lists.store');
+    Route::put('/basic-dialer/contact-lists/{contactList}', [BasicDialerController::class, 'updateContactList'])->name('basic-dialer.contact-lists.update');
+    Route::post('/basic-dialer/contact-lists/item-options', [BasicDialerController::class, 'getContactListItemOptions'])->name('basic-dialer.contact-lists.item.options');
+    Route::post('/basic-dialer/contact-lists/select-all', [BasicDialerController::class, 'selectAllContactLists'])->name('basic-dialer.contact-lists.select.all');
+    Route::post('/basic-dialer/contact-lists/bulk-delete', [BasicDialerController::class, 'bulkDeleteContactLists'])->name('basic-dialer.contact-lists.bulk.delete');
+    Route::get('/basic-dialer/contact-lists/{contactList}/contacts', [BasicDialerController::class, 'getContactsForList'])->name('basic-dialer.contact-lists.contacts');
+    Route::delete('/basic-dialer/contact-lists/{contactList}/contacts/{contact}', [BasicDialerController::class, 'deleteContact'])->name('basic-dialer.contact-lists.contacts.destroy');
 
     // Inbound Webhooks
     Route::resource('/inbound-webhooks', InboundWebhooksController::class);
