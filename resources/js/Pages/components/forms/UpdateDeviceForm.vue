@@ -144,7 +144,7 @@
                                                     'expansion_keys_submit_keys',
 
                                                 ]"
-                                                    :conditions="[() => options?.item?.device_vendor == 'cisco' || options?.item?.device_vendor == 'snom']" />
+                                                    :conditions="[() => options?.item?.device_vendor == 'cisco' || options?.item?.device_vendor == 'snom' || options?.item?.device_vendor == 'yealink']" />
 
                                                 <FormTab name="cloud_provisioning" label="Cloud Provisioning" :elements="[
                                                     'cloud_provisioning_title',

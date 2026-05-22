@@ -72,6 +72,12 @@ class ProvisioningTemplateController extends Controller
             DB::commit();
 
             return response()->json([
+                'item' => [
+                    'template_uuid' => $ProvisioningTemplate->template_uuid,
+                ],
+                'routes' => [
+                    'update_route' => route('provisioning-templates.update', $ProvisioningTemplate->template_uuid),
+                ],
                 'messages' => ['success' => ['New provisioning template created']]
             ], 201);
         } catch (\Throwable $e) {
@@ -124,6 +130,9 @@ class ProvisioningTemplateController extends Controller
 
             if (request()->filled('item_uuid')) {
                 $item = ProvisioningTemplate::findOrFail(request('item_uuid'));
+                $routes['update_route'] = route('provisioning-templates.update', $item->template_uuid);
+            } else {
+                $routes['store_route'] = route('provisioning-templates.store');
             }
 
             $defaultTemplates = QueryBuilder::for(ProvisioningTemplate::query())
@@ -135,16 +144,27 @@ class ProvisioningTemplateController extends Controller
                 ->where('type', 'default')
                 ->defaultSort('vendor', 'name')   // vendor ASC, then name ASC
                 ->get()
-                ->map(function ($item) {
-                    return [
-                        'value' => $item->template_uuid,
-                        'name' => trim(ucfirst($item->vendor)  . ' ' . $item->name),
-                    ];
-                });
+                ->groupBy('vendor')
+                ->map(function ($items, $vendor) {
+                    $vendorLabel = is_string($vendor) && $vendor !== '' ? ucfirst($vendor) : 'Other';
 
-            $routes = array_merge($routes, [
-                'template_content' => route('provisioning-templates.content'),
-            ]);
+                    return [
+                        'label' => $vendorLabel,
+                        'items' => $items->map(function ($item) {
+                            return [
+                                'value'         => $item->template_uuid,
+                                'label'         => $item->name,
+                                'name'          => $item->name,
+                                'template_name' => $item->name,
+                                'vendor'        => $item->vendor,
+                            ];
+                        })->values()->all(),
+                    ];
+                })
+                ->values()
+                ->all();
+
+            $routes['template_content'] = route('provisioning-templates.content');
 
             $vendors = QueryBuilder::for(DeviceVendor::query())
                 ->select([
@@ -157,7 +177,8 @@ class ProvisioningTemplateController extends Controller
                 ->map(function ($item) {
                     return [
                         'value' => $item->name,
-                        'name' => $item->name,
+                        'label' => $item->name,
+                        'name'  => $item->name,
                     ];
                 });
 

@@ -44,9 +44,15 @@ This repo is a Laravel, Vue/Inertia, VueForm, and FreeSWITCH application. Before
 - Blank or `N/A` Key Template keys intentionally occupy their slot and can clear older profile keys.
 - Keep vendor translation and normalization in the existing provisioning path. Do not add new broad vendor translations unless the stored data shape truly requires it.
 - The modern provisioning path is `app/Http/Controllers/ProvisioningController.php`; the old provisioning URL still uses `public/app/provision/resources/classes/provision.php`.
+- Native provisioning renders `provisioning_templates.content` from the database, not the resource file directly. Changes under `resources/provisioning/.../template.blade.php` require reseeding default templates with `php artisan prov:templates:seed` or manually updating custom template content.
+- Custom provisioning templates do not inherit default template changes automatically.
+- When changing default provisioning templates, bump the Blade front-matter `version:` so the seeder can update the database row clearly.
 - The old provisioning URL delegates modern `device_keys` overlay behavior to `fspbx_apply_new_keys_override()` in `app/helpers.php`. Key Template support for that old path should stay in helpers where possible.
 - `device_key_templates.enabled` is stored as the string `'true'`, not a boolean. Legacy SQL helpers should compare it as `t.enabled = 'true'`.
 - If the old `provision.php` path must participate in a new behavior, remember `public/` is not tracked. Make the runtime file change for the working server, then add or update an update class to download/replace the file for deployed systems.
+- Yealink templates should use `$main_keys` for `linekey.*` output and `$expansion_keys` for `expansion_module.1.key.*` output.
+- Yealink phone line keys should clear unused slots through 30; Yealink expansion module keys should clear unused slots through 60 per module.
+- Yealink devices can use the Expansion Keys tab in the device edit modal.
 
 ## Basic Queues
 
@@ -88,6 +94,15 @@ This repo is a Laravel, Vue/Inertia, VueForm, and FreeSWITCH application. Before
 - The Lua XML generator should build directory names as `{domain_name}/{music_on_hold_name}` without appending the rate, while the row path still points to the rate-specific directory. It should default blank or null rates to `48000` and honor row-level `channels` and `interval` values.
 - Deleting a stream should delete the whole generated stream folder under `/usr/share/freeswitch/sounds/music/{domain-or-global}/{stream-name}`, not just individual DB rows. Keep deletion guarded so it cannot remove the music root or a domain root.
 - Avoid icons that look like playback unless the action actually starts playback. For file selection rows, prefer an audio/file icon; reserve play icons for buttons that open or start the player.
+
+## Fax Jobs And Retention
+
+- New outbound fax state lives in `outbound_faxes`; do not use legacy `v_fax_queue` for current outbound fax alerts or status decisions.
+- The old fax queue controller/page can remain legacy unless explicitly asked to rebuild or remove it. Do not add compatibility fields to `OutboundFax` just to support that page.
+- `CheckFaxServiceStatus` should evaluate pending and failed outbound fax alerts from `outbound_faxes`.
+- `DeleteOldFaxes` should clean old inbound/sent `v_fax_files`, associated `v_fax_logs`, old terminal `outbound_faxes`, logs/files associated with those outbound rows, and leftover legacy `v_fax_queue` records.
+- Fax retention file cleanup scans the `fax` storage disk. Outside temp directories it only removes old `.tif` and `.pdf` files; temp directories have their own shorter orphan cleanup window.
+- Physical fax file deletion is based on filesystem modified time, while database retention uses `fax_date` or `created_at`. Be careful when changing either side so old DB rows and physical files do not drift unexpectedly.
 
 ## Logs Page
 

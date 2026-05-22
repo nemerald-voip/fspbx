@@ -1109,6 +1109,10 @@ class ProvisioningController extends Controller
             return ['expansion', $category];
         }
 
+        if ($vendor === 'yealink' && in_array($category, ['expansion-1', 'expansion-2'], true)) {
+            return ['expansion', $category];
+        }
+
         return ['main', $category ?: null];
     }
 
