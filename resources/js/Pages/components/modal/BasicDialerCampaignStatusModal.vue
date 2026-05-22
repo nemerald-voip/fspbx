@@ -265,6 +265,13 @@ function outcomeColor(label) {
     return OUTCOME_RED;
 }
 
+function hangupCauseColor(label) {
+    const norm = String(label ?? "").toUpperCase().replace(/[^A-Z_]/g, "");
+    if (norm === "NORMAL_CLEARING") return OUTCOME_GREEN;
+    if (norm === "" || norm === "NONE" || norm === "UNKNOWN" || norm === "ORIGINATOR_CANCEL") return OUTCOME_GRAY;
+    return OUTCOME_RED;
+}
+
 const summaryItems = computed(() => {
     const recipientCounts = summary.value.recipients || {};
 
@@ -308,7 +315,7 @@ const hangupChartData = computed(() => ({
     labels: hangupBreakdown.value.map((item) => item.label),
     datasets: [{
         data: hangupBreakdown.value.map((item) => item.count),
-        backgroundColor: "#6366f1",
+        backgroundColor: hangupBreakdown.value.map((item) => hangupCauseColor(item.label)),
         borderRadius: 4,
     }],
 }));

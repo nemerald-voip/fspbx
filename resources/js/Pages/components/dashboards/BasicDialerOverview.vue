@@ -254,7 +254,7 @@ const hangupChartData = computed(() => ({
     labels: hangupBreakdown.value.map((item) => item.label),
     datasets: [{
         data: hangupBreakdown.value.map((item) => item.count),
-        backgroundColor: "#6366f1",
+        backgroundColor: hangupBreakdown.value.map((item) => hangupCauseColor(item.label)),
         borderRadius: 4,
     }],
 }));
