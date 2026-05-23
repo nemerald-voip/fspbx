@@ -101,7 +101,7 @@
                     </TableField>
 
                     <TableField class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">
-                        <a :href="`/core/groups/group_permissions.php?group_uuid=${row.group_uuid}`"
+                        <a :href="`/groups/${row.group_uuid}/permissions`"
                             class="inline-block rounded bg-white px-2 py-1 text-sm text-gray-600 shadow-sm hover:text-gray-900">
                             Permissions
                             ({{ row.permissions_count }})

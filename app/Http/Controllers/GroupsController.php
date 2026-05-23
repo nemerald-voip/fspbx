@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use App\Models\Domain;
 use App\Models\Groups;
+use App\Models\GroupPermissions;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\JsonResponse;
 use App\Http\Requests\CreatePermissionGroupRequest;
 use App\Http\Requests\UpdatePermissionGroupRequest;
 
@@ -57,6 +59,214 @@ class GroupsController extends Controller
                 ]
             ]
         );
+    }
+
+    public function permissionsIndex(Groups $group)
+    {
+        if (!userCheckPermission('group_permission_view')) {
+            return redirect('/');
+        }
+
+        if (!$this->canAccessGroup($group)) {
+            abort(404);
+        }
+
+        return Inertia::render('GroupPermissions', [
+            'group' => [
+                'group_uuid' => $group->group_uuid,
+                'group_name' => $group->group_name,
+                'group_level' => $group->group_level,
+                'group_description' => $group->group_description,
+            ],
+            'routes' => [
+                'groups' => route('groups.index'),
+                'members' => '/core/groups/group_members.php?group_uuid=' . $group->group_uuid,
+                'data_route' => route('groups.permissions.data', ['group' => $group]),
+                'toggle' => route('groups.permissions.toggle', ['group' => $group]),
+                'reload' => route('groups.permissions.reload', ['group' => $group]),
+            ],
+            'permissions' => [
+                'assign' => userCheckPermission('group_permission_add') || userCheckPermission('group_permission_edit'),
+                'remove' => userCheckPermission('group_permission_delete') || userCheckPermission('group_permission_edit'),
+                'reload' => userCheckPermission('group_permission_view'),
+                'members' => userCheckPermission('group_member_view'),
+            ],
+        ]);
+    }
+
+    public function permissionsData(Groups $group): JsonResponse
+    {
+        if (!userCheckPermission('group_permission_view')) {
+            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+        }
+
+        if (!$this->canAccessGroup($group)) {
+            return response()->json(['messages' => ['error' => ['Group not found.']]], 404);
+        }
+
+        $rows = DB::table('v_permissions as permissions')
+            ->leftJoin('v_group_permissions as group_permissions', function ($join) use ($group) {
+                $join->on('permissions.permission_name', '=', 'group_permissions.permission_name')
+                    ->where('group_permissions.group_uuid', '=', $group->group_uuid);
+            })
+            ->select([
+                'permissions.permission_uuid',
+                'permissions.application_name',
+                'permissions.permission_name',
+                'group_permissions.group_permission_uuid',
+                'group_permissions.permission_assigned',
+            ])
+            ->distinct()
+            ->orderBy('permissions.application_name')
+            ->orderBy('permissions.permission_name')
+            ->get()
+            ->groupBy('permission_name')
+            ->map(function ($permissionRows) {
+                $row = $permissionRows->first();
+                $assignedRow = $permissionRows->firstWhere('permission_assigned', 'true');
+
+                return [
+                    'permission_uuid' => $row->permission_uuid,
+                    'application_name' => $row->application_name ?: 'Uncategorized',
+                    'permission_name' => $row->permission_name,
+                    'group_permission_uuid' => $assignedRow?->group_permission_uuid ?? $row->group_permission_uuid,
+                    'assigned' => $assignedRow !== null,
+                ];
+            })
+            ->values();
+
+        return response()->json(['data' => $rows]);
+    }
+
+    public function togglePermissionAssignments(Request $request, Groups $group): JsonResponse
+    {
+        if (!$this->canAccessGroup($group)) {
+            return response()->json(['messages' => ['error' => ['Group not found.']]], 404);
+        }
+
+        $assigned = $request->boolean('assigned');
+
+        if ($assigned && !userCheckPermission('group_permission_add') && !userCheckPermission('group_permission_edit')) {
+            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+        }
+
+        if (!$assigned && !userCheckPermission('group_permission_delete') && !userCheckPermission('group_permission_edit')) {
+            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+        }
+
+        $permissionNames = collect($request->input('items', []))
+            ->filter(fn ($permissionName) => is_string($permissionName) && $permissionName !== '')
+            ->unique()
+            ->values();
+
+        if ($permissionNames->isEmpty()) {
+            return response()->json(['messages' => ['error' => ['Select at least one permission.']]], 422);
+        }
+
+        $validPermissionNames = DB::table('v_permissions')
+            ->whereIn('permission_name', $permissionNames)
+            ->pluck('permission_name');
+
+        if ($validPermissionNames->count() !== $permissionNames->count()) {
+            return response()->json(['messages' => ['error' => ['One or more permissions are invalid.']]], 422);
+        }
+
+        DB::transaction(function () use ($assigned, $group, $validPermissionNames) {
+            if (!$assigned) {
+                GroupPermissions::query()
+                    ->where('group_uuid', $group->group_uuid)
+                    ->whereIn('permission_name', $validPermissionNames)
+                    ->delete();
+
+                return;
+            }
+
+            $existingPermissions = GroupPermissions::query()
+                ->where('group_uuid', $group->group_uuid)
+                ->whereIn('permission_name', $validPermissionNames)
+                ->get()
+                ->keyBy('permission_name');
+
+            $now = date('Y-m-d H:i:s');
+            $newRows = [];
+
+            foreach ($validPermissionNames as $permissionName) {
+                $existing = $existingPermissions->get($permissionName);
+
+                if ($existing) {
+                    $existing->forceFill([
+                        'group_name' => $group->group_name,
+                        'permission_assigned' => 'true',
+                    ])->save();
+
+                    continue;
+                }
+
+                $newRows[] = [
+                    'group_permission_uuid' => (string) Str::uuid(),
+                    'group_uuid' => $group->group_uuid,
+                    'group_name' => $group->group_name,
+                    'permission_name' => $permissionName,
+                    'permission_protected' => 'false',
+                    'permission_assigned' => 'true',
+                    'insert_date' => $now,
+                ];
+            }
+
+            if ($newRows !== []) {
+                GroupPermissions::query()->insert($newRows);
+            }
+        });
+
+        $action = $assigned ? 'assigned' : 'removed';
+        $count = $validPermissionNames->count();
+
+        return response()->json(['messages' => ['success' => ["{$count} permission(s) {$action}."]]]);
+    }
+
+    public function reloadPermissionSession(Groups $group): JsonResponse
+    {
+        if (!userCheckPermission('group_permission_view')) {
+            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+        }
+
+        if (!$this->canAccessGroup($group)) {
+            return response()->json(['messages' => ['error' => ['Group not found.']]], 404);
+        }
+
+        $userGroups = collect(session('user.groups', []));
+        $groupUuids = $userGroups->pluck('group_uuid')->filter()->values();
+
+        if ($groupUuids->isEmpty()) {
+            session()->forget('permissions');
+            unset($_SESSION['permissions'], $_SESSION['user']['permissions']);
+
+            return response()->json(['messages' => ['success' => ['Permissions reloaded.']]]);
+        }
+
+        $permissions = DB::table('v_permissions')
+            ->join('v_group_permissions', 'v_permissions.permission_name', '=', 'v_group_permissions.permission_name')
+            ->whereIn('v_group_permissions.group_uuid', $groupUuids)
+            ->where('v_group_permissions.permission_assigned', 'true')
+            ->where(function ($query) {
+                $query->where('v_group_permissions.domain_uuid', session('domain_uuid'))
+                    ->orWhereNull('v_group_permissions.domain_uuid');
+            })
+            ->distinct()
+            ->get([
+                'v_permissions.permission_uuid',
+                'v_permissions.permission_name',
+            ]);
+
+        session()->put('permissions', $permissions);
+        unset($_SESSION['permissions'], $_SESSION['user']['permissions']);
+
+        foreach ($permissions as $permission) {
+            $_SESSION['permissions'][$permission->permission_name] = true;
+            $_SESSION['user']['permissions'][$permission->permission_name] = true;
+        }
+
+        return response()->json(['messages' => ['success' => ['Permissions reloaded.']]]);
     }
 
     /**
@@ -127,6 +337,11 @@ class GroupsController extends Controller
         $data->orderBy($this->sortField, $this->sortOrder);
 
         return $data;
+    }
+
+    private function canAccessGroup(Groups $group): bool
+    {
+        return $group->domain_uuid === session('domain_uuid') || $group->domain_uuid === null;
     }
 
 

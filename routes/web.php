@@ -183,6 +183,7 @@ Route::group(['middleware' => 'auth'], function () {
 
     // Groups
     Route::get('groups', [GroupsController::class, 'index'])->name('groups.index');
+    Route::get('groups/{group}/permissions', [GroupsController::class, 'permissionsIndex'])->name('groups.permissions.index');
 
     // Domains
     Route::get('domains', [DomainController::class, 'index'])->name('domains.index');

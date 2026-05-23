@@ -229,6 +229,9 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('groups/item-options', [GroupsController::class, 'getItemOptions'])->name('groups.item.options');
     Route::post('groups/bulk-delete', [GroupsController::class, 'bulkDelete'])->name('groups.bulk.delete');
     Route::post('groups/select-all', [GroupsController::class, 'selectAll'])->name('groups.select.all');
+    Route::get('groups/{group}/permissions/data', [GroupsController::class, 'permissionsData'])->name('groups.permissions.data');
+    Route::post('groups/{group}/permissions/toggle', [GroupsController::class, 'togglePermissionAssignments'])->name('groups.permissions.toggle');
+    Route::post('groups/{group}/permissions/reload', [GroupsController::class, 'reloadPermissionSession'])->name('groups.permissions.reload');
 
     // Domain Groups
     Route::post('domain-groups', [DomainGroupsController::class, 'store'])->name('domain-groups.store');
