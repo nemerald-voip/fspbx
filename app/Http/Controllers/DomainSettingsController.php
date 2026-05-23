@@ -192,11 +192,7 @@ class DomainSettingsController extends Controller
         }
 
         try {
-            require_once base_path('public/resources/require.php');
-            require_once base_path('public/resources/classes/domains.php');
-
-            $legacyDomain = new \domains();
-            $legacyDomain->set();
+            $this->settings->reloadSessionSettings($domain);
 
             return response()->json(['messages' => ['success' => ['Settings reloaded.']]]);
         } catch (\Throwable $exception) {
