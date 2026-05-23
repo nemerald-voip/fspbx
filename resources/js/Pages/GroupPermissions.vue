@@ -106,31 +106,33 @@
                                 </div>
                             </header>
 
-                            <div v-for="row in section.rows" :key="row.permission_name" class="flex items-center gap-3 px-4 py-2.5 transition hover:bg-gray-50">
-                                <input v-model="selectedItems" type="checkbox" :value="row.permission_name" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600" />
+                            <div class="grid grid-cols-1 gap-px bg-gray-100 md:grid-cols-2 xl:grid-cols-3">
+                                <div v-for="row in section.rows" :key="row.permission_name" class="flex items-center gap-3 bg-white px-4 py-2.5 transition hover:bg-gray-50">
+                                    <input v-model="selectedItems" type="checkbox" :value="row.permission_name" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600" />
 
-                                <h4 class="min-w-0 flex-1 truncate text-sm font-medium text-gray-900" :title="row.permission_name">
-                                    {{ formatPermissionLabel(row.permission_name) }}
-                                </h4>
+                                    <h4 class="min-w-0 flex-1 truncate text-sm font-medium text-gray-900" :title="row.permission_name">
+                                        {{ formatPermissionLabel(row.permission_name) }}
+                                    </h4>
 
-                                <button
-                                    v-if="canToggleRow(row)"
-                                    type="button"
-                                    role="switch"
-                                    :aria-checked="row.assigned"
-                                    :title="row.assigned ? 'Unassign permission' : 'Assign permission'"
-                                    :class="['relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1', row.assigned ? 'bg-indigo-600' : 'bg-gray-200']"
-                                    @click="setAssignments([row.permission_name], !row.assigned)"
-                                >
-                                    <span :class="['inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition', row.assigned ? 'translate-x-[18px]' : 'translate-x-0.5']" />
-                                </button>
-                                <span
-                                    v-else
-                                    :title="row.assigned ? 'Assigned' : 'Unassigned'"
-                                    :class="['relative inline-flex h-5 w-9 shrink-0 items-center rounded-full opacity-60', row.assigned ? 'bg-indigo-600' : 'bg-gray-200']"
-                                >
-                                    <span :class="['inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow', row.assigned ? 'translate-x-[18px]' : 'translate-x-0.5']" />
-                                </span>
+                                    <button
+                                        v-if="canToggleRow(row)"
+                                        type="button"
+                                        role="switch"
+                                        :aria-checked="row.assigned"
+                                        :title="row.assigned ? 'Unassign permission' : 'Assign permission'"
+                                        :class="['relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-1', row.assigned ? 'bg-indigo-600' : 'bg-gray-200']"
+                                        @click="setAssignments([row.permission_name], !row.assigned)"
+                                    >
+                                        <span :class="['inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition', row.assigned ? 'translate-x-[18px]' : 'translate-x-0.5']" />
+                                    </button>
+                                    <span
+                                        v-else
+                                        :title="row.assigned ? 'Assigned' : 'Unassigned'"
+                                        :class="['relative inline-flex h-5 w-9 shrink-0 items-center rounded-full opacity-60', row.assigned ? 'bg-indigo-600' : 'bg-gray-200']"
+                                    >
+                                        <span :class="['inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow', row.assigned ? 'translate-x-[18px]' : 'translate-x-0.5']" />
+                                    </span>
+                                </div>
                             </div>
                         </section>
                     </div>

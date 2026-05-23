@@ -18,6 +18,8 @@ This repo is a Laravel, Vue/Inertia, VueForm, and FreeSWITCH application. Before
 - Put the Inertia page route in `routes/web.php`.
 - Put axios/data/action routes in `routes/api.php`.
 - Use Spatie QueryBuilder for searchable/sortable/paginated data tables when that is the local pattern.
+- For modern Inertia pages, pass page-specific permissions from the controller as a `permissions` prop and read `props.permissions` in Vue. Do not add new page-specific permission keys to `HandleInertiaRequests` unless a truly shared layout/component needs them globally.
+- For date filters, follow the CDR pattern: pass `timezone` as a top-level Inertia prop for the DatePicker/UI, but do not include it in the API `filter` payload. Only send filters the QueryBuilder endpoint explicitly allows.
 - Use VueForm for create/update modals.
 - Keep forms clear and operational. Avoid marketing-style UI.
 
@@ -120,6 +122,7 @@ This repo is a Laravel, Vue/Inertia, VueForm, and FreeSWITCH application. Before
   - `*_view_self_records`
 - Do not repurpose legacy permissions unless there is a concrete existing use that proves the meaning.
 - Add durable permissions to `database/seeders/DatabaseSeeder.php`; it runs as part of updates.
+- If adding permissions to an already-versioned release, also add them to the current or next update class so deployed systems receive them without relying on a fresh seed.
 
 ## Updates
 

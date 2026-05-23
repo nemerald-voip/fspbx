@@ -142,7 +142,7 @@ class CreateFSPBXMenu extends Command
                     ['title' => 'Extension Statistics', 'link' => '/extension-statistics', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'Firewall', 'link' => '/firewall', 'groups' => ['superadmin']],
                     ['title' => 'Logs', 'link' => '/logs', 'groups' => ['superadmin']],
-                    ['title' => 'Log Viewer', 'link' => '/app/log_viewer/log_viewer.php', 'groups' => ['superadmin']],
+                    ['title' => 'Log Viewer', 'link' => '/logs?tab=freeswitch_logs', 'groups' => ['superadmin']],
                     ['title' => 'Registrations', 'link' => '/registrations', 'groups' => ['superadmin', 'admin']],
                     ['title' => 'SIP Status', 'link' => '/sip-status', 'groups' => ['superadmin']],
                     ['title' => 'System Status', 'link' => '/system', 'groups' => ['superadmin']],
@@ -168,7 +168,7 @@ class CreateFSPBXMenu extends Command
                     ['title' => 'SIP Profiles', 'link' => '/app/sip_profiles/sip_profiles.php', 'groups' => ['superadmin']],
                     ['title' => 'System Settings', 'link' => '/system-settings', 'groups' => ['superadmin']],
                     ['title' => 'Transactions', 'link' => '/app/database_transactions/database_transactions.php', 'groups' => ['superadmin']],
-                    ['title' => 'Variables', 'link' => '/app/vars/vars.php', 'groups' => ['superadmin']],
+                    ['title' => 'Variables', 'link' => '/vars', 'groups' => ['superadmin']],
                 ],
             ],
         ];

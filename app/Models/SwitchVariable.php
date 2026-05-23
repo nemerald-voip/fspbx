@@ -15,10 +15,11 @@ class SwitchVariable extends Model
 
     protected $primaryKey = 'var_uuid';
 
+    public $incrementing = false;
+
     protected $keyType = 'string';
 
     // Add guarded or fillable fields based on your preference
     protected $guarded = [];
 
 }
-

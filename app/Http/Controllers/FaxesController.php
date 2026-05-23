@@ -124,7 +124,8 @@ class FaxesController extends Controller
                     'new_fax_options' => route('faxes.new.fax.options'),
                     // 'select_all' => route('users.select.all'),
 
-                ]
+                ],
+                'permissions' => $this->getUserPermissions(),
             ]
         );
     }
@@ -1215,6 +1216,13 @@ class FaxesController extends Controller
         $permissions = [];
         // $permissions['user_group_view'] = userCheckPermission('user_group_view');
         $permissions['is_superadmin'] = isSuperAdmin();
+        $permissions['fax_server_create'] = userCheckPermission('fax_add');
+        $permissions['fax_server_update'] = userCheckPermission('fax_edit');
+        $permissions['fax_server_destroy'] = userCheckPermission('fax_delete');
+        $permissions['fax_send'] = userCheckPermission('fax_send');
+        $permissions['fax_inbox_view'] = userCheckPermission('fax_inbox_view');
+        $permissions['fax_sent_view'] = userCheckPermission('fax_sent_view');
+        $permissions['fax_log_view'] = userCheckPermission('fax_log_view');
 
         return $permissions;
     }

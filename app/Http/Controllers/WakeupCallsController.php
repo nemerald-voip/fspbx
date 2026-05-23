@@ -18,15 +18,13 @@ use App\Http\Requests\CreateWakeupCallRequest;
 use App\Http\Requests\UpdateWakeupCallRequest;
 use App\Http\Requests\UpdateWakeupCallSettingsRequest;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Spatie\QueryBuilder\AllowedFilter;
+use Spatie\QueryBuilder\QueryBuilder;
 
 class WakeupCallsController extends Controller
 {
     public $model;
-    public $filters = [];
-    public $sortField;
-    public $sortOrder;
     protected $viewName = 'WakeupCalls';
-    protected $searchable = ['status', 'extension.extension', 'extension.effective_caller_id_name'];
 
     public function __construct()
     {
@@ -41,32 +39,31 @@ class WakeupCallsController extends Controller
      */
     public function index()
     {
-        if (!userCheckPermission("wakeup_calls_list_view")) {
+        if (!$this->canViewRecords()) {
             return redirect('/');
         }
 
         return Inertia::render(
             $this->viewName,
             [
-                'data' => function () {
-                    return $this->getData();
-                },
-                'startPeriod' => function () {
-                    return $this->filters['startPeriod'];
-                },
-                'endPeriod' => function () {
-                    return $this->filters['endPeriod'];
-                },
+                'startPeriod' => now(get_local_time_zone(session('domain_uuid')))->startOfMonth()->toIso8601String(),
+                'endPeriod' => now(get_local_time_zone(session('domain_uuid')))->endOfMonth()->toIso8601String(),
                 'timezone' => function () {
                     return get_local_time_zone(session('domain_uuid'));
                 },
                 'routes' => [
                     'current_page' => route('wakeup-calls.index'),
+                    'data_route' => route('wakeup-calls.data'),
                     'store' => route('wakeup-calls.store'),
                     'select_all' => route('wakeup-calls.select.all'),
                     'bulk_delete' => route('wakeup-calls.bulk.delete'),
                     'item_options' => route('wakeup-calls.item.options'),
                     'settings' => route('wakeup-calls.settings'),
+                ],
+                'permissions' => $this->permissions(),
+                'pagination' => [
+                    'per_page' => fspbx_pagination_per_page(),
+                    'per_page_options' => fspbx_pagination_options(),
                 ],
 
             ]
@@ -78,7 +75,7 @@ class WakeupCallsController extends Controller
     {
         try {
 
-            $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
+            $domain_uuid = session('domain_uuid');
             $item_uuid = request('item_uuid'); // Retrieve item_uuid from the request
 
             // Base navigation array without Greetings
@@ -120,6 +117,9 @@ class WakeupCallsController extends Controller
             ];
 
             $extensions = Extensions::where('domain_uuid', $domain_uuid)
+                ->when(!$this->canViewAllRecords(), function ($query) {
+                    $query->where('extension_uuid', optional(auth()->user())->extension_uuid);
+                })
                 ->select('extension_uuid', 'extension', 'effective_caller_id_name')
                 ->orderBy('extension', 'asc')
                 ->get();
@@ -135,7 +135,9 @@ class WakeupCallsController extends Controller
             // Check if item_uuid exists to find an existing model
             if ($item_uuid) {
                 // Find existing item by item_uuid
-                $wakeup_call = $this->model::where($this->model->getKeyName(), $item_uuid)->first();
+                $wakeup_call = $this->scopedWakeupCalls()
+                    ->where($this->model->getKeyName(), $item_uuid)
+                    ->first();
 
                 // If a model exists, use it; otherwise, create a new one
                 if (!$wakeup_call) {
@@ -146,7 +148,10 @@ class WakeupCallsController extends Controller
                 $updateRoute = route('wakeup-calls.update', ['wakeup_call' => $item_uuid]);
             } else {
                 // Create a new model if item_uuid is not provided
-                $wakeup_call = $this->model;
+                $wakeup_call = new WakeupCall([
+                    'domain_uuid' => $domain_uuid,
+                    'extension_uuid' => $this->canViewAllRecords() ? null : optional(auth()->user())->extension_uuid,
+                ]);
             }
 
             $permissions = $this->getUserPermissions();
@@ -166,7 +171,7 @@ class WakeupCallsController extends Controller
                 'permissions' => $permissions,
                 'status_options' => $status_options,
                 'routes' => $routes,
-                'timezone' => get_local_time_zone($wakeup_call->domain_uuid)
+                'timezone' => get_local_time_zone($wakeup_call->domain_uuid ?: $domain_uuid)
                 // Define options for other fields as needed
             ];
             // logger($itemOptions);
@@ -188,6 +193,12 @@ class WakeupCallsController extends Controller
     public function getSettings()
     {
         try {
+            if (!userCheckPermission('wakeup_calls_view_settings')) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['authorization' => ['Access denied.']]
+                ], 403);
+            }
 
             $domain_uuid = request('domain_uuid') ?? session('domain_uuid');
 
@@ -262,138 +273,89 @@ class WakeupCallsController extends Controller
      */
     public function getData($paginate = 50): LengthAwarePaginator
     {
-        if (!empty(request('filterData.dateRange'))) {
-            $startPeriod = Carbon::parse(request('filterData.dateRange')[0])->setTimeZone('UTC');
-            $endPeriod = Carbon::parse(request('filterData.dateRange')[1])->setTimeZone('UTC');
-        } else {
-            $domain_uuid = session('domain_uuid');
-            $startPeriod = Carbon::now(get_local_time_zone($domain_uuid))->startOfMonth()->setTimeZone('UTC');
-            $endPeriod   = Carbon::now(get_local_time_zone($domain_uuid))->endOfMonth()->setTimeZone('UTC');            
+        if (!$this->canViewRecords()) {
+            abort(403);
         }
 
-        $this->filters = [
-            'startPeriod' => $startPeriod,
-            'endPeriod' => $endPeriod,
-            'search' => request('filterData.search') ?? null,
-        ];
+        $showGlobal = filter_var(request('filter.showGlobal', false), FILTER_VALIDATE_BOOLEAN)
+            && $this->canViewGlobalRecords();
 
-        // Check if showGlobal parameter is present and not empty
-        if (!empty(request('filterData.showGlobal'))) {
-            $this->filters['showGlobal'] = request('filterData.showGlobal') === 'true';
-        } else {
-            $this->filters['showGlobal'] = null;
-        }
+        $data = QueryBuilder::for(WakeupCall::class)
+            ->select([
+                'uuid',
+                'domain_uuid',
+                'extension_uuid',
+                'wake_up_time',
+                'next_attempt_at',
+                'recurring',
+                'status',
+                'retry_count',
+            ])
+            ->when($showGlobal, function ($query) {
+                $query->with(['domain' => function ($query) {
+                    $query->select('domain_uuid', 'domain_name', 'domain_description');
+                }]);
 
-        // Add sorting criteria
-        $this->sortField = request()->get('sortField', 'wake_up_time');
-        $this->sortOrder = request()->get('sortOrder', 'asc');
-
-        $data = $this->builder($this->filters);
-
-        // Apply pagination if requested
-        if ($paginate) {
-            $data = $data->paginate($paginate);
-            $data->getCollection()->transform(function ($wakeUpCall) {
-                return $wakeUpCall->append(['wake_up_time_formatted', 'next_attempt_at_formatted', 'destroy_route']);
-            });
-        } else {
-            $data = $data->get();
-        }
-
-        // logger($data);
-
-        return $data;
-    }
-
-
-    /**
-     * @param  array  $filters
-     * @return Builder
-     */
-    public function builder(array $filters = []): Builder
-    {
-        $data =  $this->model::query();
-
-        if (isset($filters['showGlobal']) and $filters['showGlobal']) {
-            $data->with(['domain' => function ($query) {
-                $query->select('domain_uuid', 'domain_name', 'domain_description'); // Specify the fields you need
-            }]);
-            // Access domains through the session and filter devices by those domains
-            $domainUuids = Session::get('domains')->pluck('domain_uuid');
-            $data->whereHas('domain', function ($query) use ($domainUuids) {
+                $domainUuids = Session::get('domains')->pluck('domain_uuid');
                 $query->whereIn($this->model->getTable() . '.domain_uuid', $domainUuids);
-            });
-        } else {
-            // Directly filter devices by the session's domain_uuid
-            $domainUuid = session('domain_uuid');
-            $data = $data->where($this->model->getTable() . '.domain_uuid', $domainUuid);
-        }
+            })
+            ->when(!$showGlobal, function ($query) {
+                $query->where($this->model->getTable() . '.domain_uuid', session('domain_uuid'));
+            })
+            ->when(!$this->canViewAllRecords(), function ($query) {
+                $query->where('extension_uuid', optional(auth()->user())->extension_uuid);
+            })
+            ->with(['extension' => function ($query) {
+                $query->select('extension_uuid', 'extension', 'effective_caller_id_name');
+            }])
+            ->allowedFilters([
+                AllowedFilter::callback('search', function ($query, $value) {
+                    $needle = trim((string) $value);
 
-        $data->with(['extension' => function ($query) {
-            $query->select('extension_uuid', 'extension', 'effective_caller_id_name');
-        }]);
+                    if ($needle === '') {
+                        return;
+                    }
 
-        $data->select(
-            'uuid',
-            'domain_uuid',
-            'extension_uuid',
-            'wake_up_time',
-            'next_attempt_at',
-            'recurring',
-            'status',
-            'retry_count',
-        );
+                    $query->where(function ($query) use ($needle) {
+                        $query->where('status', 'ilike', "%{$needle}%")
+                            ->orWhereHas('extension', function ($query) use ($needle) {
+                                $query->where('extension', 'ilike', "%{$needle}%")
+                                    ->orWhere('effective_caller_id_name', 'ilike', "%{$needle}%");
+                            })
+                            ->orWhereHas('domain', function ($query) use ($needle) {
+                                $query->where('domain_name', 'ilike', "%{$needle}%")
+                                    ->orWhere('domain_description', 'ilike', "%{$needle}%");
+                            });
+                    });
+                }),
+                AllowedFilter::callback('dateRange', function ($query, $value) {
+                    if (!is_array($value) || count($value) < 2) {
+                        return;
+                    }
 
+                    $query->whereBetween('wake_up_time', [
+                        Carbon::parse($value[0])->setTimeZone('UTC'),
+                        Carbon::parse($value[1])->setTimeZone('UTC'),
+                    ]);
+                }),
+                AllowedFilter::callback('showGlobal', function ($query, $value) {
+                    return;
+                }),
+            ])
+            ->allowedSorts([
+                'wake_up_time',
+                'next_attempt_at',
+                'status',
+                'retry_count',
+            ])
+            ->defaultSort('wake_up_time');
 
-        if (is_array($filters)) {
-            foreach ($filters as $field => $value) {
-                if (method_exists($this, $method = "filter" . ucfirst($field))) {
-                    $this->$method($data, $value);
-                }
-            }
-        }
-
-        // Apply sorting
-        $data->orderBy($this->sortField, $this->sortOrder);
+        $data = $data->paginate(fspbx_pagination_per_page(request()));
+        $data->getCollection()->transform(function ($wakeUpCall) {
+            return $wakeUpCall->append(['wake_up_time_formatted', 'next_attempt_at_formatted']);
+        });
 
         return $data;
-    }
-
-    /**
-     * @param $query
-     * @param $value
-     * @return void
-     */
-    protected function filterSearch($query, $value)
-    {
-        $searchable = $this->searchable;
-
-        // Case-insensitive partial string search in the specified fields
-        $query->where(function ($query) use ($value, $searchable) {
-            foreach ($searchable as $field) {
-                if (strpos($field, '.') !== false) {
-                    // Nested field (e.g., 'extension.name_formatted')
-                    [$relation, $nestedField] = explode('.', $field, 2);
-
-                    $query->orWhereHas($relation, function ($query) use ($nestedField, $value) {
-                        $query->where($nestedField, 'ilike', '%' . $value . '%');
-                    });
-                } else {
-                    // Direct field
-                    $query->orWhere($field, 'ilike', '%' . $value . '%');
-                }
-            }
-        });
-    }
-
-    protected function filterStartPeriod($query, $value)
-    {
-        $query->where('wake_up_time', '>=', $value->toIso8601String());
-    }
-
-    protected function filterEndPeriod($query, $value)
-    {
-        $query->where('wake_up_time', '<=', $value->toIso8601String());
     }
 
     /**
@@ -481,6 +443,13 @@ class WakeupCallsController extends Controller
             ], 404);
         }
 
+        if (!$this->canAccessWakeupCall($wakeup_call)) {
+            return response()->json([
+                'success' => false,
+                'errors' => ['authorization' => ['Access denied.']]
+            ], 403);
+        }
+
         try {
             // Extract validated data
             $validated = $request->validated();
@@ -525,11 +494,19 @@ class WakeupCallsController extends Controller
     public function destroy(WakeupCall $wakeup_call)
     {
         try {
+            if (!userCheckPermission('wakeup_calls_delete')) {
+                return redirect()->back()->with('error', ['server' => ['Access denied.']]);
+            }
+
             if (!$wakeup_call) {
                 return response()->json([
                     'success' => false,
                     'errors' => ['message' => ['Wakeup call not found.']]
                 ], 404);
+            }
+
+            if (!$this->canAccessWakeupCall($wakeup_call)) {
+                return redirect()->back()->with('error', ['server' => ['Access denied.']]);
             }
 
             // Delete the record
@@ -550,11 +527,19 @@ class WakeupCallsController extends Controller
     public function bulkDelete(): JsonResponse
     {
         try {
+            if (!userCheckPermission('wakeup_calls_delete')) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['authorization' => ['Access denied.']]
+                ], 403);
+            }
+
             // Begin Transaction
             DB::beginTransaction();
 
             // Retrieve all items at once
-            $items = $this->model::whereIn('uuid', request('items'))
+            $items = $this->scopedWakeupCalls()
+                ->whereIn('uuid', request('items', []))
                 ->get(['uuid']);
 
             foreach ($items as $item) {
@@ -591,6 +576,13 @@ class WakeupCallsController extends Controller
     public function updateSettings(UpdateWakeupCallSettingsRequest $request)
     {
         try {
+            if (!userCheckPermission('wakeup_calls_view_settings')) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['authorization' => ['Access denied.']]
+                ], 403);
+            }
+
             // Extract validated data
             $validated = $request->validated();
             $allowedList = $validated['allowed_list'] ?? [];
@@ -633,8 +625,7 @@ class WakeupCallsController extends Controller
 
     public function getUserPermissions()
     {
-        $permissions = [];
-        return $permissions;
+        return $this->permissions();
     }
 
     /**
@@ -647,19 +638,45 @@ class WakeupCallsController extends Controller
 
         // logger(request()->all());
         try {
-            $query = $this->model::query();
+            if (!$this->canViewRecords()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => ['authorization' => ['Access denied.']]
+                ], 403);
+            }
+
+            $query = $this->scopedWakeupCalls();
 
             // Apply domain filtering unless showGlobal is enabled
-            if (!request()->get('showGlobal')) {
+            if (filter_var(request('filter.showGlobal', false), FILTER_VALIDATE_BOOLEAN) && $this->canViewGlobalRecords()) {
+                $domainUuids = Session::get('domains')->pluck('domain_uuid');
+                $query->whereIn($this->model->getTable() . '.domain_uuid', $domainUuids);
+            } else {
                 $query->where('domain_uuid', session('domain_uuid'));
             }
 
             // Apply date range filter if provided
-            if (!empty(request('dateRange'))) {
-                $startPeriod = Carbon::parse(request('dateRange')[0])->setTimeZone('UTC');
-                $endPeriod = Carbon::parse(request('dateRange')[1])->setTimeZone('UTC');
+            if (!empty(request('filter.dateRange'))) {
+                $startPeriod = Carbon::parse(request('filter.dateRange')[0])->setTimeZone('UTC');
+                $endPeriod = Carbon::parse(request('filter.dateRange')[1])->setTimeZone('UTC');
 
                 $query->whereBetween('wake_up_time', [$startPeriod, $endPeriod]);
+            }
+
+            if (filled(request('filter.search'))) {
+                $needle = trim((string) request('filter.search'));
+
+                $query->where(function ($query) use ($needle) {
+                    $query->where('status', 'ilike', "%{$needle}%")
+                        ->orWhereHas('extension', function ($query) use ($needle) {
+                            $query->where('extension', 'ilike', "%{$needle}%")
+                                ->orWhere('effective_caller_id_name', 'ilike', "%{$needle}%");
+                        })
+                        ->orWhereHas('domain', function ($query) use ($needle) {
+                            $query->where('domain_name', 'ilike', "%{$needle}%")
+                                ->orWhere('domain_description', 'ilike', "%{$needle}%");
+                        });
+                });
             }
 
             // Retrieve matching wake-up call UUIDs
@@ -679,5 +696,62 @@ class WakeupCallsController extends Controller
                 'errors' => ['server' => ['Failed to select all items']]
             ], 500); // 500 Internal Server Error for any other errors
         }
+    }
+
+    private function scopedWakeupCalls(): Builder
+    {
+        return $this->model::query()
+            ->when(!$this->canViewAllRecords(), function ($query) {
+                $query->where('extension_uuid', optional(auth()->user())->extension_uuid);
+            });
+    }
+
+    private function canViewRecords(): bool
+    {
+        return userCheckPermission('wakeup_calls_list_view')
+            && ($this->canViewAllRecords() || userCheckPermission('wakeup_calls_view_self_records'));
+    }
+
+    private function canViewAllRecords(): bool
+    {
+        return userCheckPermission('wakeup_calls_view_all_records')
+            || userCheckPermission('wakeup_calls_all');
+    }
+
+    private function canViewGlobalRecords(): bool
+    {
+        return userCheckPermission('wakeup_calls_all');
+    }
+
+    private function canAccessWakeupCall(WakeupCall $wakeupCall): bool
+    {
+        if ($this->canViewGlobalRecords()) {
+            $domainUuids = Session::get('domains')->pluck('domain_uuid');
+            if (!$domainUuids->contains($wakeupCall->domain_uuid)) {
+                return false;
+            }
+        } elseif ($wakeupCall->domain_uuid !== session('domain_uuid')) {
+            return false;
+        }
+
+        if ($this->canViewAllRecords()) {
+            return true;
+        }
+
+        return userCheckPermission('wakeup_calls_view_self_records')
+            && $wakeupCall->extension_uuid === optional(auth()->user())->extension_uuid;
+    }
+
+    private function permissions(): array
+    {
+        return [
+            'create' => userCheckPermission('wakeup_calls_create'),
+            'update' => userCheckPermission('wakeup_calls_edit'),
+            'destroy' => userCheckPermission('wakeup_calls_delete'),
+            'view_all_records' => $this->canViewAllRecords(),
+            'view_self_records' => userCheckPermission('wakeup_calls_view_self_records'),
+            'view_global' => $this->canViewGlobalRecords(),
+            'view_settings' => userCheckPermission('wakeup_calls_view_settings'),
+        ];
     }
 }

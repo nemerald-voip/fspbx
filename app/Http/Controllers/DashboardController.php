@@ -205,8 +205,11 @@ class DashboardController extends Controller
         }
 
         //Wakeup Calls Count
-        if (userCheckPermission("wakeup_calls_list_view")) {
+        if (userCheckPermission("wakeup_calls_list_view") && (userCheckPermission('wakeup_calls_view_all_records') || userCheckPermission('wakeup_calls_all') || userCheckPermission('wakeup_calls_view_self_records'))) {
             $counts['wakeup_calls'] = WakeupCall::where('domain_uuid', $domain_uuid)
+                ->when(!userCheckPermission('wakeup_calls_view_all_records') && !userCheckPermission('wakeup_calls_all'), function ($query) {
+                    $query->where('extension_uuid', optional(auth()->user())->extension_uuid);
+                })
                 ->count();
         }
 
@@ -493,7 +496,7 @@ class DashboardController extends Controller
         if (userCheckPermission("whitelisted_numbers_list_view")) {
             $apps[] = ['name' => 'Whitelisted Numbers', 'href' => route('whitelisted-numbers.index'), 'icon' => 'HeartIcon', 'slug' => 'whitelisted_numbers'];
         }
-        if (userCheckPermission("wakeup_calls_list_view")) {
+        if (userCheckPermission("wakeup_calls_list_view") && (userCheckPermission('wakeup_calls_view_all_records') || userCheckPermission('wakeup_calls_all') || userCheckPermission('wakeup_calls_view_self_records'))) {
             $apps[] = ['name' => 'Wakeup Calls', 'href' => route('wakeup-calls.index'), 'icon' => 'ClockIcon', 'slug' => 'wakeup_calls'];
         }
 

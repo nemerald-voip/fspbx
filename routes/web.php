@@ -59,6 +59,7 @@ use App\Http\Controllers\SansayActiveCallsController;
 use App\Http\Controllers\SansayRegistrationsController;
 use App\Http\Controllers\SipStatusController;
 use App\Http\Controllers\SpeedDialController;
+use App\Http\Controllers\SwitchVariableController;
 use App\Http\Controllers\SwitchModuleController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\SystemSettingsController;
@@ -283,6 +284,9 @@ Route::group(['middleware' => 'auth'], function () {
     // System
     Route::get('system', [SystemController::class, 'index'])->name('system.index');
 
+    // Switch Variables
+    Route::get('vars', [SwitchVariableController::class, 'index'])->name('switch-variables.index');
+
     // Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/logout', [App\Http\Controllers\Auth\LoginController::class, 'logout']);
@@ -299,13 +303,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/phone-numbers/import/commit', [PhoneNumbersController::class, 'importCommit'])->name('phone-numbers.import.commit');
 
     //Wakeup Calls
-    Route::resource('wakeup-calls', WakeupCallsController::class);
-    Route::post('/wakeup-calls/select-all', [WakeupCallsController::class, 'selectAll'])->name('wakeup-calls.select.all');
-    // Route::post('/wakeup-calls/bulk-update', [WakeupCallsController::class, 'bulkUpdate'])->name('wakeup-calls.bulk.update');
-    Route::post('/wakeup-calls/bulk-delete', [WakeupCallsController::class, 'bulkDelete'])->name('wakeup-calls.bulk.delete');
-    Route::post('wakeup-calls/item-options', [WakeupCallsController::class, 'getItemOptions'])->name('wakeup-calls.item.options');
-    Route::post('wakeup-calls/settings', [WakeupCallsController::class, 'getSettings'])->name('wakeup-calls.settings');
-    Route::put('wakeup-calls/settings/update', [WakeupCallsController::class, 'updateSettings'])->name('wakeup-calls.settings.update');
+    Route::get('wakeup-calls', [WakeupCallsController::class, 'index'])->name('wakeup-calls.index');
 
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
