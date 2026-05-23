@@ -206,7 +206,7 @@
             </template>
 
             <template #action>
-                <button v-if="page.props.auth.can.fax_server_create" type="button"
+                <button v-if="permissions.fax_server_create" type="button"
                     @click.prevent="handleCreateButtonClick()"
                     class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                     Create Fax Server
@@ -315,8 +315,8 @@
                             <input v-if="row.fax_uuid" v-model="selectedItems" type="checkbox" name="action_box[]"
                                 :value="row.fax_uuid" class="h-4 w-4 rounded border-gray-300 text-indigo-600">
                             <div class="ml-4"
-                                :class="{ 'cursor-pointer hover:text-gray-900': page.props.auth.can.fax_server_update, }"
-                                @click="page.props.auth.can.fax_server_update && handleEditButtonClick(row.fax_uuid)">
+                                :class="{ 'cursor-pointer hover:text-gray-900': permissions.fax_server_update, }"
+                                @click="permissions.fax_server_update && handleEditButtonClick(row.fax_uuid)">
                                 <span class="flex items-center">
                                     {{ row.fax_name }}
                                 </span>
@@ -348,7 +348,7 @@
 
                     <!--  Tools -->
                     <TableField class="px-2 py-2 text-sm flex-col sm:flex-row gap-2">
-                        <template v-if="page.props.auth.can.fax_send">
+                        <template v-if="permissions.fax_send">
                             <button @click.prevent="handleNewFaxButtonClick()"
                                 class="inline-flex items-center px-2 py-1 rounded text-gray-700 hover:bg-gray-100 transition text-xs font-medium"
                                 title="New Fax">
@@ -357,7 +357,7 @@
                             </button>
                         </template>
 
-                        <template v-if="page.props.auth.can.fax_inbox_view">
+                        <template v-if="permissions.fax_inbox_view">
                             <a :href="`/fax/${row.fax_uuid}/inbox`"
                                 class="inline-flex items-center px-2 py-1 rounded text-gray-700 hover:bg-gray-100 transition text-xs font-medium"
                                 title="Inbox">
@@ -366,7 +366,7 @@
                             </a>
                         </template>
 
-                        <template v-if="page.props.auth.can.fax_sent_view">
+                        <template v-if="permissions.fax_sent_view">
                             <a :href="`/fax/${row.fax_uuid}/sent`"
                                 class="inline-flex items-center px-2 py-1 rounded text-gray-700 hover:bg-gray-100 transition text-xs font-medium"
                                 title="Sent">
@@ -375,7 +375,7 @@
                             </a>
                         </template>
 
-                        <template v-if="page.props.auth.can.fax_log_view">
+                        <template v-if="permissions.fax_log_view">
                             <a :href="`/fax/${row.fax_uuid}/log`"
                                 class="inline-flex items-center px-2 py-1 rounded text-gray-700 hover:bg-gray-100 transition text-xs font-medium"
                                 title="Logs">
@@ -390,7 +390,7 @@
 
                         <template #action-buttons>
                             <div class="flex items-center whitespace-nowrap justify-end">
-                                <ejs-tooltip v-if="page.props.auth.can.fax_server_update" :content="'Edit'"
+                                <ejs-tooltip v-if="permissions.fax_server_update" :content="'Edit'"
                                     position='TopCenter' target="#destination_tooltip_target">
                                     <div id="destination_tooltip_target">
                                         <PencilSquareIcon @click="handleEditButtonClick(row.fax_uuid)"
@@ -399,7 +399,7 @@
                                     </div>
                                 </ejs-tooltip>
 
-                                <ejs-tooltip v-if="page.props.auth.can.fax_server_destroy" :content="'Delete'"
+                                <ejs-tooltip v-if="permissions.fax_server_destroy" :content="'Delete'"
                                     position='TopCenter' target="#delete_tooltip_target">
                                     <div id="delete_tooltip_target">
                                         <TrashIcon @click="handleSingleItemDeleteRequest(row.fax_uuid)"
@@ -464,7 +464,6 @@
 
 <script setup>
 import { computed, ref, onMounted } from "vue";
-import { usePage } from '@inertiajs/vue3'
 import axios from 'axios';
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
@@ -487,7 +486,6 @@ import { DocumentPlusIcon, EnvelopeIcon, DocumentArrowUpIcon, DocumentTextIcon }
 
 
 
-const page = usePage()
 const loading = ref(false)
 const recentOutboundLoading = ref(false)
 const recentInboundLoading = ref(false)
@@ -511,8 +509,10 @@ const props = defineProps({
     stats: Object,
     routes: Object,
     pagination: Object,
+    permissions: Object,
 });
 
+const permissions = props.permissions ?? {};
 const perPage = ref(props.pagination?.per_page);
 
 const filterData = ref({
@@ -628,7 +628,7 @@ const bulkActions = computed(() => {
     ];
 
     // Conditionally add the delete action if permission is granted
-    if (page.props.auth.can.fax_server_destroy) {
+    if (permissions.fax_server_destroy) {
         actions.push({
             id: 'bulk_delete',
             label: 'Delete',

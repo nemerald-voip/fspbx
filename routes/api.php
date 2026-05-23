@@ -40,6 +40,7 @@ use App\Http\Controllers\FaxInboxController;
 use App\Http\Controllers\FaxLogController;
 use App\Http\Controllers\FaxSentController;
 use App\Http\Controllers\FirewallController;
+use App\Http\Controllers\FreeswitchLogController;
 use App\Http\Controllers\GreetingsController;
 use App\Http\Controllers\GatewayController;
 use App\Http\Controllers\GroupsController;
@@ -59,6 +60,7 @@ use App\Http\Controllers\RingGroupsController;
 use App\Http\Controllers\SipStatusController;
 use App\Http\Controllers\SpeedDialController;
 use App\Http\Controllers\SwitchModuleController;
+use App\Http\Controllers\SwitchVariableController;
 use App\Http\Controllers\SystemController;
 use App\Http\Controllers\SystemSettingsController;
 use App\Http\Controllers\TokenController;
@@ -67,6 +69,7 @@ use App\Http\Controllers\UsersController;
 use App\Http\Controllers\VirtualReceptionistController;
 use App\Http\Controllers\VoicemailController;
 use App\Http\Controllers\VoicemailMessagesController;
+use App\Http\Controllers\WakeupCallsController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -103,6 +106,9 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     // Email logs
     Route::resource('/email-logs', EmailLogsController::class);
     Route::post('/email-logs/retry', [EmailLogsController::class, 'retry'])->name('email-logs.retry');
+
+    // FreeSWITCH logs
+    Route::get('/freeswitch-logs', [FreeswitchLogController::class, 'index'])->name('freeswitch-logs.index');
 
     // Basic Queue
     Route::get('/basic-queues/queues/data', [BasicQueueController::class, 'getQueueData'])->name('basic-queues.queues.data');
@@ -408,6 +414,16 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/call-blocks/bulk-delete', [CallBlockController::class, 'bulkDelete'])->name('call-blocks.bulk.delete');
     Route::post('/call-blocks/bulk-toggle', [CallBlockController::class, 'bulkToggle'])->name('call-blocks.bulk.toggle');
 
+    Route::post('wakeup-calls', [WakeupCallsController::class, 'store'])->name('wakeup-calls.store');
+    Route::put('wakeup-calls/{wakeup_call}', [WakeupCallsController::class, 'update'])->name('wakeup-calls.update');
+    Route::delete('wakeup-calls/{wakeup_call}', [WakeupCallsController::class, 'destroy'])->name('wakeup-calls.destroy');
+    Route::get('/wakeup-calls/data', [WakeupCallsController::class, 'getData'])->name('wakeup-calls.data');
+    Route::post('/wakeup-calls/item-options', [WakeupCallsController::class, 'getItemOptions'])->name('wakeup-calls.item.options');
+    Route::post('/wakeup-calls/select-all', [WakeupCallsController::class, 'selectAll'])->name('wakeup-calls.select.all');
+    Route::post('/wakeup-calls/bulk-delete', [WakeupCallsController::class, 'bulkDelete'])->name('wakeup-calls.bulk.delete');
+    Route::post('wakeup-calls/settings', [WakeupCallsController::class, 'getSettings'])->name('wakeup-calls.settings');
+    Route::put('wakeup-calls/settings/update', [WakeupCallsController::class, 'updateSettings'])->name('wakeup-calls.settings.update');
+
     // Conference Centers
     Route::post('conference-centers', [ConferenceCenterController::class, 'store'])->name('conference-centers.store');
     Route::put('conference-centers/{conference_center}', [ConferenceCenterController::class, 'update'])->name('conference-centers.update');
@@ -628,6 +644,16 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
 
     // System
     Route::get('system/data', [SystemController::class, 'data'])->name('system.data');
+
+    // Switch Variables
+    Route::get('switch-variables/data', [SwitchVariableController::class, 'data'])->name('switch-variables.data');
+    Route::post('switch-variables/item-options', [SwitchVariableController::class, 'itemOptions'])->name('switch-variables.item.options');
+    Route::post('switch-variables', [SwitchVariableController::class, 'store'])->name('switch-variables.store');
+    Route::put('switch-variables/{switch_variable}', [SwitchVariableController::class, 'update'])->name('switch-variables.update');
+    Route::post('switch-variables/bulk-copy', [SwitchVariableController::class, 'bulkCopy'])->name('switch-variables.bulk.copy');
+    Route::post('switch-variables/bulk-toggle', [SwitchVariableController::class, 'bulkToggle'])->name('switch-variables.bulk.toggle');
+    Route::post('switch-variables/bulk-delete', [SwitchVariableController::class, 'bulkDelete'])->name('switch-variables.bulk.delete');
+    Route::post('switch-variables/sync', [SwitchVariableController::class, 'sync'])->name('switch-variables.sync');
 
     // Call Transcription
     Route::get('/call-transcription/providers', [CallTranscriptionController::class, 'getProviders'])->name('call-transcription.providers');

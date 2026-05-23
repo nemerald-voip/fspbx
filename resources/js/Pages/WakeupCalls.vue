@@ -8,25 +8,25 @@
 
                 <template #action>
 
-                    <button v-if="page.props.auth.can.wakeup_calls_create" type="button"
+                    <button v-if="permissions.create" type="button"
                         @click.prevent="handleCreateButtonClick()"
                         class="rounded-md bg-indigo-600 px-2.5 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
                         Create
                     </button>
 
-                    <button v-if="page.props.auth.can.wakeup_calls_view_settings" type="button"
+                    <button v-if="permissions.view_settings" type="button"
                         @click.prevent="handleSettingsButtonClick()"
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                         Settings
                     </button>
 
-                    <button v-if="!filterData.showGlobal && page.props.auth.can.wakeup_calls_view_global" type="button"
+                    <button v-if="!filterData.showGlobal && permissions.view_global" type="button"
                         @click.prevent="handleShowGlobal()"
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                         Show global
                     </button>
 
-                    <button v-if="filterData.showGlobal && page.props.auth.can.wakeup_calls_view_global" type="button"
+                    <button v-if="filterData.showGlobal && permissions.view_global" type="button"
                         @click.prevent="handleShowLocal()"
                         class="rounded-md bg-white px-2.5 py-1.5 ml-2 sm:ml-4 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
                         Show local
@@ -51,7 +51,7 @@
 
 
                     <div class="relative z-10 min-w-64 -mt-0.5 mb-2 scale-y-95 shrink-0 sm:mr-4">
-                        <DatePicker :dateRange="filterData.dateRange" :timezone="filterData.timezone"
+                        <DatePicker :dateRange="filterData.dateRange" :timezone="props.timezone"
                             @update:date-range="handleUpdateDateRange" />
                     </div>
 
@@ -161,15 +161,15 @@
                                     <ejs-tooltip :content="'Edit wakeup call'" position='TopLeft'
                                         target="#edit_tooltip_target">
                                         <div id="edit_tooltip_target">
-                                            <PencilSquareIcon @click="handleEditRequest(row.uuid)"
+                                            <PencilSquareIcon v-if="permissions.update" @click="handleEditRequest(row.uuid)"
                                                 class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                         </div>
                                     </ejs-tooltip>
 
-                                    <ejs-tooltip v-if="page.props.auth.can.wakeup_calls_delete" :content="'Delete'"
+                                    <ejs-tooltip v-if="permissions.destroy" :content="'Delete'"
                                         position='TopCenter' target="#delete_tooltip_target">
                                         <div id="delete_tooltip_target">
-                                            <TrashIcon @click="handleSingleItemDeleteRequest(row.destroy_route)"
+                                            <TrashIcon @click="handleSingleItemDeleteRequest(row.uuid)"
                                                 class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                         </div>
                                     </ejs-tooltip>
@@ -197,7 +197,9 @@
                 <template #footer>
                     <Paginator :previous="data.prev_page_url" :next="data.next_page_url" :from="data.from" :to="data.to"
                         :total="data.total" :currentPage="data.current_page" :lastPage="data.last_page" :links="data.links"
-                        @pagination-change-page="renderRequestedPage" />
+                        :page-size="perPage" :page-size-options="props.pagination?.per_page_options ?? []"
+                        :show-page-size-selector="true"
+                        @pagination-change-page="renderRequestedPage" @page-size-change="handlePageSizeChange" />
                 </template>
 
 
@@ -239,9 +241,8 @@
 </template>
 
 <script setup>
-import { ref, computed } from "vue";
-import { usePage } from '@inertiajs/vue3'
-import { router } from "@inertiajs/vue3";
+import { ref, computed, onMounted } from "vue";
+import axios from "axios";
 import MainLayout from '../Layouts/MainLayout.vue'
 import DataTable from "./components/general/DataTable.vue";
 import TableColumnHeader from "./components/general/TableColumnHeader.vue";
@@ -263,7 +264,6 @@ import UpdateWakeupCallSettingsForm from "./components/forms/UpdateWakeupCallSet
 import CreateWakeupCallForm from "./components/forms/CreateWakeupCallForm.vue";
 import Loading from "./components/general/Loading.vue";
 
-const page = usePage()
 const loading = ref(false)
 const loadingModal = ref(false)
 const notificationType = ref(null);
@@ -283,15 +283,30 @@ const showDeleteConfirmationModal = ref(false);
 const confirmDeleteAction = ref(null);
 
 const props = defineProps({
-    data: Object,
     startPeriod: String,
     endPeriod: String,
     timezone: String,
     routes: Object,
+    permissions: Object,
+    pagination: Object,
 });
 
+const permissions = props.permissions;
+const perPage = ref(props.pagination?.per_page);
+const currentPage = ref(1);
 const itemOptions = ref({})
 const settings = ref({})
+const data = ref({
+    data: [],
+    prev_page_url: null,
+    next_page_url: null,
+    from: 0,
+    to: 0,
+    total: 0,
+    current_page: 1,
+    last_page: 1,
+    links: [],
+});
 
 const startLocal = moment.utc(props.startPeriod).tz(props.timezone)
 const endLocal = moment.utc(props.endPeriod).tz(props.timezone)
@@ -302,12 +317,36 @@ const dateRange = [
 ]
 
 const filterData = ref({
-    search: props.search,
+    search: null,
     showGlobal: false,
     dateRange: dateRange,
-    timezone: props.timezone,
-
 });
+
+const sortData = ref({ name: "wake_up_time", order: "asc" });
+
+onMounted(() => getData());
+
+const getData = (page = 1) => {
+    loading.value = true;
+    currentPage.value = Number(page) || 1;
+    const sort = sortData.value.order === "desc" ? `-${sortData.value.name}` : sortData.value.name;
+
+    axios.get(props.routes.data_route, {
+        params: {
+            filter: filterData.value,
+            page: currentPage.value,
+            per_page: perPage.value,
+            sort,
+        },
+    }).then((response) => {
+        data.value = response.data;
+        currentPage.value = response.data.current_page ?? currentPage.value;
+    }).catch((error) => {
+        handleErrorResponse(error);
+    }).finally(() => {
+        loading.value = false;
+    });
+}
 
 const handleCreateButtonClick = () => {
     showCreateModal.value = true
@@ -421,25 +460,7 @@ const handleSingleItemDeleteRequest = (url) => {
 }
 
 const executeSingleDelete = (url) => {
-    router.delete(url, {
-        preserveScroll: true,
-        preserveState: true,
-        onSuccess: (page) => {
-            if (page.props.flash.error) {
-                showNotification('error', page.props.flash.error);
-            }
-            if (page.props.flash.message) {
-                showNotification('success', page.props.flash.message);
-            }
-            showDeleteConfirmationModal.value = false;
-        },
-        onFinish: () => {
-            showDeleteConfirmationModal.value = false;
-        },
-        onError: (errors) => {
-            console.log(errors);
-        },
-    });
+    executeBulkDelete([url]);
 }
 
 const handleShowGlobal = () => {
@@ -453,26 +474,7 @@ const handleShowLocal = () => {
 }
 
 const handleSearchButtonClick = () => {
-    loading.value = true;
-
-    router.visit(props.routes.current_page, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: [
-            "data",
-        ],
-        onSuccess: (page) => {
-            loading.value = false;
-        },
-        onError: (error) => {
-            loading.value = false;
-            handleErrorResponse(error);
-        }
-
-    });
+    getData(1);
 };
 
 const handleFiltersReset = () => {
@@ -486,30 +488,27 @@ const handleFiltersReset = () => {
 }
 
 const renderRequestedPage = (url) => {
-    loading.value = true;
-    router.visit(url, {
-        data: {
-            filterData: filterData._rawValue,
-        },
-        preserveScroll: true,
-        preserveState: true,
-        only: ["data"],
-        onSuccess: (page) => {
-            loading.value = false;
-        }
+    if (!url) return;
+    const urlObj = new URL(url, window.location.origin);
+    getData(urlObj.searchParams.get("page") ?? 1);
+};
 
-    });
+const handlePageSizeChange = (newPerPage) => {
+    perPage.value = newPerPage;
+    getData(1);
 };
 
 // Computed property for bulk actions based on permissions
 const bulkActions = computed(() => {
-    const actions = [
-        {
+    const actions = [];
+
+    if (permissions.destroy) {
+        actions.push({
             id: 'bulk_delete',
             label: 'Delete',
             icon: 'TrashIcon'
-        }
-    ];
+        });
+    }
 
     return actions;
 });
@@ -522,12 +521,13 @@ const handleBulkActionRequest = (action) => {
 
 }
 
-const executeBulkDelete = () => {
-    axios.post(`${props.routes.bulk_delete}`, { items: selectedItems.value })
+const executeBulkDelete = (items = selectedItems.value) => {
+    axios.post(`${props.routes.bulk_delete}`, { items })
         .then((response) => {
             handleModalClose();
+            handleClearSelection();
             showNotification('success', response.data.messages);
-            handleSearchButtonClick();
+            getData(currentPage.value);
         })
         .catch((error) => {
             handleClearSelection();
@@ -542,7 +542,7 @@ const handleUpdateDateRange = (newDateRange) => {
 }
 
 const handleSelectAll = () => {
-    axios.post(props.routes.select_all, filterData._rawValue)
+    axios.post(props.routes.select_all, { filter: filterData.value })
         .then((response) => {
             selectedItems.value = response.data.items;
             selectAll.value = true;
@@ -588,7 +588,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.uuid);
+        selectedItems.value = data.value.data.map(item => item.uuid);
     } else {
         selectedItems.value = [];
     }

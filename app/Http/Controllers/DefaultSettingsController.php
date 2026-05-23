@@ -195,11 +195,7 @@ class DefaultSettingsController extends Controller
         }
 
         try {
-            require_once base_path('public/resources/require.php');
-            require_once base_path('public/resources/classes/domains.php');
-
-            $domain = new \domains();
-            $domain->set();
+            $this->settings->reloadSessionSettings();
 
             return response()->json(['messages' => ['success' => ['Settings reloaded.']]]);
         } catch (\Throwable $exception) {

@@ -46,6 +46,15 @@
                     :selected-domain-uuid="selectedDomainUuid" />
             </section>
 
+            <!-- FREESWITCH -->
+            <section v-show="selectedMenuOption === 'freeswitch_logs'">
+                <Vueform>
+                    <StaticElement name="locations_title" tag="h4" content="FreeSWITCH" />
+                </Vueform>
+
+                <FreeSwitchLogs :trigger="freeswitchLogsTrigger" :routes="routes" />
+            </section>
+
         </template>
 
         <template #overlays>
@@ -70,6 +79,7 @@ import EmailLogs from "./components/EmailLogs.vue";
 import InboundWebhooks from "./components/InboundWebhooks.vue";
 import MessageLogs from "./components/MessageLogs.vue";
 import FaxLogs from "./components/FaxLogs.vue";
+import FreeSwitchLogs from "./components/FreeSwitchLogs.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 
 import {
@@ -78,6 +88,7 @@ import {
     DocumentTextIcon,
     ChatBubbleLeftRightIcon,
     PrinterIcon,
+    ServerStackIcon,
 } from '@heroicons/vue/24/outline'
 
 const props = defineProps({
@@ -101,6 +112,7 @@ const emailsTrigger = ref(false)
 const inboundWebhooksTrigger = ref(false)
 const messageLogsTrigger = ref(false)
 const faxLogsTrigger = ref(false)
+const freeswitchLogsTrigger = ref(false)
 const initialMenuOption = ref(null)
 
 
@@ -114,6 +126,7 @@ const handleUpdateSelectedMenuOption = (key) => {
     if (key === 'inbound_webhooks') inboundWebhooksTrigger.value = !inboundWebhooksTrigger.value
     if (key === 'message_logs') messageLogsTrigger.value = !messageLogsTrigger.value
     if (key === 'fax_logs') faxLogsTrigger.value = !faxLogsTrigger.value
+    if (key === 'freeswitch_logs') freeswitchLogsTrigger.value = !freeswitchLogsTrigger.value
 }
 
 const navigation = computed(() => {
@@ -127,14 +140,23 @@ const navigation = computed(() => {
         items.push({ key: 'fax_logs', name: 'Faxes', icon: PrinterIcon })
     }
 
+    if (props.permissions?.log_view) {
+        items.push({ key: 'freeswitch_logs', name: 'FreeSWITCH', icon: ServerStackIcon })
+    }
+
     return items
 })
 
 
 onMounted(() => {
     if (navigation.value.length) {
-        initialMenuOption.value = navigation.value[0].key
-        // handleUpdateSelectedMenuOption(navigation.value[0].key)
+        const requestedOption = new URLSearchParams(window.location.search).get('tab')
+        const fallbackOption = navigation.value[0].key
+        initialMenuOption.value = navigation.value.some((item) => item.key === requestedOption)
+            ? requestedOption
+            : fallbackOption
+
+        handleUpdateSelectedMenuOption(initialMenuOption.value)
     }
 })
 
