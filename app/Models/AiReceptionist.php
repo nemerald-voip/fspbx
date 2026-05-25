@@ -56,6 +56,13 @@ class AiReceptionist extends Model
         return $this->hasMany(AiReceptionistTool::class, 'ai_receptionist_uuid', 'ai_receptionist_uuid');
     }
 
+    public function routes(): HasMany
+    {
+        return $this->hasMany(AiReceptionistRoute::class, 'ai_receptionist_uuid', 'ai_receptionist_uuid')
+            ->orderBy('sort_order')
+            ->orderBy('name');
+    }
+
     public function generateUniqueSequenceNumber(): ?string
     {
         return $this->firstAvailableExtensionInRange(9450, 9499);

@@ -48,7 +48,8 @@ def metadata_from_headers(headers: dict[str, str]) -> dict[str, str | None]:
 def receptionist_instructions(config: dict[str, Any]) -> str:
     parts = [
         config.get("system_prompt"),
-        "You may transfer calls only by using the transfer_call tool.",
+        config.get("routing_instructions"),
+        "You may route calls only by using resolve_route, transfer_call, warm_transfer_call, complete_warm_transfer, cancel_warm_transfer, or send_route_email.",
         "Use run_http_tool only for tools included in the current FS PBX configuration.",
     ]
     return "\n\n".join(str(part) for part in parts if part) or "You are a helpful phone receptionist."
@@ -71,8 +72,20 @@ def accept_payload(config: dict[str, Any]) -> dict[str, Any]:
         "tools": [
             {
                 "type": "function",
+                "name": "resolve_route",
+                "description": "Find a configured AI Receptionist route by caller intent.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "intent": {"type": "string"},
+                    },
+                    "required": ["intent"],
+                },
+            },
+            {
+                "type": "function",
                 "name": "resolve_destination",
-                "description": "Find a PBX destination by caller intent, name, or extension.",
+                "description": "Find a PBX destination by caller intent, name, or extension when no configured route applies.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -84,7 +97,7 @@ def accept_payload(config: dict[str, Any]) -> dict[str, Any]:
             {
                 "type": "function",
                 "name": "transfer_call",
-                "description": "Transfer the original FreeSWITCH caller A-leg to an approved PBX destination.",
+                "description": "Cold transfer the original FreeSWITCH caller A-leg to an approved PBX destination.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -92,6 +105,61 @@ def accept_payload(config: dict[str, Any]) -> dict[str, Any]:
                         "target": {"type": "string"},
                     },
                     "required": ["destination_type", "target"],
+                },
+            },
+            {
+                "type": "function",
+                "name": "warm_transfer_call",
+                "description": "Start a live warm transfer to a configured direct recipient. The recipient is connected to the AI before the caller is bridged.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "route_uuid": {"type": "string"},
+                        "handoff_summary": {"type": "string"},
+                    },
+                    "required": ["route_uuid", "handoff_summary"],
+                },
+            },
+            {
+                "type": "function",
+                "name": "complete_warm_transfer",
+                "description": "Complete an active warm transfer only after the recipient explicitly accepts. Include the recipient's exact spoken acceptance.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "recipient_response": {
+                            "type": "string",
+                            "description": "The exact words the recipient said to accept the call, such as 'Yes, I can take it.'",
+                        },
+                    },
+                    "required": ["recipient_response"],
+                },
+            },
+            {
+                "type": "function",
+                "name": "cancel_warm_transfer",
+                "description": "Cancel an active warm transfer after the recipient declines or the AI should return to the caller.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "reason": {"type": "string"},
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "name": "send_route_email",
+                "description": "Send a message collected by the AI to a configured route email recipient.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "route_uuid": {"type": "string"},
+                        "caller_name": {"type": "string"},
+                        "caller_number": {"type": "string"},
+                        "message": {"type": "string"},
+                        "urgency": {"type": "string"},
+                    },
+                    "required": ["route_uuid", "message"],
                 },
             },
             {
@@ -280,7 +348,15 @@ class RealtimeCallController:
                 "output": json.dumps(result),
             },
         })
-        await ws.send_json({"type": "response.create"})
+
+        response: dict[str, Any] = {}
+        if result.get("response_instructions"):
+            response["instructions"] = str(result["response_instructions"])
+
+        await ws.send_json({
+            "type": "response.create",
+            **({"response": response} if response else {}),
+        })
 
     def function_call_from_event(self, event: dict[str, Any]) -> dict[str, Any] | None:
         if event.get("type") == "response.function_call_arguments.done":
@@ -314,6 +390,9 @@ class RealtimeCallController:
         name: str,
         arguments: dict[str, Any],
     ) -> dict[str, Any]:
+        if name == "resolve_route":
+            return await client.resolve_route(session_uuid, {"intent": arguments.get("intent", "")})
+
         if name == "resolve_destination":
             return await client.resolve_destination(session_uuid, {"intent": arguments.get("intent", "")})
 
@@ -323,6 +402,34 @@ class RealtimeCallController:
                 "target": arguments.get("target"),
             })
             return await client.transfer(session_uuid, destination.get("destination") or destination)
+
+        if name == "warm_transfer_call":
+            return await client.warm_transfer(
+                session_uuid,
+                str(arguments.get("route_uuid") or ""),
+                str(arguments.get("handoff_summary") or ""),
+            )
+
+        if name == "complete_warm_transfer":
+            return await client.complete_warm_transfer(
+                session_uuid,
+                str(arguments.get("recipient_response") or ""),
+            )
+
+        if name == "cancel_warm_transfer":
+            return await client.cancel_warm_transfer(
+                session_uuid,
+                str(arguments.get("reason") or "declined"),
+            )
+
+        if name == "send_route_email":
+            return await client.send_route_email(session_uuid, {
+                "route_uuid": arguments.get("route_uuid"),
+                "caller_name": arguments.get("caller_name"),
+                "caller_number": arguments.get("caller_number"),
+                "message": arguments.get("message"),
+                "urgency": arguments.get("urgency"),
+            })
 
         if name == "run_http_tool":
             return await client.run_tool(

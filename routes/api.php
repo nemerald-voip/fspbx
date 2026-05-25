@@ -671,7 +671,12 @@ Route::prefix('ai-receptionist-agent')
         Route::get('/receptionists/{ai_receptionist}/config', [AiReceptionistAgentController::class, 'config'])->name('ai-receptionist-agent.config');
         Route::post('/receptionists/{ai_receptionist}/sessions', [AiReceptionistAgentController::class, 'startSession'])->name('ai-receptionist-agent.sessions.start');
         Route::post('/sessions/{session}/resolve-destination', [AiReceptionistAgentController::class, 'resolveDestination'])->name('ai-receptionist-agent.sessions.resolve-destination');
+        Route::post('/sessions/{session}/resolve-route', [AiReceptionistAgentController::class, 'resolveRoute'])->name('ai-receptionist-agent.sessions.resolve-route');
         Route::post('/sessions/{session}/transfer', [AiReceptionistAgentController::class, 'transfer'])->name('ai-receptionist-agent.sessions.transfer');
+        Route::post('/sessions/{session}/warm-transfer', [AiReceptionistAgentController::class, 'warmTransfer'])->name('ai-receptionist-agent.sessions.warm-transfer');
+        Route::post('/sessions/{session}/warm-transfer/complete', [AiReceptionistAgentController::class, 'completeWarmTransfer'])->name('ai-receptionist-agent.sessions.warm-transfer.complete');
+        Route::post('/sessions/{session}/warm-transfer/cancel', [AiReceptionistAgentController::class, 'cancelWarmTransfer'])->name('ai-receptionist-agent.sessions.warm-transfer.cancel');
+        Route::post('/sessions/{session}/route-email', [AiReceptionistAgentController::class, 'sendRouteEmail'])->name('ai-receptionist-agent.sessions.route-email');
         Route::post('/sessions/{session}/tools', [AiReceptionistAgentController::class, 'runTool'])->name('ai-receptionist-agent.sessions.tools');
         Route::post('/sessions/{session}/end', [AiReceptionistAgentController::class, 'endSession'])->name('ai-receptionist-agent.sessions.end');
     });

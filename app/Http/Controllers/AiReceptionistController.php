@@ -9,6 +9,7 @@ use App\Services\AiReceptionistService;
 use App\Services\CallRoutingOptionsService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -114,6 +115,7 @@ class AiReceptionistController extends Controller
 
         $item = $itemUuid
             ? AiReceptionist::query()
+                ->with('routes')
                 ->where('domain_uuid', session('domain_uuid'))
                 ->whereKey($itemUuid)
                 ->firstOrFail()
@@ -139,6 +141,7 @@ class AiReceptionistController extends Controller
         return response()->json([
             'item' => $item,
             'routing_types' => (new CallRoutingOptionsService)->routingTypes,
+            'route_routing_types' => (new CallRoutingOptionsService)->forwardingTypes,
             'tools' => $this->toolOptions($itemUuid),
             'routes' => [
                 'store_route' => route('ai-receptionists.store'),
@@ -214,7 +217,7 @@ class AiReceptionistController extends Controller
 
     private function validatedReceptionist(Request $request, ?AiReceptionist $receptionist = null): array
     {
-        return $request->validate([
+        $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'extension' => [
                 'required',
@@ -238,7 +241,61 @@ class AiReceptionistController extends Controller
             'transcript_enabled' => ['required', 'boolean'],
             'tool_access_enabled' => ['required', 'boolean'],
             'description' => ['nullable', 'string', 'max:1024'],
+            'routes' => ['nullable', 'array'],
+            'routes.*.route_uuid' => ['nullable', 'uuid'],
+            'routes.*.name' => ['nullable', 'string', 'max:255'],
+            'routes.*.match_phrases' => ['nullable'],
+            'routes.*.action_type' => ['nullable', Rule::in(['transfer', 'email'])],
+            'routes.*.transfer_type' => ['nullable', Rule::in(['warm', 'cold'])],
+            'routes.*.destination_type' => ['nullable', 'string', 'max:64'],
+            'routes.*.destination_target' => ['nullable', 'string', 'max:255'],
+            'routes.*.destination_label' => ['nullable', 'string', 'max:255'],
+            'routes.*.email_to' => ['nullable', 'string', 'max:1024'],
+            'routes.*.email_subject' => ['nullable', 'string', 'max:255'],
+            'routes.*.email_instructions' => ['nullable', 'string'],
+            'routes.*.notify_on_failed_warm_transfer' => ['nullable', 'boolean'],
+            'routes.*.failed_transfer_email_to' => ['nullable', 'string', 'max:1024'],
+            'routes.*.enabled' => ['nullable', 'boolean'],
+            'routes.*.sort_order' => ['nullable', 'integer', 'min:0'],
         ]);
+
+        foreach ($validated['routes'] ?? [] as $index => $route) {
+            $name = trim((string) ($route['name'] ?? ''));
+            if ($name === '') {
+                continue;
+            }
+
+            if (($route['action_type'] ?? null) === 'email' && blank($route['email_to'] ?? null)) {
+                throw ValidationException::withMessages([
+                    "routes.{$index}.email_to" => 'Email routes need an email address.',
+                ]);
+            }
+
+            if (($route['action_type'] ?? null) === 'transfer') {
+                if (blank($route['destination_type'] ?? null) || blank($route['destination_target'] ?? null)) {
+                    throw ValidationException::withMessages([
+                        "routes.{$index}.destination_target" => 'Transfer routes need a destination.',
+                    ]);
+                }
+
+                if (($route['transfer_type'] ?? null) === 'warm'
+                    && ! in_array($route['destination_type'] ?? null, ['extensions', 'external'], true)) {
+                    throw ValidationException::withMessages([
+                        "routes.{$index}.destination_type" => 'Warm transfer supports only Extension and External Number.',
+                    ]);
+                }
+
+                if (($route['transfer_type'] ?? null) === 'warm'
+                    && ($route['notify_on_failed_warm_transfer'] ?? false)
+                    && blank($route['failed_transfer_email_to'] ?? null)) {
+                    throw ValidationException::withMessages([
+                        "routes.{$index}.failed_transfer_email_to" => 'Failed warm transfer notifications need an email address.',
+                    ]);
+                }
+            }
+        }
+
+        return $validated;
     }
 
     private function scopedReceptionists(Request $request): QueryBuilder

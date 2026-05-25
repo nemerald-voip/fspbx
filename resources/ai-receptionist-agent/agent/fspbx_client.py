@@ -15,7 +15,7 @@ class FspbxClient:
         connection_limit: int = 100,
         connection_limit_per_host: int = 50,
         keepalive_timeout: float = 30.0,
-        request_timeout: float = 30.0,
+        request_timeout: float = 90.0,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.headers = {
@@ -81,8 +81,30 @@ class FspbxClient:
     async def resolve_destination(self, session_uuid: str, payload: dict[str, Any]) -> dict[str, Any]:
         return await self._request("POST", f"/api/ai-receptionist-agent/sessions/{session_uuid}/resolve-destination", payload)
 
+    async def resolve_route(self, session_uuid: str, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self._request("POST", f"/api/ai-receptionist-agent/sessions/{session_uuid}/resolve-route", payload)
+
     async def transfer(self, session_uuid: str, destination: dict[str, Any]) -> dict[str, Any]:
         return await self._request("POST", f"/api/ai-receptionist-agent/sessions/{session_uuid}/transfer", {"destination": destination})
+
+    async def warm_transfer(self, session_uuid: str, route_uuid: str, handoff_summary: str) -> dict[str, Any]:
+        return await self._request("POST", f"/api/ai-receptionist-agent/sessions/{session_uuid}/warm-transfer", {
+            "route_uuid": route_uuid,
+            "handoff_summary": handoff_summary,
+        })
+
+    async def complete_warm_transfer(self, session_uuid: str, recipient_response: str) -> dict[str, Any]:
+        return await self._request("POST", f"/api/ai-receptionist-agent/sessions/{session_uuid}/warm-transfer/complete", {
+            "recipient_response": recipient_response,
+        })
+
+    async def cancel_warm_transfer(self, session_uuid: str, reason: str) -> dict[str, Any]:
+        return await self._request("POST", f"/api/ai-receptionist-agent/sessions/{session_uuid}/warm-transfer/cancel", {
+            "reason": reason,
+        })
+
+    async def send_route_email(self, session_uuid: str, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self._request("POST", f"/api/ai-receptionist-agent/sessions/{session_uuid}/route-email", payload)
 
     async def run_tool(self, session_uuid: str, tool_name: str, payload: dict[str, Any]) -> dict[str, Any]:
         return await self._request("POST", f"/api/ai-receptionist-agent/sessions/{session_uuid}/tools", {

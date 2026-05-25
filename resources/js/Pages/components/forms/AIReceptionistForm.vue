@@ -59,6 +59,10 @@
                                                     'fallback_label',
                                                     'fallback_submit',
                                                 ]" />
+                                                <FormTab name="routes" label="Routes" :elements="[
+                                                    'routes',
+                                                    'routes_submit',
+                                                ]" />
                                             </FormTabs>
                                         </div>
 
@@ -151,6 +155,122 @@
 
                                                 <ButtonElement name="fallback_submit" button-label="Save"
                                                     :submits="true" align="right" />
+
+                                                <ListElement name="routes" :sort="true" size="sm"
+                                                    :controls="{ add: true, remove: true, sort: true }"
+                                                    :add-classes="{ ListElement: { listItem: 'bg-white p-4 mb-4 rounded-lg shadow-sm' } }">
+                                                    <template #default="{ index }">
+                                                        <ObjectElement :name="index">
+                                                            <HiddenElement name="route_uuid" :meta="true" />
+                                                            <HiddenElement name="destination_label" :meta="true" />
+
+                                                            <TextElement name="name" label="Route Name"
+                                                                :floating="false" :columns="{ sm: { container: 6 } }" />
+
+                                                            <TagsElement name="match_phrases" label="Match Phrases"
+                                                                :floating="false" :search="true" :create="true"
+                                                                :columns="{ sm: { container: 6 } }" />
+
+                                                            <SelectElement name="route_action" :items="actionOptions"
+                                                                label="Action" label-prop="name" value-prop="value"
+                                                                :native="false" :search="true" :floating="false"
+                                                                :columns="{ sm: { container: 6 } }" @change="(newValue, oldValue, el$) => {
+                                                                    if (oldValue !== null && oldValue !== undefined) {
+                                                                        el$.form$.el$('routes.' + index + '.destination_type')?.clear();
+                                                                        el$.form$.el$('routes.' + index + '.destination_target')?.clear();
+                                                                        el$.form$.el$('routes.' + index + '.destination_label')?.update(null);
+                                                                    }
+                                                                }" />
+
+                                                            <SelectElement name="destination_type" :items="routeRoutingTypes"
+                                                                label="Destination Type" label-prop="label" value-prop="value"
+                                                                :native="false" :search="true" :floating="false"
+                                                                :columns="{ sm: { container: 6 } }" :conditions="[
+                                                                    ['routes.' + index + '.route_action', 'in', ['warm_transfer', 'cold_transfer']]
+                                                                ]" @change="(newValue, oldValue, el$) => {
+                                                                    const action = el$.form$.el$('routes.' + index + '.route_action')?.value;
+                                                                    const selectedType = optionValue(newValue);
+                                                                    const target = el$.form$.el$('routes.' + index + '.destination_target');
+
+                                                                    el$.messageBag.clear();
+                                                                    if (action === 'warm_transfer' && !['extensions', 'external'].includes(selectedType)) {
+                                                                        el$.messageBag.append('Warm transfer supports only Extension and External Number.');
+                                                                    }
+                                                                    if (oldValue !== null && oldValue !== undefined) {
+                                                                        target?.clear();
+                                                                        el$.form$.el$('routes.' + index + '.destination_label')?.update(null);
+                                                                    }
+                                                                    target?.updateItems();
+                                                                }" />
+
+                                                            <SelectElement name="destination_target" :items="async (query, input) => {
+                                                                const type = input.$parent.el$.form$.el$('routes.' + index + '.destination_type');
+                                                                const category = optionValue(type?.value);
+                                                                if (!category || category === 'external') {
+                                                                    return [];
+                                                                }
+                                                                try {
+                                                                    const response = await type.$vueform.services.axios.post(
+                                                                        props.options.routes.get_routing_options,
+                                                                        { category },
+                                                                    );
+                                                                    return response.data.options;
+                                                                } catch (error) {
+                                                                    emit('error', error);
+                                                                    return [];
+                                                                }
+                                                            }" :search="true" label-prop="name" :native="false"
+                                                                label="Destination" input-type="search" allow-absent
+                                                                :object="true" :create="true" autocomplete="off" placeholder="Choose Target"
+                                                                :floating="false" :strict="false"
+                                                                :columns="{ sm: { container: 6 } }" :conditions="[
+                                                                    ['routes.' + index + '.route_action', 'in', ['warm_transfer', 'cold_transfer']],
+                                                                    ['routes.' + index + '.destination_type', 'not_empty']
+                                                                ]" />
+
+                                                            <TextElement name="email_to" label="Email To"
+                                                                :floating="false" :columns="{ sm: { container: 6 } }"
+                                                                :conditions="[
+                                                                    ['routes.' + index + '.route_action', 'email']
+                                                                ]" />
+
+                                                            <TextElement name="email_subject" label="Email Subject"
+                                                                :floating="false" :columns="{ sm: { container: 6 } }"
+                                                                :conditions="[
+                                                                    ['routes.' + index + '.route_action', 'email']
+                                                                ]" />
+
+                                                            <TextareaElement name="email_instructions"
+                                                                label="Message Instructions" :rows="2" :conditions="[
+                                                                    ['routes.' + index + '.route_action', 'email']
+                                                                ]" />
+
+                                                            <ToggleElement name="notify_on_failed_warm_transfer"
+                                                                text="Notify by Email if Warm Transfer Fails"
+                                                                :true-value="true" :false-value="false"
+                                                                :labels="{ on: 'On', off: 'Off' }"
+                                                                :columns="{ sm: { container: 6 } }" label="&nbsp;"
+                                                                :conditions="[
+                                                                    ['routes.' + index + '.route_action', 'warm_transfer']
+                                                                ]" />
+
+                                                            <TextElement name="failed_transfer_email_to"
+                                                                label="Failed Transfer Email To" :floating="false"
+                                                                :columns="{ sm: { container: 6 } }" :conditions="[
+                                                                    ['routes.' + index + '.route_action', 'warm_transfer'],
+                                                                    ['routes.' + index + '.notify_on_failed_warm_transfer', true]
+                                                                ]" />
+
+                                                            <ToggleElement name="enabled" text="Enabled"
+                                                                :true-value="true" :false-value="false"
+                                                                :labels="{ on: 'On', off: 'Off' }"
+                                                                :columns="{ sm: { container: 6 } }" label="&nbsp;" />
+                                                        </ObjectElement>
+                                                    </template>
+                                                </ListElement>
+
+                                                <ButtonElement name="routes_submit" button-label="Save"
+                                                    :submits="true" align="right" />
                                             </FormElements>
                                         </div>
                                     </div>
@@ -208,9 +328,46 @@ const defaultValues = computed(() => ({
         name: props.options?.item?.fallback_target_name ?? props.options?.item?.fallback_label ?? null,
     },
     fallback_label: props.options?.item?.fallback_label ?? null,
+    routes: (props.options?.item?.routes ?? []).map((route) => ({
+        route_uuid: route.route_uuid ?? null,
+        name: route.name ?? null,
+        match_phrases: route.match_phrases ?? [],
+        route_action: route.action_type === "email"
+            ? "email"
+            : (route.transfer_type === "warm" ? "warm_transfer" : "cold_transfer"),
+        destination_type: route.destination_type ?? null,
+        destination_target: route.destination_target
+            ? {
+                value: route.destination_target,
+                extension: route.destination_target,
+                name: route.destination_label ?? route.destination_target,
+            }
+            : null,
+        destination_label: route.destination_label ?? null,
+        email_to: route.email_to ?? null,
+        email_subject: route.email_subject ?? null,
+        email_instructions: route.email_instructions ?? null,
+        notify_on_failed_warm_transfer: route.notify_on_failed_warm_transfer ?? false,
+        failed_transfer_email_to: route.failed_transfer_email_to ?? null,
+        enabled: route.enabled ?? true,
+    })),
 }));
 
 const routingTypes = computed(() => props.options?.routing_types ?? []);
+const routeRoutingTypes = computed(() => props.options?.route_routing_types ?? []);
+const actionOptions = [
+    { value: "warm_transfer", name: "Warm Transfer" },
+    { value: "cold_transfer", name: "Cold Transfer" },
+    { value: "email", name: "Take Message and Email" },
+];
+
+const optionValue = (value) => {
+    if (value && typeof value === "object") {
+        return value.value ?? value.extension ?? null;
+    }
+
+    return value;
+};
 
 const formatTarget = (value) => {
     if (!value) return value;
@@ -231,6 +388,26 @@ const submitForm = async (FormData, form$) => {
         requestData.fallback_target = targetValue.extension ?? targetValue.value ?? null;
         requestData.fallback_label = targetValue.name ?? null;
     }
+
+    requestData.routes = (requestData.routes ?? []).map((route, index) => {
+        const targetValue = route.destination_target;
+        const routeAction = route.route_action ?? "cold_transfer";
+        const destinationTarget = typeof targetValue === "object" && targetValue !== null
+            ? (targetValue.extension ?? targetValue.value ?? null)
+            : targetValue;
+        const destinationLabel = typeof targetValue === "object" && targetValue !== null
+            ? (targetValue.name ?? destinationTarget)
+            : (route.destination_label ?? destinationTarget);
+
+        return {
+            ...route,
+            action_type: routeAction === "email" ? "email" : "transfer",
+            transfer_type: routeAction === "warm_transfer" ? "warm" : (routeAction === "cold_transfer" ? "cold" : null),
+            destination_target: routeAction === "email" ? null : destinationTarget,
+            destination_label: routeAction === "email" ? null : destinationLabel,
+            sort_order: index,
+        };
+    });
 
     const route = props.mode === "create"
         ? props.options.routes.store_route

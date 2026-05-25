@@ -94,6 +94,53 @@ return new class extends Migration
             });
         }
 
+        if (! Schema::hasTable('ai_receptionist_routes')) {
+            Schema::create('ai_receptionist_routes', function (Blueprint $table) {
+                $table->uuid('route_uuid')->primary()->default(DB::raw('uuid_generate_v4()'));
+                $table->uuid('domain_uuid')->index();
+                $table->uuid('ai_receptionist_uuid')->index();
+                $table->string('name');
+                $table->json('match_phrases')->nullable();
+                $table->string('action_type')->default('transfer')->index();
+                $table->string('transfer_type')->nullable()->index();
+                $table->string('destination_type')->nullable();
+                $table->text('destination_target')->nullable();
+                $table->text('destination_label')->nullable();
+                $table->text('email_to')->nullable();
+                $table->text('email_subject')->nullable();
+                $table->text('email_instructions')->nullable();
+                $table->boolean('notify_on_failed_warm_transfer')->default(false);
+                $table->text('failed_transfer_email_to')->nullable();
+                $table->boolean('enabled')->default(true)->index();
+                $table->unsignedInteger('sort_order')->default(0)->index();
+                $table->timestamps();
+            });
+        }
+
+        if (! Schema::hasTable('ai_receptionist_warm_transfers')) {
+            Schema::create('ai_receptionist_warm_transfers', function (Blueprint $table) {
+                $table->uuid('warm_transfer_uuid')->primary()->default(DB::raw('uuid_generate_v4()'));
+                $table->uuid('domain_uuid')->index();
+                $table->uuid('session_uuid')->index();
+                $table->uuid('route_uuid')->nullable()->index();
+                $table->text('status')->default('started')->index();
+                $table->text('caller_uuid')->nullable()->index();
+                $table->text('openai_uuid')->nullable()->index();
+                $table->text('recipient_uuid')->nullable()->index();
+                $table->text('destination_type')->nullable();
+                $table->text('destination_target')->nullable();
+                $table->text('destination_label')->nullable();
+                $table->longText('handoff_summary')->nullable();
+                $table->json('metadata')->nullable();
+                $table->text('error_message')->nullable();
+                $table->timestamp('started_at')->nullable();
+                $table->timestamp('answered_at')->nullable();
+                $table->timestamp('completed_at')->nullable();
+                $table->timestamp('cancelled_at')->nullable();
+                $table->timestamps();
+            });
+        }
+
         if (! Schema::hasTable('ai_receptionist_tool_runs')) {
             Schema::create('ai_receptionist_tool_runs', function (Blueprint $table) {
                 $table->uuid('tool_run_uuid')->primary()->default(DB::raw('uuid_generate_v4()'));
@@ -114,6 +161,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('ai_receptionist_tool_runs');
+        Schema::dropIfExists('ai_receptionist_warm_transfers');
+        Schema::dropIfExists('ai_receptionist_routes');
         Schema::dropIfExists('ai_receptionist_sessions');
         Schema::dropIfExists('ai_receptionist_tools');
         Schema::dropIfExists('ai_receptionists');
