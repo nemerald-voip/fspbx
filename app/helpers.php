@@ -681,7 +681,7 @@ if (!function_exists('getTimeoutDestinationsLabels')) {
     }
 }
 
-// * depreciated
+// * deprecated
 if (!function_exists('get_registrations')) {
     function get_registrations($show = null)
     {
