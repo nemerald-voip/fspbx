@@ -606,6 +606,41 @@ class AiReceptionistService
         ];
     }
 
+    public function endCall(AiReceptionistSession $session, array $payload = []): array
+    {
+        $reason = trim((string) ($payload['reason'] ?? 'conversation_complete')) ?: 'conversation_complete';
+        $commands = [];
+
+        if (filled($session->freeswitch_uuid)) {
+            $bridgeUuid = $this->eslString("uuid_getvar {$session->freeswitch_uuid} bridge_uuid");
+            $commands['hangup_caller'] = $this->eslString("uuid_kill {$session->freeswitch_uuid} NORMAL_CLEARING");
+
+            if ($this->isUsableEslValue($bridgeUuid) && $bridgeUuid !== $session->freeswitch_uuid) {
+                $commands['hangup_bridge'] = $this->eslString("uuid_kill {$bridgeUuid} NORMAL_CLEARING");
+            }
+        }
+
+        $session->forceFill([
+            'status' => $payload['status'] ?? 'completed',
+            'metadata' => array_merge($session->metadata ?? [], [
+                'end_call' => [
+                    'reason' => $reason,
+                    'commands' => $commands,
+                    'ended_at' => now()->toISOString(),
+                ],
+            ]),
+            'ended_at' => now(),
+        ])->save();
+
+        return [
+            'success' => true,
+            'status' => 'completed',
+            'reason' => $reason,
+            'message' => 'The call has been disconnected.',
+            'commands' => $commands,
+        ];
+    }
+
     public function executeHttpTool(AiReceptionistSession $session, string $toolName, array $payload): array
     {
         $tool = $this->toolsForReceptionist($session->receptionist)

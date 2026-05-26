@@ -6,6 +6,7 @@ use App\Http\Controllers\AccessControlController;
 use App\Http\Controllers\ActiveConferenceController;
 use App\Http\Controllers\AiReceptionistAgentController;
 use App\Http\Controllers\AiReceptionistController;
+use App\Http\Controllers\AiReceptionistLogController;
 use App\Http\Controllers\AiReceptionistSettingsController;
 use App\Http\Controllers\Api\EmergencyCallController;
 use App\Http\Controllers\Api\HolidayHoursController;
@@ -131,6 +132,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/ai-receptionists/select-all', [AiReceptionistController::class, 'selectAll'])->name('ai-receptionists.select.all');
     Route::post('/ai-receptionists/bulk-delete', [AiReceptionistController::class, 'bulkDelete'])->name('ai-receptionists.bulk.delete');
     Route::post('/ai-receptionists/tools', [AiReceptionistController::class, 'storeTool'])->name('ai-receptionists.tools.store');
+    Route::get('/ai-receptionist-logs', [AiReceptionistLogController::class, 'index'])->name('ai-receptionist-logs.index');
     Route::get('/ai-receptionist-settings', [AiReceptionistSettingsController::class, 'show'])->name('ai-receptionist-settings.show');
     Route::post('/ai-receptionist-settings', [AiReceptionistSettingsController::class, 'store'])->name('ai-receptionist-settings.store');
     Route::delete('/ai-receptionist-settings', [AiReceptionistSettingsController::class, 'destroy'])->name('ai-receptionist-settings.destroy');
@@ -677,6 +679,7 @@ Route::prefix('ai-receptionist-agent')
         Route::post('/sessions/{session}/warm-transfer/complete', [AiReceptionistAgentController::class, 'completeWarmTransfer'])->name('ai-receptionist-agent.sessions.warm-transfer.complete');
         Route::post('/sessions/{session}/warm-transfer/cancel', [AiReceptionistAgentController::class, 'cancelWarmTransfer'])->name('ai-receptionist-agent.sessions.warm-transfer.cancel');
         Route::post('/sessions/{session}/route-email', [AiReceptionistAgentController::class, 'sendRouteEmail'])->name('ai-receptionist-agent.sessions.route-email');
+        Route::post('/sessions/{session}/end-call', [AiReceptionistAgentController::class, 'endCall'])->name('ai-receptionist-agent.sessions.end-call');
         Route::post('/sessions/{session}/tools', [AiReceptionistAgentController::class, 'runTool'])->name('ai-receptionist-agent.sessions.tools');
         Route::post('/sessions/{session}/end', [AiReceptionistAgentController::class, 'endSession'])->name('ai-receptionist-agent.sessions.end');
     });

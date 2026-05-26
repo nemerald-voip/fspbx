@@ -203,6 +203,25 @@ class AiReceptionistAgentController extends Controller
         ));
     }
 
+    public function endCall(Request $request, AiReceptionistSession $session, AiReceptionistService $service): JsonResponse
+    {
+        if ($response = $this->authorizeAgent($request)) {
+            return $response;
+        }
+
+        $payload = $request->validate([
+            'reason' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', 'string', 'max:64'],
+        ]);
+
+        return response()->json($service->recordBuiltInToolRun(
+            $session,
+            'end_call',
+            $payload,
+            fn () => $service->endCall($session, $payload)
+        ));
+    }
+
     public function runTool(Request $request, AiReceptionistSession $session, AiReceptionistService $service): JsonResponse
     {
         if ($response = $this->authorizeAgent($request)) {

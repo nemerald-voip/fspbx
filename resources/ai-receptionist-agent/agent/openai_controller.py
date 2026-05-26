@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import signal
 import threading
 from http import HTTPStatus
@@ -49,10 +50,30 @@ def receptionist_instructions(config: dict[str, Any]) -> str:
     parts = [
         config.get("system_prompt"),
         config.get("routing_instructions"),
-        "You may route calls only by using resolve_route, transfer_call, warm_transfer_call, complete_warm_transfer, cancel_warm_transfer, or send_route_email.",
+        "You may route calls only by using resolve_route, transfer_call, warm_transfer_call, complete_warm_transfer, cancel_warm_transfer, send_route_email, or end_call.",
+        "When the caller is finished and no transfer or email handoff is needed, say a brief goodbye and then immediately call end_call. Do not only say goodbye and leave the call connected.",
         "Use run_http_tool only for tools included in the current FS PBX configuration.",
     ]
     return "\n\n".join(str(part) for part in parts if part) or "You are a helpful phone receptionist."
+
+
+def is_final_goodbye(transcript: str) -> bool:
+    text = transcript.lower()
+    final_phrases = (
+        "goodbye",
+        "bye",
+        "take care",
+        "thanks for calling",
+        "thank you for calling",
+        "have a wonderful day",
+        "have a great day",
+        "have a good day",
+    )
+
+    if "is there anything else" in text or "anything else i can help" in text:
+        return False
+
+    return any(re.search(rf"\b{re.escape(phrase)}\b", text) for phrase in final_phrases)
 
 
 def quick_accept_payload() -> dict[str, Any]:
@@ -160,6 +181,20 @@ def accept_payload(config: dict[str, Any]) -> dict[str, Any]:
                         "urgency": {"type": "string"},
                     },
                     "required": ["route_uuid", "message"],
+                },
+            },
+            {
+                "type": "function",
+                "name": "end_call",
+                "description": "Disconnect the active phone call after the conversation is complete and the AI has said goodbye.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "reason": {
+                            "type": "string",
+                            "description": "Short reason for ending the call, such as conversation_complete or caller_finished.",
+                        },
+                    },
                 },
             },
             {
@@ -285,6 +320,7 @@ class RealtimeCallController:
         transcript: list[str],
     ) -> None:
         url = f"wss://api.openai.com/v1/realtime?call_id={call_id}"
+        ended_sessions: set[str] = set()
 
         for attempt in range(1, 6):
             try:
@@ -299,7 +335,7 @@ class RealtimeCallController:
                     async for message in ws:
                         if message.type == aiohttp.WSMsgType.TEXT:
                             event = json.loads(message.data)
-                            await self.handle_event(ws, event, client, session_uuid, transcript)
+                            await self.handle_event(ws, event, client, session_uuid, transcript, ended_sessions)
                         elif message.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
                             break
 
@@ -324,6 +360,7 @@ class RealtimeCallController:
         client: FspbxClient,
         session_uuid: str,
         transcript: list[str],
+        ended_sessions: set[str],
     ) -> None:
         event_type = event.get("type")
 
@@ -332,7 +369,14 @@ class RealtimeCallController:
             return
 
         if event_type in {"response.output_audio_transcript.done", "response.audio_transcript.done"}:
-            transcript.append("Assistant: " + str(event.get("transcript") or ""))
+            assistant_transcript = str(event.get("transcript") or "")
+            transcript.append("Assistant: " + assistant_transcript)
+
+            if session_uuid not in ended_sessions and is_final_goodbye(assistant_transcript):
+                ended_sessions.add(session_uuid)
+                logger.info("Detected final AI Receptionist goodbye for session %s; ending call.", session_uuid)
+                await client.end_call(session_uuid, "assistant_goodbye_detected")
+
             return
 
         call = self.function_call_from_event(event)
@@ -430,6 +474,12 @@ class RealtimeCallController:
                 "message": arguments.get("message"),
                 "urgency": arguments.get("urgency"),
             })
+
+        if name == "end_call":
+            return await client.end_call(
+                session_uuid,
+                str(arguments.get("reason") or "conversation_complete"),
+            )
 
         if name == "run_http_tool":
             return await client.run_tool(

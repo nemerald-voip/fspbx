@@ -106,6 +106,11 @@ class FspbxClient:
     async def send_route_email(self, session_uuid: str, payload: dict[str, Any]) -> dict[str, Any]:
         return await self._request("POST", f"/api/ai-receptionist-agent/sessions/{session_uuid}/route-email", payload)
 
+    async def end_call(self, session_uuid: str, reason: str) -> dict[str, Any]:
+        return await self._request("POST", f"/api/ai-receptionist-agent/sessions/{session_uuid}/end-call", {
+            "reason": reason,
+        })
+
     async def run_tool(self, session_uuid: str, tool_name: str, payload: dict[str, Any]) -> dict[str, Any]:
         return await self._request("POST", f"/api/ai-receptionist-agent/sessions/{session_uuid}/tools", {
             "tool_name": tool_name,

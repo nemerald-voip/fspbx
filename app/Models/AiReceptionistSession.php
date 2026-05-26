@@ -29,6 +29,11 @@ class AiReceptionistSession extends Model
         return $this->belongsTo(AiReceptionist::class, 'ai_receptionist_uuid', 'ai_receptionist_uuid');
     }
 
+    public function domain(): BelongsTo
+    {
+        return $this->belongsTo(Domain::class, 'domain_uuid', 'domain_uuid');
+    }
+
     public function setting(): BelongsTo
     {
         return $this->belongsTo(AiReceptionistSetting::class, 'setting_uuid', 'setting_uuid');
@@ -37,5 +42,10 @@ class AiReceptionistSession extends Model
     public function toolRuns(): HasMany
     {
         return $this->hasMany(AiReceptionistToolRun::class, 'session_uuid', 'session_uuid');
+    }
+
+    public function warmTransfers(): HasMany
+    {
+        return $this->hasMany(AiReceptionistWarmTransfer::class, 'session_uuid', 'session_uuid');
     }
 }

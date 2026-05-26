@@ -63,6 +63,7 @@ class LogsController extends Controller
                     'fax_logs_select_all' => route('fax-logs.select.all'),
                     'fax_logs_bulk_delete' => route('fax-logs.bulk.delete'),
                     'fax_logs_retry' => route('fax-logs.retry', ['faxLog' => ':faxLog']),
+                    'ai_receptionist_logs' => route('ai-receptionist-logs.index'),
 
                 ],
                 'permissions' => function () {

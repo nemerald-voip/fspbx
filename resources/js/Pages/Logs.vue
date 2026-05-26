@@ -46,6 +46,17 @@
                     :selected-domain-uuid="selectedDomainUuid" />
             </section>
 
+            <!-- AI RECEPTIONISTS -->
+            <section v-show="selectedMenuOption === 'ai_receptionist_logs'">
+                <Vueform>
+                    <StaticElement name="locations_title" tag="h4" content="AI Receptionists" />
+                </Vueform>
+
+                <AiReceptionistLogs :trigger="aiReceptionistLogsTrigger" :startPeriod="startPeriod"
+                    :endPeriod="endPeriod" :timezone="timezone" :routes="routes" :permissions="permissions"
+                    :domain-options="domainOptions" :selected-domain-uuid="selectedDomainUuid" />
+            </section>
+
         </template>
 
         <template #overlays>
@@ -70,6 +81,7 @@ import EmailLogs from "./components/EmailLogs.vue";
 import InboundWebhooks from "./components/InboundWebhooks.vue";
 import MessageLogs from "./components/MessageLogs.vue";
 import FaxLogs from "./components/FaxLogs.vue";
+import AiReceptionistLogs from "./components/AiReceptionistLogs.vue";
 import ConfirmationModal from "./components/modal/ConfirmationModal.vue";
 
 import {
@@ -77,6 +89,7 @@ import {
     InboxArrowDownIcon,
     DocumentTextIcon,
     ChatBubbleLeftRightIcon,
+    CpuChipIcon,
     PrinterIcon,
 } from '@heroicons/vue/24/outline'
 
@@ -101,6 +114,7 @@ const emailsTrigger = ref(false)
 const inboundWebhooksTrigger = ref(false)
 const messageLogsTrigger = ref(false)
 const faxLogsTrigger = ref(false)
+const aiReceptionistLogsTrigger = ref(false)
 const initialMenuOption = ref(null)
 
 
@@ -114,6 +128,7 @@ const handleUpdateSelectedMenuOption = (key) => {
     if (key === 'inbound_webhooks') inboundWebhooksTrigger.value = !inboundWebhooksTrigger.value
     if (key === 'message_logs') messageLogsTrigger.value = !messageLogsTrigger.value
     if (key === 'fax_logs') faxLogsTrigger.value = !faxLogsTrigger.value
+    if (key === 'ai_receptionist_logs') aiReceptionistLogsTrigger.value = !aiReceptionistLogsTrigger.value
 }
 
 const navigation = computed(() => {
@@ -121,6 +136,7 @@ const navigation = computed(() => {
         { key: 'emails', name: 'Emails', icon: EnvelopeIcon },
         { key: 'inbound_webhooks', name: 'Inbound Webhooks', icon: InboxArrowDownIcon },
         { key: 'message_logs', name: 'Messages', icon: ChatBubbleLeftRightIcon },
+        { key: 'ai_receptionist_logs', name: 'AI Receptionists', icon: CpuChipIcon },
     ]
 
     if (props.permissions?.fax_log_view) {
