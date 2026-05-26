@@ -24,9 +24,14 @@ class DefaultSettingsController extends Controller
             return redirect('/');
         }
 
+        $currentDomainUuid = session('domain_uuid');
+
         return Inertia::render('DefaultSettings', [
             'routes' => [
                 'current_page' => route('default-settings.index'),
+                'current_domain_settings' => $currentDomainUuid
+                    ? route('domains.settings.index', ['domain' => $currentDomainUuid])
+                    : null,
                 'data_route' => route('default-settings.data'),
                 'store' => route('default-settings.store'),
                 'update' => route('default-settings.update', ['default_setting' => '__SETTING__']),
@@ -45,6 +50,7 @@ class DefaultSettingsController extends Controller
                 'update' => userCheckPermission('default_setting_edit'),
                 'destroy' => userCheckPermission('default_setting_delete'),
                 'copy_to_domain' => userCheckPermission('domain_select') && userCheckPermission('domain_setting_add'),
+                'domain_settings' => userCheckPermission('domain_setting_view') && (bool) $currentDomainUuid,
             ],
             'options' => [
                 'categories' => $this->settings->categories(),

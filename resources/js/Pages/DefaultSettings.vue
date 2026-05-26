@@ -10,6 +10,9 @@
                 <p class="mt-1 text-sm text-gray-500">Manage system-wide defaults. Each setting may be overridden per domain.</p>
             </div>
             <div class="flex flex-wrap gap-2">
+                <a v-if="permissions.domain_settings && routes.current_domain_settings" :href="routes.current_domain_settings" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                    <BuildingOffice2Icon class="h-4 w-4" /> Domain Settings
+                </a>
                 <button type="button" class="inline-flex items-center gap-1.5 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50" @click="reloadSettings">
                     <ArrowPathIcon class="h-4 w-4" /> Reload
                 </button>
@@ -158,7 +161,7 @@
                 <template #empty>
                     <FormElements>
                         <SelectElement name="target_domain_uuid" label="Target domain" :items="options.domains"
-                            :native="false" input-type="search" autocomplete="off" placeholder="Select domain"
+                            :native="false" :search="true" input-type="search" autocomplete="off" placeholder="Select domain"
                             :strict="false" :floating="false" />
                         <ButtonElement name="submit" button-label="Copy" :submits="true" align="right" />
                     </FormElements>
@@ -198,7 +201,7 @@ import Notification from './components/notifications/Notification.vue'
 import ConfirmationModal from './components/modal/ConfirmationModal.vue'
 import AddEditItemModal from './components/modal/AddEditItemModal.vue'
 import SettingsEditModal from './components/modal/SettingsEditModal.vue'
-import { MagnifyingGlassIcon, ArrowPathIcon, PlusIcon, UsersIcon } from '@heroicons/vue/24/outline'
+import { MagnifyingGlassIcon, ArrowPathIcon, PlusIcon, UsersIcon, BuildingOffice2Icon } from '@heroicons/vue/24/outline'
 
 const StatTile = (props) => {
     const toneMap = {

@@ -170,7 +170,7 @@
                 <template #empty>
                     <FormElements>
                         <SelectElement name="target_domain_uuid" label="Target" :items="options.domains"
-                            :native="false" input-type="search" autocomplete="off" placeholder="Select target"
+                            :native="false" :search="true" input-type="search" autocomplete="off" placeholder="Select target"
                             :strict="false" :floating="false" />
                         <ButtonElement name="submit" button-label="Copy" :submits="true" align="right" />
                     </FormElements>

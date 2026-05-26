@@ -15,8 +15,6 @@ use Spatie\QueryBuilder\QueryBuilder;
 
 class DeviceKeyTemplateController extends Controller
 {
-    protected int $perPage = 50;
-
     public function index()
     {
         if (! userCheckPermission('device_key_template_view')) {
@@ -24,6 +22,10 @@ class DeviceKeyTemplateController extends Controller
         }
 
         return Inertia::render('DeviceKeyTemplates', [
+            'pagination' => [
+                'per_page' => fspbx_pagination_per_page(),
+                'per_page_options' => fspbx_pagination_options(),
+            ],
             'routes' => [
                 'current_page' => route('device-key-templates.index'),
                 'data_route' => route('device-key-templates.data'),
@@ -32,6 +34,7 @@ class DeviceKeyTemplateController extends Controller
                 'store' => route('device-key-templates.store'),
                 'item_options' => route('device-key-templates.item.options'),
                 'get_routing_options' => route('routing.options'),
+                'duplicate' => route('device-key-templates.duplicate'),
                 'devices' => route('devices.index'),
             ],
             'permissions' => [
@@ -62,7 +65,7 @@ class DeviceKeyTemplateController extends Controller
             ->withCount('keys')
             ->allowedSorts(['name', 'enabled', 'updated_at'])
             ->defaultSort('name')
-            ->paginate($this->perPage);
+            ->paginate(fspbx_pagination_per_page($request));
     }
 
     public function getItemOptions(Request $request): JsonResponse
@@ -107,6 +110,9 @@ class DeviceKeyTemplateController extends Controller
         return response()->json([
             'item' => $item,
             'extensions' => $this->extensionOptions(),
+            'permissions' => [
+                'is_superadmin' => isSuperAdmin(),
+            ],
             'routes' => [
                 'store_route' => route('device-key-templates.store'),
                 'update_route' => $itemUuid
@@ -175,6 +181,40 @@ class DeviceKeyTemplateController extends Controller
             'items' => $items,
             'messages' => ['success' => ['All matching device key templates selected.']],
         ]);
+    }
+
+    public function duplicate(Request $request, DeviceKeyTemplateService $service): JsonResponse
+    {
+        $data = $request->validate([
+            'uuid' => ['required', 'uuid', 'exists:device_key_templates,device_key_template_uuid'],
+        ]);
+
+        if (! userCheckPermission('device_key_template_create')) {
+            return response()->json([
+                'messages' => ['error' => ['Access denied.']],
+            ], 403);
+        }
+
+        try {
+            $template = DeviceKeyTemplate::query()
+                ->where('domain_uuid', session('domain_uuid'))
+                ->with('keys')
+                ->whereKey($data['uuid'])
+                ->firstOrFail();
+
+            $copy = $service->duplicate($template);
+
+            return response()->json([
+                'messages' => ['success' => ['Device key template duplicated successfully.']],
+                'device_key_template_uuid' => $copy->device_key_template_uuid,
+            ], 201);
+        } catch (\Throwable $e) {
+            logger('DeviceKeyTemplateController@duplicate error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+
+            return response()->json([
+                'messages' => ['error' => ['Failed to duplicate device key template.']],
+            ], 500);
+        }
     }
 
     public function bulkDelete(Request $request, DeviceKeyTemplateService $service): JsonResponse

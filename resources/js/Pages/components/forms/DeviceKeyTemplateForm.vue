@@ -50,6 +50,7 @@
                                             <FormTabs view="vertical">
                                                 <FormTab name="settings" label="Settings" :elements="[
                                                     'settings_header',
+                                                    'uuid_clean',
                                                     'name',
                                                     'enabled',
                                                     'description',
@@ -81,6 +82,32 @@
                                             class="sm:px-6 lg:col-span-9 shadow sm:rounded-md space-y-6 text-gray-600 bg-gray-50 px-4 py-6 sm:p-6">
                                             <FormElements>
                                                 <StaticElement name="settings_header" tag="h4" content="Template Settings" />
+
+                                                <StaticElement name="uuid_clean"
+                                                    :conditions="[() => props.mode === 'update' && props.options?.permissions?.is_superadmin]">
+
+                                                    <div class="mb-1">
+                                                        <div class="text-sm font-medium text-gray-600 mb-1">
+                                                            Unique ID
+                                                        </div>
+
+                                                        <div class="flex items-center group">
+                                                            <span class="text-sm text-gray-900 select-all font-normal">
+                                                                {{ props.options.item.device_key_template_uuid }}
+                                                            </span>
+
+                                                            <button type="button"
+                                                                @click="handleCopyToClipboard(props.options.item.device_key_template_uuid)"
+                                                                class="ml-2 p-1 rounded-full text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                                                                title="Copy to clipboard">
+                                                                <!-- Small Copy Icon -->
+                                                                <ClipboardDocumentIcon
+                                                                    class="h-4 w-4 text-gray-500 hover:text-gray-900  cursor-pointer" />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+
+                                                </StaticElement>
 
                                                 <TextElement name="name" label="Name" placeholder="Template name"
                                                     :floating="false" :columns="{ sm: { container: 6 } }" />
@@ -142,6 +169,7 @@
 import { computed, ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
 import { XMarkIcon } from "@heroicons/vue/24/solid";
+import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
 import DeviceKeyTemplateKeyList from "./DeviceKeyTemplateKeyList.vue";
 
 const props = defineProps({
@@ -158,6 +186,14 @@ const props = defineProps({
 const emit = defineEmits(["close", "error", "success", "refresh-data"]);
 const form$ = ref(null);
 const keyValueOptionsByIndex = {};
+
+const handleCopyToClipboard = (text) => {
+    navigator.clipboard.writeText(text).then(() => {
+        emit("success", "success", { message: ["Copied to clipboard."] });
+    }).catch(() => {
+        emit("error", { response: { data: { errors: { request: ["Failed to copy to clipboard."] } } } });
+    });
+};
 
 const keyTypes = [
     { value: "", name: "N/A" },
