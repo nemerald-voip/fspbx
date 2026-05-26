@@ -19,6 +19,14 @@ from agent.settings import Settings
 logger = logging.getLogger("fspbx-ai-receptionist")
 logging.basicConfig(level=os.getenv("AI_RECEPTIONIST_LOG_LEVEL", "INFO"))
 
+CALL_CHANGING_TOOLS = {
+    "transfer_call",
+    "warm_transfer_call",
+    "complete_warm_transfer",
+    "cancel_warm_transfer",
+    "end_call",
+}
+
 def openai_realtime_headers() -> dict[str, str]:
     return {
         "Authorization": f"Bearer {os.environ['OPENAI_API_KEY']}",
@@ -51,29 +59,33 @@ def receptionist_instructions(config: dict[str, Any]) -> str:
         config.get("system_prompt"),
         config.get("routing_instructions"),
         "You may route calls only by using resolve_route, transfer_call, warm_transfer_call, complete_warm_transfer, cancel_warm_transfer, send_route_email, or end_call.",
-        "When the caller is finished and no transfer or email handoff is needed, say a brief goodbye and then immediately call end_call. Do not only say goodbye and leave the call connected.",
+        "When a caller confirms that an issue is resolved, ask if there is anything else you can help with before ending the call.",
+        "Only call end_call after the caller clearly says they need nothing else, says goodbye, or otherwise indicates the conversation is finished.",
+        "When the conversation is complete, you must call end_call after your final spoken message. Never call end_call as a silent response. Saying goodbye does not disconnect the phone call. Never leave a completed call connected.",
+        "Before calling transfer_call or warm_transfer_call, tell the caller you are connecting them now and ask them to hold. Do not start a transfer silently.",
         "Use run_http_tool only for tools included in the current FS PBX configuration.",
     ]
     return "\n\n".join(str(part) for part in parts if part) or "You are a helpful phone receptionist."
 
 
-def is_final_goodbye(transcript: str) -> bool:
-    text = transcript.lower()
-    final_phrases = (
-        "goodbye",
-        "bye",
-        "take care",
-        "thanks for calling",
-        "thank you for calling",
-        "have a wonderful day",
-        "have a great day",
-        "have a good day",
-    )
+def playback_delay_seconds(transcript: str, *, minimum: float = 1.0) -> float:
+    words = re.findall(r"\b[\w']+\b", transcript)
+    if not words:
+        return minimum
 
-    if "is there anything else" in text or "anything else i can help" in text:
-        return False
+    # Phone TTS usually lands around 130-170 words per minute. Add a little pad
+    # so FreeSWITCH actions do not clip the tail of the generated audio.
+    return min(max((len(words) / 2.4) + 0.75, minimum), 8.0)
 
-    return any(re.search(rf"\b{re.escape(phrase)}\b", text) for phrase in final_phrases)
+
+def initial_response_delay_seconds() -> float:
+    raw_delay = os.getenv("OPENAI_REALTIME_INITIAL_RESPONSE_DELAY_SECONDS", "0.8")
+    try:
+        delay = float(raw_delay)
+    except ValueError:
+        delay = 0.8
+
+    return min(max(delay, 0.0), 3.0)
 
 
 def quick_accept_payload() -> dict[str, Any]:
@@ -81,6 +93,13 @@ def quick_accept_payload() -> dict[str, Any]:
         "type": "realtime",
         "model": os.getenv("OPENAI_REALTIME_MODEL", "gpt-realtime-2"),
         "instructions": "You are a helpful phone receptionist.",
+        "audio": {
+            "input": {
+                "transcription": {
+                    "model": os.getenv("OPENAI_REALTIME_TRANSCRIPTION_MODEL", "gpt-4o-mini-transcribe"),
+                },
+            },
+        },
     }
 
 
@@ -90,6 +109,16 @@ def accept_payload(config: dict[str, Any]) -> dict[str, Any]:
         "type": "realtime",
         "model": provider_config.get("openai_realtime_model", "gpt-realtime-2"),
         "instructions": receptionist_instructions(config),
+        "audio": {
+            "input": {
+                "transcription": {
+                    "model": provider_config.get(
+                        "openai_realtime_transcription_model",
+                        os.getenv("OPENAI_REALTIME_TRANSCRIPTION_MODEL", "gpt-4o-mini-transcribe"),
+                    ),
+                },
+            },
+        },
         "tools": [
             {
                 "type": "function",
@@ -118,7 +147,7 @@ def accept_payload(config: dict[str, Any]) -> dict[str, Any]:
             {
                 "type": "function",
                 "name": "transfer_call",
-                "description": "Cold transfer the original FreeSWITCH caller A-leg to an approved PBX destination.",
+                "description": "Cold transfer the original FreeSWITCH caller A-leg to an approved PBX destination. Tell the caller you are connecting them before using this tool.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -131,7 +160,7 @@ def accept_payload(config: dict[str, Any]) -> dict[str, Any]:
             {
                 "type": "function",
                 "name": "warm_transfer_call",
-                "description": "Start a live warm transfer to a configured direct recipient. The recipient is connected to the AI before the caller is bridged.",
+                "description": "Start a live warm transfer to a configured direct recipient. Tell the caller you are connecting them and ask them to hold before using this tool.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -186,7 +215,7 @@ def accept_payload(config: dict[str, Any]) -> dict[str, Any]:
             {
                 "type": "function",
                 "name": "end_call",
-                "description": "Disconnect the active phone call after the conversation is complete and the AI has said goodbye.",
+                "description": "Disconnect the active phone call. Use only after the caller indicates the conversation is finished and after your final spoken message.",
                 "parameters": {
                     "type": "object",
                     "properties": {
@@ -320,13 +349,17 @@ class RealtimeCallController:
         transcript: list[str],
     ) -> None:
         url = f"wss://api.openai.com/v1/realtime?call_id={call_id}"
-        ended_sessions: set[str] = set()
+        pending_call_changing_tools: list[dict[str, Any]] = []
+        post_response_call_changing_tools: list[dict[str, Any]] = []
+        latest_assistant_transcript = [""]
+        assistant_transcript_version = [0]
 
         for attempt in range(1, 6):
             try:
                 async with http.ws_connect(url, headers=openai_realtime_headers()) as ws:
                     initial_message = config.get("initial_message")
                     if initial_message:
+                        await asyncio.sleep(initial_response_delay_seconds())
                         await ws.send_json({
                             "type": "response.create",
                             "response": {"instructions": initial_message},
@@ -335,7 +368,17 @@ class RealtimeCallController:
                     async for message in ws:
                         if message.type == aiohttp.WSMsgType.TEXT:
                             event = json.loads(message.data)
-                            await self.handle_event(ws, event, client, session_uuid, transcript, ended_sessions)
+                            await self.handle_event(
+                                ws,
+                                event,
+                                client,
+                                session_uuid,
+                                transcript,
+                                pending_call_changing_tools,
+                                post_response_call_changing_tools,
+                                latest_assistant_transcript,
+                                assistant_transcript_version,
+                            )
                         elif message.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
                             break
 
@@ -360,7 +403,10 @@ class RealtimeCallController:
         client: FspbxClient,
         session_uuid: str,
         transcript: list[str],
-        ended_sessions: set[str],
+        pending_call_changing_tools: list[dict[str, Any]],
+        post_response_call_changing_tools: list[dict[str, Any]],
+        latest_assistant_transcript: list[str],
+        assistant_transcript_version: list[int],
     ) -> None:
         event_type = event.get("type")
 
@@ -370,19 +416,127 @@ class RealtimeCallController:
 
         if event_type in {"response.output_audio_transcript.done", "response.audio_transcript.done"}:
             assistant_transcript = str(event.get("transcript") or "")
+            latest_assistant_transcript[0] = assistant_transcript
+            assistant_transcript_version[0] += 1
             transcript.append("Assistant: " + assistant_transcript)
 
-            if session_uuid not in ended_sessions and is_final_goodbye(assistant_transcript):
-                ended_sessions.add(session_uuid)
-                logger.info("Detected final AI Receptionist goodbye for session %s; ending call.", session_uuid)
-                await client.end_call(session_uuid, "assistant_goodbye_detected")
+            if post_response_call_changing_tools:
+                await asyncio.sleep(playback_delay_seconds(assistant_transcript, minimum=0.5))
+                await self.run_scheduled_function_calls(client, session_uuid, post_response_call_changing_tools)
+                return
 
+            if pending_call_changing_tools:
+                await asyncio.sleep(playback_delay_seconds(assistant_transcript, minimum=0.5))
+                await self.run_pending_function_calls(ws, client, session_uuid, pending_call_changing_tools)
+                return
+
+            return
+
+        if event_type in {"response.done", "response.completed"} and post_response_call_changing_tools:
+            await asyncio.sleep(0.35)
+            await self.run_scheduled_function_calls(client, session_uuid, post_response_call_changing_tools)
+            return
+
+        if event_type in {"response.done", "response.completed"} and pending_call_changing_tools:
+            tool_only_end_calls = [
+                call for call in pending_call_changing_tools
+                if call["name"] == "end_call"
+                and call.get("_queued_after_transcript_version", 0) >= assistant_transcript_version[0]
+            ]
+            if tool_only_end_calls:
+                remaining_calls = [
+                    call for call in pending_call_changing_tools
+                    if call not in tool_only_end_calls
+                ]
+                pending_call_changing_tools.clear()
+                pending_call_changing_tools.extend(remaining_calls)
+                post_response_call_changing_tools.extend(tool_only_end_calls)
+
+                for call in tool_only_end_calls:
+                    await self.acknowledge_deferred_end_call(ws, call)
+
+                await ws.send_json({
+                    "type": "response.create",
+                    "response": {
+                        "instructions": (
+                            "Say one brief, natural closing sentence to the caller, then stop. "
+                            "Do not call any tools in this response."
+                        ),
+                    },
+                })
+                return
+
+            queued_before_latest_transcript = any(
+                call.get("_queued_after_transcript_version", 0) < assistant_transcript_version[0]
+                for call in pending_call_changing_tools
+            )
+            delay = playback_delay_seconds(latest_assistant_transcript[0], minimum=0.5) if queued_before_latest_transcript else 0.35
+            await asyncio.sleep(delay)
+            await self.run_pending_function_calls(ws, client, session_uuid, pending_call_changing_tools)
             return
 
         call = self.function_call_from_event(event)
         if not call:
             return
 
+        if call["name"] in CALL_CHANGING_TOOLS:
+            logger.info("Deferring AI Receptionist call-changing tool %s for session %s.", call["name"], session_uuid)
+            call["_queued_after_transcript_version"] = assistant_transcript_version[0]
+            pending_call_changing_tools.append(call)
+            return
+
+        await self.run_function_call_and_respond(ws, client, session_uuid, call)
+
+    async def run_pending_function_calls(
+        self,
+        ws: aiohttp.ClientWebSocketResponse,
+        client: FspbxClient,
+        session_uuid: str,
+        pending_calls: list[dict[str, Any]],
+    ) -> None:
+        calls = pending_calls[:]
+        pending_calls.clear()
+
+        for call in calls:
+            await self.run_function_call_and_respond(ws, client, session_uuid, call)
+
+    async def acknowledge_deferred_end_call(
+        self,
+        ws: aiohttp.ClientWebSocketResponse,
+        call: dict[str, Any],
+    ) -> None:
+        await ws.send_json({
+            "type": "conversation.item.create",
+            "item": {
+                "type": "function_call_output",
+                "call_id": call["call_id"],
+                "output": json.dumps({
+                    "success": True,
+                    "status": "waiting_for_final_message",
+                    "message": "Say a brief final message before the call is disconnected.",
+                }),
+            },
+        })
+
+    async def run_scheduled_function_calls(
+        self,
+        client: FspbxClient,
+        session_uuid: str,
+        scheduled_calls: list[dict[str, Any]],
+    ) -> None:
+        calls = scheduled_calls[:]
+        scheduled_calls.clear()
+
+        for call in calls:
+            await self.run_function_call(client, session_uuid, call["name"], call["arguments"])
+
+    async def run_function_call_and_respond(
+        self,
+        ws: aiohttp.ClientWebSocketResponse,
+        client: FspbxClient,
+        session_uuid: str,
+        call: dict[str, Any],
+    ) -> None:
         result = await self.run_function_call(client, session_uuid, call["name"], call["arguments"])
         await ws.send_json({
             "type": "conversation.item.create",
