@@ -193,6 +193,7 @@ class AiReceptionistAgentController extends Controller
             'caller_number' => ['nullable', 'string', 'max:255'],
             'message' => ['required', 'string', 'max:5000'],
             'urgency' => ['nullable', 'string', 'max:64'],
+            'transcript' => ['nullable', 'string', 'max:50000'],
         ]);
 
         return response()->json($service->recordBuiltInToolRun(

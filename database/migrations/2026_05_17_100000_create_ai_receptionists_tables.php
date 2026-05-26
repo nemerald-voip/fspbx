@@ -29,6 +29,7 @@ return new class extends Migration
                 $table->uuid('dialplan_uuid')->nullable()->index();
                 $table->string('name');
                 $table->string('extension')->index();
+                $table->string('openai_voice')->default('marin');
                 $table->text('system_prompt')->nullable();
                 $table->text('initial_message')->nullable();
                 $table->text('fallback_type')->nullable();

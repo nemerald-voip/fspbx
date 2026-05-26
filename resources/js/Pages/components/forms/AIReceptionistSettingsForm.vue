@@ -73,12 +73,6 @@
                                 :disabled="canEdit" :conditions="[showOpenAIRealtimeFields]"
                                 :columns="{ lg: { wrapper: 6 } }" />
 
-                            <SelectElement name="openai_voice" label="OpenAI Realtime Voice" :native="false"
-                                :items="openaiVoiceOptions" label-prop="label" value-prop="value" :search="true"
-                                allow-absent :strict="false" placeholder="Select or enter a voice" :floating="false"
-                                :disabled="canEdit" :conditions="[showOpenAIRealtimeFields]"
-                                :columns="{ lg: { wrapper: 6 } }" />
-
                             <StaticElement v-if="showLocalAgentControls" name="agent_service" tag="div" :add-classes="{
                                 ElementLayout: { outerWrapper: 'col-span-12' },
                                 StaticElement: { container: 'rounded-md border border-gray-200 bg-white p-4' }
@@ -207,18 +201,6 @@ const openaiRealtimeModelOptions = [
     { value: "gpt-4o-mini-realtime-preview", label: "GPT-4o mini Realtime Preview" },
 ];
 
-const openaiVoiceOptions = [
-    { value: "marin", label: "Marin (Recommended)" },
-    { value: "alloy", label: "Alloy" },
-    { value: "ash", label: "Ash" },
-    { value: "ballad", label: "Ballad" },
-    { value: "coral", label: "Coral" },
-    { value: "echo", label: "Echo" },
-    { value: "sage", label: "Sage" },
-    { value: "shimmer", label: "Shimmer" },
-    { value: "verse", label: "Verse" },
-];
-
 const isInheriting = computed(() => settings.value?.scope === "system" && !!settings.value?.domain_uuid);
 const hasDomainOverride = computed(() => settings.value?.scope === "domain" && !!settings.value?.domain_uuid);
 const showOverrideBtn = computed(() => isInheriting.value && !isOverride.value);
@@ -322,7 +304,6 @@ function updateForm(data) {
         openai_project_id: providerConfig.openai_project_id ?? null,
         openai_sip_bridge_target: providerConfig.openai_sip_bridge_target ?? null,
         openai_realtime_model: providerConfig.openai_realtime_model ?? "gpt-realtime-2",
-        openai_voice: providerConfig.openai_voice ?? "marin",
     });
 
     if (!props.domain_uuid && selectedEnabled.value) {

@@ -7,6 +7,7 @@ use App\Models\AiReceptionistTool;
 use App\Rules\UniqueExtension;
 use App\Services\AiReceptionistService;
 use App\Services\CallRoutingOptionsService;
+use App\Services\OpenAIService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -18,6 +19,19 @@ use Spatie\QueryBuilder\QueryBuilder;
 class AiReceptionistController extends Controller
 {
     protected int $perPage = 50;
+
+    private const OPENAI_VOICES = [
+        'alloy',
+        'ash',
+        'ballad',
+        'cedar',
+        'coral',
+        'echo',
+        'marin',
+        'sage',
+        'shimmer',
+        'verse',
+    ];
 
     public function index()
     {
@@ -34,6 +48,7 @@ class AiReceptionistController extends Controller
                 'select_all' => route('ai-receptionists.select.all'),
                 'bulk_delete' => route('ai-receptionists.bulk.delete'),
                 'tool_store' => route('ai-receptionists.tools.store'),
+                'voice_preview' => route('ai-receptionists.voice.preview'),
                 'get_routing_options' => route('routing.options'),
             ],
             'permissions' => [
@@ -147,8 +162,33 @@ class AiReceptionistController extends Controller
                 'store_route' => route('ai-receptionists.store'),
                 'update_route' => $itemUuid ? route('ai-receptionists.update', ['ai_receptionist' => $item->ai_receptionist_uuid]) : null,
                 'tool_store_route' => route('ai-receptionists.tools.store'),
+                'voice_preview_route' => route('ai-receptionists.voice.preview'),
                 'get_routing_options' => route('routing.options'),
             ],
+        ]);
+    }
+
+    public function previewVoice(Request $request, OpenAIService $openAIService)
+    {
+        if (! userCheckPermission('ai_receptionist_add') && ! userCheckPermission('ai_receptionist_edit')) {
+            return response()->json(['messages' => ['error' => ['Access denied.']]], 403);
+        }
+
+        $validated = $request->validate([
+            'voice' => ['required', 'string', Rule::in(self::OPENAI_VOICES)],
+        ]);
+
+        $audio = $openAIService->textToSpeech(
+            'gpt-4o-mini-tts-2025-12-15',
+            'Hi, this is your AI receptionist voice preview. How can I help you today?',
+            $validated['voice'],
+            'mp3',
+            '1.0'
+        );
+
+        return response($audio, 200, [
+            'Content-Type' => 'audio/mpeg',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate',
         ]);
     }
 
@@ -228,6 +268,7 @@ class AiReceptionistController extends Controller
                     ->ignore($receptionist?->ai_receptionist_uuid, 'ai_receptionist_uuid'),
                 new UniqueExtension($receptionist?->ai_receptionist_uuid),
             ],
+            'openai_voice' => ['nullable', 'string', 'max:64'],
             'system_prompt' => ['nullable', 'string'],
             'initial_message' => ['nullable', 'string'],
             'fallback_type' => ['nullable', 'string', 'max:64'],

@@ -38,6 +38,8 @@
                                                 <FormTab name="settings" label="Settings" :elements="[
                                                     'name',
                                                     'extension',
+                                                    'openai_voice',
+                                                    'voice_preview',
                                                     'description',
                                                     'settings_submit',
                                                 ]" />
@@ -74,6 +76,27 @@
 
                                                 <TextElement name="extension" label="Extension" :floating="false"
                                                     :columns="{ sm: { container: 6 } }" />
+
+                                                <SelectElement name="openai_voice" label="Voice" :native="false"
+                                                    :items="openaiVoiceOptions" label-prop="label" value-prop="value"
+                                                    :search="true" allow-absent :strict="false"
+                                                    placeholder="Select or enter a voice" :floating="false"
+                                                    :columns="{ sm: { container: 8 } }" />
+
+                                                <ButtonElement v-if="!voicePreviewLoading" @click="previewVoice"
+                                                    name="voice_preview" label="&nbsp;" :secondary="true"
+                                                    :columns="{ sm: { container: 4 } }"
+                                                    :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                                    <PlayCircleIcon
+                                                        class="h-8 w-8 shrink-0 cursor-pointer rounded-full py-1 text-blue-400 ring-1 transition duration-500 ease-in-out hover:bg-blue-200 hover:text-blue-600 active:bg-blue-300 active:duration-150" />
+                                                </ButtonElement>
+
+                                                <ButtonElement v-if="voicePreviewLoading" name="voice_preview_loading"
+                                                    label="&nbsp;" :secondary="true" :columns="{ sm: { container: 4 } }"
+                                                    :remove-classes="{ ButtonElement: { button_secondary: ['form-bg-btn-secondary'], button: ['form-border-width-btn'], button_enabled: ['focus:form-ring'], button_md: ['form-p-btn'] } }">
+                                                    <ArrowPathIcon
+                                                        class="h-8 w-8 shrink-0 animate-spin rounded-full py-1 text-blue-400 ring-1" />
+                                                </ButtonElement>
 
                                                 <TextareaElement name="description" label="Description" :rows="2" />
 
@@ -287,7 +310,7 @@
 <script setup>
 import { computed, ref } from "vue";
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from "@headlessui/vue";
-import { XMarkIcon } from "@heroicons/vue/24/solid";
+import { ArrowPathIcon, PlayCircleIcon, XMarkIcon } from "@heroicons/vue/24/solid";
 
 const props = defineProps({
     show: Boolean,
@@ -307,10 +330,13 @@ const props = defineProps({
 const emit = defineEmits(["close", "error", "success", "refresh-data"]);
 
 const form$ = ref(null);
+const voicePreviewAudio = ref(null);
+const voicePreviewLoading = ref(false);
 
 const defaultValues = computed(() => ({
     name: props.options?.item?.name ?? null,
     extension: props.options?.item?.extension ?? null,
+    openai_voice: props.options?.item?.openai_voice ?? "marin",
     description: props.options?.item?.description ?? null,
     system_prompt: props.options?.item?.system_prompt ?? "You are a helpful phone receptionist. Ask concise questions, confirm before transferring, and use approved tools only.",
     initial_message: props.options?.item?.initial_message ?? "Thank you for calling. How can I help you today?",
@@ -361,6 +387,19 @@ const actionOptions = [
     { value: "email", name: "Take Message and Email" },
 ];
 
+const openaiVoiceOptions = [
+    { value: "marin", label: "Marin (Recommended)" },
+    { value: "cedar", label: "Cedar" },
+    { value: "alloy", label: "Alloy" },
+    { value: "ash", label: "Ash" },
+    { value: "ballad", label: "Ballad" },
+    { value: "coral", label: "Coral" },
+    { value: "echo", label: "Echo" },
+    { value: "sage", label: "Sage" },
+    { value: "shimmer", label: "Shimmer" },
+    { value: "verse", label: "Verse" },
+];
+
 const optionValue = (value) => {
     if (value && typeof value === "object") {
         return value.value ?? value.extension ?? null;
@@ -378,6 +417,35 @@ const formatTarget = (value) => {
     }
 
     return value;
+};
+
+const previewVoice = async () => {
+    const route = props.options?.routes?.voice_preview_route;
+    const voice = form$.value?.data?.openai_voice ?? "marin";
+
+    if (!route) {
+        emit("error", { message: "Voice preview route is missing." });
+        return;
+    }
+
+    voicePreviewLoading.value = true;
+
+    try {
+        if (voicePreviewAudio.value) {
+            voicePreviewAudio.value.pause();
+        }
+
+        const response = await axios.post(route, { voice }, { responseType: "blob" });
+        const audioUrl = URL.createObjectURL(response.data);
+        const audio = new Audio(audioUrl);
+        voicePreviewAudio.value = audio;
+        audio.addEventListener("ended", () => URL.revokeObjectURL(audioUrl), { once: true });
+        await audio.play();
+    } catch (error) {
+        emit("error", error);
+    } finally {
+        voicePreviewLoading.value = false;
+    }
 };
 
 const submitForm = async (FormData, form$) => {

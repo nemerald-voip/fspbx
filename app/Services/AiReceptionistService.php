@@ -62,6 +62,7 @@ class AiReceptionistService
                 'dialplan_uuid' => $dialplanUuid,
                 'name' => $validated['name'],
                 'extension' => $validated['extension'],
+                'openai_voice' => $this->blankToNull($validated['openai_voice'] ?? null) ?: 'marin',
                 'system_prompt' => $this->blankToNull($validated['system_prompt'] ?? null),
                 'initial_message' => $this->blankToNull($validated['initial_message'] ?? null),
                 'fallback_type' => $this->blankToNull($validated['fallback_type'] ?? null),
@@ -136,6 +137,7 @@ class AiReceptionistService
             'extension' => $receptionist->extension,
             'engine' => $engine,
             'engine_label' => self::ENGINE_DEFINITIONS[$engine]['label'] ?? $engine,
+            'openai_voice' => $receptionist->openai_voice ?: 'marin',
             'system_prompt' => $receptionist->system_prompt,
             'routing_instructions' => $this->routingInstructions($routes),
             'initial_message' => $receptionist->initial_message,
@@ -582,6 +584,7 @@ class AiReceptionistService
         $callerNumber = trim((string) ($payload['caller_number'] ?? $session->caller_id_number ?? ''));
         $message = trim((string) ($payload['message'] ?? ''));
         $urgency = trim((string) ($payload['urgency'] ?? ''));
+        $transcript = trim((string) ($payload['transcript'] ?? $session->transcript ?? ''));
         $logId = (string) Str::uuid();
 
         Mail::to($recipient)->send(new AiReceptionistRouteNotification([
@@ -594,6 +597,7 @@ class AiReceptionistService
             'caller_number' => $callerNumber ?: null,
             'message' => $message,
             'urgency' => $urgency ?: null,
+            'transcript' => $transcript ?: null,
         ]));
 
         return [
@@ -1142,6 +1146,7 @@ class AiReceptionistService
             'caller_number' => $session->caller_id_number,
             'failure_status' => $status,
             'handoff_summary' => $warmTransfer->handoff_summary,
+            'transcript' => $session->transcript,
         ]));
 
         return true;

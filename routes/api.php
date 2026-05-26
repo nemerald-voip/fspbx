@@ -132,6 +132,7 @@ Route::group(['middleware' => ['auth:sanctum', 'api.cookie.auth']], function () 
     Route::post('/ai-receptionists/select-all', [AiReceptionistController::class, 'selectAll'])->name('ai-receptionists.select.all');
     Route::post('/ai-receptionists/bulk-delete', [AiReceptionistController::class, 'bulkDelete'])->name('ai-receptionists.bulk.delete');
     Route::post('/ai-receptionists/tools', [AiReceptionistController::class, 'storeTool'])->name('ai-receptionists.tools.store');
+    Route::post('/ai-receptionists/voice-preview', [AiReceptionistController::class, 'previewVoice'])->name('ai-receptionists.voice.preview');
     Route::get('/ai-receptionist-logs', [AiReceptionistLogController::class, 'index'])->name('ai-receptionist-logs.index');
     Route::get('/ai-receptionist-settings', [AiReceptionistSettingsController::class, 'show'])->name('ai-receptionist-settings.show');
     Route::post('/ai-receptionist-settings', [AiReceptionistSettingsController::class, 'store'])->name('ai-receptionist-settings.store');

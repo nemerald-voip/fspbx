@@ -25,3 +25,8 @@ Message:
 AI Summary:
 {{ $attributes['handoff_summary'] }}
 @endif
+
+@if(!empty($attributes['transcript']))
+Call Transcript:
+{{ $attributes['transcript'] }}
+@endif

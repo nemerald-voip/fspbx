@@ -99,6 +99,9 @@ def quick_accept_payload() -> dict[str, Any]:
                     "model": os.getenv("OPENAI_REALTIME_TRANSCRIPTION_MODEL", "gpt-4o-mini-transcribe"),
                 },
             },
+            "output": {
+                "voice": os.getenv("OPENAI_REALTIME_VOICE", "marin"),
+            },
         },
     }
 
@@ -117,6 +120,9 @@ def accept_payload(config: dict[str, Any]) -> dict[str, Any]:
                         os.getenv("OPENAI_REALTIME_TRANSCRIPTION_MODEL", "gpt-4o-mini-transcribe"),
                     ),
                 },
+            },
+            "output": {
+                "voice": config.get("openai_voice") or os.getenv("OPENAI_REALTIME_VOICE", "marin"),
             },
         },
         "tools": [
@@ -353,6 +359,7 @@ class RealtimeCallController:
         post_response_call_changing_tools: list[dict[str, Any]] = []
         latest_assistant_transcript = [""]
         assistant_transcript_version = [0]
+        handled_function_calls: set[str] = set()
 
         for attempt in range(1, 6):
             try:
@@ -378,6 +385,7 @@ class RealtimeCallController:
                                 post_response_call_changing_tools,
                                 latest_assistant_transcript,
                                 assistant_transcript_version,
+                                handled_function_calls,
                             )
                         elif message.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
                             break
@@ -407,6 +415,7 @@ class RealtimeCallController:
         post_response_call_changing_tools: list[dict[str, Any]],
         latest_assistant_transcript: list[str],
         assistant_transcript_version: list[int],
+        handled_function_calls: set[str],
     ) -> None:
         event_type = event.get("type")
 
@@ -427,7 +436,7 @@ class RealtimeCallController:
 
             if pending_call_changing_tools:
                 await asyncio.sleep(playback_delay_seconds(assistant_transcript, minimum=0.5))
-                await self.run_pending_function_calls(ws, client, session_uuid, pending_call_changing_tools)
+                await self.run_pending_function_calls(ws, client, session_uuid, transcript, pending_call_changing_tools)
                 return
 
             return
@@ -472,12 +481,23 @@ class RealtimeCallController:
             )
             delay = playback_delay_seconds(latest_assistant_transcript[0], minimum=0.5) if queued_before_latest_transcript else 0.35
             await asyncio.sleep(delay)
-            await self.run_pending_function_calls(ws, client, session_uuid, pending_call_changing_tools)
+            await self.run_pending_function_calls(ws, client, session_uuid, transcript, pending_call_changing_tools)
             return
 
         call = self.function_call_from_event(event)
         if not call:
             return
+
+        call_key = self.function_call_key(call)
+        if call_key in handled_function_calls:
+            logger.info(
+                "Ignoring duplicate AI Receptionist function call %s for session %s.",
+                call["name"],
+                session_uuid,
+            )
+            return
+
+        handled_function_calls.add(call_key)
 
         if call["name"] in CALL_CHANGING_TOOLS:
             logger.info("Deferring AI Receptionist call-changing tool %s for session %s.", call["name"], session_uuid)
@@ -485,20 +505,21 @@ class RealtimeCallController:
             pending_call_changing_tools.append(call)
             return
 
-        await self.run_function_call_and_respond(ws, client, session_uuid, call)
+        await self.run_function_call_and_respond(ws, client, session_uuid, transcript, call)
 
     async def run_pending_function_calls(
         self,
         ws: aiohttp.ClientWebSocketResponse,
         client: FspbxClient,
         session_uuid: str,
+        transcript: list[str],
         pending_calls: list[dict[str, Any]],
     ) -> None:
         calls = pending_calls[:]
         pending_calls.clear()
 
         for call in calls:
-            await self.run_function_call_and_respond(ws, client, session_uuid, call)
+            await self.run_function_call_and_respond(ws, client, session_uuid, transcript, call)
 
     async def acknowledge_deferred_end_call(
         self,
@@ -535,9 +556,10 @@ class RealtimeCallController:
         ws: aiohttp.ClientWebSocketResponse,
         client: FspbxClient,
         session_uuid: str,
+        transcript: list[str],
         call: dict[str, Any],
     ) -> None:
-        result = await self.run_function_call(client, session_uuid, call["name"], call["arguments"])
+        result = await self.run_function_call(client, session_uuid, call["name"], call["arguments"], transcript)
         await ws.send_json({
             "type": "conversation.item.create",
             "item": {
@@ -574,6 +596,16 @@ class RealtimeCallController:
 
         return None
 
+    def function_call_key(self, call: dict[str, Any]) -> str:
+        call_id = str(call.get("call_id") or "").strip()
+        if call_id:
+            return call_id
+
+        return json.dumps({
+            "name": call.get("name"),
+            "arguments": call.get("arguments") or {},
+        }, sort_keys=True)
+
     def decode_arguments(self, raw: Any) -> dict[str, Any]:
         if isinstance(raw, dict):
             return raw
@@ -587,6 +619,7 @@ class RealtimeCallController:
         session_uuid: str,
         name: str,
         arguments: dict[str, Any],
+        transcript: list[str] | None = None,
     ) -> dict[str, Any]:
         if name == "resolve_route":
             return await client.resolve_route(session_uuid, {"intent": arguments.get("intent", "")})
@@ -627,6 +660,7 @@ class RealtimeCallController:
                 "caller_number": arguments.get("caller_number"),
                 "message": arguments.get("message"),
                 "urgency": arguments.get("urgency"),
+                "transcript": "\n".join(transcript or []),
             })
 
         if name == "end_call":

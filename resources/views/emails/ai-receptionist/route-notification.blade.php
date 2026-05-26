@@ -42,3 +42,8 @@
     <h3>AI Summary</h3>
     <p>{!! nl2br(e($attributes['handoff_summary'])) !!}</p>
 @endif
+
+@if(!empty($attributes['transcript']))
+    <h3>Call Transcript</h3>
+    <p style="white-space: pre-wrap;">{{ $attributes['transcript'] }}</p>
+@endif
