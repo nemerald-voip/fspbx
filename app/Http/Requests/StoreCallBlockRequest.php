@@ -34,11 +34,28 @@ class StoreCallBlockRequest extends FormRequest
             'extension_uuid' => blank($this->input('extension_uuid')) ? null : $this->input('extension_uuid'),
             'call_block_name' => blank($this->input('call_block_name')) ? null : trim((string) $this->input('call_block_name')),
             'call_block_country_code' => blank($this->input('call_block_country_code')) ? null : preg_replace('/\D+/', '', (string) $this->input('call_block_country_code')),
-            'call_block_number' => blank($this->input('call_block_number')) ? null : trim((string) $this->input('call_block_number')),
+            'call_block_number' => $this->normalizeCallerIdNumber($this->input('call_block_number')),
             'call_block_voicemail' => blank($this->input('call_block_voicemail')) ? null : trim((string) $this->input('call_block_voicemail')),
             'call_block_enabled' => $this->input('call_block_enabled', 'true'),
             'call_block_description' => blank($this->input('call_block_description')) ? null : trim((string) $this->input('call_block_description')),
         ]);
+    }
+
+    private function normalizeCallerIdNumber(mixed $value): ?string
+    {
+        if (blank($value)) {
+            return null;
+        }
+
+        $raw = (string) $value;
+        $normalized = preg_replace('/[^\d+]+/', '', $raw);
+        $normalized = ltrim($normalized, '+');
+
+        if (str_contains($raw, '+')) {
+            $normalized = '+' . $normalized;
+        }
+
+        return $normalized === '' ? null : $normalized;
     }
 
     public function withValidator($validator): void
