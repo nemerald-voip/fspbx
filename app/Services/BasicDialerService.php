@@ -472,7 +472,7 @@ class BasicDialerService
             return '&hangup()';
         }
 
-        return sprintf('&transfer(%s XML %s)', $campaign->destination_target, $domainName);
+        return sprintf('%s XML %s', $campaign->destination_target, $domainName);
     }
 
     private function defaultDestinationTarget(?string $destinationType, ?string $target): ?string
