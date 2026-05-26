@@ -144,7 +144,7 @@
                                                     }" />
 
                                                 <SelectElement name="device_profile_uuid" :items="options.profiles"
-                                                    :search="true" :native="false" label="Device Profile (Depreciated)"
+                                                    :search="true" :native="false" label="Device Profile (Deprecated)"
                                                     input-type="search" autocomplete="off" label-prop="name"
                                                     value-prop="value" placeholder="Select Profile (Optional)"
                                                     :floating="false"

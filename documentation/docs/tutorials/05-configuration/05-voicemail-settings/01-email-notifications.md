@@ -63,7 +63,7 @@ FS PBX supports two queue strategies: **legacy** and **modern**.
 
 -   ✅ **Modern** (recommended) -- Uses Laravel queues for asynchronous and reliable delivery
 
--   ⚠️ **Legacy** -- (depreciated) Sends directly from the dialplan (synchronous, less reliable, no retries)
+-   ⚠️ **Legacy** -- (deprecated) Sends directly from the dialplan (synchronous, less reliable, no retries)
 
 If your system was upgraded from FusionPBX, verify the following setting:
 
