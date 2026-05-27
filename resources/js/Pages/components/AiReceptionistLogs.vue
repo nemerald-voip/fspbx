@@ -101,7 +101,7 @@
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Caller</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Destination</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Status</th>
-                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Transfer</th>
+                                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Activity</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Tools</th>
                                 <th class="px-6 py-3 text-left text-sm font-semibold text-gray-900">Duration</th>
                             </tr>
@@ -135,9 +135,9 @@
                                         />
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
-                                        <div>{{ row.transfer_label || row.transfer_target || '-' }}</div>
-                                        <div v-if="row.latest_warm_transfer_status" class="text-xs text-gray-400">
-                                            warm: {{ statusText(row.latest_warm_transfer_status) }}
+                                        <div>{{ row.activity_summary?.label || row.transfer_label || row.transfer_target || '-' }}</div>
+                                        <div v-if="row.activity_summary?.detail || row.latest_warm_transfer_status" class="text-xs text-gray-400">
+                                            {{ row.activity_summary?.detail || `warm: ${statusText(row.latest_warm_transfer_status)}` }}
                                         </div>
                                     </td>
                                     <td class="whitespace-nowrap px-6 py-2 text-sm text-gray-500">
@@ -181,8 +181,31 @@
                                             </div>
 
                                             <div>
+                                                <h5 class="text-sm font-semibold text-gray-900">Activity</h5>
+                                                <div v-if="row.activities?.length" class="mt-2 space-y-3">
+                                                    <div v-for="activity in row.activities" :key="activity.tool_run_uuid" class="border-t border-gray-200 pt-2 first:border-t-0 first:pt-0">
+                                                        <div class="flex flex-wrap items-center gap-2 text-sm">
+                                                            <Badge
+                                                                :text="statusText(activity.status)"
+                                                                :backgroundColor="statusBadge(activity.status).backgroundColor"
+                                                                :textColor="statusBadge(activity.status).textColor"
+                                                                :ringColor="statusBadge(activity.status).ringColor"
+                                                            />
+                                                            <span class="font-medium text-gray-700">{{ activity.label }}</span>
+                                                            <span v-if="activity.detail" class="text-gray-600">{{ activity.detail }}</span>
+                                                            <span class="text-gray-400">{{ activity.started_at_formatted }}</span>
+                                                        </div>
+                                                        <div v-if="activity.error_message" class="mt-1 text-sm text-rose-700">{{ activity.error_message }}</div>
+                                                    </div>
+                                                </div>
+                                                <p v-else class="mt-2 text-sm text-gray-500">No activity recorded.</p>
+                                            </div>
+                                        </div>
+
+                                        <div v-if="row.warm_transfers?.length" class="mt-4">
+                                            <div>
                                                 <h5 class="text-sm font-semibold text-gray-900">Warm Transfers</h5>
-                                                <div v-if="row.warm_transfers?.length" class="mt-2 space-y-3">
+                                                <div class="mt-2 space-y-3">
                                                     <div v-for="transfer in row.warm_transfers" :key="transfer.warm_transfer_uuid" class="border-t border-gray-200 pt-2 first:border-t-0 first:pt-0">
                                                         <div class="flex flex-wrap items-center gap-2 text-sm">
                                                             <Badge
@@ -211,7 +234,6 @@
                                                         </dl>
                                                     </div>
                                                 </div>
-                                                <p v-else class="mt-2 text-sm text-gray-500">No warm transfers.</p>
                                             </div>
                                         </div>
 

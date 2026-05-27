@@ -1,0 +1,293 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-26T23:27:51Z",
+  "title": "Design System: FS PBX",
+  "extensions": {
+    "colorMeta": {
+      "accent-indigo": {
+        "role": "primary",
+        "displayName": "Control Indigo",
+        "canonical": "#4f46e5",
+        "tonalRamp": [
+          "oklch(15% 0.09 275)",
+          "oklch(25% 0.12 275)",
+          "oklch(35% 0.15 275)",
+          "oklch(45% 0.18 275)",
+          "oklch(55% 0.19 275)",
+          "oklch(68% 0.14 275)",
+          "oklch(82% 0.08 275)",
+          "oklch(95% 0.025 275)"
+        ]
+      },
+      "accent-indigo-soft": {
+        "role": "primary",
+        "displayName": "Soft Control Indigo",
+        "canonical": "#6366f1",
+        "tonalRamp": [
+          "oklch(15% 0.08 275)",
+          "oklch(25% 0.11 275)",
+          "oklch(35% 0.14 275)",
+          "oklch(45% 0.16 275)",
+          "oklch(58% 0.17 275)",
+          "oklch(70% 0.13 275)",
+          "oklch(84% 0.07 275)",
+          "oklch(95% 0.02 275)"
+        ]
+      },
+      "surface-white": {
+        "role": "neutral",
+        "displayName": "Operational White",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#111827",
+          "#1f2937",
+          "#374151",
+          "#4b5563",
+          "#6b7280",
+          "#d1d5db",
+          "#f3f4f6",
+          "#ffffff"
+        ]
+      },
+      "surface-muted": {
+        "role": "neutral",
+        "displayName": "Soft Workbench",
+        "canonical": "#f9fafb",
+        "tonalRamp": [
+          "#111827",
+          "#1f2937",
+          "#374151",
+          "#6b7280",
+          "#9ca3af",
+          "#d1d5db",
+          "#f3f4f6",
+          "#f9fafb"
+        ]
+      },
+      "success-fill": {
+        "role": "semantic",
+        "displayName": "Semantic Green",
+        "canonical": "#dcfce7",
+        "tonalRamp": [
+          "oklch(15% 0.07 145)",
+          "oklch(25% 0.09 145)",
+          "oklch(35% 0.11 145)",
+          "oklch(45% 0.12 145)",
+          "oklch(58% 0.13 145)",
+          "oklch(72% 0.10 145)",
+          "oklch(86% 0.06 145)",
+          "oklch(95% 0.025 145)"
+        ]
+      },
+      "warning-fill": {
+        "role": "semantic",
+        "displayName": "Semantic Amber",
+        "canonical": "#fef3c7",
+        "tonalRamp": [
+          "oklch(15% 0.06 80)",
+          "oklch(25% 0.08 80)",
+          "oklch(35% 0.10 80)",
+          "oklch(48% 0.12 80)",
+          "oklch(62% 0.13 80)",
+          "oklch(76% 0.10 80)",
+          "oklch(88% 0.06 80)",
+          "oklch(96% 0.025 80)"
+        ]
+      },
+      "danger-fill": {
+        "role": "semantic",
+        "displayName": "Semantic Rose",
+        "canonical": "#ffe4e6",
+        "tonalRamp": [
+          "oklch(15% 0.07 20)",
+          "oklch(25% 0.10 20)",
+          "oklch(35% 0.13 20)",
+          "oklch(48% 0.16 20)",
+          "oklch(62% 0.14 20)",
+          "oklch(76% 0.10 20)",
+          "oklch(88% 0.06 20)",
+          "oklch(96% 0.025 20)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page titles and major modal contexts."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Panel titles, modal titles, table section headers, and grouped form headings."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Table cells, descriptions, form text, filter labels, and operational copy."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Small labels, category headers, badges, and compact metadata."
+      }
+    },
+    "shadows": [
+      {
+        "name": "table-shell",
+        "value": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
+        "purpose": "Subtle lift around dense data tables and compact panels."
+      },
+      {
+        "name": "dropdown-lift",
+        "value": "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
+        "purpose": "Floating menus, dropdowns, and modal shells."
+      },
+      {
+        "name": "multiselect-lift",
+        "value": "0 8px 16px rgba(0, 0, 0, 0.25)",
+        "purpose": "Existing multiselect dropdown treatment."
+      }
+    ],
+    "motion": [
+      {
+        "name": "fast-state",
+        "value": "150ms ease-in-out",
+        "purpose": "Buttons, icon buttons, and small state transitions."
+      },
+      {
+        "name": "dialog-reveal",
+        "value": "200ms to 300ms ease-out",
+        "purpose": "Headless UI modal and overlay transitions."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Compact indigo action button for create, save, and primary operational commands.",
+      "html": "<button class=\"ds-btn-primary\">Create</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 6px; background: #4f46e5; color: #ffffff; padding: 6px 10px; font: 600 14px/1.5 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); transition: background-color 150ms ease-in-out, box-shadow 150ms ease-in-out; } .ds-btn-primary:hover { background: #6366f1; } .ds-btn-primary:focus-visible { outline: 2px solid #4f46e5; outline-offset: 2px; } .ds-btn-primary:active { background: #3730a3; }"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "White secondary action button for reload, reset, import, export, and navigation actions.",
+      "html": "<button class=\"ds-btn-secondary\">Reload</button>",
+      "css": ".ds-btn-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 6px; background: #ffffff; color: #111827; padding: 6px 10px; font: 600 14px/1.5 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; box-shadow: inset 0 0 0 1px #d1d5db, 0 1px 2px 0 rgb(0 0 0 / 0.05); transition: background-color 150ms ease-in-out, color 150ms ease-in-out; } .ds-btn-secondary:hover { background: #f9fafb; } .ds-btn-secondary:focus-visible { outline: 2px solid #4f46e5; outline-offset: 2px; }"
+    },
+    {
+      "name": "Search Input",
+      "kind": "input",
+      "refersTo": "input-search",
+      "description": "Icon-led compact search field used in table filters and settings sidebars.",
+      "html": "<label class=\"ds-search\"><svg viewBox=\"0 0 20 20\" aria-hidden=\"true\"><path fill=\"currentColor\" fill-rule=\"evenodd\" d=\"M9 3.5a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11ZM2 9a7 7 0 1 1 12.452 4.391l3.328 3.329a.75.75 0 1 1-1.06 1.06l-3.329-3.328A7 7 0 0 1 2 9Z\" clip-rule=\"evenodd\" /></svg><input placeholder=\"Search\" /></label>",
+      "css": ".ds-search { position: relative; display: inline-flex; align-items: center; width: 256px; color: #9ca3af; } .ds-search svg { position: absolute; left: 12px; width: 20px; height: 20px; pointer-events: none; } .ds-search input { width: 100%; border: 0; border-radius: 6px; background: #ffffff; color: #111827; padding: 6px 12px 6px 40px; font: 400 14px/1.5 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; box-shadow: inset 0 0 0 1px #d1d5db; } .ds-search input::placeholder { color: #9ca3af; } .ds-search input:focus { outline: none; box-shadow: inset 0 0 0 2px #2563eb; }"
+    },
+    {
+      "name": "Info Badge",
+      "kind": "chip",
+      "refersTo": "badge-info",
+      "description": "Soft operational chip for forwarding, active members, and compact row state.",
+      "html": "<span class=\"ds-badge-info\">FWD All</span>",
+      "css": ".ds-badge-info { display: inline-flex; align-items: center; border-radius: 6px; background: #dbeafe; color: #1e40af; padding: 4px 8px; font: 600 12px/1.33 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; box-shadow: inset 0 0 0 1px rgb(96 165 250 / 0.2); }"
+    },
+    {
+      "name": "Status Badge",
+      "kind": "chip",
+      "refersTo": "badge-status",
+      "description": "Explicit status label for enabled and disabled states.",
+      "html": "<span class=\"ds-status\"><span></span>Enabled</span>",
+      "css": ".ds-status { display: inline-flex; align-items: center; border-radius: 6px; background: #dcfce7; color: #15803d; padding: 2px 6px; font: 500 12px/1.33 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; } .ds-status span { width: 6px; height: 6px; margin-right: 4px; border-radius: 9999px; background: #22c55e; }"
+    },
+    {
+      "name": "Modal Shell",
+      "kind": "card",
+      "refersTo": "modal-shell",
+      "description": "Focused Headless UI dialog shell for create, update, upload, and confirmation workflows.",
+      "html": "<section class=\"ds-modal\"><button class=\"ds-modal-close\" aria-label=\"Close\">×</button><h2>Update Settings</h2><div class=\"ds-modal-body\">Form content</div></section>",
+      "css": ".ds-modal { position: relative; width: min(100%, 512px); border-radius: 8px; background: #ffffff; color: #111827; padding: 20px 16px 16px; text-align: left; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); } .ds-modal h2 { margin: 0; padding-right: 32px; font: 600 16px/1.5 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; } .ds-modal-body { margin-top: 16px; padding-bottom: 16px; color: #374151; font: 400 14px/1.5 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; } .ds-modal-close { position: absolute; right: 16px; top: 16px; border: 0; border-radius: 6px; background: #ffffff; color: #9ca3af; font-size: 24px; line-height: 1; } .ds-modal-close:hover { color: #6b7280; } .ds-modal-close:focus-visible { outline: 2px solid #4f46e5; outline-offset: 2px; }"
+    },
+    {
+      "name": "Toggle",
+      "kind": "input",
+      "refersTo": "toggle",
+      "description": "Indigo Headless UI switch for enabled or disabled operational state.",
+      "html": "<button class=\"ds-toggle\" aria-pressed=\"true\"><span></span></button>",
+      "css": ".ds-toggle { position: relative; display: inline-flex; width: 44px; height: 24px; flex-shrink: 0; border: 2px solid transparent; border-radius: 9999px; background: #4f46e5; padding: 0; cursor: pointer; transition: background-color 200ms ease-in-out; } .ds-toggle span { display: inline-block; width: 20px; height: 20px; transform: translateX(20px); border-radius: 9999px; background: #ffffff; box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05); transition: transform 200ms ease-in-out; } .ds-toggle:focus-visible { outline: 2px solid #4f46e5; outline-offset: 2px; }"
+    },
+    {
+      "name": "Data Table Shell",
+      "kind": "card",
+      "refersTo": "data-table",
+      "description": "Primary operational work surface for searchable, sortable, paginated records.",
+      "html": "<div class=\"ds-table\"><div class=\"ds-table-bar\">Showing <strong>1</strong> to <strong>50</strong> of <strong>148</strong> results</div><table><thead><tr><th>Name</th><th>Status</th><th></th></tr></thead><tbody><tr><td>Sales Ring Group</td><td><span class=\"ds-row-chip\">Active</span></td><td class=\"ds-actions\">Edit</td></tr></tbody></table></div>",
+      "css": ".ds-table { overflow: hidden; border-radius: 8px; background: #ffffff; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.05), 0 1px 2px 0 rgb(0 0 0 / 0.05); } .ds-table-bar { border-top: 1px solid #e5e7eb; border-bottom: 1px solid #e5e7eb; padding: 12px 16px; color: #374151; font: 400 14px/1.5 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; } .ds-table table { width: 100%; border-collapse: collapse; } .ds-table thead { background: #f9fafb; } .ds-table th { padding: 14px 8px; color: #111827; text-align: left; font: 600 14px/1.5 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; } .ds-table td { border-top: 1px solid #e5e7eb; padding: 8px; color: #6b7280; font: 400 14px/1.5 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; } .ds-actions { text-align: right; color: #4f46e5; } .ds-row-chip { display: inline-flex; border-radius: 6px; background: #dcfce7; color: #15803d; padding: 2px 6px; font-size: 12px; font-weight: 500; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Calm Control Room",
+    "overview": "FS PBX is an operational control room for complex phone-system work. The interface should feel modern, calm, and elegant while staying practical enough for repeated admin tasks, troubleshooting, and tenant operations. It is dense by design, but density must be structured, readable, and predictable.\n\nThe system follows familiar Laravel, Vue, Inertia, Tailwind, Headless UI, and VueForm conventions. New screens should start from proven app patterns such as Devices, Ring Groups, Extensions, Default Settings, and Conference-style pages before inventing a new layout. The design serves the task: tables, filters, modals, drawers, status badges, and action buttons should help mixed-skill users understand what is happening and what they can safely do next.\n\nThis visual system explicitly rejects legacy FusionPBX clutter, dense visual noise, scattered actions, ambiguous form layouts, and pages that require tribal knowledge. It also rejects marketing-style admin UI, decorative excess, oversized hero sections, and generic SaaS gloss that slows down operational work.",
+    "keyCharacteristics": [
+      "Restrained, light operational surfaces with indigo reserved for primary actions and active states.",
+      "Dense tables and forms with compact spacing, clear headers, and predictable action placement.",
+      "Calm semantic status colors that pair color with labels, counts, or icons.",
+      "Familiar controls that prioritize confidence over novelty.",
+      "VueForm and Headless UI patterns used consistently across create, update, confirmation, and selection flows."
+    ],
+    "rules": [
+      {
+        "name": "The Accent Budget Rule",
+        "body": "Indigo is for action, selection, focus, and current state. Do not use it as page decoration.",
+        "section": "colors"
+      },
+      {
+        "name": "The Status Pairing Rule",
+        "body": "Status color must be paired with a label, number, icon, or tooltip. Never rely on color alone for telephony state.",
+        "section": "colors"
+      },
+      {
+        "name": "The Native Tool Rule",
+        "body": "Use one sans-serif family for almost everything. Do not introduce display fonts into labels, buttons, tables, or forms.",
+        "section": "typography"
+      },
+      {
+        "name": "The Plain Label Rule",
+        "body": "Labels should describe the actual system object or action. Avoid clever wording around telephony, permissions, and destructive actions.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-Until-Useful Rule",
+        "body": "A surface starts flat. Add shadow only when it floats, contains a table, opens over content, or must be visually separated from a busy operational area.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do follow Devices, Ring Groups, Extensions, Default Settings, Conference-style pages, VueForm conventions, and existing Laravel/Inertia data-route structure before inventing new patterns.",
+      "Do use compact spacing, predictable headers, and right-aligned row actions for dense admin screens.",
+      "Do reserve Control Indigo for primary actions, active selections, checked controls, and focus states.",
+      "Do pair every important status color with readable text, an icon, a count, or a tooltip.",
+      "Do keep create and update workflows in VueForm modals when that is the local page pattern.",
+      "Do keep user-facing copy short, literal, and operational.",
+      "Do preserve keyboard focus states and readable contrast for mixed-skill users."
+    ],
+    "donts": [
+      "Don't recreate legacy FusionPBX clutter.",
+      "Don't create dense visual noise, scattered actions, ambiguous form layouts, or pages that require prior tribal knowledge to operate.",
+      "Don't use marketing-style admin UI, decorative excess, oversized hero sections, or generic SaaS gloss.",
+      "Don't use colored side-stripe borders as accents on cards, rows, callouts, or alerts.",
+      "Don't use gradient text, glassmorphism, decorative motion, or page-load choreography.",
+      "Don't rely on color alone for enabled, disabled, warning, error, registration, provisioning, or queue state.",
+      "Don't introduce new broad visual systems when an existing page pattern already solves the workflow."
+    ]
+  }
+}

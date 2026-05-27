@@ -90,6 +90,7 @@ class AiReceptionistAgentController extends Controller
         }
 
         $payload = $request->validate([
+            'route_uuid' => ['nullable', 'uuid'],
             'intent' => ['nullable', 'string', 'max:255'],
             'type' => ['nullable', 'string', 'max:64'],
             'target' => ['nullable', 'string', 'max:255'],
@@ -101,6 +102,10 @@ class AiReceptionistAgentController extends Controller
             'transfer_call',
             $payload,
             function () use ($service, $session, $payload) {
+                if (! empty($payload['route_uuid'])) {
+                    return $service->transferToRoute($session, $payload['route_uuid']);
+                }
+
                 $destination = $payload['destination'] ?? $service->resolveDestination($session, $payload);
 
                 return $service->transfer($session, $destination);
@@ -143,6 +148,19 @@ class AiReceptionistAgentController extends Controller
             $payload,
             fn () => $service->warmTransfer($session, $payload)
         ));
+    }
+
+    public function checkWarmTransfer(Request $request, AiReceptionistSession $session, AiReceptionistService $service): JsonResponse
+    {
+        if ($response = $this->authorizeAgent($request)) {
+            return $response;
+        }
+
+        $payload = $request->validate([
+            'warm_transfer_uuid' => ['nullable', 'uuid'],
+        ]);
+
+        return response()->json($service->checkWarmTransfer($session, $payload));
     }
 
     public function completeWarmTransfer(Request $request, AiReceptionistSession $session, AiReceptionistService $service): JsonResponse

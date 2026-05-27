@@ -68,6 +68,8 @@ class AiReceptionistLogController extends Controller
         $endedAt = $session->ended_at;
         $warmTransfers = $session->warmTransfers;
         $toolRuns = $session->toolRuns;
+        $activities = $this->activities($toolRuns, $timezone);
+        $activitySummary = $this->activitySummary($activities, $warmTransfers);
 
         return [
             'session_uuid' => $session->session_uuid,
@@ -102,6 +104,8 @@ class AiReceptionistLogController extends Controller
             'failed_tool_runs_count' => $toolRuns->where('status', 'failed')->count(),
             'warm_transfers_count' => $warmTransfers->count(),
             'latest_warm_transfer_status' => optional($warmTransfers->last())->status,
+            'activity_summary' => $activitySummary,
+            'activities' => $activities,
             'tool_runs' => $toolRuns->map(fn ($toolRun) => [
                 'tool_run_uuid' => $toolRun->tool_run_uuid,
                 'tool_name' => $toolRun->tool_name,
@@ -176,5 +180,97 @@ class AiReceptionistLogController extends Controller
         $seconds = max(0, $start->diffInSeconds($end));
 
         return sprintf('%02d:%02d', intdiv($seconds, 60), $seconds % 60);
+    }
+
+    private function activities(Collection $toolRuns, string $timezone): array
+    {
+        return $toolRuns
+            ->reject(fn ($toolRun) => in_array($toolRun->tool_name, ['resolve_route', 'resolve_destination'], true))
+            ->map(function ($toolRun) use ($timezone) {
+                $request = $toolRun->request_payload ?? [];
+                $response = $toolRun->response_payload ?? [];
+
+                return [
+                    'tool_run_uuid' => $toolRun->tool_run_uuid,
+                    'tool_name' => $toolRun->tool_name,
+                    'type' => $this->activityType($toolRun->tool_name),
+                    'label' => $this->activityLabel($toolRun->tool_name, $request, $response),
+                    'detail' => $this->activityDetail($toolRun->tool_name, $request, $response),
+                    'status' => $toolRun->status,
+                    'started_at_formatted' => $toolRun->started_at
+                        ? $toolRun->started_at->copy()->timezone($timezone)->format('Y-m-d H:i:s')
+                        : null,
+                    'duration' => $toolRun->started_at ? $this->durationText($toolRun->started_at, $toolRun->ended_at ?: now()) : null,
+                    'error_message' => $toolRun->error_message,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    private function activitySummary(array $activities, Collection $warmTransfers): ?array
+    {
+        $activityCollection = collect($activities);
+        $last = $activityCollection
+            ->reject(fn ($activity) => ($activity['tool_name'] ?? null) === 'end_call')
+            ->last() ?: $activityCollection->last();
+
+        if ($last) {
+            return [
+                'label' => $last['label'],
+                'detail' => $last['detail'],
+                'status' => $last['status'],
+            ];
+        }
+
+        $lastWarmTransfer = $warmTransfers->last();
+        if ($lastWarmTransfer) {
+            return [
+                'label' => $lastWarmTransfer->destination_label ?: $lastWarmTransfer->destination_target,
+                'detail' => 'Warm transfer',
+                'status' => $lastWarmTransfer->status,
+            ];
+        }
+
+        return null;
+    }
+
+    private function activityType(string $toolName): string
+    {
+        return match ($toolName) {
+            'send_route_email' => 'email',
+            'transfer_call' => 'cold_transfer',
+            'warm_transfer_call', 'complete_warm_transfer', 'cancel_warm_transfer' => 'warm_transfer',
+            'end_call' => 'call',
+            default => 'tool',
+        };
+    }
+
+    private function activityLabel(string $toolName, array $request, array $response): string
+    {
+        return match ($toolName) {
+            'send_route_email' => 'Email handoff',
+            'transfer_call' => 'Cold transfer',
+            'warm_transfer_call' => 'Warm transfer started',
+            'complete_warm_transfer' => 'Warm transfer completed',
+            'cancel_warm_transfer' => 'Warm transfer cancelled',
+            'end_call' => 'Call ended',
+            default => $toolName,
+        };
+    }
+
+    private function activityDetail(string $toolName, array $request, array $response): ?string
+    {
+        return match ($toolName) {
+            'send_route_email' => data_get($response, 'email_to') ?? data_get($response, 'route.name'),
+            'transfer_call' => data_get($request, 'destination.label')
+                ?? data_get($request, 'destination.target')
+                ?? data_get($response, 'destination.label')
+                ?? data_get($response, 'destination.target'),
+            'warm_transfer_call' => data_get($response, 'route.destination_label') ?? data_get($response, 'route.name') ?? data_get($request, 'route_uuid'),
+            'complete_warm_transfer' => data_get($request, 'recipient_response'),
+            'cancel_warm_transfer', 'end_call' => data_get($request, 'reason') ?? data_get($response, 'reason'),
+            default => null,
+        };
     }
 }

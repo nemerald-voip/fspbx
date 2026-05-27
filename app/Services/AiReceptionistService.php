@@ -257,6 +257,27 @@ class AiReceptionistService
         ];
     }
 
+    public function transferToRoute(AiReceptionistSession $session, string $routeUuid): array
+    {
+        $route = $this->routeForSession($session, $routeUuid);
+
+        if ($route->action_type !== 'transfer' || $route->transfer_type !== 'cold') {
+            throw new RuntimeException('The selected route is not configured for cold transfer.');
+        }
+
+        if (blank($route->destination_type) || blank($route->destination_target)) {
+            throw new RuntimeException('The selected route has no destination configured.');
+        }
+
+        return $this->transfer($session, [
+            'type' => $route->destination_type,
+            'extension' => $route->destination_target,
+            'name' => $route->destination_label ?: $route->name,
+            'route_uuid' => $route->route_uuid,
+            'route_name' => $route->name,
+        ]);
+    }
+
     public function resolveRoute(AiReceptionistSession $session, array $payload): array
     {
         $intent = trim((string) ($payload['intent'] ?? ''));
@@ -301,7 +322,7 @@ class AiReceptionistService
                 'warm_transfer_uuid' => $activeWarmTransfer->warm_transfer_uuid,
                 'route' => $this->routePayload($route, includePrivate: false),
                 'handoff_summary' => $activeWarmTransfer->handoff_summary,
-                'instructions' => 'An active warm transfer is already connected. Do not call warm_transfer_call again. Brief the recipient live and ask them to accept or decline.',
+                'instructions' => 'An active warm transfer is already connected. Brief the recipient live and ask them to accept or decline.',
                 'response_instructions' => $this->recipientConsultInstructions($route, (string) $activeWarmTransfer->handoff_summary),
             ];
         }
@@ -364,6 +385,8 @@ class AiReceptionistService
         $commands['hold_caller'] = $this->eslString("uuid_hold {$callerUuid}");
         $commands['park_caller'] = $this->eslString("uuid_park {$callerUuid}");
         $commands['caller_moh'] = $this->eslString("uuid_broadcast {$callerUuid} {$holdMusic} aleg");
+        $commands['set_openai_hangup_after_bridge'] = $this->eslString("uuid_setvar {$openAiUuid} hangup_after_bridge false");
+        $commands['set_openai_park_after_bridge'] = $this->eslString("uuid_setvar {$openAiUuid} park_after_bridge true");
         $commands['park_openai'] = $this->eslString("uuid_park {$openAiUuid}");
 
         $domainName = $this->domainName($session);
@@ -404,7 +427,17 @@ class AiReceptionistService
             return $this->warmTransferFailureResponse($route, 'no_answer', true, $notified);
         }
 
-        $commands['bridge_recipient_to_openai'] = $this->eslString("bgapi uuid_bridge {$recipientUuid} {$openAiUuid}");
+        // Bridge synchronously so we know the path is established before returning
+        // success to the controller (which will then ask the AI to brief the
+        // recipient). uuid_bridge returns once the bridge is set up; it does not
+        // block until the call ends. bgapi is the fallback if the sync attempt
+        // fails for any reason.
+        $bridgeResponse = $this->eslString("uuid_bridge {$recipientUuid} {$openAiUuid}");
+        $commands['bridge_recipient_to_openai'] = $bridgeResponse;
+
+        if (str_starts_with($bridgeResponse, '-ERR')) {
+            $commands['bridge_recipient_to_openai_bg'] = $this->eslString("bgapi uuid_bridge {$recipientUuid} {$openAiUuid}");
+        }
 
         $warmTransfer->forceFill([
             'status' => 'consulting',
@@ -487,7 +520,14 @@ class AiReceptionistService
         $commands = [];
         $commands['stop_caller_moh'] = $this->eslString("uuid_break {$warmTransfer->caller_uuid} all");
         $commands['unhold_caller'] = $this->eslString("uuid_hold off {$warmTransfer->caller_uuid}");
-        $commands['bridge_caller_to_recipient'] = $this->eslString("bgapi uuid_bridge {$warmTransfer->caller_uuid} {$warmTransfer->recipient_uuid}");
+
+        $bridgeResponse = $this->eslString("uuid_bridge {$warmTransfer->caller_uuid} {$warmTransfer->recipient_uuid}");
+        $commands['bridge_caller_to_recipient'] = $bridgeResponse;
+
+        if (str_starts_with($bridgeResponse, '-ERR')) {
+            $commands['bridge_caller_to_recipient_bg'] = $this->eslString("bgapi uuid_bridge {$warmTransfer->caller_uuid} {$warmTransfer->recipient_uuid}");
+        }
+
         $commands['kill_openai'] = $this->eslString("bgapi sched_api +1 none uuid_kill {$warmTransfer->openai_uuid}");
 
         $warmTransfer->forceFill([
@@ -533,15 +573,33 @@ class AiReceptionistService
 
         $reason = trim((string) ($payload['reason'] ?? 'declined')) ?: 'declined';
         $route = $warmTransfer->route;
+        $commands = [];
 
         if (filled($warmTransfer->recipient_uuid)) {
-            $this->eslString("uuid_kill {$warmTransfer->recipient_uuid}");
+            $commands['kill_recipient'] = $this->eslString("uuid_kill {$warmTransfer->recipient_uuid}");
         }
 
-        $commands = [];
-        $commands['stop_caller_moh'] = $this->eslString("uuid_break {$warmTransfer->caller_uuid} all");
-        $commands['unhold_caller'] = $this->eslString("uuid_hold off {$warmTransfer->caller_uuid}");
-        $commands['return_caller_to_openai'] = $this->eslString("bgapi uuid_bridge {$warmTransfer->caller_uuid} {$warmTransfer->openai_uuid}");
+        $openAiAlive = $this->channelExists((string) $warmTransfer->openai_uuid);
+        $callerAlive = $this->channelExists((string) $warmTransfer->caller_uuid);
+
+        if ($openAiAlive) {
+            $commands['break_openai'] = $this->eslString("uuid_break {$warmTransfer->openai_uuid} all");
+            $commands['park_openai'] = $this->eslString("uuid_park {$warmTransfer->openai_uuid}");
+        }
+
+        if ($callerAlive) {
+            $commands['stop_caller_moh'] = $this->eslString("uuid_break {$warmTransfer->caller_uuid} all");
+            $commands['unhold_caller'] = $this->eslString("uuid_hold off {$warmTransfer->caller_uuid}");
+        }
+
+        if ($callerAlive && $openAiAlive) {
+            $bridgeResponse = $this->eslString("uuid_bridge {$warmTransfer->caller_uuid} {$warmTransfer->openai_uuid}");
+            $commands['return_caller_to_openai'] = $bridgeResponse;
+
+            if (str_starts_with($bridgeResponse, '-ERR')) {
+                $commands['return_caller_to_openai_bg'] = $this->eslString("bgapi uuid_bridge {$warmTransfer->caller_uuid} {$warmTransfer->openai_uuid}");
+            }
+        }
 
         $warmTransfer->forceFill([
             'status' => $reason,
@@ -562,8 +620,65 @@ class AiReceptionistService
             'success' => false,
             'status' => $reason,
             'team_notified' => $notified,
-            'message' => 'The warm transfer was cancelled. Apologize briefly, tell the caller the appropriate team has been notified, and tell them the team will return the call as soon as possible.',
-            'response_instructions' => 'You are speaking to the original caller again. Briefly apologize and say: "I’m sorry, I couldn’t reach that team right now. I’ve notified them and they’ll return your call as soon as possible."',
+            'message' => 'The warm transfer was cancelled. Apologize briefly to the caller in the language you have been speaking with them, tell them the appropriate team has been notified, and tell them the team will return the call as soon as possible.',
+            'response_instructions' => 'You are speaking to the original caller again. Briefly apologize in the language you have been speaking with the caller, then say that you could not reach that team right now, that you have notified them, and that they will return the call as soon as possible. Do not switch language unless the caller does.',
+        ];
+    }
+
+    public function checkWarmTransfer(AiReceptionistSession $session, array $payload = []): array
+    {
+        $warmTransfer = $this->activeWarmTransfer($session);
+        $requestedWarmTransferUuid = trim((string) ($payload['warm_transfer_uuid'] ?? ''));
+
+        if (! $warmTransfer || ($requestedWarmTransferUuid !== '' && $warmTransfer->warm_transfer_uuid !== $requestedWarmTransferUuid)) {
+            $latestWarmTransfer = $this->latestWarmTransfer($session);
+
+            return [
+                'success' => true,
+                'active' => false,
+                'status' => $latestWarmTransfer?->status ?: 'inactive',
+                'warm_transfer_uuid' => $latestWarmTransfer?->warm_transfer_uuid,
+            ];
+        }
+
+        if (! $this->channelExists((string) $warmTransfer->caller_uuid)) {
+            $this->tearDownAbandonedWarmTransfer($warmTransfer);
+
+            return [
+                'success' => true,
+                'active' => false,
+                'status' => 'caller_gone',
+                'warm_transfer_uuid' => $warmTransfer->warm_transfer_uuid,
+            ];
+        }
+
+        if (filled($warmTransfer->recipient_uuid) && ! $this->channelExists((string) $warmTransfer->recipient_uuid)) {
+            return [
+                'success' => true,
+                'active' => false,
+                'status' => 'recipient_hangup',
+                'reason' => 'unavailable',
+                'warm_transfer_uuid' => $warmTransfer->warm_transfer_uuid,
+            ];
+        }
+
+        $referenceTime = $warmTransfer->answered_at ?: $warmTransfer->started_at;
+        if ($referenceTime && $referenceTime->diffInSeconds(now()) >= self::WARM_TRANSFER_TIMEOUT_SECONDS) {
+            return [
+                'success' => true,
+                'active' => false,
+                'status' => 'timeout',
+                'reason' => 'no_answer',
+                'warm_transfer_uuid' => $warmTransfer->warm_transfer_uuid,
+            ];
+        }
+
+        return [
+            'success' => true,
+            'active' => true,
+            'status' => $warmTransfer->status,
+            'warm_transfer_uuid' => $warmTransfer->warm_transfer_uuid,
+            'timeout_seconds' => self::WARM_TRANSFER_TIMEOUT_SECONDS,
         ];
     }
 
@@ -722,6 +837,26 @@ class AiReceptionistService
             ])->save();
 
             return $responsePayload;
+        } catch (RuntimeException $exception) {
+            // Domain errors (no route matched, no destination found, transfer
+            // preconditions, etc.) are expected outcomes that the AI should be
+            // able to react to. Return them as a structured failure response
+            // instead of letting them surface as HTTP 500 — otherwise the
+            // Realtime controller treats them as fatal and tears down the call.
+            $failurePayload = [
+                'success' => false,
+                'error' => $exception->getMessage(),
+                'tool_name' => $toolName,
+            ];
+
+            $run->forceFill([
+                'status' => 'failed',
+                'response_payload' => $failurePayload,
+                'error_message' => $exception->getMessage(),
+                'ended_at' => now(),
+            ])->save();
+
+            return $failurePayload;
         } catch (\Throwable $exception) {
             $run->forceFill([
                 'status' => 'failed',
@@ -969,8 +1104,9 @@ class AiReceptionistService
             if ($route->action_type === 'email') {
                 $extra = $route->email_instructions ? ' Instructions: ' . $route->email_instructions : '';
                 $lines[] = sprintf(
-                    '- %s: take a message and email the team. Match phrases: %s. Collect caller name, callback number, and a short message before calling send_route_email.%s',
+                    '- %s (route_uuid: %s): take a message and email the team. Match phrases: %s. Collect caller name, callback number, and a short message before calling send_route_email with this route_uuid.%s',
                     $route->name,
+                    $route->route_uuid,
                     $phrases ?: $route->name,
                     $extra
                 );
@@ -979,19 +1115,21 @@ class AiReceptionistService
 
             $mode = $route->transfer_type === 'warm' ? 'warm transfer' : 'cold transfer';
             $lines[] = sprintf(
-                '- %s: %s to %s. Match phrases: %s.',
+                '- %s (route_uuid: %s): %s to %s. Match phrases: %s.',
                 $route->name,
+                $route->route_uuid,
                 $mode,
                 $route->destination_label ?: $route->destination_target,
                 $phrases ?: $route->name
             );
         }
 
-        $lines[] = 'When caller intent matches a configured route, call resolve_route first.';
-        $lines[] = 'For cold transfer routes, call transfer_call using the returned route destination_type and destination_target.';
-        $lines[] = 'For warm transfer routes, tell the caller you will try the team, then call warm_transfer_call with a concise handoff_summary. Brief the recipient live, ask them to say accept or decline, then call complete_warm_transfer or cancel_warm_transfer.';
+        $lines[] = 'When caller intent matches a configured route, pick the matching route_uuid from the list above (or call resolve_route to look it up) and invoke the matching tool with that route_uuid.';
+        $lines[] = 'For cold transfer routes: (1) first speak a brief one-sentence announcement to the caller telling them you are connecting them now, (2) then call transfer_call with route_uuid set to the route_uuid above. Never call transfer_call without speaking first.';
+        $lines[] = 'For warm transfer routes: (1) first speak a brief one-sentence announcement to the caller telling them you are connecting them now and asking them to hold, (2) then call warm_transfer_call with the matching route_uuid and a concise handoff_summary, (3) after the recipient connects, you will hear them; brief the recipient live and ask them to accept or decline, (4) then call complete_warm_transfer or cancel_warm_transfer. Never call warm_transfer_call without speaking the announcement first in the same response.';
         $lines[] = 'If warm_transfer_call returns no_answer, declined, failed, or unavailable, apologize briefly, tell the caller the appropriate team has been notified, and tell them the team will return the call as soon as possible.';
-        $lines[] = 'For email routes, collect the requested message details, call send_route_email, then tell the caller the team has been notified and will return the call as soon as possible.';
+        $lines[] = 'For email routes, collect the requested message details, call send_route_email with the matching route_uuid, then tell the caller the team has been notified and will return the call as soon as possible.';
+        $lines[] = 'If no configured route fits the caller\'s request, do NOT guess a destination, do NOT call resolve_destination as a fallback, and do NOT pass arbitrary destination_type/target values to transfer_call. Instead, ask the caller a clarifying question to find a fit among the configured routes, or take a message via send_route_email on the most appropriate route. resolve_destination + transfer_call without route_uuid are only for cases where the caller has explicitly named a specific extension, queue, or person to reach (for example, "transfer me to extension 201" or "I want to speak to Dexter").';
 
         return implode("\n", $lines);
     }
@@ -1054,8 +1192,8 @@ class AiReceptionistService
             'route' => $this->routePayload($route, includePrivate: false),
             'team_notified' => $teamNotified,
             'returned_to_ai' => $returnedToAi,
-            'message' => 'The recipient could not be reached within 60 seconds. Apologize briefly, tell the caller the appropriate team has been notified, and tell them the team will return the call as soon as possible.',
-            'response_instructions' => 'You are speaking to the original caller again. Briefly apologize and say: "I’m sorry, I couldn’t reach that team right now. I’ve notified them and they’ll return your call as soon as possible."',
+            'message' => 'The recipient could not be reached within 60 seconds. Apologize briefly to the caller in the language you have been speaking with them, tell them the appropriate team has been notified, and tell them the team will return the call as soon as possible.',
+            'response_instructions' => 'You are speaking to the original caller again. Briefly apologize in the language you have been speaking with the caller, then say that you could not reach that team right now, that you have notified them, and that they will return the call as soon as possible. Do not switch language unless the caller does.',
         ];
     }
 
@@ -1064,17 +1202,27 @@ class AiReceptionistService
         $team = $route->destination_label ?: $route->name;
         $summary = $handoffSummary !== '' ? $handoffSummary : 'The caller asked to be connected.';
 
+        // Keep this VERY tight. OpenAI Realtime treats per-response `instructions` as
+        // a script for the next response, and the model will paraphrase any
+        // operational rules it sees here into spoken narration to the recipient.
+        // Operational rules (when to call which tool, language, etc.) live in the
+        // session-level consult persona that the controller installs via
+        // session.update — do NOT duplicate them here.
+        //
+        // This response is sent with conversation="none", so the model only sees
+        // these instructions — no prior caller-mode history. That is intentional:
+        // when the model can see the caller-mode conversation it tends to emit a
+        // stray "still trying to reach support" status line first, which the
+        // recipient ends up hearing through the bridged audio path.
         return implode("\n", [
-            'Do not call warm_transfer_call again. The warm transfer is already active.',
-            "You are speaking to the transfer recipient for {$team} now, not the original caller.",
-            'The original caller is parked/on hold and cannot hear this consult conversation.',
-            'Do not say you are still trying to connect the caller.',
-            'Do not ask the recipient how you can help them as if they were the caller.',
-            'Say only this next:',
-            "\"Hi, this is the AI receptionist. I have a caller for {$team}. {$summary} Would you like to accept the call?\"",
-            'Wait for the recipient to answer.',
-            'If the recipient clearly accepts, call complete_warm_transfer and include their exact spoken acceptance in recipient_response.',
-            'If the recipient declines or cannot take the call, call cancel_warm_transfer with reason "declined".',
+            'The recipient just picked up the phone. Speak directly to the recipient now. The original caller is on hold and cannot hear you.',
+            'Your VERY FIRST spoken word must be the introduction below. Do NOT say anything before it. Do NOT say "still trying", "please hold", "one moment", or any status update; you are not talking to the original caller anymore.',
+            'Produce exactly one short spoken turn that does these four things in this order:',
+            '1. Identify yourself as the AI receptionist.',
+            "2. Name the team you are reaching for: {$team}.",
+            "3. State the handoff in one sentence: {$summary}",
+            '4. Ask whether the recipient will accept the call.',
+            'Stop speaking immediately after the question. Do not narrate, do not repeat yourself, do not add a status update.',
         ]);
     }
 
@@ -1096,29 +1244,36 @@ class AiReceptionistService
 
     private function recipientAcceptedWarmTransfer(string $recipientResponse): bool
     {
-        if ($recipientResponse === '') {
-            return false;
+        // The AI calls complete_warm_transfer only when the recipient accepts and
+        // cancel_warm_transfer when they decline. We trust the AI's interpretation
+        // (which works in any language the caller and recipient may be speaking)
+        // and only require that it captured the recipient's spoken response, so
+        // we have proof the recipient was given a chance to reply.
+        return trim($recipientResponse) !== '';
+    }
+
+    private function tearDownAbandonedWarmTransfer(AiReceptionistWarmTransfer $warmTransfer): array
+    {
+        $commands = [];
+
+        if (filled($warmTransfer->recipient_uuid) && $this->channelExists((string) $warmTransfer->recipient_uuid)) {
+            $commands['kill_recipient'] = $this->eslString("uuid_kill {$warmTransfer->recipient_uuid}");
         }
 
-        $response = Str::lower($recipientResponse);
-        $acceptedPhrases = [
-            'accept',
-            'accepted',
-            'yes',
-            'yeah',
-            'yep',
-            'sure',
-            'okay',
-            'ok',
-            'connect',
-            'put them through',
-            'send them through',
-            'transfer them',
-        ];
+        if (filled($warmTransfer->openai_uuid) && $this->channelExists((string) $warmTransfer->openai_uuid)) {
+            $commands['kill_openai'] = $this->eslString("uuid_kill {$warmTransfer->openai_uuid}");
+        }
 
-        return collect($acceptedPhrases)->contains(
-            fn (string $phrase) => str_contains($response, $phrase)
-        );
+        $warmTransfer->forceFill([
+            'status' => 'caller_abandoned',
+            'error_message' => 'Caller hung up while on hold during warm transfer.',
+            'cancelled_at' => now(),
+            'metadata' => array_merge($warmTransfer->metadata ?? [], [
+                'caller_abandoned_commands' => $commands,
+            ]),
+        ])->save();
+
+        return $commands;
     }
 
     private function notifyFailedWarmTransfer(
@@ -1199,6 +1354,20 @@ class AiReceptionistService
         return filled($value)
             && $value !== '_undef_'
             && ! str_starts_with($value, '-ERR');
+    }
+
+    private function channelExists(string $uuid): bool
+    {
+        if (blank($uuid)) {
+            return false;
+        }
+
+        $response = Str::lower($this->eslString("uuid_exists {$uuid}"));
+
+        return $response === 'true'
+            || $response === '+ok true'
+            || $response === '1'
+            || str_contains($response, 'true');
     }
 
     private function eslString(string $command): string
