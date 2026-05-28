@@ -78,6 +78,12 @@ class FspbxClient:
     async def start_session(self, receptionist_uuid: str, payload: dict[str, Any]) -> dict[str, Any]:
         return await self._request("POST", f"/api/ai-receptionist-agent/receptionists/{receptionist_uuid}/sessions", payload)
 
+    async def get_consult_config(self, warm_transfer_uuid: str) -> dict[str, Any]:
+        return await self._request("GET", f"/api/ai-receptionist-agent/warm-transfers/{warm_transfer_uuid}/consult-config")
+
+    async def start_consult(self, warm_transfer_uuid: str, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self._request("POST", f"/api/ai-receptionist-agent/warm-transfers/{warm_transfer_uuid}/consult-start", payload)
+
     async def resolve_destination(self, session_uuid: str, payload: dict[str, Any]) -> dict[str, Any]:
         return await self._request("POST", f"/api/ai-receptionist-agent/sessions/{session_uuid}/resolve-destination", payload)
 
@@ -87,6 +93,11 @@ class FspbxClient:
     async def transfer(self, session_uuid: str, payload: dict[str, Any]) -> dict[str, Any]:
         # payload may contain {"route_uuid": "..."} or {"destination": {...}}.
         return await self._request("POST", f"/api/ai-receptionist-agent/sessions/{session_uuid}/transfer", payload)
+
+    async def cold_transfer(self, session_uuid: str, route_uuid: str) -> dict[str, Any]:
+        return await self._request("POST", f"/api/ai-receptionist-agent/sessions/{session_uuid}/cold-transfer", {
+            "route_uuid": route_uuid,
+        })
 
     async def warm_transfer(self, session_uuid: str, route_uuid: str, handoff_summary: str) -> dict[str, Any]:
         return await self._request("POST", f"/api/ai-receptionist-agent/sessions/{session_uuid}/warm-transfer", {
@@ -104,13 +115,28 @@ class FspbxClient:
             "recipient_response": recipient_response,
         })
 
+    async def accept_transfer(self, warm_transfer_uuid: str, recipient_response: str, transcript: str | None = None) -> dict[str, Any]:
+        return await self._request("POST", f"/api/ai-receptionist-agent/warm-transfers/{warm_transfer_uuid}/accept", {
+            "recipient_response": recipient_response,
+            "transcript": transcript,
+        })
+
     async def cancel_warm_transfer(self, session_uuid: str, reason: str) -> dict[str, Any]:
         return await self._request("POST", f"/api/ai-receptionist-agent/sessions/{session_uuid}/warm-transfer/cancel", {
             "reason": reason,
         })
 
+    async def decline_transfer(self, warm_transfer_uuid: str, reason: str, transcript: str | None = None) -> dict[str, Any]:
+        return await self._request("POST", f"/api/ai-receptionist-agent/warm-transfers/{warm_transfer_uuid}/decline", {
+            "reason": reason,
+            "transcript": transcript,
+        })
+
     async def send_route_email(self, session_uuid: str, payload: dict[str, Any]) -> dict[str, Any]:
         return await self._request("POST", f"/api/ai-receptionist-agent/sessions/{session_uuid}/route-email", payload)
+
+    async def send_email(self, session_uuid: str, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self._request("POST", f"/api/ai-receptionist-agent/sessions/{session_uuid}/send-email", payload)
 
     async def end_call(self, session_uuid: str, reason: str) -> dict[str, Any]:
         return await self._request("POST", f"/api/ai-receptionist-agent/sessions/{session_uuid}/end-call", {

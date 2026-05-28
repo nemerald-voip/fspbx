@@ -20,6 +20,8 @@ class AiReceptionistWarmTransfer extends Model
         'metadata' => 'array',
         'started_at' => 'datetime',
         'answered_at' => 'datetime',
+        'accepted_at' => 'datetime',
+        'declined_at' => 'datetime',
         'completed_at' => 'datetime',
         'cancelled_at' => 'datetime',
     ];

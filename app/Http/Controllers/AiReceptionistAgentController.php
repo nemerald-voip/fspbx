@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AiReceptionist;
 use App\Models\AiReceptionistSession;
+use App\Models\AiReceptionistWarmTransfer;
 use App\Services\AiReceptionistService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -113,6 +114,24 @@ class AiReceptionistAgentController extends Controller
         ));
     }
 
+    public function coldTransfer(Request $request, AiReceptionistSession $session, AiReceptionistService $service): JsonResponse
+    {
+        if ($response = $this->authorizeAgent($request)) {
+            return $response;
+        }
+
+        $payload = $request->validate([
+            'route_uuid' => ['required', 'uuid'],
+        ]);
+
+        return response()->json($service->recordBuiltInToolRun(
+            $session,
+            'cold_transfer',
+            $payload,
+            fn () => $service->coldTransfer($session, $payload['route_uuid'])
+        ));
+    }
+
     public function resolveRoute(Request $request, AiReceptionistSession $session, AiReceptionistService $service): JsonResponse
     {
         if ($response = $this->authorizeAgent($request)) {
@@ -219,6 +238,100 @@ class AiReceptionistAgentController extends Controller
             'send_route_email',
             $payload,
             fn () => $service->sendRouteEmail($session, $payload)
+        ));
+    }
+
+    public function sendEmail(Request $request, AiReceptionistSession $session, AiReceptionistService $service): JsonResponse
+    {
+        if ($response = $this->authorizeAgent($request)) {
+            return $response;
+        }
+
+        $payload = $request->validate([
+            'route_uuid' => ['required', 'uuid'],
+            'caller_name' => ['nullable', 'string', 'max:255'],
+            'caller_number' => ['nullable', 'string', 'max:255'],
+            'message' => ['required', 'string', 'max:5000'],
+            'urgency' => ['nullable', 'string', 'max:64'],
+            'transcript' => ['nullable', 'string', 'max:50000'],
+        ]);
+
+        return response()->json($service->recordBuiltInToolRun(
+            $session,
+            'send_email',
+            $payload,
+            fn () => $service->sendEmail($session, $payload)
+        ));
+    }
+
+    public function consultConfig(Request $request, AiReceptionistWarmTransfer $warm_transfer, AiReceptionistService $service): JsonResponse
+    {
+        if ($response = $this->authorizeAgent($request)) {
+            return $response;
+        }
+
+        return response()->json($service->consultConfig($warm_transfer));
+    }
+
+    public function startWarmTransferConsult(Request $request, AiReceptionistWarmTransfer $warm_transfer, AiReceptionistService $service): JsonResponse
+    {
+        if ($response = $this->authorizeAgent($request)) {
+            return $response;
+        }
+
+        $payload = $request->validate([
+            'freeswitch_uuid' => ['nullable', 'string', 'max:255'],
+            'openai_call_id' => ['nullable', 'string', 'max:255'],
+            'sip_call_id' => ['nullable', 'string', 'max:255'],
+            'metadata' => ['nullable', 'array'],
+        ]);
+
+        return response()->json($service->startWarmTransferConsult($warm_transfer, $payload));
+    }
+
+    public function acceptWarmTransfer(Request $request, AiReceptionistWarmTransfer $warm_transfer, AiReceptionistService $service): JsonResponse
+    {
+        if ($response = $this->authorizeAgent($request)) {
+            return $response;
+        }
+
+        $payload = $request->validate([
+            'recipient_response' => ['required', 'string', 'max:1000'],
+            'transcript' => ['nullable', 'string', 'max:50000'],
+        ]);
+
+        if (! $warm_transfer->session) {
+            return response()->json(['message' => 'Warm transfer session could not be resolved.'], 404);
+        }
+
+        return response()->json($service->recordBuiltInToolRun(
+            $warm_transfer->session,
+            'accept_transfer',
+            $payload,
+            fn () => $service->acceptWarmTransfer($warm_transfer, $payload)
+        ));
+    }
+
+    public function declineWarmTransfer(Request $request, AiReceptionistWarmTransfer $warm_transfer, AiReceptionistService $service): JsonResponse
+    {
+        if ($response = $this->authorizeAgent($request)) {
+            return $response;
+        }
+
+        $payload = $request->validate([
+            'reason' => ['nullable', 'string', 'max:255'],
+            'transcript' => ['nullable', 'string', 'max:50000'],
+        ]);
+
+        if (! $warm_transfer->session) {
+            return response()->json(['message' => 'Warm transfer session could not be resolved.'], 404);
+        }
+
+        return response()->json($service->recordBuiltInToolRun(
+            $warm_transfer->session,
+            'decline_transfer',
+            $payload,
+            fn () => $service->declineWarmTransfer($warm_transfer, $payload)
         ));
     }
 

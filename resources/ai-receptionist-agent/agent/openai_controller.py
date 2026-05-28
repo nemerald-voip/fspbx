@@ -21,14 +21,11 @@ logger = logging.getLogger("fspbx-ai-receptionist")
 logging.basicConfig(level=os.getenv("AI_RECEPTIONIST_LOG_LEVEL", "INFO"))
 
 CALL_CHANGING_TOOLS = {
-    "transfer_call",
-    "warm_transfer_call",
-    "complete_warm_transfer",
-    "cancel_warm_transfer",
-    "end_call",
+    "cold_transfer",
+    "warm_transfer",
 }
 
-CONSULT_TOOL_NAMES = {"complete_warm_transfer", "cancel_warm_transfer"}
+CONSULT_TOOL_NAMES = {"accept_transfer", "decline_transfer"}
 
 
 def openai_realtime_headers() -> dict[str, str]:
@@ -54,30 +51,74 @@ def metadata_from_headers(headers: dict[str, str]) -> dict[str, str | None]:
         "ai_receptionist_caller_id_name": headers.get("x-fspbx-caller-id-name"),
         "ai_receptionist_caller_id_number": headers.get("x-fspbx-caller-id-number"),
         "ai_receptionist_destination_number": headers.get("x-fspbx-destination-number"),
+        "ai_receptionist_mode": headers.get("x-fspbx-ai-receptionist-mode"),
+        "warm_transfer_uuid": headers.get("x-fspbx-warm-transfer-uuid"),
         "sip_call_id": headers.get("call-id"),
     }
 
 
 def receptionist_instructions(config: dict[str, Any]) -> str:
-    parts = [
-        config.get("system_prompt"),
-        config.get("routing_instructions"),
-        "CRITICAL ROUTING RULES:",
-        "- Routing is ONLY allowed via configured routes (the list above). Pick the matching route_uuid and pass it to transfer_call (cold), warm_transfer_call (warm), or send_route_email (email).",
-        "- If the caller's intent does not clearly match any configured route, do NOT guess and do NOT invent a destination. Ask one clarifying question to find a fit, or take a message via send_route_email on the most appropriate route.",
-        "- resolve_destination + transfer_call (without route_uuid) are ONLY for the case where the caller has EXPLICITLY named a specific extension number, queue, or person they want to reach (e.g. \"transfer me to extension 201\", \"I'd like to speak to Dexter\"). NEVER use them as a fallback when resolve_route returned no match.",
-        "CRITICAL TOOL RULES:",
-        "- Every transfer_call or warm_transfer_call invocation MUST be preceded by spoken audio in the SAME response. Tell the caller you are connecting them now and ask them to hold, then call the tool. Calling a transfer tool without speaking first is forbidden — the system will reject it and ask you to announce first.",
-        "- Example pattern: First say a one-sentence announcement to the caller, such as \"Connecting you to support now, please hold.\" THEN immediately call warm_transfer_call with the route_uuid.",
-        "- Every end_call invocation MUST be preceded by a brief spoken closing in the SAME response. Calling end_call silently is forbidden. Saying goodbye in conversation does not disconnect the call on its own — you must call end_call after your final spoken sentence.",
-        "- You may route calls only by using resolve_route, resolve_destination, transfer_call, warm_transfer_call, complete_warm_transfer, cancel_warm_transfer, send_route_email, or end_call.",
-        "- Use run_http_tool only for tools included in the current FS PBX configuration.",
-        "CONVERSATION RULES:",
-        "- When a caller confirms that an issue is resolved, ask if there is anything else you can help with before ending the call.",
-        "- Only call end_call after the caller clearly says they need nothing else, says goodbye, or otherwise indicates the conversation is finished.",
-        "- Never leave a completed call connected.",
+    return str(config.get("instructions") or config.get("instructions_preview") or "You are a helpful phone receptionist.")
+
+
+def route_display(route: dict[str, Any]) -> str:
+    name = str(route.get("name") or "Unnamed route")
+    route_uuid = str(route.get("route_uuid") or "")
+    return f"{name} ({route_uuid})" if route_uuid else name
+
+
+def route_uuids_for_action(config: dict[str, Any], action: str) -> list[str]:
+    routes = config.get("routes") or []
+    uuids: list[str] = []
+
+    for route in routes:
+        if not isinstance(route, dict):
+            continue
+
+        route_uuid = str(route.get("route_uuid") or "").strip()
+        if not route_uuid:
+            continue
+
+        if action == "cold_transfer":
+            if route.get("action_type") == "transfer" and route.get("transfer_type") == "cold":
+                uuids.append(route_uuid)
+            continue
+
+        if action == "warm_transfer":
+            if route.get("action_type") == "transfer" and route.get("transfer_type") == "warm":
+                uuids.append(route_uuid)
+            continue
+
+        if action == "send_email":
+            # Email routes are normal message routes. Warm-transfer routes are
+            # also valid after the warm transfer tool reports failure.
+            if route.get("action_type") == "email" or (
+                route.get("action_type") == "transfer" and route.get("transfer_type") == "warm"
+            ):
+                uuids.append(route_uuid)
+
+    return uuids
+
+
+def route_list_for_action(config: dict[str, Any], action: str) -> str:
+    allowed = set(route_uuids_for_action(config, action))
+    labels = [
+        route_display(route)
+        for route in (config.get("routes") or [])
+        if isinstance(route, dict) and str(route.get("route_uuid") or "") in allowed
     ]
-    return "\n\n".join(str(part) for part in parts if part) or "You are a helpful phone receptionist."
+
+    return ", ".join(labels) if labels else "none"
+
+
+def route_uuid_property(config: dict[str, Any], action: str) -> dict[str, Any]:
+    prop: dict[str, Any] = {"type": "string"}
+    uuids = route_uuids_for_action(config, action)
+
+    if uuids:
+        prop["enum"] = uuids
+
+    return prop
 
 
 def consult_persona_instructions(team: str, handoff_summary: str) -> str:
@@ -89,8 +130,8 @@ def consult_persona_instructions(team: str, handoff_summary: str) -> str:
         f"Handoff context: {summary}",
         "Speak in the language you were using with the original caller, unless the recipient clearly prefers another.",
         "Only two outcomes are allowed:",
-        "- If the recipient accepts (in any language), call complete_warm_transfer with the recipient's exact spoken response in recipient_response.",
-        "- If the recipient declines, is unavailable, or asks to call back later, call cancel_warm_transfer with reason \"declined\".",
+        "- If the recipient accepts (in any language), call accept_transfer with the recipient's exact spoken response in recipient_response.",
+        "- If the recipient declines, is unavailable, or asks to call back later, call decline_transfer with reason \"declined\".",
         "Do not call any other tool while consulting.",
         "Do not narrate your own state. Do not say you are waiting. Do not say you are still trying to reach anyone. Do not describe what you just did.",
         "Do not speak to the recipient as if they were the original caller.",
@@ -118,16 +159,11 @@ def initial_response_delay_seconds() -> float:
 
 
 def recipient_consult_response_delay_seconds() -> float:
-    # Default raised to 3.0: the recipient leg's bridge to the OpenAI leg and the
-    # consult-mode session.update both need a moment to fully take effect on the
-    # OpenAI server before the briefing response.create is requested. Shorter
-    # delays produced cases where the briefing response generated no audible
-    # output on the recipient's leg.
-    raw_delay = os.getenv("OPENAI_REALTIME_RECIPIENT_CONSULT_DELAY_SECONDS", "3.0")
+    raw_delay = os.getenv("OPENAI_REALTIME_RECIPIENT_CONSULT_DELAY_SECONDS", "1.0")
     try:
         delay = float(raw_delay)
     except ValueError:
-        delay = 3.0
+        delay = 1.0
 
     return min(max(delay, 0.0), 5.0)
 
@@ -140,6 +176,16 @@ def bridge_audio_drain_seconds() -> float:
         delay = 0.3
 
     return min(max(delay, 0.0), 2.0)
+
+
+def audio_drain_fallback_extra_seconds() -> float:
+    raw_delay = os.getenv("OPENAI_REALTIME_AUDIO_DRAIN_FALLBACK_EXTRA_SECONDS", "1.0")
+    try:
+        delay = float(raw_delay)
+    except ValueError:
+        delay = 1.0
+
+    return min(max(delay, 0.0), 4.0)
 
 
 def quick_accept_payload() -> dict[str, Any]:
@@ -182,58 +228,35 @@ def accept_payload(config: dict[str, Any]) -> dict[str, Any]:
         "tools": [
             {
                 "type": "function",
-                "name": "resolve_route",
-                "description": "Look up a configured AI Receptionist route by caller intent. Returns the route, including route_uuid. Every configured route is also listed (with its route_uuid) in your system instructions, so you may pick a route_uuid directly from there instead of calling this tool.",
+                "name": "cold_transfer",
+                "description": (
+                    "Cold transfer the caller to a configured cold-transfer route. "
+                    f"Allowed routes: {route_list_for_action(config, 'cold_transfer')}. "
+                    "If the caller said one of these route names, use that route immediately. "
+                    "Before calling this tool, speak one short sentence telling the caller you are connecting them now."
+                ),
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "intent": {"type": "string"},
+                        "route_uuid": route_uuid_property(config, "cold_transfer"),
                     },
-                    "required": ["intent"],
+                    "required": ["route_uuid"],
                 },
             },
             {
                 "type": "function",
-                "name": "resolve_destination",
-                "description": "Look up a PBX destination by extension or name. ONLY use when the caller has EXPLICITLY named a specific extension number, queue, or person they want to reach (e.g. \"transfer me to extension 201\", \"I'd like to speak to Dexter\"). NEVER use this as a fallback when resolve_route returns no match — for an unmatched intent, ask the caller for clarification or take a message via send_route_email instead.",
+                "name": "warm_transfer",
+                "description": (
+                    "Start a warm transfer for a configured warm-transfer route. "
+                    f"Allowed routes: {route_list_for_action(config, 'warm_transfer')}. "
+                    "If the caller said one of these route names, use that route immediately. "
+                    "Before calling this tool, tell the caller you are connecting them now and ask them to hold. "
+                    "If the result says the transfer failed or was declined, collect a message and call send_email for the same route."
+                ),
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "intent": {"type": "string"},
-                    },
-                    "required": ["intent"],
-                },
-            },
-            {
-                "type": "function",
-                "name": "transfer_call",
-                "description": "Cold transfer the caller. Provide EITHER route_uuid (preferred — for a configured route) OR destination_type + target (only when the caller explicitly named an extension/queue/person and you looked it up via resolve_destination). NEVER guess destination_type/target values, and never use destination_type/target as a fallback when no route matches. PRECONDITION (REQUIRED): in the SAME response, first speak a brief announcement to the caller telling them you are connecting them, then invoke this tool. Calling this tool without preceding spoken audio is forbidden and the system will reject it.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "route_uuid": {
-                            "type": "string",
-                            "description": "The route_uuid of a configured cold-transfer route, taken from your system instructions or from resolve_route. Use this whenever the caller's intent matches a configured route.",
-                        },
-                        "destination_type": {
-                            "type": "string",
-                            "description": "Only when the caller explicitly named an extension or queue. Pair with target. Must come from resolve_destination output.",
-                        },
-                        "target": {
-                            "type": "string",
-                            "description": "Only when the caller explicitly named an extension or queue. Pair with destination_type. Must come from resolve_destination output.",
-                        },
-                    },
-                },
-            },
-            {
-                "type": "function",
-                "name": "warm_transfer_call",
-                "description": "Start a live warm transfer to a configured direct recipient. PRECONDITION (REQUIRED): in the SAME response, first speak a brief one-sentence announcement to the caller (for example, \"Connecting you to support now, please hold\") and then invoke this tool. Calling this tool without preceding spoken audio is forbidden and the system will reject it.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "route_uuid": {"type": "string"},
+                        "route_uuid": route_uuid_property(config, "warm_transfer"),
                         "handoff_summary": {"type": "string"},
                     },
                     "required": ["route_uuid", "handoff_summary"],
@@ -241,71 +264,24 @@ def accept_payload(config: dict[str, Any]) -> dict[str, Any]:
             },
             {
                 "type": "function",
-                "name": "complete_warm_transfer",
-                "description": "Complete an active warm transfer only after the recipient explicitly accepts. Include the recipient's exact spoken acceptance.",
+                "name": "send_email",
+                "description": (
+                    "Email a message collected from the caller to a configured email route, "
+                    "or to a warm-transfer route only after that warm transfer failed. "
+                    f"Allowed routes: {route_list_for_action(config, 'send_email')}. "
+                    "Do not use this as a substitute for a clear cold_transfer or warm_transfer route match. "
+                    "Collect caller name, callback number, and the message before calling."
+                ),
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "recipient_response": {
-                            "type": "string",
-                            "description": "The exact words the recipient said to accept the call, such as 'Yes, I can take it.'",
-                        },
-                    },
-                    "required": ["recipient_response"],
-                },
-            },
-            {
-                "type": "function",
-                "name": "cancel_warm_transfer",
-                "description": "Cancel an active warm transfer after the recipient declines or the AI should return to the caller.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "reason": {"type": "string"},
-                    },
-                },
-            },
-            {
-                "type": "function",
-                "name": "send_route_email",
-                "description": "Send a message collected by the AI to a configured route email recipient.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "route_uuid": {"type": "string"},
+                        "route_uuid": route_uuid_property(config, "send_email"),
                         "caller_name": {"type": "string"},
                         "caller_number": {"type": "string"},
                         "message": {"type": "string"},
                         "urgency": {"type": "string"},
                     },
                     "required": ["route_uuid", "message"],
-                },
-            },
-            {
-                "type": "function",
-                "name": "end_call",
-                "description": "Disconnect the active phone call. Use only after the caller indicates the conversation is finished and after your final spoken message.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "reason": {
-                            "type": "string",
-                            "description": "Short reason for ending the call, such as conversation_complete or caller_finished.",
-                        },
-                    },
-                },
-            },
-            {
-                "type": "function",
-                "name": "run_http_tool",
-                "description": "Run a domain-approved generic HTTP tool through FS PBX.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "tool_name": {"type": "string"},
-                        "payload": {"type": "object"},
-                    },
-                    "required": ["tool_name"],
                 },
             },
         ],
@@ -319,15 +295,66 @@ def accept_payload(config: dict[str, Any]) -> dict[str, Any]:
     return payload
 
 
+def consult_accept_payload(config: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "type": "realtime",
+        "model": config.get("model") or "gpt-realtime-2",
+        "instructions": str(config.get("instructions") or "You are a private warm transfer consult agent."),
+        "audio": {
+            "input": {
+                "transcription": {
+                    "model": config.get("transcription_model") or os.getenv("OPENAI_REALTIME_TRANSCRIPTION_MODEL", "gpt-4o-mini-transcribe"),
+                },
+                "turn_detection": {
+                    "type": "server_vad",
+                    "create_response": False,
+                    "interrupt_response": False,
+                },
+            },
+            "output": {
+                "voice": config.get("voice") or os.getenv("OPENAI_REALTIME_VOICE", "marin"),
+            },
+        },
+        "tools": [
+            {
+                "type": "function",
+                "name": "accept_transfer",
+                "description": "Call only when the recipient clearly accepts taking the caller now. Include the recipient's exact spoken acceptance.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "recipient_response": {"type": "string"},
+                    },
+                    "required": ["recipient_response"],
+                },
+            },
+            {
+                "type": "function",
+                "name": "decline_transfer",
+                "description": "Call when the recipient declines, is unavailable, asks for a callback, or does not clearly accept the call.",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "reason": {"type": "string"},
+                    },
+                },
+            },
+        ],
+        "tool_choice": "auto",
+    }
+
+
 @dataclass
 class CallContext:
     config: dict[str, Any]
     session_uuid: str
+    mode: str
     transcript: list[str]
     ws_lock: asyncio.Lock
     base_instructions: str
     base_tools: list[dict[str, Any]] | None
     base_tool_choice: str
+    warm_transfer_uuid: str | None = None
     base_audio: dict[str, Any] = field(default_factory=dict)
     pending_call_changing_tools: list[dict[str, Any]] = field(default_factory=list)
     post_response_call_changing_tools: list[dict[str, Any]] = field(default_factory=list)
@@ -343,6 +370,8 @@ class CallContext:
     # recipient's "hello" before the briefing arrives makes us steal the turn
     # and collide with the briefing.
     consult_briefing_done: bool = False
+    consult_briefing_requested: bool = False
+    pending_initial_message: str | None = None
     # output_audio_buffer.{started,stopped} let us know when the SIP playback buffer
     # has actually drained, which is the only reliable signal for "the caller heard
     # everything we just generated". Word-count heuristics on transcript.done get
@@ -350,6 +379,7 @@ class CallContext:
     audio_output_active: bool = False
     response_had_audio_transcript: bool = False
     audio_buffer_observed: bool = False
+    auto_response_disabled: bool = False
 
 
 class RealtimeCallController:
@@ -363,10 +393,19 @@ class RealtimeCallController:
             raise RuntimeError("OpenAI realtime call missing call_id.")
 
         headers = sip_header_map(payload.get("sip_headers") or [])
-        receptionist_uuid = metadata_from_headers(headers).get("ai_receptionist_uuid")
+        metadata = metadata_from_headers(headers)
+        receptionist_uuid = metadata.get("ai_receptionist_uuid")
+        mode = metadata.get("ai_receptionist_mode") or "caller"
+        warm_transfer_uuid = metadata.get("warm_transfer_uuid")
         accept_config = quick_accept_payload()
 
-        if receptionist_uuid:
+        if mode == "consult" and warm_transfer_uuid:
+            client = FspbxClient(self.settings.fspbx_base_url, self.settings.fspbx_agent_token)
+            try:
+                accept_config = consult_accept_payload(await client.get_consult_config(warm_transfer_uuid))
+            finally:
+                await client.close()
+        elif receptionist_uuid:
             client = FspbxClient(self.settings.fspbx_base_url, self.settings.fspbx_agent_token)
             try:
                 accept_config = accept_payload(await client.get_config(receptionist_uuid))
@@ -383,9 +422,11 @@ class RealtimeCallController:
         headers = sip_header_map(payload.get("sip_headers") or [])
         metadata = metadata_from_headers(headers)
         receptionist_uuid = metadata.get("ai_receptionist_uuid")
+        mode = metadata.get("ai_receptionist_mode") or "caller"
+        warm_transfer_uuid = metadata.get("warm_transfer_uuid")
 
-        if not call_id or not receptionist_uuid:
-            logger.warning("OpenAI realtime call missing call_id or AI receptionist UUID.")
+        if not call_id or (mode == "caller" and not receptionist_uuid) or (mode == "consult" and not warm_transfer_uuid):
+            logger.warning("OpenAI realtime call missing required identifiers for mode %s.", mode)
             return
 
         client = FspbxClient(self.settings.fspbx_base_url, self.settings.fspbx_agent_token)
@@ -394,29 +435,44 @@ class RealtimeCallController:
 
         try:
             async with aiohttp.ClientSession(headers=openai_realtime_headers()) as http:
-                config = await client.get_config(receptionist_uuid)
-                session_response = await client.start_session(receptionist_uuid, {
-                    "openai_call_id": call_id,
-                    "sip_call_id": metadata.get("sip_call_id"),
-                    "freeswitch_uuid": metadata.get("ai_receptionist_freeswitch_uuid"),
-                    "caller_id_name": metadata.get("ai_receptionist_caller_id_name"),
-                    "caller_id_number": metadata.get("ai_receptionist_caller_id_number"),
-                    "destination_number": metadata.get("ai_receptionist_destination_number"),
-                    "metadata": {
-                        **payload,
-                        "sip_header_map": headers,
-                    },
-                })
-                session_uuid = session_response["session_uuid"]
-                await self.monitor_call(http, call_id, client, session_uuid, config, transcript)
+                if mode == "consult" and warm_transfer_uuid:
+                    config = await client.get_consult_config(warm_transfer_uuid)
+                    await client.start_consult(warm_transfer_uuid, {
+                        "openai_call_id": call_id,
+                        "sip_call_id": metadata.get("sip_call_id"),
+                        "freeswitch_uuid": metadata.get("ai_receptionist_freeswitch_uuid"),
+                        "metadata": {
+                            **payload,
+                            "sip_header_map": headers,
+                        },
+                    })
+                    session_uuid = str(config.get("session_uuid") or warm_transfer_uuid)
+                    await self.monitor_call(http, call_id, client, session_uuid, config, transcript, mode="consult", warm_transfer_uuid=warm_transfer_uuid)
+                else:
+                    config = await client.get_config(str(receptionist_uuid))
+                    session_response = await client.start_session(str(receptionist_uuid), {
+                        "openai_call_id": call_id,
+                        "sip_call_id": metadata.get("sip_call_id"),
+                        "freeswitch_uuid": metadata.get("ai_receptionist_freeswitch_uuid"),
+                        "caller_id_name": metadata.get("ai_receptionist_caller_id_name"),
+                        "caller_id_number": metadata.get("ai_receptionist_caller_id_number"),
+                        "destination_number": metadata.get("ai_receptionist_destination_number"),
+                        "metadata": {
+                            **payload,
+                            "sip_header_map": headers,
+                        },
+                    })
+                    session_uuid = session_response["session_uuid"]
+                    await self.monitor_call(http, call_id, client, session_uuid, config, transcript, mode="caller")
 
-            await client.end_session(session_uuid, {
-                "status": "completed",
-                "transcript": "\n".join(transcript),
-            })
+            if session_uuid and mode == "caller":
+                await client.end_session(session_uuid, {
+                    "status": "completed",
+                    "transcript": "\n".join(transcript),
+                })
         except Exception as exc:
             logger.exception("OpenAI realtime call %s failed", call_id)
-            if session_uuid:
+            if session_uuid and mode == "caller":
                 await client.end_session(session_uuid, {
                     "status": "failed",
                     "transcript": "\n".join(transcript),
@@ -571,6 +627,61 @@ class RealtimeCallController:
         })
         context.in_consult = False
         context.consult_briefing_done = False
+        context.consult_briefing_requested = False
+        context.auto_response_disabled = False
+
+    async def set_caller_auto_response(
+        self,
+        ws: aiohttp.ClientWebSocketResponse,
+        context: CallContext,
+        enabled: bool,
+    ) -> None:
+        if context.mode != "caller" or context.in_consult or context.auto_response_disabled == (not enabled):
+            return
+
+        audio_config: dict[str, Any] = (
+            {k: (dict(v) if isinstance(v, dict) else v) for k, v in (context.base_audio or {}).items()}
+        )
+        audio_input = dict(audio_config.get("input") or {})
+        audio_input["turn_detection"] = {
+            "type": "server_vad",
+            "create_response": enabled,
+            "interrupt_response": enabled,
+        }
+        audio_config["input"] = audio_input
+
+        await self.ws_send(ws, context, {
+            "type": "session.update",
+            "session": {
+                "type": "realtime",
+                "audio": audio_config,
+            },
+        })
+        context.auto_response_disabled = not enabled
+
+    async def send_consult_briefing(
+        self,
+        ws: aiohttp.ClientWebSocketResponse,
+        context: CallContext,
+    ) -> None:
+        if (
+            context.mode != "consult"
+            or not context.pending_initial_message
+            or context.consult_briefing_requested
+            or not context.response_completed
+            or ws.closed
+        ):
+            return
+
+        context.consult_briefing_requested = True
+        await asyncio.sleep(recipient_consult_response_delay_seconds())
+        await self.ws_send(ws, context, {
+            "type": "response.create",
+            "response": {
+                "instructions": context.pending_initial_message,
+                "tool_choice": "none",
+            },
+        })
 
     async def monitor_call(
         self,
@@ -580,16 +691,21 @@ class RealtimeCallController:
         session_uuid: str,
         config: dict[str, Any],
         transcript: list[str],
+        *,
+        mode: str = "caller",
+        warm_transfer_uuid: str | None = None,
     ) -> None:
-        accept = accept_payload(config)
+        accept = consult_accept_payload(config) if mode == "consult" else accept_payload(config)
         context = CallContext(
             config=config,
             session_uuid=session_uuid,
+            mode=mode,
             transcript=transcript,
             ws_lock=asyncio.Lock(),
             base_instructions=str(accept.get("instructions") or ""),
             base_tools=accept.get("tools"),
             base_tool_choice=str(accept.get("tool_choice") or "auto"),
+            warm_transfer_uuid=warm_transfer_uuid,
             base_audio=accept.get("audio") or {},
         )
 
@@ -599,11 +715,21 @@ class RealtimeCallController:
             try:
                 async with http.ws_connect(url, headers=openai_realtime_headers()) as ws:
                     initial_message = config.get("initial_message")
-                    if initial_message:
-                        await asyncio.sleep(initial_response_delay_seconds())
+                    if initial_message and mode == "consult":
+                        context.pending_initial_message = str(initial_message)
+                        logger.info(
+                            "AI Receptionist consult briefing queued for session %s; waiting for recipient speech.",
+                            context.session_uuid,
+                        )
+                    elif initial_message:
+                        await asyncio.sleep(
+                            initial_response_delay_seconds()
+                        )
+                        response: dict[str, Any] = {"instructions": initial_message}
+
                         await self.ws_send(ws, context, {
                             "type": "response.create",
-                            "response": {"instructions": initial_message},
+                            "response": response,
                         })
 
                     async for message in ws:
@@ -657,22 +783,26 @@ class RealtimeCallController:
             return
 
         if event_type == "input_audio_buffer.speech_stopped":
-            # While in consult mode we run with turn_detection.create_response=false
-            # so server VAD does not auto-create responses (that race blocks our
-            # briefing). VAD still emits speech_started/speech_stopped though, so we
-            # use speech_stopped as the signal that the recipient's turn ended and
-            # manually trigger a response so the AI can reply (typically calling
-            # complete_warm_transfer or cancel_warm_transfer based on the answer).
-            #
-            # CRITICAL: we must wait until the briefing response has actually been
-            # delivered (consult_briefing_done) before honouring speech_stopped.
-            # Otherwise the recipient's pre-briefing "hello" / mic noise fires
-            # speech_stopped while response_completed is still True (the announcement
-            # is done, the briefing has not been sent yet), and our handler steals
-            # the turn — making our briefing response.create get rejected with
-            # conversation_already_has_active_response.
+            # In consult mode we disable VAD auto-response creation. The first
+            # recipient speech boundary proves the human side is present, so only
+            # then do we play the private briefing. After the briefing, subsequent
+            # recipient turns manually trigger response.create for accept/decline.
             if (
-                context.in_consult
+                context.mode == "consult"
+                and context.pending_initial_message
+                and not context.consult_briefing_requested
+                and context.response_completed
+                and not ws.closed
+            ):
+                logger.info(
+                    "AI Receptionist consult: recipient spoke for session %s; sending queued briefing.",
+                    context.session_uuid,
+                )
+                await self.send_consult_briefing(ws, context)
+                return
+
+            if (
+                context.mode == "consult"
                 and context.consult_briefing_done
                 and context.response_completed
                 and not ws.closed
@@ -694,14 +824,16 @@ class RealtimeCallController:
             return
 
         if event_type == "conversation.item.input_audio_transcription.completed":
-            context.transcript.append("Caller: " + str(event.get("transcript") or ""))
+            speaker = "Recipient" if context.mode == "consult" else "Caller"
+            context.transcript.append(f"{speaker}: " + str(event.get("transcript") or ""))
             return
 
         if event_type in {"response.output_audio_transcript.done", "response.audio_transcript.done"}:
             assistant_transcript = str(event.get("transcript") or "")
             context.latest_assistant_transcript = assistant_transcript
             context.assistant_transcript_version += 1
-            context.transcript.append("Assistant: " + assistant_transcript)
+            speaker = "Consult Agent" if context.mode == "consult" else "Assistant"
+            context.transcript.append(f"{speaker}: " + assistant_transcript)
             context.response_had_audio_transcript = True
             # We no longer trigger deferred tools here. transcript.done fires when the
             # text is generated, which is earlier than when SIP audio finishes playing.
@@ -736,7 +868,7 @@ class RealtimeCallController:
             # Until this fires, the speech_stopped handler must not steal the turn
             # by auto-creating a response — that would race the briefing and OpenAI
             # would reject one of them with conversation_already_has_active_response.
-            if context.in_consult and not context.consult_briefing_done:
+            if context.mode == "consult" and context.consult_briefing_requested and not context.consult_briefing_done:
                 context.consult_briefing_done = True
                 logger.info(
                     "AI Receptionist consult: briefing response.done received for session %s.",
@@ -768,12 +900,13 @@ class RealtimeCallController:
 
         context.handled_function_calls.add(call_key)
 
-        if call["name"] in CALL_CHANGING_TOOLS:
+        if self.should_defer_call_changing_tool(context, str(call["name"] or "")):
             logger.info(
                 "Deferring AI Receptionist call-changing tool %s for session %s.",
                 call["name"],
                 context.session_uuid,
             )
+            await self.set_caller_auto_response(ws, context, False)
             call["_queued_after_transcript_version"] = context.assistant_transcript_version
             context.pending_call_changing_tools.append(call)
 
@@ -783,6 +916,12 @@ class RealtimeCallController:
             return
 
         await self.run_function_call_and_respond(ws, client, context, call)
+
+    def should_defer_call_changing_tool(self, context: CallContext, tool_name: str) -> bool:
+        if tool_name in CALL_CHANGING_TOOLS:
+            return True
+
+        return context.mode == "consult" and tool_name in CONSULT_TOOL_NAMES
 
     async def maybe_run_pending_tools(
         self,
@@ -843,7 +982,7 @@ class RealtimeCallController:
 
             silent_transfer_calls = [
                 call for call in context.pending_call_changing_tools
-                if call["name"] in {"warm_transfer_call", "transfer_call"}
+                if call["name"] in {"warm_transfer", "cold_transfer"}
             ]
             if silent_transfer_calls:
                 # Reject the silent call back to the model and prompt it to retry
@@ -878,6 +1017,14 @@ class RealtimeCallController:
                 })
                 return
 
+            silent_consult_decision_calls = [
+                call for call in context.pending_call_changing_tools
+                if context.mode == "consult" and call["name"] in CONSULT_TOOL_NAMES
+            ]
+            if silent_consult_decision_calls:
+                await self.run_pending_function_calls(ws, client, context)
+                return
+
         await self.run_pending_function_calls(ws, client, context)
 
     async def audio_drain_fallback(
@@ -892,8 +1039,8 @@ class RealtimeCallController:
         strand the caller on hold forever.
         """
         max_wait = max(
-            playback_delay_seconds(context.latest_assistant_transcript, minimum=0.5) + 4.0,
-            5.0,
+            playback_delay_seconds(context.latest_assistant_transcript, minimum=0.5) + audio_drain_fallback_extra_seconds(),
+            2.0,
         )
         deadline = asyncio.get_running_loop().time() + max_wait
 
@@ -992,7 +1139,10 @@ class RealtimeCallController:
         # Before any bridge swap, stop OpenAI from emitting more audio so that the
         # tail of a response meant for the recipient is not piped to the caller (or
         # vice versa) once the bridge changes.
-        if name in {"cancel_warm_transfer", "complete_warm_transfer"} and context.in_consult:
+        if (
+            name in {"accept_transfer", "decline_transfer", "cancel_warm_transfer", "complete_warm_transfer"}
+            and (context.in_consult or context.mode == "consult")
+        ):
             await self.cancel_in_flight_response(ws, context)
 
         # An unhandled exception here would propagate up through monitor_call and
@@ -1014,13 +1164,10 @@ class RealtimeCallController:
                 "tool_name": name,
                 "recovery_hint": (
                     "The tool call failed. Briefly apologize to the caller in the language you "
-                    "have been using and recover within the configured options. If resolve_route "
-                    "returned no match, do NOT fall back to resolve_destination or invent a "
-                    "destination — ask the caller a clarifying question to identify which "
-                    "configured route fits, or take a message via send_route_email on the most "
-                    "appropriate route. Only use resolve_destination + transfer_call (without "
-                    "route_uuid) when the caller has explicitly named a specific extension, "
-                    "queue, or person to reach. Do not end the call abruptly."
+                    "have been using and recover within the configured options. Do not invent a "
+                    "destination or route_uuid. Ask one clarifying question to identify which "
+                    "configured route fits, or take a message via send_email on the most "
+                    "appropriate configured route. Do not end the call abruptly."
                 ),
             }
 
@@ -1040,7 +1187,15 @@ class RealtimeCallController:
         # Skip creating a new response when the OpenAI leg is about to be killed —
         # otherwise we'd burn compute and risk audio bleeding to the freshly bridged
         # caller↔recipient leg before the kill fires.
-        if name == "complete_warm_transfer" and result.get("status") in {"completed", "already_completed"}:
+        if (
+            name in {"cold_transfer", "accept_transfer", "decline_transfer"}
+            and result.get("success")
+        ) or (
+            name == "warm_transfer"
+            and result.get("status") == "completed"
+        ) or (
+            name == "complete_warm_transfer" and result.get("status") in {"completed", "already_completed"}
+        ):
             self.watch_warm_transfer_if_needed(ws, client, context, name, result)
             return
 
@@ -1048,41 +1203,26 @@ class RealtimeCallController:
         if result.get("response_instructions"):
             response["instructions"] = str(result["response_instructions"])
 
-        if name == "warm_transfer_call" and result.get("status") == "recipient_connected":
-            # Force audio output for the briefing — the model is otherwise free to
-            # silently invoke complete_warm_transfer or cancel_warm_transfer and
-            # the recipient would hear nothing. tool_choice="none" on the
-            # per-response config blocks any tool call for this turn.
-            response["tool_choice"] = "none"
-            # Generate this response WITHOUT the prior caller-mode conversation as
-            # input. response.input=[] tells OpenAI to use an empty input set; the
-            # model then sees only the session-level (consult persona) plus the
-            # per-response (briefing) instructions, with NO caller-side dialogue to
-            # "naturally continue." Without this the model emits caller-mode lines
-            # like "Still trying to reach support, please hold..." right before the
-            # briefing, which the recipient hears through the bridged audio path.
-            # (response.conversation stays at its default "auto" so the briefing
-            # IS still recorded into the conversation afterwards — subsequent
-            # recipient turns need it as context to reply appropriately.)
-            response["input"] = []
-            logger.info(
-                "AI Receptionist warm transfer recipient_connected for session %s: "
-                "route=%s, warm_transfer_uuid=%s; sending briefing response.create "
-                "(consult delay %.1fs, tool_choice=none).",
-                context.session_uuid,
-                (result.get("route") or {}).get("name"),
-                result.get("warm_transfer_uuid"),
-                recipient_consult_response_delay_seconds(),
+        if name == "send_email" and result.get("success"):
+            await self.set_caller_auto_response(ws, context, False)
+            context.post_response_call_changing_tools.append({
+                "name": "end_call",
+                "arguments": {
+                    "reason": "message_sent",
+                    "status": "completed",
+                },
+            })
+            response["instructions"] = (
+                "Tell the caller in one brief sentence that the message has been sent "
+                "and the team will follow up. Then say goodbye and stop. Do not ask "
+                "another question. Do not call any tools."
             )
-            await asyncio.sleep(recipient_consult_response_delay_seconds())
-            # Once the bridge swaps the OpenAI leg's input from caller to recipient,
-            # server-side VAD typically fires on the recipient's first audio
-            # (a "hello" or even mic noise) and auto-creates a response. That
-            # auto-response collides with our briefing response.create with a
-            # "conversation_already_has_active_response" error. Cancel any
-            # in-flight response now so our briefing can take its place.
-            await self.cancel_in_flight_response(ws, context)
-        elif name == "cancel_warm_transfer":
+            response["tool_choice"] = "none"
+
+        if name != "send_email" and context.auto_response_disabled:
+            await self.set_caller_auto_response(ws, context, True)
+
+        if name in {"decline_transfer"}:
             # Same protection for the apology back to the caller after a cancel —
             # we want the model to actually speak the apology, not silently chain
             # into another tool call.
@@ -1102,27 +1242,7 @@ class RealtimeCallController:
         tool_name: str,
         result: dict[str, Any],
     ) -> None:
-        if tool_name == "warm_transfer_call" and result.get("status") == "recipient_connected":
-            await self.enter_consult_mode(
-                ws,
-                context,
-                result.get("route") or {},
-                str(result.get("handoff_summary") or ""),
-            )
-            return
-
-        if tool_name == "cancel_warm_transfer" and context.in_consult:
-            await self.restore_caller_session(ws, context)
-            return
-
-        if (
-            tool_name == "complete_warm_transfer"
-            and context.in_consult
-            and result.get("status") in {"completed", "already_completed"}
-        ):
-            # The OpenAI leg is being killed — clear the flag without sending a
-            # session.update (the WS is about to close).
-            context.in_consult = False
+        return
 
     def watch_warm_transfer_if_needed(
         self,
@@ -1132,8 +1252,13 @@ class RealtimeCallController:
         tool_name: str,
         result: dict[str, Any],
     ) -> None:
+        # Two-agent warm transfer is synchronously resolved by the Laravel
+        # warm_transfer tool call, so the caller-side Realtime controller no longer
+        # needs a consult watchdog.
+        return
+
         warm_transfer_uuid = str(result.get("warm_transfer_uuid") or "")
-        if tool_name != "warm_transfer_call" or result.get("status") != "recipient_connected" or not warm_transfer_uuid:
+        if not warm_transfer_uuid:
             return
 
         watcher_key = f"{context.session_uuid}:{warm_transfer_uuid}"
@@ -1305,60 +1430,21 @@ class RealtimeCallController:
     ) -> dict[str, Any]:
         session_uuid = context.session_uuid
 
-        if name == "resolve_route":
-            return await client.resolve_route(session_uuid, {"intent": arguments.get("intent", "")})
+        if name == "cold_transfer":
+            return await client.cold_transfer(
+                session_uuid,
+                str(arguments.get("route_uuid") or ""),
+            )
 
-        if name == "resolve_destination":
-            return await client.resolve_destination(session_uuid, {"intent": arguments.get("intent", "")})
-
-        if name == "transfer_call":
-            route_uuid = str(arguments.get("route_uuid") or "").strip()
-            if route_uuid:
-                # Configured-route cold transfer — server loads the route and uses
-                # its stored destination_type/target. AI cannot inject arbitrary
-                # values this way.
-                return await client.transfer(session_uuid, {"route_uuid": route_uuid})
-
-            destination_type = arguments.get("destination_type")
-            target = arguments.get("target")
-            if not destination_type or not target:
-                return {
-                    "success": False,
-                    "error": (
-                        "transfer_call requires either route_uuid (preferred, for a configured route) "
-                        "or both destination_type and target (only when the caller explicitly named an "
-                        "extension or queue and you looked it up via resolve_destination)."
-                    ),
-                    "tool_name": name,
-                }
-
-            destination = await client.resolve_destination(session_uuid, {
-                "type": destination_type,
-                "target": target,
-            })
-            return await client.transfer(session_uuid, {"destination": destination.get("destination") or destination})
-
-        if name == "warm_transfer_call":
+        if name == "warm_transfer":
             return await client.warm_transfer(
                 session_uuid,
                 str(arguments.get("route_uuid") or ""),
                 str(arguments.get("handoff_summary") or ""),
             )
 
-        if name == "complete_warm_transfer":
-            return await client.complete_warm_transfer(
-                session_uuid,
-                str(arguments.get("recipient_response") or ""),
-            )
-
-        if name == "cancel_warm_transfer":
-            return await client.cancel_warm_transfer(
-                session_uuid,
-                str(arguments.get("reason") or "declined"),
-            )
-
-        if name == "send_route_email":
-            return await client.send_route_email(session_uuid, {
+        if name == "send_email":
+            return await client.send_email(session_uuid, {
                 "route_uuid": arguments.get("route_uuid"),
                 "caller_name": arguments.get("caller_name"),
                 "caller_number": arguments.get("caller_number"),
@@ -1373,11 +1459,22 @@ class RealtimeCallController:
                 str(arguments.get("reason") or "conversation_complete"),
             )
 
-        if name == "run_http_tool":
-            return await client.run_tool(
-                session_uuid,
-                str(arguments.get("tool_name") or ""),
-                arguments.get("payload") or {},
+        if name == "accept_transfer":
+            if not context.warm_transfer_uuid:
+                return {"success": False, "error": "Missing warm transfer UUID."}
+            return await client.accept_transfer(
+                context.warm_transfer_uuid,
+                str(arguments.get("recipient_response") or ""),
+                "\n".join(context.transcript),
+            )
+
+        if name == "decline_transfer":
+            if not context.warm_transfer_uuid:
+                return {"success": False, "error": "Missing warm transfer UUID."}
+            return await client.decline_transfer(
+                context.warm_transfer_uuid,
+                str(arguments.get("reason") or "declined"),
+                "\n".join(context.transcript),
             )
 
         return {"success": False, "error": f"Unknown tool {name}"}

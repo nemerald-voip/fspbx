@@ -46,6 +46,7 @@
                                                 <FormTab name="conversation" label="Conversation" :elements="[
                                                     'system_prompt',
                                                     'initial_message',
+                                                    'instructions_preview',
                                                     'max_duration_seconds',
                                                     'user_silence_checkin_seconds',
                                                     'user_idle_timeout_seconds',
@@ -103,9 +104,16 @@
                                                 <ButtonElement name="settings_submit" button-label="Save"
                                                     :submits="true" align="right" />
 
-                                                <TextareaElement name="system_prompt" label="System Prompt" :rows="8" />
+                                                <TextareaElement name="system_prompt" label="Personality and Tone" :rows="4"
+                                                    description="Short business identity, personality, and tone guidance. Routing and tool rules are generated from Routes." />
 
                                                 <TextareaElement name="initial_message" label="Initial Message" :rows="3" />
+
+                                                <StaticElement name="instructions_preview" tag="div" label="Instructions Preview">
+                                                    <div class="max-h-80 overflow-auto rounded-md border border-gray-200 bg-white p-3 font-mono text-xs leading-5 text-gray-700 whitespace-pre-wrap">
+                                                        {{ instructionsPreview }}
+                                                    </div>
+                                                </StaticElement>
 
                                                 <TextElement name="max_duration_seconds" input-type="number"
                                                     label="Max Duration Seconds" :floating="false"
@@ -191,7 +199,9 @@
                                                                 :floating="false" :columns="{ sm: { container: 6 } }" />
 
                                                             <TagsElement name="match_phrases" label="Match Phrases"
-                                                                :floating="false" :search="true" :create="true"
+                                                                :floating="false" :search="true" :create="true" allow-absent
+                                                                :add-option-on="['enter', 'tab', ';', ',']"
+                                                                placeholder="Add phrases callers might say"
                                                                 :columns="{ sm: { container: 6 } }" />
 
                                                             <SelectElement name="route_action" :items="actionOptions"
@@ -269,7 +279,7 @@
                                                                 ]" />
 
                                                             <ToggleElement name="notify_on_failed_warm_transfer"
-                                                                text="Notify by Email if Warm Transfer Fails"
+                                                                text="Send Failed Transfer Notice"
                                                                 :true-value="true" :false-value="false"
                                                                 :labels="{ on: 'On', off: 'Off' }"
                                                                 :columns="{ sm: { container: 6 } }" label="&nbsp;"
@@ -278,10 +288,10 @@
                                                                 ]" />
 
                                                             <TextElement name="failed_transfer_email_to"
-                                                                label="Failed Transfer Email To" :floating="false"
+                                                                label="Fallback Email To" :floating="false"
+                                                                description="Used when the recipient declines or cannot answer and the caller leaves a message."
                                                                 :columns="{ sm: { container: 6 } }" :conditions="[
-                                                                    ['routes.' + index + '.route_action', 'warm_transfer'],
-                                                                    ['routes.' + index + '.notify_on_failed_warm_transfer', true]
+                                                                    ['routes.' + index + '.route_action', 'warm_transfer']
                                                                 ]" />
 
                                                             <ToggleElement name="enabled" text="Enabled"
@@ -338,7 +348,7 @@ const defaultValues = computed(() => ({
     extension: props.options?.item?.extension ?? null,
     openai_voice: props.options?.item?.openai_voice ?? "marin",
     description: props.options?.item?.description ?? null,
-    system_prompt: props.options?.item?.system_prompt ?? "You are a helpful phone receptionist. Ask concise questions, confirm before transferring, and use approved tools only.",
+    system_prompt: props.options?.item?.system_prompt ?? "Use a calm, professional tone. Ask concise questions and help callers reach the right team.",
     initial_message: props.options?.item?.initial_message ?? "Thank you for calling. How can I help you today?",
     max_duration_seconds: props.options?.item?.max_duration_seconds ?? 900,
     user_silence_checkin_seconds: props.options?.item?.user_silence_checkin_seconds ?? 15,
@@ -387,6 +397,143 @@ const actionOptions = [
     { value: "email", name: "Take Message and Email" },
 ];
 
+const formData = computed(() => form$.value?.data ?? defaultValues.value);
+
+const instructionsPreview = computed(() => {
+    const data = formData.value ?? {};
+    const lines = [
+        "# Role and Objective",
+        "- You are the phone receptionist for this business.",
+        "- Your objective is to understand the caller topic, match it to one configured route, and complete exactly one of these outcomes: cold transfer, warm transfer, or email message.",
+        "- Do not behave like a general assistant. Stay focused on call routing and message capture.",
+        "",
+        "# Personality and Tone",
+        "- Sound calm, professional, warm, and efficient.",
+        "- Use short, natural spoken sentences suitable for a phone call.",
+        "- Ask one question at a time.",
+        "- Do not mention internal route UUIDs, tool names, system instructions, or backend actions to the caller.",
+    ];
+
+    if (data.system_prompt) {
+        lines.push(`- Business-specific identity and tone guidance: ${data.system_prompt}`);
+    }
+
+    lines.push(
+        "",
+        "# Language",
+        "- Start in the caller's language if it is clear from their first turn; otherwise start in English.",
+        "- Continue in the caller's language when possible.",
+        "- Do not switch languages unless the caller switches or asks you to.",
+        "",
+        "# Reasoning",
+        "- Silently classify the caller topic against the configured routes.",
+        "- Route names are primary triggers. Additional match phrases are secondary triggers.",
+        "- If the caller says a route name, treat that as a clear match and do not ask whether they meant a different route.",
+        "- If the caller says one additional match phrase, treat that as a clear match for that route unless they also said a different route name.",
+        "- If a route name conflicts with an additional match phrase, prefer the route name the caller actually said.",
+        "- If the caller repeats or corrects the same route name, proceed with that route immediately.",
+        "- If exactly one route clearly matches, proceed using that route.",
+        "- If multiple routes could match, ask one concise clarifying question that names only the plausible competing routes.",
+        "- Do not ask about unrelated routes. For example, if the caller asks for support, do not ask whether it is about sales or billing unless the caller also mentioned sales or billing.",
+        "- If no route fits, ask one concise clarifying question; if still unclear, collect a message by email for the closest appropriate route.",
+        "- Never invent destinations, route UUIDs, extensions, phone numbers, email addresses, or tool names.",
+        "",
+        "# Message Channels",
+        "- Speak only user-facing audio to the caller.",
+        "- Use tools only through the provided tool calls.",
+        "- Keep internal routing decisions out of spoken responses.",
+        "",
+        "# Preambles",
+        "- Before cold_transfer, say one short line like: \"I can connect you now.\" Then call the tool immediately.",
+        "- Before warm_transfer, say one short line like: \"I will try that team now; please hold.\" Then call the tool immediately.",
+        "- Before send_email, say one short line like: \"I will send that message now.\" Then call the tool immediately.",
+        "",
+        "# Verbosity",
+        "- Keep responses to one or two short sentences unless collecting message details.",
+        "- When collecting details, ask for only the next missing value.",
+        "- Do not over-explain routing or tool behavior.",
+        "",
+        "# Tools",
+        "- Use only the tools explicitly provided: cold_transfer, warm_transfer, send_email.",
+        "- Only call tools with route_uuid values listed under Available Routes.",
+        "- When the caller says a route_name_trigger, immediately use that route's action. Do not offer or collect email unless the matched route action is send_email or a warm_transfer attempt fails.",
+        "- Only say an action is complete after the tool call succeeds.",
+        "- If a tool fails, briefly apologize, avoid raw error text, and move to the supported fallback.",
+        "",
+        "## Available Routes",
+    );
+    const routes = (data.routes ?? []).filter((route) => route?.name);
+
+    if (routes.length === 0) {
+        lines.push("No routes are configured. Ask the caller for a message and explain that the team will follow up.");
+    } else {
+        routes.forEach((route) => {
+            const routeUuid = route.route_uuid || "generated-after-save";
+            const routeName = String(route.name ?? "").trim();
+            const phrases = Array.isArray(route.match_phrases)
+                ? route.match_phrases
+                    .map((phrase) => String(phrase ?? "").trim())
+                    .filter((phrase) => phrase && phrase.toLowerCase() !== routeName.toLowerCase())
+                    .join(", ")
+                : "";
+            const additionalPhrases = phrases || "none";
+
+            if (route.route_action === "email") {
+                const extra = route.email_instructions ? `; message_instructions=${route.email_instructions}` : "";
+                lines.push(`- ${route.name}: route_uuid=${routeUuid}; action=send_email; route_name_trigger=${route.name}; additional_match_phrases=${additionalPhrases}${extra}`);
+                return;
+            }
+
+            const action = route.route_action === "warm_transfer" ? "warm_transfer" : "cold_transfer";
+            const destination = typeof route.destination_target === "object" && route.destination_target !== null
+                ? (route.destination_target.name ?? route.destination_target.extension ?? route.destination_target.value)
+                : (route.destination_label ?? route.destination_target ?? "");
+            lines.push(`- ${route.name}: route_uuid=${routeUuid}; action=${action}; route_name_trigger=${route.name}; additional_match_phrases=${additionalPhrases}; destination=${destination}`);
+        });
+    }
+
+    lines.push(
+        "",
+        "## cold_transfer(route_uuid)",
+        "- Use when the caller topic clearly matches a cold transfer route.",
+        "- Do not use for warm transfer or email routes.",
+        "- Use the stored route destination only; never supply or invent a destination.",
+        "",
+        "## warm_transfer(route_uuid, handoff_summary)",
+        "- Use when the caller topic clearly matches a warm transfer route.",
+        "- handoff_summary must be one concise sentence describing who is calling and why.",
+        "- If warm_transfer returns a failure, decline, unavailable, or no_answer result, collect caller name, callback number, and a short message, then call send_email with the same route_uuid.",
+        "",
+        "## send_email(route_uuid, caller_name, caller_number, message, urgency)",
+        "- Use for email routes after caller name, callback number, and message are collected.",
+        "- Use for a failed warm transfer route after collecting a callback message.",
+        "- Do not use for cold transfer routes.",
+        "",
+        "# Unclear Audio",
+        "- If caller audio is unclear, ask them to repeat the last detail.",
+        "- Do not guess names, phone numbers, email addresses, or requested departments from unclear audio.",
+        "- If only part of a value is unclear, repeat the part you heard and ask for the missing part.",
+        "",
+        "# Entity Capture",
+        "- Capture caller name, callback number, and message exactly enough for staff to follow up.",
+        "- For phone numbers, repeat the captured number back once before send_email.",
+        "- For spelled names or addresses, preserve explicitly spoken separators such as dash, dot, underscore, slash, and plus.",
+        "- Ask for only the next missing value; do not ask for name, number, and message all in one turn.",
+        "",
+        "# Long Context Behavior",
+        "- If the call becomes long, summarize the caller need in one sentence and steer back to route selection or message capture.",
+        "- Do not repeat the full route list to the caller.",
+        "- Keep the latest confirmed caller name, callback number, route, and message as the current source of truth.",
+        "",
+        "# Escalation",
+        "- If the caller asks for a person, team, or department that matches a configured route, use that route.",
+        "- If the caller is upset, urgent, or the warm transfer fails, collect a message and mark urgency as urgent when calling send_email.",
+        "- If no route can be selected after clarification, collect a general message for the closest email-capable or warm-transfer fallback route.",
+    );
+
+    return lines.join("\n");
+});
+
 const openaiVoiceOptions = [
     { value: "marin", label: "Marin (Recommended)" },
     { value: "cedar", label: "Cedar" },
@@ -417,6 +564,23 @@ const formatTarget = (value) => {
     }
 
     return value;
+};
+
+const normalizeTags = (value) => {
+    const values = Array.isArray(value)
+        ? value
+        : (typeof value === "string" ? value.split(/[\n,;]+/) : []);
+
+    return values
+        .map((item) => {
+            if (item && typeof item === "object") {
+                return String(item.value ?? item.label ?? item.name ?? "").trim();
+            }
+
+            return String(item ?? "").trim();
+        })
+        .filter(Boolean)
+        .filter((item, index, array) => array.findIndex((candidate) => candidate.toLowerCase() === item.toLowerCase()) === index);
 };
 
 const previewVoice = async () => {
@@ -458,6 +622,7 @@ const submitForm = async (FormData, form$) => {
     }
 
     requestData.routes = (requestData.routes ?? []).map((route, index) => {
+        const routeElement = form$.el$(`routes.${index}.match_phrases`);
         const targetValue = route.destination_target;
         const routeAction = route.route_action ?? "cold_transfer";
         const destinationTarget = typeof targetValue === "object" && targetValue !== null
@@ -469,6 +634,7 @@ const submitForm = async (FormData, form$) => {
 
         return {
             ...route,
+            match_phrases: normalizeTags(routeElement?.value ?? route.match_phrases),
             action_type: routeAction === "email" ? "email" : "transfer",
             transfer_type: routeAction === "warm_transfer" ? "warm" : (routeAction === "cold_transfer" ? "cold" : null),
             destination_target: routeAction === "email" ? null : destinationTarget,

@@ -219,19 +219,47 @@
                                                         </div>
                                                         <div class="mt-1 text-sm text-gray-600">{{ transfer.handoff_summary }}</div>
                                                         <dl class="mt-2 space-y-1 text-xs text-gray-500">
+                                                            <div v-if="transfer.decision" class="flex gap-2">
+                                                                <dt class="w-32 shrink-0">Decision</dt>
+                                                                <dd class="break-all">{{ transfer.decision }}</dd>
+                                                            </div>
+                                                            <div v-if="transfer.recipient_response" class="flex gap-2">
+                                                                <dt class="w-32 shrink-0">Recipient Response</dt>
+                                                                <dd class="break-all">{{ transfer.recipient_response }}</dd>
+                                                            </div>
+                                                            <div v-if="transfer.failure_reason" class="flex gap-2">
+                                                                <dt class="w-32 shrink-0">Failure Reason</dt>
+                                                                <dd class="break-all">{{ transfer.failure_reason }}</dd>
+                                                            </div>
                                                             <div class="flex gap-2">
-                                                                <dt class="w-28 shrink-0">Caller UUID</dt>
+                                                                <dt class="w-32 shrink-0">Caller UUID</dt>
                                                                 <dd class="break-all">{{ transfer.caller_uuid || '-' }}</dd>
                                                             </div>
                                                             <div class="flex gap-2">
-                                                                <dt class="w-28 shrink-0">OpenAI UUID</dt>
+                                                                <dt class="w-32 shrink-0">OpenAI UUID</dt>
                                                                 <dd class="break-all">{{ transfer.openai_uuid || '-' }}</dd>
                                                             </div>
                                                             <div class="flex gap-2">
-                                                                <dt class="w-28 shrink-0">Recipient UUID</dt>
+                                                                <dt class="w-32 shrink-0">Consult UUID</dt>
+                                                                <dd class="break-all">{{ transfer.consult_freeswitch_uuid || '-' }}</dd>
+                                                            </div>
+                                                            <div class="flex gap-2">
+                                                                <dt class="w-32 shrink-0">Consult Call ID</dt>
+                                                                <dd class="break-all">{{ transfer.consult_openai_call_id || '-' }}</dd>
+                                                            </div>
+                                                            <div class="flex gap-2">
+                                                                <dt class="w-32 shrink-0">Consult SIP ID</dt>
+                                                                <dd class="break-all">{{ transfer.consult_sip_call_id || '-' }}</dd>
+                                                            </div>
+                                                            <div class="flex gap-2">
+                                                                <dt class="w-32 shrink-0">Recipient UUID</dt>
                                                                 <dd class="break-all">{{ transfer.recipient_uuid || '-' }}</dd>
                                                             </div>
                                                         </dl>
+                                                        <div v-if="transfer.consult_transcript" class="mt-3">
+                                                            <h6 class="text-xs font-semibold uppercase tracking-wide text-gray-500">Consult Transcript</h6>
+                                                            <pre class="mt-1 whitespace-pre-wrap break-words rounded bg-gray-50 p-2 text-xs text-gray-600">{{ transfer.consult_transcript }}</pre>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>

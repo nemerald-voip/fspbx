@@ -125,9 +125,16 @@ class AiReceptionistLogController extends Controller
                 'destination_type' => $transfer->destination_type,
                 'destination_target' => $transfer->destination_target,
                 'handoff_summary' => $transfer->handoff_summary,
+                'decision' => $transfer->decision,
+                'recipient_response' => $transfer->recipient_response,
+                'failure_reason' => $transfer->failure_reason,
                 'caller_uuid' => $transfer->caller_uuid,
                 'openai_uuid' => $transfer->openai_uuid,
+                'consult_openai_call_id' => $transfer->consult_openai_call_id,
+                'consult_sip_call_id' => $transfer->consult_sip_call_id,
+                'consult_freeswitch_uuid' => $transfer->consult_freeswitch_uuid,
                 'recipient_uuid' => $transfer->recipient_uuid,
+                'consult_transcript' => data_get($transfer->metadata, 'consult_transcript'),
                 'started_at_formatted' => $transfer->started_at
                     ? $transfer->started_at->copy()->timezone($timezone)->format('Y-m-d H:i:s')
                     : null,
@@ -238,9 +245,9 @@ class AiReceptionistLogController extends Controller
     private function activityType(string $toolName): string
     {
         return match ($toolName) {
-            'send_route_email' => 'email',
-            'transfer_call' => 'cold_transfer',
-            'warm_transfer_call', 'complete_warm_transfer', 'cancel_warm_transfer' => 'warm_transfer',
+            'send_route_email', 'send_email' => 'email',
+            'transfer_call', 'cold_transfer' => 'cold_transfer',
+            'warm_transfer_call', 'warm_transfer', 'complete_warm_transfer', 'cancel_warm_transfer', 'accept_transfer', 'decline_transfer' => 'warm_transfer',
             'end_call' => 'call',
             default => 'tool',
         };
@@ -249,11 +256,13 @@ class AiReceptionistLogController extends Controller
     private function activityLabel(string $toolName, array $request, array $response): string
     {
         return match ($toolName) {
-            'send_route_email' => 'Email handoff',
-            'transfer_call' => 'Cold transfer',
-            'warm_transfer_call' => 'Warm transfer started',
+            'send_route_email', 'send_email' => 'Email handoff',
+            'transfer_call', 'cold_transfer' => 'Cold transfer',
+            'warm_transfer_call', 'warm_transfer' => 'Warm transfer started',
             'complete_warm_transfer' => 'Warm transfer completed',
             'cancel_warm_transfer' => 'Warm transfer cancelled',
+            'accept_transfer' => 'Warm transfer accepted',
+            'decline_transfer' => 'Warm transfer declined',
             'end_call' => 'Call ended',
             default => $toolName,
         };
@@ -262,14 +271,14 @@ class AiReceptionistLogController extends Controller
     private function activityDetail(string $toolName, array $request, array $response): ?string
     {
         return match ($toolName) {
-            'send_route_email' => data_get($response, 'email_to') ?? data_get($response, 'route.name'),
-            'transfer_call' => data_get($request, 'destination.label')
+            'send_route_email', 'send_email' => data_get($response, 'email_to') ?? data_get($response, 'route.name'),
+            'transfer_call', 'cold_transfer' => data_get($request, 'destination.label')
                 ?? data_get($request, 'destination.target')
                 ?? data_get($response, 'destination.label')
                 ?? data_get($response, 'destination.target'),
-            'warm_transfer_call' => data_get($response, 'route.destination_label') ?? data_get($response, 'route.name') ?? data_get($request, 'route_uuid'),
-            'complete_warm_transfer' => data_get($request, 'recipient_response'),
-            'cancel_warm_transfer', 'end_call' => data_get($request, 'reason') ?? data_get($response, 'reason'),
+            'warm_transfer_call', 'warm_transfer' => data_get($response, 'route.destination_label') ?? data_get($response, 'route.name') ?? data_get($request, 'route_uuid'),
+            'complete_warm_transfer', 'accept_transfer' => data_get($request, 'recipient_response'),
+            'cancel_warm_transfer', 'decline_transfer', 'end_call' => data_get($request, 'reason') ?? data_get($response, 'reason'),
             default => null,
         };
     }

@@ -327,10 +327,9 @@ class AiReceptionistController extends Controller
                 }
 
                 if (($route['transfer_type'] ?? null) === 'warm'
-                    && ($route['notify_on_failed_warm_transfer'] ?? false)
                     && blank($route['failed_transfer_email_to'] ?? null)) {
                     throw ValidationException::withMessages([
-                        "routes.{$index}.failed_transfer_email_to" => 'Failed warm transfer notifications need an email address.',
+                        "routes.{$index}.failed_transfer_email_to" => 'Warm transfer routes need a fallback email address.',
                     ]);
                 }
             }
