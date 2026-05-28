@@ -1,65 +1,48 @@
 <template>
-    <TransitionRoot as="div" :show="show">
-        <Dialog as="div" class="relative z-10">
-            <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
-                leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
-                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
-            </TransitionChild>
-            <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
-                <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-                    <TransitionChild as="template" enter="ease-out duration-300"
-                        enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-                        enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200"
-                        leave-from="opacity-100 translate-y-0 sm:scale-100"
-                        leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+    <Teleport to="body">
+        <div v-if="show" class="fixed inset-0 z-50 overflow-y-auto">
+            <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+            <div class="relative z-10 flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                <div
+                    class="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:p-6">
 
-                        <DialogPanel
-                            class="relative transform  rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-md sm:p-6">
+                    <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
+                        <button type="button"
+                            class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                            @click="emit('close')">
+                            <span class="sr-only">Close</span>
+                            <XMarkIcon class="h-6 w-6" aria-hidden="true" />
+                        </button>
+                    </div>
 
-                            <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
-                                <button type="button"
-                                    class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                                    @click="emit('close')">
-                                    <span class="sr-only">Close</span>
-                                    <XMarkIcon class="h-6 w-6" aria-hidden="true" />
-                                </button>
-                            </div>
+                    <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
+                        @response="handleResponse" :display-errors="false" :default="{
+                            extension_uuid: extension_uuid,
+                            password: sip_credentials?.password,
+                        }">
+                        <HiddenElement name="extension_uuid" :meta="true" />
+                        <StaticElement name="h4" tag="h4" content="Update SIP Password" />
 
-                            <Vueform ref="form$" :endpoint="submitForm" @success="handleSuccess" @error="handleError"
-                                @response="handleResponse" :display-errors="false" :default="{
-                                    extension_uuid: extension_uuid,
-                                    password: sip_credentials?.password,
-                                }">
-                                <HiddenElement name="extension_uuid" :meta="true" />
-                                <StaticElement name="h4" tag="h4" content="Update SIP Password" />
+                        <TextElement name="password" label="Password" description="" />
 
-                                <TextElement name="password" label="Password"
-                                    description="" />
-
-                                <GroupElement name="container_3" />
-                                <ButtonElement name="reset" button-label="Cancel" :secondary="true" :resets="true"
-                                    @click="emit('close')" :columns="{
-                                        container: 6,
-                                    }" />
-                                <ButtonElement name="submit" button-label="Update" :submits="true" align="right" :columns="{
-                                    container: 6,
-                                }" />
-                            </Vueform>
-                        </DialogPanel>
-
-
-                    </TransitionChild>
+                        <GroupElement name="container_3" />
+                        <ButtonElement name="reset" button-label="Cancel" :secondary="true" :resets="true"
+                            @click="emit('close')" :columns="{
+                                container: 6,
+                            }" />
+                        <ButtonElement name="submit" button-label="Update" :submits="true" align="right" :columns="{
+                            container: 6,
+                        }" />
+                    </Vueform>
                 </div>
             </div>
-        </Dialog>
-    </TransitionRoot>
+        </div>
+    </Teleport>
 </template>
 
 <script setup>
 import { ref } from "vue";
-import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
-import {CheckCircleIcon, XMarkIcon } from "@heroicons/vue/24/solid";
-import { ClipboardDocumentIcon } from "@heroicons/vue/24/outline";
+import { XMarkIcon } from "@heroicons/vue/24/solid";
 
 
 const emit = defineEmits(['close', 'confirm', 'success', 'error', 'refresh-data'])
