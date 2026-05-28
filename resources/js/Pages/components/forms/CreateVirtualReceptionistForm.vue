@@ -111,8 +111,8 @@
                                                 <TextElement name="digit_length" label="Digit Length"
                                                     :columns="{ sm: { container: 6 } }" />
 
-                                                <TextElement name="prompt_timeout" label="Input Timeout (ms)"
-                                                    placeholder="3000" :columns="{ sm: { container: 6 } }"
+                                                <TextElement name="prompt_timeout" label="Input Timeout (seconds)"
+                                                    placeholder="3" :columns="{ sm: { container: 6 } }"
                                                     description="How long to wait for caller input before counting it as no input." />
 
                                                 <TextElement name="pin" label="PIN Number"
@@ -263,7 +263,7 @@ const defaultFormData = computed(() => ({
     ivr_menu_extension: props.options?.item?.ivr_menu_extension ?? '',
     ivr_menu_description: props.options?.item?.ivr_menu_description ?? '',
     ivr_menu_enabled: props.options?.item?.ivr_menu_enabled ?? 'true',
-    prompt_timeout: props.options?.item?.ivr_menu_timeout ?? '3000',
+    prompt_timeout: millisecondsToSeconds(props.options?.item?.ivr_menu_timeout ?? '3000'),
     direct_dial: props.options?.item?.ivr_menu_direct_dial ?? 'false',
     caller_id_prefix: props.options?.item?.ivr_menu_cid_prefix ?? '',
     pin: props.options?.item?.ivr_menu_pin_number ?? '',
@@ -272,6 +272,16 @@ const defaultFormData = computed(() => ({
     invalid_input_message: props.options?.item?.ivr_menu_invalid_sound ?? 'ivr/ivr-that_was_an_invalid_entry.wav',
     exit_message: props.options?.item?.ivr_menu_exit_sound ?? 'silence_stream://100',
 }));
+
+const millisecondsToSeconds = (milliseconds) => {
+    const value = Number(milliseconds);
+
+    if (!Number.isFinite(value)) {
+        return '3';
+    }
+
+    return String(value / 1000);
+};
 
 const submitForm = async (FormData, form$) => {
     const requestData = form$.requestData;

@@ -120,7 +120,7 @@ class VirtualReceptionistController extends Controller
                 'ivr_menu_extension' => $inputs['ivr_menu_extension'],
                 'ivr_menu_enabled' => $inputs['ivr_menu_enabled'],
                 'ivr_menu_digit_len' => $inputs['digit_length'],
-                'ivr_menu_timeout' => $inputs['prompt_timeout'],
+                'ivr_menu_timeout' => $this->promptTimeoutSecondsToMilliseconds($inputs['prompt_timeout']),
                 'ivr_menu_pin_number' => $inputs['pin'] ?? null,
                 'ivr_menu_ringback' => $inputs['ring_back_tone'],
                 'ivr_menu_invalid_sound' => $inputs['invalid_input_message'],
@@ -172,7 +172,7 @@ class VirtualReceptionistController extends Controller
                 'ivr_menu_description' => $inputs['ivr_menu_description'] ?? null,
                 'ivr_menu_enabled' => $inputs['ivr_menu_enabled'],
                 'ivr_menu_digit_len' => $inputs['digit_length'],
-                'ivr_menu_timeout' => $inputs['prompt_timeout'],
+                'ivr_menu_timeout' => $this->promptTimeoutSecondsToMilliseconds($inputs['prompt_timeout']),
                 'ivr_menu_pin_number' => $inputs['pin'] ?? null,
                 'ivr_menu_ringback' => $inputs['ring_back_tone'],
                 'ivr_menu_invalid_sound' => $inputs['invalid_input_message'],
@@ -448,12 +448,14 @@ class VirtualReceptionistController extends Controller
                 $ivr->ivr_menu_description = '';
                 $ivr->ivr_menu_greet_long = null;
                 $ivr->ivr_menu_enabled = 'true';
-                $ivr->ivr_menu_digit_len = '5';
-                $ivr->ivr_menu_timeout = '3000';
-                $ivr->ivr_menu_ringback = '${us-ring}';
+                $ivr->ivr_menu_digit_len = get_domain_setting('virtual_receptionist_digit_length', $domainUuid) ?? '5';
+                $ivr->ivr_menu_timeout = (string) $this->promptTimeoutSecondsToMilliseconds(
+                    get_domain_setting('virtual_receptionist_prompt_timeout', $domainUuid) ?? '3'
+                );
+                $ivr->ivr_menu_ringback = get_domain_setting('virtual_receptionist_ring_back_tone', $domainUuid) ?? '${us-ring}';
                 $ivr->ivr_menu_invalid_sound = 'ivr/ivr-that_was_an_invalid_entry.wav';
                 $ivr->ivr_menu_exit_sound = 'silence_stream://100';
-                $ivr->ivr_menu_direct_dial = 'false';
+                $ivr->ivr_menu_direct_dial = get_domain_setting('virtual_receptionist_direct_dial', $domainUuid) ?? 'false';
                 $ivr->ivr_menu_max_failures = '3';
                 $ivr->ivr_menu_max_timeouts = '3';
                 $ivr->ivr_menu_cid_prefix = '';
@@ -513,6 +515,11 @@ class VirtualReceptionistController extends Controller
                 'errors' => ['server' => ['Failed to fetch item details.']]
             ], 500);
         }
+    }
+
+    private function promptTimeoutSecondsToMilliseconds($seconds): int
+    {
+        return (int) round(((float) $seconds) * 1000);
     }
 
     public function getGreetings()

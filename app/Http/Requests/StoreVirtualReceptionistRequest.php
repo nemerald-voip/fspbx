@@ -71,7 +71,7 @@ class StoreVirtualReceptionistRequest extends FormRequest
             'ivr_menu_name' => 'name',
             'ivr_menu_extension' => 'extension',
             'caller_id_prefix' => 'caller id name prefix',
-            'prompt_timeout' => 'input timeout',
+            'prompt_timeout' => 'input timeout in seconds',
             'digit_length' => 'digit length',
             'ring_back_tone' => 'ring back tone',
             'invalid_input_message' => 'invalid input message',

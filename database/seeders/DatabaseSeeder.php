@@ -106,6 +106,10 @@ class DatabaseSeeder extends Seeder
             ['application_name' => 'Cloud Provisioning', 'permission_name' => 'cloud_provisioning_show_credentials'],
             ['application_name' => 'Cloud Provisioning', 'permission_name' => 'polycom_api_token_update'],
             ['application_name' => 'Account Settings', 'permission_name' => 'account_settings_list_view'],
+            ['application_name' => 'Customer Notes', 'permission_name' => 'customer_notes_level_1'],
+            ['application_name' => 'Customer Notes', 'permission_name' => 'customer_notes_level_2'],
+            ['application_name' => 'Customer Notes', 'permission_name' => 'customer_notes_level_3'],
+            ['application_name' => 'Customer Notes', 'permission_name' => 'customer_notes_edit'],
             ['application_name' => 'Ring Groups', 'permission_name' => 'ring_group_view_settings'],
             ['application_name' => 'Ring Groups', 'permission_name' => 'ring_group_view_advanced'],
             ['application_name' => 'Business Hours', 'permission_name' => 'business_hours_list_view'],
@@ -555,6 +559,38 @@ class DatabaseSeeder extends Seeder
     private function createDefaultSettings()
     {
         $settings = [
+            [
+                'default_setting_category'      => 'virtual_receptionists',
+                'default_setting_subcategory'   => 'virtual_receptionist_direct_dial',
+                'default_setting_name'          => 'boolean',
+                'default_setting_value'         => "false",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Enable direct extension dialing for new virtual receptionists.",
+            ],
+            [
+                'default_setting_category'      => 'virtual_receptionists',
+                'default_setting_subcategory'   => 'virtual_receptionist_digit_length',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "5",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Default direct dial digit length for new virtual receptionists.",
+            ],
+            [
+                'default_setting_category'      => 'virtual_receptionists',
+                'default_setting_subcategory'   => 'virtual_receptionist_ring_back_tone',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => '${us-ring}',
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Default ring back tone for new virtual receptionists.",
+            ],
+            [
+                'default_setting_category'      => 'virtual_receptionists',
+                'default_setting_subcategory'   => 'virtual_receptionist_prompt_timeout',
+                'default_setting_name'          => 'text',
+                'default_setting_value'         => "3",
+                'default_setting_enabled'       => true,
+                'default_setting_description'   => "Default input timeout in seconds for new virtual receptionists.",
+            ],
             [
                 'default_setting_category'      => 'provision',
                 'default_setting_subcategory'   => 'polycom_vvx_firmware_url',
