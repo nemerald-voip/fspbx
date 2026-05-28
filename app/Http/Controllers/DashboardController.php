@@ -55,6 +55,7 @@ class DashboardController extends Controller
                     'data_route' => route('dashboard.data'),
                     'counts_route' => route('dashboard.counts'),
                     'my_extension_status_route' => route('dashboard.my-extension-status'),
+                    'customer_notes_route' => route('dashboard.customer-notes'),
                     'extension_item_options' => route('extensions.item.options'),
                 ]
             ]
@@ -67,7 +68,7 @@ class DashboardController extends Controller
         $permissions['extension_view'] = userCheckPermission('extension_view');
         $permissions['account_settings_index'] = userCheckPermission('account_settings_list_view');
 
-        return $permissions;
+        return array_merge($permissions, CustomerNotesController::permissionFlags());
     }
 
     public function getCounts()
