@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Mail\FaxFailed;
 use App\Mail\FaxSent;
+use App\Models\FaxLogs;
 use App\Models\OutboundFax;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -38,9 +39,7 @@ class SendFaxNotificationJob implements ShouldQueue
     public function handle(): void
     {
         Redis::throttle('fax')->allow(2)->every(1)->then(function () {
-            $fax = OutboundFax::with(['logs' => function ($q) {
-                $q->orderByDesc('fax_date')->limit(1);
-            }])->find($this->outboundFaxUuid);
+            $fax = OutboundFax::find($this->outboundFaxUuid);
 
             if (!$fax) {
                 fax_webhook_debug('SendFaxNotificationJob: row not found, dropping', [
@@ -102,11 +101,11 @@ class SendFaxNotificationJob implements ShouldQueue
 
     /**
      * Build the attributes array fed to the Mailable / Blade template.
-     * Pulls wire-level detail from the latest v_fax_logs row when available.
+     * Pulls wire-level detail from the current attempt's v_fax_logs row when available.
      */
     private function buildAttributes(OutboundFax $fax): array
     {
-        $log = $fax->logs->first(); // single latest log thanks to with() above
+        $log = $this->notificationLog($fax);
 
         $attributes = [
             'fax_destination'        => $fax->destination,
@@ -148,6 +147,45 @@ class SendFaxNotificationJob implements ShouldQueue
         }
 
         return $attributes;
+    }
+
+    private function notificationLog(OutboundFax $fax): ?FaxLogs
+    {
+        if (!empty($fax->current_attempt_uuid)) {
+            $currentAttemptQuery = FaxLogs::query()
+                ->where('outbound_fax_uuid', $fax->outbound_fax_uuid)
+                ->where('outbound_fax_attempt_uuid', $fax->current_attempt_uuid);
+
+            if ($fax->status === 'sent') {
+                $successfulCurrentAttempt = (clone $currentAttemptQuery)
+                    ->where('fax_success', '1')
+                    ->reorder()
+                    ->orderByDesc('fax_date')
+                    ->orderByDesc('fax_epoch')
+                    ->first();
+
+                if ($successfulCurrentAttempt) {
+                    return $successfulCurrentAttempt;
+                }
+            }
+
+            $currentAttempt = $currentAttemptQuery
+                ->reorder()
+                ->orderByDesc('fax_date')
+                ->orderByDesc('fax_epoch')
+                ->first();
+
+            if ($currentAttempt) {
+                return $currentAttempt;
+            }
+        }
+
+        return FaxLogs::query()
+            ->where('outbound_fax_uuid', $fax->outbound_fax_uuid)
+            ->reorder()
+            ->orderByDesc('fax_date')
+            ->orderByDesc('fax_epoch')
+            ->first();
     }
 
     private function failureMessage(array $attributes): string
