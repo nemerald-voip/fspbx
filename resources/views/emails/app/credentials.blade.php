@@ -128,12 +128,19 @@
         @endif
       </table>
     </td>
-    <td>
-        @if(empty($attributes['password_url']))
-            <img src="data:image/png;base64, {!! base64_encode($attributes['qrCode']) !!} ">
-        @endif
-    </td>
   </tr>
+  @if(empty($attributes['password_url']) && !empty($attributes['qrCodeUrl']))
+    <tr>
+      <td class="attributes_content" align="center" style="padding-top: 0;">
+        <img
+          src="{{ $attributes['qrCodeUrl'] }}"
+          alt="Mobile app credentials QR code"
+          width="180"
+          style="display:block; width:180px; height:auto; margin:0 auto;"
+        >
+      </td>
+    </tr>
+  @endif
 </table>
 
 <p>3. Once you have logged in, start communicating with the users within your organization. You can make and receive phone calls through your extension, put calls on hold, transfer calls, park calls, and much more.</p>

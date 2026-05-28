@@ -8,9 +8,10 @@ use App\Models\DefaultSettings;
 use Symfony\Component\Mime\Email;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Mail\Mailables\Content;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class AppCredentials extends Mailable
 {
@@ -53,11 +54,19 @@ class AppCredentials extends Mailable
             $message->getHeaders()->addTextHeader('List-Unsubscribe', 'mailto:' . $this->attributes['unsubscribe_email']);
         });
 
-        $this->attributes['qrCode'] = QrCode::format('png')
-            ->generate('{"domain":"' . $this->attributes["domain"] . '","username":"' . $this->attributes["username"] . '","password":"' . $this->attributes["password"] . '"}');
+        $payload = json_encode([
+            'domain' => $this->attributes['domain'] ?? '',
+            'username' => $this->attributes['username'] ?? '',
+            'password' => $this->attributes['password'] ?? '',
+        ]);
 
-        // logger($this->attributes['qrCode']);
+        $qrExpiresAt = now()->addDays(30);
 
+        $this->attributes['qrCodeUrl'] = URL::temporarySignedRoute(
+            'appsMobileAppQr',
+            $qrExpiresAt,
+            ['payload' => Crypt::encryptString($payload)]
+        );
 
         return $this->from(config('mail.from.address'), config('mail.from.name'))
             ->subject(config('app.name', 'Laravel') . ' App Credentials');

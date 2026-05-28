@@ -124,6 +124,9 @@ Route::get(
 Route::get('/csrf-token/refresh', [CsrfTokenController::class, 'store']);
 
 // Get mobile app password
+Route::get('/mobile-app/qr-code', [AppsCredentialsController::class, 'showQrCode'])
+    ->middleware('signed')
+    ->name('appsMobileAppQr');
 Route::get('/mobile-app/get-password/{token}', [AppsCredentialsController::class, 'getPasswordByToken'])->name('appsGetPasswordByToken');
 Route::post('/mobile-app/get-password/{token}', [AppsCredentialsController::class, 'retrievePasswordByToken'])->name('appsRetrievePasswordByToken');
 

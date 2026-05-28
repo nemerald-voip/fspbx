@@ -5,12 +5,32 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use App\Models\MobileAppUsers;
+use Illuminate\Support\Facades\Crypt;
 use App\Services\RingotelApiService;
 use App\Models\MobileAppPasswordResetLinks;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class AppsCredentialsController extends Controller
 {
+    public function showQrCode(Request $request)
+    {
+        if (!$request->filled('payload')) {
+            abort(404);
+        }
+
+        try {
+            $payload = Crypt::decryptString($request->query('payload'));
+        } catch (\Throwable $e) {
+            abort(404);
+        }
+
+        $qrCode = QrCode::format('png')->generate($payload);
+
+        return response($qrCode, 200)
+            ->header('Content-Type', 'image/png')
+            ->header('Cache-Control', 'private, max-age=2592000');
+    }
+
     /**
      * Show the credentials view.
      *
