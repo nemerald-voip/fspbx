@@ -60,7 +60,11 @@
             <table border="0" cellspacing="0" cellpadding="0">
               <tr>
                 <td>
-                  <a href="{{ $attributes['windows_link'] ?? '' }}" class="button button--" target="_blank">Get it for <strong>Windows</strong></a>
+                  <a
+                    href="{{ $attributes['windows_link'] ?? '' }}"
+                    target="_blank"
+                    style="background-color:#3869D4; border-top:10px solid #3869D4; border-right:18px solid #3869D4; border-bottom:10px solid #3869D4; border-left:18px solid #3869D4; border-radius:3px; color:#ffffff !important; display:inline-block; font-family:Helvetica, Arial, sans-serif; font-size:16px; font-weight:700; line-height:20px; text-align:center; text-decoration:none; -webkit-text-size-adjust:none;"
+                  ><span style="color:#ffffff;">Get it for Windows</span></a>
 
 
                 </td>
@@ -77,7 +81,11 @@
             <table border="0" cellspacing="0" cellpadding="0">
               <tr>
                 <td>
-                  <a href="{{ $attributes['mac_link'] ?? '' }}" class="button button--" target="_blank">Download for <strong>Mac</strong></a>
+                  <a
+                    href="{{ $attributes['mac_link'] ?? '' }}"
+                    target="_blank"
+                    style="background-color:#3869D4; border-top:10px solid #3869D4; border-right:18px solid #3869D4; border-bottom:10px solid #3869D4; border-left:18px solid #3869D4; border-radius:3px; color:#ffffff !important; display:inline-block; font-family:Helvetica, Arial, sans-serif; font-size:16px; font-weight:700; line-height:20px; text-align:center; text-decoration:none; -webkit-text-size-adjust:none;"
+                  ><span style="color:#ffffff;">Download for Mac</span></a>
 
                 </td>
               </tr>
