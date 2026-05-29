@@ -730,7 +730,7 @@ const handleErrorResponse = (error) => {
 
 const handleSelectPageItems = () => {
     if (selectPageItems.value) {
-        selectedItems.value = props.data.data.map(item => item.destination_uuid);
+        selectedItems.value = data.value.data.map(item => item.destination_uuid);
     } else {
         selectedItems.value = [];
     }

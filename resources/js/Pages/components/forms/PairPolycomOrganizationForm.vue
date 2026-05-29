@@ -1,67 +1,155 @@
 <template>
-    <form @submit.prevent="submitForm">
-        <div class="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-            <div class="sm:col-span-12">
-                <p class="text-sm text-gray-500 pb-2">
-                    Select the organization you want to connect to from the dropdown below.
-                </p>
-                <LabelInputRequired :target="'org_id'" :label="'Organization'" />
-                <div class="mt-2">
-                    <ComboBox :options="orgs" :search="true"
-                    :placeholder="'Select an organization'" @update:model-value="handleUpdateOrgValue" :error="errors?.org_id.length > 0"/>
-                </div>
-                <div v-if="errors?.org_id" class="mt-2 text-sm text-red-600">
-                    {{ errors.org_id[0] }}
+    <TransitionRoot as="div" :show="show">
+        <Dialog as="div" class="relative z-20">
+            <TransitionChild as="div" enter="ease-out duration-300" enter-from="opacity-0" enter-to="opacity-100"
+                leave="ease-in duration-200" leave-from="opacity-100" leave-to="opacity-0">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" />
+            </TransitionChild>
+
+            <div class="fixed inset-0 z-20 w-screen overflow-y-auto">
+                <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+                    <TransitionChild as="template" enter="ease-out duration-300"
+                        enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+                        enter-to="opacity-100 translate-y-0 sm:scale-100" leave="ease-in duration-200"
+                        leave-from="opacity-100 translate-y-0 sm:scale-100"
+                        leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
+
+                        <DialogPanel
+                            class="relative transform rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-xl sm:p-6">
+                            <DialogTitle as="h3" class="mb-4 pr-8 text-base font-semibold leading-6 text-gray-900">
+                                Connect to existing ZTP Organization
+                            </DialogTitle>
+
+                            <div class="absolute right-0 top-0 pr-4 pt-4 sm:block">
+                                <button type="button"
+                                    class="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                    @click="emit('close')">
+                                    <span class="sr-only">Close</span>
+                                    <XMarkIcon class="h-6 w-6" aria-hidden="true" />
+                                </button>
+                            </div>
+
+                            <div v-if="loading" class="w-full h-full py-6">
+                                <div class="flex items-center justify-center space-x-3">
+                                    <svg class="h-10 w-10 animate-spin text-blue-600"
+                                        xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4" />
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                    </svg>
+                                    <div class="m-auto text-lg text-blue-600">Loading...</div>
+                                </div>
+                            </div>
+
+                            <Vueform v-else ref="form$" :endpoint="submitForm" @success="handleSuccess"
+                                @error="handleError" @response="handleResponse" :display-errors="false" :default="{
+                                    provider: selectedProvider,
+                                }">
+                                <StaticElement name="intro">
+                                    <p class="text-sm text-gray-500">
+                                        Select the organization you want to connect to from the dropdown below.
+                                    </p>
+                                </StaticElement>
+
+                                <HiddenElement name="provider" :meta="true" />
+
+                                <SelectElement name="org_id" label="Organization" :items="organizationOptions"
+                                    label-prop="name" value-prop="value" :search="true" :native="false"
+                                    input-type="search" autocomplete="off" placeholder="Select an organization"
+                                    :rules="['required']" />
+
+                                <GroupElement name="buttons" />
+
+                                <ButtonElement name="cancel" button-label="Cancel" :secondary="true"
+                                    @click="emit('close')" :columns="{ container: 6 }" />
+
+                                <ButtonElement name="submit" button-label="Submit" :submits="true" align="right"
+                                    :columns="{ container: 6 }" />
+                            </Vueform>
+                        </DialogPanel>
+                    </TransitionChild>
                 </div>
             </div>
-
-        </div>
-
-        <div class="border-t mt-4 sm:mt-4 ">
-            <div class="mt-4 sm:mt-4 sm:grid sm:grid-flow-row-dense sm:grid-cols-2 sm:gap-3">
-                <button type="button"
-                    class="inline-flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 sm:col-start-2"
-                     :disabled="isSubmitting" @click.prevent="submitForm">
-                    <Spinner :show="isSubmitting" />
-                    Submit
-                </button>
-                <button type="button"
-                    class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:col-start-1 sm:mt-0"
-                    @click="emits('cancel')" ref="cancelButtonRef">Cancel
-                </button>
-            </div>
-        </div>
-    </form>
+        </Dialog>
+    </TransitionRoot>
 </template>
 
 <script setup>
-import { reactive } from "vue";
-
-import ComboBox from "../general/ComboBox.vue";
-import LabelInputRequired from "../general/LabelInputRequired.vue";
-import Spinner from "../general/Spinner.vue";
+import { computed, ref } from "vue";
+import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
+import { XMarkIcon } from "@heroicons/vue/24/solid";
 
 const props = defineProps({
-    orgs: [Object, null],
+    orgs: [Array, Object, null],
     selectedProvider: [String, null],
-    isSubmitting: Boolean,
-    errors: Object,
+    show: Boolean,
+    loading: Boolean,
+    route: [String, null],
 });
 
+const emit = defineEmits(['close', 'error', 'success', 'refresh-data']);
 
-const form = reactive({
-    org_id: null,
-    provider: props.selectedProvider,
+const form$ = ref(null)
+
+const organizationOptions = computed(() => {
+    if (Array.isArray(props.orgs)) {
+        return props.orgs
+    }
+
+    return Object.values(props.orgs ?? {})
 })
 
-const emits = defineEmits(['submit', 'cancel']);
+const submitForm = async (FormData, form$) => {
+    return await form$.$vueform.services.axios.post(props.route, form$.requestData)
+};
 
-const submitForm = () => {
-    emits('submit', form); // Emit the event with the form data
+function clearErrorsRecursive(el$) {
+    el$.messageBag?.clear()
+
+    if (el$.children$) {
+        Object.values(el$.children$).forEach(childEl$ => {
+            clearErrorsRecursive(childEl$)
+        })
+    }
 }
 
-const handleUpdateOrgValue = (org) => {
-    form.org_id = org.value
+const handleResponse = (response, form$) => {
+    Object.values(form$.elements$).forEach(el$ => {
+        clearErrorsRecursive(el$)
+    })
+
+    if (response.data.errors) {
+        Object.keys(response.data.errors).forEach((elName) => {
+            if (form$.el$(elName)) {
+                form$.el$(elName).messageBag.append(response.data.errors[elName][0])
+            }
+        })
+    }
 }
 
+const handleSuccess = (response) => {
+    emit('success', response.data.messages);
+    emit('close');
+    emit('refresh-data', props.selectedProvider);
+}
+
+const handleError = (error, details, form$) => {
+    form$.messageBag.clear()
+
+    switch (details.type) {
+        case 'prepare':
+            form$.messageBag.append('Could not prepare form')
+            break
+        case 'submit':
+            emit('error', error);
+            break
+        case 'cancel':
+            form$.messageBag.append('Request cancelled')
+            break
+        case 'other':
+            form$.messageBag.append('Couldn\'t submit form')
+            break
+    }
+}
 </script>
