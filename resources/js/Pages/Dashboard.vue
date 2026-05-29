@@ -92,6 +92,59 @@
                             </dl>
                         </div>
 
+                        <section v-if="customerNotes.visible" role="button" tabindex="0" @click="showCustomerNotesModal = true"
+                            @keydown.enter="showCustomerNotesModal = true"
+                            @keydown.space.prevent="showCustomerNotesModal = true"
+                            :class="[
+                                'group relative w-full overflow-hidden rounded-lg p-5 text-left shadow-sm ring-1 transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2',
+                                hasVisibleCustomerNotesContent
+                                    ? 'border border-amber-200 bg-amber-100/90 ring-amber-300/30'
+                                    : 'border border-gray-200 bg-white ring-gray-200',
+                            ]">
+                            <div class="relative flex items-start justify-between gap-4">
+                                <div>
+                                    <p :class="[
+                                        'text-xs font-semibold uppercase tracking-wide',
+                                        hasVisibleCustomerNotesContent ? 'text-amber-800' : 'text-cyan-700',
+                                    ]">Customer Notes</p>
+                                    <h3 :class="[
+                                        'mt-1 text-base font-semibold',
+                                        hasVisibleCustomerNotesContent ? 'text-amber-950' : 'text-gray-950',
+                                    ]">Technician notes</h3>
+                                </div>
+                            </div>
+
+                            <div class="relative mt-4 space-y-3">
+                                <div v-for="note in visibleCustomerNotes" :key="note.key"
+                                    :class="[
+                                        'rounded-md px-3 py-2 ring-1 ring-inset',
+                                        hasVisibleCustomerNotesContent ? 'bg-white/55 ring-amber-700/10' : 'bg-gray-50 ring-gray-200',
+                                        note.borderClass,
+                                    ]">
+                                    <div class="mb-1 flex items-center gap-2 text-xs font-semibold uppercase tracking-wide"
+                                        :class="note.labelClass">
+                                        <span :class="['h-2 w-2 rounded-full', note.dotClass]"></span>
+                                        {{ note.label }}
+                                    </div>
+                                    <div v-if="note.content" class="relative">
+                                        <div :ref="(el) => setCustomerNotesPreviewRef(note.key, el)"
+                                            class="customer-notes-preview max-h-28 overflow-hidden text-sm leading-5 text-amber-950"
+                                            v-html="note.content"></div>
+                                        <div v-if="overflowingCustomerNotes[note.key]"
+                                            :class="[
+                                                'pointer-events-none absolute inset-x-0 bottom-0 flex h-10 items-end justify-center bg-gradient-to-t pb-0.5 text-lg font-semibold leading-none',
+                                                hasVisibleCustomerNotesContent
+                                                    ? 'from-amber-50 via-amber-50/95 text-amber-900'
+                                                    : 'from-gray-50 via-gray-50/95 text-gray-700',
+                                            ]">
+                                            ...
+                                        </div>
+                                    </div>
+                                    <p v-else class="text-sm italic leading-5 text-amber-900/75">No notes yet.</p>
+                                </div>
+                            </div>
+                        </section>
+
                         <div v-if="my_extension_status"
                             class="overflow-hidden rounded-lg bg-white ring-1 ring-gray-200">
                             <div class="flex flex-col gap-4 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
@@ -168,18 +221,25 @@
         @close="showExtensionModal = false" @error="handleErrorResponse" @success="showNotification"
         @refresh-data="getCounts" />
 
+    <CustomerNotesModal :show="showCustomerNotesModal" :customer-notes="customerNotes"
+        :can-edit="permissions.customer_notes_edit" :route="routes.customer_notes_route"
+        @close="showCustomerNotesModal = false"
+        @error="handleErrorResponse" @success="handleCustomerNotesSuccess"
+        @updated="handleCustomerNotesUpdated" />
+
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onBeforeUnmount, onMounted, nextTick } from 'vue'
 import axios from 'axios';
 import MainLayout from '../Layouts/MainLayout.vue'
 import DashboardTile from './components/general/DashboardTile.vue'
 import GlobalInfoPanel from './components/general/GlobalInfoPanel.vue'
 import SkeletonRows from './components/general/Skeleton.vue'
 import UpdateExtensionForm from './components/forms/UpdateExtensionForm.vue'
+import CustomerNotesModal from './components/modal/CustomerNotesModal.vue'
 import Notification from './components/notifications/Notification.vue'
 import ContactPhoneIcon from "./components/icons/ContactPhoneIcon.vue"
 import DialpadIcon from "./components/icons/DialpadIcon.vue"
@@ -204,6 +264,10 @@ const props = defineProps({
         type: Object,
         default: null,
     },
+    customer_notes: {
+        type: Object,
+        default: () => ({ visible: false, levels: [], notes: {} }),
+    },
     permissions: {
         type: Object,
         default: () => ({})
@@ -214,7 +278,11 @@ const props = defineProps({
 const data = ref(props.data ?? {});
 const counts = ref(props.counts ?? {});
 const my_extension_status = ref(props.my_extension_status ?? null);
+const customerNotes = ref(props.customer_notes ?? { visible: false, levels: [], notes: {} });
+const customerNotesPreviewRefs = ref({});
+const overflowingCustomerNotes = ref({});
 const showExtensionModal = ref(false);
+const showCustomerNotesModal = ref(false);
 const isExtensionModalLoading = ref(false);
 const extensionItemOptions = ref({});
 const notificationType = ref(null);
@@ -258,8 +326,59 @@ const hasActiveCallHandling = computed(() => {
     );
 });
 
+const customerNoteLayers = [
+    {
+        key: 'level_1',
+        level: 1,
+        label: 'Level 1',
+        borderClass: 'border-l-4 border-l-amber-600',
+        labelClass: 'text-amber-800',
+        dotClass: 'bg-amber-600',
+    },
+    {
+        key: 'level_2',
+        level: 2,
+        label: 'Level 2',
+        borderClass: 'border-l-4 border-l-sky-600',
+        labelClass: 'text-sky-800',
+        dotClass: 'bg-sky-600',
+    },
+    {
+        key: 'level_3',
+        level: 3,
+        label: 'Level 3',
+        borderClass: 'border-l-4 border-l-rose-600',
+        labelClass: 'text-rose-800',
+        dotClass: 'bg-rose-600',
+    },
+];
+
+const visibleCustomerNotes = computed(() => {
+    const levels = customerNotes.value?.levels || [];
+    const notes = customerNotes.value?.notes || {};
+
+    return customerNoteLayers
+        .filter((layer) => levels.includes(layer.level))
+        .map((layer) => ({
+            ...layer,
+            content: notes[layer.key] || null,
+        }));
+});
+
+const hasVisibleCustomerNotesContent = computed(() => {
+    return visibleCustomerNotes.value.some((note) => {
+        const content = note.content || '';
+        return content.replace(/<[^>]*>/g, '').trim() !== '';
+    });
+});
+
 onMounted(() => {
     getCounts();
+    window.addEventListener('resize', measureCustomerNotesPreviews);
+})
+
+onBeforeUnmount(() => {
+    window.removeEventListener('resize', measureCustomerNotesPreviews);
 })
 
 const getCounts = () => {
@@ -269,7 +388,10 @@ const getCounts = () => {
             return getMyExtensionStatus();
         })
         .then(() => {
-            getData();
+            return getData();
+        })
+        .then(() => {
+            return getCustomerNotes();
         })
         .catch((error) => {
             handleErrorResponse(error);
@@ -324,8 +446,57 @@ const showNotification = (type, messages = null) => {
     notificationShow.value = true;
 }
 
+const handleCustomerNotesUpdated = (payload) => {
+    customerNotes.value = payload || { visible: false, levels: [], notes: {} };
+    measureCustomerNotesPreviews();
+}
+
+const handleCustomerNotesSuccess = (messages = null) => {
+    showNotification('success', messages);
+}
+
+const setCustomerNotesPreviewRef = (key, el) => {
+    if (el) {
+        customerNotesPreviewRefs.value[key] = el;
+    } else {
+        delete customerNotesPreviewRefs.value[key];
+    }
+
+    measureCustomerNotesPreviews();
+}
+
+const measureCustomerNotesPreviews = async () => {
+    await nextTick();
+
+    const overflowState = {};
+    Object.entries(customerNotesPreviewRefs.value).forEach(([key, el]) => {
+        overflowState[key] = el.scrollHeight > el.clientHeight + 1;
+    });
+
+    if (JSON.stringify(overflowingCustomerNotes.value) !== JSON.stringify(overflowState)) {
+        overflowingCustomerNotes.value = overflowState;
+    }
+}
+
+const getCustomerNotes = () => {
+    const hasCustomerNotesAccess = props.permissions.customer_notes_level_1
+        || props.permissions.customer_notes_level_2
+        || props.permissions.customer_notes_level_3;
+
+    if (!hasCustomerNotesAccess || !props.routes.customer_notes_route) {
+        customerNotes.value = { visible: false, levels: [], notes: {} };
+        return Promise.resolve();
+    }
+
+    return axios.get(props.routes.customer_notes_route)
+        .then((response) => {
+            customerNotes.value = response.data || { visible: false, levels: [], notes: {} };
+            measureCustomerNotesPreviews();
+        });
+}
+
 const getData = () => {
-    axios.get(props.routes.data_route)
+    return axios.get(props.routes.data_route)
         .then((response) => {
             data.value = response.data || {};
         })
@@ -345,3 +516,32 @@ const getMyExtensionStatus = () => {
         });
 }
 </script>
+
+<style scoped>
+.customer-notes-preview :deep(p),
+.customer-notes-preview :deep(div),
+.customer-notes-preview :deep(ul),
+.customer-notes-preview :deep(ol),
+.customer-notes-preview :deep(blockquote),
+.customer-notes-preview :deep(pre) {
+    margin-bottom: 0.5rem;
+}
+
+.customer-notes-preview :deep(ul),
+.customer-notes-preview :deep(ol) {
+    padding-left: 1.25rem;
+}
+
+.customer-notes-preview :deep(ul) {
+    list-style: disc;
+}
+
+.customer-notes-preview :deep(ol) {
+    list-style: decimal;
+}
+
+.customer-notes-preview :deep(a) {
+    color: #0e7490;
+    text-decoration: underline;
+}
+</style>
