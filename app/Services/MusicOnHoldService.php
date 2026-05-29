@@ -232,11 +232,35 @@ class MusicOnHoldService
 
     public function representativeQuery()
     {
+        $representatives = DB::query()
+            ->select('music_on_hold_uuid')
+            ->fromSub(function ($query) {
+                $query->from((new MusicOnHold())->getTable())
+                    ->select('music_on_hold_uuid')
+                    ->selectRaw(
+                        "row_number() over (
+                            partition by domain_uuid,
+                                music_on_hold_name,
+                                regexp_replace(rtrim(music_on_hold_path, '/'), '/(8000|16000|32000|48000)$', '')
+                            order by
+                                case
+                                    when music_on_hold_rate = ? then 0
+                                    when music_on_hold_rate is null then 1
+                                    when music_on_hold_rate = '8000' then 2
+                                    when music_on_hold_rate = '32000' then 3
+                                    when music_on_hold_rate = '48000' then 4
+                                    else 5
+                                end,
+                                music_on_hold_rate nulls last,
+                                music_on_hold_uuid
+                        ) as stream_rank",
+                        [self::DEFAULT_RATE]
+                    );
+            }, 'ranked_music_on_hold')
+            ->where('stream_rank', 1);
+
         return $this->scopedQuery()
-            ->where(function ($query) {
-                $query->where('music_on_hold_rate', self::DEFAULT_RATE)
-                    ->orWhereNull('music_on_hold_rate');
-            });
+            ->whereIn('music_on_hold_uuid', $representatives);
     }
 
     public function accessibleDomainUuids(): array
