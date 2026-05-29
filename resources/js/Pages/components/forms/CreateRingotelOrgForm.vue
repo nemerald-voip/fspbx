@@ -252,12 +252,16 @@ watch(
 
 const page = usePage();
 
+const isEnabledSetting = (value) => {
+    return value === true || value === 'true' || value === 't' || value === 1 || value === '1';
+};
+
 const form = reactive({
     organization_name: props.options.model.domain_description,
     organization_domain: props.options.settings.suggested_ringotel_domain,
     region: props.options.settings.organization_region,
     package: props.options.settings.package,
-    dont_send_user_credentials: props.options.settings.dont_send_user_credentials === "true",
+    dont_send_user_credentials: isEnabledSetting(props.options.settings.dont_send_user_credentials),
     domain_uuid: props.options.model.domain_uuid,
     _token: page.props.csrf_token,
 })
