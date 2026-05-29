@@ -158,7 +158,6 @@ class UpdateApp extends Command
             '1.8.3' => Update183::class,
             '1.8.4' => Update184::class,
             '1.8.5' => Update185::class,
-            '1.8.6' => Update186::class,
             // Add more versions as needed
         ];
 
