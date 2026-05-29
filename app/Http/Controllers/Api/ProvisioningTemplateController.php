@@ -76,7 +76,9 @@ class ProvisioningTemplateController extends Controller
                     'template_uuid' => $ProvisioningTemplate->template_uuid,
                 ],
                 'routes' => [
-                    'update_route' => route('provisioning-templates.update', $ProvisioningTemplate->template_uuid),
+                    'update_route' => route('provisioning-templates.update', [
+                        'provisioning_template' => $ProvisioningTemplate->template_uuid,
+                    ]),
                 ],
                 'messages' => ['success' => ['New provisioning template created']]
             ], 201);
@@ -130,7 +132,9 @@ class ProvisioningTemplateController extends Controller
 
             if (request()->filled('item_uuid')) {
                 $item = ProvisioningTemplate::findOrFail(request('item_uuid'));
-                $routes['update_route'] = route('provisioning-templates.update', $item->template_uuid);
+                $routes['update_route'] = route('provisioning-templates.update', [
+                    'provisioning_template' => $item->template_uuid,
+                ]);
             } else {
                 $routes['store_route'] = route('provisioning-templates.store');
             }
