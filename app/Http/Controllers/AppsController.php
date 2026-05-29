@@ -584,6 +584,10 @@ class AppsController extends Controller
             $deleteResponse = $this->ringotelApiService->deleteOrganization($org_id);
 
             if ($deleteResponse) {
+                MobileAppUsers::where('domain_uuid', $domain_uuid)
+                    ->where('org_id', $org_id)
+                    ->delete();
+
                 return response()->json([
                     'messages' => ['success' => ['Organization and its connections were successfully deleted.']]
                 ], 200); // 200 OK
