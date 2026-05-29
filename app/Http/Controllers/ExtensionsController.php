@@ -8,6 +8,7 @@ use Inertia\Inertia;
 use App\Models\Groups;
 use App\Models\Devices;
 use App\Data\DeviceData;
+use App\Models\DeviceLines;
 use App\Models\FollowMe;
 use App\Models\UserGroup;
 use App\Models\Extensions;
@@ -1115,12 +1116,7 @@ public function store(StoreExtensionRequest $request)
             DB::beginTransaction();
             $currentDomain = session('domain_uuid');
 
-            $extension = Extensions::with([
-                'deviceLines' => function ($q) use ($currentDomain) {
-                    $q->where('domain_uuid', $currentDomain)
-                        ->select('device_line_uuid', 'device_uuid', 'auth_id', 'domain_uuid', 'password');
-                }
-            ])->whereKey($extension_uuid)
+            $extension = Extensions::whereKey($extension_uuid)
                 ->where('domain_uuid', $currentDomain)
                 ->firstOrFail();
 
@@ -1132,7 +1128,15 @@ public function store(StoreExtensionRequest $request)
             $extension->save();
 
             // Update all related device line passwords for this domain
-            foreach ($extension->deviceLines as $deviceLine) {
+            $deviceLines = DeviceLines::where('domain_uuid', $currentDomain)
+                ->where('auth_id', $extension->extension)
+                ->where(function ($query) {
+                    $query->whereNull('external_line')
+                        ->orWhere('external_line', '!=', 't');
+                })
+                ->get();
+
+            foreach ($deviceLines as $deviceLine) {
                 $deviceLine->password = $newPassword; // Use correct field name!
                 $deviceLine->save();
             }
@@ -1170,30 +1174,33 @@ public function store(StoreExtensionRequest $request)
         try {
 
             $extension = QueryBuilder::for(\App\Models\Extensions::query())
-                ->with([
-                    'deviceLines' => function ($q) use ($currentDomain) {
-                        $q->where('domain_uuid', $currentDomain)
-                            ->select('device_line_uuid', 'device_uuid', 'auth_id', 'domain_uuid')
-                            ->with(['device' => function ($query) {
-                                $query->select('device_uuid', 'device_profile_uuid', 'device_key_template_uuid', 'device_address', 'device_template', 'device_template_uuid')
-                                    ->with(['profile' => function ($profileQuery) {
-                                        $profileQuery->select('device_profile_uuid', 'device_profile_name'); // Add fields as needed
-                                    }])
-                                    ->with(['keyTemplate' => function ($query) {
-                                        $query->select('device_key_template_uuid', 'name');
-                                    }])
-                                    ->with(['template' => function ($query) {
-                                        $query->select('template_uuid', 'domain_uuid', 'vendor', 'name');
-                                    }]);
-                            }]);
-                    }
-                ])
-                ->select('extension_uuid', 'extension')
+                ->select('extension_uuid', 'extension', 'user_context')
                 ->where('extension_uuid', $extension_uuid)
-                ->first();
+                ->where('domain_uuid', $currentDomain)
+                ->firstOrFail();
 
+            $deviceLines = DeviceLines::where('domain_uuid', $currentDomain)
+                ->where('auth_id', $extension->extension)
+                ->where(function ($query) {
+                    $query->whereNull('external_line')
+                        ->orWhere('external_line', '!=', 't');
+                })
+                ->select('device_line_uuid', 'device_uuid', 'auth_id', 'domain_uuid')
+                ->with(['device' => function ($query) {
+                    $query->select('device_uuid', 'device_profile_uuid', 'device_key_template_uuid', 'device_address', 'device_template', 'device_template_uuid')
+                        ->with(['profile' => function ($profileQuery) {
+                            $profileQuery->select('device_profile_uuid', 'device_profile_name'); // Add fields as needed
+                        }])
+                        ->with(['keyTemplate' => function ($query) {
+                            $query->select('device_key_template_uuid', 'name');
+                        }])
+                        ->with(['template' => function ($query) {
+                            $query->select('template_uuid', 'domain_uuid', 'vendor', 'name');
+                        }]);
+                }])
+                ->get();
 
-            $devices = collect($extension->deviceLines)
+            $devices = collect($deviceLines)
                 ->pluck('device')
                 ->filter()            // Remove any nulls (just in case)
                 ->sortBy('device_address')
@@ -1268,6 +1275,9 @@ public function store(StoreExtensionRequest $request)
                 ->where('domain_uuid', $currentDomain)
                 ->firstOrFail();
 
+            $oldExtension = (string) $extension->extension;
+            $oldPassword = (string) $extension->password;
+
             if ($selfService) {
                 $data['extension'] = $extension->extension;
                 $data['effective_caller_id_number'] = $extension->extension;
@@ -1299,7 +1309,38 @@ public function store(StoreExtensionRequest $request)
                 $data['follow_me_uuid'] = $followMeUuid;
             }
 
+            $deviceLines = collect();
+            $newExtension = (string) ($data['extension'] ?? $extension->extension);
+            $newPassword = (string) ($data['password'] ?? $extension->password);
+
+            if ($oldExtension !== $newExtension || $oldPassword !== $newPassword) {
+                $deviceLines = DeviceLines::where('domain_uuid', $currentDomain)
+                    ->where('auth_id', $oldExtension)
+                    ->where(function ($query) {
+                        $query->whereNull('external_line')
+                            ->orWhere('external_line', '!=', 't');
+                    })
+                    ->get();
+            }
+
             $extension->update($data);
+
+            foreach ($deviceLines as $deviceLine) {
+                if ($oldExtension !== (string) $extension->extension) {
+                    $deviceLine->auth_id = $extension->extension;
+
+                    if ((string) $deviceLine->user_id === $oldExtension) {
+                        $deviceLine->user_id = $extension->extension;
+                    }
+
+                    if ((string) $deviceLine->label === $oldExtension) {
+                        $deviceLine->label = $extension->extension;
+                    }
+                }
+
+                $deviceLine->password = $extension->password;
+                $deviceLine->save();
+            }
 
 // Update related voicemail only when user has permission
             if ($canManageVoicemail) {
@@ -2226,8 +2267,33 @@ public function store(StoreExtensionRequest $request)
         try {
             DB::beginTransaction();
 
-            $extension = Extensions::find(request('extension_uuid'));
-            $extension->update(request()->all());
+            $data = request()->validate([
+                'extension_uuid' => ['required', 'uuid'],
+                'password' => ['required', 'string'],
+            ]);
+
+            $extension = Extensions::where('extension_uuid', $data['extension_uuid'])
+                ->where('domain_uuid', session('domain_uuid'))
+                ->firstOrFail();
+
+            $oldPassword = (string) $extension->password;
+            $extension->password = $data['password'];
+            $extension->save();
+
+            if ($oldPassword !== (string) $extension->password) {
+                $deviceLines = DeviceLines::where('domain_uuid', session('domain_uuid'))
+                    ->where('auth_id', $extension->extension)
+                    ->where(function ($query) {
+                        $query->whereNull('external_line')
+                            ->orWhere('external_line', '!=', 't');
+                    })
+                    ->get();
+
+                foreach ($deviceLines as $deviceLine) {
+                    $deviceLine->password = $extension->password;
+                    $deviceLine->save();
+                }
+            }
 
             DB::commit();
 
@@ -2238,7 +2304,7 @@ public function store(StoreExtensionRequest $request)
             ], 200);
         } catch (\Throwable $e) {
             DB::rollBack();
-            logger('UserController@updatePassword error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
+            logger('ExtensionsController@updatePassword error: ' . $e->getMessage() . ' at ' . $e->getFile() . ':' . $e->getLine());
             return response()->json([
                 'success' => false,
                 'errors' => ['error' => [$e->getMessage()]],
