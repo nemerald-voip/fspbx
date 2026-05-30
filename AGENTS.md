@@ -49,6 +49,8 @@ This repo is a Laravel, Vue/Inertia, VueForm, and FreeSWITCH application. Before
 - Native provisioning renders `provisioning_templates.content` from the database, not the resource file directly. Changes under `resources/provisioning/.../template.blade.php` require reseeding default templates with `php artisan prov:templates:seed` or manually updating custom template content.
 - Custom provisioning templates do not inherit default template changes automatically.
 - When changing default provisioning templates, bump the Blade front-matter `version:` so the seeder can update the database row clearly.
+- The provisioning template seeder keys default rows by `vendor + folder name + type`. When renaming a default template folder, add an update step before `prov:templates:seed` runs that renames the existing `provisioning_templates.name` row and any custom `base_template` references, otherwise the seeder will create a second default row under the new folder name.
+- Provisioning preview should render through the same code path as live provisioning but must not touch `/prov`, digest auth, or device last-contact metadata. Treat generated previews as credential-bearing output and gate them with a dedicated action permission.
 - The old provisioning URL delegates modern `device_keys` overlay behavior to `fspbx_apply_new_keys_override()` in `app/helpers.php`. Key Template support for that old path should stay in helpers where possible.
 - `device_key_templates.enabled` is stored as the string `'true'`, not a boolean. Legacy SQL helpers should compare it as `t.enabled = 'true'`.
 - If the old `provision.php` path must participate in a new behavior, remember `public/` is not tracked. Make the runtime file change for the working server, then add or update an update class to download/replace the file for deployed systems.
@@ -122,7 +124,7 @@ This repo is a Laravel, Vue/Inertia, VueForm, and FreeSWITCH application. Before
   - `*_view_self_records`
 - Do not repurpose legacy permissions unless there is a concrete existing use that proves the meaning.
 - Add durable permissions to `database/seeders/DatabaseSeeder.php`; it runs as part of updates.
-- If adding permissions to an already-versioned release, also add them to the current or next update class so deployed systems receive them without relying on a fresh seed.
+- Do not manually add permissions in update classes unless the normal update flow is bypassing the seeder for that release.
 
 ## Updates
 

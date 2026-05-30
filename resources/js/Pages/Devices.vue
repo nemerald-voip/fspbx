@@ -258,6 +258,15 @@
                                     </div>
                                 </ejs-tooltip>
 
+                                <ejs-tooltip v-if="permissions.device_provisioning_preview"
+                                    :content="'Preview provisioning'" position='TopCenter'
+                                    target="#provisioning_preview_tooltip_target">
+                                    <div id="provisioning_preview_tooltip_target">
+                                        <MagnifyingGlassIcon @click="handleProvisioningPreview(row.device_uuid)"
+                                            class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
+                                    </div>
+                                </ejs-tooltip>
+
                                 <ejs-tooltip :content="'Restart device'" position='TopCenter'
                                     target="#restart_tooltip_target">
                                     <div id="restart_tooltip_target">
@@ -341,6 +350,70 @@
 
     <Notification :show="notificationShow" :type="notificationType" :messages="notificationMessages"
         @update:show="hideNotification" />
+
+    <AddEditItemModal :show="showProvisioningPreviewModal" :header="provisioningPreviewHeader"
+        :loading="isProvisioningPreviewLoading" customClass="sm:max-w-6xl h-[85vh] max-h-[85vh]"
+        contentClass="flex min-h-0 flex-1 flex-col" bodyClass="min-h-0 flex-1 overflow-hidden"
+        @close="closeProvisioningPreview">
+        <template #modal-body>
+            <div class="flex h-full min-h-0 flex-col">
+                <div v-if="provisioningPreviewError" class="rounded-md bg-red-50 p-4 text-sm text-red-700">
+                    {{ provisioningPreviewError }}
+                </div>
+
+                <div v-else class="flex min-h-0 flex-1 flex-col gap-3">
+                    <div class="grid gap-2 text-sm text-gray-600 sm:grid-cols-3">
+                        <div>
+                            <span class="font-semibold text-gray-900">Device:</span>
+                            {{ provisioningPreviewData?.device?.device_address_formatted || provisioningPreviewData?.device?.device_address || '—' }}
+                        </div>
+                        <div>
+                            <span class="font-semibold text-gray-900">Vendor:</span>
+                            {{ provisioningPreviewData?.device?.device_vendor || '—' }}
+                        </div>
+                        <div>
+                            <span class="font-semibold text-gray-900">Template:</span>
+                            {{ provisioningPreviewTemplateLabel }}
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2 border-b border-gray-200 pb-2">
+                        <button v-for="file in provisioningPreviewFiles" :key="file.flavor" type="button"
+                            @click="activeProvisioningPreviewFlavor = file.flavor" :class="[
+                                activeProvisioningPreviewFlavor === file.flavor
+                                    ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                                    : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50',
+                                'rounded-md border px-3 py-1.5 text-sm font-medium'
+                            ]">
+                            {{ file.filename }}
+                        </button>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-3">
+                        <div class="min-w-0 text-sm text-gray-600">
+                            <span class="font-semibold text-gray-900">{{ activeProvisioningPreviewFile?.flavor || '—' }}</span>
+                            <span v-if="activeProvisioningPreviewFile">
+                                - {{ activeProvisioningPreviewFile.mime }} - {{ activeProvisioningPreviewFile.bytes }} bytes
+                            </span>
+                        </div>
+                        <div class="flex shrink-0 items-center gap-2">
+                            <button type="button" @click="copyProvisioningPreview"
+                                class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                Copy
+                            </button>
+                            <button type="button" @click="downloadProvisioningPreview"
+                                class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                Download
+                            </button>
+                        </div>
+                    </div>
+
+                    <pre
+                        class="min-h-0 flex-1 overflow-auto rounded-md border border-gray-200 bg-gray-950 p-4 text-xs leading-5 text-gray-100"><code>{{ activeProvisioningPreviewFile?.content || '' }}</code></pre>
+                </div>
+            </div>
+        </template>
+    </AddEditItemModal>
 
     <AddEditItemModal :show="showDuplicateModal" :header="'Duplicate Device'" :loading="isModalLoading"
         @close="showDuplicateModal = false">
@@ -439,6 +512,11 @@ const notificationShow = ref(null);
 const showDuplicateModal = ref(false);
 const itemToDuplicate = ref(null);
 const newMacAddress = ref('');
+const showProvisioningPreviewModal = ref(false);
+const isProvisioningPreviewLoading = ref(false);
+const provisioningPreviewData = ref(null);
+const provisioningPreviewError = ref(null);
+const activeProvisioningPreviewFlavor = ref(null);
 let tooltipCopyContent = ref('Copy to Clipboard');
 
 const data = ref({
@@ -479,6 +557,38 @@ const advancedActions = computed(() => [
     },
 ]);
 
+const provisioningPreviewFiles = computed(() => provisioningPreviewData.value?.files ?? []);
+
+const activeProvisioningPreviewFile = computed(() => {
+    return provisioningPreviewFiles.value.find((file) => file.flavor === activeProvisioningPreviewFlavor.value)
+        ?? provisioningPreviewFiles.value[0]
+        ?? null;
+});
+
+const provisioningPreviewHeader = computed(() => {
+    const device = provisioningPreviewData.value?.device;
+    const label = device?.device_address_formatted || device?.device_address;
+
+    return label ? `Provisioning Preview - ${label}` : 'Provisioning Preview';
+});
+
+const provisioningPreviewTemplateLabel = computed(() => {
+    const template = provisioningPreviewData.value?.template;
+    if (!template) return '—';
+
+    const base = template.vendor ? `${template.vendor}/${template.name}` : template.name;
+    const suffixParts = [];
+    if (template.version) suffixParts.push(`v${template.version}`);
+    if (Number(template.revision) > 0) suffixParts.push(`r${template.revision}`);
+
+    return suffixParts.length ? `${base} (${suffixParts.join(', ')})` : base;
+});
+
+const provisioningPreviewRoute = (uuid) => {
+    return (props.routes.provisioning_preview || '/api/devices/__DEVICE_UUID__/provisioning-preview')
+        .replace('__DEVICE_UUID__', uuid);
+};
+
 const handleSortRequest = (column) => {
     if (sortData.value.name === column) {
         sortData.value.order = sortData.value.order === 'asc' ? 'desc' : 'asc';
@@ -497,6 +607,58 @@ const handleAdvancedActionRequest = (action, uuid) => {
         formErrors.value = null;
         showDuplicateModal.value = true;
     }
+};
+
+const handleProvisioningPreview = async (uuid) => {
+    showProvisioningPreviewModal.value = true;
+    isProvisioningPreviewLoading.value = true;
+    provisioningPreviewData.value = null;
+    provisioningPreviewError.value = null;
+    activeProvisioningPreviewFlavor.value = null;
+
+    try {
+        const response = await axios.get(provisioningPreviewRoute(uuid));
+        provisioningPreviewData.value = response.data;
+        activeProvisioningPreviewFlavor.value = response.data?.files?.[0]?.flavor ?? null;
+    } catch (error) {
+        const errors = error.response?.data?.errors;
+        provisioningPreviewError.value = errors
+            ? Object.values(errors).flat().join(' ')
+            : 'Could not render provisioning preview.';
+    } finally {
+        isProvisioningPreviewLoading.value = false;
+    }
+};
+
+const closeProvisioningPreview = () => {
+    showProvisioningPreviewModal.value = false;
+    provisioningPreviewData.value = null;
+    provisioningPreviewError.value = null;
+    activeProvisioningPreviewFlavor.value = null;
+};
+
+const copyProvisioningPreview = async () => {
+    if (!activeProvisioningPreviewFile.value?.content) return;
+
+    try {
+        await navigator.clipboard.writeText(activeProvisioningPreviewFile.value.content);
+        showNotification('success', { preview: ['Provisioning file copied.'] });
+    } catch (error) {
+        showNotification('error', { preview: ['Could not copy provisioning file.'] });
+    }
+};
+
+const downloadProvisioningPreview = () => {
+    const file = activeProvisioningPreviewFile.value;
+    if (!file) return;
+
+    const blob = new Blob([file.content ?? ''], { type: file.mime || 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = file.filename || 'provisioning-preview.cfg';
+    link.click();
+    URL.revokeObjectURL(url);
 };
 
 const submitDuplicateRequest = () => {

@@ -48,6 +48,7 @@ use App\Http\Controllers\MessageSettingsController;
 use App\Http\Controllers\MusicOnHoldController;
 use App\Http\Controllers\PhoneNumbersController;
 use App\Http\Controllers\PolycomLogController;
+use App\Http\Controllers\PolycomProvisioningFileController;
 use App\Http\Controllers\ProFeaturesController;
 use App\Http\Controllers\ProvisioningController;
 use App\Http\Controllers\RecordingsController;
@@ -129,6 +130,15 @@ Route::get('/mobile-app/qr-code', [AppsCredentialsController::class, 'showQrCode
     ->name('appsMobileAppQr');
 Route::get('/mobile-app/get-password/{token}', [AppsCredentialsController::class, 'getPasswordByToken'])->name('appsGetPasswordByToken');
 Route::post('/mobile-app/get-password/{token}', [AppsCredentialsController::class, 'retrievePasswordByToken'])->name('appsRetrievePasswordByToken');
+
+Route::match(['PUT', 'GET', 'HEAD'], '/prov/{bucket}/{id}-{kind}.{ext}', [PolycomProvisioningFileController::class, 'handle'])
+    ->whereIn('bucket', ['logs', 'phoneconfigs', 'directories', 'calls', 'corefiles'])
+    ->where('id', '[0-9A-Fa-f]{12}')
+    ->where('kind', '[A-Za-z0-9_-]+')
+    ->where('ext', '[A-Za-z0-9]+')
+    ->middleware(['throttle:provision', 'provision.digest'])
+    ->withoutMiddleware(['auth', 'web'])
+    ->name('provision.polycom-files');
 
 Route::match(['GET', 'HEAD'], '/prov/{path}', [ProvisioningController::class, 'serve'])
     ->where('path', '.*')

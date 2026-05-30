@@ -74,6 +74,11 @@ return [
             'root' => env('POLYCOM_LOG_DIRECTORY'),
         ],
 
+        'polycom_provisioning_uploads' => [
+            'driver' => 'local',
+            'root' => env('POLYCOM_PROVISIONING_UPLOAD_DIRECTORY') ?: storage_path('app/private/polycom'),
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
