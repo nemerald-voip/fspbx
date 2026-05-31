@@ -370,15 +370,6 @@ chown -R www-data:www-data /var/cache/fusionpbx
 
 print_success "FusionPBX cache directory setup completed."
 
-print_success "Installing FS PBX Apps..."
-bash /var/www/fspbx/install/install_fusionpbx_apps.sh
-if [ $? -eq 0 ]; then
-    print_success "FS PBX Apps installed successfully."
-else
-    print_error "Error occurred while installing FS PBX Apps."
-    exit 1
-fi
-
 
 # Copy .env.example to .env
 cp .env.example .env
