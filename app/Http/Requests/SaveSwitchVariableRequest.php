@@ -12,6 +12,13 @@ class SaveSwitchVariableRequest extends FormRequest
         return auth()->check();
     }
 
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('var_order') && $this->input('var_order') === '') {
+            $this->merge(['var_order' => null]);
+        }
+    }
+
     public function rules(): array
     {
         return [
@@ -21,7 +28,7 @@ class SaveSwitchVariableRequest extends FormRequest
             'var_command' => ['nullable', Rule::in(['set', 'exec-set'])],
             'var_hostname' => ['nullable', 'string', 'max:255'],
             'var_enabled' => ['required', 'boolean'],
-            'var_order' => ['required', 'numeric'],
+            'var_order' => ['nullable', 'numeric'],
             'var_description' => ['nullable', 'string'],
         ];
     }

@@ -54,7 +54,7 @@ class SwitchVariableService
             'var_command' => $variable->var_command ?: 'set',
             'var_hostname' => $variable->var_hostname,
             'var_enabled' => $variable->exists ? $this->boolValue($variable->var_enabled) : true,
-            'var_order' => $variable->exists ? $variable->var_order : 0,
+            'var_order' => $variable->exists ? $variable->var_order : null,
             'var_description' => $variable->var_description,
         ];
     }
@@ -68,10 +68,10 @@ class SwitchVariableService
                 'var_category' => $data['var_category'],
                 'var_name' => $data['var_name'],
                 'var_value' => $data['var_value'] ?? null,
-                'var_command' => $data['var_command'] ?: 'set',
+                'var_command' => ($data['var_command'] ?? null) ?: 'set',
                 'var_hostname' => filled($data['var_hostname'] ?? null) ? $data['var_hostname'] : null,
                 'var_enabled' => (bool) $data['var_enabled'] ? 'true' : 'false',
-                'var_order' => $data['var_order'],
+                'var_order' => filled($data['var_order'] ?? null) ? $data['var_order'] : null,
                 'var_description' => $data['var_description'] ?? null,
             ])->save();
 
