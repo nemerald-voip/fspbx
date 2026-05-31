@@ -260,8 +260,8 @@
 
                                 <ejs-tooltip v-if="permissions.device_provisioning_preview"
                                     :content="'Preview provisioning'" position='TopCenter'
-                                    target="#provisioning_preview_tooltip_target">
-                                    <div id="provisioning_preview_tooltip_target">
+                                    :target="'#provisioning_preview_tooltip_target_' + row.device_uuid">
+                                    <div :id="'provisioning_preview_tooltip_target_' + row.device_uuid">
                                         <MagnifyingGlassIcon @click="handleProvisioningPreview(row.device_uuid)"
                                             class="h-9 w-9 transition duration-500 ease-in-out py-2 rounded-full text-gray-400 hover:bg-gray-200 hover:text-gray-600 active:bg-gray-300 active:duration-150 cursor-pointer" />
                                     </div>
@@ -352,7 +352,7 @@
         @update:show="hideNotification" />
 
     <AddEditItemModal :show="showProvisioningPreviewModal" :header="provisioningPreviewHeader"
-        :loading="isProvisioningPreviewLoading" customClass="sm:max-w-6xl h-[85vh] max-h-[85vh]"
+        :loading="isProvisioningPreviewLoading" customClass="sm:max-w-6xl h-[85vh] max-h-[85vh] flex flex-col"
         contentClass="flex min-h-0 flex-1 flex-col" bodyClass="min-h-0 flex-1 overflow-hidden"
         @close="closeProvisioningPreview">
         <template #modal-body>
@@ -377,39 +377,68 @@
                         </div>
                     </div>
 
-                    <div class="flex flex-wrap items-center gap-2 border-b border-gray-200 pb-2">
-                        <button v-for="file in provisioningPreviewFiles" :key="file.flavor" type="button"
-                            @click="activeProvisioningPreviewFlavor = file.flavor" :class="[
-                                activeProvisioningPreviewFlavor === file.flavor
-                                    ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
-                                    : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50',
-                                'rounded-md border px-3 py-1.5 text-sm font-medium'
-                            ]">
-                            {{ file.filename }}
-                        </button>
+                    <div v-if="provisioningPreviewFiles.length === 0"
+                        class="flex min-h-0 flex-1 flex-col items-center justify-center rounded-md border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
+                        <MagnifyingGlassIcon class="h-10 w-10 text-gray-300" aria-hidden="true" />
+                        <p class="mt-2 text-sm font-medium text-gray-900">No provisioning files generated</p>
+                        <p class="mt-1 text-sm text-gray-500">This device's template did not produce any files to preview.</p>
                     </div>
 
-                    <div class="flex items-center justify-between gap-3">
-                        <div class="min-w-0 text-sm text-gray-600">
-                            <span class="font-semibold text-gray-900">{{ activeProvisioningPreviewFile?.flavor || '—' }}</span>
-                            <span v-if="activeProvisioningPreviewFile">
-                                - {{ activeProvisioningPreviewFile.mime }} - {{ activeProvisioningPreviewFile.bytes }} bytes
-                            </span>
-                        </div>
-                        <div class="flex shrink-0 items-center gap-2">
-                            <button type="button" @click="copyProvisioningPreview"
-                                class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                                Copy
+                    <template v-else>
+                        <div role="tablist" aria-label="Provisioning files"
+                            class="flex flex-nowrap items-center gap-2 overflow-x-auto border-b border-gray-200 pb-2">
+                            <button v-for="(file, index) in provisioningPreviewFiles" :key="file.flavor" type="button"
+                                role="tab" :aria-selected="activeProvisioningPreviewFlavor === file.flavor"
+                                :tabindex="activeProvisioningPreviewFlavor === file.flavor ? 0 : -1"
+                                @click="activeProvisioningPreviewFlavor = file.flavor"
+                                @keydown.left.prevent="focusProvisioningPreviewTab(index - 1, $event)"
+                                @keydown.right.prevent="focusProvisioningPreviewTab(index + 1, $event)" :class="[
+                                    activeProvisioningPreviewFlavor === file.flavor
+                                        ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                                        : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50',
+                                    'shrink-0 whitespace-nowrap rounded-md border px-3 py-1.5 text-sm font-medium'
+                                ]">
+                                {{ file.filename }}
                             </button>
-                            <button type="button" @click="downloadProvisioningPreview"
-                                class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
-                                Download
-                            </button>
                         </div>
-                    </div>
 
-                    <pre
-                        class="min-h-0 flex-1 overflow-auto rounded-md border border-gray-200 bg-gray-950 p-4 text-xs leading-5 text-gray-100"><code>{{ activeProvisioningPreviewFile?.content || '' }}</code></pre>
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="min-w-0 text-sm text-gray-600">
+                                <span class="font-semibold text-gray-900">{{ activeProvisioningPreviewFile?.flavor || '—' }}</span>
+                                <span v-if="activeProvisioningPreviewFile">
+                                    · {{ activeProvisioningPreviewFile.mime }} · {{ formatBytes(activeProvisioningPreviewFile.bytes) }}
+                                </span>
+                            </div>
+                            <div class="flex shrink-0 items-center gap-2">
+                                <button type="button" @click="provisioningPreviewWrap = !provisioningPreviewWrap"
+                                    :aria-pressed="provisioningPreviewWrap" :class="[
+                                        provisioningPreviewWrap
+                                            ? 'bg-indigo-50 text-indigo-700 ring-indigo-300'
+                                            : 'bg-white text-gray-900 ring-gray-300 hover:bg-gray-50',
+                                        'rounded-md px-2.5 py-1.5 text-sm font-semibold shadow-sm ring-1 ring-inset'
+                                    ]">
+                                    Wrap
+                                </button>
+                                <button type="button" @click="copyProvisioningPreview"
+                                    class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                    Copy
+                                </button>
+                                <button type="button" @click="downloadProvisioningPreview"
+                                    class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">
+                                    Download
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="min-h-0 flex-1 overflow-hidden rounded-md border border-gray-200">
+                            <AceEditor
+                                :key="`${activeProvisioningPreviewFile?.flavor}-${provisioningPreviewWrap}`"
+                                :model-value="activeProvisioningPreviewFile?.content || ''"
+                                :lang="activeProvisioningPreviewLang" theme="one_dark"
+                                :options="{ readOnly: true, wrap: provisioningPreviewWrap, fontSize: 13, tabSize: 2, useWorker: false, highlightActiveLine: false, showGutter: true }"
+                                height="100%" />
+                        </div>
+                    </template>
                 </div>
             </div>
         </template>
@@ -475,6 +504,7 @@ import Notification from "./components/notifications/Notification.vue";
 import CloudProvisioningSettings from "./components/forms/CloudProvisioningSettings.vue";
 import AdvancedActionButton from "./components/general/AdvancedActionButton.vue";
 import AddEditItemModal from "./components/modal/AddEditItemModal.vue";
+import AceEditor from "./components/general/AceEditor.vue";
 
 const page = usePage()
 const props = defineProps({
@@ -517,6 +547,7 @@ const isProvisioningPreviewLoading = ref(false);
 const provisioningPreviewData = ref(null);
 const provisioningPreviewError = ref(null);
 const activeProvisioningPreviewFlavor = ref(null);
+const provisioningPreviewWrap = ref(false);
 let tooltipCopyContent = ref('Copy to Clipboard');
 
 const data = ref({
@@ -564,6 +595,33 @@ const activeProvisioningPreviewFile = computed(() => {
         ?? provisioningPreviewFiles.value[0]
         ?? null;
 });
+
+const activeProvisioningPreviewLang = computed(() => {
+    const file = activeProvisioningPreviewFile.value;
+    if (!file) return 'text';
+
+    const isXml = /xml/i.test(file.mime || '') || /\.xml$/i.test(file.filename || '');
+
+    return isXml ? 'xml' : 'text';
+});
+
+const focusProvisioningPreviewTab = (index, event) => {
+    const files = provisioningPreviewFiles.value;
+    if (files.length === 0) return;
+
+    const wrapped = (index + files.length) % files.length;
+    activeProvisioningPreviewFlavor.value = files[wrapped].flavor;
+    event?.target?.parentElement?.children?.[wrapped]?.focus();
+};
+
+const formatBytes = (bytes) => {
+    const value = Number(bytes);
+    if (!Number.isFinite(value) || value < 0) return '— bytes';
+    if (value < 1024) return `${value} bytes`;
+    if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+
+    return `${(value / (1024 * 1024)).toFixed(1)} MB`;
+};
 
 const provisioningPreviewHeader = computed(() => {
     const device = provisioningPreviewData.value?.device;
