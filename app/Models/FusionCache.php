@@ -137,12 +137,36 @@ class FusionCache extends Model
             $cacheLocation = static::cacheLocation();
 
             if ($cacheLocation && File::isDirectory($cacheLocation)) {
-                File::cleanDirectory($cacheLocation);
+                static::cleanFileCacheDirectory($cacheLocation);
             }
 
             return true;
         }
 
         return false;
+    }
+
+    /**
+     * Remove generated FSPBX cache files without deleting sync metadata.
+     */
+    protected static function cleanFileCacheDirectory(string $cacheLocation): void
+    {
+        foreach (new \DirectoryIterator($cacheLocation) as $item) {
+            if ($item->isDot() || static::isSyncthingMetadataPath($item->getPathname())) {
+                continue;
+            }
+
+            if ($item->isDir() && ! $item->isLink()) {
+                File::deleteDirectory($item->getPathname());
+                continue;
+            }
+
+            File::delete($item->getPathname());
+        }
+    }
+
+    protected static function isSyncthingMetadataPath(string $path): bool
+    {
+        return str_starts_with(basename($path), '.st');
     }
 }
