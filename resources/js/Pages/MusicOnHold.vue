@@ -38,6 +38,16 @@
                 </button>
 
                 <button
+                    v-if="permissions.tenant_settings"
+                    type="button"
+                    class="ml-2 sm:ml-4 inline-flex items-center gap-1 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                    @click="openTenantSettingsModal"
+                >
+                    <Cog6ToothIcon class="h-4 w-4 text-gray-500" />
+                    Tenant settings
+                </button>
+
+                <button
                     v-if="permissions.create"
                     type="button"
                     class="ml-2 sm:ml-4 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
@@ -290,6 +300,16 @@
                     >
                         <ArrowPathIcon class="h-4 w-4 text-gray-500" />
                         Reload
+                    </button>
+
+                    <button
+                        v-if="permissions.tenant_settings"
+                        type="button"
+                        class="inline-flex items-center gap-1 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
+                        @click="openTenantSettingsModal"
+                    >
+                        <Cog6ToothIcon class="h-4 w-4 text-gray-500" />
+                        Tenant settings
                     </button>
 
                     <button
@@ -600,6 +620,43 @@
         </template>
     </AddEditItemModal>
 
+    <AddEditItemModal :show="showTenantSettingsModal" :loading="loadingForm || formSubmitting" header="Tenant Music on Hold" custom-class="sm:max-w-2xl" @close="closeTenantSettingsModal">
+        <template #modal-body>
+            <Vueform :key="tenantSettingsFormKey" ref="tenantSettingsForm$" :endpoint="false" :default="tenantSettingsDefaultValues">
+                <RadiogroupElement
+                    name="mode"
+                    label="Music on Hold"
+                    :items="tenantModeOptions"
+                    :columns="{ container: 12 }"
+                />
+
+                <SelectElement
+                    name="stream_uuid"
+                    :items="tenantStreamOptions"
+                    label="Stream"
+                    :native="false"
+                    :search="true"
+                    :floating="false"
+                    :columns="{ container: 12 }"
+                    :conditions="[['mode', '==', 'stream']]"
+                    :error="formErrors.stream_uuid?.[0]"
+                />
+
+                <GroupElement name="tenant_button_container" />
+
+                <ButtonElement name="tenant_cancel" :secondary="true" :submits="false" align="right"
+                    :columns="{ container: 12, sm: 6 }" @click="closeTenantSettingsModal">
+                    Cancel
+                </ButtonElement>
+
+                <ButtonElement name="tenant_save" :loading="formSubmitting" :submits="false" align="right"
+                    :columns="{ container: 12, sm: 6 }" @click="submitTenantSettings">
+                    Save
+                </ButtonElement>
+            </Vueform>
+        </template>
+    </AddEditItemModal>
+
     <AddEditItemModal :show="showPlayerModal" :loading="false" :header="selectedFile?.name || 'Music on Hold'" custom-class="sm:max-w-3xl" @close="showPlayerModal = false">
         <template #modal-body>
             <AudioPlayer
@@ -646,6 +703,7 @@ import {
     ArrowDownTrayIcon,
     ChevronDownIcon,
     ChevronUpIcon,
+    Cog6ToothIcon,
     ListBulletIcon,
     MagnifyingGlassIcon,
     MusicalNoteIcon,
@@ -725,6 +783,7 @@ const loadingForm = ref(false);
 const formSubmitting = ref(false);
 const showForm = ref(false);
 const showUploadModal = ref(false);
+const showTenantSettingsModal = ref(false);
 const showPlayerModal = ref(false);
 const showConfirmationModal = ref(false);
 const showDrawer = ref(false);
@@ -738,7 +797,9 @@ const formMode = ref("create");
 const formErrors = ref({});
 const selectedFile = ref(null);
 const uploadForm$ = ref(null);
+const tenantSettingsForm$ = ref(null);
 const uploadFormKey = ref(0);
+const tenantSettingsFormKey = ref(0);
 const uploadFile = ref(null);
 const uploadInitialStreamUuid = ref("");
 const confirmAction = ref(() => {});
@@ -755,6 +816,8 @@ const itemOptions = ref({
     domains: [],
     current_domain_uuid: null,
     streams: [],
+    tenant_streams: [],
+    tenant_settings: {},
     chime_options: [],
 });
 
@@ -772,6 +835,12 @@ const uploadStreamOptions = computed(() => [
     { label: "New stream", value: "" },
     ...(itemOptions.value.streams ?? []),
 ]);
+const tenantStreamOptions = computed(() => itemOptions.value.tenant_streams ?? []);
+const tenantModeOptions = [
+    { label: "Stream selection", value: "stream" },
+    { label: "Play beeps", value: "beeps" },
+    { label: "Silence", value: "silence" },
+];
 
 const uploadDefaultValues = computed(() => ({
     music_on_hold_uuid: uploadInitialStreamUuid.value || "",
@@ -779,6 +848,10 @@ const uploadDefaultValues = computed(() => ({
     domain_uuid: itemOptions.value.current_domain_uuid
         ?? itemOptions.value.domains.find((domain) => domain.value)?.value
         ?? null,
+}));
+const tenantSettingsDefaultValues = computed(() => ({
+    mode: itemOptions.value.tenant_settings?.mode ?? "stream",
+    stream_uuid: itemOptions.value.tenant_settings?.stream_uuid ?? tenantStreamOptions.value[0]?.value ?? null,
 }));
 
 const selectedUploadStreamUuid = computed(() => uploadForm$.value?.data?.music_on_hold_uuid ?? "");
@@ -940,6 +1013,19 @@ const closeUploadModal = () => {
     resetUploadForm();
 };
 
+const openTenantSettingsModal = () => {
+    formErrors.value = {};
+    showTenantSettingsModal.value = true;
+    resetTenantSettingsForm();
+    getItemOptions(null, "tenant_settings");
+};
+
+const closeTenantSettingsModal = () => {
+    showTenantSettingsModal.value = false;
+    formErrors.value = {};
+    resetTenantSettingsForm();
+};
+
 const openDrawer = (row) => {
     drawerStream.value = row;
     showDrawer.value = true;
@@ -972,20 +1058,40 @@ const quickPlay = (row) => {
     openDrawer(row);
 };
 
-const getItemOptions = (itemUuid = null) => {
+const getItemOptions = (itemUuid = null, purpose = null) => {
     loadingForm.value = true;
 
-    axios.post(routes.item_options, itemUuid ? { itemUuid, filter: filterData.value } : { filter: filterData.value })
+    axios.post(routes.item_options, itemUuid ? { itemUuid, filter: filterData.value } : { filter: filterData.value, purpose })
         .then((response) => {
             itemOptions.value = response.data;
         })
         .catch((error) => {
             closeForm();
             closeUploadModal();
+            closeTenantSettingsModal();
             handleError(error);
         })
         .finally(() => {
             loadingForm.value = false;
+        });
+};
+
+const submitTenantSettings = () => {
+    formErrors.value = {};
+    formSubmitting.value = true;
+    const requestData = tenantSettingsForm$.value?.data ?? {};
+
+    axios.post(routes.tenant_settings, {
+        mode: requestData.mode,
+        stream_uuid: requestData.mode === "stream" ? requestData.stream_uuid : null,
+    })
+        .then((response) => {
+            closeTenantSettingsModal();
+            showNotification("success", response.data.messages);
+        })
+        .catch((error) => handleError(error, true))
+        .finally(() => {
+            formSubmitting.value = false;
         });
 };
 
@@ -1143,12 +1249,16 @@ const closeConfirmation = () => {
 };
 
 const resetItemOptions = () => {
-    itemOptions.value = { item: {}, rates: [], domains: [], current_domain_uuid: null, streams: [], chime_options: [] };
+    itemOptions.value = { item: {}, rates: [], domains: [], current_domain_uuid: null, streams: [], tenant_streams: [], tenant_settings: {}, chime_options: [] };
 };
 
 const resetUploadForm = () => {
     uploadFile.value = null;
     uploadFormKey.value++;
+};
+
+const resetTenantSettingsForm = () => {
+    tenantSettingsFormKey.value++;
 };
 
 const hideNotification = () => {

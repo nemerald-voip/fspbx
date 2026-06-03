@@ -45,6 +45,11 @@ class DialplanDetails extends Model
         $this->fill($attributes);
     }
 
+    public function dialplan()
+    {
+        return $this->belongsTo(Dialplans::class, 'dialplan_uuid', 'dialplan_uuid');
+    }
+
     /**
      * Force to use it, cause laravel's casting method doesn't determine string 'false' as a valid boolean value.
      *
