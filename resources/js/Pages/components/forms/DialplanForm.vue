@@ -41,15 +41,15 @@
                                 </div>
                             </div>
 
-                            <Vueform v-if="!loading" ref="form$" :endpoint="submitForm" @vue:mounted="handleFormMounted"
-                                @success="handleSuccess" @error="handleError" @response="handleResponse"
-                                :display-errors="false" :default="defaultValues">
-                                <template #empty>
-                                    <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
+                            <div v-if="!loading" ref="formContainer$" @keydown.enter.capture="handleEnterSubmit">
+                                <Vueform ref="form$" :endpoint="submitForm" @vue:mounted="handleFormMounted"
+                                    @success="handleSuccess" @error="handleError" @response="handleResponse"
+                                    :display-errors="false" :default="defaultValues">
+                                    <template #empty>
+                                        <div class="lg:grid lg:grid-cols-12 lg:gap-x-5">
                                         <div class="px-2 py-6 sm:px-6 lg:col-span-3 lg:px-0 lg:py-0">
-                                            <FormTabs view="vertical" @select="handleTabSelected">
-                                                <FormTab name="settings" label="Settings"
-                                                    @click="handleTabSelected('settings')" :elements="[
+                                            <FormTabs view="vertical">
+                                                <FormTab name="settings" label="Settings" :elements="[
                                                     'dialplan_uuid',
                                                     'dialplan_uuid_clean',
                                                     'settings_header',
@@ -67,15 +67,13 @@
                                                     'settings_button_container',
                                                     'settings_submit',
                                                 ]" />
-                                                <FormTab name="rules" label="Rules"
-                                                    @click="handleTabSelected('rules')" :elements="[
+                                                <FormTab name="rules" label="Rules" :elements="[
                                                     'rules_header',
                                                     'dialplan_rule_groups',
                                                     'rules_button_container',
                                                     'rules_submit',
                                                 ]" />
-                                                <FormTab name="xml" label="XML Editor"
-                                                    @click="handleTabSelected('xml')" :elements="[
+                                                <FormTab name="xml" label="XML Editor" :elements="[
                                                     'advanced_header',
                                                     'xml_editor',
                                                     'advanced_button_container',
@@ -369,8 +367,9 @@
                                             </FormElements>
                                         </div>
                                     </div>
-                                </template>
-                            </Vueform>
+                                    </template>
+                                </Vueform>
+                            </div>
                         </DialogPanel>
                     </TransitionChild>
                 </div>
@@ -403,8 +402,8 @@ const props = defineProps({
 const emit = defineEmits(["close", "error", "success", "refresh-data", "saved"]);
 
 const form$ = ref(null);
+const formContainer$ = ref(null);
 const submitMode = ref("builder");
-const activeTabName = ref("settings");
 const pendingTabName = ref(null);
 const xmlEditorTheme = ref("chrome");
 const xmlEditorContent = ref("");
@@ -496,37 +495,28 @@ const defaultXmlTemplate = (item = {}) => {
 
 const prepareSubmit = (mode, tabName) => {
     submitMode.value = mode;
-    activeTabName.value = tabName;
     pendingTabName.value = tabName;
 };
 
-const handleTabSelected = (activeTab) => {
-    activeTabName.value = typeof activeTab === "string"
-        ? activeTab
-        : activeTab?.name ?? "settings";
+const isVisible = (element) => {
+    return Boolean(element.offsetParent || element.getClientRects().length);
 };
 
-const selectedTabNameFromDom = () => {
-    const selectedTab = Array.from(document.querySelectorAll('[role="tab"][aria-selected="true"]'))
-        .find((tab) => ["Settings", "Rules", "XML Editor"].includes(tab.textContent?.trim()));
-
-    const selectedLabel = selectedTab?.textContent?.trim();
-
-    if (selectedLabel === "Rules") {
-        return "rules";
+const handleEnterSubmit = (event) => {
+    if (event.defaultPrevented || event.isComposing || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+        return;
     }
 
-    if (selectedLabel === "XML Editor") {
-        return "xml";
+    const saveButton = Array.from(formContainer$.value?.querySelectorAll("button") ?? [])
+        .find((button) => button.textContent?.trim() === "Save" && isVisible(button));
+
+    if (!saveButton) {
+        return;
     }
 
-    return selectedLabel === "Settings" ? "settings" : null;
-};
-
-const prepareSubmitFromActiveTab = () => {
-    const tabName = selectedTabNameFromDom() ?? activeTabName.value ?? "settings";
-
-    prepareSubmit(tabName === "xml" ? "xml" : "builder", tabName);
+    event.preventDefault();
+    event.stopPropagation();
+    saveButton.click();
 };
 
 const handleFormMounted = () => {
@@ -537,13 +527,10 @@ const handleFormMounted = () => {
     }
 
     form$.value?.tabs$?.goTo(pendingTabName.value);
-    activeTabName.value = pendingTabName.value;
     pendingTabName.value = null;
 };
 
 const handleClose = () => {
-    submitMode.value = "builder";
-    activeTabName.value = "settings";
     pendingTabName.value = null;
     emit("close");
 };
@@ -729,8 +716,6 @@ const handleCopyToClipboard = (text) => {
 };
 
 const submitForm = async (FormData, form$) => {
-    prepareSubmitFromActiveTab();
-
     const requestData = { ...form$.requestData };
     xmlEditorError.value = null;
 
