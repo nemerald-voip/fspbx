@@ -244,22 +244,44 @@ class CallBlockController extends Controller
             })
             ->allowedFilters([
                 AllowedFilter::callback('search', function ($query, $value) {
-                    $needle = trim((string) $value);
+                    $s = trim((string) $value);
 
-                    if ($needle === '') {
+                    if ($s === '') {
                         return;
                     }
 
-                    $query->where(function ($query) use ($needle) {
-                        $query->where('call_block_uuid', 'ilike', "%{$needle}%")
-                            ->orWhere('call_block_direction', 'ilike', "%{$needle}%")
-                            ->orWhere('call_block_name', 'ilike', "%{$needle}%")
-                            ->orWhere('call_block_country_code', 'ilike', "%{$needle}%")
-                            ->orWhere('call_block_number', 'ilike', "%{$needle}%")
-                            ->orWhere('call_block_app', 'ilike', "%{$needle}%")
-                            ->orWhere('call_block_data', 'ilike', "%{$needle}%")
-                            ->orWhere('call_block_description', 'ilike', "%{$needle}%");
-                    });
+                    // If it contains any letters, keep original behavior (text search)
+                    if (preg_match('/[A-Za-z]/', $s)) {
+                        $query->where(function ($query) use ($s) {
+                            $query->where('call_block_uuid', 'ilike', "%{$s}%")
+                                ->orWhere('call_block_direction', 'ilike', "%{$s}%")
+                                ->orWhere('call_block_name', 'ilike', "%{$s}%")
+                                ->orWhere('call_block_country_code', 'ilike', "%{$s}%")
+                                ->orWhere('call_block_number', 'ilike', "%{$s}%")
+                                ->orWhere('call_block_app', 'ilike', "%{$s}%")
+                                ->orWhere('call_block_data', 'ilike', "%{$s}%")
+                                ->orWhere('call_block_description', 'ilike', "%{$s}%");
+                        });
+                        return;
+                    }
+
+                    // Numeric-only: remove all non-digits
+                    $digits = preg_replace('/\D+/', '', $s);
+
+                    // If 11 digits and starts with 1 (covers +1 once stripped), drop leading 1
+                    if (strlen($digits) === 11 && str_starts_with($digits, '1')) {
+                        $digits = substr($digits, 1);
+                    }
+
+                    if ($digits === '') {
+                        return;
+                    }
+
+                    $pattern = '%' . implode('%', str_split($digits)) . '%';
+                    $query->whereRaw(
+                        "regexp_replace(coalesce(call_block_country_code::text, '') || coalesce(call_block_number::text, ''), '\\D+', '', 'g') ilike ?",
+                        [$pattern]
+                    );
                 }),
             ]);
     }
